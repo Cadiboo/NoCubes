@@ -36,6 +36,7 @@ public class Main {
     //private static final String PROXY_COMMON = "com.cosmicdan.nocubes.CommonProxy";
     
     public static KeyBinding KEYBIND_SETTINGS;
+    public static KeyBinding KEYBIND_DEBUG;
     
     @Instance(MODNAME)
     public static Main INSTANCE;
@@ -47,11 +48,15 @@ public class Main {
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-    	if (event.getSide() == Side.SERVER)
-    		return;
+        if (event.getSide() == Side.SERVER)
+            return;
         ModConfig.doConfig(event.getModConfigurationDirectory());
         KEYBIND_SETTINGS = new KeyBinding("key.settings", Keyboard.KEY_F4, MODNAME);
         ClientRegistry.registerKeyBinding(KEYBIND_SETTINGS);
+        // DEBUG
+        //KEYBIND_DEBUG = new KeyBinding("Reload", Keyboard.KEY_F5, MODNAME);
+        //ClientRegistry.registerKeyBinding(KEYBIND_DEBUG);
+        //
         FMLCommonHandler.instance().bus().register(new EventsFML());
         MinecraftForge.EVENT_BUS.register(new EventsForge());
         //PROXY.preInit(event);
@@ -68,14 +73,14 @@ public class Main {
     }
     
     protected static void openSettingsGui() {
-		Minecraft.getMinecraft().displayGuiScreen((GuiScreen) new GuiNoCubes());
-	}
-	
-	public static boolean shouldSmooth(Block block) {
-		if (!ModConfig.MOD_ENABLED)
-			return false;
-		if (ModConfig.SMOOTHBLOCKS_IDS.contains(Block.getIdFromBlock(block)))
-			return true;
-		return false;
-	}
+        Minecraft.getMinecraft().displayGuiScreen((GuiScreen) new GuiNoCubes());
+    }
+    
+    public static boolean shouldSmooth(Block block) {
+        if (!ModConfig.MOD_ENABLED)
+            return false;
+        if (ModConfig.SMOOTHBLOCKS_IDS.contains(Block.getIdFromBlock(block)))
+            return true;
+        return false;
+    }
 }

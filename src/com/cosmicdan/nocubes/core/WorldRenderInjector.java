@@ -34,8 +34,8 @@ public class WorldRenderInjector implements IClassTransformer {
 
          for(MethodNode methodNode : classNode.methods) {
             //if(methodNode.name.equals("a") && methodNode.desc.equals("(Lsv;)V")) {
-        	//if(methodNode.name.equals("func_147892_a") && methodNode.desc.equals("(Lnet/minecraft/entity/EntityLivingBase;)V")) {
-        	if(methodNode.name.equals("updateRenderer") && methodNode.desc.equals("(Lnet/minecraft/entity/EntityLivingBase;)V")) {
+            //if(methodNode.name.equals("func_147892_a") && methodNode.desc.equals("(Lnet/minecraft/entity/EntityLivingBase;)V")) {
+            if(methodNode.name.equals("updateRenderer") && methodNode.desc.equals("(Lnet/minecraft/entity/EntityLivingBase;)V")) {
                targetMethod = methodNode;
                break;
             }
@@ -44,7 +44,7 @@ public class WorldRenderInjector implements IClassTransformer {
          if(targetMethod == null) {
             return bytes;
          } else {
-        	//Main.LOGGER.warn("~~~ Inside the WorldRenderer class: " + name);
+            //Main.LOGGER.warn("~~~ Inside the WorldRenderer class: " + name);
             MethodNode injectedMethod = new MethodNode();
             Label label0 = new Label();
             injectedMethod.visitLabel(label0);
