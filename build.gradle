@@ -1,0 +1,121 @@
+/*
+ * Based on Mantle (SlimeKnights) master build file (which is based on TConstruct's master build file)
+ * Credits: CosmicDan, Sunstrike, ProgWML6, AbrarSyed
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            name = "forge"
+            url = "http://files.minecraftforge.net/maven"
+        }
+        maven {
+            name = "sonatype"
+            url = "https://oss.sonatype.org/content/repositories/snapshots/"
+        }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+    }
+}
+
+apply plugin: 'forge'
+group = "com.cosmicdan.nocubes"
+
+ext.configFile = file "build.properties"
+
+configFile.withReader {
+    // Load config.  It shall from now be referenced as simply config or project.config
+    def prop = new Properties()
+    prop.load(it)
+    project.ext.config = new ConfigSlurper().parse prop
+}
+
+// sets version to the slimeKnights default version format
+// Finds and sets version data
+task buildInfo {
+    def cmd = "git rev-parse --short HEAD"
+    def proc = cmd.execute()
+    proc.waitFor()
+    if (proc.exitValue() == 0) {
+        ext.revision = proc.text.trim()
+    } else {
+        ext.revision = "GITBORK"
+    }
+
+    ext.buildNum = "devbuild.${project.buildInfo.revision}"
+}
+
+ext.artifact_version = 'NFG'
+artifact_version = "${config.mod_version}.${project.buildInfo.buildNum}"
+
+if (System.getenv("RELEASEMODE") == "true") {
+    artifact_version = "${config.mod_version}"
+}
+
+version = "${config.minecraft_version}-${artifact_version}"
+//archivesBaseName = "modid"
+
+minecraft {
+    version = config.minecraft_version + "-" + config.forge_version + "-" + config.minecraft_version
+    runDir = "eclipse"
+    replace '${version}', project.version
+    // manually specifying MCP mappings seems to cause issues, not sure when/why that happened :\
+    // mappings = "${config.mcp_mappings}"
+}
+
+dependencies {}
+
+sourceSets {
+    main {
+        resources {
+            srcDir 'resources'
+        }
+        java {
+            srcDir 'src'
+        }
+    }
+}
+processResources
+{
+    inputs.property "version", artifact_version
+    inputs.property "MCversion", config.minecraft_version
+
+    // replace stuff in text files, not binary ones.
+    from(sourceSets.main.resources.srcDirs) {
+        include '**/*.info'
+        // replace version and MCVersion
+        expand 'version':artifact_version,'MCversion':config.minecraft_version
+    }
+        
+    // copy everything else, thats not text
+    from(sourceSets.main.resources.srcDirs) {
+        exclude '**/*.info'
+    }
+}
+
+// because the normal output has been made to be obfuscated
+task deobfJar(type: Jar) {
+    from sourceSets.main.output
+    classifier = 'deobf'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+artifacts {
+    archives deobfJar
+    archives sourcesJar
+}
+
+jar {
+    manifest {
+        attributes 'FMLCorePlugin': 'com.cosmicdan.nocubes.core.CorePlugin',
+                   'FMLCorePluginContainsFMLMod': 'true'
+    }
+}
+
+
