@@ -1,11 +1,13 @@
 #NoCubes mod
 Coremod that creates a cosmetic-only curved terrain layout in Minecraft. Original mod by Click_Me, this repo is reverse engineered under his permission (and modified with removed Mojang code where possible).
 
+Original thread: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics
 
 
 ##STATEMENT OF VOLUNTEERED ACT OF LIBERATION FOR AN ORPHAN WORK
-While the original mod was closed source and had no opensource license, the original author "Click_Me" has given permission for decompilation and redistribution of the result. I, Daniel Connolly, declare that, to the best of my knowledge, in good faith and agreement with all interested parties, have lawfully and rightfully recognized this software as an orphan work, or "abandonware", volunteered to perform the desired liberation of the work, and have taken it upon myself to do so - while claiming all responsibility of any legal repercussions if or when any of them should arrive in future. In doing so, I hereby relinquish and redeem Click_Me from any possible issues regarding the law, copyright or otherwise, in regards or relation to the liberation of this orphan work.
+While the original mod was closed source and had no opensource license, the original author "Click_Me" has given permission for reverse-engineering and redistribution of the result. I, Daniel Connolly, declare that, to the best of my knowledge, in good faith and agreement with all interested parties, have lawfully and rightfully recognized this software as an orphan work, or "abandonware", volunteered to perform the desired liberation of the work, and have taken it upon myself to do so - while claiming all responsibility of any legal repercussions if or when any of them should arrive in future. In doing so, I hereby relinquish and redeem Click_Me from any possible issues regarding the law, copyright or otherwise, in regards or relation to the liberation of this orphan work.
 
+Source for permission of reverse-enginering of orphaned work by original author: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861
 
 
 ##License/Policies
