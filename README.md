@@ -3,6 +3,8 @@ Coremod that creates a cosmetic-only curved terrain layout in Minecraft. Origina
 
 Original thread: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics
 
+Source theory: https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/
+
 
 ##STATEMENT OF VOLUNTEERED ACT OF LIBERATION FOR AN ORPHAN WORK
 While the original mod was closed source and had no opensource license, the original author "Click_Me" has given permission for reverse-engineering and redistribution of the result. I, Daniel Connolly, declare that, to the best of my knowledge, in good faith and agreement with all interested parties, have lawfully and rightfully recognized this software as an orphan work, or "abandonware", volunteered to perform the desired liberation of the work, and have taken it upon myself to do so - while claiming all responsibility of any legal repercussions if or when any of them should arrive in future. In doing so, I hereby relinquish and redeem Click_Me from any possible issues regarding the law, copyright or otherwise, in regards or relation to the liberation of this orphan work. I also declare that I will, to the best of my ability, uphold and preserve the identity of this software being an original work of Click_Me and that no other person may claim ownership of this authored work, excluding that which involves claiming legal responsibility for implementing, compiling, distributing or otherwise utilizing any of the source code contained in this repository, as described in the Liability section of the MMPL (see LICENSE).
