@@ -1,6 +1,8 @@
 #NoCubes mod
 Coremod that creates a cosmetic-only curved terrain layout in Minecraft. Original mod by Click_Me, this repo is reverse engineered under his permission (and modified with removed Mojang code where possible).
 
+THIS MOD IS NOT UNDER DEVELOPMENT BY ME. I HAVE ONLY UPLOADED SOURCES HERE FOR OTHERS TO USE. DO NOT REPORT BUGS OR REQUEST FEATURES.
+
 Original thread: http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics
 
 Source theory: https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/
