@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 
 public class ModConfig {
     public static boolean MOD_ENABLED = true;
@@ -44,7 +45,7 @@ public class ModConfig {
         // build the default blocklist
         SMOOTHBLOCKS = getDefaultBlocks();
         Property SMOOTHBLOCKS_PROP = CONFIG.get("smoothing", "smoothblocks", SMOOTHBLOCKS);
-        SMOOTHBLOCKS_PROP.comment = "The list of blocks to be smoothed, in modid:name format";
+//        SMOOTHBLOCKS_PROP.comment = "The list of blocks to be smoothed, in modid:name format";
         
         // save config if it differs to the default values
         saveIfChanged();
@@ -67,7 +68,7 @@ public class ModConfig {
     // B:smoothing
     public static Property getEnabled(boolean defaultVal) {
         Property PROP = CONFIG.get("general", "smoothing", defaultVal);
-        PROP.comment = "Set if block smoothing is enabled by default. This can be toggled in-game.";
+//        PROP.comment = "Set if block smoothing is enabled by default. This can be toggled in-game.";
         return PROP;
     }
     public static void setEnabled(boolean newVal) {
@@ -79,7 +80,7 @@ public class ModConfig {
     public static Property getStepup(boolean defaultVal) {
         Property PROP = CONFIG.get("general", "stepup", defaultVal);
         //PROP.comment = "Set if step-up is enabled by default. This can be toggled in-game.";
-        PROP.comment = "Not yet implemented. Use Iguana Tweaks for now if you want this.";
+//        PROP.comment = "Not yet implemented. Use Iguana Tweaks for now if you want this.";
         return PROP;
     }
     public static void setStepup(boolean newVal) {
@@ -127,7 +128,8 @@ public class ModConfig {
                 Main.LOGGER.warn(" - Invalid block entry in config: " + smoothBlocksListEntry);
                 continue;
             }
-            Block foundBlock = GameRegistry.findBlock(blockFqn[0], blockFqn[1]); 
+            //GameRegistry.findBlock(blockFqn[0], blockFqn[1]);
+            Block foundBlock = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockFqn[0], blockFqn[1])); 
             if (foundBlock == null) {
                 Main.LOGGER.warn(" - Block not found in game: " + smoothBlocksListEntry);
                 continue;
