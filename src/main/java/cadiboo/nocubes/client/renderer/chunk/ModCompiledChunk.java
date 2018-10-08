@@ -1,4 +1,4 @@
-package cadiboo.nocubes_uhh.client.renderer.chunk;
+package cadiboo.nocubes.client.renderer.chunk;
 
 import java.util.List;
 

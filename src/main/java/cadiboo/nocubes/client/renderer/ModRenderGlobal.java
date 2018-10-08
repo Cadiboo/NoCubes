@@ -1,4 +1,4 @@
-package cadiboo.nocubes_uhh.client.renderer;
+package cadiboo.nocubes.client.renderer;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -24,8 +24,8 @@ import com.google.gson.JsonSyntaxException;
 
 import cadiboo.nocubes.client.NoCubesHooksClient;
 import cadiboo.nocubes.client.event.RenderBlockLayerEvent;
-import cadiboo.nocubes_uhh.client.renderer.chunk.ModCompiledChunk;
-import cadiboo.nocubes_uhh.client.renderer.chunk.ModRenderChunk;
+import cadiboo.nocubes.client.renderer.chunk.ModCompiledChunk;
+import cadiboo.nocubes.client.renderer.chunk.ModRenderChunk;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockChest;
 import net.minecraft.block.BlockEnderChest;

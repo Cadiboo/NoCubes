@@ -1,8 +1,8 @@
-package cadiboo.nocubes_uhh.client.renderer;
+package cadiboo.nocubes.client.renderer;
 
 import javax.annotation.Nullable;
 
-import cadiboo.nocubes_uhh.client.renderer.chunk.ModRenderChunk;
+import cadiboo.nocubes.client.renderer.chunk.ModRenderChunk;
 import net.minecraft.client.renderer.ViewFrustum;
 import net.minecraft.client.renderer.chunk.IRenderChunkFactory;
 import net.minecraft.util.math.BlockPos;

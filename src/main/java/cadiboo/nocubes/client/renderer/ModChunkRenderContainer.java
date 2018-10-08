@@ -1,10 +1,10 @@
-package cadiboo.nocubes_uhh.client.renderer;
+package cadiboo.nocubes.client.renderer;
 
 import java.util.List;
 
 import com.google.common.collect.Lists;
 
-import cadiboo.nocubes_uhh.client.renderer.chunk.ModRenderChunk;
+import cadiboo.nocubes.client.renderer.chunk.ModRenderChunk;
 import net.minecraft.client.renderer.ChunkRenderContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.chunk.RenderChunk;
