@@ -1,4 +1,4 @@
-package cadiboo.nocubes.client.renderer.chunk;
+package cadiboo.nocubes_uhh.client.renderer.chunk;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import cadiboo.nocubes.client.renderer.ModRegionRenderCacheBuilder;
+import cadiboo.nocubes_uhh.client.renderer.ModRegionRenderCacheBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;

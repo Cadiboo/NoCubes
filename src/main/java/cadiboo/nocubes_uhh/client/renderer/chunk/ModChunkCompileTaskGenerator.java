@@ -1,4 +1,4 @@
-package cadiboo.nocubes.client.renderer.chunk;
+package cadiboo.nocubes_uhh.client.renderer.chunk;
 
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;

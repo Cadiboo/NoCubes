@@ -1,4 +1,4 @@
-package cadiboo.nocubes.client.renderer.chunk;
+package cadiboo.nocubes_uhh.client.renderer.chunk;
 
 import java.nio.FloatBuffer;
 import java.util.HashSet;
@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Sets;
 
-import cadiboo.nocubes.client.renderer.ModRenderGlobal;
+import cadiboo.nocubes_uhh.client.renderer.ModRenderGlobal;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;

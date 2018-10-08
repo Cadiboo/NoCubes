@@ -1,4 +1,4 @@
-package cadiboo.nocubes.client.renderer;
+package cadiboo.nocubes_uhh.client.renderer;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;

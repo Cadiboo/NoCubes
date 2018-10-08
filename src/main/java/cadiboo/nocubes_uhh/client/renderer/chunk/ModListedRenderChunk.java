@@ -1,6 +1,6 @@
-package cadiboo.nocubes.client.renderer.chunk;
+package cadiboo.nocubes_uhh.client.renderer.chunk;
 
-import cadiboo.nocubes.client.renderer.ModRenderGlobal;
+import cadiboo.nocubes_uhh.client.renderer.ModRenderGlobal;
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.world.World;
