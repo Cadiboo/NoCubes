@@ -2,7 +2,7 @@ package com.cosmicdan.nocubes.core;
 
 import java.util.Map;
 
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 
 @IFMLLoadingPlugin.Name(value = "NoCubesCore")
 @IFMLLoadingPlugin.MCVersion(value = "1.7.10")

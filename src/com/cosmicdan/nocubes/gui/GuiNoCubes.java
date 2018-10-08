@@ -61,7 +61,7 @@ public class GuiNoCubes extends GuiScreen {
     @Override
     public void drawScreen(int x, int y, float unused) {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRenderer, "No Cubes Settings", this.width / 2, this.height / 2 - 70, 0xffffff);
+        this.drawCenteredString(this.fontRendererObj, "No Cubes Settings", this.width / 2, this.height / 2 - 70, 0xffffff);
         super.drawScreen(x, y, unused);
         if (shouldClose) {
             if (shouldSaveAndRefresh)

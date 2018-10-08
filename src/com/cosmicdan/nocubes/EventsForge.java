@@ -1,7 +1,7 @@
 package com.cosmicdan.nocubes;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class EventsForge {
     @SubscribeEvent
