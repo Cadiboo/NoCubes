@@ -30,8 +30,8 @@ import net.minecraftforge.fml.relauncher.Side;
 )
 
 public class Main {
-    public static final String MODID = "cosmicdannocubes";
-    public static final String MODNAME = "CosmicDanNoCubes";
+    public static final String MODID = "nocubes";
+    public static final String MODNAME = "NoCubes";
     //private static final String PROXY_CLIENT = "com.cosmicdan.nocubes.client.ClientProxy";
     //private static final String PROXY_COMMON = "com.cosmicdan.nocubes.CommonProxy";
     
