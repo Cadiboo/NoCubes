@@ -3,14 +3,11 @@ package cadiboo.nocubes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import cadiboo.nocubes.client.renderer.ModRenderGlobal;
 import cadiboo.nocubes.util.ModReference;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 //@SideOnly(Side.CLIENT)
@@ -29,20 +26,6 @@ public class NoCubes {
 	public void preInit(final FMLPreInitializationEvent event) {
 		// TODO: remove this when I'm done - its only needed cause the old no-cubes also has an event subscriber & forge can't determine the owning mod for my event subscriber
 //		MinecraftForge.EVENT_BUS.register(new EventSubscriber());
-	}
-
-	@EventHandler
-	public void init(final FMLInitializationEvent event) {
-		try {
-			Minecraft.getMinecraft().renderGlobal = new ModRenderGlobal(Minecraft.getMinecraft());
-			LOGGER.info("Successfully replaced Minecraft's RenderGlobal");
-		} catch (final Throwable throwable) {
-			LOGGER.error("Failed to replace Minecraft's RenderGlobal");
-			// This should only happen rarely (never honestly) - so printing the Stack Trace shoudn't spam any logs
-			throwable.printStackTrace();
-			// TODO: throw the throwable? Maybe, keep it commented out for now
-			// throw throwable;
-		}
 	}
 
 //	protected static void openSettingsGui() {
