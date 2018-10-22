@@ -28,8 +28,6 @@ eclipse
 run
 
 # Important setup
-/*
-/*/
 !/src/
 !/src/*
 *.DS_Store*
