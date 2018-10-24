@@ -31,7 +31,6 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 public class NoCubes {
 
 	// TODO list:
-	// DEPENDECIES!!!
 	// change smoothable blocks
 	// density function!
 	// Marching Cubes
