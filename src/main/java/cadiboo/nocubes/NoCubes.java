@@ -32,6 +32,8 @@ public class NoCubes {
 
 	// TODO list:
 	// DEPENDECIES!!!
+	// change smoothable blocks
+	// density function!
 	// Marching Cubes
 	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
 	// Better algorithms
