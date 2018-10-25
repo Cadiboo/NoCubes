@@ -11,7 +11,7 @@ Minecraft: Denotes a copy of the Minecraft game licensed by Mojang AB
 User: Anybody that interacts with the software in one of the following ways:
    - play
    - decompile
-   - recompile or compile
+   - compile or recompile
    - modify
    - distribute
 
@@ -61,8 +61,8 @@ can be licensed under a license different from this mod.
 6. Distribution of original or modified copy rights
 ---------------------------------------------------
 
-Is subject to distribution rights this entire mod in its various forms. This
-include:
+Is subject to the distribution rights of this entire mod in its various forms. This
+includes:
    - original binary or source forms of this mod files
    - modified versions of these binaries or source files, as well as binaries
      resulting from source modifications
@@ -77,10 +77,9 @@ entire set of sources or modified sources at no costs.
 
 All distributions of this mod must remain licensed under the MMPL.
 
-All dependencies that this mod have on other mods or classes must be licensed
+All dependencies that this mod has on other mods or classes must be licensed
 under conditions comparable to this version of MMPL, with the exception of the
-Minecraft code and the mod loading framework (e.g. ModLoader, ModLoaderMP or
-Bukkit).
+Minecraft code and the mod loading framework (e.g. MCP, FML or MinecraftForge).
 
 Modified version of binaries and sources, as well as files containing sections
 copied from this mod, should be distributed under the terms of the present
