@@ -12,6 +12,6 @@ Source for permission of reverse-enginering of orphaned work by original author:
 
 ## License/Policies
  - (c)(R) Click_Me, 2016, unlicensed
- - Reverse-Engineered and Licensed by CosmicDan 2016 under MMPL (see LICENSE for details).
- - Continued by Cadiboo 2018 under MMPL (see LICENSE for details).
+ - Reverse-Engineered and Licensed by CosmicDan 2016 under MMPL 1.0.1 (see LICENSE for details).
+ - Continued by Cadiboo 2018 under MMPL 2.0.0 (see LICENSE for details).
  - Free to redistribute and use in any modpack, public or private
