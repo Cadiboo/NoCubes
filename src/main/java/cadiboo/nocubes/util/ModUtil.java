@@ -6,10 +6,12 @@ import java.util.function.BiFunction;
 
 import net.minecraft.block.BlockClay;
 import net.minecraft.block.BlockDirt;
+import net.minecraft.block.BlockGlowstone;
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.BlockGrassPath;
 import net.minecraft.block.BlockGravel;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockNetherrack;
 import net.minecraft.block.BlockOre;
 import net.minecraft.block.BlockRedstoneOre;
 import net.minecraft.block.BlockSand;
@@ -471,6 +473,11 @@ public class ModUtil {
 		smooth |= state.getBlock() instanceof BlockClay;
 		smooth |= state.getBlock() instanceof BlockSnow;
 		smooth |= state.getBlock() == Blocks.BEDROCK;
+
+		smooth |= state.getBlock() instanceof BlockNetherrack;
+		smooth |= state.getBlock() instanceof BlockGlowstone;
+
+		smooth |= state.getBlock() == Blocks.END_STONE;
 
 		return smooth;
 	}
