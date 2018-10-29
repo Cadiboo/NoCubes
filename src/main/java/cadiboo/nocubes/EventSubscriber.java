@@ -667,7 +667,7 @@ public class EventSubscriber {
 								continue;
 							}
 
-							redoPositions.put(offset, new Tuple(state.getActualState(cache, pos), pos.toImmutable()));
+							redoPositions.put(offset, new Tuple<IBlockState, BlockPos>(state.getActualState(cache, pos), pos.toImmutable()));
 						}
 					}
 				}
