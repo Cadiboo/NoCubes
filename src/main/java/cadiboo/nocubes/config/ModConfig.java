@@ -20,8 +20,20 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 @Config.LangKey(ModReference.MOD_ID + ".config.title")
 public class ModConfig {
 
+	@Name("Enabled")
+	@Comment("If the mod is enabled")
+	public static boolean isEnabled = true;
+
 	@Name("Active Rendering Algorithms")
-	@Comment({ "A list of all Active Rendering Algorithms, separated by a \", \".", "Valid Algorithms are: " + "VANILLA, VANILLA_MODDED, FRAGMENTED, FACING, MARCHING_CUBES, SURFACE_NETS, SURFACE_NETS_OOP" })
+	@Comment({
+
+			"A list of all Active Rendering Algorithms, separated by a \", \".",
+
+			"Valid Algorithms are: " + "VANILLA, VANILLA_MODDED, FRAGMENTED, FACING, MARCHING_CUBES, SURFACE_NETS, SURFACE_NETS_OOP",
+
+			"OOP stands for Object Oriented Programming and SURFACE_NETS_OOP uses Objects rather than Primatives in the algorithm"
+
+	})
 	public static String activeRenderingAlgorithms = RenderAlgorithm.SURFACE_NETS.name();
 
 	public static Set<RenderAlgorithm> getActiveRenderingAlgorithms() {
@@ -30,7 +42,7 @@ public class ModConfig {
 	}
 
 	@Name("Facing faces")
-	@Comment("Faces of each block to render in Facing rendering algorithm")
+	@Comment("Faces of each block to render, separated by a \", \", in the Facing rendering algorithm")
 	public static String facingFacings = String.join(", ", Arrays.asList(EnumFacing.values()).stream().map(EnumFacing::name).collect(Collectors.toList()));
 
 	public static Set<EnumFacing> getFacingFacings() {
@@ -47,16 +59,22 @@ public class ModConfig {
 	}
 
 	@Name("Fragment faces")
-	@Comment("Faces of each block to render in Fragment rendering algorithm")
+	@Comment("Faces of each block to render, separated by a \", \", in Fragment rendering algorithm")
 	public static String fragmentFacings = String.join(", ", Arrays.asList(EnumFacing.values()).stream().map(EnumFacing::name).collect(Collectors.toList()));
 
 	public static Set<EnumFacing> getFragmentFacings() {
 		return Arrays.asList(fragmentFacings.split(", ")).stream().map(EnumFacing::valueOf).collect(Collectors.toSet());
 	}
 
-	@Name("Enabled")
-	@Comment("If the mod is enabled")
-	public static boolean isEnabled = true;
+	@Name("Smooth Water")
+	@Comment({
+
+			"If water should be rendered extended into smoothable blocks",
+
+			"Not applicable for VANILLA rendering"
+
+	})
+	public static boolean shouldSmoothWater = false;
 
 	@Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
 	private static class EventSubscriber {
