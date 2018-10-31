@@ -92,6 +92,6 @@ public final class ModReference {
 	public static final String	ACCEPTED_VERSIONS	= "[1.12, 1.12.2]";
 	public static final String	DEPENDENCIES		= "required-after:minecraft;" + "required-after:forge@[14.21.0.2320,14.23.5.2768];" + "required-after:renderchunkrebuildchunkhooks;" + "";
 
-	public static final boolean CAN_BE_DEACTIVATED = false;
+	public static final boolean CAN_BE_DEACTIVATED = true;
 
 }

@@ -36,7 +36,6 @@ public class NoCubes {
 	// Marching Cubes
 	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
 	// Better algorithms
-	// Liquid smoothing for all algorithms
 	// Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting
 	// Better Config system (add some documentation at least)
 
