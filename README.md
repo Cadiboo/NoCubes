@@ -10,7 +10,12 @@ A mod for 1.12.2 that creates a cosmetic-only curved terrain layout in Minecraft
 - [https://0fps.net/2012/07/10/smooth-voxel-terrain-part-1/](https://0fps.net/2012/07/10/smooth-voxel-terrain-part-1/)
 - [https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/](https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/)
 
-Source for permission of reverse-enginering of orphaned work by original author: [http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861](http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861)
+#### Source for permission of reverse-enginering of orphaned work by original author:
+[http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861](http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861)
+
+###### See Also
+[MinecraftForge Forums - [1.12.2] Replace world renderer](http://www.minecraftforge.net/forum/topic/66516-1122-replace-world-renderer/)
+
 
 ###### I know that my implementation of the marching cubes rendering algorithm is broken!
 The algorithm outputs triangles, and I need to figure out how to turn them into quads because Minecraft's Renderer requires blocks to be drawn with quads.
