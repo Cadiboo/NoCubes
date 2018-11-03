@@ -15,6 +15,7 @@ import net.minecraft.block.BlockGrass;
 import net.minecraft.block.BlockGrassPath;
 import net.minecraft.block.BlockGravel;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockMycelium;
 import net.minecraft.block.BlockNetherrack;
 import net.minecraft.block.BlockOre;
 import net.minecraft.block.BlockRedstoneOre;
@@ -486,6 +487,8 @@ public class ModUtil {
 		smooth |= state.getBlock() instanceof BlockGlowstone;
 
 		smooth |= state.getBlock() == Blocks.END_STONE;
+
+		smooth |= state.getBlock() instanceof BlockMycelium;
 
 		return smooth;
 	}
