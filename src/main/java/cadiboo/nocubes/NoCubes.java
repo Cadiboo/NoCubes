@@ -37,7 +37,7 @@ public class NoCubes {
 	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
 	// Better algorithms
 	// Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting
-	// Better Config system (add some documentation at least)
+	// Change config documentation to I18n (lang files)
 
 	@Instance(ModReference.MOD_ID)
 	public static NoCubes instance;

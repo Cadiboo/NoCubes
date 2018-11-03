@@ -31,7 +31,9 @@ public class ModConfig {
 
 			"Valid Algorithms are: " + "VANILLA, VANILLA_MODDED, FRAGMENTED, FACING, MARCHING_CUBES, SURFACE_NETS, SURFACE_NETS_OOP",
 
-			"OOP stands for Object Oriented Programming and SURFACE_NETS_OOP uses Objects rather than Primatives in the algorithm"
+			"OOP stands for Object Oriented Programming and SURFACE_NETS_OOP uses Objects rather than Primatives in the algorithm",
+
+			"MARCHING_CUBES IS CURRENTLY BROKEN!!! I NEED TO FIGURE OUT HOW TO TURN THE TRIs IT OUTPUTS INTO THE QUADS REQUIRED BY MINECRAFT's RENDERER"
 
 	})
 	public static String activeRenderingAlgorithms = RenderAlgorithm.SURFACE_NETS.name();
@@ -71,7 +73,7 @@ public class ModConfig {
 
 			"If water should be rendered extended into smoothable blocks",
 
-			"Not applicable for VANILLA rendering"
+			"Not applicable for the VANILLA rendering algorithm"
 
 	})
 	public static boolean shouldSmoothWater = false;
