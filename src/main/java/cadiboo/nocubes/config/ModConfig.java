@@ -76,7 +76,7 @@ public class ModConfig {
 			"Not applicable for the VANILLA rendering algorithm"
 
 	})
-	public static boolean shouldSmoothWater = false;
+	public static boolean shouldSmoothLiquids = false;
 
 	@Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
 	private static class EventSubscriber {

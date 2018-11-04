@@ -861,7 +861,7 @@ public class ModUtil {
 
 	public static void smoothWater(final RebuildChunkBlocksEvent event) {
 
-		if (!ModConfig.shouldSmoothWater) {
+		if (!ModConfig.shouldSmoothLiquids) {
 			return;
 		}
 
