@@ -30,7 +30,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
@@ -44,7 +43,6 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.Tuple;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -729,16 +727,18 @@ public class ModUtil {
 
 					final int[] brightnessPos = new int[] { startPos[0] + currentPos[0], startPos[1] + currentPos[1] + 1, startPos[2] + currentPos[2] };
 
-					getBrightnessPos: for (int y = -1; y < 2; ++y) {
-						for (int z = -2; z < 3; ++z) {
-							for (int x = -1; x < 2; ++x) {
-								// TODO: mutableblockpos?
-								final IBlockState tempState = cache.getBlockState(new BlockPos(startPos[0] + currentPos[0] + x, startPos[1] + currentPos[1] + y, startPos[2] + currentPos[2] + z));
-								if (!tempState.isOpaqueCube()) {
-									brightnessPos[0] = startPos[0] + currentPos[0] + x;
-									brightnessPos[1] = startPos[1] + currentPos[1] + y;
-									brightnessPos[2] = startPos[2] + currentPos[2] + z;
-									break getBrightnessPos;
+					if (ModConfig.shouldAproximateLighting) {
+						getBrightnessPos: for (int y = -1; y < 2; ++y) {
+							for (int z = -2; z < 3; ++z) {
+								for (int x = -1; x < 2; ++x) {
+									// TODO: mutableblockpos?
+									final IBlockState tempState = cache.getBlockState(new BlockPos(startPos[0] + currentPos[0] + x, startPos[1] + currentPos[1] + y, startPos[2] + currentPos[2] + z));
+									if (!tempState.isOpaqueCube()) {
+										brightnessPos[0] = startPos[0] + currentPos[0] + x;
+										brightnessPos[1] = startPos[1] + currentPos[1] + y;
+										brightnessPos[2] = startPos[2] + currentPos[2] + z;
+										break getBrightnessPos;
+									}
 								}
 							}
 						}
@@ -859,7 +859,7 @@ public class ModUtil {
 		return new SurfaceNet(posInfos);
 	}
 
-	public static void smoothWater(final RebuildChunkBlocksEvent event) {
+	public static void smoothLiquids(final RebuildChunkBlocksEvent event) {
 
 		if (!ModConfig.shouldSmoothLiquids) {
 			return;
@@ -872,57 +872,8 @@ public class ModUtil {
 		for (final BlockPos pos : event.getChunkBlockPositions()) {
 			final IBlockState state = cache.getBlockState(pos);
 
-			final Block block = state.getBlock();
+			handleRedoPos(pos, state, cache, redoPositions, 15);
 
-			if (ModUtil.shouldSmooth(state)) {
-				continue;
-			}
-
-			if (block instanceof BlockLiquid) {
-				if (state.getValue(BlockLiquid.LEVEL) == 0) {
-					boolean shouldExtend = false;
-					for (final EnumFacing facing : EnumFacing.VALUES) {
-						if (facing == EnumFacing.UP) {
-							continue;
-						}
-						final BlockPos offset = pos.offset(facing);
-
-						shouldExtend |= cache.getBlockState(offset).getBlock() == state.getBlock();
-					}
-
-					if (shouldExtend) {
-						for (final EnumFacing facing : EnumFacing.VALUES) {
-							if (facing == EnumFacing.UP) {
-								continue;
-							}
-							final BlockPos offset = pos.offset(facing);
-
-							if (!ModUtil.shouldSmooth(cache.getBlockState(offset))) {
-								continue;
-							}
-
-							redoPositions.put(offset, new Tuple<>(state.getActualState(cache, pos), pos.toImmutable()));
-						}
-					}
-				}
-			}
-
-			for (final BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
-				if (!block.canRenderInLayer(state, blockRenderLayer)) {
-					continue;
-				}
-				net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockRenderLayer);
-
-				if (state.getRenderType() != EnumBlockRenderType.INVISIBLE) {
-					final BufferBuilder bufferBuilder = event.startOrContinueLayer(blockRenderLayer);
-
-					final boolean wasLayerUsed = event.getBlockRendererDispatcher().renderBlock(state, pos, cache, bufferBuilder);
-
-					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, wasLayerUsed);
-
-				}
-			}
-			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
 
 		for (final BlockPos pos : redoPositions.keySet()) {
@@ -1180,16 +1131,157 @@ public class ModUtil {
 		}
 	}
 
-	public static boolean renderBlockNormal(final BlockRendererDispatcher blockRendererDispatcher, final IBlockState blockState, final BlockPos pos, final ChunkCache chunkCache, final BufferBuilder bufferbuilder) {
-		return blockRendererDispatcher.renderBlock(blockState, pos, chunkCache, bufferbuilder);
+	private static void handleRedoPos(final BlockPos pos, final IBlockState state, final IBlockAccess cache, final Hashtable redoPositions, final int repetitions) {
+		if (repetitions >= 15) {
+			return;
+		}
+
+		if (ModUtil.shouldSmooth(state)) {
+			return;
+		}
+
+		final Block block = state.getBlock();
+
+		if (block instanceof BlockLiquid) {
+			if (state.getValue(BlockLiquid.LEVEL) == 0) {
+				boolean shouldExtend = false;
+				for (final EnumFacing facing : EnumFacing.VALUES) {
+//					if (facing == EnumFacing.UP) {
+//						continue;
+//					}
+					final BlockPos offset = pos.offset(facing);
+					final IBlockState offsetState = cache.getBlockState(offset);
+
+					// make sure that the position is in the same chunk as our chunk
+					if (!new ChunkPos(pos.toImmutable()).equals(new ChunkPos(offset.toImmutable()))) {
+						continue;
+					}
+
+					handleRedoPos(offset, offsetState, cache, redoPositions, repetitions + 1);
+
+					shouldExtend |= (offsetState.getBlock() == state.getBlock()) && !redoPositions.containsKey(offset);
+				}
+
+				if (shouldExtend) {
+					for (final EnumFacing facing : EnumFacing.VALUES) {
+//						if (facing == EnumFacing.UP) {
+//							continue;
+//						}
+						final BlockPos offset = pos.offset(facing);
+
+						if (!ModUtil.shouldSmooth(cache.getBlockState(offset))) {
+							continue;
+						}
+
+						redoPositions.put(offset, new Tuple<>(state.getActualState(cache, pos), pos.toImmutable()));
+					}
+				}
+			}
+		}
+
+		return;
 	}
 
+	public static boolean renderBlockNormal(final BlockRendererDispatcher blockRendererDispatcher, IBlockState blockState, final BlockPos pos, final ChunkCache chunkCache, final BufferBuilder bufferBuilder) {
+
+		try {
+			final EnumBlockRenderType enumblockrendertype = blockState.getRenderType();
+
+			if (enumblockrendertype == EnumBlockRenderType.INVISIBLE) {
+				return false;
+			} else {
+				if (chunkCache.getWorldType() != WorldType.DEBUG_ALL_BLOCK_STATES) {
+					try {
+						blockState = blockState.getActualState(chunkCache, pos);
+					} catch (final Exception var8) {
+						;
+					}
+				}
+
+				switch (enumblockrendertype) {
+					case MODEL:
+
+						boolean checkSides = false;
+						for (final EnumFacing facing : EnumFacing.VALUES) {
+							final float density = getBlockDensity(pos.offset(facing), chunkCache);
+							checkSides |= (0x00 < density) && (density < 0xFF);
+						}
+
+						final IBakedModel model = blockRendererDispatcher.getModelForState(blockState);
+						blockState = blockState.getBlock().getExtendedState(blockState, chunkCache, pos);
+						return blockRendererDispatcher.getBlockModelRenderer().renderModel(chunkCache, model, blockState, pos, bufferBuilder, checkSides);
+					case ENTITYBLOCK_ANIMATED:
+						return false;
+					case LIQUID:
+						return blockRendererDispatcher.renderBlock(blockState, pos, chunkCache, bufferBuilder);
+					default:
+						return false;
+				}
+			}
+		} catch (final Throwable throwable) {
+			final CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating block in world");
+			final CrashReportCategory crashreportcategory = crashreport.makeCategory("Block being tesselated");
+			CrashReportCategory.addBlockInfo(crashreportcategory, pos, blockState.getBlock(), blockState.getBlock().getMetaFromState(blockState));
+			throw new ReportedException(crashreport);
+		}
+
+	}
+
+	// TODO
 	public static void drawWireframe(final RebuildChunkBlocksEvent event) {
 
+		if (!ModConfig.shouldDrawWireframe) {
+			return;
+		}
+
+		final int red = 0x00;
+		final int green = 0xFF;
+		final int blue = 0x00;
+		final int alpha = 0x66;
+
+		final int minU = 0;
+		final int maxV = 2;
+
+		final int lightmapSkyLight = 15 << 4;
+		final int lightmapBlockLight = 15 << 4;
+
+		final BufferBuilder bufferBuilder = event.startOrContinueLayer(BlockRenderLayer.CUTOUT);
+
 		for (final BlockPos pos : event.getChunkBlockPositions()) {
-			final AxisAlignedBB renderBox = new AxisAlignedBB(pos);
-			event.getContext();
-			RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 0.0F, 0.4F);
+			final ChunkCache worldView = event.getWorldView();
+			final IBlockState state = worldView.getBlockState(pos);
+			if (state.getBlock().isAir(state, worldView, pos)) {
+				continue;
+			}
+
+			final int minX = pos.getX();
+			final int minY = pos.getY();
+			final int minZ = pos.getZ();
+			final int maxX = minX + 1;
+			final int maxY = minY + 1;
+			final int maxZ = minZ + 1;
+
+			bufferBuilder.pos(minX, minY, minZ).color(red, green, blue, 0.0F).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, minY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, minY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, minY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, minY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, minY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, maxY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, maxY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, maxY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, maxY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, maxY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, maxY, maxZ).color(red, green, blue, 0.0F).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(minX, minY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, maxY, maxZ).color(red, green, blue, 0.0F).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, minY, maxZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, maxY, minZ).color(red, green, blue, 0.0F).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, minY, minZ).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(maxX, minY, minZ).color(red, green, blue, 0.0F).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+			event.setBlockRenderLayerUsedWithOrOpperation(BlockRenderLayer.CUTOUT, true);
+
 		}
 
 	}
