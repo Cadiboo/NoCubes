@@ -872,7 +872,7 @@ public class ModUtil {
 		for (final BlockPos pos : event.getChunkBlockPositions()) {
 			final IBlockState state = cache.getBlockState(pos);
 
-			handleRedoPos(pos, state, cache, redoPositions, 15);
+			handleRedoPos(pos, state, cache, redoPositions, 0);
 
 		}
 
@@ -1131,8 +1131,8 @@ public class ModUtil {
 		}
 	}
 
-	private static void handleRedoPos(final BlockPos pos, final IBlockState state, final IBlockAccess cache, final Hashtable redoPositions, final int repetitions) {
-		if (repetitions >= 15) {
+	private static void handleRedoPos(final BlockPos pos, final IBlockState state, final IBlockAccess cache, final Hashtable<BlockPos, Tuple<IBlockState, BlockPos>> redoPositions, final int repetitions) {
+		if (repetitions >= 1) {
 			return;
 		}
 
@@ -1157,9 +1157,9 @@ public class ModUtil {
 						continue;
 					}
 
-					handleRedoPos(offset, offsetState, cache, redoPositions, repetitions + 1);
+					handleRedoPos(offset.toImmutable(), offsetState, cache, redoPositions, repetitions + 1);
 
-					shouldExtend |= (offsetState.getBlock() == state.getBlock()) && !redoPositions.containsKey(offset);
+					shouldExtend |= (offsetState.getBlock() == state.getBlock()) && !redoPositions.containsKey(offset.toImmutable());
 				}
 
 				if (shouldExtend) {
@@ -1173,7 +1173,7 @@ public class ModUtil {
 							continue;
 						}
 
-						redoPositions.put(offset, new Tuple<>(state.getActualState(cache, pos), pos.toImmutable()));
+						redoPositions.put(offset.toImmutable(), new Tuple<>(state.getActualState(cache, pos), pos.toImmutable()));
 					}
 				}
 			}
