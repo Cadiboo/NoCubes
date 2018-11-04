@@ -68,10 +68,10 @@ public class ModConfig {
 		return Arrays.asList(fragmentFacings.split(", ")).stream().map(EnumFacing::valueOf).collect(Collectors.toSet());
 	}
 
-	@Name("Smooth Water")
+	@Name("Smooth Liquids")
 	@Comment({
 
-			"If water should be rendered extended into smoothable blocks",
+			"If liquids (lava and water) should be rendered extended into smoothable blocks",
 
 			"Not applicable for the VANILLA rendering algorithm"
 
