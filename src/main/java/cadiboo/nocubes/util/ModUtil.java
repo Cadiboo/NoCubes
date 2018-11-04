@@ -18,6 +18,7 @@ import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.BlockMycelium;
 import net.minecraft.block.BlockNetherrack;
 import net.minecraft.block.BlockOre;
+import net.minecraft.block.BlockRedSandstone;
 import net.minecraft.block.BlockRedstoneOre;
 import net.minecraft.block.BlockSand;
 import net.minecraft.block.BlockSandStone;
@@ -29,6 +30,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
@@ -42,6 +44,7 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.Tuple;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -472,7 +475,9 @@ public class ModUtil {
 		smooth |= state.getBlock() instanceof BlockGrass;
 		smooth |= state.getBlock() instanceof BlockStone;
 		smooth |= state.getBlock() instanceof BlockSand;
-		smooth |= state.getBlock() instanceof BlockSandStone;
+//		smooth |= state.getBlock() instanceof BlockSandStone;
+		smooth |= state == Blocks.SANDSTONE.getDefaultState().withProperty(BlockSandStone.TYPE, BlockSandStone.EnumType.DEFAULT);
+		smooth |= state == Blocks.RED_SANDSTONE.getDefaultState().withProperty(BlockRedSandstone.TYPE, BlockRedSandstone.EnumType.DEFAULT);
 		smooth |= state.getBlock() instanceof BlockGravel;
 		smooth |= state.getBlock() instanceof BlockOre;
 		smooth |= state.getBlock() instanceof BlockRedstoneOre;
@@ -1173,6 +1178,20 @@ public class ModUtil {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+	}
+
+	public static boolean renderBlockNormal(final BlockRendererDispatcher blockRendererDispatcher, final IBlockState blockState, final BlockPos pos, final ChunkCache chunkCache, final BufferBuilder bufferbuilder) {
+		return blockRendererDispatcher.renderBlock(blockState, pos, chunkCache, bufferbuilder);
+	}
+
+	public static void drawWireframe(final RebuildChunkBlocksEvent event) {
+
+		for (final BlockPos pos : event.getChunkBlockPositions()) {
+			final AxisAlignedBB renderBox = new AxisAlignedBB(pos);
+			event.getContext();
+			RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 0.0F, 0.4F);
+		}
+
 	}
 
 }

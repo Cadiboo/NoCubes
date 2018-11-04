@@ -69,7 +69,7 @@ public class EventSubscriber {
 
 					final BufferBuilder bufferbuilder = event.startOrContinueLayer(blockRenderLayer);
 
-					final boolean used = event.getBlockRendererDispatcher().renderBlock(blockState, currentBlockPos, event.getWorldView(), bufferbuilder);
+					final boolean used = ModUtil.renderBlockNormal(event.getBlockRendererDispatcher(), blockState, currentBlockPos, event.getWorldView(), bufferbuilder);
 
 					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, used);
 
@@ -80,6 +80,8 @@ public class EventSubscriber {
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
@@ -132,7 +134,7 @@ public class EventSubscriber {
 						offsetPos = offsetPos.offset(facing, FRAGMENT_RANDOM.nextInt(ModConfig.getFragmentRange() + 1));
 					}
 
-					final boolean used = event.getBlockRendererDispatcher().renderBlock(iblockstate, offsetPos, event.getWorldView(), bufferbuilder);
+					final boolean used = ModUtil.renderBlockNormal(event.getBlockRendererDispatcher(), iblockstate, offsetPos, event.getWorldView(), bufferbuilder);
 
 					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, used);
 
@@ -140,6 +142,8 @@ public class EventSubscriber {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
@@ -181,6 +185,8 @@ public class EventSubscriber {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
@@ -323,7 +329,7 @@ public class EventSubscriber {
 				if (state.getRenderType() != EnumBlockRenderType.INVISIBLE) {
 					final BufferBuilder bufferBuilder = event.startOrContinueLayer(blockRenderLayer);
 
-					final boolean wasLayerUsed = event.getBlockRendererDispatcher().renderBlock(state, pos, cache, bufferBuilder);
+					final boolean wasLayerUsed = ModUtil.renderBlockNormal(event.getBlockRendererDispatcher(), state, pos, cache, bufferBuilder);
 
 					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, wasLayerUsed);
 
@@ -331,6 +337,8 @@ public class EventSubscriber {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
@@ -632,7 +640,7 @@ public class EventSubscriber {
 				if (state.getRenderType() != EnumBlockRenderType.INVISIBLE) {
 					final BufferBuilder bufferBuilder = event.startOrContinueLayer(blockRenderLayer);
 
-					final boolean wasLayerUsed = event.getBlockRendererDispatcher().renderBlock(state, pos, cache, bufferBuilder);
+					final boolean wasLayerUsed = ModUtil.renderBlockNormal(event.getBlockRendererDispatcher(), state, pos, cache, bufferBuilder);
 
 					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, wasLayerUsed);
 
@@ -640,6 +648,8 @@ public class EventSubscriber {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
@@ -770,7 +780,7 @@ public class EventSubscriber {
 				if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE) {
 					final BufferBuilder bufferbuilder = event.startOrContinueLayer(blockRenderLayer);
 
-					final boolean used = event.getBlockRendererDispatcher().renderBlock(state, blockpos$mutableblockpos, event.getWorldView(), bufferbuilder);
+					final boolean used = ModUtil.renderBlockNormal(event.getBlockRendererDispatcher(), state, blockpos$mutableblockpos, event.getWorldView(), bufferbuilder);
 
 					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, used);
 
@@ -778,6 +788,8 @@ public class EventSubscriber {
 			}
 			net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 		}
+
+		ModUtil.drawWireframe(event);
 
 		ModUtil.smoothWater(event);
 
