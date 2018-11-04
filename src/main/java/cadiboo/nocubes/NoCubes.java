@@ -31,8 +31,15 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 public class NoCubes {
 
 	// TODO list:
-	// change smoothable blocks
-	// density function!
+	// "I found a hole in a mountain..."
+	// cull facing - @Eddie "More bugs"
+	// "I noticed that snow layers is rendered as a full block..." "I need to do some stuff with bounding boxes"
+	// "btw the grass has some lightning issues" "Ill add an option to turn off aproximate lighting" "I'll do smooth(er) lighting soon" "Vanilla oil?"
+	// "I'm standing in midair..." "Just stack like 10 blocks and you have an invisible border" "if (density < 10) or something"
+	// "Another thing: add smooth lava in the config file"
+	// "Sandstone villages are looking intresting..."
+	// user changeable smoothable blocks
+	// user changeable density function!
 	// Marching Cubes
 	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
 	// Better algorithms
