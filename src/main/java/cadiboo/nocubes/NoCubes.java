@@ -33,6 +33,7 @@ public class NoCubes {
 	// TODO list:
 	// "I found a hole in a mountain..."
 	// cull facing - @Eddie "More bugs"
+	// liquid smoothing OFF FAST FANCY
 	// "I noticed that snow layers is rendered as a full block..." "I need to do some stuff with bounding boxes"
 	// "btw the grass has some lightning issues" "Ill add an option to turn off aproximate lighting" "I'll do smooth(er) lighting soon" "Vanilla oil?"
 	// "I'm standing in midair..." "Just stack like 10 blocks and you have an invisible border" "if (density < 10) or something"
