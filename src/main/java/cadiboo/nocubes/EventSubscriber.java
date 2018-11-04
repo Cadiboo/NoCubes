@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.BiFunction;
 
-import org.apache.logging.log4j.LogManager;
-
 import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
 import cadiboo.nocubes.util.ModUtil;
@@ -83,7 +81,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 
@@ -145,7 +143,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 
@@ -188,7 +186,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 
@@ -293,7 +291,7 @@ public class EventSubscriber {
 		final int lightmapSkyLight = 15 << 4, lightmapBlockLight = 0;
 
 		for (int i = 0; i < vertices.size(); i++) {
-			LogManager.getLogger().info(vertices.size() / 4f);
+//			LogManager.getLogger().info(vertices.size() / 4f);
 			final float[] v0 = vertices.get(i + 0);
 			bufferBuilderTest.pos(c[0] + v0[0], c[1] + v0[1], c[2] + v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 		}
@@ -340,7 +338,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 
@@ -444,16 +442,18 @@ public class EventSubscriber {
 
 					final int[] brightnessPos = new int[] { startPos[0] + currentPos[0], startPos[1] + currentPos[1] + 1, startPos[2] + currentPos[2] };
 
-					getBrightnessPos: for (int y = -1; y < 2; ++y) {
-						for (int z = -2; z < 3; ++z) {
-							for (int x = -1; x < 2; ++x) {
-								// TODO: mutableblockpos?
-								final IBlockState tempState = cache.getBlockState(new BlockPos(startPos[0] + currentPos[0] + x, startPos[1] + currentPos[1] + y, startPos[2] + currentPos[2] + z));
-								if (!tempState.isOpaqueCube()) {
-									brightnessPos[0] = startPos[0] + currentPos[0] + x;
-									brightnessPos[1] = startPos[1] + currentPos[1] + y;
-									brightnessPos[2] = startPos[2] + currentPos[2] + z;
-									break getBrightnessPos;
+					if (ModConfig.shouldAproximateLighting) {
+						getBrightnessPos: for (int y = -1; y < 2; ++y) {
+							for (int z = -2; z < 3; ++z) {
+								for (int x = -1; x < 2; ++x) {
+									// TODO: mutableblockpos?
+									final IBlockState tempState = cache.getBlockState(new BlockPos(startPos[0] + currentPos[0] + x, startPos[1] + currentPos[1] + y, startPos[2] + currentPos[2] + z));
+									if (!tempState.isOpaqueCube()) {
+										brightnessPos[0] = startPos[0] + currentPos[0] + x;
+										brightnessPos[1] = startPos[1] + currentPos[1] + y;
+										brightnessPos[2] = startPos[2] + currentPos[2] + z;
+										break getBrightnessPos;
+									}
 								}
 							}
 						}
@@ -651,7 +651,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 
@@ -791,7 +791,7 @@ public class EventSubscriber {
 
 		ModUtil.drawWireframe(event);
 
-		ModUtil.smoothWater(event);
+		ModUtil.smoothLiquids(event);
 
 	}
 

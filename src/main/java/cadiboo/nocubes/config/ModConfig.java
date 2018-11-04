@@ -78,6 +78,26 @@ public class ModConfig {
 	})
 	public static boolean shouldSmoothLiquids = false;
 
+	@Name("Draw Wireframe")
+	@Comment({
+
+			"If a wireframe should be drawn on non-air blocks",
+
+			"Not applicable for the VANILLA rendering algorithm"
+
+	})
+	public static boolean shouldDrawWireframe = false;
+
+	@Name("Aproximate Lighting")
+	@Comment({
+
+			"If a lighting should be aproximated for blocks rendered with the bufferbuilder",
+
+			"Not applicable for the VANILLA rendering algorithm"
+
+	})
+	public static boolean shouldAproximateLighting = true;
+
 	@Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
 	private static class EventSubscriber {
 
