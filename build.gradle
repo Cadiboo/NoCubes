@@ -62,6 +62,8 @@ jar {
         main {
             java {
                 exclude '**/com/cosmicdan/**'
+                exclude '**/clickme/nocubes/**'
+                exclude '**/net/minecraft/**'
             }
         }
     }
