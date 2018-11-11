@@ -5,8 +5,8 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkAllBlocksEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlocksEvent;
 
 /**
  * Holds all enums and enum-related stuff for this mod
@@ -50,21 +50,33 @@ public final class ModEnums {
 
 	public static enum RenderAlgorithm implements IEnumNameFormattable {
 
-		SURFACE_NETS(null, null),
+		SURFACE_NETS(
 
-		MARCHING_CUBES(null, null),
+				(event) -> ModUtil.renderChunkSurfaceNets(event),
+
+				(event) -> ModUtil.renderBlockSurfaceNets(event)
+
+		),
+
+		MARCHING_CUBES(
+
+				(event) -> ModUtil.renderChunkMarchingCubes(event),
+
+				(event) -> ModUtil.renderBlockMarchingCubes(event)
+
+		),
 
 		;
 
-		private final Function<RebuildChunkAllBlocksEvent, Integer>	renderAllBlocks;
+		private final Function<RebuildChunkBlocksEvent, Integer>	renderAllBlocks;
 		private final Consumer<RebuildChunkBlockEvent>				renderBlock;
 
-		private RenderAlgorithm(final Function<RebuildChunkAllBlocksEvent, Integer> renderAllBlocks, final Consumer<RebuildChunkBlockEvent> renderBlock) {
+		private RenderAlgorithm(final Function<RebuildChunkBlocksEvent, Integer> renderAllBlocks, final Consumer<RebuildChunkBlockEvent> renderBlock) {
 			this.renderAllBlocks = renderAllBlocks;
 			this.renderBlock = renderBlock;
 		}
 
-		public int renderAllBlocks(final RebuildChunkAllBlocksEvent event) {
+		public int renderAllBlocks(final RebuildChunkBlocksEvent event) {
 			return this.renderAllBlocks.apply(event);
 		}
 
