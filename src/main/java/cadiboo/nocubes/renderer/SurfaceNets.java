@@ -5,7 +5,6 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 
 public class SurfaceNets {

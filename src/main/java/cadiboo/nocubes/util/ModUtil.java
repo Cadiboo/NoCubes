@@ -1,5 +1,7 @@
 package cadiboo.nocubes.util;
 
+import java.util.List;
+
 import cadiboo.nocubes.renderer.MarchingCubes;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlocksEvent;
@@ -21,11 +23,18 @@ import net.minecraft.block.BlockSnow;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
@@ -38,6 +47,10 @@ public class ModUtil {
 
 	public static boolean shouldSmooth(final IBlockState state) {
 		boolean smooth = false;
+
+		if (true) {
+			return state.getMaterial() != Material.AIR;
+		}
 
 		smooth |= state.getBlock() instanceof BlockGrass;
 		smooth |= state.getBlock() instanceof BlockStone;
@@ -121,27 +134,32 @@ public class ModUtil {
 
 		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
 
-		boolean solidUsed = false;
-
 		for (int y = chunky; y < (chunky + 16); ++y) {
 			for (int z = chunkz; z < (chunkz + 16); ++z) {
 				for (int x = chunkx; x < (chunkx + 16); ++x) {
 					final BlockPos pos = new BlockPos(x, y, z);
 					final IBlockState state = cache.getBlockState(pos);
-					boolean used = false;
-					if (shouldSmooth(state)) {
-						used = MarchingCubes.renderBlock(state, pos, cache, event.startOrContinueLayer(BlockRenderLayer.SOLID));
-					}
-					if (!shouldSmooth(state) || !used) {
-						used = blockRendererDispatcher.renderBlock(state, pos, cache, event.startOrContinueLayer(BlockRenderLayer.SOLID));
-					}
 
-					solidUsed |= used;
+					blockRenderLayers: for (final BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
+						if (!state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
+							continue blockRenderLayers;
+						}
+
+						final BufferBuilder blockRenderLayerBufferBuilder = event.startOrContinueLayer(blockRenderLayer);
+
+						boolean used = false;
+						if (shouldSmooth(state)) {
+							used = MarchingCubes.renderBlock(state, pos, cache, blockRenderLayerBufferBuilder, blockRendererDispatcher);
+						}
+						if (!shouldSmooth(state) || !used) {
+							used = blockRendererDispatcher.renderBlock(state, pos, cache, blockRenderLayerBufferBuilder);
+						}
+
+						event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, used);
+					}
 				}
 			}
 		}
-
-		event.setBlockRenderLayerUsed(BlockRenderLayer.SOLID, solidUsed);
 
 		return 1;
 
@@ -151,6 +169,30 @@ public class ModUtil {
 
 		return;
 
+	}
+
+	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+		try {
+			final long posRand = MathHelper.getPositionRandom(pos);
+
+			final IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
+			List<BakedQuad> quads = model.getQuads(state, EnumFacing.UP, posRand);
+			if (quads.isEmpty()) {
+				getQuads: for (EnumFacing facing : EnumFacing.VALUES) {
+					if (facing == EnumFacing.NORTH) {
+						facing = null;
+					}
+					quads = model.getQuads(state, EnumFacing.UP, posRand);
+					if (!quads.isEmpty()) {
+						break getQuads;
+					}
+				}
+			}
+			final BakedQuad quad = quads.get(0);
+			return quad.getSprite();
+		} catch (final Exception e) {
+			return null;
+		}
 	}
 
 }

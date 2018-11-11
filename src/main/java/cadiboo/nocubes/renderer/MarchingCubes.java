@@ -1,15 +1,11 @@
 package cadiboo.nocubes.renderer;
 
-import java.util.List;
-
 import cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
@@ -266,7 +262,7 @@ public class MarchingCubes {
 		}
 	}
 
-	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder) {
+	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
 		try {
 
 			final int x = pos.getX();
@@ -351,15 +347,7 @@ public class MarchingCubes {
 				}
 			}
 
-			TextureAtlasSprite sprite = null;
-			try {
-				final IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
-				final List<BakedQuad> quads = model.getQuads(state, EnumFacing.UP, MathHelper.getPositionRandom(pos));
-				final BakedQuad quad = quads.get(0);
-				sprite = quad.getSprite();
-			} catch (final Exception e) {
-				return false;
-			}
+			final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
 
 			if (sprite == null) {
 				return false;
@@ -370,6 +358,8 @@ public class MarchingCubes {
 			final float colorRed = ((color >> 16) & 255) / 255.0F;
 			final float colorGreen = ((color >> 8) & 255) / 255.0F;
 			final float colorBlue = (color & 255) / 255.0F;
+
+			final float alpha = 1f;
 
 			final double minU = sprite.getInterpolatedU(0.0D);
 			final double minV = sprite.getInterpolatedV(0.0D);
@@ -492,15 +482,15 @@ public class MarchingCubes {
 
 //					bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
-					final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex]];
+					final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 0]];
 					final Vec3dMutable vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
 					final Vec3dMutable vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
 					final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
 
-					bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-					bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-					bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-					bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 				}
 				return true;
