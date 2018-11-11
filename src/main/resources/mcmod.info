@@ -1,16 +1,15 @@
-[
-{
-  "modid": "examplemod",
-  "name": "Example Mod",
-  "description": "Example placeholder mod.",
+[{
+  "modid": "nocubes",
+  "name": "NoCubes",
+  "description": "Client-side smooth-world mod. Refactor and port to 1.12.x by Cadiboo using Open-source reimplementation by CosmicDan of work originally by Click_Me and code decompiled from bytecode released by Click_Me",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
   "updateUrl": "",
-  "authorList": ["ExampleDude"],
-  "credits": "The Forge and FML guys, for making this example",
-  "logoFile": "",
+  "authorList": ["Click_Me, CosmicDan, Cadiboo"],
+  "credits": "Thanks to everyone who made this possible: Forge, FML, Click_Me, CosmicDan & Cadiboo",
+  "logoFile": "/nocubes_logo.png",
   "screenshots": [],
-  "dependencies": []
-}
-]
+  "dependencies": [],
+  "useDependencyInformation": "false"
+}]
