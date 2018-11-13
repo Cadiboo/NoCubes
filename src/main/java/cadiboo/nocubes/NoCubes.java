@@ -1,15 +1,16 @@
 package cadiboo.nocubes;
 
+import static cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
+import static cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
+import static cadiboo.nocubes.util.ModReference.DEPENDENCIES;
+import static cadiboo.nocubes.util.ModReference.MOD_ID;
+import static cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static cadiboo.nocubes.util.ModReference.Version.VERSION;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import cadiboo.nocubes.config.ModConfig;
-import static cadiboo.nocubes.util.ModReference.MOD_ID;
-import static cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static cadiboo.nocubes.util.ModReference.Version.VERSION;
-import static cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
-import static cadiboo.nocubes.util.ModReference.DEPENDENCIES;
-import static cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -55,6 +56,9 @@ public class NoCubes {
 	// Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting
 	// Change config documentation to I18n (lang files)
 
+	// https://www.reddit.com/r/VoxelGameDev/comments/5amgtz/is_marching_surface_nets_possible/
+	// https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
+
 	public static final Logger LOGGER = LogManager.getLogger();
 
 	@Instance(MOD_ID)
@@ -78,7 +82,7 @@ public class NoCubes {
 	// not implemented, we use our config system instead
 	@EventHandler
 	public static void onDisableEvent(final FMLModDisabledEvent event) {
-		LOGGER.fatal("DEBUG: "+MOD_NAME+" was disabled");
+		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled");
 //			NoCubes.deactivate();
 	}
 
