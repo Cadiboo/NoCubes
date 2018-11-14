@@ -83,7 +83,7 @@ public final class ModReference {
 
 	// https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
 	public static final String	ACCEPTED_VERSIONS	= "[1.12.2]";
-	public static final String	DEPENDENCIES		= "required-after:minecraft;" + "required-after:forge@[14.23.4.2729,];" + "";
+	public static final String	DEPENDENCIES		= "required-after:minecraft;" + "required-after:forge@[14.23.4.2729,];" + "required-after:renderchunkrebuildchunkhooks;" + "";
 
 	public static final boolean CAN_BE_DEACTIVATED = true;
 
