@@ -2,8 +2,8 @@ package cadiboo.nocubes;
 
 import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.util.ModEnums.RenderType;
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkAllBlocksEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlocksEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public class EventSubscriber {
 
 	@SubscribeEvent
-	public static void onRebuildChunkAllBlocksEvent(final RebuildChunkBlocksEvent event) {
+	public static void onRebuildChunkAllBlocksEvent(final RebuildChunkAllBlocksEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}

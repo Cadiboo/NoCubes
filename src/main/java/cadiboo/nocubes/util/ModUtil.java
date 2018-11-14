@@ -3,8 +3,8 @@ package cadiboo.nocubes.util;
 import java.util.List;
 
 import cadiboo.nocubes.renderer.MarchingCubes;
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkAllBlocksEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlocksEvent;
 import net.minecraft.block.BlockClay;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGlowstone;
@@ -111,7 +111,7 @@ public class ModUtil {
 		return density;
 	}
 
-	public static int renderChunkSurfaceNets(final RebuildChunkBlocksEvent event) {
+	public static int renderChunkSurfaceNets(final RebuildChunkAllBlocksEvent event) {
 
 		return 1;
 
@@ -123,7 +123,7 @@ public class ModUtil {
 
 	}
 
-	public static int renderChunkMarchingCubes(final RebuildChunkBlocksEvent event) {
+	public static int renderChunkMarchingCubes(final RebuildChunkAllBlocksEvent event) {
 
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final int chunkx = renderChunkPosition.getX();
