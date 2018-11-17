@@ -41,7 +41,7 @@ public class ModConfig {
 			"Single Block - Renders each block based on its neighbours (does computation spread out over time)",
 
 	})
-	public static RenderType renderType = RenderType.ALL_BLOCKS;
+	public static RenderType renderType = RenderType.BLOCK;
 
 	@Name("Smooth Liquids")
 	@Comment({

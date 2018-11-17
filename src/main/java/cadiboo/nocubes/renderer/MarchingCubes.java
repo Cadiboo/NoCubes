@@ -385,6 +385,7 @@ public class MarchingCubes {
 
 			int cubeIndex = 0;
 			final float isolevel = 0.5F;
+			//final float isolevel = 1F; // gives intresting results
 			if (pointValue[0] < isolevel) {
 				cubeIndex |= 1;
 			}

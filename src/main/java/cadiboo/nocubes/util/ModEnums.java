@@ -1,12 +1,10 @@
 package cadiboo.nocubes.util;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import org.apache.commons.lang3.StringUtils;
 
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkAllBlocksEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import java.util.function.Consumer;
 
 /**
  * Holds all enums and enum-related stuff for this mod
@@ -26,6 +24,7 @@ public final class ModEnums {
 		 * Converts the name to lowercase as per {@link java.lang.String#toLowerCase() String.toLowerCase}.
 		 */
 		default String getNameLowercase() {
+
 			return this.name().toLowerCase();
 		}
 
@@ -33,6 +32,7 @@ public final class ModEnums {
 		 * Converts the name to uppercase as per {@link java.lang.String#toUpperCase() String.toUpperCase}.
 		 */
 		default String getNameUppercase() {
+
 			return this.getNameLowercase().toUpperCase();
 		}
 
@@ -40,6 +40,7 @@ public final class ModEnums {
 		 * Capitalizes the name of the material as per {@link org.apache.commons.lang3.StringUtils#capitalize(String) StringUtils.capitalize}.
 		 */
 		default String getNameFormatted() {
+
 			return StringUtils.capitalize(this.getNameLowercase());
 		}
 
@@ -52,35 +53,38 @@ public final class ModEnums {
 
 		SURFACE_NETS(
 
-				(event) -> ModUtil.renderChunkSurfaceNets(event),
+			(event) -> ModUtil.renderChunkSurfaceNets(event),
 
-				(event) -> ModUtil.renderBlockSurfaceNets(event)
+			(event) -> ModUtil.renderBlockSurfaceNets(event)
 
 		),
 
 		MARCHING_CUBES(
 
-				(event) -> ModUtil.renderChunkMarchingCubes(event),
+			(event) -> ModUtil.renderChunkMarchingCubes(event),
 
-				(event) -> ModUtil.renderBlockMarchingCubes(event)
+			(event) -> ModUtil.renderBlockMarchingCubes(event)
 
 		),
 
 		;
 
-		private final Function<RebuildChunkAllBlocksEvent, Integer>	renderAllBlocks;
-		private final Consumer<RebuildChunkBlockEvent>				renderBlock;
+		private final Consumer<RebuildChunkPreEvent>   renderChunk;
+		private final Consumer<RebuildChunkBlockEvent> renderBlock;
 
-		private RenderAlgorithm(final Function<RebuildChunkAllBlocksEvent, Integer> renderAllBlocks, final Consumer<RebuildChunkBlockEvent> renderBlock) {
-			this.renderAllBlocks = renderAllBlocks;
+		private RenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderChunk, final Consumer<RebuildChunkBlockEvent> renderBlock) {
+
+			this.renderChunk = renderChunk;
 			this.renderBlock = renderBlock;
 		}
 
-		public int renderAllBlocks(final RebuildChunkAllBlocksEvent event) {
-			return this.renderAllBlocks.apply(event);
+		public void renderChunk(final RebuildChunkPreEvent event) {
+
+			this.renderChunk.accept(event);
 		}
 
 		public void renderBlock(final RebuildChunkBlockEvent event) {
+
 			this.renderBlock.accept(event);
 		}
 
@@ -88,9 +92,9 @@ public final class ModEnums {
 
 	public static enum RenderType implements IEnumNameFormattable {
 
-		ALL_BLOCKS,
+		CHUNK,
 
-		SINGLE_BLOCK,
+		BLOCK,
 
 		;
 
