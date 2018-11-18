@@ -32,10 +32,6 @@ public class ModUtil {
 
 		boolean smooth = false;
 
-		if (true) {
-			return state.getMaterial() != Material.AIR;
-		}
-
 		smooth |= state.getBlock() instanceof BlockGrass;
 		smooth |= state.getBlock() instanceof BlockStone;
 		smooth |= state.getBlock() instanceof BlockSand;
@@ -153,9 +149,16 @@ public class ModUtil {
 
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
-//		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
+		//		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		boolean used = false;
+		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		//TODO event.setCancelled(false);
+		if (! used) {
+			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
+		}
+
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;
 
 	}
 
@@ -186,10 +189,12 @@ public class ModUtil {
 	}
 
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
+
 		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
 	}
 
 	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
+
 		return (packedLightmapCoords) & 0xFFFF; // get lower 4 bytes
 	}
 
