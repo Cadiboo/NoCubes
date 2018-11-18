@@ -1,9 +1,9 @@
 package cadiboo.nocubes.util;
 
+import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.renderer.MarchingCubes;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -30,32 +30,13 @@ public class ModUtil {
 
 	public static boolean shouldSmooth(final IBlockState state) {
 
-		boolean smooth = false;
+		for (String smoothableStateString : ModConfig.smoothableBlockStates) {
+			if (state.toString().equals(smoothableStateString)) {
+				return true;
+			}
+		}
 
-		smooth |= state.getBlock() instanceof BlockGrass;
-		smooth |= state.getBlock() instanceof BlockStone;
-		smooth |= state.getBlock() instanceof BlockSand;
-		//		smooth |= state.getBlock() instanceof BlockSandStone;
-		smooth |= state == Blocks.SANDSTONE.getDefaultState().withProperty(BlockSandStone.TYPE, BlockSandStone.EnumType.DEFAULT);
-		smooth |= state == Blocks.RED_SANDSTONE.getDefaultState().withProperty(BlockRedSandstone.TYPE, BlockRedSandstone.EnumType.DEFAULT);
-		smooth |= state.getBlock() instanceof BlockGravel;
-		smooth |= state.getBlock() instanceof BlockOre;
-		smooth |= state.getBlock() instanceof BlockRedstoneOre;
-		smooth |= state.getBlock() instanceof BlockSilverfish;
-		smooth |= state.getBlock() instanceof BlockGrassPath;
-		smooth |= state.getBlock() instanceof BlockDirt;
-		smooth |= state.getBlock() instanceof BlockClay;
-		smooth |= state.getBlock() instanceof BlockSnow;
-		smooth |= state.getBlock() == Blocks.BEDROCK;
-
-		smooth |= state.getBlock() instanceof BlockNetherrack;
-		smooth |= state.getBlock() instanceof BlockGlowstone;
-
-		smooth |= state.getBlock() == Blocks.END_STONE;
-
-		smooth |= state.getBlock() instanceof BlockMycelium;
-
-		return smooth;
+		return false;
 	}
 
 	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
