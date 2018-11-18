@@ -31,4 +31,3 @@ run
 !/build/
 /build/*
 !/build/libs/
-/build/libs/*sources*
