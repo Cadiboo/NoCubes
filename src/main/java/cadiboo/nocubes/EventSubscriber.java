@@ -16,6 +16,8 @@ public class EventSubscriber {
 	@SubscribeEvent
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
 
+//		NoCubes.LOGGER.info("onRebuildChunkPreEvent");
+
 		if (! NoCubes.isEnabled()) {
 			return;
 		}
@@ -33,6 +35,8 @@ public class EventSubscriber {
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
+
+//		NoCubes.LOGGER.info("onRebuildChunkBlockEvent");
 
 		if (! NoCubes.isEnabled()) {
 			return;
@@ -57,6 +61,8 @@ public class EventSubscriber {
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
+
+//		NoCubes.LOGGER.info("onRebuildChunkBlockRenderInLayerEvent");
 
 		if (! NoCubes.isEnabled()) {
 			return;
