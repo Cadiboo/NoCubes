@@ -185,4 +185,12 @@ public class ModUtil {
 		}
 	}
 
+	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
+		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
+	}
+
+	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
+		return (packedLightmapCoords) & 0xFFFF; // get lower 4 bytes
+	}
+
 }

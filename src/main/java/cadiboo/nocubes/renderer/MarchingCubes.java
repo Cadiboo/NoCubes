@@ -368,9 +368,9 @@ public class MarchingCubes {
 
 			final BlockPos brightnessPos = pos.up();
 
-			final int brightness = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
-			final int lightmapSkyLight = (brightness >> 16) & 65535;
-			final int lightmapBlockLight = brightness & 65535;
+			final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
+			final int lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			final int lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
 
 //			int meta = cache.getBlockMetadata(fastx, fasty, fastz);
 //			final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
