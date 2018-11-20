@@ -132,11 +132,15 @@ public class ModUtil {
 
 		//		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 
+
+
 		boolean used = false;
 		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		//TODO event.setCancelled(false);
 		if (! used) {
-			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
+			event.setCanceled(false);
+			return;
+//			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 		}
 
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;

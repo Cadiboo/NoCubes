@@ -8,15 +8,17 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.Side;
 
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(Side.CLIENT)
 public class EventSubscriber {
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
 
-//		NoCubes.LOGGER.info("onRebuildChunkPreEvent");
+		//		NoCubes.LOGGER.info("onRebuildChunkPreEvent");
 
 		if (! NoCubes.isEnabled()) {
 			return;
@@ -33,10 +35,10 @@ public class EventSubscriber {
 
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
 
-//		NoCubes.LOGGER.info("onRebuildChunkBlockEvent");
+		//		NoCubes.LOGGER.info("onRebuildChunkBlockEvent");
 
 		if (! NoCubes.isEnabled()) {
 			return;
@@ -59,10 +61,10 @@ public class EventSubscriber {
 
 	}
 
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
 
-//		NoCubes.LOGGER.info("onRebuildChunkBlockRenderInLayerEvent");
+		//		NoCubes.LOGGER.info("onRebuildChunkBlockRenderInLayerEvent");
 
 		if (! NoCubes.isEnabled()) {
 			return;
