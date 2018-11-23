@@ -92,7 +92,7 @@ public class ModUtil {
 		final int chunky = renderChunkPosition.getY();
 		final int chunkz = renderChunkPosition.getZ();
 
-		final ChunkCache cache = event.getWorldView();
+		final ChunkCache cache = event.getChunkCache();
 
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
@@ -135,7 +135,7 @@ public class ModUtil {
 
 
 		boolean used = false;
-		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		//TODO event.setCancelled(false);
 		if (! used) {
 			event.setCanceled(false);
