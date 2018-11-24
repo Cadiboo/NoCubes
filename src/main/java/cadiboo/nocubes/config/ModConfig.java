@@ -26,10 +26,6 @@ public class ModConfig {
 	@Comment({ "nocubes.config.algorithm.comment" })
 	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
 
-	@Name("nocubes.config.algorithmtype.name")
-	@Comment({ "nocubes.config.algorithmtype.comment" })
-	public static RenderType renderType = RenderType.BLOCK;
-
 	@Name("nocubes.config.forcechunkreload.name")
 	@Comment({ "nocubes.config.forcechunkreload.comment" })
 	public static boolean shouldForceChunkReload = true;

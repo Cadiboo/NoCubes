@@ -1,7 +1,6 @@
 package cadiboo.nocubes.util;
 
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Consumer;
@@ -53,15 +52,11 @@ public final class ModEnums {
 
 		SURFACE_NETS(
 
-			(event) -> ModUtil.renderChunkSurfaceNets(event),
-
 			(event) -> ModUtil.renderBlockSurfaceNets(event)
 
 		),
 
 		MARCHING_CUBES(
-
-			(event) -> ModUtil.renderChunkMarchingCubes(event),
 
 			(event) -> ModUtil.renderBlockMarchingCubes(event)
 
@@ -69,18 +64,11 @@ public final class ModEnums {
 
 		;
 
-		private final Consumer<RebuildChunkPreEvent>   renderChunk;
 		private final Consumer<RebuildChunkBlockEvent> renderBlock;
 
-		private RenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderChunk, final Consumer<RebuildChunkBlockEvent> renderBlock) {
+		private RenderAlgorithm(final Consumer<RebuildChunkBlockEvent> renderBlock) {
 
-			this.renderChunk = renderChunk;
 			this.renderBlock = renderBlock;
-		}
-
-		public void renderChunk(final RebuildChunkPreEvent event) {
-
-			this.renderChunk.accept(event);
 		}
 
 		public void renderBlock(final RebuildChunkBlockEvent event) {
