@@ -21,9 +21,28 @@ import static cadiboo.nocubes.util.ModReference.Version.VERSION;
  * @author CosmicDan (2016)
  * @author Cadiboo (2018)
  */
-/*@formatter:off*/
-@Mod(modid = MOD_ID, name = MOD_NAME, version = VERSION, acceptedMinecraftVersions = ACCEPTED_VERSIONS, dependencies = DEPENDENCIES, canBeDeactivated = CAN_BE_DEACTIVATED, clientSideOnly = true, serverSideOnly = false, modLanguage = "java")
-/*@formatter:on*/ public class NoCubes {
+@Mod(
+
+	modid = MOD_ID,
+
+	name = MOD_NAME,
+
+	version = VERSION,
+
+	acceptedMinecraftVersions = ACCEPTED_VERSIONS,
+
+	dependencies = DEPENDENCIES,
+
+	canBeDeactivated = CAN_BE_DEACTIVATED,
+
+	clientSideOnly = true,
+
+	serverSideOnly = false,
+
+	modLanguage = "java"
+
+)
+public class NoCubes {
 
 	// TODO list:
 	// Marching Cubes BLOCK method
