@@ -407,8 +407,8 @@ public class MarchingCubes {
 			//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
 
 			int cubeIndex = 0;
-			//			final float isolevel = 0.5F;
-			final float isolevel = 1F; // gives intresting results
+			final float isolevel = 0.5F;
+			//			final float isolevel = 1F; // gives interesting results
 			if (pointValue[0] < isolevel) {
 				cubeIndex |= 1;
 			}
