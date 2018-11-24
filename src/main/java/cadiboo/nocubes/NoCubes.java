@@ -1,10 +1,12 @@
 package cadiboo.nocubes;
 
 import cadiboo.nocubes.config.ModConfig;
+import cadiboo.nocubes.util.ModReference;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -73,6 +75,13 @@ public class NoCubes {
 	@Instance(MOD_ID)
 	public static NoCubes instance;
 
+	@EventHandler
+	public static void onPreInit(final FMLPreInitializationEvent event) {
+
+		event.getModMetadata().url = "https://cadiboo.github.io/projects/" + ModReference.MOD_ID;
+
+	}
+
 	//	private static boolean isEnabled;
 	//
 	//	public static void deactivate() {
@@ -94,6 +103,7 @@ public class NoCubes {
 
 		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled");
 		//			NoCubes.deactivate();
+
 	}
 
 }
