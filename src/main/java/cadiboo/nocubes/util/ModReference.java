@@ -35,7 +35,7 @@ public final class ModReference {
 		/**
 		 * This is our Mod's Minor Mod Version.<br>
 		 * It is changed when add new mechanics or add items, blocks, tile entities, etc.<br>
-		 * It is reset when we update to a new Minecraft version or our Major Mod Version.
+		 * It is reset when we update to a new Minecraft version or our Major Mod Version increments.
 		 */
 		public static final int MINOR_MOD_VERSION = 0;
 
@@ -44,14 +44,14 @@ public final class ModReference {
 		 * It is changed when we patch small problems that do not cause a change to any greater versions.<br>
 		 * It is reset when we update to a new Minecraft version, our Major Mod Version increments or our Minor Mod Version increments.
 		 */
-		public static final int PATCH_VERSION = 1;
+		public static final int PATCH_VERSION = 0;
 
 		/**
 		 * This is our Mod's PreRelease Version.<br>
 		 * It is changed when we add new features that are not quite done yet.<br>
 		 * It is reset when we update to a new Minecraft version, our Major Mod Version increments, our Minor Mod Version increments or our Patch Version increments.
 		 */
-		public static final int PRE_RELEASE_VERSION = 0;
+		public static final int PRE_RELEASE_VERSION = 3;
 
 		/**
 		 * This is our Mod's Suffix including our PreRelease Version.<br>
