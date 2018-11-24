@@ -30,13 +30,8 @@ public class ModUtil {
 
 	public static boolean shouldSmooth(final IBlockState state) {
 
-		for (String smoothableStateString : ModConfig.smoothableBlockStates) {
-			if (state.toString().equals(smoothableStateString)) {
-				return true;
-			}
-		}
+		return ModConfig.getFastSmoothableBlockStates().contains(state);
 
-		return false;
 	}
 
 	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
@@ -132,15 +127,13 @@ public class ModUtil {
 
 		//		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 
-
-
 		boolean used = false;
 		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		//TODO event.setCancelled(false);
 		if (! used) {
 			event.setCanceled(false);
 			return;
-//			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
+			//			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 		}
 
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;

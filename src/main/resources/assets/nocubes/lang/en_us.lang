@@ -1,26 +1,26 @@
-nocubes.config.enabled.name=Enabled
-nocubes.config.enabled.comment=If the mod is enabled
+nocubes.config.enabled=Enabled
+nocubes.config.enabled.tooltip=If the mod is enabled
 
-nocubes.config.algorithm.name=Rendering Algorithm
-nocubes.config.algorithm.comment=Interactive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html\nMarching Cubes - The original smoothing algorithm that has existed since 1986 - Fast, Well documented\nSurface Nets - A smoothing algorithm - Slightly slower, Dual contouring!
+nocubes.config.algorithm=Rendering Algorithm
+nocubes.config.algorithm.tooltip=Interactive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html\nMarching Cubes - The original smoothing algorithm that has existed since 1986 - Fast, Well documented\nSurface Nets - A smoothing algorithm - Slightly slower, Dual contouring!
 
-nocubes.config.algorithmtype.name=Render Type
-nocubes.config.algorithmtype.comment=How the algorithm should render blocks\nCHUNK - Renders the whole chunk at once (does all computation at one time - stops everything else during that time)\nBLOCK - Renders each block based on its neighbours (does computation spread out over time)
+nocubes.config.algorithmtype=Render Type
+nocubes.config.algorithmtype.tooltip=How the algorithm should render blocks\nCHUNK - Renders the whole chunk at once (does all computation at one time - stops everything else during that time)\nBLOCK - Renders each block based on its neighbours (does computation spread out over time)
 
-nocubes.config.forcechunkreload.name=Force Chunk Reload
-nocubes.config.forcechunkreload.comment=If chunks should be reloaded when settings change
+nocubes.config.forcechunkreload=Force Chunk Reload
+nocubes.config.forcechunkreload.tooltip=If chunks should be reloaded when settings change
 
-nocubes.config.fixcullfacing.name=Fix CullFacing
-nocubes.config.fixcullfacing.comment=If CullFacing issues (like the bottom of trees not rendering correctly) should be fixed
+nocubes.config.fixcullfacing=Fix CullFacing
+nocubes.config.fixcullfacing.tooltip=If CullFacing issues (like the bottom of trees not rendering correctly) should be fixed
 
-nocubes.config.smoothliquids.name=Smooth Liquids
-nocubes.config.smoothliquids.comment=If liquids (lava and water) should be rendered extended into smoothable blocks
+nocubes.config.smoothliquids=Smooth Liquids
+nocubes.config.smoothliquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks
 
-nocubes.config.drawwireframe.name=Draw Wireframe
-nocubes.config.drawwireframe.comment=If a wireframe should be drawn on non-air blocks
+nocubes.config.drawwireframe=Draw Wireframe
+nocubes.config.drawwireframe.tooltip=If a wireframe should be drawn on non-air blocks
 
-nocubes.config.approximatelighting.name=Approximate Lighting
-nocubes.config.approximatelighting.comment=If a lighting should be approximated for blocks rendered with the BufferBuilder
+nocubes.config.approximatelighting=Approximate Lighting
+nocubes.config.approximatelighting.tooltip=If a lighting should be approximated for blocks rendered with the BufferBuilder
 
-nocubes.config.smoothableblockstates.name=Smoothable BlockStates
-nocubes.config.smoothableblockstates.comment=Block States that the Rendering Algorithm will smooth
+nocubes.config.smoothableblockstates=Smoothable BlockStates
+nocubes.config.smoothableblockstates.tooltip=Block States that the Rendering Algorithm will smooth
