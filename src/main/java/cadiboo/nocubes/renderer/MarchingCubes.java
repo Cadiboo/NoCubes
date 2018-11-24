@@ -1,5 +1,6 @@
 package cadiboo.nocubes.renderer;
 
+import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -382,11 +383,17 @@ public class MarchingCubes {
 			//			final double maxU = 0.1;
 			//			final double maxV = 0.1;
 
-			final BlockPos brightnessPos = pos.up();
-
-			final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
-			final int lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-			final int lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			final int lightmapSkyLight;
+			final int lightmapBlockLight;
+			if (ModConfig.shouldAproximateLighting) {
+				final BlockPos brightnessPos = pos.up();
+				final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
+				lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+				lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			} else {
+				lightmapSkyLight = 15 << 4;
+				lightmapBlockLight = 15 << 4;
+			}
 
 			//			int meta = cache.getBlockMetadata(fastx, fasty, fastz);
 			//			final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
@@ -400,7 +407,7 @@ public class MarchingCubes {
 			//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
 
 			int cubeIndex = 0;
-//			final float isolevel = 0.5F;
+			//			final float isolevel = 0.5F;
 			final float isolevel = 1F; // gives intresting results
 			if (pointValue[0] < isolevel) {
 				cubeIndex |= 1;
