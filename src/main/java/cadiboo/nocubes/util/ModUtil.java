@@ -1,10 +1,10 @@
 package cadiboo.nocubes.util;
 
-import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.renderer.MarchingCubes;
+import cadiboo.nocubes.renderer.SurfaceNets;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.material.Material;
+import net.minecraft.block.BlockAir;
+import net.minecraft.block.BlockStone;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -16,7 +16,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
 import java.util.List;
@@ -30,7 +29,17 @@ public class ModUtil {
 
 	public static boolean shouldSmooth(final IBlockState state) {
 
-		return ModConfig.getFastSmoothableBlockStates().contains(state);
+		return state.getBlock() instanceof BlockStone || state.getBlock() instanceof BlockAir;
+
+		//		return ModConfig.getFastSmoothableBlockStates().contains(state);
+
+	}
+
+	public static boolean shouldSmoothS(final IBlockState state) {
+
+		return state.getBlock() instanceof BlockStone;
+
+		//		return ModConfig.getFastSmoothableBlockStates().contains(state);
 
 	}
 
@@ -47,14 +56,14 @@ public class ModUtil {
 
 					final IBlockState state = cache.getBlockState(mutablePos);
 
-					if (ModUtil.shouldSmooth(state)) {
+					if (ModUtil.shouldSmoothS(state)) {
 						density += 1;
-					} else if (state.isNormalCube()) {
-
-					} else if (state.getMaterial() == Material.VINE) {
-						density -= 0.75;
-					} else {
-						density -= 1;
+						//					} else if (state.isNormalCube()) {
+						//
+						//					} else if (state.getMaterial() == Material.VINE) {
+						//						density -= 0.75;
+						//					} else {
+						//						density -= 1;
 					}
 
 					if (state.getBlock() == Blocks.BEDROCK) {
@@ -68,74 +77,28 @@ public class ModUtil {
 		return density;
 	}
 
-	public static void renderChunkSurfaceNets(final RebuildChunkPreEvent event) {
-
-		return;
-
-	}
-
 	public static void renderBlockSurfaceNets(final RebuildChunkBlockEvent event) {
 
-		return;
-
-	}
-
-	public static void renderChunkMarchingCubes(final RebuildChunkPreEvent event) {
-
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final int chunkx = renderChunkPosition.getX();
-		final int chunky = renderChunkPosition.getY();
-		final int chunkz = renderChunkPosition.getZ();
-
-		final ChunkCache cache = event.getChunkCache();
-
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-
-		//		for (int y = chunky; y < (chunky + 16); ++ y) {
-		//			for (int z = chunkz; z < (chunkz + 16); ++ z) {
-		//				for (int x = chunkx; x < (chunkx + 16); ++ x) {
-		//					final BlockPos pos = new BlockPos(x, y, z);
-		//					final IBlockState state = cache.getBlockState(pos);
-		//
-		//					blockRenderLayers:
-		//					for (final BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
-		//						if (! state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
-		//							continue blockRenderLayers;
-		//						}
-		//
-		////						final BufferBuilder blockRenderLayerBufferBuilder = event.startOrContinueLayer(blockRenderLayer);
-		//
-		//						boolean used = false;
-		//						if (shouldSmooth(state)) {
-		//							used = MarchingCubes.renderBlock(state, pos, cache, blockRenderLayerBufferBuilder, blockRendererDispatcher);
-		//						}
-		//						if (! shouldSmooth(state) || ! used) {
-		//							used = blockRendererDispatcher.renderBlock(state, pos, cache, blockRenderLayerBufferBuilder);
-		//						}
-		//
-		////						event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, used);
-		//					}
-		//				}
-		//			}
-		//		}
-
-		return;
+		boolean used = false;
+		if (!shouldSmoothS(event.getBlockState())) {
+			used = SurfaceNets.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		}
+		if (! used) {
+			event.setCanceled(false);
+			return;
+		}
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;
 
 	}
 
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
-		//		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
-
 		boolean used = false;
-		used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		//TODO event.setCancelled(false);
+		used = MarchingCubes.renderBlock1(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		if (! used) {
 			event.setCanceled(false);
 			return;
-			//			used = event.getBlockRendererDispatcher().renderBlock(event.getBlockState(), event.getBlockPos(), event.getWorldView(), event.getBufferBuilder());
 		}
-
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;
 
 	}

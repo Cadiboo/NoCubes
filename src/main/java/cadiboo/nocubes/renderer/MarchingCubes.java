@@ -7,10 +7,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+import org.apache.logging.log4j.LogManager;
 
 public class MarchingCubes {
 
@@ -230,12 +232,14 @@ public class MarchingCubes {
 			final int y = (int) point.y;
 			final int z = (int) point.z - ((i >> 1) & 1);
 			final IBlockState block1 = cache.getBlockState(new BlockPos(x, y - 1, z));
-			if (ModUtil.shouldSmooth(block1)) {
+			//			if (ModUtil.shouldSmooth(block1)) {
+			if (ModUtil.shouldSmoothS(block1)) {
 				result += 0.125F;
 			}
 
 			final IBlockState block2 = cache.getBlockState(new BlockPos(x, y, z));
-			if (ModUtil.shouldSmooth(block2)) {
+			//			if (ModUtil.shouldSmooth(block2)) {
+			if (ModUtil.shouldSmoothS(block2)) {
 				result += 0.125F;
 			}
 		}
@@ -274,6 +278,45 @@ public class MarchingCubes {
 	}
 
 	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		// Marching Cubes is an algorithm for rendering isosurfaces in volumetric data.
+
+		// The basic notion is that we can define a voxel(cube) by the pixel values at the eight corners of the cube.
+
+		// If one or more pixels of a cube have values less than the user-specified isovalue,
+		// and one or more have values greater than this value,
+		// we know the voxel must contribute some component of the isosurface.
+
+		// By determining which edges of the cube are intersected by the isosurface,
+		// we can create triangular patches which divide the cube between regions within the isosurface and regions outside.
+
+		// By connecting the patches from all cubes on the isosurface boundary,
+		// we get a surface representation.
+
+		return false;
+
+	}
+
+	public static class Vec3dMutable {
+
+		double x;
+		double y;
+		double z;
+
+		public Vec3dMutable(final double x, final double y, final double z) {
+
+			this.x = x;
+			this.y = y;
+			this.z = z;
+		}
+
+	}
+
+	public static boolean renderBlock1(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		if (state.getBlock() == Blocks.AIR) {
+			LogManager.getLogger().info(state);
+		}
 
 		try {
 
@@ -359,13 +402,18 @@ public class MarchingCubes {
 				}
 			}
 
-			final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
+			final IBlockState textureColorState = state;
+			final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
+
+			final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
+
+			//			final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
 
 			if (sprite == null) {
 				return false;
 			}
 
-			final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(textureColorState, cache, textureColorPos, 0);
 
 			final float colorRed = ((color >> 16) & 255) / 255.0F;
 			final float colorGreen = ((color >> 8) & 255) / 255.0F;
@@ -407,8 +455,9 @@ public class MarchingCubes {
 			//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
 
 			int cubeIndex = 0;
-			final float isolevel = 0.5F;
+			//			final float isolevel = 0.5F;
 			//			final float isolevel = 1F; // gives interesting results
+			final float isolevel = 0.1F;
 			if (pointValue[0] < isolevel) {
 				cubeIndex |= 1;
 			}
@@ -509,7 +558,7 @@ public class MarchingCubes {
 					final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 0]];
 					final Vec3dMutable vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
 					final Vec3dMutable vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
-					final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+					final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 0]];
 
 					bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 					bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
@@ -523,21 +572,6 @@ public class MarchingCubes {
 			return false;
 		}
 		return false;
-	}
-
-	public static class Vec3dMutable {
-
-		double x;
-		double y;
-		double z;
-
-		public Vec3dMutable(final double x, final double y, final double z) {
-
-			this.x = x;
-			this.y = y;
-			this.z = z;
-		}
-
 	}
 
 }
