@@ -232,14 +232,12 @@ public class MarchingCubes {
 			final int y = (int) point.y;
 			final int z = (int) point.z - ((i >> 1) & 1);
 			final IBlockState block1 = cache.getBlockState(new BlockPos(x, y - 1, z));
-			//			if (ModUtil.shouldSmooth(block1)) {
-			if (ModUtil.shouldSmoothS(block1)) {
+			if (ModUtil.shouldSmooth(block1)) {
 				result += 0.125F;
 			}
 
 			final IBlockState block2 = cache.getBlockState(new BlockPos(x, y, z));
-			//			if (ModUtil.shouldSmooth(block2)) {
-			if (ModUtil.shouldSmoothS(block2)) {
+			if (ModUtil.shouldSmooth(block2)) {
 				result += 0.125F;
 			}
 		}
@@ -277,7 +275,7 @@ public class MarchingCubes {
 		}
 	}
 
-	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+	public static boolean renderBlockDev(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
 
 		// Marching Cubes is an algorithm for rendering isosurfaces in volumetric data.
 
@@ -312,11 +310,7 @@ public class MarchingCubes {
 
 	}
 
-	public static boolean renderBlock1(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
-
-		if (state.getBlock() == Blocks.AIR) {
-			LogManager.getLogger().info(state);
-		}
+	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
 
 		try {
 
@@ -342,7 +336,7 @@ public class MarchingCubes {
 			int i;
 			for (i = 0; i < 8; ++ i) {
 				pointValue[i] = isPointCorner(pointList[i], cache);
-				if (! set || ! ModUtil.shouldSmooth(state)) {
+				if (! set || ! ModUtil.shouldSmoothWithAirAllowed(state)) {
 					set = true;
 					if (! ModUtil.shouldSmooth(state)) {
 						fastx = (int) pointList[i].x;
@@ -405,6 +399,13 @@ public class MarchingCubes {
 			final IBlockState textureColorState = state;
 			final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
 
+
+			//TODO it should _never_ be air
+			if (state.getBlock() == Blocks.AIR) {
+				return false;
+//				LogManager.getLogger().info(state);
+			}
+
 			final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
 
 			//			final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
@@ -455,9 +456,9 @@ public class MarchingCubes {
 			//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
 
 			int cubeIndex = 0;
-			//			final float isolevel = 0.5F;
+			final float isolevel = 0.5F;
 			//			final float isolevel = 1F; // gives interesting results
-			final float isolevel = 0.1F;
+			//			final float isolevel = 0.1F;
 			if (pointValue[0] < isolevel) {
 				cubeIndex |= 1;
 			}

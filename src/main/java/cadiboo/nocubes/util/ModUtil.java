@@ -1,10 +1,12 @@
 package cadiboo.nocubes.util;
 
+import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.renderer.MarchingCubes;
 import cadiboo.nocubes.renderer.SurfaceNets;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import net.minecraft.block.BlockAir;
-import net.minecraft.block.BlockStone;
+import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -27,19 +29,17 @@ import java.util.List;
  */
 public class ModUtil {
 
-	public static boolean shouldSmooth(final IBlockState state) {
-
-		return state.getBlock() instanceof BlockStone || state.getBlock() instanceof BlockAir;
-
-		//		return ModConfig.getFastSmoothableBlockStates().contains(state);
+	public static boolean shouldSmoothWithAirAllowed(final IBlockState state) {
+		//		return shouldSmooth(state) || state.getBlock() instanceof BlockAir;
+		return shouldSmooth(state) || !state.isFullCube()|| state.getBlock() instanceof BlockAir || state.getBlock() instanceof BlockLiquid;
 
 	}
 
-	public static boolean shouldSmoothS(final IBlockState state) {
+	public static boolean shouldSmooth(final IBlockState state) {
 
-		return state.getBlock() instanceof BlockStone;
+		//		return state.getBlock() instanceof BlockStone;
 
-		//		return ModConfig.getFastSmoothableBlockStates().contains(state);
+		return ModConfig.getFastSmoothableBlockStates().contains(state);
 
 	}
 
@@ -56,7 +56,7 @@ public class ModUtil {
 
 					final IBlockState state = cache.getBlockState(mutablePos);
 
-					if (ModUtil.shouldSmoothS(state)) {
+					if (ModUtil.shouldSmooth(state)) {
 						density += 1;
 						//					} else if (state.isNormalCube()) {
 						//
@@ -80,9 +80,7 @@ public class ModUtil {
 	public static void renderBlockSurfaceNets(final RebuildChunkBlockEvent event) {
 
 		boolean used = false;
-		if (!shouldSmoothS(event.getBlockState())) {
-			used = SurfaceNets.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		}
+		used = SurfaceNets.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		if (! used) {
 			event.setCanceled(false);
 			return;
@@ -94,8 +92,10 @@ public class ModUtil {
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
 		boolean used = false;
-		used = MarchingCubes.renderBlock1(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		if (! used) {
+		if (shouldSmoothWithAirAllowed(event.getBlockState())) {
+			used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		}
+		if (! used || !shouldSmooth(event.getBlockState())) {
 			event.setCanceled(false);
 			return;
 		}
