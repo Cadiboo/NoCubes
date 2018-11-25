@@ -4,8 +4,7 @@ import cadiboo.nocubes.config.ModConfig;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
-import net.minecraft.block.material.Material;
-import net.minecraft.util.BlockRenderLayer;
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -38,15 +37,19 @@ public class EventSubscriber {
 	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkBlockRenderInTypeEvent(final RebuildChunkBlockRenderInTypeEvent event) {
 
-//		if(event.getBlockState().getMaterial()== Material.AIR) {
-			event.setResult(Event.Result.DENY);
-//		}
+		//		if(event.getBlockState().getMaterial()== Material.AIR) {
+		event.setResult(Event.Result.DENY);
+		//		}
 
 	}
 
-	private static BlockRenderLayer airRenderLayerHook() {
+	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
+	public static void onRebuildChunkPostEventEvent(final RebuildChunkPostEvent event) {
 
-		return BlockRenderLayer.CUTOUT;
+		// No. not a good idea
+		//		if (new Random().nextInt(16 + 1) == 0) {
+		//			new Thread(System::gc, "NoCubes Garbage Collecter").start();
+		//		}
 
 	}
 

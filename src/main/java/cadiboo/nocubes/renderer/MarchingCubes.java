@@ -12,7 +12,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
-import org.apache.logging.log4j.LogManager;
 
 public class MarchingCubes {
 
@@ -399,11 +398,10 @@ public class MarchingCubes {
 			final IBlockState textureColorState = state;
 			final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
 
-
 			//TODO it should _never_ be air
 			if (state.getBlock() == Blocks.AIR) {
 				return false;
-//				LogManager.getLogger().info(state);
+				//				LogManager.getLogger().info(state);
 			}
 
 			final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
@@ -540,6 +538,8 @@ public class MarchingCubes {
 				if ((EDGE_TABLE[cubeIndex] & 2048) == 2048) {
 					vertexList[11] = vertexInterpolation(isolevel, pointList[3], pointList[7], pointValue[3], pointValue[7]);
 				}
+
+				//TODO don't render triangle if it is completely horzontal or vetical
 
 				for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != - 1; triangleIndex += 3) {
 
