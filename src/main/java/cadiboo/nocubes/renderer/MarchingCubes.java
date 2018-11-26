@@ -335,7 +335,7 @@ public class MarchingCubes {
 			int i;
 			for (i = 0; i < 8; ++ i) {
 				pointValue[i] = isPointCorner(pointList[i], cache);
-				if (! set || ! ModUtil.shouldSmoothWithAirAllowed(state)) {
+				if (! set || ! ModUtil.shouldRenderInState(state)) {
 					set = true;
 					if (! ModUtil.shouldSmooth(state)) {
 						fastx = (int) pointList[i].x;

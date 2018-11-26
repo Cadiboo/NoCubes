@@ -4,9 +4,6 @@ import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.renderer.MarchingCubes;
 import cadiboo.nocubes.renderer.SurfaceNets;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import net.minecraft.block.BlockAir;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -29,9 +26,11 @@ import java.util.List;
  */
 public class ModUtil {
 
-	public static boolean shouldSmoothWithAirAllowed(final IBlockState state) {
+	public static boolean shouldRenderInState(final IBlockState state) {
 		//		return shouldSmooth(state) || state.getBlock() instanceof BlockAir;
-		return shouldSmooth(state) || !state.isFullCube()|| state.getBlock() instanceof BlockAir || state.getBlock() instanceof BlockLiquid;
+		//		return shouldSmooth(state) || ! state.isFullCube() || state.getBlock() instanceof BlockAir || state.getBlock() instanceof BlockLiquid;
+
+		return true;
 
 	}
 
@@ -92,10 +91,10 @@ public class ModUtil {
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
 		boolean used = false;
-		if (shouldSmoothWithAirAllowed(event.getBlockState())) {
+		if (shouldRenderInState(event.getBlockState())) {
 			used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		}
-		if (! used || !shouldSmooth(event.getBlockState())) {
+		if (! used || ! shouldSmooth(event.getBlockState())) {
 			event.setCanceled(false);
 			return;
 		}
