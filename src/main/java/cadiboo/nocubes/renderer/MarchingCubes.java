@@ -2,14 +2,12 @@ package cadiboo.nocubes.renderer;
 
 import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
@@ -63,416 +61,518 @@ public class MarchingCubes {
 		{ - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1 }
 	};
 
-	public static boolean renderBlock(IBlockState state, BlockPos.MutableBlockPos blockPos, ChunkCache chunkCache, BufferBuilder bufferBuilder, BlockRendererDispatcher blockRendererDispatcher) {
+	//	private static boolean renderGrid(final IBlockState state, final int x, final int y, final int z, final IBlockAccess cache, final Tessellator tesselator) {
+	//		final Tessellator tessellator = Tessellator.getInstance();
+	//		final Vec3dMutable[] pointList = new Vec3dMutable[] { new Vec3dMutable(0.0D, 0.0D, 1.0D), new Vec3dMutable(1.0D, 0.0D, 1.0D), new Vec3dMutable(1.0D, 0.0D, 0.0D), new Vec3dMutable(0.0D, 0.0D, 0.0D), new Vec3dMutable(0.0D, 1.0D, 1.0D), new Vec3dMutable(1.0D, 1.0D, 1.0D), new Vec3dMutable(1.0D, 1.0D, 0.0D), new Vec3dMutable(0.0D, 1.0D, 0.0D) };
+	//		int fastx;
+	//		for (fastx = 0; fastx < 8; ++fastx) {
+	//			pointList[fastx].x += x;
+	//			pointList[fastx].y += y;
+	//			pointList[fastx].z += z;
+	//		}
+	//		fastx = x;
+	//		int fasty = y;
+	//		int fastz = z;
+	//		boolean set = false;
+	//		final float[] pointValue = new float[8];
+	//		int i;
+	//		for (i = 0; i < 8; ++i) {
+	//			pointValue[i] = isPointCorner(pointList[i], cache);
+	//			if (!set || !NoCubes.isBlockNatural(state)) {
+	//				set = true;
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x;
+	//					fasty = (int) pointList[i].y;
+	//					fastz = (int) pointList[i].z;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x;
+	//					fasty = (int) pointList[i].y - 1;
+	//					fastz = (int) pointList[i].z;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x - 1;
+	//					fasty = (int) pointList[i].y;
+	//					fastz = (int) pointList[i].z;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x - 1;
+	//					fasty = (int) pointList[i].y - 1;
+	//					fastz = (int) pointList[i].z;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x;
+	//					fasty = (int) pointList[i].y;
+	//					fastz = (int) pointList[i].z - 1;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x;
+	//					fasty = (int) pointList[i].y - 1;
+	//					fastz = (int) pointList[i].z - 1;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x - 1;
+	//					fasty = (int) pointList[i].y;
+	//					fastz = (int) pointList[i].z - 1;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//				if (!NoCubes.isBlockNatural(state)) {
+	//					fastx = (int) pointList[i].x - 1;
+	//					fasty = (int) pointList[i].y - 1;
+	//					fastz = (int) pointList[i].z - 1;
+	//					state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+	//				}
+	//			}
+	//		}
+	//		i = cache.getBlockMetadata(fastx, fasty, fastz);
+	//		final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
+	//		final float colorRed = ((color >> 16) & 255) / 255.0F;
+	//		final float colorGreen = ((color >> 8) & 255) / 255.0F;
+	//		final float colorBlue = (color & 255) / 255.0F;
+	//		final IIcon icon = renderblocks.getBlockIconFromSideAndMetadata(state, 1, i);
+	//		final double minU = (double) icon.func_94214_a(0.0D);
+	//		final double minV = (double) icon.func_94207_b(0.0D);
+	//		final double maxU = (double) icon.func_94214_a(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(x, 0, 6)));
+	//		final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
+	//		int cubeIndex = 0;
+	//		final float isolevel = 0.5F;
+	//		if (pointValue[0] < isolevel) {
+	//			cubeIndex |= 1;
+	//		}
+	//		if (pointValue[1] < isolevel) {
+	//			cubeIndex |= 2;
+	//		}
+	//		if (pointValue[2] < isolevel) {
+	//			cubeIndex |= 4;
+	//		}
+	//		if (pointValue[3] < isolevel) {
+	//			cubeIndex |= 8;
+	//		}
+	//		if (pointValue[4] < isolevel) {
+	//			cubeIndex |= 16;
+	//		}
+	//		if (pointValue[5] < isolevel) {
+	//			cubeIndex |= 32;
+	//		}
+	//		if (pointValue[6] < isolevel) {
+	//			cubeIndex |= 64;
+	//		}
+	//		if (pointValue[7] < isolevel) {
+	//			cubeIndex |= 128;
+	//		}
+	//		if ((cubeIndex != 0) && (cubeIndex != 255)) {
+	//			final Vec3dMutable[] vertexList = new Vec3dMutable[12];
+	//			if ((EDGE_TABLE[cubeIndex] & 1) == 1) {
+	//				vertexList[0] = vertexInterpolation(isolevel, pointList[0], pointList[1], pointValue[0], pointValue[1]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 2) == 2) {
+	//				vertexList[1] = vertexInterpolation(isolevel, pointList[1], pointList[2], pointValue[1], pointValue[2]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 4) == 4) {
+	//				vertexList[2] = vertexInterpolation(isolevel, pointList[2], pointList[3], pointValue[2], pointValue[3]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 8) == 8) {
+	//				vertexList[3] = vertexInterpolation(isolevel, pointList[3], pointList[0], pointValue[3], pointValue[0]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 16) == 16) {
+	//				vertexList[4] = vertexInterpolation(isolevel, pointList[4], pointList[5], pointValue[4], pointValue[5]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 32) == 32) {
+	//				vertexList[5] = vertexInterpolation(isolevel, pointList[5], pointList[6], pointValue[5], pointValue[6]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 64) == 64) {
+	//				vertexList[6] = vertexInterpolation(isolevel, pointList[6], pointList[7], pointValue[6], pointValue[7]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 128) == 128) {
+	//				vertexList[7] = vertexInterpolation(isolevel, pointList[7], pointList[4], pointValue[7], pointValue[4]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 256) == 256) {
+	//				vertexList[8] = vertexInterpolation(isolevel, pointList[0], pointList[4], pointValue[0], pointValue[4]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 512) == 512) {
+	//				vertexList[9] = vertexInterpolation(isolevel, pointList[1], pointList[5], pointValue[1], pointValue[5]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 1024) == 1024) {
+	//				vertexList[10] = vertexInterpolation(isolevel, pointList[2], pointList[6], pointValue[2], pointValue[6]);
+	//			}
+	//			if ((EDGE_TABLE[cubeIndex] & 2048) == 2048) {
+	//				vertexList[11] = vertexInterpolation(isolevel, pointList[3], pointList[7], pointValue[3], pointValue[7]);
+	//			}
+	//			for (int i = 0; TRIANGLE_TABLE[cubeIndex][i] != -1; i += 3) {
+	//				tessellator.setBrightness(state.getMixedBrightnessForBlock(cache, x, y + 1, z));
+	//				tessellator.color(colorRed, colorGreen, colorBlue);
+	//				final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][i]];
+	//				final Vec3dMutable vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 1]];
+	//				final Vec3dMutable vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 2]];
+	//				final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 2]];
+	//				tessellator.addVertexWithUV(vertex0.x, vertex0.y, vertex0.z, maxU, maxV);
+	//				tessellator.addVertexWithUV(vertex1.x, vertex1.y, vertex1.z, maxU, minV);
+	//				tessellator.addVertexWithUV(vertex2.x, vertex2.y, vertex2.z, minU, minV);
+	//				tessellator.addVertexWithUV(vertex3.x, vertex3.y, vertex3.z, minU, maxV);
+	//			}
+	//			return true;
+	//		} else {
+	//			return false;
+	//		}
+	//	}
+	//
+	private static float isPointCorner(final Vec3dMutable point, final IBlockAccess cache) {
 
-		final int x = blockPos.getX();
-		final int y = blockPos.getY();
-		final int z= blockPos.getZ();
+		float result = 0.0F;
 
-		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, chunkCache, blockPos, 0);
-		final float colorRed = (color >> 16 & 0xFF) / 255.0f;
-		final float colorGreen = (color >> 8 & 0xFF) / 255.0f;
-		final float colorBlue = (color & 0xFF) / 255.0f;
-		final float shadowBottom = 0.6f;
-		final float shadowTop = 1.0f;
-		final float shadowLeft = 0.9f;
-		final float shadowRight = 0.8f;
+		for (int i = 0; i < 4; ++ i) {
+			final int x = (int) point.x - (i & 1);
+			final int y = (int) point.y;
+			final int z = (int) point.z - ((i >> 1) & 1);
+			final IBlockState block1 = cache.getBlockState(new BlockPos(x, y - 1, z));
+			if (ModUtil.shouldSmooth(block1)) {
+				result += 0.125F;
+			}
 
-		final TextureAtlasSprite sprite = ModUtil.getSprite(state, blockPos, blockRendererDispatcher);
-
-		final double minU = sprite.getMinU();
-		final double minV = sprite.getMinV();
-		final double maxU = sprite.getMaxU();
-		final double maxV = sprite.getMaxV();
-
-		final int[][] points = {
-
-			{0, 0, 0},
-
-			{1, 0, 0},
-
-			{1, 0, 1},
-
-			{0, 0, 1},
-
-			{0, 1, 0},
-
-			{1, 1, 0},
-
-			{1, 1, 1},
-
-			{0, 1, 1},
-
-		};
-
-		for(int pointIndex = 0; pointIndex < 8; ++pointIndex)
-		{
-			final int[] point = points[pointIndex];
-			point[0] += x;
-			point[1] += y;
-			point[2] += z;
-			if(!doesPointIntersectWithManufactured(chunkCache, points[pointIndex]))
-			{
-				if(pointIndex < 4 && doesPointBottomIntersectWithAir(chunkCache, points[pointIndex]))
-				{
-					points[pointIndex][1] = y + 1;
-				}
-				else if(pointIndex >= 4 && doesPointTopIntersectWithAir(chunkCache, points[pointIndex]))
-				{
-					points[pointIndex][1] = y;
-				}
-				points[pointIndex] = givePointRoughness(points[pointIndex]);
+			final IBlockState block2 = cache.getBlockState(new BlockPos(x, y, z));
+			if (ModUtil.shouldSmooth(block2)) {
+				result += 0.125F;
 			}
 		}
-		for(int side = 0; side < 6; ++side)
-		{
-			int facingX = x;
-			int facingY = y;
-			int facingZ = z;
-			if(side == 0)
-			{
-				--facingY;
-			}
-			else if(side == 1)
-			{
-				++facingY;
-			}
-			else if(side == 2)
-			{
-				--facingZ;
-			}
-			else if(side == 3)
-			{
-				++facingX;
-			}
-			else if(side == 4)
-			{
-				++facingZ;
-			}
-			else if(side == 5)
-			{
-				--facingX;
-			}
-			if(/*renderer.renderAllFaces*/false || state.shouldSideBeRendered(chunkCache, new BlockPos(facingX, facingY, facingZ), EnumFacing.VALUES[side]))
-			{
-				float colorFactor = 1.0f;
-				int[] vertex0 = null;
-				int[] vertex2 = null;
-				int[] vertex3 = null;
-				int[] vertex4 = null;
-				if(side == 0)
-				{
-					colorFactor = shadowBottom;
-					vertex0 = points[0];
-					vertex2 = points[1];
-					vertex3 = points[2];
-					vertex4 = points[3];
-				}
-				else if(side == 1)
-				{
-					colorFactor = shadowTop;
-					vertex0 = points[7];
-					vertex2 = points[6];
-					vertex3 = points[5];
-					vertex4 = points[4];
-				}
-				else if(side == 2)
-				{
-					colorFactor = shadowLeft;
-					vertex0 = points[1];
-					vertex2 = points[0];
-					vertex3 = points[4];
-					vertex4 = points[5];
-				}
-				else if(side == 3)
-				{
-					colorFactor = shadowRight;
-					vertex0 = points[2];
-					vertex2 = points[1];
-					vertex3 = points[5];
-					vertex4 = points[6];
-				}
-				else if(side == 4)
-				{
-					colorFactor = shadowLeft;
-					vertex0 = points[3];
-					vertex2 = points[2];
-					vertex3 = points[6];
-					vertex4 = points[7];
-				}
-				else if(side == 5)
-				{
-					colorFactor = shadowRight;
-					vertex0 = points[0];
-					vertex2 = points[3];
-					vertex3 = points[7];
-					vertex4 = points[4];
-				}
 
+		return result;
+	}
+	//
+	//	private static Vec3dMutable vertexInterpolation(final Vec3dMutable p1, final Vec3dMutable p2, final boolean valp1, final boolean valp2) {
+	//		if (!valp1) {
+	//			return p1;
+	//		} else if (!valp2) {
+	//			return p2;
+	//		} else {
+	//			final double x = (p1.x + p2.x) - p1.x;
+	//			final double y = (p1.y + p2.y) - p1.y;
+	//			final double z = (p1.z + p2.z) - p1.z;
+	//			return new Vec3dMutable(x, y, z);
+	//		}
+	//	}
 
-//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
-//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue);
-//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
-//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, maxV);
-//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, maxU, minV);
-//				tessellator.addVertexWithUV(vertex4.xCoord, vertex4.yCoord, vertex4.zCoord, minU, minV);
+	private static Vec3dMutable vertexInterpolation(final float isoLevel, final Vec3dMutable p1, final Vec3dMutable p2, final float valp1, final float valp2) {
 
-
-
-				final int lightmapSkyLight;
-				final int lightmapBlockLight;
-				if (ModConfig.shouldAproximateLighting) {
-					final BlockPos brightnessPos = new BlockPos(facingX, facingY, facingZ);
-					final int packedLightmapCoords = chunkCache.getBlockState(brightnessPos).getPackedLightmapCoords(chunkCache, brightnessPos);
-					lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-					lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-				} else {
-					lightmapSkyLight = 15 << 4;
-					lightmapBlockLight = 15 << 4;
-				}
-
-
-				bufferBuilder.pos(vertex0[0], vertex0[1], vertex0[2]).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2[0], vertex2[1], vertex2[2]).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex3[0], vertex3[1], vertex3[2]).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex4[0], vertex4[1], vertex4[2]).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-
-
-
-//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
-//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue);
-//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
-//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, maxV);
-//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, maxU, minV);
-//				tessellator.addVertexWithUV(vertex4.xCoord, vertex4.yCoord, vertex4.zCoord, minU, minV);
-
-
-			}
+		if (MathHelper.abs(isoLevel - valp1) < 1.0E-5F) {
+			return p1;
+		} else if (MathHelper.abs(isoLevel - valp2) < 1.0E-5F) {
+			return p2;
+		} else if (MathHelper.abs(valp1 - valp2) < 1.0E-5F) {
+			return p1;
+		} else {
+			final double mu = (isoLevel - valp1) / (valp2 - valp1);
+			final double x = p1.x + (mu * (p2.x - p1.x));
+			final double y = p1.y + (mu * (p2.y - p1.y));
+			final double z = p1.z + (mu * (p2.z - p1.z));
+			return new Vec3dMutable(x, y, z);
 		}
-		return true;
 	}
 
-	private static int[] givePointRoughness(final int[] point)
-	{
-		long i = (long)(point[0] * 3129871.0) ^ (long)point[1] * 116129781L ^ (long)point[2];
-		i = i * i * 42317861L + i * 11L;
-		point[0] += ((i >> 16 & 0xFL) / 15.0f - 0.5f) * 0.5f;
-		point[1] += ((i >> 20 & 0xFL) / 15.0f - 0.5f) * 0.5f;
-		point[2] += ((i >> 24 & 0xFL) / 15.0f - 0.5f) * 0.5f;
-		return point;
+	public static boolean renderBlockDev(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		// Marching Cubes is an algorithm for rendering isosurfaces in volumetric data.
+
+		// The basic notion is that we can define a voxel(cube) by the pixel values at the eight corners of the cube.
+
+		// If one or more pixels of a cube have values less than the user-specified isovalue,
+		// and one or more have values greater than this value,
+		// we know the voxel must contribute some component of the isosurface.
+
+		// By determining which edges of the cube are intersected by the isosurface,
+		// we can create triangular patches which divide the cube between regions within the isosurface and regions outside.
+
+		// By connecting the patches from all cubes on the isosurface boundary,
+		// we get a surface representation.
+
+		return false;
+
 	}
 
-	public static boolean isBlockAirOrPlant(final IBlockState state)
-	{
-		final Material material = state.getMaterial();
-		return material == Material.AIR || material == Material.PLANTS || material == Material.VINE || ModUtil.isBlockLiquid(state);
+	public static class Vec3dMutable {
+
+		double x;
+		double y;
+		double z;
+
+		public Vec3dMutable(final double x, final double y, final double z) {
+
+			this.x = x;
+			this.y = y;
+			this.z = z;
+		}
+
 	}
 
-	public static boolean doesPointTopIntersectWithAir(final IBlockAccess world, final int[] point)
-	{
-		boolean intersects = false;
-		for(int i = 0; i < 4; ++i)
-		{
-			final int x1 = (int)(point[0] - (i & 0x1));
-			final int z1 = (int)(point[2] - (i >> 1 & 0x1));
-			if(!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, point[1], z1))))
-			{
+	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		try {
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
+			final Vec3dMutable[] pointList = new Vec3dMutable[] { new Vec3dMutable(0.0D, 0.0D, 1.0D), new Vec3dMutable(1.0D, 0.0D, 1.0D), new Vec3dMutable(1.0D, 0.0D, 0.0D), new Vec3dMutable(0.0D, 0.0D, 0.0D), new Vec3dMutable(0.0D, 1.0D, 1.0D), new Vec3dMutable(1.0D, 1.0D, 1.0D), new Vec3dMutable(1.0D, 1.0D, 0.0D), new Vec3dMutable(0.0D, 1.0D, 0.0D) };
+
+			int fastx;
+			for (fastx = 0; fastx < 8; ++ fastx) {
+				pointList[fastx].x += x;
+				pointList[fastx].y += y;
+				pointList[fastx].z += z;
+			}
+
+			fastx = x;
+			int fasty = y;
+			int fastz = z;
+			boolean set = false;
+			final float[] pointValue = new float[8];
+
+			int i;
+			for (i = 0; i < 8; ++ i) {
+				pointValue[i] = isPointCorner(pointList[i], cache);
+				if (! set || ! ModUtil.shouldRenderInState(state)) {
+					set = true;
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x;
+						fasty = (int) pointList[i].y;
+						fastz = (int) pointList[i].z;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x;
+						fasty = (int) pointList[i].y - 1;
+						fastz = (int) pointList[i].z;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x - 1;
+						fasty = (int) pointList[i].y;
+						fastz = (int) pointList[i].z;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x - 1;
+						fasty = (int) pointList[i].y - 1;
+						fastz = (int) pointList[i].z;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x;
+						fasty = (int) pointList[i].y;
+						fastz = (int) pointList[i].z - 1;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x;
+						fasty = (int) pointList[i].y - 1;
+						fastz = (int) pointList[i].z - 1;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x - 1;
+						fasty = (int) pointList[i].y;
+						fastz = (int) pointList[i].z - 1;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+
+					if (! ModUtil.shouldSmooth(state)) {
+						fastx = (int) pointList[i].x - 1;
+						fasty = (int) pointList[i].y - 1;
+						fastz = (int) pointList[i].z - 1;
+						state = cache.getBlockState(new BlockPos(fastx, fasty, fastz));
+					}
+				}
+			}
+
+			final IBlockState textureColorState = state;
+			final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
+
+			//TODO it should _never_ be air
+			if (state.getBlock() == Blocks.AIR) {
+				return false;
+				//				LogManager.getLogger().info(state);
+			}
+
+			final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
+
+			//			final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+
+			if (sprite == null) {
 				return false;
 			}
-			if(!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, point[1]-1, z1))))
-			{
-				intersects = true;
-			}
-		}
-		return intersects;
-	}
 
-	public static boolean doesPointBottomIntersectWithAir(final IBlockAccess world, final int[] point)
-	{
-		boolean intersects = false;
-		boolean notOnly = false;
-		for(int i = 0; i < 4; ++i)
-		{
-			final int x1 = (int)(point[0] - (i & 0x1));
-			final int z1 = (int)(point[2] - (i >> 1 & 0x1));
-			if(!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, point[1]-1, z1))))
-			{
-				return false;
-			}
-			if(!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, point[1]+1, z1))))
-			{
-				notOnly = true;
-			}
-			if(!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, point[1], z1))))
-			{
-				intersects = true;
-			}
-		}
-		return intersects && notOnly;
-	}
+			final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(textureColorState, cache, textureColorPos, 0);
 
-	public static boolean doesPointIntersectWithManufactured(final IBlockAccess world, final int[] point)
-	{
-		for(int i = 0; i < 4; ++i)
-		{
-			final int x1 = (int)(point[0] - (i & 0x1));
-			final int z1 = (int)(point[2] - (i >> 1 & 0x1));
-			final IBlockState state1 = world.getBlockState(new BlockPos(x1, point[1], z1));
-			if(!isBlockAirOrPlant(state1) && !ModUtil.shouldSmooth(state1))
-			{
+			final float colorRed = ((color >> 16) & 255) / 255.0F;
+			final float colorGreen = ((color >> 8) & 255) / 255.0F;
+			final float colorBlue = (color & 255) / 255.0F;
+
+			final float alpha = 1f;
+
+			final double minU = sprite.getInterpolatedU(0.0D);
+			final double minV = sprite.getInterpolatedV(0.0D);
+			final double maxU = sprite.getInterpolatedU(15.0D + (0.16666666666666666D * MathHelper.clamp(x, 0, 6)));
+			final double maxV = sprite.getInterpolatedV(15.0D + (0.16666666666666666D * MathHelper.clamp(z, 0, 6)));
+
+			//			final double minU = 0;
+			//			final double minV = 0;
+			//			final double maxU = 0.1;
+			//			final double maxV = 0.1;
+
+			final int lightmapSkyLight;
+			final int lightmapBlockLight;
+			if (ModConfig.shouldAproximateLighting) {
+				final BlockPos brightnessPos = pos.up();
+				final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
+				lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+				lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			} else {
+				lightmapSkyLight = 15 << 4;
+				lightmapBlockLight = 15 << 4;
+			}
+
+			//			int meta = cache.getBlockMetadata(fastx, fasty, fastz);
+			//			final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
+			//			final float colorRed = ((color >> 16) & 255) / 255.0F;
+			//			final float colorGreen = ((color >> 8) & 255) / 255.0F;
+			//			final float colorBlue = (color & 255) / 255.0F;
+			//			final IIcon icon = renderblocks.getBlockIconFromSideAndMetadata(state, 1, meta);
+			//			final double minU = (double) icon.func_94214_a(0.0D);
+			//			final double minV = (double) icon.func_94207_b(0.0D);
+			//			final double maxU = (double) icon.func_94214_a(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(x, 0, 6)));
+			//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
+
+			int cubeIndex = 0;
+			final float isolevel = 0.5F;
+			//			final float isolevel = 1F; // gives interesting results
+			//			final float isolevel = 0.1F;
+			if (pointValue[0] < isolevel) {
+				cubeIndex |= 1;
+			}
+
+			if (pointValue[1] < isolevel) {
+				cubeIndex |= 2;
+			}
+
+			if (pointValue[2] < isolevel) {
+				cubeIndex |= 4;
+			}
+
+			if (pointValue[3] < isolevel) {
+				cubeIndex |= 8;
+			}
+
+			if (pointValue[4] < isolevel) {
+				cubeIndex |= 16;
+			}
+
+			if (pointValue[5] < isolevel) {
+				cubeIndex |= 32;
+			}
+
+			if (pointValue[6] < isolevel) {
+				cubeIndex |= 64;
+			}
+
+			if (pointValue[7] < isolevel) {
+				cubeIndex |= 128;
+			}
+
+			if ((cubeIndex != 0) && (cubeIndex != 255)) {
+				final Vec3dMutable[] vertexList = new Vec3dMutable[12];
+				if ((EDGE_TABLE[cubeIndex] & 1) == 1) {
+					vertexList[0] = vertexInterpolation(isolevel, pointList[0], pointList[1], pointValue[0], pointValue[1]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 2) == 2) {
+					vertexList[1] = vertexInterpolation(isolevel, pointList[1], pointList[2], pointValue[1], pointValue[2]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 4) == 4) {
+					vertexList[2] = vertexInterpolation(isolevel, pointList[2], pointList[3], pointValue[2], pointValue[3]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 8) == 8) {
+					vertexList[3] = vertexInterpolation(isolevel, pointList[3], pointList[0], pointValue[3], pointValue[0]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 16) == 16) {
+					vertexList[4] = vertexInterpolation(isolevel, pointList[4], pointList[5], pointValue[4], pointValue[5]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 32) == 32) {
+					vertexList[5] = vertexInterpolation(isolevel, pointList[5], pointList[6], pointValue[5], pointValue[6]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 64) == 64) {
+					vertexList[6] = vertexInterpolation(isolevel, pointList[6], pointList[7], pointValue[6], pointValue[7]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 128) == 128) {
+					vertexList[7] = vertexInterpolation(isolevel, pointList[7], pointList[4], pointValue[7], pointValue[4]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 256) == 256) {
+					vertexList[8] = vertexInterpolation(isolevel, pointList[0], pointList[4], pointValue[0], pointValue[4]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 512) == 512) {
+					vertexList[9] = vertexInterpolation(isolevel, pointList[1], pointList[5], pointValue[1], pointValue[5]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 1024) == 1024) {
+					vertexList[10] = vertexInterpolation(isolevel, pointList[2], pointList[6], pointValue[2], pointValue[6]);
+				}
+
+				if ((EDGE_TABLE[cubeIndex] & 2048) == 2048) {
+					vertexList[11] = vertexInterpolation(isolevel, pointList[3], pointList[7], pointValue[3], pointValue[7]);
+				}
+
+				//TODO don't render triangle if it is completely horzontal or vetical
+
+				for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != - 1; triangleIndex += 3) {
+
+					//					tessellator.setBrightness(state.getMixedBrightnessForBlock(cache, x, y + 1, z));
+					//					tessellator.color(colorRed, colorGreen, colorBlue);
+					//					final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex]];
+					//					final Vec3dMutable vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
+					//					final Vec3dMutable vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+					//					final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+					//					tessellator.addVertexWithUV(vertex0.x, vertex0.y, vertex0.z, maxU, maxV);
+					//					tessellator.addVertexWithUV(vertex1.x, vertex1.y, vertex1.z, maxU, minV);
+					//					tessellator.addVertexWithUV(vertex2.x, vertex2.y, vertex2.z, minU, minV);
+					//					tessellator.addVertexWithUV(vertex3.x, vertex3.y, vertex3.z, minU, maxV);
+
+					//					bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+					final Vec3dMutable vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 0]];
+					final Vec3dMutable vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
+					final Vec3dMutable vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+					final Vec3dMutable vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][triangleIndex + 0]];
+
+					bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+					bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+				}
 				return true;
 			}
-			final IBlockState state2 = world.getBlockState(new BlockPos(x1, point[1]-1, z1));
-			if(!isBlockAirOrPlant(state2) && !ModUtil.shouldSmooth(state2))
-			{
-				return true;
-			}
+		} catch (final Exception e) {
+			return false;
 		}
 		return false;
 	}
-
-
-	public static boolean renderLiquidBlock(IBlockState state, BlockPos.MutableBlockPos blockPos, ChunkCache chunkCache, BufferBuilder bufferBuilder, BlockRendererDispatcher blockRendererDispatcher) {
-		final boolean rendered = blockRendererDispatcher.renderBlock(state, blockPos, chunkCache, bufferBuilder);
-//		if(NoCubes.isBlockLiquid(world.getBlock(x, y + 1, z)))
-//		{
-//			return rendered;
-//		}
-//		final int brightness = block.getMixedBrightnessForBlock(world, x, y, z);
-//		if(NoCubes.isBlockSoft(world.getBlock(x + 1, y, z)))
-//		{
-//			this.renderGhostLiquid(block, x + 1, y, z, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z + 1)))
-//		{
-//			this.renderGhostLiquid(block, x, y, z + 1, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x - 1, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z - 1)))
-//		{
-//			this.renderGhostLiquid(block, x - 1, y, z, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z - 2)) && !NoCubes.isBlockLiquid(world.getBlock(x + 1, y, z - 1)))
-//		{
-//			this.renderGhostLiquid(block, x, y, z - 1, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x + 1, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x + 1, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x + 2, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x + 1, y, z + 2)))
-//		{
-//			this.renderGhostLiquid(block, x + 1, y, z + 1, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x + 1, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x + 1, y, z - 2)) && !NoCubes.isBlockLiquid(world.getBlock(x + 2, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x + 1, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z - 2)))
-//		{
-//			this.renderGhostLiquid(block, x + 1, y, z - 1, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x - 1, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z - 2)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z - 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z - 2)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z)))
-//		{
-//			this.renderGhostLiquid(block, x - 1, y, z - 1, brightness, renderer, world);
-//		}
-//		if(NoCubes.isBlockSoft(world.getBlock(x - 1, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z + 1)) && !NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z + 2)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z)) && !NoCubes.isBlockLiquid(world.getBlock(x - 2, y, z + 2)) && !NoCubes.isBlockLiquid(world.getBlock(x, y, z + 2)))
-//		{
-//			this.renderGhostLiquid(block, x - 1, y, z + 1, brightness, renderer, world);
-//		}
-		return rendered;
-	}
-
-	public boolean doesPointIntersectWithLiquid(final int x, final int y, final int z, final IBlockAccess world)
-	{
-		return false;
-//		return NoCubes.isBlockLiquid(world.getBlock(x, y, z)) || NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z)) || NoCubes.isBlockLiquid(world.getBlock(x, y, z - 1)) || NoCubes.isBlockLiquid(world.getBlock(x - 1, y, z - 1)) || NoCubes.isBlockLiquid(world.getBlock(x, y + 1, z)) || NoCubes.isBlockLiquid(world.getBlock(x - 1, y + 1, z)) || NoCubes.isBlockLiquid(world.getBlock(x, y + 1, z - 1)) || NoCubes.isBlockLiquid(world.getBlock(x - 1, y + 1, z - 1));
-	}
-
-//	public boolean renderGhostLiquid(final Block block, final int x, final int y, final int z, final int brightness, final RenderBlocks renderer, final IBlockAccess world)
-//	{
-//		final Tessellator tessellator = Tessellator.instance;
-//		final Material material = block.getMaterial();
-//		double height0 = 0.7;
-//		double height2 = 0.7;
-//		double height3 = 0.7;
-//		double height4 = 0.7;
-//		if(this.doesPointIntersectWithLiquid(x, y, z, world))
-//		{
-//			height0 = renderer.getLiquidHeight(x, y, z, material);
-//		}
-//		if(this.doesPointIntersectWithLiquid(x, y, z + 1, world))
-//		{
-//			height2 = renderer.getLiquidHeight(x, y, z + 1, material);
-//		}
-//		if(this.doesPointIntersectWithLiquid(x + 1, y, z + 1, world))
-//		{
-//			height3 = renderer.getLiquidHeight(x + 1, y, z + 1, material);
-//		}
-//		if(this.doesPointIntersectWithLiquid(x + 1, y, z, world))
-//		{
-//			height4 = renderer.getLiquidHeight(x + 1, y, z, material);
-//		}
-//		height0 -= 0.0010000000474974513;
-//		height2 -= 0.0010000000474974513;
-//		height3 -= 0.0010000000474974513;
-//		height4 -= 0.0010000000474974513;
-//		final IIcon icon = renderer.getBlockIconFromSide(block, 1);
-//		final double minU = icon.getInterpolatedU(0.0);
-//		final double minV = icon.getInterpolatedV(0.0);
-//		final double maxU = icon.getInterpolatedU(16.0);
-//		final double maxV = icon.getInterpolatedV(16.0);
-//		tessellator.setBrightness(brightness);
-//		tessellator.setColorOpaque_I(block.colorMultiplier(world, x, y, z));
-//		tessellator.addVertexWithUV((double)(x + 0), y + height0, (double)(z + 0), minU, minV);
-//		tessellator.addVertexWithUV((double)(x + 0), y + height2, (double)(z + 1), minU, maxV);
-//		tessellator.addVertexWithUV((double)(x + 1), y + height3, (double)(z + 1), maxU, maxV);
-//		tessellator.addVertexWithUV((double)(x + 1), y + height4, (double)(z + 0), maxU, minV);
-//		return true;
-//	}
-//
-//	public static boolean shouldHookRenderer(final Block block)
-//	{
-//		return NoCubes.isNoCubesEnabled && (NoCubes.isBlockSoft(block) || NoCubes.isBlockLiquid(block));
-//	}
-//
-//	public boolean directRenderHook(final Block block, final int x, final int y, final int z, final RenderBlocks renderer)
-//	{
-//		block.setBlockBoundsBasedOnState(renderer.blockAccess, x, y, z);
-//		renderer.setRenderBoundsFromBlock(block);
-//		final IBlockAccess world = renderer.blockAccess;
-//		if(NoCubes.isBlockLiquid(block))
-//		{
-//			return this.renderLiquidBlock(block, x, y, z, renderer, world);
-//		}
-//		return this.renderSoftBlock(block, x, y, z, renderer, world);
-//	}
-//
-//	public static void inject(final Block block, final World world, final int x, final int y, final int z, final AxisAlignedBB aabb, final List list, final Entity entity)
-//	{
-//		final float f = SmoothBlockRenderer2.getSmoothBlockHeightForCollision((IBlockAccess)world, block, x, y, z);
-//		final float f2 = SmoothBlockRenderer2.getSmoothBlockHeightForCollision((IBlockAccess)world, block, x, y, z + 1);
-//		final float f3 = SmoothBlockRenderer2.getSmoothBlockHeightForCollision((IBlockAccess)world, block, x + 1, y, z + 1);
-//		final float f4 = SmoothBlockRenderer2.getSmoothBlockHeightForCollision((IBlockAccess)world, block, x + 1, y, z);
-//		addBBoundsToList(x, y, z, 0.0f, 0.0f, 0.0f, 0.5f, f, 0.5f, aabb, list);
-//		addBBoundsToList(x, y, z, 0.0f, 0.0f, 0.5f, 0.5f, f2, 1.0f, aabb, list);
-//		addBBoundsToList(x, y, z, 0.5f, 0.0f, 0.5f, 1.0f, f3, 1.0f, aabb, list);
-//		addBBoundsToList(x, y, z, 0.5f, 0.0f, 0.0f, 1.0f, f4, 0.5f, aabb, list);
-//	}
-//
-//	public static void addBBoundsToList(final int x, final int y, final int z, final float minX, final float minY, final float minZ, final float maxX, final float maxY, final float maxZ, final AxisAlignedBB aabb, final List list)
-//	{
-//		final AxisAlignedBB aabb2 = AxisAlignedBB.getBoundingBox(x + minX, y + minY, z + minZ, x + maxX, y + maxY, z + maxZ);
-//		if(aabb2 != null && aabb.intersectsWith(aabb2))
-//		{
-//			list.add(aabb2);
-//		}
-//	}
-//
-//	public static class Vec3dMutable {
-//
-//		double x;
-//		double y;
-//		double z;
-//
-//		public Vec3dMutable(final double x, final double y, final double z) {
-//
-//			this.x = x;
-//			this.y = y;
-//			this.z = z;
-//		}
-//
-//	}
 
 }
