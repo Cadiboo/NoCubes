@@ -17,7 +17,10 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static net.minecraft.util.EnumFacing.*;
 
 /**
  * Utility Methods for Common Code
@@ -25,6 +28,10 @@ import java.util.List;
  * @author Cadiboo
  */
 public class ModUtil {
+
+	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+		UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
+	};
 
 	public static boolean shouldRenderInState(final IBlockState state) {
 		//		return shouldSmooth(state) || state.getBlock() instanceof BlockAir;
@@ -90,11 +97,13 @@ public class ModUtil {
 
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
+		final IBlockState state = event.getBlockState();
+
 		boolean used = false;
-		if (shouldRenderInState(event.getBlockState())) {
-			used = MarchingCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+		if (shouldRenderInState(state)) {
+			used = MarchingCubes.renderBlock(state, event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		}
-		if (! used || ! shouldSmooth(event.getBlockState())) {
+		if (! used || ! shouldSmooth(state)) {
 			event.setCanceled(false);
 			return;
 		}
@@ -104,22 +113,20 @@ public class ModUtil {
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
+		if (true) {
+			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+		}
+
 		try {
 			final long posRand = MathHelper.getPositionRandom(pos);
 
-			final IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
-			List<BakedQuad> quads = model.getQuads(state, EnumFacing.UP, posRand);
-			if (quads.isEmpty()) {
-				getQuads:
-				for (EnumFacing facing : EnumFacing.VALUES) {
-					if (facing == EnumFacing.NORTH) {
-						facing = null;
-					}
-					quads = model.getQuads(state, EnumFacing.UP, posRand);
-					if (! quads.isEmpty()) {
-						break getQuads;
-					}
+			final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+			List<BakedQuad> quads = new ArrayList<>();
+			for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
+				if (! quads.isEmpty()) {
+					break;
 				}
+				quads = model.getQuads(state, facing, posRand);
 			}
 			final BakedQuad quad = quads.get(0);
 			return quad.getSprite();
