@@ -4,6 +4,7 @@ import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.renderer.MarchingCubes;
 import cadiboo.nocubes.renderer.SurfaceNets;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -114,7 +115,7 @@ public class ModUtil {
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
 		if (true) {
-			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+//			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
 		}
 
 		try {
@@ -143,6 +144,12 @@ public class ModUtil {
 	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
 
 		return (packedLightmapCoords) & 0xFFFF; // get lower 4 bytes
+	}
+
+	public static boolean isBlockLiquid(IBlockState state) {
+
+		return state.getBlock() instanceof BlockLiquid;
+
 	}
 
 }
