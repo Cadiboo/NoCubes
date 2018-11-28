@@ -1,5 +1,6 @@
 package cadiboo.nocubes.renderer;
 
+import cadiboo.nocubes.NoCubes;
 import cadiboo.nocubes.config.ModConfig;
 import cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
@@ -11,8 +12,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
-
-import java.util.ArrayList;
 
 public class MarchingCubes {
 
@@ -69,7 +68,7 @@ public class MarchingCubes {
 		final int x = blockPos.getX();
 		final int y = blockPos.getY();
 		final int z = blockPos.getZ();
-
+		
 		int fastx;
 		for (fastx = 0; fastx < 8; ++ fastx) {
 			pointList[fastx].x += (double) x;
@@ -147,14 +146,14 @@ public class MarchingCubes {
 			}
 		}
 
-		//		i = cache.func_72805_g(fastx, fasty, fastz);
+//		i = cache.func_72805_g(fastx, fasty, fastz);
 
-		//		int color = block.func_149720_d(cache, fastx, fasty, fastz);
+//		int color = block.func_149720_d(cache, fastx, fasty, fastz);
 		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, new BlockPos(fastx, fasty, fastz), 0);
 		float colorRed = (float) (color >> 16 & 255) / 255.0F;
 		float colorGreen = (float) (color >> 8 & 255) / 255.0F;
 		float colorBlue = (float) (color & 255) / 255.0F;
-		//		IIcon icon = renderblocks.func_147787_a(block, 1, i);
+//		IIcon icon = renderblocks.func_147787_a(block, 1, i);
 		final TextureAtlasSprite icon = ModUtil.getSprite(state, new BlockPos(fastx, fasty, fastz), blockRendererDispatcher);
 		double minU = (double) icon.getInterpolatedU(0.0D);
 		double minV = (double) icon.getInterpolatedV(0.0D);
@@ -247,7 +246,7 @@ public class MarchingCubes {
 			final int lightmapSkyLight;
 			final int lightmapBlockLight;
 			if (ModConfig.shouldAproximateLighting) {
-				final BlockPos brightnessPos = new BlockPos(fastx, fasty + 1, fastz);
+				final BlockPos brightnessPos = new BlockPos(fastx, fasty+1, fastz);
 				final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
 				lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
 				lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
@@ -256,65 +255,29 @@ public class MarchingCubes {
 				lightmapBlockLight = 15 << 4;
 			}
 
-			ArrayList<Vec3> vertices = new ArrayList<>();
+			for ( i = 0; TRIANGLE_TABLE[cubeIndex][i] != - 1; i += 3) {
 
-			for (i = 0; TRIANGLE_TABLE[cubeIndex][i] != - 1; i += 3) {
 				Vec3 vertex0 = vertexList[TRIANGLE_TABLE[cubeIndex][i]];
 				Vec3 vertex1 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 1]];
 				Vec3 vertex2 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 2]];
-				vertices.add(vertex0);
-				vertices.add(vertex1);
-				vertices.add(vertex2);
-			}
+				Vec3 vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 2]];
 
-			ArrayList<Vec3> quads = new ArrayList<>();
-
-			for (i = 0; i < vertices.size(); i += 3) {
-				// If the algorithm gives you two triangles it then outputs 6 vertices.
-				// Remove duplicates until you have 4 vertices which are your quad.
-				// You just need to find the right order, and, well, consider the following - say the algorithm outputs these triangles
-				// [0, 1, 2] and [3, 4, 5] where 0 and 3 are duplicate and 2 and 4 are duplicates.
-				// Now you have the following triangles:
-				// [0, 1, 3] and [0, 3, 2]. The triangles are clock-wise and thus your quad becomes [0, 1, 3, 2].
-
-				Vec3 vertex0 = vertices.get(i);
-				Vec3 vertex1 = vertices.get(i + 1);
-				Vec3 vertex2 = vertices.get(i + 2);
-
-
-
-			}
-
-			for (i = 0; i < quads.size(); i += 4) {
-				Vec3 vertex0 = quads.get(i);
-				Vec3 vertex1 = quads.get(i + 1);
-				Vec3 vertex2 = quads.get(i + 2);
-				Vec3 vertex3 = quads.get(i + 3);
-
-				bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+//				tessellator.func_78380_c(block.func_149677_c(cache, x, y + 1, z));
+//				tessellator.func_78386_a(colorRed, colorGreen, colorBlue);
+//				Vec3 vertex0 = vertexList[triangle_table[cubeIndex][i]];
+//				Vec3 vertex1 = vertexList[triangle_table[cubeIndex][i + 1]];
+//				Vec3 vertex2 = vertexList[triangle_table[cubeIndex][i + 2]];
+//				Vec3 vertex3 = vertexList[triangle_table[cubeIndex][i + 2]];
+//				tessellator.func_78374_a(vertex0.x, vertex0.y, vertex0.z, maxU, maxV);
+//				tessellator.func_78374_a(vertex1.x, vertex1.y, vertex1.z, maxU, minV);
+//				tessellator.func_78374_a(vertex2.x, vertex2.y, vertex2.z, minU, minV);
+//				tessellator.func_78374_a(vertex3.x, vertex3.y, vertex3.z, minU, maxV);
 			}
-
-			Vec3 vertex3 = vertexList[TRIANGLE_TABLE[cubeIndex][i + 2]];
-
-			bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(colorRed, colorGreen, colorBlue, 1f).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			//				bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			//				bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(colorRed, colorGreen, colorBlue, 1f).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-
-			//				tessellator.func_78380_c(block.func_149677_c(cache, x, y + 1, z));
-			//				tessellator.func_78386_a(colorRed, colorGreen, colorBlue);
-			//				Vec3 vertex0 = vertexList[triangle_table[cubeIndex][i]];
-			//				Vec3 vertex1 = vertexList[triangle_table[cubeIndex][i + 1]];
-			//				Vec3 vertex2 = vertexList[triangle_table[cubeIndex][i + 2]];
-			//				Vec3 vertex3 = vertexList[triangle_table[cubeIndex][i + 2]];
-			//				tessellator.func_78374_a(vertex0.x, vertex0.y, vertex0.z, maxU, maxV);
-			//				tessellator.func_78374_a(vertex1.x, vertex1.y, vertex1.z, maxU, minV);
-			//				tessellator.func_78374_a(vertex2.x, vertex2.y, vertex2.z, minU, minV);
-			//				tessellator.func_78374_a(vertex3.x, vertex3.y, vertex3.z, minU, maxV);
 
 			return true;
 		} else {
@@ -388,10 +351,9 @@ public class MarchingCubes {
 			this.y = y;
 			this.z = z;
 		}
-
-		public static Vec3 from(double x, double y, double z) {
-
-			return new Vec3(x, y, z);
+		
+		public static Vec3 from(double x, double y, double z){
+			return new Vec3(x,y,z);
 		}
 
 	}
