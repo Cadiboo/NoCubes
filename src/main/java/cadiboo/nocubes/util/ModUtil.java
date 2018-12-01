@@ -23,8 +23,6 @@ import java.util.List;
 import static net.minecraft.util.EnumFacing.*;
 
 /**
- * Utility Methods for Common Code
- *
  * @author Cadiboo
  */
 public class ModUtil {

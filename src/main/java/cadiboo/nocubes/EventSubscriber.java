@@ -43,14 +43,4 @@ public class EventSubscriber {
 
 	}
 
-	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
-	public static void onRebuildChunkPostEventEvent(final RebuildChunkPostEvent event) {
-
-		// No. not a good idea
-		//		if (new Random().nextInt(16 + 1) == 0) {
-		//			new Thread(System::gc, "NoCubes Garbage Collecter").start();
-		//		}
-
-	}
-
 }
