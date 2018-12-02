@@ -12,6 +12,46 @@ import java.util.function.Consumer;
  */
 public final class ModEnums {
 
+	public static enum RenderAlgorithm implements IEnumNameFormattable {
+
+		SURFACE_NETS(
+
+				(event) -> ModUtil.renderBlockSurfaceNets(event)
+
+		),
+
+		MARCHING_CUBES(
+
+				(event) -> ModUtil.renderBlockMarchingCubes(event)
+
+		),
+
+		;
+
+		private final Consumer<RebuildChunkBlockEvent> renderBlock;
+
+		private RenderAlgorithm(final Consumer<RebuildChunkBlockEvent> renderBlock) {
+
+			this.renderBlock = renderBlock;
+		}
+
+		public void renderBlock(final RebuildChunkBlockEvent event) {
+
+			this.renderBlock.accept(event);
+		}
+
+	}
+
+	public static enum RenderType implements IEnumNameFormattable {
+
+		CHUNK,
+
+		BLOCK,
+
+		;
+
+	}
+
 	/**
 	 * provides some default methods for formatting enum names
 	 *
@@ -45,46 +85,6 @@ public final class ModEnums {
 
 		// HACK
 		String name(); /* not exactly hacky, but this method is provided by enum */
-
-	}
-
-	public static enum RenderAlgorithm implements IEnumNameFormattable {
-
-		SURFACE_NETS(
-
-			(event) -> ModUtil.renderBlockSurfaceNets(event)
-
-		),
-
-		MARCHING_CUBES(
-
-			(event) -> ModUtil.renderBlockMarchingCubes(event)
-
-		),
-
-		;
-
-		private final Consumer<RebuildChunkBlockEvent> renderBlock;
-
-		private RenderAlgorithm(final Consumer<RebuildChunkBlockEvent> renderBlock) {
-
-			this.renderBlock = renderBlock;
-		}
-
-		public void renderBlock(final RebuildChunkBlockEvent event) {
-
-			this.renderBlock.accept(event);
-		}
-
-	}
-
-	public static enum RenderType implements IEnumNameFormattable {
-
-		CHUNK,
-
-		BLOCK,
-
-		;
 
 	}
 
