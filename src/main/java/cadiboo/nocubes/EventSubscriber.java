@@ -4,7 +4,6 @@ import cadiboo.nocubes.config.ModConfig;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -19,7 +18,7 @@ public class EventSubscriber {
 
 		//		NoCubes.LOGGER.info("onRebuildChunkBlockEvent");
 
-		if (! NoCubes.isEnabled()) {
+		if (!NoCubes.isEnabled()) {
 			return;
 		}
 
