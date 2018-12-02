@@ -47,6 +47,8 @@ public class SurfaceNets {
 
 	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
 
+		if(true) return false;
+
 		// For every edge crossing the boundary, create an (n-1) cell.  (Face in 3D)
 		// For every face crossing the boundary, create an (n-2) cell. (Edge in 3D)
 		// …
