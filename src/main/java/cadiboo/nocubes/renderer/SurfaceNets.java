@@ -19,7 +19,7 @@ public class SurfaceNets {
 		//Initialize the cube_edges table
 		// This is just the vertex number of each cube
 		int k = 0;
-		for (int i = 0; i < 8; ++ i) {
+		for (int i = 0; i < 8; ++i) {
 			for (int em = 1; em <= 4; em <<= 1) {
 				int j = i ^ em;
 				if (i <= j) {
@@ -33,7 +33,7 @@ public class SurfaceNets {
 		//  This is a 2^(cube configuration) ->  2^(edge configuration) map
 		//  There is one entry for each possible cube configuration, and the output is a 12-bit vector enumerating all edges crossing the 0-level.
 
-		for (int i = 0; i < 256; ++ i) {
+		for (int i = 0; i < 256; ++i) {
 			int em = 0;
 			for (int j = 0; j < 24; j += 2) {
 				final boolean a = (i & (1 << CUBE_EDGES[j])) != 0;
@@ -47,7 +47,7 @@ public class SurfaceNets {
 
 	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
 
-		if(true) return false;
+		if (true) return false;
 
 		// For every edge crossing the boundary, create an (n-1) cell.  (Face in 3D)
 		// For every face crossing the boundary, create an (n-2) cell. (Edge in 3D)
@@ -62,10 +62,10 @@ public class SurfaceNets {
 		// 8-bit mask (1 bit for every cube corner)
 		int mask = 0b00000000;
 		// grid of densities (1 slot for every cube neighbour)
-		float[] densityGrid = { 0, 0, 0, 0, 0, 0, 0, 0 };
+		float[] densityGrid = {0, 0, 0, 0, 0, 0, 0, 0};
 
 		int pointIndex = 0;
-		for (BlockPos.MutableBlockPos edgePos : BlockPos.getAllInBoxMutable(pos.add(- 1, - 1, - 1), pos.add(1, 1, 1))) {
+		for (BlockPos.MutableBlockPos edgePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
 			if (edgePos.equals(pos)) {
 				continue;
 			}
@@ -82,11 +82,11 @@ public class SurfaceNets {
 
 		//Sum up edge intersections
 		int edge_mask = EDGE_TABLE[mask];
-		float[] v = { 0.0f, 0.0f, 0.0f };
+		float[] v = {0.0f, 0.0f, 0.0f};
 		int e_count = 0;
 
 		//For every edge of the cube...
-		for (int i = 0; i < 12; ++ i) {
+		for (int i = 0; i < 12; ++i) {
 
 			//Use edge mask to check if it is crossed
 			// if (! (edge_mask & (1 << i))) {
@@ -95,7 +95,7 @@ public class SurfaceNets {
 			}
 
 			//If it did, increment number of edge crossings
-			++ e_count;
+			++e_count;
 
 			//Now find the point of intersection
 			int e0 = CUBE_EDGES[i << 1]; //Unpack vertices
@@ -118,7 +118,7 @@ public class SurfaceNets {
 			//					v[j] += a ? 1.0 : 0;
 			//				}
 			//			}
-			for (int j = 0, k = 1; j < 3; ++ j, k <<= 1) {
+			for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
 				int a = e0 & k;
 				int b = e1 & k;
 				if (a != b) {
@@ -127,14 +127,14 @@ public class SurfaceNets {
 					v[j] += a != 0 ? 1.0F : 0.0F;
 				}
 
-				++ j;
+				++j;
 			}
 
 		}
 
 		//Now we just average the edge intersections and add them to coordinate
 		float s = 1.0f / e_count;
-		for (int i = 0; i < 3; ++ i) {
+		for (int i = 0; i < 3; ++i) {
 //			v[i] = x[i] + s * v[i];
 		}
 
@@ -143,7 +143,7 @@ public class SurfaceNets {
 		//		vertices.push(v);
 
 		//Now we need to add faces together, to do this we just loop over 3 basis components
-		for (int i = 0; i < 3; ++ i) {
+		for (int i = 0; i < 3; ++i) {
 			//The first three entries of the edge_mask count the crossings along the edge
 			// if (! (edge_mask & (1 << i))) {
 			if ((edge_mask & (1 << i)) == 0) {
