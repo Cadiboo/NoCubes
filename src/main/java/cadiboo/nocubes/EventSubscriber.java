@@ -38,7 +38,7 @@ public class EventSubscriber {
 	public static void onRebuildChunkBlockRenderInTypeEvent(final RebuildChunkBlockRenderInTypeEvent event) {
 
 		//		if(event.getBlockState().getMaterial()== Material.AIR) {
-		event.setResult(Event.Result.DENY);
+		event.setResult(Event.Result.ALLOW);
 		//		}
 
 	}
