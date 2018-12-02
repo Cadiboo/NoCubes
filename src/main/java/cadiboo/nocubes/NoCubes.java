@@ -10,7 +10,11 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static cadiboo.nocubes.util.ModReference.*;
+import static cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
+import static cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
+import static cadiboo.nocubes.util.ModReference.DEPENDENCIES;
+import static cadiboo.nocubes.util.ModReference.MOD_ID;
+import static cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static cadiboo.nocubes.util.ModReference.Version.VERSION;
 
 /**
@@ -25,23 +29,23 @@ import static cadiboo.nocubes.util.ModReference.Version.VERSION;
  */
 @Mod(
 
-	modid = MOD_ID,
+		modid = MOD_ID,
 
-	name = MOD_NAME,
+		name = MOD_NAME,
 
-	version = VERSION,
+		version = VERSION,
 
-	acceptedMinecraftVersions = ACCEPTED_VERSIONS,
+		acceptedMinecraftVersions = ACCEPTED_VERSIONS,
 
-	dependencies = DEPENDENCIES,
+		dependencies = DEPENDENCIES,
 
-	canBeDeactivated = CAN_BE_DEACTIVATED,
+		canBeDeactivated = CAN_BE_DEACTIVATED,
 
-	clientSideOnly = true,
+		clientSideOnly = true,
 
-	serverSideOnly = false,
+		serverSideOnly = false,
 
-	modLanguage = "java"
+		modLanguage = "java"
 
 )
 public class NoCubes {
