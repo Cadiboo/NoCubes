@@ -20,7 +20,12 @@ import net.minecraft.world.IBlockAccess;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.minecraft.util.EnumFacing.*;
+import static net.minecraft.util.EnumFacing.DOWN;
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.UP;
+import static net.minecraft.util.EnumFacing.WEST;
 
 /**
  * @author Cadiboo
@@ -28,7 +33,7 @@ import static net.minecraft.util.EnumFacing.*;
 public class ModUtil {
 
 	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
-		UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
+			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
 
 	public static boolean shouldRenderInState(final IBlockState state) {
@@ -53,9 +58,9 @@ public class ModUtil {
 
 		final MutableBlockPos mutablePos = new MutableBlockPos(pos);
 
-		for (int x = 0; x < 2; ++ x) {
-			for (int y = 0; y < 2; ++ y) {
-				for (int z = 0; z < 2; ++ z) {
+		for (int x = 0; x < 2; ++x) {
+			for (int y = 0; y < 2; ++y) {
+				for (int z = 0; z < 2; ++z) {
 					mutablePos.setPos(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
 
 					final IBlockState state = cache.getBlockState(mutablePos);
@@ -85,7 +90,7 @@ public class ModUtil {
 
 		boolean used = false;
 		used = SurfaceNets.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		if (! used) {
+		if (!used) {
 			event.setCanceled(false);
 			return;
 		}
@@ -101,7 +106,7 @@ public class ModUtil {
 		if (shouldRenderInState(state)) {
 			used = MarchingCubes.renderBlock(state, event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 		}
-		if (! used || ! shouldSmooth(state)) {
+		if (!used || !shouldSmooth(state)) {
 			event.setCanceled(false);
 			return;
 		}
@@ -111,9 +116,9 @@ public class ModUtil {
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
-		if (true) {
-			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
-		}
+//		if (true) {
+//			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+//		}
 
 		try {
 			final long posRand = MathHelper.getPositionRandom(pos);
@@ -121,7 +126,7 @@ public class ModUtil {
 			final IBakedModel model = blockRendererDispatcher.getModelForState(state);
 			List<BakedQuad> quads = new ArrayList<>();
 			for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
-				if (! quads.isEmpty()) {
+				if (!quads.isEmpty()) {
 					break;
 				}
 				quads = model.getQuads(state, facing, posRand);
