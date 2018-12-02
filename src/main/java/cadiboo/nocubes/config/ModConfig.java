@@ -2,7 +2,17 @@ package cadiboo.nocubes.config;
 
 import cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
 import cadiboo.nocubes.util.ModReference;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockDirt;
+import net.minecraft.block.BlockGrass;
+import net.minecraft.block.BlockMycelium;
+import net.minecraft.block.BlockRedSandstone;
+import net.minecraft.block.BlockSand;
+import net.minecraft.block.BlockSandStone;
+import net.minecraft.block.BlockSilverfish;
+import net.minecraft.block.BlockSnow;
+import net.minecraft.block.BlockStainedHardenedClay;
+import net.minecraft.block.BlockStone;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
@@ -27,74 +37,65 @@ import java.util.HashSet;
 @LangKey(ModReference.MOD_ID + ".config.title")
 public class ModConfig {
 
-	@LangKey(ModReference.MOD_ID + ".config.enabled")
-	public static boolean isEnabled = true;
-
-	@LangKey(ModReference.MOD_ID + ".config.algorithm")
-	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
-
-	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
-	public static boolean reloadChunksOnConfigChange = true;
-
-	@LangKey(ModReference.MOD_ID + ".config.fixcullfacing")
-	public static boolean shouldFixCullFacing = true;
-
-	@LangKey(ModReference.MOD_ID + ".config.smoothliquids")
-	public static boolean shouldSmoothLiquids = false;
-
-	@LangKey(ModReference.MOD_ID + ".config.drawwireframe.comment")
-	public static boolean shouldDrawWireframe = false;
-
-	@LangKey(ModReference.MOD_ID + ".config.approximatelighting")
-	public static boolean shouldAproximateLighting = true;
-
-	@LangKey(ModReference.MOD_ID + ".config.smoothableblockstates")
-	public static String[] smoothableBlockStates;
-
 	@Config.Ignore
 	private static final HashSet<IBlockState> FAST_SMOOTHABLE_BLOCK_STATES = new HashSet<>();
-
+	@LangKey(ModReference.MOD_ID + ".config.enabled")
+	public static boolean isEnabled = true;
+	@LangKey(ModReference.MOD_ID + ".config.algorithm")
+	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
+	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
+	public static boolean reloadChunksOnConfigChange = true;
+	@LangKey(ModReference.MOD_ID + ".config.fixcullfacing")
+	public static boolean shouldFixCullFacing = true;
+	@LangKey(ModReference.MOD_ID + ".config.smoothliquids")
+	public static boolean shouldSmoothLiquids = false;
+	@LangKey(ModReference.MOD_ID + ".config.drawwireframe.comment")
+	public static boolean shouldDrawWireframe = false;
+	@LangKey(ModReference.MOD_ID + ".config.approximatelighting")
+	public static boolean shouldAproximateLighting = true;
+	@LangKey(ModReference.MOD_ID + ".config.smoothableblockstates")
+	public static String[] smoothableBlockStates;
 	static {
 
-		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[] {
+		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{
 
-			Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, false), Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true),
+				Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, false), Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true),
 
-			Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.STONE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE_SMOOTH), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.DIORITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.DIORITE_SMOOTH),
-			Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.ANDESITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.ANDESITE_SMOOTH),
+				Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.STONE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.GRANITE_SMOOTH), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.DIORITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.DIORITE_SMOOTH),
+				Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.ANDESITE), Blocks.STONE.getDefaultState().withProperty(BlockStone.VARIANT, BlockStone.EnumType.ANDESITE_SMOOTH),
 
-			Blocks.SAND.getDefaultState().withProperty(BlockSand.VARIANT, net.minecraft.block.BlockSand.EnumType.SAND), Blocks.SAND.getDefaultState().withProperty(BlockSand.VARIANT, net.minecraft.block.BlockSand.EnumType.RED_SAND),
+				Blocks.SAND.getDefaultState().withProperty(BlockSand.VARIANT, net.minecraft.block.BlockSand.EnumType.SAND), Blocks.SAND.getDefaultState().withProperty(BlockSand.VARIANT, net.minecraft.block.BlockSand.EnumType.RED_SAND),
 
-			Blocks.SANDSTONE.getDefaultState().withProperty(BlockSandStone.TYPE, net.minecraft.block.BlockSandStone.EnumType.DEFAULT), Blocks.RED_SANDSTONE.getDefaultState().withProperty(BlockRedSandstone.TYPE, net.minecraft.block.BlockRedSandstone.EnumType.DEFAULT),
+				Blocks.SANDSTONE.getDefaultState().withProperty(BlockSandStone.TYPE, net.minecraft.block.BlockSandStone.EnumType.DEFAULT), Blocks.RED_SANDSTONE.getDefaultState().withProperty(BlockRedSandstone.TYPE, net.minecraft.block.BlockRedSandstone.EnumType.DEFAULT),
 
-			Blocks.GRAVEL.getDefaultState(),
+				Blocks.GRAVEL.getDefaultState(),
 
-			Blocks.COAL_ORE.getDefaultState(), Blocks.IRON_ORE.getDefaultState(), Blocks.GOLD_ORE.getDefaultState(), Blocks.REDSTONE_ORE.getDefaultState(), Blocks.LIT_REDSTONE_ORE.getDefaultState(), Blocks.DIAMOND_ORE.getDefaultState(), Blocks.EMERALD_ORE.getDefaultState(), Blocks.QUARTZ_ORE.getDefaultState(),
+				Blocks.COAL_ORE.getDefaultState(), Blocks.IRON_ORE.getDefaultState(), Blocks.GOLD_ORE.getDefaultState(), Blocks.REDSTONE_ORE.getDefaultState(), Blocks.LIT_REDSTONE_ORE.getDefaultState(), Blocks.DIAMOND_ORE.getDefaultState(), Blocks.EMERALD_ORE.getDefaultState(), Blocks.QUARTZ_ORE.getDefaultState(),
 
-			Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.STONE), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.COBBLESTONE), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.STONEBRICK),
-			Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.MOSSY_STONEBRICK), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.CRACKED_STONEBRICK), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.CHISELED_STONEBRICK),
+				Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.STONE), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.COBBLESTONE), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.STONEBRICK),
+				Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.MOSSY_STONEBRICK), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.CRACKED_STONEBRICK), Blocks.MONSTER_EGG.getDefaultState().withProperty(BlockSilverfish.VARIANT, net.minecraft.block.BlockSilverfish.EnumType.CHISELED_STONEBRICK),
 
-			Blocks.GRASS_PATH.getDefaultState(), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.DIRT), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.COARSE_DIRT), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.PODZOL),
+				Blocks.GRASS_PATH.getDefaultState(), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.DIRT), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.COARSE_DIRT), Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.PODZOL),
 
-			Blocks.CLAY.getDefaultState(), Blocks.HARDENED_CLAY.getDefaultState(),
+				Blocks.CLAY.getDefaultState(), Blocks.HARDENED_CLAY.getDefaultState(),
 
-			Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.WHITE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.ORANGE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.MAGENTA), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.LIGHT_BLUE),
-			Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.YELLOW), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.LIME), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.PINK), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.GRAY),
-			Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.SILVER), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.CYAN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.PURPLE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BLUE),
-			Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BROWN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.GREEN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.RED), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BLACK),
+				Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.WHITE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.ORANGE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.MAGENTA), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.LIGHT_BLUE),
+				Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.YELLOW), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.LIME), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.PINK), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.GRAY),
+				Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.SILVER), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.CYAN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.PURPLE), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BLUE),
+				Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BROWN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.GREEN), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.RED), Blocks.STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BLACK),
 
-			Blocks.SNOW.getDefaultState(),
+				Blocks.SNOW.getDefaultState(),
 
-			Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 1), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 2), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 3), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 4), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 5), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 6),
-			Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 7), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 8),
+				Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 1), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 2), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 3), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 4), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 5), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 6),
+				Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 7), Blocks.SNOW_LAYER.getDefaultState().withProperty(BlockSnow.LAYERS, 8),
 
-			Blocks.BEDROCK.getDefaultState(),
+				Blocks.BEDROCK.getDefaultState(),
 
-			Blocks.NETHERRACK.getDefaultState(), Blocks.GLOWSTONE.getDefaultState(),
+				Blocks.NETHERRACK.getDefaultState(), Blocks.GLOWSTONE.getDefaultState(),
 
-			Blocks.END_STONE.getDefaultState(),
+				Blocks.END_STONE.getDefaultState(),
 
-			Blocks.MYCELIUM.getDefaultState().withProperty(BlockMycelium.SNOWY, false), Blocks.MYCELIUM.getDefaultState().withProperty(BlockMycelium.SNOWY, true),
+				Blocks.MYCELIUM.getDefaultState().withProperty(BlockMycelium.SNOWY, false), Blocks.MYCELIUM.getDefaultState().withProperty(BlockMycelium.SNOWY, true),
 
 		};
 
