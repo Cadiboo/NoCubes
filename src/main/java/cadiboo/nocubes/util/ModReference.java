@@ -7,17 +7,30 @@ package cadiboo.nocubes.util;
  */
 public final class ModReference {
 
-	/** This is our Mod's Name. */
+	/**
+	 * This is our Mod's Name.
+	 */
 	public static final String MOD_NAME = "NoCubes";
 
-	/** This is our Mod's Mod Id that is used for stuff like resource locations. */
+	/**
+	 * This is our Mod's Mod Id that is used for stuff like resource locations.
+	 */
 	public static final String MOD_ID = "nocubes";
+	// https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
+	public static final String ACCEPTED_VERSIONS = "[1.12.2]";
+	public static final String DEPENDENCIES = "" +
+			"required-after:minecraft;" +
+			"required-after:forge@[14.23.4.2729,];" +
+			"required-after:render_chunk_rebuild_chunk_hooks@[1.0.0.0,];" +
+			"";
+	public static final boolean CAN_BE_DEACTIVATED = true;
 
 	/**
 	 * @author Cadiboo
 	 * @see <a href= "https://mcforge.readthedocs.io/en/latest/conventions/versioning/">Forge Versioning Docs</a>
 	 */
 	public static final class Version {
+
 		/**
 		 * This is the Minecraft version we're modding for.<br>
 		 * It is changed every time we start modding for a new Minecraft version.<br>
@@ -51,7 +64,7 @@ public final class ModReference {
 		 * It is changed when we add new features that are not quite done yet.<br>
 		 * It is reset when we update to a new Minecraft version, our Major Mod Version increments, our Minor Mod Version increments or our Patch Version increments.
 		 */
-		public static final int PRE_RELEASE_VERSION = 3;
+		public static final int PRE_RELEASE_VERSION = 5;
 
 		/**
 		 * This is our Mod's Suffix including our PreRelease Version.<br>
@@ -78,16 +91,6 @@ public final class ModReference {
 		 * It is our Mod's Name, our Mod's Minecraft Version, our Mod's Major Mod version, our Mod's Minor Mod version, our Mod's Patch version and our Mod's Suffix in the format <code>MODNAME MCVERSION-MAJORMOD.MINOR.PATCH[-SUFFIX]</code>
 		 */
 		public static final String FULL_VERSION = MOD_NAME + "-" + MINECRAFT_VERSION + "-" + VERSION + (VERSION_SUFFIX.length() > 0 ? "-" + VERSION_SUFFIX : "");
-
-	}
-
-	// https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
-	public static final String	ACCEPTED_VERSIONS	= "[1.12.2]";
-	public static final String	DEPENDENCIES		= "required-after:minecraft;" + "required-after:forge@[14.23.4.2729,];" + "required-after:render_chunk_rebuild_chunk_hooks;" + "";
-
-	public static final boolean CAN_BE_DEACTIVATED = true;
-
-	public static final class Debug {
 
 	}
 
