@@ -7,8 +7,8 @@ nocubes.config.algorithm.tooltip=Interactive examples: https://wordsandbuttons.o
 nocubes.config.algorithmtype=Render Type
 nocubes.config.algorithmtype.tooltip=How the algorithm should render blocks\nCHUNK - Renders the whole chunk at once (does all computation at one time - stops everything else during that time)\nBLOCK - Renders each block based on its neighbours (does computation spread out over time)
 
-nocubes.config.forcechunkreload=Force Chunk Reload
-nocubes.config.forcechunkreload.tooltip=If chunks should be reloaded when settings change
+nocubes.config.reloadChunksOnConfigChange=Reload Chunks when Config changes
+nocubes.config.reloadChunksOnConfigChange.tooltip=If chunks should be reloaded when settings change
 
 nocubes.config.fixcullfacing=Fix CullFacing
 nocubes.config.fixcullfacing.tooltip=If CullFacing issues (like the bottom of trees not rendering correctly) should be fixed

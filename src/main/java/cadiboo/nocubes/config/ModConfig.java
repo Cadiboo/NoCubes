@@ -4,6 +4,7 @@ import cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
 import cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.InvalidBlockStateException;
 import net.minecraft.command.NumberInvalidException;
@@ -32,8 +33,8 @@ public class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.algorithm")
 	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
 
-	@LangKey(ModReference.MOD_ID + ".config.forcechunkreload")
-	public static boolean shouldForceChunkReload = true;
+	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
+	public static boolean reloadChunksOnConfigChange = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.fixcullfacing")
 	public static boolean shouldFixCullFacing = true;
@@ -126,6 +127,13 @@ public class ModConfig {
 
 			if (event.getModID().equals(ModReference.MOD_ID)) {
 				ConfigManager.sync(ModReference.MOD_ID, Config.Type.INSTANCE);
+
+				if (reloadChunksOnConfigChange) {
+					if (Minecraft.getMinecraft().renderGlobal != null) {
+						Minecraft.getMinecraft().renderGlobal.loadRenderers();
+					}
+				}
+
 				FAST_SMOOTHABLE_BLOCK_STATES.clear();
 
 				for (String blockStateString : smoothableBlockStates) {
