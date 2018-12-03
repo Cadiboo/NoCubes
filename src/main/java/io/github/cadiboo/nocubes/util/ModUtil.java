@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.renderer.OldNoCubes;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -113,15 +114,18 @@ public class ModUtil {
 		// By connecting the patches from all cubes on the isosurface boundary,
 		// we get a surface representation.
 
-		if (event.getBlockRenderLayer() != Blocks.WATER.getRenderLayer()) return;
-
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= true;
-
-		event.getBlockRendererDispatcher().renderBlock(Blocks.WATER.getDefaultState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder());
-
 	}
 
 	public static void renderBlockOldNoCubes(final RebuildChunkBlockEvent event) {
+
+		final boolean wasLayerUsed = OldNoCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
+
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasLayerUsed;
+
+		if(wasLayerUsed) {
+			event.setCanceled(true);
+		}
+
 	}
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
