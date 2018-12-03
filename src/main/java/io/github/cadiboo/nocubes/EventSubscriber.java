@@ -1,6 +1,6 @@
-package cadiboo.nocubes;
+package io.github.cadiboo.nocubes;
 
-import cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
@@ -28,7 +28,12 @@ public class EventSubscriber {
 
 	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
+		if (event.getBlockState().getBlock() instanceof BlockAir) event.setResult(Event.Result.DENY);
+		else if (event.getBlockRenderLayer() == Blocks.WATER.getRenderLayer()) event.setResult(Event.Result.DENY);
 
+		event.setResult(Event.Result.DENY);
+
+		event.setCanceled(true);
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)

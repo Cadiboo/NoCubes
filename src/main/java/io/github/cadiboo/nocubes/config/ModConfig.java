@@ -1,7 +1,7 @@
-package cadiboo.nocubes.config;
+package io.github.cadiboo.nocubes.config;
 
-import cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
-import cadiboo.nocubes.util.ModReference;
+import io.github.cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
+import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGrass;

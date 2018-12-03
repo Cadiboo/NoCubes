@@ -1,4 +1,4 @@
-package cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util;
 
 /**
  * Holds mod-wide constant values
@@ -21,7 +21,7 @@ public final class ModReference {
 	public static final String DEPENDENCIES = "" +
 			"required-after:minecraft;" +
 			"required-after:forge@[14.23.4.2729,];" +
-			"required-after:render_chunk_rebuild_chunk_hooks@[1.0.0.0,];" +
+			"required-after:render_chunk_rebuild_chunk_hooks@[1.0.1.0,];" +
 			"";
 	public static final boolean CAN_BE_DEACTIVATED = true;
 

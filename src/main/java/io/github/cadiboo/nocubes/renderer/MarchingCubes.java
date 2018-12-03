@@ -1,7 +1,7 @@
-package cadiboo.nocubes.renderer;
+package io.github.cadiboo.nocubes.renderer;
 
-import cadiboo.nocubes.config.ModConfig;
-import cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;

@@ -1,4 +1,4 @@
-package cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util;
 
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import org.apache.commons.lang3.StringUtils;

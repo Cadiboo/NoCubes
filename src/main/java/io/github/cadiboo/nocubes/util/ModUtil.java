@@ -1,8 +1,7 @@
-package cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util;
 
-import cadiboo.nocubes.config.ModConfig;
-import cadiboo.nocubes.renderer.MarchingCubes;
-import cadiboo.nocubes.renderer.SurfaceNets;
+import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.renderer.SurfaceNets;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -100,25 +99,33 @@ public class ModUtil {
 
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
-		final IBlockState state = event.getBlockState();
+		// Marching Cubes is an algorithm for rendering isosurfaces in volumetric data.
 
-		boolean used = false;
-		if (shouldRenderInState(state)) {
-			used = MarchingCubes.renderBlock(state, event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		}
-		if (!used || !shouldSmooth(state)) {
-			event.setCanceled(false);
-			return;
-		}
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;
+		// The basic notion is that we can define a voxel(cube) by the pixel values at the eight corners of the cube.
+
+		// If one or more pixels of a cube have values less than the user-specified isovalue,
+		// and one or more have values greater than this value,
+		// we know the voxel must contribute some component of the isosurface.
+
+		// By determining which edges of the cube are intersected by the isosurface,
+		// we can create triangular patches which divide the cube between regions within the isosurface and regions outside.
+
+		// By connecting the patches from all cubes on the isosurface boundary,
+		// we get a surface representation.
+
+		if (event.getBlockRenderLayer() != Blocks.WATER.getRenderLayer()) return;
+
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= true;
+
+		event.getBlockRendererDispatcher().renderBlock(Blocks.WATER.getDefaultState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder());
 
 	}
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
-//		if (true) {
-//			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
-//		}
+		if (true) {
+			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+		}
 
 		try {
 			final long posRand = MathHelper.getPositionRandom(pos);

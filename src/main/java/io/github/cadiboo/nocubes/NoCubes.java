@@ -1,7 +1,7 @@
-package cadiboo.nocubes;
+package io.github.cadiboo.nocubes;
 
-import cadiboo.nocubes.config.ModConfig;
-import cadiboo.nocubes.util.ModReference;
+import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -10,12 +10,12 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
-import static cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
-import static cadiboo.nocubes.util.ModReference.DEPENDENCIES;
-import static cadiboo.nocubes.util.ModReference.MOD_ID;
-import static cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static cadiboo.nocubes.util.ModReference.Version.VERSION;
+import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
+import static io.github.cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
+import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static io.github.cadiboo.nocubes.util.ModReference.Version.VERSION;
 
 /**
  * NoCubes<br>
@@ -81,9 +81,7 @@ public class NoCubes {
 
 	@EventHandler
 	public static void onPreInit(final FMLPreInitializationEvent event) {
-
-		event.getModMetadata().url = "https://cadiboo.github.io/projects/" + ModReference.MOD_ID;
-
+		event.getModMetadata().url = "https://cadiboo.github.io/projects/" + MOD_ID;
 	}
 
 	//	private static boolean isEnabled;
@@ -104,10 +102,8 @@ public class NoCubes {
 	// not implemented, we use our config system instead
 	@EventHandler
 	public static void onDisableEvent(final FMLModDisabledEvent event) {
-
 		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled");
 		//			NoCubes.deactivate();
-
 	}
 
 }
