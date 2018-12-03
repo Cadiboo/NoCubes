@@ -14,41 +14,21 @@ public final class ModEnums {
 
 	public static enum RenderAlgorithm implements IEnumNameFormattable {
 
-		SURFACE_NETS(
+		SURFACE_NETS(ModUtil::renderBlockSurfaceNets),
 
-				(event) -> ModUtil.renderBlockSurfaceNets(event)
-
-		),
-
-		MARCHING_CUBES(
-
-				(event) -> ModUtil.renderBlockMarchingCubes(event)
-
-		),
+		MARCHING_CUBES(ModUtil::renderBlockMarchingCubes),
 
 		;
 
 		private final Consumer<RebuildChunkBlockEvent> renderBlock;
 
 		private RenderAlgorithm(final Consumer<RebuildChunkBlockEvent> renderBlock) {
-
 			this.renderBlock = renderBlock;
 		}
 
 		public void renderBlock(final RebuildChunkBlockEvent event) {
-
 			this.renderBlock.accept(event);
 		}
-
-	}
-
-	public static enum RenderType implements IEnumNameFormattable {
-
-		CHUNK,
-
-		BLOCK,
-
-		;
 
 	}
 
