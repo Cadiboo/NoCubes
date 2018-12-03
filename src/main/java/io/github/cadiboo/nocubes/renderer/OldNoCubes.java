@@ -1,11 +1,13 @@
 package io.github.cadiboo.nocubes.renderer;
 
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
@@ -17,7 +19,7 @@ public class OldNoCubes {
 		final int x = pos.getX();
 		final int y = pos.getY();
 		final int z = pos.getZ();
-		
+
 		// The basic block color.
 //		int color = block.colorMultiplier(world, x, y, z);
 		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
@@ -77,12 +79,12 @@ public class OldNoCubes {
 			points[point].zCoord += (double) z;
 
 			// Check if the point is NOT intersecting with a manufactured block.
-			if (!doesPointIntersectWithManufactured(world, points[point])) {
+			if (!doesPointIntersectWithManufactured(cache, points[point])) {
 				// Check if the block's bottom side intersects with air.
-				if (point < 4 && doesPointBottomIntersectWithAir(world, points[point]))
+				if (point < 4 && doesPointBottomIntersectWithAir(cache, points[point]))
 					points[point].yCoord = (double) y + 1.0D;
 					// Check if the block's top side intersects with air.
-				else if (point >= 4 && doesPointTopIntersectWithAir(world, points[point]))
+				else if (point >= 4 && doesPointTopIntersectWithAir(cache, points[point]))
 					points[point].yCoord = (double) y;
 
 				// Give the point some random offset.
@@ -111,7 +113,8 @@ public class OldNoCubes {
 
 			// Check if the side should be rendered:
 			// This prevents a lot of lag!
-			if (renderer.renderAllFaces || block.shouldSideBeRendered(world, facingX, facingY, facingZ, side)) {
+//			if (renderer.renderAllFaces || block.shouldSideBeRendered(world, facingX, facingY, facingZ, side)) {
+			if (state.shouldSideBeRendered(cache, new BlockPos(facingX, facingY, facingZ), EnumFacing.VALUES[side])) {
 				// When you lower this value the block will become darker.
 				float colorFactor = 1.0F;
 
@@ -163,19 +166,34 @@ public class OldNoCubes {
 					vertex3 = points[4];
 				}
 
-				// Here is the brightness of the block being set.
-				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
-				// Here is the color of the block being set.
-				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen,
-						shadowTop * colorFactor * colorBlue);
+//				// Here is the brightness of the block being set.
+//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
+//				// Here is the color of the block being set.
+//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen,
+//						shadowTop * colorFactor * colorBlue);
+//
+//				// And finally the side is going to be rendered!
+//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
+//				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
+//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
+//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
 
-				// And finally the side is going to be rendered!
-				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
-				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
-				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
-				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
+//				// Here is the brightness of the block being set.
+//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
+//				// Here is the color of the block being set.
+//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen,
+//						shadowTop * colorFactor * colorBlue);
+//
+//				// And finally the side is going to be rendered!
+//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
+//				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
+//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
+//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
+
 			}
 		}
+
+		return true;
 
 	}
 
@@ -193,32 +211,31 @@ public class OldNoCubes {
 
 	}
 
-
 	public static Vec3 givePointRoughness(Vec3 point) {
-		long i = (long)(point.xCoord * 3129871.0D) ^ (long)point.yCoord * 116129781L ^ (long)point.zCoord;
+		long i = (long) (point.xCoord * 3129871.0D) ^ (long) point.yCoord * 116129781L ^ (long) point.zCoord;
 		i = i * i * 42317861L + i * 11L;
-		point.xCoord += (double)(((float)(i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
-		point.yCoord += (double)(((float)(i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
-		point.zCoord += (double)(((float)(i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.xCoord += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.yCoord += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.zCoord += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
 		return point;
 	}
 
-	public static boolean isBlockAirOrPlant(Block block) {
-		Material material = block.getMaterial();
+	public static boolean isBlockAirOrPlant(IBlockState state) {
+		Material material = state.getMaterial();
 		return material == Material.AIR || material == Material.PLANTS || material == Material.VINE;
 	}
 
 	public static boolean doesPointTopIntersectWithAir(IBlockAccess world, Vec3 point) {
 		boolean intersects = false;
 
-		for(int i = 0; i < 4; ++i) {
-			int x1 = (int)(point.xCoord - (double)(i & 1));
-			int z1 = (int)(point.zCoord - (double)(i >> 1 & 1));
-			if (!isBlockAirOrPlant(world.getBlock(x1, (int)point.yCoord, z1))) {
+		for (int i = 0; i < 4; ++i) {
+			int x1 = (int) (point.xCoord - (double) (i & 1));
+			int z1 = (int) (point.zCoord - (double) (i >> 1 & 1));
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1)))) {
 				return false;
 			}
 
-			if (isBlockAirOrPlant(world.getBlock(x1, (int)point.yCoord - 1, z1))) {
+			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1)))) {
 				intersects = true;
 			}
 		}
@@ -230,18 +247,18 @@ public class OldNoCubes {
 		boolean intersects = false;
 		boolean notOnly = false;
 
-		for(int i = 0; i < 4; ++i) {
-			int x1 = (int)(point.xCoord - (double)(i & 1));
-			int z1 = (int)(point.zCoord - (double)(i >> 1 & 1));
-			if (!isBlockAirOrPlant(world.getBlock(x1, (int)point.yCoord - 1, z1))) {
+		for (int i = 0; i < 4; ++i) {
+			int x1 = (int) (point.xCoord - (double) (i & 1));
+			int z1 = (int) (point.zCoord - (double) (i >> 1 & 1));
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1)))) {
 				return false;
 			}
 
-			if (!isBlockAirOrPlant(world.getBlock(x1, (int)point.yCoord + 1, z1))) {
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord + 1, z1)))) {
 				notOnly = true;
 			}
 
-			if (isBlockAirOrPlant(world.getBlock(x1, (int)point.yCoord, z1))) {
+			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1)))) {
 				intersects = true;
 			}
 		}
@@ -250,15 +267,15 @@ public class OldNoCubes {
 	}
 
 	public static boolean doesPointIntersectWithManufactured(IBlockAccess world, Vec3 point) {
-		for(int i = 0; i < 4; ++i) {
-			int x1 = (int)(point.xCoord - (double)(i & 1));
-			int z1 = (int)(point.yCoord - (double)(i >> 1 & 1));
-			Block block = world.getBlock(x1, (int)point.yCoord, z1);
+		for (int i = 0; i < 4; ++i) {
+			int x1 = (int) (point.xCoord - (double) (i & 1));
+			int z1 = (int) (point.yCoord - (double) (i >> 1 & 1));
+			IBlockState block = world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1));
 			if (!isBlockAirOrPlant(block) && !NoCubes_isBlockSmoothed(block)) {
 				return true;
 			}
 
-			Block block1 = world.getBlock(x1, (int)point.yCoord - 1, z1);
+			IBlockState block1 = world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1));
 			if (!isBlockAirOrPlant(block1) && !NoCubes_isBlockSmoothed(block1)) {
 				return true;
 			}
@@ -269,8 +286,9 @@ public class OldNoCubes {
 
 	// Taken from NoCubes 0.3
 	// public static final int renderId = RenderingRegistry.getNextAvailableRenderId();
-	public static boolean NoCubes_isBlockSmoothed(Block block) {
-			return block.getRenderType() == renderId;
+	public static boolean NoCubes_isBlockSmoothed(IBlockState block) {
+//		return block.getRenderType() == renderId;
+		return ModUtil.shouldSmooth(block);
 	}
 
 }
