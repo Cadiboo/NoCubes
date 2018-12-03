@@ -1,11 +1,10 @@
 package io.github.cadiboo.nocubes;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockAir;
-import net.minecraft.init.Blocks;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -28,12 +27,10 @@ public class EventSubscriber {
 
 	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
 	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
-		if (event.getBlockState().getBlock() instanceof BlockAir) event.setResult(Event.Result.DENY);
-		else if (event.getBlockRenderLayer() == Blocks.WATER.getRenderLayer()) event.setResult(Event.Result.DENY);
-
-		event.setResult(Event.Result.DENY);
-
-		event.setCanceled(true);
+		if (event.getBlockState().getBlock() instanceof BlockAir) {
+			event.setResult(Event.Result.ALLOW);
+			event.setCanceled(true);
+		}
 	}
 
 	@SubscribeEvent(priority = EventPriority.HIGH, receiveCanceled = false)
