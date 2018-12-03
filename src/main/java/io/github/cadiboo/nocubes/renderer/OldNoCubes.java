@@ -185,10 +185,10 @@ public class OldNoCubes {
 		public double yCoord;
 		public double zCoord;
 
-		public Vec3(final double x, final double y, final double z) {
-			this.xCoord = x;
-			this.yCoord = y;
-			this.zCoord = z;
+		public Vec3(final double xCoord, final double yCoord, final double zCoord) {
+			this.xCoord = xCoord;
+			this.yCoord = yCoord;
+			this.zCoord = zCoord;
 		}
 
 	}
