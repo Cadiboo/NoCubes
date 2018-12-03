@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.util;
 
+import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -119,6 +119,9 @@ public class ModUtil {
 
 		event.getBlockRendererDispatcher().renderBlock(Blocks.WATER.getDefaultState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder());
 
+	}
+
+	public static void renderBlockOldNoCubes(final RebuildChunkBlockEvent event) {
 	}
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {

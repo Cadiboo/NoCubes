@@ -18,6 +18,8 @@ public final class ModEnums {
 
 		MARCHING_CUBES(ModUtil::renderBlockMarchingCubes),
 
+		OLD_NO_CUBES(ModUtil::renderBlockOldNoCubes),
+
 		;
 
 		private final Consumer<RebuildChunkBlockEvent> renderBlock;
