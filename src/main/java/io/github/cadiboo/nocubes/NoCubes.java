@@ -53,7 +53,6 @@ public class NoCubes {
 	// TODO list:
 	// Marching Cubes BLOCK method
 	// Surface Nets BLOCK method
-	// add an option to force reload chunks on algorithm change
 	// a shortcut key to toggle the mod on and off for building
 	// "I found a hole in a mountain..."
 	// cull facing - @Eddie "More bugs" "sometimes the bottom-most log on trees doesn't appear"
@@ -62,12 +61,10 @@ public class NoCubes {
 	// "btw the grass has some lightning issues" "Ill add an option to turn off aproximate lighting" "I'll do smooth(er) lighting soon" "Vanilla oil?"
 	// "I'm standing in midair..." "Just stack like 10 blocks and you have an invisible border" "if (density < 10) or something"
 	// "Sandstone villages are looking intresting..."
-	// user changeable smoothable blocks
 	// user changeable density function!?
 	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
 	// Better algorithms
 	// Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting OR implement smooth lighting
-	// Change config documentation to I18n (lang files)
 
 	// vrackfall, why did you disapear? you got SO FAR and all your work is just down the drain
 
