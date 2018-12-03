@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.renderer;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -7,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
@@ -15,6 +17,12 @@ import net.minecraft.world.IBlockAccess;
 public class OldNoCubes {
 
 	public static boolean renderBlock(IBlockState state, final BlockPos pos, final ChunkCache cache, final BufferBuilder bufferBuilder, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		if (!ModUtil.shouldSmooth(state)) {
+			return false;
+		}
+
+		if (state == Blocks.DIRT.getDefaultState()) state = Blocks.GRASS.getDefaultState();
 
 		final int x = pos.getX();
 		final int y = pos.getY();
@@ -26,6 +34,17 @@ public class OldNoCubes {
 		float colorRed = (float) (color >> 16 & 255) / 255.0F;
 		float colorGreen = (float) (color >> 8 & 255) / 255.0F;
 		float colorBlue = (float) (color & 255) / 255.0F;
+
+		final int skyLight;
+		final int blockLight;
+		if (ModConfig.shouldAproximateLighting) {
+			final int packedLightmapCoords = state.getPackedLightmapCoords(cache, pos.up());
+			skyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			blockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+		} else {
+			skyLight = 240;
+			blockLight = 240;
+		}
 
 		// The shadow values.
 		float shadowBottom = 0.6F;
@@ -94,21 +113,30 @@ public class OldNoCubes {
 
 		// Loop through all the sides of the block:
 		for (int side = 0; side < 6; side++) {
+
 			// The coordinates the side is facing to.
 			int facingX = x;
 			int facingY = y;
 			int facingZ = z;
-			if (side == 0)
+			if (side == 0) //down -y
 				facingY--;
-			else if (side == 1)
+			else if (side == 1) //up +y
 				facingY++;
-			else if (side == 2)
-				facingZ--;
-			else if (side == 3)
+//			else if (side == 2)
+//				facingZ--;
+//			else if (side == 3)
+//				facingX++;
+//			else if (side == 4)
+//				facingZ++;
+//			else if (side == 5)
+//				facingX--;
+			else if (side == 2) //north?
+				facingX--;
+			else if (side == 3) //south? east?
 				facingX++;
-			else if (side == 4)
+			else if (side == 4) //west?
 				facingZ++;
-			else if (side == 5)
+			else if (side == 5) //east?
 				facingX--;
 
 			// Check if the side should be rendered:
@@ -189,6 +217,11 @@ public class OldNoCubes {
 //				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
 //				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
 //				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
+
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, maxV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, maxV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, minV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, minV).lightmap(skyLight, blockLight).endVertex();
 
 			}
 		}

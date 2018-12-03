@@ -130,9 +130,9 @@ public class ModUtil {
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
-		if (true) {
-			return Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
-		}
+//		if (true) {
+//			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
+//		}
 
 		try {
 			final long posRand = MathHelper.getPositionRandom(pos);
