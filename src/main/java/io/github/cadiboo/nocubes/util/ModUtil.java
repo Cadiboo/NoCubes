@@ -120,9 +120,8 @@ public class ModUtil {
 
 		final boolean wasLayerUsed = OldNoCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
 
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasLayerUsed;
-
 		if(wasLayerUsed) {
+			event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasLayerUsed;
 			event.setCanceled(true);
 		}
 
