@@ -134,7 +134,7 @@ public class ModUtil {
 			case OFF:
 				return new LightmapInfo(240, 240);
 			case FAST:
-				final int FASTpackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				final int FASTpackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos.up());
 				return new LightmapInfo(
 						ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords),
 						ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords)
