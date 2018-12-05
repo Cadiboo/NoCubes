@@ -8,6 +8,8 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import io.github.cadiboo.nocubes.renderer.MarchingCubes;
 import io.github.cadiboo.nocubes.renderer.OldNoCubes;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets;
+import io.github.cadiboo.nocubes.renderer.SurfaceNets2;
+import io.github.cadiboo.nocubes.renderer.SurfaceNets3;
 import io.github.cadiboo.nocubes.renderer.SurfaceNetsOOP;
 import org.apache.commons.lang3.StringUtils;
 
@@ -29,6 +31,10 @@ public final class ModEnums {
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost),
 
 		SURFACE_NETS_OOP(SurfaceNetsOOP::renderPre, SurfaceNetsOOP::renderLayer, SurfaceNetsOOP::renderType, SurfaceNetsOOP::renderBlock, SurfaceNetsOOP::renderPost),
+
+		SURFACE_NETS2(SurfaceNets2::renderPre, SurfaceNets2::renderLayer, SurfaceNets2::renderType, SurfaceNets2::renderBlock, SurfaceNets2::renderPost),
+
+		SURFACE_NETS3(SurfaceNets3::renderPre, SurfaceNets3::renderLayer, SurfaceNets3::renderType, SurfaceNets3::renderBlock, SurfaceNets3::renderPost),
 
 		;
 

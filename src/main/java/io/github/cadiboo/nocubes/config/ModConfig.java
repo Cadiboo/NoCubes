@@ -40,22 +40,24 @@ public class ModConfig {
 
 	@Config.Ignore
 	private static final HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
-	@LangKey(ModReference.MOD_ID + ".config.enabled")
+	@LangKey(ModReference.MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
-	@LangKey(ModReference.MOD_ID + ".config.algorithm")
+	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
 	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
-	@LangKey(ModReference.MOD_ID + ".config.fixcullfacing")
-	public static boolean shouldFixCullFacing = true;
-	@LangKey(ModReference.MOD_ID + ".config.smoothliquids")
+	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
+	public static boolean shouldFixFaceCulling = true;
+	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
 	public static boolean shouldSmoothLiquids = false;
-	@LangKey(ModReference.MOD_ID + ".config.drawwireframe.comment")
+	@LangKey(ModReference.MOD_ID + ".config.shouldDrawWireframe")
 	public static boolean shouldDrawWireframe = false;
-	@LangKey(ModReference.MOD_ID + ".config.approximatelightinglevel")
+	@LangKey(ModReference.MOD_ID + ".config.approximateLightingLevel")
 	public static EffortLevel approximateLightingLevel = EffortLevel.FAST;
-	@LangKey(ModReference.MOD_ID + ".config.smoothableblockstates")
+	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
+	@LangKey(ModReference.MOD_ID + ".config.cacheQuads")
+	public static boolean cacheQuads;
 	static {
 
 		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{

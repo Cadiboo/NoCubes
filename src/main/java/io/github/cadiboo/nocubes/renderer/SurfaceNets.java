@@ -10,7 +10,6 @@ import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -334,18 +333,12 @@ public class SurfaceNets {
 		final int red;
 		final int green;
 		final int blue;
-		final int alpha = 0xFF;
 
-		if (quad.hasTintIndex()) {
-			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
-			red = (colorMultiplier >> 16) & 255;
-			green = (colorMultiplier >> 8) & 255;
-			blue = colorMultiplier & 255;
-		} else {
-			red = 0xFF;
-			green = 0xFF;
-			blue = 0xFF;
-		}
+		final int color = ModUtil.getColor(quad, state, cache, pos);
+		red = (color >> 16) & 255;
+		green = (color >> 8) & 255;
+		blue = color & 255;
+		final int alpha = color >> 24 & 255;
 
 		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, event.getBlockRendererDispatcher());
 

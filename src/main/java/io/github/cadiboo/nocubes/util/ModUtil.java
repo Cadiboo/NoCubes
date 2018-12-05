@@ -13,6 +13,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
@@ -95,12 +96,16 @@ public class ModUtil {
 
 	}
 
-	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-		try {
-			final long posRand = MathHelper.getPositionRandom(pos);
+	private static BakedQuad cachedQuad = null;
 
-			final IBakedModel model = blockRendererDispatcher.getModelForState(state);
-			List<BakedQuad> quads = new ArrayList<>();
+	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+
+		final long posRand = MathHelper.getPositionRandom(pos);
+
+		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+		List<BakedQuad> quads = new ArrayList<>();
+
+		try {
 			for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
 				if (!quads.isEmpty()) {
 					break;
@@ -108,9 +113,23 @@ public class ModUtil {
 				quads = model.getQuads(state, facing, posRand);
 			}
 			final BakedQuad quad = quads.get(0);
+			if (ModConfig.cacheQuads) {
+				if (quad == null) {
+					return cachedQuad;
+				} else {
+					if (!quad.getSprite().equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) {
+						cachedQuad = quad;
+					}
+					return quad;
+				}
+			}
 			return quad;
 		} catch (final Exception e) {
-			return null;
+			if (ModConfig.cacheQuads) {
+				return cachedQuad;
+			} else {
+				return null;
+			}
 		}
 	}
 
@@ -120,11 +139,18 @@ public class ModUtil {
 //			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
 //		}
 
+		TextureAtlasSprite sprite = null;
+
 		try {
-			return getQuad(state, pos, blockRendererDispatcher).getSprite();
-		} catch (final Exception e) {
-			return null;
+			sprite = getQuad(state, pos, blockRendererDispatcher).getSprite();
+		} catch (final NullPointerException e) {
 		}
+
+		if (sprite == null || sprite.equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) {
+			sprite = cachedQuad.getSprite();
+		}
+
+		return sprite;
 
 	}
 
@@ -170,6 +196,53 @@ public class ModUtil {
 
 	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
 		return (packedLightmapCoords) & 0xFFFF; // get lower 4 bytes
+	}
+
+	public static int getColor(final BakedQuad quad, final IBlockState state, final ChunkCache cache, final BlockPos pos) {
+
+		final int red;
+		final int green;
+		final int blue;
+
+		if (quad.hasTintIndex()) {
+			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			red = (colorMultiplier >> 16) & 255;
+			green = (colorMultiplier >> 8) & 255;
+			blue = colorMultiplier & 255;
+		} else {
+			red = 0xFF;
+			green = 0xFF;
+			blue = 0xFF;
+		}
+
+		return color(red, green, blue);
+
+	}
+
+	/**
+	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
+	 * @param green the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
+	 * @param blue  the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
+	 * @return the color in ARGB format
+	 */
+	public static int color(int red, int green, int blue) {
+
+		red = MathHelper.clamp(red, 0x00, 0xFF);
+		green = MathHelper.clamp(green, 0x00, 0xFF);
+		blue = MathHelper.clamp(blue, 0x00, 0xFF);
+
+		final int alpha = 0xFF;
+
+		// 0x alpha red green blue
+		// 0xaarrggbb
+
+		int colorRGBA = 0;
+		colorRGBA |= red << 16;
+		colorRGBA |= green << 8;
+		colorRGBA |= blue << 0;
+		colorRGBA |= alpha << 24;
+
+		return colorRGBA;
 	}
 
 }
