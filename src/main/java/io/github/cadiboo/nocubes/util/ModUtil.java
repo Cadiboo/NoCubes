@@ -37,19 +37,11 @@ public class ModUtil {
 	};
 
 	public static boolean shouldRenderInState(final IBlockState state) {
-		//		return shouldSmooth(state) || state.getBlock() instanceof BlockAir;
-		//		return shouldSmooth(state) || ! state.isFullCube() || state.getBlock() instanceof BlockAir || state.getBlock() instanceof BlockLiquid;
-
 		return true;
-
 	}
 
 	public static boolean shouldSmooth(final IBlockState state) {
-
-		//		return state.getBlock() instanceof BlockStone;
-
-		return ModConfig.getFastSmoothableBlockStates().contains(state);
-
+		return ModConfig.getSmoothableBlockStatesCache().contains(state);
 	}
 
 	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
@@ -86,17 +78,6 @@ public class ModUtil {
 		return density;
 	}
 
-	public static void renderBlockSurfaceNets(final RebuildChunkBlockEvent event) {
-
-		boolean used = false;
-		used = SurfaceNets.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-		if (!used) {
-			event.setCanceled(false);
-			return;
-		}
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= used;
-
-	}
 
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
@@ -113,17 +94,6 @@ public class ModUtil {
 
 		// By connecting the patches from all cubes on the isosurface boundary,
 		// we get a surface representation.
-
-	}
-
-	public static void renderBlockOldNoCubes(final RebuildChunkBlockEvent event) {
-
-		final boolean wasLayerUsed = OldNoCubes.renderBlock(event.getBlockState(), event.getBlockPos(), event.getChunkCache(), event.getBufferBuilder(), event.getBlockRendererDispatcher());
-
-		if(wasLayerUsed) {
-			event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasLayerUsed;
-			event.setCanceled(true);
-		}
 
 	}
 
