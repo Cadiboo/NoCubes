@@ -6,24 +6,18 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeE
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.renderer.SurfaceNets.RenderChunkSurfaceNet.BlockVertices;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.Block;
+import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
-import net.minecraft.world.IBlockAccess;
 
-import java.time.chrono.MinguoChronology;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class SurfaceNets {
@@ -64,6 +58,8 @@ public class SurfaceNets {
 
 	}
 
+	public static final HashMap<BlockPos, RenderChunkSurfaceNet> surfaceNetHashMap = new HashMap<>();
+
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
@@ -76,7 +72,7 @@ public class SurfaceNets {
 
 		final ChunkCache cache = event.getChunkCache();
 
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+		final RenderChunkSurfaceNet renderChunkSurfaceNet = new RenderChunkSurfaceNet();
 
 		// dims: "A 3D vector of integers representing the resolution of the isosurface". Resolution in our context means the size of a render chunk (16x16x16)
 		int[] dims = new int[]{16, 16, 16};
@@ -133,7 +129,8 @@ public class SurfaceNets {
 					IBlockState state = Blocks.AIR.getDefaultState();
 
 					final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-					getStateAndPos: for (int posY = -1; posY < 2; ++posY) {
+					getStateAndPos:
+					for (int posY = -1; posY < 2; ++posY) {
 						for (int posZ = -1; posZ < 2; ++posZ) {
 							for (int posX = -1; posX < 2; ++posX) {
 								pos.setPos(c[0] + x[0] + posX, c[1] + x[1] + posY, c[2] + x[2] + posZ);
@@ -158,29 +155,10 @@ public class SurfaceNets {
 						}
 					}
 
-					final int[] brightnessPos = new int[] { c[0] + x[0], c[1] + x[1] + 1, c[2] + x[2] };
-
-					if (ModConfig.shouldAproximateLighting) {
-						getBrightnessPos: for (int posY = -1; posY < 2; ++posY) {
-							for (int posZ = -2; posZ < 3; ++posZ) {
-								for (int posX = -1; posX < 2; ++posX) {
-									// TODO: mutableblockpos?
-									final IBlockState tempState = cache.getBlockState(new BlockPos(c[0] + x[0] + posX, c[1] + x[1] + posY, c[2] + x[2] + posZ));
-									if (!tempState.isOpaqueCube()) {
-										brightnessPos[0] = c[0] + x[0] + posX;
-										brightnessPos[1] = c[1] + x[1] + posY;
-										brightnessPos[2] = c[2] + x[2] + posZ;
-										break getBrightnessPos;
-									}
-								}
-							}
-						}
-					}
-
 					// Sum up edge intersections
 					final int edge_mask = EDGE_TABLE[mask];
 					int e_count = 0;
-					final float[] v = new float[] { 0.0F, 0.0F, 0.0F };
+					final float[] v = new float[]{0.0F, 0.0F, 0.0F};
 
 					// For every edge of the cube...
 					for (int i = 0; i < 12; ++i) {
@@ -238,46 +216,7 @@ public class SurfaceNets {
 
 					buffer[m] = v;
 
-					final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
-					if (quad == null) {
-						continue;
-					}
-
-					final TextureAtlasSprite sprite = quad.getSprite();
-					if (sprite == null) {
-						continue;
-					}
-
-					final float redFloat;
-					final float greenFloat;
-					final float blueFloat;
-
-					if (quad.hasTintIndex()) {
-						final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
-						redFloat = ((colorMultiplier >> 16) & 255) / 255.0F;
-						greenFloat = ((colorMultiplier >> 8) & 255) / 255.0F;
-						blueFloat = (colorMultiplier & 255) / 255.0F;
-					} else {
-						redFloat = 1;
-						greenFloat = 1;
-						blueFloat = 1;
-					}
-
-					final int red = (int) (0xFF * redFloat);
-					final int green = (int) (0xFF * greenFloat);
-					final int blue = (int) (0xFF * blueFloat);
-					final int alpha = 0xFF;
-					final double minU = sprite.getMinU();
-					final double maxU = sprite.getMaxU();
-					final double minV = sprite.getMinV();
-					final double maxV = sprite.getMaxV();
-
-					final BlockPos brightnessBlockPos = new BlockPos(brightnessPos[0], brightnessPos[1], brightnessPos[2]);
-					final IBlockState brightnessState = cache.getBlockState(brightnessBlockPos);
-
-					final int brightness = brightnessState.getPackedLightmapCoords(cache, brightnessBlockPos);
-					final int lightmapSkyLight = (brightness >> 16) & 65535;
-					final int lightmapBlockLight = brightness & 65535;
+					ArrayList<BlockVertices> blockVerticesList = new ArrayList<>();
 
 					// Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int i = 0; i < 3; ++i) {
@@ -306,22 +245,29 @@ public class SurfaceNets {
 
 						// Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
-							bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							Vec3 vertex0 = new Vec3(v0[0], v0[1], v0[2]);
+							Vec3 vertex1 = new Vec3(v1[0], v1[1], v1[2]);
+							Vec3 vertex2 = new Vec3(v2[0], v2[1], v2[2]);
+							Vec3 vertex3 = new Vec3(v3[0], v3[1], v3[2]);
+							blockVerticesList.add(new BlockVertices(vertex0, vertex1, vertex2, vertex3));
 						} else {
-							bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							Vec3 vertex0 = new Vec3(v0[0], v0[1], v0[2]);
+							Vec3 vertex1 = new Vec3(v3[0], v3[1], v3[2]);
+							Vec3 vertex2 = new Vec3(v2[0], v2[1], v2[2]);
+							Vec3 vertex3 = new Vec3(v1[0], v1[1], v1[2]);
+							blockVerticesList.add(new BlockVertices(vertex0, vertex1, vertex2, vertex3));
 						}
 					}
+
+					renderChunkSurfaceNet.putVertices(pos, blockVerticesList);
 
 				}
 
 			}
 		}
+
+		surfaceNetHashMap.put(renderChunkPos, renderChunkSurfaceNet);
+
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
@@ -331,9 +277,105 @@ public class SurfaceNets {
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		final IBlockState state = event.getBlockState();
+		if (!ModUtil.shouldSmooth(state))
+			return;
+		final BlockPos pos = event.getBlockPos();
+		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final ChunkCache cache = event.getChunkCache();
+		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+
+		final RenderChunkSurfaceNet renderChunkSurfaceNet = surfaceNetHashMap.get(renderChunkPos);
+		if (renderChunkSurfaceNet == null)
+			return;
+
+		final List<BlockVertices> blockVerticesList = renderChunkSurfaceNet.getVertices(pos);
+		if (blockVerticesList == null)
+			return;
+
+		final int red = 0xFF;
+		final int green = 0xFF;
+		final int blue = 0xFF;
+		final int alpha = 0xFF;
+
+		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, event.getBlockRendererDispatcher());
+
+		if (sprite == null)
+			return;
+
+		final double minU = sprite.getMinU();
+		final double minV = sprite.getMinV();
+		final double maxU = sprite.getMaxU();
+		final double maxV = sprite.getMaxV();
+
+		final int lightmapSkyLight;
+		final int lightmapBlockLight;
+		if (ModConfig.shouldAproximateLighting) {
+			final int packedLightmapCoords = state.getPackedLightmapCoords(cache, pos.up());
+			lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+			lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+		} else {
+			lightmapSkyLight = 240;
+			lightmapBlockLight = 240;
+		}
+
+		boolean wasAnythingRendered = false;
+
+		for (BlockVertices blockVertices : blockVerticesList) {
+
+			wasAnythingRendered = true;
+
+			final Vec3 v0 = blockVertices.vertex0;
+			final Vec3 v1 = blockVertices.vertex1;
+			final Vec3 v2 = blockVertices.vertex2;
+			final Vec3 v3 = blockVertices.vertex3;
+
+			bufferBuilder.pos(v0.xCoord, v0.yCoord, v0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v1.xCoord, v1.yCoord, v1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v2.xCoord, v2.yCoord, v2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v3.xCoord, v3.yCoord, v3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+		}
+
+		event.setCanceled(wasAnythingRendered);
+
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
+
+		surfaceNetHashMap.remove(event.getRenderChunkPosition());
+
+	}
+
+	public static class RenderChunkSurfaceNet {
+
+		final HashMap<BlockPos, ArrayList<BlockVertices>> blockVerticesHashMap = new HashMap<>();
+
+		public ArrayList<BlockVertices> getVertices(BlockPos pos) {
+			return blockVerticesHashMap.get(pos);
+		}
+
+		public void putVertices(BlockPos pos, ArrayList<BlockVertices> blockVertices) {
+			blockVerticesHashMap.put(pos, blockVertices);
+		}
+
+		public static class BlockVertices {
+
+			public final Vec3 vertex0;
+			public final Vec3 vertex1;
+			public final Vec3 vertex2;
+			public final Vec3 vertex3;
+
+			public BlockVertices(final Vec3 vertex0, final Vec3 vertex1, final Vec3 vertex2, final Vec3 vertex3) {
+				this.vertex0 = vertex0;
+				this.vertex1 = vertex1;
+				this.vertex2 = vertex2;
+				this.vertex3 = vertex3;
+			}
+
+		}
+
 	}
 
 }
