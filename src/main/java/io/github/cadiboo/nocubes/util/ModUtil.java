@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -115,9 +116,9 @@ public class ModUtil {
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
-//		if (true) {
-//			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
-//		}
+		if (true) {
+			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
+		}
 
 		try {
 			return getQuad(state, pos, blockRendererDispatcher).getSprite();
@@ -132,7 +133,7 @@ public class ModUtil {
 		switch (ModConfig.approximateLightingLevel) {
 			default:
 			case OFF:
-				return new LightmapInfo(240, 240);
+				return new LightmapInfo(240, 0);
 			case FAST:
 				final int FASTpackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos.up());
 				return new LightmapInfo(

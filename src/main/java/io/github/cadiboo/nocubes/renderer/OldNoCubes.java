@@ -44,8 +44,8 @@ public class OldNoCubes {
 		}
 
 		if (state.getBlock() instanceof BlockGrass) {
-//			state = Blocks.GRASS.getDefaultState();
-			state = Blocks.STONE.getDefaultState();
+			event.setCanceled(false);
+			return;
 		}
 
 		final int x = pos.getX();
