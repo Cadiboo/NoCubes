@@ -18,6 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 public class MarchingCubes {
 
@@ -71,9 +72,19 @@ public class MarchingCubes {
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
+//		if(event.getBlockState().getBlock() instanceof BlockAir) {
+//          if(event.getRenderLayer()==BlockRenderLayer.CUTOUT) {
+		event.setResult(Event.Result.ALLOW);
+		event.setCanceled(true);
+//			}
+//		}
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
+//		if(event.getBlockState().getBlock() instanceof BlockAir) {
+		event.setResult(Event.Result.ALLOW);
+		event.setCanceled(true);
+//		}
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
@@ -172,12 +183,6 @@ public class MarchingCubes {
 
 			final IBlockState textureColorState = state;
 			final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
-
-			//TODO it should _never_ be air
-			if (state.getBlock() == Blocks.AIR) {
-				return;
-				//				LogManager.getLogger().info(state);
-			}
 
 			final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
 
