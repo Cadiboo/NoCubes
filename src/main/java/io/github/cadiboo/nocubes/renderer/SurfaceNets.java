@@ -10,11 +10,15 @@ import io.github.cadiboo.nocubes.renderer.SurfaceNets.RenderChunkSurfaceNet.Bloc
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -271,20 +275,31 @@ public class SurfaceNets {
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
+//		if(event.getBlockState().getBlock() instanceof BlockAir) {
+//          if(event.getRenderLayer()==BlockRenderLayer.CUTOUT) {
+		event.setResult(Event.Result.ALLOW);
+		event.setCanceled(true);
+//			}
+//		}
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
+//		if(event.getBlockState().getBlock() instanceof BlockAir) {
+		event.setResult(Event.Result.ALLOW);
+		event.setCanceled(true);
+//		}
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
-		final IBlockState state = event.getBlockState();
-		if (!ModUtil.shouldSmooth(state))
+		IBlockState state = event.getBlockState();
+		if (!ModUtil.shouldRenderInState(state))
 			return;
-		final BlockPos pos = event.getBlockPos();
+		BlockPos pos = event.getBlockPos();
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
 		final ChunkCache cache = event.getChunkCache();
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
 
 		final RenderChunkSurfaceNet renderChunkSurfaceNet = surfaceNetHashMap.get(renderChunkPos);
 		if (renderChunkSurfaceNet == null)
@@ -294,10 +309,45 @@ public class SurfaceNets {
 		if (blockVerticesList == null)
 			return;
 
-		final int red = 0xFF;
-		final int green = 0xFF;
-		final int blue = 0xFF;
+		final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+		getStateAndPos:
+		for (int posY = -1; posY < 2; ++posY) {
+			for (int posZ = -1; posZ < 2; ++posZ) {
+				for (int posX = -1; posX < 2; ++posX) {
+					mutablePos.setPos(pos.getX() + posX, pos.getY() + posY, pos.getZ() + posZ);
+					final IBlockState tempState = cache.getBlockState(pos);
+
+					if (ModUtil.shouldSmooth(tempState) && (state.getBlock() != Blocks.SNOW_LAYER) && (state.getBlock() != Blocks.GRASS)) {
+						state = tempState;
+						pos = mutablePos.toImmutable();
+						if ((tempState.getBlock() == Blocks.SNOW_LAYER) || (tempState.getBlock() == Blocks.GRASS)) {
+							break getStateAndPos;
+						}
+					}
+				}
+			}
+		}
+
+		final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
+		if (quad == null) {
+			return;
+		}
+
+		final int red;
+		final int green;
+		final int blue;
 		final int alpha = 0xFF;
+
+		if (quad.hasTintIndex()) {
+			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			red = (colorMultiplier >> 16) & 255;
+			green = (colorMultiplier >> 8) & 255;
+			blue = colorMultiplier & 255;
+		} else {
+			red = 0xFF;
+			green = 0xFF;
+			blue = 0xFF;
+		}
 
 		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, event.getBlockRendererDispatcher());
 
@@ -331,14 +381,15 @@ public class SurfaceNets {
 			final Vec3 v2 = blockVertices.vertex2;
 			final Vec3 v3 = blockVertices.vertex3;
 
-			bufferBuilder.pos(v0.xCoord, v0.yCoord, v0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(v1.xCoord, v1.yCoord, v1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(v2.xCoord, v2.yCoord, v2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(v3.xCoord, v3.yCoord, v3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v0.xCoord, v0.yCoord - 1, v0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v1.xCoord, v1.yCoord - 1, v1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v2.xCoord, v2.yCoord - 1, v2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(v3.xCoord, v3.yCoord - 1, v3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 		}
 
-		event.setCanceled(wasAnythingRendered);
+		if (pos.equals(event.getBlockPos()))
+			event.setCanceled(wasAnythingRendered);
 
 	}
 
