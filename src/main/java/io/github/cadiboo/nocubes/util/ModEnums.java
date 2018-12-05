@@ -65,6 +65,10 @@ public final class ModEnums {
 
 	}
 
+	public enum EffortLevel {
+		OFF, FAST, FANCY;
+	}
+
 	/**
 	 * provides some default methods for formatting enum names
 	 *

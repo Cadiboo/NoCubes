@@ -5,8 +5,8 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets.RenderChunkSurfaceNet.BlockVertices;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
@@ -357,16 +357,10 @@ public class SurfaceNets {
 		final double maxU = sprite.getMaxU();
 		final double maxV = sprite.getMaxV();
 
-		final int lightmapSkyLight;
-		final int lightmapBlockLight;
-		if (ModConfig.shouldAproximateLighting) {
-			final int packedLightmapCoords = state.getPackedLightmapCoords(cache, pos.up());
-			lightmapSkyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-			lightmapBlockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-		} else {
-			lightmapSkyLight = 240;
-			lightmapBlockLight = 240;
-		}
+		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
+
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
 		boolean wasAnythingRendered = false;
 

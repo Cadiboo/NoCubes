@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.config;
 
+import io.github.cadiboo.nocubes.util.ModEnums.EffortLevel;
 import io.github.cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
 import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.Block;
@@ -51,8 +52,8 @@ public class ModConfig {
 	public static boolean shouldSmoothLiquids = false;
 	@LangKey(ModReference.MOD_ID + ".config.drawwireframe.comment")
 	public static boolean shouldDrawWireframe = false;
-	@LangKey(ModReference.MOD_ID + ".config.approximatelighting")
-	public static boolean shouldAproximateLighting = true;
+	@LangKey(ModReference.MOD_ID + ".config.approximatelightinglevel")
+	public static EffortLevel approximateLightingLevel = EffortLevel.FAST;
 	@LangKey(ModReference.MOD_ID + ".config.smoothableblockstates")
 	public static String[] smoothableBlockStates;
 	static {

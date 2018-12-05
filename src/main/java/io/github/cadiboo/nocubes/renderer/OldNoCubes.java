@@ -5,7 +5,7 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.BlockGrass;
@@ -63,16 +63,10 @@ public class OldNoCubes {
 		float colorGreen = 1.0F;
 		float colorBlue = 1.0F;
 
-		final int skyLight;
-		final int blockLight;
-		if (ModConfig.shouldAproximateLighting) {
-			final int packedLightmapCoords = state.getPackedLightmapCoords(cache, pos.up());
-			skyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-			blockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-		} else {
-			skyLight = 240;
-			blockLight = 240;
-		}
+		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
+
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
 		// The shadow values.
 		float shadowBottom = 0.6F;
@@ -225,10 +219,10 @@ public class OldNoCubes {
 				}
 
 				// And finally the side is going to be rendered!
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, maxV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, maxV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, minV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, minV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 			}
 

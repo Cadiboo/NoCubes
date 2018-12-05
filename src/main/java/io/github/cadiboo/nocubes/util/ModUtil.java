@@ -15,6 +15,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static net.minecraft.util.EnumFacing.DOWN;
@@ -124,6 +125,42 @@ public class ModUtil {
 			return null;
 		}
 
+	}
+
+	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {
+
+		switch (ModConfig.approximateLightingLevel) {
+			default:
+			case OFF:
+				return new LightmapInfo(240, 240);
+			case FAST:
+				final int FASTpackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				return new LightmapInfo(
+						ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords),
+						ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords)
+				);
+			case FANCY:
+				final int[] skyLightBrightnesses = new int[EnumFacing.VALUES.length + 1];
+				final int[] blockLightBrightnesses = new int[EnumFacing.VALUES.length + 1];
+
+				for (EnumFacing facing : EnumFacing.VALUES) {
+					final BlockPos brightnessPos = pos.offset(facing);
+					final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
+
+					skyLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+					blockLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+				}
+
+				final int packedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+
+				skyLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+				blockLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+
+				return new LightmapInfo(
+						(int) Arrays.stream(skyLightBrightnesses).average().getAsDouble(),
+						(int) Arrays.stream(blockLightBrightnesses).average().getAsDouble()
+				);
+		}
 	}
 
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
