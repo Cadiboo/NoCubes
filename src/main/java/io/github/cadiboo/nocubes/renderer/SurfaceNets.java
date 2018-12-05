@@ -5,12 +5,6 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
 
 public class SurfaceNets {
 
@@ -50,19 +44,19 @@ public class SurfaceNets {
 
 	}
 
-	public static void renderPre(final RebuildChunkPreEvent rebuildChunkPreEvent) {
+	public static void renderPre(final RebuildChunkPreEvent event) {
 	}
 
-	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent rebuildChunkBlockRenderInLayerEvent) {
+	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 	}
 
-	public static void renderType(final RebuildChunkBlockRenderInTypeEvent rebuildChunkBlockRenderInTypeEvent) {
+	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 	}
 
-	public static void renderBlock(final RebuildChunkBlockEvent rebuildChunkBlockEvent) {
+	public static void renderBlock(final RebuildChunkBlockEvent event) {
 	}
 
-	public static void renderPost(final RebuildChunkPostEvent rebuildChunkPostEvent) {
+	public static void renderPost(final RebuildChunkPostEvent event) {
 	}
 
 }
