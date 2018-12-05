@@ -2,11 +2,13 @@ package io.github.cadiboo.nocubes.renderer;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.block.BlockGrass;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
@@ -22,7 +24,10 @@ public class OldNoCubes {
 			return false;
 		}
 
-		if (state == Blocks.DIRT.getDefaultState()) state = Blocks.GRASS.getDefaultState();
+		if(state.getBlock() instanceof BlockGrass) {
+//			state = Blocks.GRASS.getDefaultState();
+			state = Blocks.STONE.getDefaultState();
+		}
 
 		final int x = pos.getX();
 		final int y = pos.getY();
@@ -30,10 +35,15 @@ public class OldNoCubes {
 
 		// The basic block color.
 //		int color = block.colorMultiplier(world, x, y, z);
-		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
-		float colorRed = (float) (color >> 16 & 255) / 255.0F;
-		float colorGreen = (float) (color >> 8 & 255) / 255.0F;
-		float colorBlue = (float) (color & 255) / 255.0F;
+//		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+//		float colorRed = (float) (color >> 16 & 255) / 255.0F;
+//		float colorGreen = (float) (color >> 8 & 255) / 255.0F;
+//		float colorBlue = (float) (color & 255) / 255.0F;
+
+		float colorRed = 1.0F;
+		float colorGreen = 1.0F;
+		float colorBlue = 1.0F;
+
 
 		final int skyLight;
 		final int blockLight;
@@ -61,8 +71,7 @@ public class OldNoCubes {
 //			icon = renderer.overrideBlockTexture;
 
 		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
-//		final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
-
+//		final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
 		if (sprite == null) {
 			return false;
 		}
@@ -78,7 +87,7 @@ public class OldNoCubes {
 		final double maxU = sprite.getMaxU();
 		final double maxV = sprite.getMaxV();
 
-		// The 8 points that make the block.
+		// The 8 points (corners) that make the block.
 		Vec3[] points = new Vec3[8];
 		points[0] = new Vec3(0.0D, 0.0D, 0.0D);
 		points[1] = new Vec3(1.0D, 0.0D, 0.0D);
@@ -111,122 +120,103 @@ public class OldNoCubes {
 			}
 		}
 
-		// Loop through all the sides of the block:
-		for (int side = 0; side < 6; side++) {
+		boolean wasAnythingRendered = false;
 
-			// The coordinates the side is facing to.
-			int facingX = x;
-			int facingY = y;
-			int facingZ = z;
-			if (side == 0) //down -y
-				facingY--;
-			else if (side == 1) //up +y
-				facingY++;
-//			else if (side == 2)
-//				facingZ--;
-//			else if (side == 3)
-//				facingX++;
-//			else if (side == 4)
-//				facingZ++;
-//			else if (side == 5)
-//				facingX--;
-			else if (side == 2) //north?
-				facingX--;
-			else if (side == 3) //south? east?
-				facingX++;
-			else if (side == 4) //west?
-				facingZ++;
-			else if (side == 5) //east?
-				facingX--;
+		// Loop through all the sides of the block:
+		for (EnumFacing side : EnumFacing.VALUES) {
 
 			// Check if the side should be rendered:
 			// This prevents a lot of lag!
-//			if (renderer.renderAllFaces || block.shouldSideBeRendered(world, facingX, facingY, facingZ, side)) {
-			if (state.shouldSideBeRendered(cache, new BlockPos(facingX, facingY, facingZ), EnumFacing.VALUES[side])) {
+			if (state.shouldSideBeRendered(cache, pos, side)) {
+				wasAnythingRendered = true;
+
 				// When you lower this value the block will become darker.
 				float colorFactor = 1.0F;
 
-				// This are the vertices used for the side.
+				// These are the vertices used for the side.
 				Vec3 vertex0 = null;
 				Vec3 vertex1 = null;
 				Vec3 vertex2 = null;
 				Vec3 vertex3 = null;
-				if (side == 0) {
-					// Side 0 is the bottom side.
-					colorFactor = shadowBottom;
-					vertex0 = points[0];
-					vertex1 = points[1];
-					vertex2 = points[2];
-					vertex3 = points[3];
 
-				} else if (side == 1) {
-					// Side 1 is the top side.
-					colorFactor = shadowTop;
-					vertex0 = points[7];
-					vertex1 = points[6];
-					vertex2 = points[5];
-					vertex3 = points[4];
+				//to find the vertices for a side get the points in this order
+				// 1➡️2
+				//   ⬇️
+				// 4⬅️3
 
-				} else if (side == 2) {
-					colorFactor = shadowLeft;
-					vertex0 = points[1];
-					vertex1 = points[0];
-					vertex2 = points[4];
-					vertex3 = points[5];
+				// to find the vertices for the opposite side
+				// just get the points with the opposite axis for the side (for example east is +x and west is -x)
+				// and then flip the order
 
-				} else if (side == 3) {
-					colorFactor = shadowRight;
-					vertex0 = points[2];
-					vertex1 = points[1];
-					vertex2 = points[5];
-					vertex3 = points[6];
-				} else if (side == 4) {
-					colorFactor = shadowLeft;
-					vertex0 = points[3];
-					vertex1 = points[2];
-					vertex2 = points[6];
-					vertex3 = points[7];
-				} else if (side == 5) {
-					colorFactor = shadowRight;
-					vertex0 = points[0];
-					vertex1 = points[3];
-					vertex2 = points[7];
-					vertex3 = points[4];
+				//example
+				// west:
+				// (0,0,0) (0,0,1)
+				// (0,1,1) (0,1,0)
+
+				// to get east you add 1 to the x coord for every point (east is +x and west is -x)
+				// (1,0,0) (1,0,1)
+				// (1,1,1) (1,1,0)
+
+				// then flip the order (1234 -> 4321)
+				// (1,1,0) (1,1,1)
+				// (1,0,1) (1,0,0)
+
+				switch (side) {
+					case DOWN:
+						colorFactor = shadowBottom;
+						vertex0 = points[0];
+						vertex1 = points[1];
+						vertex2 = points[2];
+						vertex3 = points[3];
+						break;
+					case UP:
+						colorFactor = shadowTop;
+						vertex0 = points[7];
+						vertex1 = points[6];
+						vertex2 = points[5];
+						vertex3 = points[4];
+						break;
+					case NORTH:
+						colorFactor = shadowLeft;
+						vertex0 = points[1];
+						vertex1 = points[0];
+						vertex2 = points[4];
+						vertex3 = points[5];
+						break;
+					case SOUTH:
+						colorFactor = shadowRight;
+						vertex0 = points[6];
+						vertex1 = points[7];
+						vertex2 = points[3];
+						vertex3 = points[2];
+						break;
+					case WEST:
+						colorFactor = shadowLeft;
+						vertex0 = points[0];
+						vertex1 = points[3];
+						vertex2 = points[7];
+						vertex3 = points[4];
+						break;
+					case EAST:
+						colorFactor = shadowRight;
+						vertex0 = points[5];
+						vertex1 = points[6];
+						vertex2 = points[2];
+						vertex3 = points[1];
+						break;
 				}
 
-//				// Here is the brightness of the block being set.
-//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
-//				// Here is the color of the block being set.
-//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen,
-//						shadowTop * colorFactor * colorBlue);
-//
-//				// And finally the side is going to be rendered!
-//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
-//				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
-//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
-//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
-
-//				// Here is the brightness of the block being set.
-//				tessellator.setBrightness(block.getMixedBrightnessForBlock(world, facingX, facingY, facingZ));
-//				// Here is the color of the block being set.
-//				tessellator.setColorOpaque_F(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen,
-//						shadowTop * colorFactor * colorBlue);
-//
-//				// And finally the side is going to be rendered!
-//				tessellator.addVertexWithUV(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord, minU, maxV);
-//				tessellator.addVertexWithUV(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord, maxU, maxV);
-//				tessellator.addVertexWithUV(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord, maxU, minV);
-//				tessellator.addVertexWithUV(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord, minU, minV);
-
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, maxV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, maxV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(maxU, minV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(colorRed, colorGreen, colorBlue, 0xFF).tex(minU, minV).lightmap(skyLight, blockLight).endVertex();
+				// And finally the side is going to be rendered!
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, maxV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, maxV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, minV).lightmap(skyLight, blockLight).endVertex();
+				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, minV).lightmap(skyLight, blockLight).endVertex();
 
 			}
+
 		}
 
-		return true;
+		return wasAnythingRendered;
 
 	}
 
