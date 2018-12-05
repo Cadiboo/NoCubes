@@ -28,7 +28,7 @@ public class SurfaceNets {
 
 	public static final int[] CUBE_EDGES = new int[24];
 	public static final int[] EDGE_TABLE = new int[256];
-
+	public static final HashMap<BlockPos, RenderChunkSurfaceNet> surfaceNetHashMap = new HashMap<>();
 	//Precompute edge table, like Paul Bourke does.
 	// This saves a bit of time when computing the centroid of each boundary cell
 	static {
@@ -61,8 +61,6 @@ public class SurfaceNets {
 		}
 
 	}
-
-	public static final HashMap<BlockPos, RenderChunkSurfaceNet> surfaceNetHashMap = new HashMap<>();
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
