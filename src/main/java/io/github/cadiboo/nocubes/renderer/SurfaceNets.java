@@ -340,10 +340,11 @@ public class SurfaceNets {
 		blue = color & 255;
 		final int alpha = color >> 24 & 255;
 
-		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, event.getBlockRendererDispatcher());
+		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
 
-		if (sprite == null)
+		if (sprite == null) {
 			return;
+		}
 
 		final double minU = sprite.getMinU();
 		final double minV = sprite.getMinV();
