@@ -116,9 +116,9 @@ public class ModUtil {
 
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
-		if (true) {
-			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
-		}
+//		if (true) {
+//			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
+//		}
 
 		try {
 			return getQuad(state, pos, blockRendererDispatcher).getSprite();
