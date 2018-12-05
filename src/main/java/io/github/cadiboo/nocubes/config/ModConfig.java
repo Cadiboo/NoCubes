@@ -38,7 +38,7 @@ import java.util.HashSet;
 public class ModConfig {
 
 	@Config.Ignore
-	private static final HashSet<IBlockState> FAST_SMOOTHABLE_BLOCK_STATES = new HashSet<>();
+	private static final HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
 	@LangKey(ModReference.MOD_ID + ".config.enabled")
 	public static boolean isEnabled = true;
 	@LangKey(ModReference.MOD_ID + ".config.algorithm")
@@ -103,7 +103,7 @@ public class ModConfig {
 		final ArrayList<String> tempSmoothableBlockStates = new ArrayList<>();
 
 		for (IBlockState state : defaultSmoothableBlockStates) {
-			FAST_SMOOTHABLE_BLOCK_STATES.add(state);
+			SMOOTHABLE_BLOCK_STATES_CACHE.add(state);
 			tempSmoothableBlockStates.add(state.toString());
 		}
 
@@ -111,9 +111,8 @@ public class ModConfig {
 
 	}
 
-	public static HashSet<IBlockState> getFastSmoothableBlockStates() {
-
-		return FAST_SMOOTHABLE_BLOCK_STATES;
+	public static HashSet<IBlockState> getSmoothableBlockStatesCache() {
+		return SMOOTHABLE_BLOCK_STATES_CACHE;
 	}
 
 	@Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
@@ -136,7 +135,7 @@ public class ModConfig {
 					}
 				}
 
-				FAST_SMOOTHABLE_BLOCK_STATES.clear();
+				SMOOTHABLE_BLOCK_STATES_CACHE.clear();
 
 				for (String blockStateString : smoothableBlockStates) {
 					final String[] splitBlockStateString = StringUtils.split(blockStateString, "[");
@@ -150,7 +149,7 @@ public class ModConfig {
 					final Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockString));
 
 					try {
-						FAST_SMOOTHABLE_BLOCK_STATES.add(CommandBase.convertArgToBlockState(block, stateString));
+						SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
 					} catch (NumberInvalidException | InvalidBlockStateException e) {
 						e.printStackTrace();
 					}
