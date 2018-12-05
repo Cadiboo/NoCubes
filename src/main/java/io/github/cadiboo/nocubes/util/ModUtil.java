@@ -2,10 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.renderer.OldNoCubes;
-import io.github.cadiboo.nocubes.renderer.SurfaceNets;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -78,7 +75,6 @@ public class ModUtil {
 		return density;
 	}
 
-
 	public static void renderBlockMarchingCubes(final RebuildChunkBlockEvent event) {
 
 		// Marching Cubes is an algorithm for rendering isosurfaces in volumetric data.
@@ -97,12 +93,7 @@ public class ModUtil {
 
 	}
 
-	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-
-//		if (true) {
-//			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
-//		}
-
+	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 		try {
 			final long posRand = MathHelper.getPositionRandom(pos);
 
@@ -115,10 +106,24 @@ public class ModUtil {
 				quads = model.getQuads(state, facing, posRand);
 			}
 			final BakedQuad quad = quads.get(0);
-			return quad.getSprite();
+			return quad;
 		} catch (final Exception e) {
 			return null;
 		}
+	}
+
+	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+
+//		if (true) {
+//			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
+//		}
+
+		try {
+			return getQuad(state, pos, blockRendererDispatcher).getSprite();
+		} catch (final Exception e) {
+			return null;
+		}
+
 	}
 
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {

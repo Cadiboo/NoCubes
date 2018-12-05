@@ -5,13 +5,26 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+
+import java.time.chrono.MinguoChronology;
+import java.util.List;
 
 public class SurfaceNets {
 
@@ -63,165 +76,252 @@ public class SurfaceNets {
 
 		final ChunkCache cache = event.getChunkCache();
 
-		//the size of a render chunk (16x16x16)
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
+		// dims: "A 3D vector of integers representing the resolution of the isosurface". Resolution in our context means the size of a render chunk (16x16x16)
 		int[] dims = new int[]{16, 16, 16};
+		//startPos
 		int[] c = new int[]{cx, cy, cz};
+		//currentPos
 		int[] x = new int[3];
+		//edgesIThink
 		int[] r = new int[]{1, dims[0] + 3, (dims[0] + 3) * (dims[1] + 3)};
 		float[] grid = new float[8];
 		float[][] buffer = new float[r[2] * 2][3];
 		int bufno = 1;
 
-		for (x[2] = 0; x[2] < dims[2] + 1; r[2] = -r[2]) {
-			int m = 1 + (dims[0] + 3) * (1 + bufno * (dims[1] + 3));
+		// "Resize buffer if necessary" is what mikolalysenko said, but Click_Me seems to have removed this code. This is probably because the buffer should never (and actually
+		// can't be in java) be resized
 
-			for (x[1] = 0; x[1] < dims[1] + 1; m += 2) {
-				for (x[0] = 0; x[0] < dims[0] + 1; ++m) {
+		// March over the voxel grid
+		for (x[2] = 0; x[2] < (dims[2] + 1); r[2] = -r[2], ++x[2], bufno ^= 1) {
+
+			// m is the pointer into the buffer we are going to use.
+			// "This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(" is what mikolalysenko said, it
+			// obviously doesn't apply here
+			// The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
+			int m = 1 + ((dims[0] + 3) * (1 + (bufno * (dims[1] + 3))));
+
+			for (x[1] = 0; x[1] < (dims[1] + 1); ++x[1], m += 2) {
+				for (x[0] = 0; x[0] < (dims[0] + 1); ++x[0], ++m) {
+
+					// Read in 8 field values around this vertex and store them in an array
+					// Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
 					int mask = 0;
 					int g = 0;
 
-					for (int k = 0; k < 2; ++k) {
-						for (int j = 0; j < 2; ++j) {
-							for (int i = 0; i < 2; ++g) {
-								float p = getBlockDensity(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k, cache);
+					for (int posZ = 0; posZ < 2; ++posZ) {
+						for (int posY = 0; posY < 2; ++posY) {
+							for (int posX = 0; posX < 2; ++g) {
+								// TODO: mutableblockpos?
+								// final float p = potential.apply(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k), cache);
+
+								final float p = ModUtil.getBlockDensity(new BlockPos(c[0] + x[0] + posX, c[1] + x[1] + posY, c[2] + x[2] + posZ), cache);
 								grid[g] = p;
 								mask |= p > 0.0F ? 1 << g : 0;
-								++i;
+								++posX;
+
 							}
 						}
 					}
 
-					if (mask != 0 && mask != 255) {
-						Block block = Blocks.AIR;
-						int meta = 0;
+					// Check for early termination if cell does not intersect boundary
+					if ((mask == 0) || (mask == 0xff)) {
+						continue;
+					}
 
-						label368:
-						for (int k = -1; k < 2; ++k) {
-							for (int j = -1; j < 2; ++j) {
-								for (int i = -1; i < 2; ++i) {
-//									Block b = cache.getBlock(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
-									IBlockState state = cache.getBlockState(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
-									if (Main.shouldSmooth(b) && block != Blocks.SNOW_LAYER && block != Blocks.GRASS) {
-										block = b;
-										meta = cache.getBlockMetadata(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
-										if (b == Blocks.snow_layer || b == Blocks.grass) {
-											break label368;
-										}
-									}
-								}
-							}
-						}
+					IBlockState state = Blocks.AIR.getDefaultState();
 
-						int[] br = new int[]{c[0] + x[0], c[1] + x[1] + 1, c[2] + x[2]};
+					final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+					getStateAndPos: for (int posY = -1; posY < 2; ++posY) {
+						for (int posZ = -1; posZ < 2; ++posZ) {
+							for (int posX = -1; posX < 2; ++posX) {
+								pos.setPos(c[0] + x[0] + posX, c[1] + x[1] + posY, c[2] + x[2] + posZ);
+								final IBlockState tempState = cache.getBlockState(pos);
 
-						label594:
-						for (int k = -1; k < 2; ++k) {
-							for (int j = -2; j < 3; ++j) {
-								for (int i = -1; i < 2; ++i) {
-									Block b = cache.getBlock(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
-									if (!b.isOpaqueCube()) {
-										br[0] = c[0] + x[0] + i;
-										br[1] = c[1] + x[1] + k;
-										br[2] = c[2] + x[2] + j;
-										break label594;
-									}
-								}
-							}
-						}
+								// if (shouldSmooth(tempState) && (state.getBlock() != Blocks.GRASS))
+								// {
+								// state = tempState;
+								// if ((tempState.getBlock() == Blocks.GRASS))
+								// {
+								// break getStateAndPos;
+								// }
+								// }
 
-						double tu0 = (double) icon.getMinU();
-						double tu1 = (double) icon.getMaxU();
-						double tv0 = (double) icon.getMinV();
-						double tv1 = (double) icon.getMaxV();
-						int edgemask = edge_table[mask];
-						int ecount = 0;
-						float[] v = new float[]{0.0F, 0.0F, 0.0F};
-
-						for (int i = 0; i < 12; ++i) {
-							if ((edgemask & 1 << i) != 0) {
-								++ecount;
-								int e0 = cube_edges[i << 1];
-								int e1 = cube_edges[(i << 1) + 1];
-								float g0 = grid[e0];
-								float g1 = grid[e1];
-								float t = g0 - g1;
-								if (Math.abs(t) > 0.0F) {
-									t = g0 / t;
-									int j = 0;
-
-									for (int k = 1; j < 3; k <<= 1) {
-										int a = e0 & k;
-										int b = e1 & k;
-										if (a != b) {
-											v[j] += a != 0 ? 1.0F - t : t;
-										} else {
-											v[j] += a != 0 ? 1.0F : 0.0F;
-										}
-
-										++j;
-									}
-								}
-							}
-						}
-
-						float s = 1.0F / (float) ecount;
-
-						for (int i = 0; i < 3; ++i) {
-							v[i] = (float) (c[i] + x[i]) + s * v[i];
-						}
-
-						int tx = x[0] == 16 ? 0 : x[0];
-						int ty = x[1] == 16 ? 0 : x[1];
-						int tz = x[2] == 16 ? 0 : x[2];
-						long i1 = (long) (tx * 3129871) ^ (long) tz * 116129781L ^ (long) ty;
-						i1 = i1 * i1 * 42317861L + i1 * 11L;
-						v[0] = (float) ((double) v[0] - ((double) ((float) (i1 >> 16 & 15L) / 15.0F) - 0.5D) * 0.2D);
-						v[1] = (float) ((double) v[1] - ((double) ((float) (i1 >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D);
-						v[2] = (float) ((double) v[2] - ((double) ((float) (i1 >> 24 & 15L) / 15.0F) - 0.5D) * 0.2D);
-						buffer[m] = v;
-
-						for (int i = 0; i < 3; ++i) {
-							if ((edgemask & 1 << i) != 0) {
-								int iu = (i + 1) % 3;
-								int iv = (i + 2) % 3;
-								if (x[iu] != 0 && x[iv] != 0) {
-									int du = r[iu];
-									int dv = r[iv];
-									tess.setBrightness(block.getMixedBrightnessForBlock(Minecraft.getMinecraft().theWorld, br[0], br[1], br[2]));
-									tess.setColorOpaque_I(block.colorMultiplier(cache, c[0] + x[0], c[1] + x[1], c[2] + x[2]));
-									float[] v0 = buffer[m];
-									float[] v1 = buffer[m - du];
-									float[] v2 = buffer[m - du - dv];
-									float[] v3 = buffer[m - dv];
-									if ((mask & 1) != 0) {
-										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
-										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu1, tv1);
-										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
-										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu0, tv0);
-									} else {
-										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
-										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu1, tv1);
-										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
-										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu0, tv0);
+								if (ModUtil.shouldSmooth(tempState) && (state.getBlock() != Blocks.SNOW_LAYER) && (state.getBlock() != Blocks.GRASS)) {
+									state = tempState;
+									if ((tempState.getBlock() == Blocks.SNOW_LAYER) || (tempState.getBlock() == Blocks.GRASS)) {
+										break getStateAndPos;
 									}
 								}
 							}
 						}
 					}
 
-					++x[0];
+					final int[] brightnessPos = new int[] { c[0] + x[0], c[1] + x[1] + 1, c[2] + x[2] };
+
+					if (ModConfig.shouldAproximateLighting) {
+						getBrightnessPos: for (int posY = -1; posY < 2; ++posY) {
+							for (int posZ = -2; posZ < 3; ++posZ) {
+								for (int posX = -1; posX < 2; ++posX) {
+									// TODO: mutableblockpos?
+									final IBlockState tempState = cache.getBlockState(new BlockPos(c[0] + x[0] + posX, c[1] + x[1] + posY, c[2] + x[2] + posZ));
+									if (!tempState.isOpaqueCube()) {
+										brightnessPos[0] = c[0] + x[0] + posX;
+										brightnessPos[1] = c[1] + x[1] + posY;
+										brightnessPos[2] = c[2] + x[2] + posZ;
+										break getBrightnessPos;
+									}
+								}
+							}
+						}
+					}
+
+					// Sum up edge intersections
+					final int edge_mask = EDGE_TABLE[mask];
+					int e_count = 0;
+					final float[] v = new float[] { 0.0F, 0.0F, 0.0F };
+
+					// For every edge of the cube...
+					for (int i = 0; i < 12; ++i) {
+
+						// Use edge mask to check if it is crossed
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+
+						// If it did, increment number of edge crossings
+						++e_count;
+
+						// Now find the point of intersection
+						final int e0 = CUBE_EDGES[i << 1]; // Unpack vertices
+						final int e1 = CUBE_EDGES[(i << 1) + 1];
+						final float g0 = grid[e0]; // Unpack grid values
+						final float g1 = grid[e1];
+						float t = g0 - g1; // Compute point of intersection
+						if (Math.abs(t) > 0.0F) {
+							t = g0 / t;
+							int j = 0;
+
+							// Interpolate vertices and add up intersections (this can be done without multiplying)
+							for (int k = 1; j < 3; k <<= 1) {
+								final int a = e0 & k;
+								final int b = e1 & k;
+								if (a != b) {
+									v[j] += a != 0 ? 1.0F - t : t;
+								} else {
+									v[j] += a != 0 ? 1.0F : 0.0F;
+								}
+
+								++j;
+							}
+
+						}
+					}
+
+					// Now we just average the edge intersections and add them to coordinate
+					final float s = 1.0F / e_count;
+					for (int i = 0; i < 3; ++i) {
+						v[i] = c[i] + x[i] + (s * v[i]);
+					}
+
+					final int tx = x[0] == 16 ? 0 : x[0];
+					final int ty = x[1] == 16 ? 0 : x[1];
+					final int tz = x[2] == 16 ? 0 : x[2];
+					long i1 = (tx * 3129871) ^ (tz * 116129781L) ^ ty;
+					i1 = (i1 * i1 * 42317861L) + (i1 * 11L);
+					v[0] = (float) (v[0] - (((((i1 >> 16) & 15L) / 15.0F) - 0.5D) * 0.2D));
+					v[1] = (float) (v[1] - (((((i1 >> 20) & 15L) / 15.0F) - 1.0D) * 0.2D));
+					v[2] = (float) (v[2] - (((((i1 >> 24) & 15L) / 15.0F) - 0.5D) * 0.2D));
+
+					// "Add vertex to buffer, store pointer to vertex index in buffer" is what mikolalysenko said, but Click_Me seems to have changed something
+
+					buffer[m] = v;
+
+					final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
+					if (quad == null) {
+						continue;
+					}
+
+					final TextureAtlasSprite sprite = quad.getSprite();
+					if (sprite == null) {
+						continue;
+					}
+
+					final float redFloat;
+					final float greenFloat;
+					final float blueFloat;
+
+					if (quad.hasTintIndex()) {
+						final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+						redFloat = ((colorMultiplier >> 16) & 255) / 255.0F;
+						greenFloat = ((colorMultiplier >> 8) & 255) / 255.0F;
+						blueFloat = (colorMultiplier & 255) / 255.0F;
+					} else {
+						redFloat = 1;
+						greenFloat = 1;
+						blueFloat = 1;
+					}
+
+					final int red = (int) (0xFF * redFloat);
+					final int green = (int) (0xFF * greenFloat);
+					final int blue = (int) (0xFF * blueFloat);
+					final int alpha = 0xFF;
+					final double minU = sprite.getMinU();
+					final double maxU = sprite.getMaxU();
+					final double minV = sprite.getMinV();
+					final double maxV = sprite.getMaxV();
+
+					final BlockPos brightnessBlockPos = new BlockPos(brightnessPos[0], brightnessPos[1], brightnessPos[2]);
+					final IBlockState brightnessState = cache.getBlockState(brightnessBlockPos);
+
+					final int brightness = brightnessState.getPackedLightmapCoords(cache, brightnessBlockPos);
+					final int lightmapSkyLight = (brightness >> 16) & 65535;
+					final int lightmapBlockLight = brightness & 65535;
+
+					// Now we need to add faces together, to do this we just loop over 3 basis components
+					for (int i = 0; i < 3; ++i) {
+						// The first three entries of the edge_mask count the crossings along the edge
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+
+						// i = axes we are point along. iu, iv = orthogonal axes
+						final int iu = (i + 1) % 3;
+						final int iv = (i + 2) % 3;
+
+						// If we are on a boundary, skip it
+						if ((x[iu] == 0) || (x[iv] == 0)) {
+							continue;
+						}
+
+						// Otherwise, look up adjacent edges in buffer
+						final int du = r[iu];
+						final int dv = r[iv];
+
+						final float[] v0 = buffer[m];
+						final float[] v1 = buffer[m - du];
+						final float[] v2 = buffer[m - du - dv];
+						final float[] v3 = buffer[m - dv];
+
+						// Remember to flip orientation depending on the sign of the corner.
+						if ((mask & 1) != 0) {
+							bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						} else {
+							bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						}
+					}
+
 				}
 
-				++x[1];
 			}
-
-			++x[2];
-			bufno ^= 1;
 		}
-	}
-
-	private static float getBlockDensity(int x, int y, int z, ChunkCacheWrapper cache) {
-		return ModUtil.getBlockDensity(new BlockPos(x, y, z), cache.wrappedCache);
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
