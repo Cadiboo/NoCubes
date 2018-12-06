@@ -1,3 +1,20 @@
 {
-	
+	"homepage": "https://cadiboo.github.io/projects/nocubes/",
+	"promos": {
+		"1.12.2-latest": "0.0.0-alpha11",
+		"1.12.2-recommended": "0.0.0-alpha11"
+	},
+	"1.12.2": {
+		"0.0.0-alpha11": "Cadiboo: Added update json to mod",
+		"0.0.0-alpha10": "Cadiboo: Optimise imports & Reformat code\nCadiboo: Fix lang & and add lang for new stuff\nCadiboo: Add IsosurfaceLevel, refactoring, formatting, removed unused code and fixed a pretty stupid bad bug involving vertex y values\nCadiboo: First working surface nets\nCadiboo: Small optimisations & code style\nCadiboo: Quad caching and surface nets 2 & 3",
+		"0.0.0-alpha9": "Cadiboo: Added surface nets OOP algorithm (borked)\nCadiboo: Tweaked OldNoCubes algorithm\nCadiboo: Changed BlockLight in FAST from 240 to 0",
+		"0.0.0-alpha8": "Cadiboo: Update group\nCadiboo: fix lighting bug\nCadiboo: lightmap, bugs & formatting\nCadiboo: fixed the glitch with world holes in MarchingCubes\nCadiboo: Formatting",
+		"0.0.0-alpha7": "Cadiboo: Update MarchingCubes\nCadiboo: Update OldNoCubes\nCadiboo: Update SurfaceNets\nCadiboo: Refactoring and Imports\nCadiboo: renamed FAST_SMOOTHABLE_BLOCK_STATES to SMOOTHABLE_BLOCK_STATES_CACHE\nCadiboo: changed = assignment to |= assignment\nCadiboo: fixed vertices\nCadiboo: Removed unused code",
+		"0.0.0-alpha6": "Cadiboo: Added old NoCubes render algorithm from 0.3\nCadiboo: Repackage to reflect web presence\nCadiboo: Remove RenderType and change lambda to double colon\nCadiboo: Removed smooth liquids\nCadiboo: Update LICENSE",
+		"0.0.0-alpha5": "Cadiboo: Fixed a couple bugs:\n\tFixed bug in coremod that was being patched -> removed patch from here\n\tAdded smooth liquids. Then commented it out",
+		"0.0.0-alpha4": "Cadiboo: Almost properly works",
+		"0.0.0-alpha3": "Cadiboo: added approximateLighting option from config",
+		"0.0.0-alpha2": "Cadiboo: Fixed performance issues\nCadiboo: Fixed broken Config internationalisation\nCadiboo: Changed isosurface level from 0.5 to 1.0",
+		"0.0.0-alpha1": "Cadiboo: Nothing works, It lags the game amazingly (20 seconds per chunk render) but its a good starting point"
+	}
 }
