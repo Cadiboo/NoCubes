@@ -157,6 +157,7 @@ public class SurfaceNets5 {
 						}
 
 						float s = 1.0F / (float) ecount;
+						// this looks like its the problem
 						for (int i = 0; i < 3; ++i) {
 							v[i] = (float) (c[i] + x[i]) + s * v[i];
 						}
