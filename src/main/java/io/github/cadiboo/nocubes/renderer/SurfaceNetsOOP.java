@@ -25,10 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class SurfaceNetsOOP {
+import static io.github.cadiboo.nocubes.renderer.SurfaceNets.CUBE_EDGES;
+import static io.github.cadiboo.nocubes.renderer.SurfaceNets.EDGE_TABLE;
 
-	public static final int[] CUBE_EDGES = SurfaceNets.CUBE_EDGES;
-	public static final int[] EDGE_TABLE = SurfaceNets.EDGE_TABLE;
+public class SurfaceNetsOOP {
 
 	public static volatile HashMap<BlockPos, SurfaceNet> posSurfaceNetHashMap = new HashMap<>();
 
