@@ -52,22 +52,6 @@ import static io.github.cadiboo.nocubes.util.ModReference.Version.VERSION;
 )
 public class NoCubes {
 
-	// TODO list:
-	// lighting from MineAndCraft12
-	// user changeable density function
-	// a shortcut key to toggle the mod on and off for building
-	// cull facing - @Eddie "More bugs" "sometimes the bottom-most log on trees doesn't appear"
-	// liquid smoothing OFF FAST FANCY
-	// Surface Nets BLOCK method
-	// "I found a hole in a mountain..."
-	// "I noticed that snow layers is rendered as a full block..." "I need to do some stuff with bounding boxes"
-	// "btw the grass has some lightning issues" "Ill add an option to turn off aproximate lighting" "I'll do smooth(er) lighting soon" "Vanilla oil?"
-	// "I'm standing in midair..." "Just stack like 10 blocks and you have an invisible border" "if (density < 10) or something"
-	// "Sandstone villages are looking intresting..."
-	// Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
-	// Better algorithms :D
-	// Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting OR implement smooth lighting
-
 	// vrackfall, why did you disapear? you got SO FAR and all your work is just down the drain
 
 	// https://www.reddit.com/r/VoxelGameDev/comments/5amgtz/is_marching_surface_nets_possible/

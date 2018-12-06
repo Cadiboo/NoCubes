@@ -316,7 +316,7 @@ public class MarchingCubes {
 				vertexList[11] = vertexInterpolation(isolevel, pointList[3], pointList[7], pointValue[3], pointValue[7]);
 			}
 
-			//TODO don't render triangle if it is completely horzontal or vetical
+			//TODO don't render triangle if it is completely horizontal or vertical
 
 			for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
 

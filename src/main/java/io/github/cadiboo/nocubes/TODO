@@ -1,0 +1,14 @@
+// TODO lighting from MineAndCraft12
+// TODO user changeable density function
+// TODO a shortcut key to toggle the mod on and off for building
+// TODO cull facing - @Eddie "More bugs" "sometimes the bottom-most log on trees doesn't appear"
+// TODO liquid smoothing OFF FAST FANCY
+// TODO Surface Nets BLOCK method
+// TODO "I found a hole in a mountain..."
+// TODO "I noticed that snow layers is rendered as a full block..." "I need to do some stuff with bounding boxes"
+// TODO "btw the grass has some lightning issues" "Ill add an option to turn off aproximate lighting" "I'll do smooth(er) lighting soon" "Vanilla oil?"
+// TODO "I'm standing in midair..." "Just stack like 10 blocks and you have an invisible border" "if (density < 10) or something"
+// TODO "Sandstone villages are looking intresting..."
+// TODO Marching Tetreheda (Might be too slow/computationally expensive of an algorithm)
+// TODO Better algorithms :D
+// TODO Use BakedQuads instead of BufferBuilder directly so that we get smooth lighting OR implement smooth lighting
