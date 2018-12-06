@@ -5,7 +5,6 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
@@ -114,7 +113,7 @@ public class SurfaceNets5 {
 						final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(currentBlockPos, cache);
 						final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 						final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
-						TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+						TextureAtlasSprite sprite = ModUtil.getSprite(state, currentBlockPos, blockRendererDispatcher);
 						final double minU = sprite.getMinU();
 						final double maxU = sprite.getMaxU();
 						final double minV = sprite.getMinV();
@@ -124,8 +123,6 @@ public class SurfaceNets5 {
 //						double tu1 = (double) sprite.getMaxU();
 //						double tv0 = (double) sprite.getMinV();
 //						double tv1 = (double) sprite.getMaxV();
-
-
 
 						int edgemask = EDGE_TABLE[mask];
 						int ecount = 0;
@@ -159,25 +156,21 @@ public class SurfaceNets5 {
 							}
 						}
 
-//						float s = 1.0F / (float) ecount;
-						float s = ModConfig.getIsosurfaceLevel() / (float) ecount;
+						float s = 1.0F / (float) ecount;
 						for (int i = 0; i < 3; ++i) {
 							v[i] = (float) (c[i] + x[i]) + s * v[i];
 						}
 
-						for (int i = 0; i < 3; ++i) {
-							v[i] = v[i] + 0.5f;
-						}
-
 						// the magic that gives everything a random offset
-//						int tx = x[0] == 16 ? 0 : x[0];
-//						int ty = x[1] == 16 ? 0 : x[1];
-//						int tz = x[2] == 16 ? 0 : x[2];
-//						long i1 = (long) (tx * 3129871) ^ (long) tz * 116129781L ^ (long) ty;
-//						i1 = i1 * i1 * 42317861L + i1 * 11L;
-//						v[0] = (float) ((double) v[0] - ((double) ((float) (i1 >> 16 & 15L) / 15.0F) - 0.5D) * 0.2D);
-//						v[1] = (float) ((double) v[1] - ((double) ((float) (i1 >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D);
-//						v[2] = (float) ((double) v[2] - ((double) ((float) (i1 >> 24 & 15L) / 15.0F) - 0.5D) * 0.2D);
+						int tx = x[0] == 16 ? 0 : x[0];
+						int ty = x[1] == 16 ? 0 : x[1];
+						int tz = x[2] == 16 ? 0 : x[2];
+						long i1 = (long) (tx * 3129871) ^ (long) tz * 116129781L ^ (long) ty;
+						i1 = i1 * i1 * 42317861L + i1 * 11L;
+						v[0] = (float) ((double) v[0] - ((double) ((float) (i1 >> 16 & 15L) / 15.0F) - 0.5D) * 0.2D);
+						v[1] = (float) ((double) v[1] - ((double) ((float) (i1 >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D);
+						v[2] = (float) ((double) v[2] - ((double) ((float) (i1 >> 24 & 15L) / 15.0F) - 0.5D) * 0.2D);
+
 						buffer[m] = v;
 
 						for (int i = 0; i < 3; ++i) {
