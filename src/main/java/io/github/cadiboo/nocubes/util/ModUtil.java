@@ -16,6 +16,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,6 +99,7 @@ public class ModUtil {
 
 	private static BakedQuad cachedQuad = null;
 
+	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
 		final long posRand = MathHelper.getPositionRandom(pos);
@@ -133,20 +135,22 @@ public class ModUtil {
 		}
 	}
 
+	@Nullable
 	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 
 //		if (true) {
 //			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
 //		}
 
-		TextureAtlasSprite sprite = null;
+		TextureAtlasSprite sprite;
 
 		try {
 			sprite = getQuad(state, pos, blockRendererDispatcher).getSprite();
 		} catch (final NullPointerException e) {
+			sprite = null;
 		}
 
-		if (sprite == null || sprite.equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) {
+		if ((sprite == null || sprite.equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) && ModConfig.cacheQuads) {
 			sprite = cachedQuad.getSprite();
 		}
 
@@ -161,32 +165,76 @@ public class ModUtil {
 			case OFF:
 				return new LightmapInfo(240, 0);
 			case FAST:
-				final int FASTpackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos.up());
+				//the block above
+				final BlockPos FAST_BrightnessPos = pos.up();
+				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
 				return new LightmapInfo(
-						ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords),
-						ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FASTpackedLightmapCoords)
+						ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
+						ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
 				);
-			case FANCY:
+			case FANCYISH:
 				final int[] skyLightBrightnesses = new int[EnumFacing.VALUES.length + 1];
 				final int[] blockLightBrightnesses = new int[EnumFacing.VALUES.length + 1];
 
+				//every neighbour
 				for (EnumFacing facing : EnumFacing.VALUES) {
 					final BlockPos brightnessPos = pos.offset(facing);
-					final int packedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
+					final int FANCY_PackedLightmapCoords = cache.getBlockState(brightnessPos).getPackedLightmapCoords(cache, brightnessPos);
 
-					skyLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-					blockLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+					skyLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCY_PackedLightmapCoords);
+					blockLightBrightnesses[facing.ordinal()] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCY_PackedLightmapCoords);
 				}
 
-				final int packedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
-
-				skyLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
-				blockLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLightmapCoords);
+				//this block
+				final int FANCY_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				skyLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCY_PackedLightmapCoords);
+				blockLightBrightnesses[EnumFacing.VALUES.length] = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCY_PackedLightmapCoords);
 
 				return new LightmapInfo(
 						(int) Arrays.stream(skyLightBrightnesses).average().getAsDouble(),
 						(int) Arrays.stream(blockLightBrightnesses).average().getAsDouble()
 				);
+			case FANCY: //credit to MineAndCraft12
+				int averageSkyLight = 0;
+				int totalBlocksCheckedForSkyLight = 0;
+
+				int averageBlockLight = 0;
+				int totalBlocksCheckedForBlockLight = 0;
+
+				//every neighbour
+				for (EnumFacing facing : EnumFacing.VALUES) {
+					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
+					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
+					final int skyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (skyLight > 0) {
+						averageSkyLight += skyLight;
+						totalBlocksCheckedForSkyLight++;
+					}
+					final int blockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (blockLight > 0) {
+						averageBlockLight += blockLight;
+						totalBlocksCheckedForBlockLight++;
+					}
+				}
+
+				//this block
+				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				final int skyLight = ModUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (skyLight > 0) {
+					averageSkyLight += skyLight;
+					totalBlocksCheckedForSkyLight++;
+				}
+				final int blockLight = ModUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (blockLight > 0) {
+					averageBlockLight += blockLight;
+					totalBlocksCheckedForBlockLight++;
+				}
+
+				return new LightmapInfo(
+						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
+						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
+				);
+
 		}
 	}
 
