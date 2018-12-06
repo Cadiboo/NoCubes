@@ -150,8 +150,12 @@ public class ModUtil {
 			sprite = null;
 		}
 
-		if ((sprite == null || sprite.equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) && ModConfig.cacheQuads) {
-			sprite = cachedQuad.getSprite();
+		if (sprite == null || sprite.equals(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite())) {
+			if (ModConfig.cacheQuads) {
+				if (cachedQuad != null) {
+					sprite = cachedQuad.getSprite();
+				}
+			}
 		}
 
 		return sprite;
