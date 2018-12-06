@@ -10,6 +10,7 @@ import io.github.cadiboo.nocubes.renderer.OldNoCubes;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets2;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets3;
+import io.github.cadiboo.nocubes.renderer.SurfaceNets4;
 import io.github.cadiboo.nocubes.renderer.SurfaceNetsOOP;
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,6 +36,8 @@ public final class ModEnums {
 		SURFACE_NETS2(SurfaceNets2::renderPre, SurfaceNets2::renderLayer, SurfaceNets2::renderType, SurfaceNets2::renderBlock, SurfaceNets2::renderPost),
 
 		SURFACE_NETS3(SurfaceNets3::renderPre, SurfaceNets3::renderLayer, SurfaceNets3::renderType, SurfaceNets3::renderBlock, SurfaceNets3::renderPost),
+
+		SURFACE_NETS4(SurfaceNets4::renderPre, SurfaceNets4::renderLayer, SurfaceNets4::renderType, SurfaceNets4::renderBlock, SurfaceNets4::renderPost),
 
 		;
 
@@ -75,7 +78,7 @@ public final class ModEnums {
 	}
 
 	public enum EffortLevel {
-		OFF, FAST, FANCY;
+		OFF, FAST, FANCYISH, FANCY;
 	}
 
 	/**
