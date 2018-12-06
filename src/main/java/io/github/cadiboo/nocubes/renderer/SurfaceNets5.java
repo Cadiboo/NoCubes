@@ -5,14 +5,17 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.init.Blocks;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 
@@ -59,47 +62,70 @@ public class SurfaceNets5 {
 
 					if (mask != 0 && mask != 255) {
 
-						Block block = Blocks.air;
-						int meta = 0;
+//						Block block = Blocks.air;
+//						int meta = 0;
+//
+//						label368:
+//						for (int k = -1; k < 2; ++k) {
+//							for (int j = -1; j < 2; ++j) {
+//								for (int i = -1; i < 2; ++i) {
+//									Block b = cache.getBlock(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
+//									if (ModUtil.shouldSmooth(b) && block != Blocks.snow_layer && block != Blocks.grass) {
+//										block = b;
+//										meta = cache.getBlockMetadata(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
+//										if (b == Blocks.snow_layer || b == Blocks.grass) {
+//											break label368;
+//										}
+//									}
+//								}
+//							}
+//						}
+//
+//						int[] br = new int[]{c[0] + x[0], c[1] + x[1] + 1, c[2] + x[2]};
+//
+//						label594:
+//						for (int k = -1; k < 2; ++k) {
+//							for (int j = -2; j < 3; ++j) {
+//								for (int i = -1; i < 2; ++i) {
+//									Block b = cache.getBlock(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
+//									if (!b.isOpaqueCube()) {
+//										br[0] = c[0] + x[0] + i;
+//										br[1] = c[1] + x[1] + k;
+//										br[2] = c[2] + x[2] + j;
+//										break label594;
+//									}
+//								}
+//							}
+//						}
 
-						label368:
-						for (int k = -1; k < 2; ++k) {
-							for (int j = -1; j < 2; ++j) {
-								for (int i = -1; i < 2; ++i) {
-									Block b = cache.getBlock(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
-									if (ModUtil.shouldSmooth(b) && block != Blocks.snow_layer && block != Blocks.grass) {
-										block = b;
-										meta = cache.getBlockMetadata(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
-										if (b == Blocks.snow_layer || b == Blocks.grass) {
-											break label368;
-										}
-									}
-								}
-							}
+						final int red = 0xFF;
+						final int green = 0xFF;
+						final int blue = 0xFF;
+						final int alpha = 0xFF;
+						final BlockPos currentBlockPos = new BlockPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
+						final IBlockState state = cache.getBlockState(currentBlockPos);
+						final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+						final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayer.ordinal());
+						if (!compiledchunk.isLayerStarted(blockRenderLayer)) {
+							compiledchunk.setLayerStarted(blockRenderLayer);
+							SurfaceNets3.RenderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
+						final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(currentBlockPos, cache);
+						final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+						final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+						TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
+						final double minU = sprite.getMinU();
+						final double maxU = sprite.getMaxU();
+						final double minV = sprite.getMinV();
+						final double maxV = sprite.getMaxV();
 
-						int[] br = new int[]{c[0] + x[0], c[1] + x[1] + 1, c[2] + x[2]};
+//						double tu0 = (double) sprite.getMinU();
+//						double tu1 = (double) sprite.getMaxU();
+//						double tv0 = (double) sprite.getMinV();
+//						double tv1 = (double) sprite.getMaxV();
 
-						label594:
-						for (int k = -1; k < 2; ++k) {
-							for (int j = -2; j < 3; ++j) {
-								for (int i = -1; i < 2; ++i) {
-									Block b = cache.getBlock(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
-									if (!b.isOpaqueCube()) {
-										br[0] = c[0] + x[0] + i;
-										br[1] = c[1] + x[1] + k;
-										br[2] = c[2] + x[2] + j;
-										break label594;
-									}
-								}
-							}
-						}
 
-						IIcon icon = renderer.getBlockIconFromSideAndMetadata(block, 1, meta);
-						double tu0 = (double) icon.getMinU();
-						double tu1 = (double) icon.getMaxU();
-						double tv0 = (double) icon.getMinV();
-						double tv1 = (double) icon.getMaxV();
+
 						int edgemask = EDGE_TABLE[mask];
 						int ecount = 0;
 						float[] v = new float[]{0.0F, 0.0F, 0.0F};
@@ -131,20 +157,23 @@ public class SurfaceNets5 {
 							}
 						}
 
-						float s = 1.0F / (float) ecount;
+//						float s = 1.0F / (float) ecount;
+
+						float s = 2f;
 
 						for (int i = 0; i < 3; ++i) {
 							v[i] = (float) (c[i] + x[i]) + s * v[i];
 						}
 
-						int tx = x[0] == 16 ? 0 : x[0];
-						int ty = x[1] == 16 ? 0 : x[1];
-						int tz = x[2] == 16 ? 0 : x[2];
-						long i1 = (long) (tx * 3129871) ^ (long) tz * 116129781L ^ (long) ty;
-						i1 = i1 * i1 * 42317861L + i1 * 11L;
-						v[0] = (float) ((double) v[0] - ((double) ((float) (i1 >> 16 & 15L) / 15.0F) - 0.5D) * 0.2D);
-						v[1] = (float) ((double) v[1] - ((double) ((float) (i1 >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D);
-						v[2] = (float) ((double) v[2] - ((double) ((float) (i1 >> 24 & 15L) / 15.0F) - 0.5D) * 0.2D);
+						// the magic that gives everything a random offset
+//						int tx = x[0] == 16 ? 0 : x[0];
+//						int ty = x[1] == 16 ? 0 : x[1];
+//						int tz = x[2] == 16 ? 0 : x[2];
+//						long i1 = (long) (tx * 3129871) ^ (long) tz * 116129781L ^ (long) ty;
+//						i1 = i1 * i1 * 42317861L + i1 * 11L;
+//						v[0] = (float) ((double) v[0] - ((double) ((float) (i1 >> 16 & 15L) / 15.0F) - 0.5D) * 0.2D);
+//						v[1] = (float) ((double) v[1] - ((double) ((float) (i1 >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D);
+//						v[2] = (float) ((double) v[2] - ((double) ((float) (i1 >> 24 & 15L) / 15.0F) - 0.5D) * 0.2D);
 						buffer[m] = v;
 
 						for (int i = 0; i < 3; ++i) {
@@ -154,23 +183,37 @@ public class SurfaceNets5 {
 								if (x[iu] != 0 && x[iv] != 0) {
 									int du = r[iu];
 									int dv = r[iv];
-									tess.setBrightness(block.getMixedBrightnessForBlock(Minecraft.getMinecraft().theWorld, br[0], br[1], br[2]));
-									tess.setColorOpaque_I(block.colorMultiplier(cache, c[0] + x[0], c[1] + x[1], c[2] + x[2]));
+//									tess.setBrightness(block.getMixedBrightnessForBlock(Minecraft.getMinecraft().theWorld, br[0], br[1], br[2]));
+//									tess.setColorOpaque_I(block.colorMultiplier(cache, c[0] + x[0], c[1] + x[1], c[2] + x[2]));
 									float[] v0 = buffer[m];
 									float[] v1 = buffer[m - du];
 									float[] v2 = buffer[m - du - dv];
 									float[] v3 = buffer[m - dv];
+//									if ((mask & 1) != 0) {
+//										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
+//										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu1, tv1);
+//										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
+//										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu0, tv0);
+//									} else {
+//										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
+//										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu1, tv1);
+//										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
+//										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu0, tv0);
+//									}
+
+									// Remember to flip orientation depending on the sign of the corner.
 									if ((mask & 1) != 0) {
-										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
-										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu1, tv1);
-										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
-										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu0, tv0);
+										bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 									} else {
-										tess.addVertexWithUV((double) v0[0], (double) v0[1], (double) v0[2], tu0, tv1);
-										tess.addVertexWithUV((double) v3[0], (double) v3[1], (double) v3[2], tu1, tv1);
-										tess.addVertexWithUV((double) v2[0], (double) v2[1], (double) v2[2], tu1, tv0);
-										tess.addVertexWithUV((double) v1[0], (double) v1[1], (double) v1[2], tu0, tv0);
+										bufferBuilder.pos(v0[0], v0[1], v0[2]).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v3[0], v3[1], v3[2]).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v2[0], v2[1], v2[2]).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+										bufferBuilder.pos(v1[0], v1[1], v1[2]).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 									}
+
 								}
 							}
 						}
