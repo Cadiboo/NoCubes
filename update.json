@@ -1,10 +1,11 @@
 {
 	"homepage": "https://cadiboo.github.io/projects/nocubes/",
 	"promos": {
-		"1.12.2-latest": "0.0.0-alpha11",
-		"1.12.2-recommended": "0.0.0-alpha11"
+		"1.12.2-latest": "0.0.0-alpha12",
+		"1.12.2-recommended": "0.0.0-alpha12"
 	},
 	"1.12.2": {
+		"0.0.0-alpha12": "Cadiboo: Surface Nets test 4\nCadiboo: Better lighting, thanks MineAndCraft12\nCadiboo: Update todos\nCadiboo: Changed to static imports",
 		"0.0.0-alpha11": "Cadiboo: Added update json to mod",
 		"0.0.0-alpha10": "Cadiboo: Optimise imports & Reformat code\nCadiboo: Fix lang & and add lang for new stuff\nCadiboo: Add IsosurfaceLevel, refactoring, formatting, removed unused code and fixed a pretty stupid bad bug involving vertex y values\nCadiboo: First working surface nets\nCadiboo: Small optimisations & code style\nCadiboo: Quad caching and surface nets 2 & 3",
 		"0.0.0-alpha9": "Cadiboo: Added surface nets OOP algorithm (borked)\nCadiboo: Tweaked OldNoCubes algorithm\nCadiboo: Changed BlockLight in FAST from 240 to 0",
