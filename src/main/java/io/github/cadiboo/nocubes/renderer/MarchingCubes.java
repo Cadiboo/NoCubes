@@ -5,6 +5,7 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -212,21 +213,22 @@ public class MarchingCubes {
 		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
-		//			int meta = cache.getBlockMetadata(fastx, fasty, fastz);
-		//			final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
-		//			final float colorRed = ((color >> 16) & 255) / 255.0F;
-		//			final float colorGreen = ((color >> 8) & 255) / 255.0F;
-		//			final float colorBlue = (color & 255) / 255.0F;
-		//			final IIcon icon = renderblocks.getBlockIconFromSideAndMetadata(state, 1, meta);
-		//			final double minU = (double) icon.func_94214_a(0.0D);
-		//			final double minV = (double) icon.func_94207_b(0.0D);
-		//			final double maxU = (double) icon.func_94214_a(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(x, 0, 6)));
-		//			final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
+//		int meta = cache.getBlockMetadata(fastx, fasty, fastz);
+//		final int color = state.colorMultiplier(cache, fastx, fasty, fastz);
+//		final float colorRed = ((color >> 16) & 255) / 255.0F;
+//		final float colorGreen = ((color >> 8) & 255) / 255.0F;
+//		final float colorBlue = (color & 255) / 255.0F;
+//		final IIcon icon = renderblocks.getBlockIconFromSideAndMetadata(state, 1, meta);
+//		final double minU = (double) icon.func_94214_a(0.0D);
+//		final double minV = (double) icon.func_94207_b(0.0D);
+//		final double maxU = (double) icon.func_94214_a(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(x, 0, 6)));
+//		final double maxV = (double) icon.func_94207_b(15.0D + (0.16666666666666666D * (double) MathHelper.clamp_int(z, 0, 6)));
 
 		int cubeIndex = 0;
-		final float isolevel = 0.5F;
-		//			final float isolevel = 1F; // gives interesting results
-		//			final float isolevel = 0.1F;
+//		final float isolevel = 0.5F;
+//		final float isolevel = 1F; // gives interesting results
+//		final float isolevel = 0.1F;
+		final float isolevel = ModConfig.getIsosurfaceLevel();
 		if (pointValue[0] < isolevel) {
 			cubeIndex |= 1;
 		}

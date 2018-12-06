@@ -5,6 +5,7 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets.RenderChunkSurfaceNet.BlockVertices;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -199,7 +200,7 @@ public class SurfaceNets {
 					}
 
 					// Now we just average the edge intersections and add them to coordinate
-					final float s = 1.0F / e_count;
+					final float s = ModConfig.getIsosurfaceLevel() / e_count;
 					for (int i = 0; i < 3; ++i) {
 						v[i] = c[i] + x[i] + (s * v[i]);
 					}

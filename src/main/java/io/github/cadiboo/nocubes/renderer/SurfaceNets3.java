@@ -89,18 +89,18 @@ public class SurfaceNets3 {
 
 					// Read in 8 field values around this vertex and store them in an array
 					// Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-					int mask = 0;
-					int g = 0;
+					int mask = 0b00000000;
+					int pointIndex = 0;
 
 					for (int z = 0; z < 2; ++z) {
 						for (int y = 0; y < 2; ++y) {
-							for (int x = 0; x < 2; ++g) {
+							for (int x = 0; x < 2; ++pointIndex) {
 								// TODO: mutableblockpos?
 								// final float p = potential.apply(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k), cache);
 
 								final float p = ModUtil.getBlockDensity(new BlockPos(startPos[0] + currentPos[0] + x, startPos[1] + currentPos[1] + y, startPos[2] + currentPos[2] + z), cache);
-								grid[g] = p;
-								mask |= p > 0.0F ? 1 << g : 0;
+								grid[pointIndex] = p;
+								mask |= p > 0.0F ? 1 << pointIndex : 0;
 								++x;
 
 							}
@@ -204,7 +204,8 @@ public class SurfaceNets3 {
 					}
 
 					// Now we just average the edge intersections and add them to coordinate
-					final float s = 1.0F / e_count;
+//					final float s = 1.0F / e_count;
+					final float s = ModConfig.getIsosurfaceLevel() / e_count;
 					for (int i = 0; i < 3; ++i) {
 						v[i] = startPos[i] + currentPos[i] + (s * v[i]);
 					}
@@ -243,7 +244,6 @@ public class SurfaceNets3 {
 						return;
 					}
 
-					final BlockPos currentBlockPos = new BlockPos(currentPos[0], currentPos[1], currentPos[2]);
 					final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 					final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayer.ordinal());
 
@@ -290,10 +290,10 @@ public class SurfaceNets3 {
 						final float[] v2 = buffer[m - du - dv];
 						final float[] v3 = buffer[m - dv];
 
-						//fix weird bug of terrain rendering 1 block too high
-						for (float[] vertex : new float[][]{v0, v1, v2, v3}) {
-							vertex[1] -= 1;
-						}
+//						//fix weird bug of terrain rendering 1 block too high
+//						for (float[] vertex : new float[][]{v0, v1, v2, v3}) {
+//							vertex[1] -= 1;
+//						}
 
 						// Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
