@@ -5,6 +5,7 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
@@ -158,9 +159,14 @@ public class SurfaceNets5 {
 							}
 						}
 
-						float s = 1.0F / (float) ecount;
+//						float s = 1.0F / (float) ecount;
+						float s = ModConfig.getIsosurfaceLevel() / (float) ecount;
 						for (int i = 0; i < 3; ++i) {
 							v[i] = (float) (c[i] + x[i]) + s * v[i];
+						}
+
+						for (int i = 0; i < 3; ++i) {
+							v[i] = v[i] + 0.5f;
 						}
 
 						// the magic that gives everything a random offset
