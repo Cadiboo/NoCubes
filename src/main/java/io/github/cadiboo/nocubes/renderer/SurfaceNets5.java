@@ -130,6 +130,7 @@ public class SurfaceNets5 {
 						int ecount = 0;
 						float[] v = new float[]{0.0F, 0.0F, 0.0F};
 
+						// the actual surface net magic
 						for (int i = 0; i < 12; ++i) {
 							if ((edgemask & 1 << i) != 0) {
 								++ecount;
@@ -157,10 +158,7 @@ public class SurfaceNets5 {
 							}
 						}
 
-//						float s = 1.0F / (float) ecount;
-
-						float s = 2f;
-
+						float s = 1.0F / (float) ecount;
 						for (int i = 0; i < 3; ++i) {
 							v[i] = (float) (c[i] + x[i]) + s * v[i];
 						}
