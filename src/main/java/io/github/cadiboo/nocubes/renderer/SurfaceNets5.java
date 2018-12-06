@@ -84,7 +84,7 @@ public class SurfaceNets5 {
 						for (int k = -1; k < 2; ++k) {
 							for (int j = -2; j < 3; ++j) {
 								for (int i = -1; i < 2; ++i) {
-									Block b = cache.getBlock(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j);
+									Block b = cache.getBlock(new BlockPos(c[0] + x[0] + i, c[1] + x[1] + k, c[2] + x[2] + j));
 									if (!b.isOpaqueCube()) {
 										br[0] = c[0] + x[0] + i;
 										br[1] = c[1] + x[1] + k;
