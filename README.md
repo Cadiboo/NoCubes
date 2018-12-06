@@ -10,6 +10,10 @@ A mod for 1.12.2 that creates a cosmetic-only curved terrain layout in Minecraft
 ## Relevant links
 - [Original NoCubes thread](http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics)
 - [Click_Me's comment about how he made 1.0](https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1883)
+- [Stuff I plan to implement or have already implemented](https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1084)
+- [Me too bro](https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1234)
+- [More stuff I plan on implementing](https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1591)
+- [Even more stuff I'm planning on implementing](https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1633)
 - [Source Theory Part 1](https://0fps.net/2012/07/10/smooth-voxel-terrain-part-1/)
 - [Source Theory Part 2](https://0fps.net/2012/07/12/smooth-voxel-terrain-part-2/)
 - [Source for permission of reverse-enginering of orphaned work by original author](http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1294958-no-cubes-1-0-realistic-graphics?comment=1861)
