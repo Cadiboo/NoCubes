@@ -14,6 +14,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.CAN_BE_DEACTIVATED;
 import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static io.github.cadiboo.nocubes.util.ModReference.UPDATE_JSON;
 import static io.github.cadiboo.nocubes.util.ModReference.Version.VERSION;
 
 /**
@@ -41,6 +42,8 @@ import static io.github.cadiboo.nocubes.util.ModReference.Version.VERSION;
 		canBeDeactivated = CAN_BE_DEACTIVATED,
 
 		clientSideOnly = true,
+
+		updateJSON = UPDATE_JSON,
 
 		serverSideOnly = false,
 

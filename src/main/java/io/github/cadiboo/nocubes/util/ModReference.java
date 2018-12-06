@@ -16,13 +16,18 @@ public final class ModReference {
 	 * This is our Mod's Mod Id that is used for stuff like resource locations.
 	 */
 	public static final String MOD_ID = "nocubes";
+
 	// https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
 	public static final String ACCEPTED_VERSIONS = "[1.12.2]";
+
+	public static final String UPDATE_JSON = "https://github.com/Cadiboo/NoCubes/blob/master/update.json";
+
 	public static final String DEPENDENCIES = "" +
 			"required-after:minecraft;" +
 			"required-after:forge@[14.23.4.2729,];" +
 			"required-after:render_chunk_rebuild_chunk_hooks@[1.0.1.0,];" +
 			"";
+	
 	public static final boolean CAN_BE_DEACTIVATED = true;
 
 	/**
