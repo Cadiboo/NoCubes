@@ -165,54 +165,6 @@ public class SurfaceNetsOOP {
 
 	}
 
-	public static class SurfaceNet {
-
-		public final HashMap<BlockPos, BlockPosSurfaceNetInfo> posInfos;
-
-		public SurfaceNet(final HashMap<BlockPos, BlockPosSurfaceNetInfo> posInfos) {
-			this.posInfos = posInfos;
-		}
-
-		public BlockPosSurfaceNetInfo get(BlockPos pos) {
-			return posInfos.get(pos);
-		}
-
-	}
-
-	public static class BlockPosSurfaceNetInfo {
-
-		public final IBlockState state;
-		public final BlockPos brightnessPos;
-		public final List<QuadVertexList> vertexList;
-
-		public BlockPosSurfaceNetInfo(final IBlockState state, final BlockPos brightnessPos, final List<QuadVertexList> quadVertexList) {
-			this.state = state;
-			this.brightnessPos = brightnessPos;
-			this.vertexList = quadVertexList;
-		}
-
-	}
-
-	public static class QuadVertexList {
-
-		public final Vec3d vertex1;
-		public final Vec3d vertex2;
-		public final Vec3d vertex3;
-		public final Vec3d vertex4;
-
-		public QuadVertexList(final Vec3d vertex1, final Vec3d vertex2, final Vec3d vertex3, final Vec3d vertex4) {
-			this.vertex1 = vertex1;
-			this.vertex2 = vertex2;
-			this.vertex3 = vertex3;
-			this.vertex4 = vertex4;
-		}
-
-		public Vec3d[] getVertexes() {
-			return new Vec3d[]{this.vertex1, this.vertex2, this.vertex3, this.vertex4};
-		}
-
-	}
-
 	public static SurfaceNet generateSurfaceNet(final BlockPos startingPositionIn, final IBlockAccess cache, final BiFunction<BlockPos, IBlockAccess, Float> potential) {
 		return generateSurfaceNetUNUSED(startingPositionIn, cache, potential);
 	}
@@ -412,6 +364,54 @@ public class SurfaceNetsOOP {
 			}
 		}
 		return new SurfaceNet(posInfos);
+	}
+
+	public static class SurfaceNet {
+
+		public final HashMap<BlockPos, BlockPosSurfaceNetInfo> posInfos;
+
+		public SurfaceNet(final HashMap<BlockPos, BlockPosSurfaceNetInfo> posInfos) {
+			this.posInfos = posInfos;
+		}
+
+		public BlockPosSurfaceNetInfo get(BlockPos pos) {
+			return posInfos.get(pos);
+		}
+
+	}
+
+	public static class BlockPosSurfaceNetInfo {
+
+		public final IBlockState state;
+		public final BlockPos brightnessPos;
+		public final List<QuadVertexList> vertexList;
+
+		public BlockPosSurfaceNetInfo(final IBlockState state, final BlockPos brightnessPos, final List<QuadVertexList> quadVertexList) {
+			this.state = state;
+			this.brightnessPos = brightnessPos;
+			this.vertexList = quadVertexList;
+		}
+
+	}
+
+	public static class QuadVertexList {
+
+		public final Vec3d vertex1;
+		public final Vec3d vertex2;
+		public final Vec3d vertex3;
+		public final Vec3d vertex4;
+
+		public QuadVertexList(final Vec3d vertex1, final Vec3d vertex2, final Vec3d vertex3, final Vec3d vertex4) {
+			this.vertex1 = vertex1;
+			this.vertex2 = vertex2;
+			this.vertex3 = vertex3;
+			this.vertex4 = vertex4;
+		}
+
+		public Vec3d[] getVertexes() {
+			return new Vec3d[]{this.vertex1, this.vertex2, this.vertex3, this.vertex4};
+		}
+
 	}
 
 }
