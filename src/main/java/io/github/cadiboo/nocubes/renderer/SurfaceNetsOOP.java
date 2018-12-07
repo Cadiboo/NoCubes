@@ -101,30 +101,15 @@ public class SurfaceNetsOOP {
 		}
 
 		final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
-		if (quad == null) {
+		final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
+		if (sprite == null) {
 			return;
 		}
-
-		final int red;
-		final int green;
-		final int blue;
+		final int color = ModUtil.getColor(quad, state, cache, pos);
+		final int red = (color >> 16) & 255;
+		final int green = (color >> 8) & 255;
+		final int blue = color & 255;
 		final int alpha = 0xFF;
-
-		if (quad.hasTintIndex()) {
-			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
-			red = (colorMultiplier >> 16) & 255;
-			green = (colorMultiplier >> 8) & 255;
-			blue = colorMultiplier & 255;
-		} else {
-			red = 0xFF;
-			green = 0xFF;
-			blue = 0xFF;
-		}
-
-		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, event.getBlockRendererDispatcher());
-
-		if (sprite == null)
-			return;
 
 		final double minU = sprite.getMinU();
 		final double minV = sprite.getMinV();
@@ -132,7 +117,6 @@ public class SurfaceNetsOOP {
 		final double maxV = sprite.getMaxV();
 
 		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
-
 		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 

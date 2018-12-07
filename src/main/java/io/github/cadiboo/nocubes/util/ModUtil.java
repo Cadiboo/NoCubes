@@ -136,7 +136,7 @@ public class ModUtil {
 	}
 
 	@Nullable
-	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+	public static TextureAtlasSprite getSprite(final BakedQuad quad) {
 
 //		if (true) {
 //			return Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
@@ -145,7 +145,7 @@ public class ModUtil {
 		TextureAtlasSprite sprite;
 
 		try {
-			sprite = getQuad(state, pos, blockRendererDispatcher).getSprite();
+			sprite = quad.getSprite();
 		} catch (final NullPointerException e) {
 			sprite = null;
 		}
@@ -160,6 +160,11 @@ public class ModUtil {
 
 		return sprite;
 
+	}
+
+	@Nullable
+	public static TextureAtlasSprite getSprite(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+		return getSprite(getQuad(state, pos, blockRendererDispatcher));
 	}
 
 	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {

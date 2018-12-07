@@ -13,9 +13,11 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
@@ -51,52 +53,31 @@ public class OldNoCubes {
 		final int y = pos.getY();
 		final int z = pos.getZ();
 
-		// The basic block color.
-//		int color = block.colorMultiplier(world, x, y, z);
-//		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
-//		float colorRed = (float) (color >> 16 & 255) / 255.0F;
-//		float colorGreen = (float) (color >> 8 & 255) / 255.0F;
-//		float colorBlue = (float) (color & 255) / 255.0F;
-
-		float colorRed = 1.0F;
-		float colorGreen = 1.0F;
-		float colorBlue = 1.0F;
-
-		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
-
-		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
-
 		// The shadow values.
 		float shadowBottom = 0.6F;
 		float shadowTop = 1.0F;
 		float shadowLeft = 0.9F;
 		float shadowRight = 0.8F;
 
-//		// The block's icon
-//		IIcon icon;
-//		if (!renderer.hasOverrideBlockTexture())
-//			icon = renderer.getBlockIconFromSideAndMetadata(block, 1, meta);
-//		else
-//			// Used for the crack texture
-//			icon = renderer.overrideBlockTexture;
-
-		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
-//		final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/sand");
+		final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
+		final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
 		if (sprite == null) {
 			return;
 		}
-
-//		// The icon's UVs
-//		double minU = (double) icon.getMinU();
-//		double minV = (double) icon.getMinV();
-//		double maxU = (double) icon.getMaxU();
-//		double maxV = (double) icon.getMaxV();
+		final int color = ModUtil.getColor(quad, state, cache, pos);
+		final float colorRed = ((color >> 16) & 255) / 255.0F;
+		final float colorGreen = ((color >> 8) & 255) / 255.0F;
+		final float colorBlue = (color & 255) / 255.0F;
+		final float alpha = 1F;
 
 		final double minU = sprite.getMinU();
 		final double minV = sprite.getMinV();
 		final double maxU = sprite.getMaxU();
 		final double maxV = sprite.getMaxV();
+
+		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
 		// The 8 points (corners) that make the block.
 		Vec3[] points = new Vec3[8];

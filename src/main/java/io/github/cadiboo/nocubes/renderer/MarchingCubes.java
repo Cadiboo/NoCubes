@@ -10,9 +10,9 @@ import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -182,34 +182,23 @@ public class MarchingCubes {
 		final IBlockState textureColorState = state;
 		final BlockPos textureColorPos = new BlockPos(fastx, fasty, fastz);
 
-		final TextureAtlasSprite sprite = ModUtil.getSprite(textureColorState, textureColorPos, blockRendererDispatcher);
-
-		//			final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite();
-
+		final BakedQuad quad = ModUtil.getQuad(textureColorState, textureColorPos, blockRendererDispatcher);
+		final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
 		if (sprite == null) {
 			return;
 		}
-
-		final int color = Minecraft.getMinecraft().getBlockColors().colorMultiplier(textureColorState, cache, textureColorPos, 0);
-
+		final int color = ModUtil.getColor(quad, textureColorState, cache, textureColorPos);
 		final float colorRed = ((color >> 16) & 255) / 255.0F;
 		final float colorGreen = ((color >> 8) & 255) / 255.0F;
 		final float colorBlue = (color & 255) / 255.0F;
-
-		final float alpha = 1f;
+		final float alpha = 1F;
 
 		final double minU = sprite.getInterpolatedU(0.0D);
 		final double minV = sprite.getInterpolatedV(0.0D);
 		final double maxU = sprite.getInterpolatedU(15.0D + (0.16666666666666666D * MathHelper.clamp(x, 0, 6)));
 		final double maxV = sprite.getInterpolatedV(15.0D + (0.16666666666666666D * MathHelper.clamp(z, 0, 6)));
 
-		//			final double minU = 0;
-		//			final double minV = 0;
-		//			final double maxU = 0.1;
-		//			final double maxV = 0.1;
-
 		final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(pos, cache);
-
 		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 

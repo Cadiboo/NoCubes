@@ -224,25 +224,25 @@ public class SurfaceNets3 {
 					buffer[m] = v;
 
 					final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
-					if (quad == null) {
-						return;
-					}
-
-					final int red;
-					final int green;
-					final int blue;
-
-					final int color = ModUtil.getColor(quad, state, cache, pos);
-					red = (color >> 16) & 255;
-					green = (color >> 8) & 255;
-					blue = color & 255;
-					final int alpha = color >> 24 & 255;
-
-					final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
-
+					final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
 					if (sprite == null) {
 						return;
 					}
+					final int color = ModUtil.getColor(quad, state, cache, pos);
+					final int red = (color >> 16) & 255;
+					final int green = (color >> 8) & 255;
+					final int blue = color & 255;
+					final int alpha = 0xFF;
+
+					final double minU = sprite.getMinU();
+					final double minV = sprite.getMinV();
+					final double maxU = sprite.getMaxU();
+					final double maxV = sprite.getMaxV();
+
+					final BlockPos brightnessBlockPos = new BlockPos(brightnessPos[0], brightnessPos[1], brightnessPos[2]);
+					final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(brightnessBlockPos, cache);
+					final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+					final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
 					final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 					final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayer.ordinal());
@@ -254,16 +254,6 @@ public class SurfaceNets3 {
 
 //					final BufferBuilder bufferBuilder = event.startOrContinueLayer(blockRenderLayer);
 //					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, true);
-
-					final double minU = sprite.getMinU();
-					final double maxU = sprite.getMaxU();
-					final double minV = sprite.getMinV();
-					final double maxV = sprite.getMaxV();
-
-					final BlockPos brightnessBlockPos = new BlockPos(brightnessPos[0], brightnessPos[1], brightnessPos[2]);
-					final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(brightnessBlockPos, cache);
-					final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-					final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
 					// Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int i = 0; i < 3; ++i) {

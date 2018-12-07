@@ -12,6 +12,7 @@ import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -212,10 +213,17 @@ public class SurfaceNets2 {
 
 		final float shadowTop = 1.0F;
 
-		final TextureAtlasSprite sprite = ModUtil.getSprite(state, pos, blockRendererDispatcher);
+		final BakedQuad quad = ModUtil.getQuad(state, pos, blockRendererDispatcher);
+		final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
 		if (sprite == null) {
 			return;
 		}
+		final int color = ModUtil.getColor(quad, state, cache, pos);
+		final float colorRed = ((color >> 16) & 255) / 255.0F;
+		final float colorGreen = ((color >> 8) & 255) / 255.0F;
+		final float colorBlue = (color & 255) / 255.0F;
+		final float alpha = 1F;
+
 		final double minU = sprite.getMinU();
 		final double minV = sprite.getMinV();
 		final double maxU = sprite.getMaxU();
@@ -253,10 +261,10 @@ public class SurfaceNets2 {
 //				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 //				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * 0, shadowTop * colorFactor * 1, shadowTop * colorFactor * 1, 1).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * 0, shadowTop * colorFactor * 1, shadowTop * colorFactor * 1, 1).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * 0, shadowTop * colorFactor * 1, shadowTop * colorFactor * 1, 1).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * 0, shadowTop * colorFactor * 1, shadowTop * colorFactor * 1, 1).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 			}
 

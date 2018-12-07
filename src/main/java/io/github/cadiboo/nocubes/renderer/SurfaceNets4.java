@@ -12,6 +12,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -143,15 +144,8 @@ public class SurfaceNets4 {
 
 					buffer[m] = vertex;
 
-					final int red = 0xFF;
-					final int green = 0xFF;
-					final int blue = 0xFF;
-					final int alpha = 0xFF;
-
 					final BlockPos currentBlockPos = new BlockPos(startPos[0] + currentPos[0], startPos[1] + currentPos[1], startPos[2] + currentPos[2]);
 					final IBlockState state = cache.getBlockState(currentBlockPos);
-
-					final TextureAtlasSprite sprite = ModUtil.getSprite(state, currentBlockPos, blockRendererDispatcher);
 
 					final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 					final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayer.ordinal());
@@ -164,9 +158,20 @@ public class SurfaceNets4 {
 //					final BufferBuilder bufferBuilder = event.startOrContinueLayer(blockRenderLayer);
 //					event.setBlockRenderLayerUsedWithOrOpperation(blockRenderLayer, true);
 
+					final BakedQuad quad = ModUtil.getQuad(state, currentBlockPos, blockRendererDispatcher);
+					final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
+					if (sprite == null) {
+						return;
+					}
+					final int color = ModUtil.getColor(quad, state, cache, currentBlockPos);
+					final int red = (color >> 16) & 255;
+					final int green = (color >> 8) & 255;
+					final int blue = color & 255;
+					final int alpha = 0xFF;
+
 					final double minU = sprite.getMinU();
-					final double maxU = sprite.getMaxU();
 					final double minV = sprite.getMinV();
+					final double maxU = sprite.getMaxU();
 					final double maxV = sprite.getMaxV();
 
 					final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(currentBlockPos, cache);

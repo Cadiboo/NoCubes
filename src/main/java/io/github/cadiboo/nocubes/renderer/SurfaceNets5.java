@@ -11,6 +11,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -98,10 +99,6 @@ public class SurfaceNets5 {
 //							}
 //						}
 
-						final int red = 0xFF;
-						final int green = 0xFF;
-						final int blue = 0xFF;
-						final int alpha = 0xFF;
 						final BlockPos currentBlockPos = new BlockPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
 						final IBlockState state = cache.getBlockState(currentBlockPos);
 						final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
@@ -110,19 +107,26 @@ public class SurfaceNets5 {
 							compiledchunk.setLayerStarted(blockRenderLayer);
 							SurfaceNets3.RenderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
+
+						final BakedQuad quad = ModUtil.getQuad(state, currentBlockPos, blockRendererDispatcher);
+						final TextureAtlasSprite sprite = ModUtil.getSprite(quad);
+						if (sprite == null) {
+							return;
+						}
+						final int color = ModUtil.getColor(quad, state, cache, currentBlockPos);
+						final int red = (color >> 16) & 255;
+						final int green = (color >> 8) & 255;
+						final int blue = color & 255;
+						final int alpha = 0xFF;
+
+						final double minU = sprite.getMinU();
+						final double minV = sprite.getMinV();
+						final double maxU = sprite.getMaxU();
+						final double maxV = sprite.getMaxV();
+
 						final LightmapInfo lightmapInfo = ModUtil.getLightmapInfo(currentBlockPos, cache);
 						final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 						final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
-						TextureAtlasSprite sprite = ModUtil.getSprite(state, currentBlockPos, blockRendererDispatcher);
-						final double minU = sprite.getMinU();
-						final double maxU = sprite.getMaxU();
-						final double minV = sprite.getMinV();
-						final double maxV = sprite.getMaxV();
-
-//						double tu0 = (double) sprite.getMinU();
-//						double tu1 = (double) sprite.getMaxU();
-//						double tv0 = (double) sprite.getMinV();
-//						double tv1 = (double) sprite.getMaxV();
 
 						int edgemask = EDGE_TABLE[mask];
 						int ecount = 0;
