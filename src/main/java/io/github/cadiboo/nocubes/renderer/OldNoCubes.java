@@ -131,8 +131,6 @@ public class OldNoCubes {
 			}
 		}
 
-//		BakedQuad s = new BakedQuad()
-
 		boolean wasAnythingRendered = false;
 
 		// Loop through all the sides of the block:
