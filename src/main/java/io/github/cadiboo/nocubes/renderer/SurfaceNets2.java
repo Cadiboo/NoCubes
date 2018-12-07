@@ -16,7 +16,7 @@ public class SurfaceNets2 {
 
 	public static volatile ConcurrentHashMap<BlockPos, ConcurrentHashMap<BlockPos, Object[]>> renderChunkPosConcurrentHashMap = new ConcurrentHashMap<>();
 
-	public static volatile HashMap<BlockPos, Integer> positions = new HashMap<>();
+	public static volatile ConcurrentHashMap<BlockPos, Integer> positions = new ConcurrentHashMap<>();
 
 	public static synchronized void renderPre(final RebuildChunkPreEvent event) {
 		final BlockPos rcp = event.getRenderChunkPosition().toImmutable();
