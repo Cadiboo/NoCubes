@@ -12,6 +12,7 @@ import io.github.cadiboo.nocubes.renderer.SurfaceNets2;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets3;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets4;
 import io.github.cadiboo.nocubes.renderer.SurfaceNets5;
+import io.github.cadiboo.nocubes.renderer.SurfaceNetsBlock;
 import io.github.cadiboo.nocubes.renderer.SurfaceNetsOOP;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,6 +42,8 @@ public final class ModEnums {
 		SURFACE_NETS4(SurfaceNets4::renderPre, SurfaceNets4::renderLayer, SurfaceNets4::renderType, SurfaceNets4::renderBlock, SurfaceNets4::renderPost),
 
 		SURFACE_NETS5(SurfaceNets5::renderPre, SurfaceNets5::renderLayer, SurfaceNets5::renderType, SurfaceNets5::renderBlock, SurfaceNets5::renderPost),
+
+		SURFACE_NETS_BLOCK(SurfaceNetsBlock::renderPre, SurfaceNetsBlock::renderLayer, SurfaceNetsBlock::renderType, SurfaceNetsBlock::renderBlock, SurfaceNetsBlock::renderPost),
 
 		;
 
