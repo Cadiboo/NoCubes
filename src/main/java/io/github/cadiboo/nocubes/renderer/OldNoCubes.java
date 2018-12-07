@@ -5,6 +5,7 @@ import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayer
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -116,8 +117,22 @@ public class OldNoCubes {
 			}
 		}
 
-		boolean wasAnythingRendered = false;
 		boolean cancel = true;
+
+		if (ModConfig.betterFoliageGrassCompatibility) {
+			//render BF grass if not near air
+			if (state.getBlock() instanceof BlockGrass) {
+				cancel = false;
+				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
+						cancel = true;
+						break;
+					}
+				}
+			}
+		}
+
+		boolean wasAnythingRendered = false;
 
 		// Loop through all the sides of the block:
 		for (EnumFacing side : EnumFacing.VALUES) {
@@ -201,17 +216,6 @@ public class OldNoCubes {
 						vertex2 = points[2];
 						vertex3 = points[1];
 						break;
-				}
-
-				//render BF grass if not on slope
-				if (state.getBlock() instanceof BlockGrass) {
-					if (side == EnumFacing.UP) {
-						double height = vertex0.yCoord + vertex1.yCoord + vertex2.yCoord + vertex3.yCoord;
-						height -= pos.getY() * 4;
-						if (height > 2.5) {
-							cancel = false;
-						}
-					}
 				}
 
 				// And finally the side is going to be rendered!

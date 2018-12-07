@@ -88,6 +88,8 @@ public class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -5, max = 5)
 	public static double isosurfaceLevel = 0.5d;
+	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
+	public static boolean betterFoliageGrassCompatibility;
 	static {
 
 		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{
