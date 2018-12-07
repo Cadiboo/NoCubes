@@ -1,10 +1,11 @@
 {
 	"homepage": "https://cadiboo.github.io/projects/nocubes/",
 	"promos": {
-		"1.12.2-latest": "0.0.0-alpha14",
-		"1.12.2-recommended": "0.0.0-alpha14"
+		"1.12.2-latest": "0.0.0-alpha15",
+		"1.12.2-recommended": "0.0.0-alpha15"
 	},
 	"1.12.2": {
+		"0.0.0-alpha15": "Cadiboo: Fix #2 for all renderers",
 		"0.0.0-alpha14": "Cadiboo: Removed old comments\nCadiboo: Fix big SurfaceNets bug\nCadiboo: Add SurfaceNets Block algorithm\nCadiboo: Change SurfaceNets2 Algorithm to temporarily render OldNoCubes (it renders it perfectly though)\nCadiboo: Remove unneeded exclusions",
 		"0.0.0-alpha13": "Cadiboo: Added comment\nCadiboo: Fixed cached quad code\nCadiboo: Working on broken surface nets that I don't understand\nCadiboo: Create and update SurfaceNets5\nCadiboo: Remove useless assignment",
 		"0.0.0-alpha12": "Cadiboo: Surface Nets test 4\nCadiboo: Better lighting, thanks MineAndCraft12\nCadiboo: Update todos\nCadiboo: Changed to static imports",
