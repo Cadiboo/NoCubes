@@ -64,8 +64,8 @@ public class ModUtil {
 						//
 						//					} else if (state.getMaterial() == Material.VINE) {
 						//						density -= 0.75;
-						//					} else {
-						//						density -= 1;
+					} else {
+						density -= 1;
 					}
 
 					if (state.getBlock() == Blocks.BEDROCK) {
