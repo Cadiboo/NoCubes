@@ -15,10 +15,12 @@ import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 public class OldNoCubes {
 
@@ -26,6 +28,14 @@ public class OldNoCubes {
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
+
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			if (event.getBlockRenderLayer() == BlockRenderLayer.SOLID)
+				event.setResult(Event.Result.ALLOW);
+//			else event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
@@ -40,11 +50,6 @@ public class OldNoCubes {
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
 		if (!ModUtil.shouldSmooth(state)) {
-			return;
-		}
-
-		if (state.getBlock() instanceof BlockGrass) {
-			event.setCanceled(false);
 			return;
 		}
 
