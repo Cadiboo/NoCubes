@@ -395,7 +395,7 @@ public class SurfaceNets {
 		}
 
 		public void putVertices(BlockPos pos, ArrayList<BlockVertices> blockVertices) {
-			blockVerticesHashMap.put(pos, blockVertices);
+			blockVerticesHashMap.put(pos.toImmutable(), blockVertices);
 		}
 
 		public static class BlockVertices {
