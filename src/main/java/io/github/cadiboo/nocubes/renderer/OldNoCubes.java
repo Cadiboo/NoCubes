@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
@@ -113,6 +112,7 @@ public class OldNoCubes {
 		}
 
 		boolean wasAnythingRendered = false;
+		boolean cancel = true;
 
 		// Loop through all the sides of the block:
 		for (EnumFacing side : EnumFacing.VALUES) {
@@ -198,6 +198,17 @@ public class OldNoCubes {
 						break;
 				}
 
+				//render BF grass if not on slope
+				if (state.getBlock() instanceof BlockGrass) {
+					if (side == EnumFacing.UP) {
+						double height = vertex0.yCoord + vertex1.yCoord + vertex2.yCoord + vertex3.yCoord;
+						height -= pos.getY() * 4;
+						if (height > 2.5) {
+							cancel = false;
+						}
+					}
+				}
+
 				// And finally the side is going to be rendered!
 				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(shadowTop * colorFactor * colorRed, shadowTop * colorFactor * colorGreen, shadowTop * colorFactor * colorBlue, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
@@ -209,7 +220,7 @@ public class OldNoCubes {
 		}
 
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasAnythingRendered;
-		event.setCanceled(wasAnythingRendered);
+		event.setCanceled(cancel);
 
 	}
 
