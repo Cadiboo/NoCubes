@@ -11,7 +11,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 
-version = "1.12.2-0.0.0-alpha13"
+version = "1.12.2-0.0.0-alpha14"
 group = "io.github.cadiboo.nocubes" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "NoCubes"
 
@@ -57,18 +57,6 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
-}
-
-jar {
-    sourceSets {
-        main {
-            java {
-                exclude '**/com/cosmicdan/**'
-                exclude '**/clickme/nocubes/**'
-                exclude '**/net/minecraft/**'
-            }
-        }
-    }
 }
 
 processResources {
