@@ -251,7 +251,7 @@ public class SurfaceNets2 {
 			}
 		}
 
-		final Object[] data = renderChunkPosConcurrentHashMap.get(renderChunkPos).get(pos);
+		final Object[] data = renderChunkPosConcurrentHashMap.get(renderChunkPos.toImmutable()).get(pos.toImmutable());
 		final boolean wasAnythingRendered = (boolean) data[0];
 		if (!wasAnythingRendered) {
 			return;
