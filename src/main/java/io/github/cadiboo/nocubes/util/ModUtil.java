@@ -64,6 +64,10 @@ public class ModUtil {
 						//
 						//					} else if (state.getMaterial() == Material.VINE) {
 						//						density -= 0.75;
+						// Thanks VoidWalker. I'm pretty embarrased.
+						// Uncommenting 2 lines of code fixed the entire algorithm. (else density-=1)
+						// I had been planning to uncomment and redo them after I fixed the algorithm.
+						// If you hadn't taken the time to debug this, I might never have found the bug
 					} else {
 						density -= 1;
 					}
