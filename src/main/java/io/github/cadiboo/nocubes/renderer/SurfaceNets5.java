@@ -242,6 +242,7 @@ public class SurfaceNets5 {
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] = true;
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
