@@ -1,0 +1,15 @@
+[{
+  "modid": "nocubes",
+  "name": "NoCubes",
+  "description": "Client-side smooth-world mod. Open-source reimplementation of work originally by Click_Me",
+  "version": "${version}",
+  "mcversion": "${MCversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["CosmicDan, Click_Me"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": [],
+  "useDependencyInformation": "false"
+}]
