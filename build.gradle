@@ -10,8 +10,15 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle.forge'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-
-version = "1.12.2-0.1.0"
+// Taken from https://semver.org
+// Given a version number MAJOR.MINOR.PATCH, increment the:
+//	 MAJOR version when you make incompatible API changes,
+//	 MINOR version when you add functionality in a backwards-compatible manner, and
+//	 PATCH version when you make backwards-compatible bug fixes.
+// Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
+// We use the format MCVERSION-MAJOR.MINOR.PATCH
+// Because we have prior versions that do NOT follow semver, we append "-semver" to THIS VERSION ONLY https://semver.org/spec/v1.0.0.html#spec-item-2
+version = "1.12.2-0.1.0-semver"
 group = "io.github.cadiboo.nocubes" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "NoCubes"
 
@@ -24,7 +31,7 @@ minecraft {
 
 	version = "1.12.2-14.23.5.2795" // Latest Forge-Optifine(HD_U_E3) 1.12.2 Compatibility
 	// version = "1.12.2-14.23.5.2768" // Latest Stable
-   
+
 	runDir = "run"
 	
 	// the mappings can be changed at any time, and must be in the following format.
@@ -39,6 +46,9 @@ minecraft {
 
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
+	replace "@VERSION@", project.version
+	replaceIn "io/github/cadiboo/nocubes/util/ModReference.java"
+
 }
 
 dependencies {
@@ -47,7 +57,7 @@ dependencies {
 	// or you may define them like so..
 	//compile "some.group:artifact:version:classifier"
 	//compile "some.group:artifact:version"
-	  
+
 	// real examples
 	//compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
 	//compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
@@ -63,6 +73,19 @@ dependencies {
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
 	// http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+}
+
+jar {
+
+	// Until I figure out how to use gradle tests in IntelliJ
+	sourceSets {
+		main {
+			java {
+				exclude '**/debug/**'
+			}
+		}
+	}
 
 }
 
