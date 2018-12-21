@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.fml.common.Mod;
@@ -7,6 +8,7 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
@@ -73,6 +75,28 @@ public final class NoCubes {
 	@EventHandler
 	public void postInit(final FMLPostInitializationEvent event) {
 		LOGGER.debug("postInit");
+	}
+
+	//	private static boolean isEnabled;
+	//
+	//	public static void deactivate() {
+	//		isEnabled = false;
+	//	}
+	//
+	//	public static void reactivate() {
+	//		isEnabled = true;
+	//	}
+
+	public static boolean isEnabled() {
+		//		return isEnabled;
+		return ModConfig.isEnabled;
+	}
+
+	// not implemented unfortunately, we use our config system instead
+	@EventHandler
+	public static void onDisableEvent(final FMLModDisabledEvent event) {
+		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled :o this is... impossible???");
+		//			NoCubes.deactivate();
 	}
 
 }
