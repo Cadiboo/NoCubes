@@ -1,17 +1,17 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
-import cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
  *
  * @author Cadiboo
  */
-public class SurfaceNets {
+public final class SurfaceNets {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
