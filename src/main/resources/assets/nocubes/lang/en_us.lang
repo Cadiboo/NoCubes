@@ -1,0 +1,23 @@
+nocubes.config.isEnabled=Enabled
+nocubes.config.isEnabled.tooltip=If the mod is enabled
+
+nocubes.config.activeRenderingAlgorithm=Rendering Algorithm
+nocubes.config.activeRenderingAlgorithm.tooltip=Interactive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html\nOld NoCubes - The original renderer from NoCubes 0.3 by Click_ME\nMarching Cubes - The original smoothing algorithm that has existed since 1986 - Fast, Well documented\nSurface Nets - A smoothing algorithm - Slightly slower, Dual contouring!
+
+nocubes.config.reloadChunksOnConfigChange=Reload Chunks when Config changes
+nocubes.config.reloadChunksOnConfigChange.tooltip=If chunks should be reloaded when settings change
+
+nocubes.config.shouldFixFaceCulling=Fix Face Culling
+nocubes.config.shouldFixFaceCulling.tooltip=If Face Culling issues (like the bottom of trees not rendering correctly) should be fixed
+
+nocubes.config.shouldSmoothLiquids=Smooth Liquids
+nocubes.config.shouldSmoothLiquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks
+
+nocubes.config.shouldDrawWireframe=Draw Wireframe
+nocubes.config.shouldDrawWireframe.tooltip=If a wireframe should be drawn on non-air blocks
+
+nocubes.config.smoothableBlockStates=Smoothable BlockStates
+nocubes.config.smoothableBlockStates.tooltip=Block States that the Rendering Algorithm will smooth
+
+nocubes.config.isosurfaceLevel=Isosurface Level
+nocubes.config.isosurfaceLevel.tooltip=The expansion of the generated surface mesh (hard to explain, just play around with it)
