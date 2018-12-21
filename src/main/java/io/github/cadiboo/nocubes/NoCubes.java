@@ -32,7 +32,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.Version;
 		acceptedMinecraftVersions = ACCEPTED_VERSIONS,
 		dependencies = DEPENDENCIES
 )
-public class NoCubes {
+public final class NoCubes {
 
 	public static final Logger EXAMPLE_MOD_LOG = LogManager.getLogger(MOD_ID);
 	private static final Logger LOGGER = LogManager.getLogger();
