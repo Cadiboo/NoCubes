@@ -17,8 +17,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 //	 PATCH version when you make backwards-compatible bug fixes.
 // Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 // We use the format MCVERSION-MAJOR.MINOR.PATCH
-// Because we have prior versions that do NOT follow semver, we append "-semver" to THIS VERSION ONLY https://semver.org/spec/v1.0.0.html#spec-item-2
-version = "1.12.2-0.1.0-semver"
+version = "1.12.2-0.1.0"
 group = "io.github.cadiboo.nocubes" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "NoCubes"
 
