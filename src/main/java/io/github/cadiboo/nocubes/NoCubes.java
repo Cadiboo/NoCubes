@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.debug.SmoothLightingFluid;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.fml.common.Mod;
@@ -75,6 +76,7 @@ public final class NoCubes {
 	@EventHandler
 	public void postInit(final FMLPostInitializationEvent event) {
 		LOGGER.debug("postInit");
+		SmoothLightingFluid.changeFluidRenderer();
 	}
 
 	//	private static boolean isEnabled;
