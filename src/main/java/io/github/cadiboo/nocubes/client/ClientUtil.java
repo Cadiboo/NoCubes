@@ -1,18 +1,25 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.ChunkCache;
+import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.client.model.pipeline.VertexBufferConsumer;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
@@ -23,11 +30,20 @@ import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Vector4f;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
+
+import static net.minecraft.util.EnumFacing.DOWN;
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.UP;
+import static net.minecraft.util.EnumFacing.WEST;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -61,7 +77,7 @@ public final class ClientUtil {
 	 * @param face the {@link net.minecraft.util.EnumFacing face} to rotate for
 	 */
 	public static void rotateForFace(final EnumFacing face) {
-		GlStateManager.rotate(face == EnumFacing.DOWN ? 0 : face == EnumFacing.UP ? 180F : (face == EnumFacing.NORTH) || (face == EnumFacing.EAST) ? 90F : -90F, face.getAxis() == EnumFacing.Axis.Z ? 1 : 0, 0, face.getAxis() == EnumFacing.Axis.Z ? 0 : 1);
+		GlStateManager.rotate(face == DOWN ? 0 : face == EnumFacing.UP ? 180F : (face == EnumFacing.NORTH) || (face == EnumFacing.EAST) ? 90F : -90F, face.getAxis() == EnumFacing.Axis.Z ? 1 : 0, 0, face.getAxis() == EnumFacing.Axis.Z ? 0 : 1);
 		GlStateManager.rotate(-90, 0, 0, 1);
 	}
 
@@ -371,6 +387,160 @@ public final class ClientUtil {
 			CrashReport crashReport = new CrashReport("An impossible error has occurred!", exception);
 			crashReport.makeCategory("Reflectively Accessing BufferBuilder#rawIntBuffer");
 			throw new ReportedException(crashReport);
+		}
+	}
+
+	/**
+	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
+	 */
+	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
+	};
+
+	/**
+	 * Gets The first quad of a model for a pos & state or null if the model has no quads
+	 *
+	 * @param state                   the state
+	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
+	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
+	 * @return The first quad or null if the model has no quads
+	 */
+	@Nullable
+	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+		final long posRand = MathHelper.getPositionRandom(pos);
+		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
+			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
+			if (!quads.isEmpty()) {
+				return quads.get(0);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Gets the color of a quad through a block at a pos
+	 *
+	 * @param quad  the quad
+	 * @param state the state
+	 * @param cache the cache
+	 * @param pos   the pos
+	 * @return the color
+	 */
+	public static int getColor(final BakedQuad quad, final IBlockState state, final ChunkCache cache, final BlockPos pos) {
+		final int red;
+		final int green;
+		final int blue;
+
+		if (quad.hasTintIndex()) {
+			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			red = (colorMultiplier >> 16) & 255;
+			green = (colorMultiplier >> 8) & 255;
+			blue = colorMultiplier & 255;
+		} else {
+			red = 0xFF;
+			green = 0xFF;
+			blue = 0xFF;
+		}
+		return color(red, green, blue);
+	}
+
+	/**
+	 * Gets the fixed minimum U coordinate to use when rendering the sprite.
+	 *
+	 * @param sprite the sprite
+	 * @return The fixed minimum U coordinate to use when rendering the sprite
+	 */
+	public static double getMinU(final TextureAtlasSprite sprite) {
+		return sprite.getMinU() + UV_CORRECT;
+	}
+
+	/**
+	 * Gets the fixed maximum U coordinate to use when rendering the sprite.
+	 *
+	 * @param sprite the sprite
+	 * @return The fixed maximum U coordinate to use when rendering the sprite
+	 */
+	public static double getMaxU(final TextureAtlasSprite sprite) {
+		return sprite.getMaxU() - UV_CORRECT;
+	}
+
+	/**
+	 * Gets the fixed minimum V coordinate to use when rendering the sprite.
+	 *
+	 * @param sprite the sprite
+	 * @return The fixed minimum V coordinate to use when rendering the sprite
+	 */
+	public static double getMinV(final TextureAtlasSprite sprite) {
+		return sprite.getMinV() + UV_CORRECT;
+	}
+
+	/**
+	 * Gets the fixed maximum V coordinate to use when rendering the sprite.
+	 *
+	 * @param sprite the sprite
+	 * @return The fixed maximum V coordinate to use when rendering the sprite
+	 */
+	public static double getMaxV(final TextureAtlasSprite sprite) {
+		return sprite.getMaxV() - UV_CORRECT;
+	}
+
+	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {
+
+		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
+			default:
+			case 0: // Off
+				return new LightmapInfo(240, 0);
+			case 1: // Fast
+				//the block above
+				final BlockPos FAST_BrightnessPos = pos.up();
+				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
+				return new LightmapInfo(
+						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
+						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
+				);
+			case 2: // Fancy
+				//credit to MineAndCraft12
+				int averageSkyLight = 0;
+				int totalBlocksCheckedForSkyLight = 0;
+
+				int averageBlockLight = 0;
+				int totalBlocksCheckedForBlockLight = 0;
+
+				//every neighbour
+				for (EnumFacing facing : EnumFacing.VALUES) {
+					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
+					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
+					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (skyLight > 0) {
+						averageSkyLight += skyLight;
+						totalBlocksCheckedForSkyLight++;
+					}
+					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (blockLight > 0) {
+						averageBlockLight += blockLight;
+						totalBlocksCheckedForBlockLight++;
+					}
+				}
+
+				//this block
+				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (skyLight > 0) {
+					averageSkyLight += skyLight;
+					totalBlocksCheckedForSkyLight++;
+				}
+				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (blockLight > 0) {
+					averageBlockLight += blockLight;
+					totalBlocksCheckedForBlockLight++;
+				}
+
+				return new LightmapInfo(
+						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
+						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
+				);
+
 		}
 	}
 
