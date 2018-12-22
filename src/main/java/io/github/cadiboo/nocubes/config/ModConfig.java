@@ -123,9 +123,6 @@ public final class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
 
-	@LangKey(ModReference.MOD_ID + ".config.cacheQuads")
-	public static boolean cacheQuads;
-
 	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -5, max = 5)
 	public static double isosurfaceLevel = 0.5d;
