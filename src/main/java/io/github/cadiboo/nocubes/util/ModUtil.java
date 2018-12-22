@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Level;
@@ -80,6 +82,15 @@ public final class ModUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * If the state should be smoothed
+	 * @param state the state
+	 * @return If the state should be smoothed
+	 */
+	public static boolean shouldSmooth(final IBlockState state) {
+		return ModConfig.getSmoothableBlockStatesCache().contains(state);
 	}
 
 }
