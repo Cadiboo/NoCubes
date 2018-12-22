@@ -9,6 +9,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
@@ -20,35 +21,40 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 @Mod.EventBusSubscriber(modid = ModReference.MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
-	public static void on(final RebuildChunkPreEvent event) {
+	@SubscribeEvent
+	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
 		ModConfig.activeRenderingAlgorithm.renderPre(event);
 	}
 
-	public static void on(final RebuildChunkBlockRenderInLayerEvent event) {
+	@SubscribeEvent
+	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
 		ModConfig.activeRenderingAlgorithm.renderLayer(event);
 	}
 
-	public static void on(final RebuildChunkBlockRenderInTypeEvent event) {
+	@SubscribeEvent
+	public static void onRebuildChunkBlockRenderInTypeEvent(final RebuildChunkBlockRenderInTypeEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
 		ModConfig.activeRenderingAlgorithm.renderType(event);
 	}
 
-	public static void on(final RebuildChunkBlockEvent event) {
+	@SubscribeEvent
+	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
 		ModConfig.activeRenderingAlgorithm.renderBlock(event);
 	}
 
-	public static void on(final RebuildChunkPostEvent event) {
+	@SubscribeEvent
+	public static void onRebuildChunkPostEvent(final RebuildChunkPostEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
