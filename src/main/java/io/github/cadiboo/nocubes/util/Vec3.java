@@ -13,17 +13,17 @@ public class Vec3 {
 		this(0, 0, 0);
 	}
 
-	public Vec3(final double xCoord, final double yCoord, final double zCoord) {
-		this.xCoord = xCoord;
-		this.yCoord = yCoord;
-		this.zCoord = zCoord;
+	public Vec3(final double x, final double y, final double z) {
+		this.xCoord = x;
+		this.yCoord = y;
+		this.zCoord = z;
 	}
 
-	public Vec3 offset(final double offsetX, final double offsetY, final double offsetZ) {
+	public Vec3 offset(final double x, final double y, final double z) {
 		return new Vec3(
-				this.xCoord + offsetX,
-				this.yCoord + offsetY,
-				this.zCoord + offsetZ
+				this.xCoord + x,
+				this.yCoord + y,
+				this.zCoord + z
 		);
 	}
 

@@ -1,6 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -9,8 +11,16 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
+
+import java.util.ArrayList;
 
 /**
  * Implementation of the MarchingCubes algorithm in Minecraft
@@ -54,7 +64,7 @@ public final class MarchingCubes {
 			0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
 	};
 
-	private static final int[][] TRI_TABLE = {
+	private static final int[][] TRIANGLE_TABLE = {
 			{},
 			{0, 8, 3},
 			{0, 1, 9},
@@ -339,59 +349,166 @@ public final class MarchingCubes {
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
-		final BlockPos pos = event.getBlockPos();
+		final MutableBlockPos pos = event.getBlockPos();
 		final ChunkCache cache = event.getChunkCache();
 		final IBlockState state = event.getBlockState();
+		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
 
-		// byte to conserve memory, we only actually use the first nybble (8 bits)
-		// also called "cubeIndex" in many implementations
-		byte neighbourMask = 0b00000000;
+		MutableBlockPos texturePos = pos;
+		IBlockState textureState = state;
+
+		final Vec3[] points = new Vec3[]{
+				new Vec3(0.0D, 0.0D, 1.0D),
+				new Vec3(1.0D, 0.0D, 1.0D),
+				new Vec3(1.0D, 0.0D, 0.0D),
+				new Vec3(0.0D, 0.0D, 0.0D),
+				new Vec3(0.0D, 1.0D, 1.0D),
+				new Vec3(1.0D, 1.0D, 1.0D),
+				new Vec3(1.0D, 1.0D, 0.0D),
+				new Vec3(0.0D, 1.0D, 0.0D)
+		};
+
 		final float[] neighbourDensities = new float[8];
 		int neighbourIndex = 0;
-		// Determine the index into the edge table which tells us which vertices are inside of the surface
-		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos, pos.add(1, 1, 1))) {
+		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos, pos.add(1, 1, 1))) {
 			final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
 			neighbourDensities[neighbourIndex] = neighbourDensity;
 			final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
 			neighbourIndex++;
-			neighbourMask |= (neighborIsInsideIsosurface ? 1 : 0) << neighbourIndex;
 		}
 
-		// Check for early termination if cell does not intersect boundary
-		if ((neighbourMask == 0b0000_0000) || (neighbourMask == 0b1111_1111)) {
-			return;
-		}
+		byte cubeIndex = 0b00000000;
 
-		final int edgeMask = EDGE_TABLE[neighbourMask];
-		if (edgeMask == 0) {
+		final float isolevel = ModConfig.getIsosurfaceLevel();
+		if (neighbourDensities[0] < isolevel) cubeIndex |= 0b00000001;
+		if (neighbourDensities[1] < isolevel) cubeIndex |= 0b00000010;
+		if (neighbourDensities[2] < isolevel) cubeIndex |= 0b00000100;
+		if (neighbourDensities[3] < isolevel) cubeIndex |= 0b00001000;
+		if (neighbourDensities[4] < isolevel) cubeIndex |= 0b00010000;
+		if (neighbourDensities[5] < isolevel) cubeIndex |= 0b00100000;
+		if (neighbourDensities[6] < isolevel) cubeIndex |= 0b01000000;
+		if (neighbourDensities[7] < isolevel) cubeIndex |= 0b10000000;
+
+		if ((cubeIndex == 0) || (cubeIndex == 255)) {
 			return;
 		}
 
 		final Vec3[] vertices = new Vec3[12];
+		final int edgeMask = EDGE_TABLE[cubeIndex];
 
-		/* Find the vertices where the surface intersects the cube */
-		// for every edge of the cube
-		for (int edgeIndex = 0; edgeIndex < 12; edgeIndex++) {
-			if ((edgeMask & (1 << edgeIndex)) != 1) {
-				continue;
+		if ((edgeMask & 1) == 1)
+			vertices[0] = vertexInterpolation(isolevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
+		if ((edgeMask & 2) == 2)
+			vertices[1] = vertexInterpolation(isolevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
+		if ((edgeMask & 4) == 4)
+			vertices[2] = vertexInterpolation(isolevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
+		if ((edgeMask & 8) == 8)
+			vertices[3] = vertexInterpolation(isolevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
+		if ((edgeMask & 16) == 16)
+			vertices[4] = vertexInterpolation(isolevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
+		if ((edgeMask & 32) == 32)
+			vertices[5] = vertexInterpolation(isolevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
+		if ((edgeMask & 64) == 64)
+			vertices[6] = vertexInterpolation(isolevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
+		if ((edgeMask & 128) == 128)
+			vertices[7] = vertexInterpolation(isolevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
+		if ((edgeMask & 256) == 256)
+			vertices[8] = vertexInterpolation(isolevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
+		if ((edgeMask & 512) == 512)
+			vertices[9] = vertexInterpolation(isolevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
+		if ((edgeMask & 1024) == 1024)
+			vertices[10] = vertexInterpolation(isolevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
+		if ((edgeMask & 2048) == 2048)
+			vertices[11] = vertexInterpolation(isolevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
+
+		// get texture
+		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+			if (ModUtil.shouldSmooth(state)) {
+				break;
+			} else {
+				textureState = cache.getBlockState(mutablePos);
+				texturePos = mutablePos;
 			}
-			float offset = getOffset(, , )
-			final int[] vertex = EDGE_[edgeIndex];
-			vertices[edgeIndex] = new Vec3(vertex[0], vertex[1], vertex[2]);
 		}
 
-		for (Vec3 vertex : vertices)
+		final BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
+		if (quad == null) {
+			return;
+		}
+		final TextureAtlasSprite sprite = quad.getSprite();
+		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+		final int red = (color >> 16) & 0xFF ;
+		final int green = (color >> 8) & 0xFF;
+		final int blue = color & 0xFF;
+		final int alpha = 0xFF;
+
+		final double minU = ClientUtil.getMinU(sprite);
+		final double minV = ClientUtil.getMinV(sprite);
+		final double maxU = ClientUtil.getMaxU(sprite);
+		final double maxV = ClientUtil.getMaxV(sprite);
+
+		// real pos not texturePos
+		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+
+		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+
+		final ArrayList<Vec3[]> faces = new ArrayList<>();
+
+		//shit I don't understand (lookup table)
+		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
+			final Vec3 vertex0 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex]];
+			final Vec3 vertex1 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
+			final Vec3 vertex2 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+			faces.add(new Vec3[]{
+					vertex0, vertex1, vertex2
+			});
+		}
+
+		// triangles -> quads
+		for (int i = 0; i < faces.size(); i += 2) {
+			final Vec3[] vertexList0 = faces.get(i);
+			final Vec3[] vertexList1 = faces.get(i + 1);
+
+			//1st face
+			{
+				final Vec3 vertex0 = vertexList0[0];
+				final Vec3 vertex1 = vertexList0[1];
+				final Vec3 vertex2 = vertexList0[2];
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			}
+
+			//2nd face
+			{
+				final Vec3 vertex0 = vertexList1[0];
+				final Vec3 vertex1 = vertexList1[1];
+				final Vec3 vertex2 = vertexList1[2];
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			}
+		}
 
 	}
 
-	/// <summary>
-	/// getOffset finds the approximate point of intersection of the surface
-	/// between two points with the values v1 and v2
-	/// </summary>
-	protected static float getOffset(float v1, float v2, float isoSurface)
-	{
-		float delta = v2 - v1;
-		return (delta == 0.0f) ? isoSurface : (isoSurface - v1) / delta;
+	private static Vec3 vertexInterpolation(final float isoLevel, final Vec3 p1, final Vec3 p2, final float valp1, final float valp2) {
+
+		if (MathHelper.abs(isoLevel - valp1) < 1.0E-5F) {
+			return p1;
+		} else if (MathHelper.abs(isoLevel - valp2) < 1.0E-5F) {
+			return p2;
+		} else if (MathHelper.abs(valp1 - valp2) < 1.0E-5F) {
+			return p1;
+		} else {
+			final double mu = (isoLevel - valp1) / (valp2 - valp1);
+			final double x = p1.xCoord + (mu * (p2.xCoord - p1.xCoord));
+			final double y = p1.yCoord + (mu * (p2.yCoord - p1.yCoord));
+			final double z = p1.zCoord + (mu * (p2.zCoord - p1.zCoord));
+			return new Vec3(x, y, z);
+		}
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {

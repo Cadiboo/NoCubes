@@ -343,7 +343,7 @@ public final class SmoothLightingFluid {
 				}
 			}
 
-			List<BakedQuad> list1 = modelIn.getQuads(stateIn, (EnumFacing)null, rand);
+			List<BakedQuad> list1 = modelIn.getQuads(stateIn, null, rand);
 
 			if (!list1.isEmpty())
 			{
