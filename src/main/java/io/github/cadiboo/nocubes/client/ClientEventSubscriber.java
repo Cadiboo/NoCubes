@@ -79,6 +79,10 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onDrawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+
 		final EntityPlayer player = Minecraft.getMinecraft().player;
 		if (player == null) {
 			return;
