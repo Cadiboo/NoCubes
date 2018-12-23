@@ -61,7 +61,7 @@ public final class ModEnums {
 
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost),
 
-		SURFACE_NETS_CHUNK(SurfaceNetsChunk::renderPre, SurfaceNetsChunk::renderLayer, SurfaceNetsChunk::renderType, SurfaceNetsChunk::renderBlock, SurfaceNetsChunk::renderPost),
+//		SURFACE_NETS_CHUNK(SurfaceNetsChunk::renderPre, SurfaceNetsChunk::renderLayer, SurfaceNetsChunk::renderType, SurfaceNetsChunk::renderBlock, SurfaceNetsChunk::renderPost),
 
 		;
 
