@@ -92,7 +92,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-//		event.setCanceled(true);
+		event.setCanceled(true);
 
 		final Profiler profiler = player.world.profiler;
 		profiler.startSection("drawing dynamic block highlights");
