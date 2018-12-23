@@ -7,6 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.world.GetCollisionBoxesEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -18,6 +19,11 @@ import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
  */
 @Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
 public final class EventSubscriber {
+
+	@SubscribeEvent
+	public static void onPlayerTickEvent(@Nonnull final TickEvent.PlayerTickEvent event) {
+		event.player.noClip = true;
+	}
 
 	@SubscribeEvent
 	public static void onGetCollisionBoxesEvent(@Nonnull final GetCollisionBoxesEvent event) {
