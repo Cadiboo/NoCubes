@@ -162,6 +162,26 @@ public final class ClientEventSubscriber {
 		bufferBuilder.pos(v6.xCoord, v6.yCoord, v6.zCoord).color(red, green, blue, alpha).endVertex();
 		bufferBuilder.pos(v7.xCoord, v7.yCoord, v7.zCoord).color(red, green, blue, alpha).endVertex();
 		bufferBuilder.pos(v4.xCoord, v4.yCoord, v4.zCoord).color(red, green, blue, alpha).endVertex();
+		// north
+		// assuming facing north (towards neg z) & up (we only draw 0-4 & 1-5 cause the others are already drawn)
+		// 0 1
+		// 4 5
+		bufferBuilder.pos(v0.xCoord, v0.yCoord, v0.zCoord).color(red, green, blue, invis).endVertex();
+		bufferBuilder.pos(v0.xCoord, v0.yCoord, v0.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v4.xCoord, v4.yCoord, v4.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v1.xCoord, v1.yCoord, v1.zCoord).color(red, green, blue, invis).endVertex();
+		bufferBuilder.pos(v1.xCoord, v1.yCoord, v1.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v5.xCoord, v5.yCoord, v5.zCoord).color(red, green, blue, alpha).endVertex();
+		// south
+		// assuming facing north (towards neg z) & up (we only draw 3-2 & 7-6 cause the others are already drawn)
+		// 3 2
+		// 7 6
+		bufferBuilder.pos(v3.xCoord, v3.yCoord, v3.zCoord).color(red, green, blue, invis).endVertex();
+		bufferBuilder.pos(v3.xCoord, v3.yCoord, v3.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v2.xCoord, v2.yCoord, v2.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v7.xCoord, v7.yCoord, v7.zCoord).color(red, green, blue, invis).endVertex();
+		bufferBuilder.pos(v7.xCoord, v7.yCoord, v7.zCoord).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(v6.xCoord, v6.yCoord, v6.zCoord).color(red, green, blue, alpha).endVertex();
 
 		//		bufferBuilder.pos(minX, minY, minZ).color(red, green, blue, 0.0F).endVertex();
 //		bufferBuilder.pos(minX, minY, minZ).color(red, green, blue, alpha).endVertex();
