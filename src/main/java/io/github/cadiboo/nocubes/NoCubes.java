@@ -21,7 +21,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static io.github.cadiboo.nocubes.util.ModReference.SERVER_PROXY_CLASS;
-import static io.github.cadiboo.nocubes.util.ModReference.Version;
+import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 
 /**
  * Our main mod class
@@ -31,7 +31,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.Version;
 @Mod(
 		modid = MOD_ID,
 		name = MOD_NAME,
-		version = Version.VERSION,
+		version = VERSION,
 		acceptedMinecraftVersions = ACCEPTED_VERSIONS,
 		dependencies = DEPENDENCIES
 )
