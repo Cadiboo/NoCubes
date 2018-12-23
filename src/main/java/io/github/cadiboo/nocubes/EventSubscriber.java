@@ -29,6 +29,8 @@ public final class EventSubscriber {
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(@Nonnull final PlayerSPPushOutOfBlocksEvent event) {
 
+		if (true) return;
+
 		if (true) {
 			event.setCanceled(true);
 			return;
@@ -64,6 +66,8 @@ public final class EventSubscriber {
 
 	@SubscribeEvent
 	public static void onGetCollisionBoxesEvent(@Nonnull final GetCollisionBoxesEvent event) {
+
+		if (true) return;
 
 		if (!NoCubes.isEnabled()) {
 			return;

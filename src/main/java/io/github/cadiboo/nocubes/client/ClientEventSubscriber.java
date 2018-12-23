@@ -79,6 +79,8 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onDrawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
+		if (true) return;
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
