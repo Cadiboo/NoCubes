@@ -3,8 +3,6 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.debug.SmoothLightingFluid;
 import io.github.cadiboo.nocubes.util.IProxy;
-import io.github.cadiboo.nocubes.util.Vec3;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -16,8 +14,6 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.HashMap;
 
 import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
 import static io.github.cadiboo.nocubes.util.ModReference.CLIENT_PROXY_CLASS;
@@ -104,7 +100,5 @@ public final class NoCubes {
 		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled :o this is... impossible???");
 		//			NoCubes.deactivate();
 	}
-
-	public static final HashMap<BlockPos, Vec3[]> VERTICES = new HashMap<>();
 
 }

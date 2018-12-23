@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
 import net.minecraft.client.renderer.GlStateManager.SourceFactor;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,7 +26,6 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
@@ -78,18 +79,18 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onDrawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
-		final RayTraceResult rayTraceResult = event.getTarget();
-		final Vec3[] vertices = VERTICES.get(rayTraceResult.getBlockPos());
-		if (vertices == null) {
-			return;
-		}
-
 		final EntityPlayer player = Minecraft.getMinecraft().player;
 		if (player == null) {
 			return;
 		}
 
+		final RayTraceResult rayTraceResult = event.getTarget();
 		if (rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK) {
+			return;
+		}
+
+		final Vec3[] vertices = OldNoCubes.getPoints(rayTraceResult.getBlockPos(), player.world);
+		if (vertices == null) {
 			return;
 		}
 
@@ -109,8 +110,8 @@ public final class ClientEventSubscriber {
 		final double renderY = -(player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks));
 		final double renderZ = -(player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks));
 
-		for(AxisAlignedBB axisAlignedBB : player.world.getCollisionBoxes(player, new AxisAlignedBB(rayTraceResult.getBlockPos()))){
-			event.getContext().drawSelectionBox(player, rayTraceResult, 0, partialTicks);
+		for (AxisAlignedBB axisAlignedBB : player.world.getCollisionBoxes(player, new AxisAlignedBB(rayTraceResult.getBlockPos()))) {
+			RenderGlobal.drawSelectionBoundingBox(axisAlignedBB.offset(renderX, renderY, renderZ), 1, 0, 0, 1);
 		}
 
 		//				drawSelectionBoundingBox(iblockstate.getSelectedBoundingBox(this.world, blockpos).grow(0.0020000000949949026D).offset(-d3, -d4, -d5), 0.0F, 0.0F, 0.0F, 0.4F);

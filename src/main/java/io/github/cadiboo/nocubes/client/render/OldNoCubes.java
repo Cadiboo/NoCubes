@@ -22,7 +22,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
-import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Reimplementation of the NoCubes algorithm for NoCubes 0.3 (by Click_Me)
@@ -82,46 +83,9 @@ public final class OldNoCubes {
 		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
 
-		final int x = pos.getX();
-		final int y = pos.getY();
-		final int z = pos.getZ();
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
-		// The 8 points that make the block.
-		// 1 point for each corner
-		final Vec3[] points = {
-				new Vec3(0, 0, 0),
-				new Vec3(1, 0, 0),
-				new Vec3(1, 0, 1),
-				new Vec3(0, 0, 1),
-				new Vec3(0, 1, 0),
-				new Vec3(1, 1, 0),
-				new Vec3(1, 1, 1),
-				new Vec3(0, 1, 1),
-		};
-
-		// Loop through all the points:
-		// Here everything will be 'smoothed'.
-		for (int pointIndex = 0; pointIndex < 8; pointIndex++) {
-
-			final Vec3 point = points[pointIndex];
-
-			// Give the point the block's coordinates.
-			point.xCoord += (double) x;
-			point.yCoord += (double) y;
-			point.zCoord += (double) z;
-
-			// Check if the point is intersecting with a smoothable block.
-			if (doesPointIntersectWithSmoothable(cache, point)) {
-				if (pointIndex < 4 && doesPointBottomIntersectWithAir(cache, point)) {
-					point.yCoord = (double) y + 1.0D;
-				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point)) {
-					point.yCoord = (double) y;
-				}
-
-				points[pointIndex] = givePointRoughness(point);
-			}
-		}
+		final Vec3[] points = getPoints(pos, cache);
 
 		boolean cancelEvent = true;
 
@@ -137,8 +101,6 @@ public final class OldNoCubes {
 				}
 			}
 		}
-
-		VERTICES.put(pos.toImmutable(), points);
 
 		boolean wasAnythingRendered = false;
 
@@ -260,6 +222,57 @@ public final class OldNoCubes {
 
 	}
 
+	@Nullable
+	public static Vec3[] getPoints(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess cache) {
+
+		if (!ModUtil.shouldSmooth(cache.getBlockState(pos))) {
+			return null;
+		}
+
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
+
+		// The 8 points that make the block.
+		// 1 point for each corner
+		final Vec3[] points = {
+				new Vec3(0, 0, 0),
+				new Vec3(1, 0, 0),
+				new Vec3(1, 0, 1),
+				new Vec3(0, 0, 1),
+				new Vec3(0, 1, 0),
+				new Vec3(1, 1, 0),
+				new Vec3(1, 1, 1),
+				new Vec3(0, 1, 1),
+		};
+
+		// Loop through all the points:
+		// Here everything will be 'smoothed'.
+		for (int pointIndex = 0; pointIndex < 8; pointIndex++) {
+
+			final Vec3 point = points[pointIndex];
+
+			// Give the point the block's coordinates.
+			point.xCoord += (double) x;
+			point.yCoord += (double) y;
+			point.zCoord += (double) z;
+
+			// Check if the point is intersecting with a smoothable block.
+			if (doesPointIntersectWithSmoothable(cache, point)) {
+				if (pointIndex < 4 && doesPointBottomIntersectWithAir(cache, point)) {
+					point.yCoord = (double) y + 1.0D;
+				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point)) {
+					point.yCoord = (double) y;
+				}
+
+//				points[pointIndex] = givePointRoughness(point);
+			}
+		}
+
+		return points;
+
+	}
+
 	/**
 	 * Give the point some (pseudo) random offset based on its location
 	 *
@@ -277,6 +290,7 @@ public final class OldNoCubes {
 
 	/**
 	 * Check if the state is AIR or PLANT or VINE
+	 *
 	 * @param state the state
 	 * @return if the state is AIR or PLANT or VINE
 	 */

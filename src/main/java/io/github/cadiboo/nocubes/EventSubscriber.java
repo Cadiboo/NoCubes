@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -7,12 +8,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.world.GetCollisionBoxesEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import javax.annotation.Nonnull;
 import java.util.List;
-
-import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
 
 /**
  * Subscribe to events that should be handled on both PHYSICAL sides in this class
@@ -21,18 +19,13 @@ import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
 public final class EventSubscriber {
 
 	@SubscribeEvent
-	public static void onPlayerTickEvent(@Nonnull final TickEvent.PlayerTickEvent event) {
-		event.player.noClip = true;
-	}
-
-	@SubscribeEvent
 	public static void onGetCollisionBoxesEvent(@Nonnull final GetCollisionBoxesEvent event) {
 
 		final AxisAlignedBB aabb = event.getAabb();
-		final BlockPos pos = new BlockPos(aabb.minX, aabb.minY, aabb.minZ);
 
-		final Vec3[] vertices = VERTICES.get(pos);
-		if (vertices == null) {
+		final Vec3[] vertices = OldNoCubes.getPoints(new BlockPos(aabb.minX, aabb.minY, aabb.minZ), event.getWorld());
+
+		if(vertices==null){
 			return;
 		}
 
@@ -47,7 +40,8 @@ public final class EventSubscriber {
 		final Vec3 v6 = vertices[6];
 		final Vec3 v7 = vertices[7];
 
-		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v7.xCoord, v7.yCoord, v7.zCoord);
+//		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);
+		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);
 
 		collisionBoxes.clear();
 		collisionBoxes.add(collisionBox);
