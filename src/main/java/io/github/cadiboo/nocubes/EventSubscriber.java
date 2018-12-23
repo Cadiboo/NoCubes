@@ -43,6 +43,9 @@ public final class EventSubscriber {
 
 		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v7.xCoord, v7.yCoord, v7.zCoord);
 
+		collisionBoxes.clear();
+		collisionBoxes.add(collisionBox);
+
 	}
 
 }
