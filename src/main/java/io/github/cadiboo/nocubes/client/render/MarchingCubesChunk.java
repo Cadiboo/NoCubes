@@ -29,6 +29,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
+import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.invoke.MethodHandle;
@@ -370,6 +371,11 @@ public final class MarchingCubesChunk {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
+		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+		final int renderChunkPosX = renderChunkPos.getX();
+		final int renderChunkPosY = renderChunkPos.getY();
+		final int renderChunkPosZ = renderChunkPos.getZ();
+
 		final ChunkCache cache = event.getChunkCache();
 		//todo: customisable Isolevel
 		int[] dims = new int[]{16, 16, 16};
@@ -390,7 +396,7 @@ public final class MarchingCubesChunk {
 					for (int i = 0; i < 8; ++i) {
 						int[] v = CUBE_VERTICES[i];
 //						float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
-						float s = ModUtil.getBlockDensity(new BlockPos(v[0] + dims[0], v[1] + dims[1], v[2] + dims[2]), cache);
+						float s = ModUtil.getBlockDensity(new BlockPos(v[0] + x[0] + renderChunkPosX, v[1] + x[1] + renderChunkPosY, v[2] + x[2] + renderChunkPosZ), cache);
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
 					}
@@ -417,9 +423,9 @@ public final class MarchingCubesChunk {
 						}
 
 						// Linear interpolation?
-						nv.xCoord = (x[0] + p0[0]) + t * (p1[0] - p0[0]);
-						nv.yCoord = (x[1] + p0[1]) + t * (p1[1] - p0[1]);
-						nv.zCoord = (x[2] + p0[2]) + t * (p1[2] - p0[2]);
+						nv.xCoord = (x[0] + p0[0]) + t * (p1[0] - p0[0]) + x[0] + renderChunkPosX;
+						nv.yCoord = (x[1] + p0[1]) + t * (p1[1] - p0[1]) + x[1] + renderChunkPosY;
+						nv.zCoord = (x[2] + p0[2]) + t * (p1[2] - p0[2]) + x[2] + renderChunkPosZ;
 
 						vertices.add(nv);
 					}
@@ -429,8 +435,6 @@ public final class MarchingCubesChunk {
 //						faces.add(new Vec3(edges[f[i]], edges[f[i + 1]], edges[f[i + 2]]));
 //					}
 				}
-
-		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
 
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
@@ -459,26 +463,9 @@ public final class MarchingCubesChunk {
 
 			final Block block = state.getBlock();
 
-			boolean cancelEvent = true;
-
-			if (ModConfig.betterFoliageGrassCompatibility) {
-				//render BF grass if not near air
-				if (state.getBlock() instanceof BlockGrass) {
-					cancelEvent = false;
-					for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-						if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
-							cancelEvent = true;
-							break;
-						}
-					}
-				}
-			}
-
 			final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
 			final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
 			final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
-
-			boolean wasAnythingRendered = false;
 
 			for (final BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
 
@@ -508,13 +495,10 @@ public final class MarchingCubesChunk {
 				final double maxU = ClientUtil.getMaxU(sprite);
 				final double maxV = ClientUtil.getMaxV(sprite);
 
-				wasAnythingRendered = true;
-
 				bufferBuilder.pos(v0.xCoord, v0.yCoord, v0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(v1.xCoord, v1.yCoord, v1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(v2.xCoord, v2.yCoord, v2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(v3.xCoord, v3.yCoord, v3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-
 
 			}
 		}
@@ -529,6 +513,29 @@ public final class MarchingCubesChunk {
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] = true;
+
+		final IBlockState state = event.getBlockState();
+		final IBlockAccess cache = event.getChunkCache();
+		final BlockPos pos = event.getBlockPos();
+
+		boolean cancelEvent = true;
+
+		if (ModConfig.betterFoliageGrassCompatibility) {
+			//render BF grass if not near air
+			if (state.getBlock() instanceof BlockGrass) {
+				cancelEvent = false;
+				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
+						cancelEvent = true;
+						break;
+					}
+				}
+			}
+		}
+
+		event.setCanceled(cancelEvent && ModUtil.shouldSmooth(state));
 
 	}
 
