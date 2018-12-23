@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -107,6 +108,10 @@ public final class ClientEventSubscriber {
 		final double renderX = -(player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks));
 		final double renderY = -(player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks));
 		final double renderZ = -(player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks));
+
+		for(AxisAlignedBB axisAlignedBB : player.world.getCollisionBoxes(player, new AxisAlignedBB(rayTraceResult.getBlockPos()))){
+			event.getContext().drawSelectionBox(player, rayTraceResult, 0, partialTicks);
+		}
 
 		//				drawSelectionBoundingBox(iblockstate.getSelectedBoundingBox(this.world, blockpos).grow(0.0020000000949949026D).offset(-d3, -d4, -d5), 0.0F, 0.0F, 0.0F, 0.4F);
 
