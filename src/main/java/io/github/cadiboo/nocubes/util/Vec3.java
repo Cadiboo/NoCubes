@@ -15,4 +15,12 @@ public class Vec3 {
 		this.zCoord = zCoord;
 	}
 
+	public Vec3 offset(final double offsetX, final double offsetY, final double offsetZ) {
+		return new Vec3(
+				this.xCoord + offsetX,
+				this.yCoord + offsetY,
+				this.zCoord + offsetZ
+		);
+	}
+
 }
