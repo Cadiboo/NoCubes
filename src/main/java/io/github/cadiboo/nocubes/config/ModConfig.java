@@ -106,7 +106,7 @@ public final class ModConfig {
 	public static boolean isEnabled = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
-	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.SURFACE_NETS;
+	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.OLD_NO_CUBES;
 
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
