@@ -76,7 +76,7 @@ public final class NoCubes {
 	@EventHandler
 	public void postInit(final FMLPostInitializationEvent event) {
 		LOGGER.debug("postInit");
-		SmoothLightingFluid.changeFluidRenderer();
+//		SmoothLightingFluid.changeFluidRenderer();
 	}
 
 	//	private static boolean isEnabled;
