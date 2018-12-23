@@ -2,6 +2,10 @@ package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Level;
@@ -86,11 +90,55 @@ public final class ModUtil {
 
 	/**
 	 * If the state should be smoothed
+	 *
 	 * @param state the state
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmooth(final IBlockState state) {
 		return ModConfig.getSmoothableBlockStatesCache().contains(state);
+	}
+
+	/**
+	 * @param pos   the position of the block
+	 * @param cache the cache
+	 * @return the density for the block
+	 */
+	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
+
+		float density = 0.0F;
+
+		final MutableBlockPos mutablePos = new MutableBlockPos(pos);
+
+		for (int x = 0; x < 2; ++x) {
+			for (int y = 0; y < 2; ++y) {
+				for (int z = 0; z < 2; ++z) {
+					mutablePos.setPos(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
+
+					final IBlockState state = cache.getBlockState(mutablePos);
+
+					if (ModUtil.shouldSmooth(state)) {
+						density += 1;
+						//					} else if (state.isNormalCube()) {
+						//
+						//					} else if (state.getMaterial() == Material.VINE) {
+						//						density -= 0.75;
+						// Thanks VoidWalker. I'm pretty embarrased.
+						// Uncommenting 2 lines of code fixed the entire algorithm. (else density-=1)
+						// I had been planning to uncomment and redo them after I fixed the algorithm.
+						// If you hadn't taken the time to debug this, I might never have found the bug
+					} else {
+						density -= 1;
+					}
+
+					if (state.getBlock() == Blocks.BEDROCK) {
+						density += 0.000000000000000000000000000000000000000000001f;
+					}
+
+				}
+			}
+		}
+
+		return density;
 	}
 
 }

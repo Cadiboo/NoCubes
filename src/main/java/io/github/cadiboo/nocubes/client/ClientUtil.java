@@ -427,7 +427,7 @@ public final class ClientUtil {
 	 * @param pos   the pos
 	 * @return the color
 	 */
-	public static int getColor(final BakedQuad quad, final IBlockState state, final ChunkCache cache, final BlockPos pos) {
+	public static int getColor(final BakedQuad quad, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
 		final int red;
 		final int green;
 		final int blue;

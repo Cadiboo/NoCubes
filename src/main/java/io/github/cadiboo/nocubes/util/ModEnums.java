@@ -1,9 +1,9 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.client.render.MarchingCubes;
+import io.github.cadiboo.nocubes.client.render.MarchingCubesChunk;
 import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.client.render.SurfaceNets;
-import io.github.cadiboo.nocubes.debug.SurfaceNetsChunk;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
@@ -60,6 +60,8 @@ public final class ModEnums {
 		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost),
 
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost),
+
+		MARCHING_CUBES_CHUNK(MarchingCubesChunk::renderPre, MarchingCubesChunk::renderLayer, MarchingCubesChunk::renderType, MarchingCubesChunk::renderBlock, MarchingCubesChunk::renderPost),
 
 //		SURFACE_NETS_CHUNK(SurfaceNetsChunk::renderPre, SurfaceNetsChunk::renderLayer, SurfaceNetsChunk::renderType, SurfaceNetsChunk::renderBlock, SurfaceNetsChunk::renderPost),
 
