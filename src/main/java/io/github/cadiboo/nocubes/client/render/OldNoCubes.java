@@ -22,6 +22,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
+import static io.github.cadiboo.nocubes.NoCubes.VERTICES;
+
 /**
  * Reimplementation of the NoCubes algorithm for NoCubes 0.3 (by Click_Me)
  *
@@ -135,6 +137,8 @@ public final class OldNoCubes {
 				}
 			}
 		}
+
+		VERTICES.put(pos.toImmutable(), points);
 
 		boolean wasAnythingRendered = false;
 

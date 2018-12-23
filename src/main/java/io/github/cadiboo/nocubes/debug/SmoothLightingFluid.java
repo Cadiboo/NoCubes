@@ -5,20 +5,33 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
+import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.BitSet;
+import java.util.List;
 
 /**
  * @author Cadiboo
@@ -32,19 +45,21 @@ public final class SmoothLightingFluid {
 	}
 
 	public static void changeFluidRenderer() {
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-		try {
-			fluidRenderer.set(blockRendererDispatcher, new SmoothLightingFluidRenderer(Minecraft.getMinecraft().getBlockColors()));
-		} catch (IllegalAccessException e) {
-			// Some other mod messed up and reset the access flag of the field.
-			CrashReport crashReport = new CrashReport("An impossible error has occurred!", e);
-			crashReport.makeCategory("Reflectively Accessing BlockRendererDispatcher#fluidRenderer");
-			throw new ReportedException(crashReport);
-		}
+//		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+//		try {
+//			fluidRenderer.set(blockRendererDispatcher, new SmoothLightingFluidRenderer(Minecraft.getMinecraft().getBlockColors()));
+//		} catch (IllegalAccessException e) {
+//			// Some other mod messed up and reset the access flag of the field.
+//			CrashReport crashReport = new CrashReport("An impossible error has occurred!", e);
+//			crashReport.makeCategory("Reflectively Accessing BlockRendererDispatcher#fluidRenderer");
+//			throw new ReportedException(crashReport);
+//		}
 	}
 
 	private static class SmoothLightingFluidRenderer extends BlockFluidRenderer {
 
+		private static final Class<?> BlockModelRenderer_AmbientOcclusionFace = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "AmbientOcclusionFace");
+		private static final Constructor<?> BlockModelRenderer_AmbientOcclusionFace_constructor = ObfuscationReflectionHelper.findConstructor(BlockModelRenderer_AmbientOcclusionFace);
 		private final BlockColors blockColors;
 
 		private final TextureAtlasSprite[] atlasSpritesLava = new TextureAtlasSprite[2];
@@ -308,6 +323,87 @@ public final class SmoothLightingFluid {
 			}
 
 			return 1.0F - liquidHeightPercentage / (float) divisor;
+		}
+
+		public boolean renderModelSmooth(IBlockAccess worldIn, IBakedModel modelIn, IBlockState stateIn, BlockPos posIn, BufferBuilder buffer, boolean checkSides, long rand) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+//			BlockModelRenderer.AmbientOcclusionFace
+			boolean flag = false;
+			float[] afloat = new float[EnumFacing.values().length * 2];
+			BitSet bitset = new BitSet(3);
+			Object blockmodelrenderer$ambientocclusionface = BlockModelRenderer_AmbientOcclusionFace_constructor.newInstance();
+
+			for (EnumFacing enumfacing : EnumFacing.values())
+			{
+				List<BakedQuad> list = modelIn.getQuads(stateIn, enumfacing, rand);
+
+				if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, enumfacing)))
+				{
+					this.renderQuadsSmooth(worldIn, stateIn, posIn, buffer, list, afloat, bitset, blockmodelrenderer$ambientocclusionface);
+					flag = true;
+				}
+			}
+
+			List<BakedQuad> list1 = modelIn.getQuads(stateIn, (EnumFacing)null, rand);
+
+			if (!list1.isEmpty())
+			{
+				this.renderQuadsSmooth(worldIn, stateIn, posIn, buffer, list1, afloat, bitset, blockmodelrenderer$ambientocclusionface);
+				flag = true;
+			}
+
+			return flag;
+		}
+
+		private void renderQuadsSmooth(IBlockAccess blockAccessIn, IBlockState stateIn, BlockPos posIn, BufferBuilder buffer, List<BakedQuad> list, float[] quadBounds, BitSet bitSet, Object aoFace)
+		{
+//			Vec3d vec3d = stateIn.getOffset(blockAccessIn, posIn);
+//			double d0 = (double)posIn.getX() + vec3d.x;
+//			double d1 = (double)posIn.getY() + vec3d.y;
+//			double d2 = (double)posIn.getZ() + vec3d.z;
+//			int i = 0;
+//
+//			for (int j = list.size(); i < j; ++i)
+//			{
+//				BakedQuad bakedquad = list.get(i);
+//				this.fillQuadBounds(stateIn, bakedquad.getVertexData(), bakedquad.getFace(), quadBounds, bitSet);
+//				aoFace.updateVertexBrightness(blockAccessIn, stateIn, posIn, bakedquad.getFace(), quadBounds, bitSet);
+//				buffer.addVertexData(bakedquad.getVertexData());
+//				buffer.putBrightness4(aoFace.vertexBrightness[0], aoFace.vertexBrightness[1], aoFace.vertexBrightness[2], aoFace.vertexBrightness[3]);
+//				if(bakedquad.shouldApplyDiffuseLighting())
+//				{
+//					float diffuse = net.minecraftforge.client.model.pipeline.LightUtil.diffuseLight(bakedquad.getFace());
+//					aoFace.vertexColorMultiplier[0] *= diffuse;
+//					aoFace.vertexColorMultiplier[1] *= diffuse;
+//					aoFace.vertexColorMultiplier[2] *= diffuse;
+//					aoFace.vertexColorMultiplier[3] *= diffuse;
+//				}
+//				if (bakedquad.hasTintIndex())
+//				{
+//					int k = this.blockColors.colorMultiplier(stateIn, blockAccessIn, posIn, bakedquad.getTintIndex());
+//
+//					if (EntityRenderer.anaglyphEnable)
+//					{
+//						k = TextureUtil.anaglyphColor(k);
+//					}
+//
+//					float f = (float)(k >> 16 & 255) / 255.0F;
+//					float f1 = (float)(k >> 8 & 255) / 255.0F;
+//					float f2 = (float)(k & 255) / 255.0F;
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[0] * f, aoFace.vertexColorMultiplier[0] * f1, aoFace.vertexColorMultiplier[0] * f2, 4);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[1] * f, aoFace.vertexColorMultiplier[1] * f1, aoFace.vertexColorMultiplier[1] * f2, 3);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[2] * f, aoFace.vertexColorMultiplier[2] * f1, aoFace.vertexColorMultiplier[2] * f2, 2);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[3] * f, aoFace.vertexColorMultiplier[3] * f1, aoFace.vertexColorMultiplier[3] * f2, 1);
+//				}
+//				else
+//				{
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[0], aoFace.vertexColorMultiplier[0], aoFace.vertexColorMultiplier[0], 4);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[1], aoFace.vertexColorMultiplier[1], aoFace.vertexColorMultiplier[1], 3);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[2], aoFace.vertexColorMultiplier[2], aoFace.vertexColorMultiplier[2], 2);
+//					buffer.putColorMultiplier(aoFace.vertexColorMultiplier[3], aoFace.vertexColorMultiplier[3], aoFace.vertexColorMultiplier[3], 1);
+//				}
+//
+//				buffer.putPosition(d0, d1, d2);
+//			}
 		}
 
 	}
