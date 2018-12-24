@@ -19,8 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
-
-import java.util.ArrayList;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 /**
  * Implementation of the MarchingCubes algorithm in Minecraft
@@ -343,7 +342,14 @@ public final class MarchingCubes {
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
-
+		final BlockPos pos = event.getBlockPos();
+		for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+			if (ModUtil.shouldSmooth(event.getChunkCache().getBlockState(mutablePos))) {
+				event.setResult(Event.Result.ALLOW);
+				event.setCanceled(true);
+				break;
+			}
+		}
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
@@ -367,14 +373,24 @@ public final class MarchingCubes {
 				new Vec3(1.0D, 1.0D, 0.0D),
 				new Vec3(0.0D, 1.0D, 0.0D)
 		};
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
+
+		for (int i = 0; i < points.length; i++) {
+			points[i] = points[i].offset(x, y, z);
+		}
 
 		final float[] neighbourDensities = new float[8];
-		int neighbourIndex = 0;
-		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos, pos.add(1, 1, 1))) {
-			final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
-			neighbourDensities[neighbourIndex] = neighbourDensity;
-			final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
-			neighbourIndex++;
+		{
+			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
+			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
+				mutablePos.setPos(points[neighbourIndex].xCoord, points[neighbourIndex].yCoord, points[neighbourIndex].zCoord);
+				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
+				neighbourDensities[neighbourIndex] = neighbourDensity;
+//				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
+			}
+			mutablePos.release();
 		}
 
 		int cubeIndex = 0b00000000;
@@ -388,7 +404,10 @@ public final class MarchingCubes {
 		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
 		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
 
-		if ((cubeIndex == 0) || (cubeIndex == 255)) {
+		// 0x00 = completely inside, 0xFF = completely outside
+		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
+			if (cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks)
+				event.setCanceled(ModUtil.shouldSmooth(state));
 			return;
 		}
 
@@ -422,7 +441,7 @@ public final class MarchingCubes {
 
 		// get texture
 		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-			if (ModUtil.shouldSmooth(state)) {
+			if (ModUtil.shouldSmooth(textureState)) {
 				break;
 			} else {
 				textureState = cache.getBlockState(mutablePos);
@@ -453,8 +472,6 @@ public final class MarchingCubes {
 
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
-		final ArrayList<Vec3[]> faces = new ArrayList<>();
-
 		// local variable for speed
 		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
 
@@ -465,36 +482,24 @@ public final class MarchingCubes {
 			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
 			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
 			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
-			faces.add(new Vec3[]{
-					vertex0, vertex1, vertex2
-			});
-		}
 
-		// triangles -> quads
-		for (int i = 0; i < faces.size(); i += 2) {
-			final Vec3[] vertexList0 = faces.get(i);
-			final Vec3[] vertexList1 = faces.get(i + 1);
-
-			//1st face (Top 3 UVs)
-			{
-				final Vec3 vertex0 = vertexList0[0];
-				final Vec3 vertex1 = vertexList0[1];
-				final Vec3 vertex2 = vertexList0[2];
+			// triangle -> quad UVs
+			if (triangleIndex % 6 == 0) {
+				//bottom right triangle (if facing north)
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			} else {
+				//top left triangle (if facing north)
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 			}
-
-			//2nd face (Bottom 3 UVs)
-			{
-				final Vec3 vertex0 = vertexList1[0];
-				final Vec3 vertex1 = vertexList1[1];
-				final Vec3 vertex2 = vertexList1[2];
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			}
 		}
+
+		event.setCanceled(ModUtil.shouldSmooth(state));
 
 	}
 
