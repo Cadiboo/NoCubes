@@ -108,6 +108,9 @@ public final class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
 	public static boolean hideOutsideBlocks;
 
+	@LangKey(ModReference.MOD_ID + ".config.offsetVertices")
+	public static boolean offsetVertices;
+
 	static {
 
 		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{

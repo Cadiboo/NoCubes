@@ -386,10 +386,15 @@ public final class MarchingCubes {
 		{
 			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
 			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
-				mutablePos.setPos(points[neighbourIndex].xCoord, points[neighbourIndex].yCoord, points[neighbourIndex].zCoord);
+				//local variable for speed
+				final Vec3 point = points[neighbourIndex];
+				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
 				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
 				neighbourDensities[neighbourIndex] = neighbourDensity;
 //				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
+				if (ModConfig.offsetVertices) {
+					ModUtil.givePointRoughness(point);
+				}
 			}
 			mutablePos.release();
 		}
@@ -405,11 +410,22 @@ public final class MarchingCubes {
 		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
 		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
 
+		if (ModConfig.shouldSmoothLiquids)
+			ClientUtil.extendLiquids(event);
+
 		// 0x00 = completely inside, 0xFF = completely outside
-		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
-			if (cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks)
+//		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
+//			if ((cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks) || cubeIndex == 0b00000000)
+//				event.setCanceled(ModUtil.shouldSmooth(state));
+//			return;
+//		}
+		if (cubeIndex == 0b00000000) {
+			event.setCanceled(ModUtil.shouldSmooth(state));
+		} else if (cubeIndex == 0b11111111) {
+			if (ModConfig.hideOutsideBlocks) {
 				event.setCanceled(ModUtil.shouldSmooth(state));
-			return;
+			}
+
 		}
 
 		final Vec3[] vertices = new Vec3[12];
@@ -516,7 +532,7 @@ public final class MarchingCubes {
 			}
 		}
 
-		event.setCanceled(cancelEvent);
+		event.setCanceled(cancelEvent && ModUtil.shouldSmooth(state));
 
 	}
 

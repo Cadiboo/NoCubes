@@ -117,7 +117,7 @@ public final class ModUtil {
 					final IBlockState state = cache.getBlockState(mutablePos);
 
 					if (ModUtil.shouldSmooth(state)) {
-						density += 1;
+						density += state.getBoundingBox(cache, pos).maxY;
 						//					} else if (state.isNormalCube()) {
 						//
 						//					} else if (state.getMaterial() == Material.VINE) {
@@ -139,6 +139,24 @@ public final class ModUtil {
 		}
 
 		return density;
+	}
+
+	/**
+	 * Give the point some (pseudo) random offset based on its location
+	 *
+	 * @param point the point
+	 * @return the point with offset applied
+	 */
+	public static Vec3 givePointRoughness(Vec3 point) {
+		// yay magic numbers
+		/* Begin Click_Me's Code (Modified by Cadiboo) */
+		long i = (long) (point.xCoord * 3129871.0D) ^ (long) point.yCoord * 116129781L ^ (long) point.zCoord;
+		i = i * i * 42317861L + i * 11L;
+		point.xCoord += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.yCoord += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.zCoord += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
+		return point;
+		/* End Click_Me's Code (Modified by Cadiboo) */
 	}
 
 }

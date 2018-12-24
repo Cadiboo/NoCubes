@@ -32,7 +32,8 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 		name = MOD_NAME,
 		version = VERSION,
 		acceptedMinecraftVersions = ACCEPTED_VERSIONS,
-		dependencies = DEPENDENCIES
+		dependencies = DEPENDENCIES,
+		clientSideOnly = true
 )
 public final class NoCubes {
 

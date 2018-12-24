@@ -1,6 +1,9 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.LightmapInfo;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -542,6 +545,37 @@ public final class ClientUtil {
 				);
 
 		}
+	}
+
+	public static void extendLiquids(final RebuildChunkBlockEvent event) {
+
+		final IBlockState state = event.getBlockState();
+		if (!ModUtil.shouldSmooth(state)) {
+			return;
+		}
+		final ChunkCache cache = event.getChunkCache();
+		final BlockPos pos = event.getBlockPos();
+
+		BlockPos.MutableBlockPos liquidPos = null;
+		IBlockState liquidState = null;
+
+		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+			final IBlockState tempState = cache.getBlockState(mutablePos);
+			if (tempState.getBlock() instanceof BlockLiquid) {
+				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
+				liquidPos = mutablePos;
+				liquidState = tempState;
+				break;
+			}
+		}
+
+		// set at same time so can skip
+		if (liquidPos == null /*|| liquidState == null*/) {
+			return;
+		}
+
+		event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, event.getBufferBuilder());
+
 	}
 
 }
