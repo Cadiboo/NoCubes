@@ -46,6 +46,7 @@ import static net.minecraft.init.Blocks.GRASS_PATH;
 import static net.minecraft.init.Blocks.GRAVEL;
 import static net.minecraft.init.Blocks.HARDENED_CLAY;
 import static net.minecraft.init.Blocks.IRON_ORE;
+import static net.minecraft.init.Blocks.LAPIS_ORE;
 import static net.minecraft.init.Blocks.LIT_REDSTONE_ORE;
 import static net.minecraft.init.Blocks.MONSTER_EGG;
 import static net.minecraft.init.Blocks.MYCELIUM;
@@ -137,6 +138,7 @@ public final class ModConfig {
 				REDSTONE_ORE.getDefaultState(),
 				LIT_REDSTONE_ORE.getDefaultState(),
 				DIAMOND_ORE.getDefaultState(),
+				LAPIS_ORE.getDefaultState(),
 				EMERALD_ORE.getDefaultState(),
 				QUARTZ_ORE.getDefaultState(),
 
