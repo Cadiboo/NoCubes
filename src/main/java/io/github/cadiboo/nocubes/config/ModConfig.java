@@ -102,8 +102,8 @@ public final class ModConfig {
 	@Config.RangeDouble(min = -10, max = 10)
 	public static double isosurfaceLevel = 0.001D;
 
-//	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
-//	public static boolean betterFoliageGrassCompatibility;
+	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
+	public static boolean betterFoliageGrassCompatibility;
 
 	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
 	public static boolean hideOutsideBlocks;

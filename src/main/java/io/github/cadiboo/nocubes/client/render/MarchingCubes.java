@@ -10,6 +10,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -499,7 +500,23 @@ public final class MarchingCubes {
 			}
 		}
 
-		event.setCanceled(ModUtil.shouldSmooth(state));
+		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] = true;
+
+		boolean cancelEvent = true;
+		if (ModConfig.betterFoliageGrassCompatibility) {
+			//render BF grass if not near air
+			if (state.getBlock() instanceof BlockGrass) {
+				cancelEvent = false;
+				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
+						cancelEvent = true;
+						break;
+					}
+				}
+			}
+		}
+
+		event.setCanceled(cancelEvent);
 
 	}
 
