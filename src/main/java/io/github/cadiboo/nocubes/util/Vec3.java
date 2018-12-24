@@ -1,5 +1,8 @@
 package io.github.cadiboo.nocubes.util;
 
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+
 /**
  * @author Cadiboo
  */
@@ -25,6 +28,14 @@ public class Vec3 {
 				this.yCoord + y,
 				this.zCoord + z
 		);
+	}
+
+	public BlockPos toBlockPos() {
+		return new BlockPos(this.xCoord, this.yCoord, this.zCoord);
+	}
+
+	public AxisAlignedBB toAxisAlignedBB() {
+		return new AxisAlignedBB(this.toBlockPos());
 	}
 
 }
