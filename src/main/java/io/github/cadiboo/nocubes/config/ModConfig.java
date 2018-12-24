@@ -80,29 +80,29 @@ public final class ModConfig {
 	public static boolean isEnabled = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
-	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.OLD_NO_CUBES;
+	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
 
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
-	public static boolean shouldFixFaceCulling = true;
+//	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
+//	public static boolean shouldFixFaceCulling = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
-	public static boolean shouldSmoothLiquids = false;
+//	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
+//	public static boolean shouldSmoothLiquids = false;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldDrawWireframe")
-	public static boolean shouldDrawWireframe = false;
+//	@LangKey(ModReference.MOD_ID + ".config.shouldDrawWireframe")
+//	public static boolean shouldDrawWireframe = false;
 
 	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
 
 	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
-	@Config.RangeDouble(min = -5, max = 5)
-	public static double isosurfaceLevel = 0.5d;
+	@Config.RangeDouble(min = -10, max = 10)
+	public static double isosurfaceLevel = 0.001D;
 
-	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
-	public static boolean betterFoliageGrassCompatibility;
+//	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
+//	public static boolean betterFoliageGrassCompatibility;
 
 	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
 	public static boolean hideOutsideBlocks;
