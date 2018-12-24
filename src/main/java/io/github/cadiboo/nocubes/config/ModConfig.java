@@ -18,7 +18,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.InvalidBlockStateException;
 import net.minecraft.command.NumberInvalidException;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.LangKey;
@@ -60,35 +59,10 @@ import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 import static net.minecraft.init.Blocks.STAINED_HARDENED_CLAY;
 import static net.minecraft.init.Blocks.STONE;
+import static net.minecraft.item.EnumDyeColor.*;
 
 import io.github.cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
-import io.github.cadiboo.nocubes.util.ModReference;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDirt;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockMycelium;
-import net.minecraft.block.BlockRedSandstone;
-import net.minecraft.block.BlockSand;
-import net.minecraft.block.BlockSandStone;
-import net.minecraft.block.BlockSilverfish;
-import net.minecraft.block.BlockSnow;
-import net.minecraft.block.BlockStainedHardenedClay;
-import net.minecraft.block.BlockStone;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.InvalidBlockStateException;
-import net.minecraft.command.NumberInvalidException;
-import net.minecraft.item.EnumDyeColor;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.Config.LangKey;
-import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import org.apache.commons.lang3.StringUtils;
+
 /**
  * Our Mod's configuration
  *
@@ -129,6 +103,9 @@ public final class ModConfig {
 
 	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
 	public static boolean betterFoliageGrassCompatibility;
+
+	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
+	public static boolean hideOutsideBlocks;
 
 	static {
 
@@ -179,13 +156,13 @@ public final class ModConfig {
 				CLAY.getDefaultState(),
 				HARDENED_CLAY.getDefaultState(),
 
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.WHITE),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.ORANGE),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.YELLOW),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.SILVER),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BROWN),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.RED),
-				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, EnumDyeColor.BLACK),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, WHITE),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, ORANGE),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, YELLOW),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, SILVER),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, BROWN),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, RED),
+				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, BLACK),
 
 				SNOW.getDefaultState(),
 
@@ -263,19 +240,19 @@ public final class ModConfig {
 					} else if (splitBlockStateString.length == 2) {
 						stateString = StringUtils.reverse(StringUtils.reverse(StringUtils.split(blockStateString, "[")[1]).replaceFirst("]", ""));
 					} else {
-						NoCubes.EXAMPLE_MOD_LOG.error("Block/Blockstate Parsing error for \"" + blockStateString + "\"");
+						NoCubes.NO_CUBES_LOG.error("Block/Blockstate Parsing error for \"" + blockStateString + "\"");
 						continue;
 					}
 
 					final Block block = BLOCKS.getValue(new ResourceLocation(blockString));
 					if (block == null) {
-						NoCubes.EXAMPLE_MOD_LOG.error("Block Parsing error NullPointerException for \"" + blockString + "\"");
+						NoCubes.NO_CUBES_LOG.error("Block Parsing error NullPointerException for \"" + blockString + "\"");
 						continue;
 					}
 					try {
 						SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
 					} catch (NumberInvalidException | InvalidBlockStateException e) {
-						NoCubes.EXAMPLE_MOD_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\"");
+						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\"");
 						continue;
 					}
 

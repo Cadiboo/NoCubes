@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.debug.SmoothLightingFluid;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.fml.common.Mod;
@@ -37,10 +36,12 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 )
 public final class NoCubes {
 
-	public static final Logger EXAMPLE_MOD_LOG = LogManager.getLogger(MOD_ID);
+	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
 	private static final Logger LOGGER = LogManager.getLogger();
+
 	@Instance(MOD_ID)
 	public static NoCubes instance;
+
 	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
 	public static IProxy proxy;
 
@@ -53,7 +54,7 @@ public final class NoCubes {
 	@EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {
 		LOGGER.debug("preInit");
-		proxy.logPhysicalSide(EXAMPLE_MOD_LOG);
+		proxy.logPhysicalSide(NO_CUBES_LOG);
 
 	}
 

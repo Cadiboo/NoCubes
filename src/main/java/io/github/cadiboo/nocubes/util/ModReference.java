@@ -14,7 +14,7 @@ public final class ModReference {
 	/**
 	 * This is our Mod's Name.
 	 */
-	public static final String MOD_NAME = "Cadiboo's Example Mod";
+	public static final String MOD_NAME = "NoCubes";
 
 	/**
 	 * This is our Mod's Mod Id that is used for stuff like resource locations.
@@ -38,7 +38,9 @@ public final class ModReference {
 	public static final String DEPENDENCIES = "" +
 			"required-after:minecraft;" +
 			"required-after:forge@[14.23.4.2704,);" +
+			"required-after:render_chunk_rebuild_chunk_hooks@[0.1.1,);" +
 			"";
+
 	static {
 		if (MOD_ID.length() > 64) {
 			final IllegalStateException exception = new IllegalStateException("Mod Id is too long!");
