@@ -65,7 +65,7 @@ public final class ClientUtil {
 			new Vector4f(0, 1, 0, 0)
 	};
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
-	private static final float UV_CORRECT = 1F / 16F / 10000;
+	private static final float UV_CORRECT = 1 / 10000F;
 	/**
 	 * A field reference to the rawIntBuffer of the BufferBuilder class. Need reflection since the field is private.
 	 */
