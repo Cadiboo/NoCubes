@@ -475,7 +475,7 @@ public final class MarchingCubes {
 			final Vec3[] vertexList0 = faces.get(i);
 			final Vec3[] vertexList1 = faces.get(i + 1);
 
-			//1st face
+			//1st face (Top 3 UVs)
 			{
 				final Vec3 vertex0 = vertexList0[0];
 				final Vec3 vertex1 = vertexList0[1];
@@ -485,7 +485,7 @@ public final class MarchingCubes {
 				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 			}
 
-			//2nd face
+			//2nd face (Bottom 3 UVs)
 			{
 				final Vec3 vertex0 = vertexList1[0];
 				final Vec3 vertex1 = vertexList1[1];
