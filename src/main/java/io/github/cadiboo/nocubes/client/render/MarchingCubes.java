@@ -377,7 +377,7 @@ public final class MarchingCubes {
 			neighbourIndex++;
 		}
 
-		byte cubeIndex = 0b00000000;
+		int cubeIndex = 0b00000000;
 
 		if (neighbourDensities[0] < isosurfaceLevel) cubeIndex |= 0b00000001;
 		if (neighbourDensities[1] < isosurfaceLevel) cubeIndex |= 0b00000010;
