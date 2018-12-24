@@ -23,7 +23,7 @@ nocubes.config.betterFoliageGrassCompatibility=BetterFoliage Grass Compatibility
 nocubes.config.betterFoliageGrassCompatibility.tooltip=If BetterFoliage's grass should be allowed to render under specific circumstances (requires BetterFoliage)
 
 nocubes.config.isosurfaceLevel=Isosurface Level
-nocubes.config.isosurfaceLevel.tooltip=The expansion of the generated surface mesh (hard to explain, just play around with it)\nBest values:\nOld NoCubes: N/A\nMarching Cubes: 0.001 or 0.5\nSurface Nets: 1.0
+nocubes.config.isosurfaceLevel.tooltip=The expansion of the generated surface mesh (hard to explain, just play around with it)\nBest values:\nOld NoCubes: N/A\nMarching Cubes: -0.5 or 0\nSurface Nets: 1.0
 
 nocubes.config.hideOutsideBlocks=Hide Outside Blocks
 nocubes.config.hideOutsideBlocks.tooltip=Hide blocks that are outside the isosurface (leads to invisible blocks, great for screenshots - bad for survival gameplay)
