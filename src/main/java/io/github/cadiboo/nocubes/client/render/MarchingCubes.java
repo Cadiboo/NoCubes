@@ -455,11 +455,16 @@ public final class MarchingCubes {
 
 		final ArrayList<Vec3[]> faces = new ArrayList<>();
 
+		// local variable for speed
+		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
+
 		//shit I don't understand (lookup table)
 		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
-			final Vec3 vertex0 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex]];
-			final Vec3 vertex1 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex + 1]];
-			final Vec3 vertex2 = vertices[TRIANGLE_TABLE[cubeIndex][triangleIndex + 2]];
+			// local variable for speed
+			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
+			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
+			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
+			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
 			faces.add(new Vec3[]{
 					vertex0, vertex1, vertex2
 			});
