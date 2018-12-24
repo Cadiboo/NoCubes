@@ -379,15 +379,14 @@ public final class MarchingCubes {
 
 		byte cubeIndex = 0b00000000;
 
-		final float isolevel = ModConfig.getIsosurfaceLevel();
-		if (neighbourDensities[0] < isolevel) cubeIndex |= 0b00000001;
-		if (neighbourDensities[1] < isolevel) cubeIndex |= 0b00000010;
-		if (neighbourDensities[2] < isolevel) cubeIndex |= 0b00000100;
-		if (neighbourDensities[3] < isolevel) cubeIndex |= 0b00001000;
-		if (neighbourDensities[4] < isolevel) cubeIndex |= 0b00010000;
-		if (neighbourDensities[5] < isolevel) cubeIndex |= 0b00100000;
-		if (neighbourDensities[6] < isolevel) cubeIndex |= 0b01000000;
-		if (neighbourDensities[7] < isolevel) cubeIndex |= 0b10000000;
+		if (neighbourDensities[0] < isosurfaceLevel) cubeIndex |= 0b00000001;
+		if (neighbourDensities[1] < isosurfaceLevel) cubeIndex |= 0b00000010;
+		if (neighbourDensities[2] < isosurfaceLevel) cubeIndex |= 0b00000100;
+		if (neighbourDensities[3] < isosurfaceLevel) cubeIndex |= 0b00001000;
+		if (neighbourDensities[4] < isosurfaceLevel) cubeIndex |= 0b00010000;
+		if (neighbourDensities[5] < isosurfaceLevel) cubeIndex |= 0b00100000;
+		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
+		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
 
 		if ((cubeIndex == 0) || (cubeIndex == 255)) {
 			return;
@@ -397,29 +396,29 @@ public final class MarchingCubes {
 		final int edgeMask = EDGE_TABLE[cubeIndex];
 
 		if ((edgeMask & 1) == 1)
-			vertices[0] = vertexInterpolation(isolevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
+			vertices[0] = vertexInterpolation(isosurfaceLevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
 		if ((edgeMask & 2) == 2)
-			vertices[1] = vertexInterpolation(isolevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
+			vertices[1] = vertexInterpolation(isosurfaceLevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
 		if ((edgeMask & 4) == 4)
-			vertices[2] = vertexInterpolation(isolevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
+			vertices[2] = vertexInterpolation(isosurfaceLevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
 		if ((edgeMask & 8) == 8)
-			vertices[3] = vertexInterpolation(isolevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
+			vertices[3] = vertexInterpolation(isosurfaceLevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
 		if ((edgeMask & 16) == 16)
-			vertices[4] = vertexInterpolation(isolevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
+			vertices[4] = vertexInterpolation(isosurfaceLevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
 		if ((edgeMask & 32) == 32)
-			vertices[5] = vertexInterpolation(isolevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
+			vertices[5] = vertexInterpolation(isosurfaceLevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
 		if ((edgeMask & 64) == 64)
-			vertices[6] = vertexInterpolation(isolevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
+			vertices[6] = vertexInterpolation(isosurfaceLevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
 		if ((edgeMask & 128) == 128)
-			vertices[7] = vertexInterpolation(isolevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
+			vertices[7] = vertexInterpolation(isosurfaceLevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
 		if ((edgeMask & 256) == 256)
-			vertices[8] = vertexInterpolation(isolevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
+			vertices[8] = vertexInterpolation(isosurfaceLevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
 		if ((edgeMask & 512) == 512)
-			vertices[9] = vertexInterpolation(isolevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
+			vertices[9] = vertexInterpolation(isosurfaceLevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
 		if ((edgeMask & 1024) == 1024)
-			vertices[10] = vertexInterpolation(isolevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
+			vertices[10] = vertexInterpolation(isosurfaceLevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
 		if ((edgeMask & 2048) == 2048)
-			vertices[11] = vertexInterpolation(isolevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
+			vertices[11] = vertexInterpolation(isosurfaceLevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
 
 		// get texture
 		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
