@@ -436,7 +436,7 @@ public final class MarchingCubes {
 		}
 		final TextureAtlasSprite sprite = quad.getSprite();
 		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
-		final int red = (color >> 16) & 0xFF ;
+		final int red = (color >> 16) & 0xFF;
 		final int green = (color >> 8) & 0xFF;
 		final int blue = color & 0xFF;
 		final int alpha = 0xFF;
