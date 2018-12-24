@@ -18,8 +18,8 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 // Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 // We use the format MCVERSION-MAJOR.MINOR.PATCH
 version = "1.12.2-0.1.0"
-group = "io.github.cadiboo.nocubes" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "NoCubes"
+group = "io.github.cadiboo.nocubes_mmd_winterjam" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "NoCubes MMD Winterjam"
 
 sourceCompatibility = targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 compileJava {
@@ -46,7 +46,7 @@ minecraft {
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	replace "@VERSION@", project.version
-	replaceIn "io/github/cadiboo/nocubes/util/ModReference.java"
+	replaceIn "io/github/cadiboo/nocubes_mmd_winterjam/util/ModReference.java"
 
 }
 

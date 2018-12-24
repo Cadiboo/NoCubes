@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes_mmd_winterjam.util;
 
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.Logger;

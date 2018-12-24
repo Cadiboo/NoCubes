@@ -1,21 +1,15 @@
-package io.github.cadiboo.nocubes.client.render;
+package io.github.cadiboo.nocubes_mmd_winterjam.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.LightmapInfo;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes_mmd_winterjam.client.ClientUtil;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.LightmapInfo;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.ModUtil;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.BlockGrass;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -41,38 +35,27 @@ public final class OldNoCubes {
 	private static final float SHADOW_RIGHT = 0.8F;
 	/* End Click_Me's code */
 
-	public static void renderPre(final RebuildChunkPreEvent event) {
-
-	}
-
-	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
-
-	}
-
-	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
-
-	}
-
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
 		final IBlockState state = event.getBlockState();
 		if (!ModUtil.shouldSmooth(state)) {
 			return;
 		}
+		final ChunkCache cache = event.getChunkCache();
 		final BlockPos pos = event.getBlockPos();
-
-		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
-
-		final BakedQuad quad = ClientUtil.getQuad(state, pos, blockRendererDispatcher);
-		if (quad == null) {
+		if (cache.getBlockState(pos.up()).getBlock() instanceof BlockLiquid) {
 			return;
 		}
-		final TextureAtlasSprite sprite = quad.getSprite();
-		final ChunkCache cache = event.getChunkCache();
-		final int color = ClientUtil.getColor(quad, state, cache, pos);
-		final float colorRed = ((color >> 16) & 255) / 255.0F;
-		final float colorGreen = ((color >> 8) & 255) / 255.0F;
-		final float colorBlue = (color & 255) / 255.0F;
+
+//		final BakedQuad quad = ClientUtil.getQuad(state, pos, blockRendererDispatcher);
+//		if (quad == null) {
+//			return;
+//		}
+		final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/snow");
+
+		final float colorRed = 0xFF / 255.0F;
+		final float colorGreen = 0xFF / 255.0F;
+		final float colorBlue = 0xFF / 255.0F;
 
 		final double minU = ClientUtil.getMinU(sprite);
 		final double minV = ClientUtil.getMinV(sprite);
@@ -87,20 +70,22 @@ public final class OldNoCubes {
 
 		final Vec3[] points = getPoints(pos, cache);
 
-		boolean cancelEvent = true;
+		if (points == null) return;
 
-		if (ModConfig.betterFoliageGrassCompatibility) {
-			//render BF grass if not near air
-			if (state.getBlock() instanceof BlockGrass) {
-				cancelEvent = false;
-				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
-						cancelEvent = true;
-						break;
-					}
-				}
-			}
-		}
+//		boolean cancelEvent = true;
+
+//		if (ModConfig.betterFoliageGrassCompatibility) {
+//			//render BF grass if not near air
+//			if (state.getBlock() instanceof BlockGrass) {
+//				cancelEvent = false;
+//				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+//					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
+//						cancelEvent = true;
+//						break;
+//					}
+//				}
+//			}
+//		}
 
 		boolean wasAnythingRendered = false;
 
@@ -218,12 +203,12 @@ public final class OldNoCubes {
 
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] |= wasAnythingRendered;
 
-		event.setCanceled(cancelEvent);
+//		event.setCanceled(cancelEvent);
 
 	}
 
 	@Nullable
-	public static Vec3[] getPoints(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess cache) {
+	private static Vec3[] getPoints(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess cache) {
 
 		if (!ModUtil.shouldSmooth(cache.getBlockState(pos))) {
 			return null;
@@ -265,9 +250,8 @@ public final class OldNoCubes {
 					point.yCoord = (double) y;
 				}
 
-				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
-				}
+				ModUtil.givePointRoughness(point);
+
 			}
 		}
 
@@ -363,10 +347,6 @@ public final class OldNoCubes {
 			}
 		}
 		return true;
-	}
-
-	public static void renderPost(final RebuildChunkPostEvent event) {
-
 	}
 
 }

@@ -1,6 +1,6 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes_mmd_winterjam.util;
 
-import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes_mmd_winterjam.NoCubes;
 import net.minecraft.crash.CrashReport;
 
 /**
@@ -14,20 +14,20 @@ public final class ModReference {
 	/**
 	 * This is our Mod's Name.
 	 */
-	public static final String MOD_NAME = "NoCubes";
+	public static final String MOD_NAME = "NoCubes MMD Winterjam";
 
 	/**
 	 * This is our Mod's Mod Id that is used for stuff like resource locations.
 	 */
-	public static final String MOD_ID = "nocubes";
+	public static final String MOD_ID = "nocubes_mmd_winterjam";
 	/**
 	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL CLIENT
 	 */
-	public static final String CLIENT_PROXY_CLASS = "io.github.cadiboo.nocubes.client.ClientProxy";
+	public static final String CLIENT_PROXY_CLASS = "io.github.cadiboo.nocubes_mmd_winterjam.client.ClientProxy";
 	/**
 	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL/DEDICATED SERVER
 	 */
-	public static final String SERVER_PROXY_CLASS = "io.github.cadiboo.nocubes.server.ServerProxy";
+	public static final String SERVER_PROXY_CLASS = "io.github.cadiboo.nocubes_mmd_winterjam.server.ServerProxy";
 	/**
 	 * @see "https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html"
 	 */
@@ -40,7 +40,12 @@ public final class ModReference {
 			"required-after:forge@[14.23.4.2704,);" +
 			"required-after:render_chunk_rebuild_chunk_hooks@[0.1.1,);" +
 			"";
-
+	/**
+	 * "@VERSION@" is replaced by build.gradle with the actual version
+	 *
+	 * @see <a href= "https://mcforge.readthedocs.io/en/latest/conventions/versioning/">Forge Versioning Docs</a>
+	 */
+	public static final String VERSION = "@VERSION@";
 	static {
 		if (MOD_ID.length() > 64) {
 			final IllegalStateException exception = new IllegalStateException("Mod Id is too long!");
@@ -48,11 +53,5 @@ public final class ModReference {
 			crashReport.makeCategory("Constructing Mod");
 		}
 	}
-
-	/**
-	 * "@VERSION@" is replaced by build.gradle with the actual version
-	 * @see <a href= "https://mcforge.readthedocs.io/en/latest/conventions/versioning/">Forge Versioning Docs</a>
-	 */
-	public static final String VERSION = "@VERSION@";
 
 }

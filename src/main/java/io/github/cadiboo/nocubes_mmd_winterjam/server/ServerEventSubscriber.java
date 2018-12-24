@@ -1,6 +1,6 @@
-package io.github.cadiboo.nocubes.server;
+package io.github.cadiboo.nocubes_mmd_winterjam.server;
 
-import io.github.cadiboo.nocubes.util.ModReference;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.ModReference;
 import net.minecraftforge.fml.common.Mod;
 
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;

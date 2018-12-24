@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes_mmd_winterjam.util;
 
 public class LightmapInfo {
 

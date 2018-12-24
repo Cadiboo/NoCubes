@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.server;
+package io.github.cadiboo.nocubes_mmd_winterjam.server;
 
 /**
  * Util that is only used on the Physical/Dedicated Server

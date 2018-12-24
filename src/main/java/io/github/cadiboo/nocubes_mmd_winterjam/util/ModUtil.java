@@ -1,6 +1,6 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes_mmd_winterjam.util;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -95,7 +95,44 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmooth(final IBlockState state) {
-		return ModConfig.getSmoothableBlockStatesCache().contains(state);
+		return
+//				state.getMaterial() == Material.AIR ||
+				state.getMaterial() == Material.GRASS ||
+						state.getMaterial() == Material.GROUND ||
+						state.getMaterial() == Material.WOOD ||
+						state.getMaterial() == Material.ROCK ||
+						state.getMaterial() == Material.IRON ||
+						state.getMaterial() == Material.ANVIL ||
+//				state.getMaterial() == Material.WATER ||
+//				state.getMaterial() == Material.LAVA ||
+						state.getMaterial() == Material.LEAVES ||
+						state.getMaterial() == Material.PLANTS ||
+//				state.getMaterial() == Material.VINE ||
+						state.getMaterial() == Material.SPONGE ||
+						state.getMaterial() == Material.CLOTH ||
+//				state.getMaterial() == Material.FIRE ||
+						state.getMaterial() == Material.SAND ||
+//				state.getMaterial() == Material.CIRCUITS ||
+//				state.getMaterial() == Material.CARPET ||
+//				state.getMaterial() == Material.GLASS ||
+//				state.getMaterial() == Material.REDSTONE_LIGHT ||
+						state.getMaterial() == Material.TNT ||
+						state.getMaterial() == Material.CORAL ||
+						state.getMaterial() == Material.ICE ||
+						state.getMaterial() == Material.PACKED_ICE ||
+//				state.getMaterial() == Material.SNOW ||
+						/** The material for crafted snow. */
+						state.getMaterial() == Material.CRAFTED_SNOW ||
+						state.getMaterial() == Material.CACTUS ||
+						state.getMaterial() == Material.CLAY ||
+						state.getMaterial() == Material.GOURD ||
+						state.getMaterial() == Material.DRAGON_EGG ||
+//				state.getMaterial() == Material.PORTAL ||
+//				state.getMaterial() == Material.CAKE ||
+						state.getMaterial() == Material.WEB
+
+				;
+
 	}
 
 	/**

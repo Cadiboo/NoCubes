@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.network;
+package io.github.cadiboo.nocubes_mmd_winterjam.network;
 
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
+import static io.github.cadiboo.nocubes_mmd_winterjam.util.ModReference.MOD_ID;
 
 /**
  * Manages the registry of the of network packets (it does more than this but everything's handled automagically by forge)

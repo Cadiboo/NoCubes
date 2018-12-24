@@ -1,7 +1,7 @@
-package io.github.cadiboo.nocubes.server;
+package io.github.cadiboo.nocubes_mmd_winterjam.server;
 
-import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.util.IProxy;
+import io.github.cadiboo.nocubes_mmd_winterjam.NoCubes;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.IProxy;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 

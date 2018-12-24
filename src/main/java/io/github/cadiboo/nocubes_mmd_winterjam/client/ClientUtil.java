@@ -1,7 +1,7 @@
-package io.github.cadiboo.nocubes.client;
+package io.github.cadiboo.nocubes_mmd_winterjam.client;
 
-import io.github.cadiboo.nocubes.util.LightmapInfo;
-import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.LightmapInfo;
+import io.github.cadiboo.nocubes_mmd_winterjam.util.ModUtil;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
@@ -66,6 +66,12 @@ public final class ClientUtil {
 			new Vector4f(1, 0, 0, 0),
 			new Vector4f(0, 0, 0, 0),
 			new Vector4f(0, 1, 0, 0)
+	};
+	/**
+	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
+	 */
+	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
@@ -203,6 +209,8 @@ public final class ClientUtil {
 
 	}
 
+	// Below are some helper methods to upload data to the buffer for use by FastTESRs
+
 	/**
 	 * @param red   the red value of the color, 0F and 1F
 	 * @param green the green value of the color, 0F and 1F
@@ -215,8 +223,6 @@ public final class ClientUtil {
 		final int blueInt = Math.max(0, Math.min(255, Math.round(blue * 255)));
 		return color(redInt, greenInt, blueInt);
 	}
-
-	// Below are some helper methods to upload data to the buffer for use by FastTESRs
 
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
 		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
@@ -392,13 +398,6 @@ public final class ClientUtil {
 			throw new ReportedException(crashReport);
 		}
 	}
-
-	/**
-	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
-	 */
-	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
-			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
-	};
 
 	/**
 	 * Gets The first quad of a model for a pos & state or null if the model has no quads
