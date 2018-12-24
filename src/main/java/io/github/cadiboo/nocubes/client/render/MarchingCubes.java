@@ -410,8 +410,8 @@ public final class MarchingCubes {
 		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
 		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
 
-		if (ModConfig.shouldSmoothLiquids)
-			ClientUtil.extendLiquids(event);
+//		if (ModConfig.shouldSmoothLiquids)
+//			ClientUtil.extendLiquids(event);
 
 		// 0x00 = completely inside, 0xFF = completely outside
 //		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {

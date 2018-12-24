@@ -3,6 +3,10 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraftforge.common.ForgeModContainer;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -55,8 +59,24 @@ public final class NoCubes {
 	@EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {
 		LOGGER.debug("preInit");
+		final Configuration config = new Configuration(event.getSuggestedConfigurationFile());
+		fixConfig(config);
 		proxy.logPhysicalSide(NO_CUBES_LOG);
 
+	}
+
+	private void fixConfig(final Configuration config) {
+		LOGGER.debug("fixing Config");
+		config.load();
+		// fix Isosurface level
+		{
+			final double oldDefaultValue = 0.001D;
+			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+			if (isosurfaceLevel.isDefault())
+				isosurfaceLevel.set(0.0D);
+		}
+		config.save();
+		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 	}
 
 	/**

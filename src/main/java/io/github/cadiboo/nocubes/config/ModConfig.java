@@ -100,7 +100,7 @@ public final class ModConfig {
 
 	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -10, max = 10)
-	public static double isosurfaceLevel = 0.001D;
+	public static double isosurfaceLevel = 0.0D;
 
 	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
 	public static boolean betterFoliageGrassCompatibility;
