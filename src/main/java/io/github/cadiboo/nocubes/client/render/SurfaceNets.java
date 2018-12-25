@@ -272,6 +272,10 @@ public final class SurfaceNets {
 
 		// now comes the pain...
 
+		// use 
+		// https://github.com/TomaszFoster/NaiveSurfaceNets/blob/master/NaiveSurfaceNets.cs
+		// because IT DOESNT USE A BUFFER!!!
+
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
