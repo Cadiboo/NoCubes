@@ -343,14 +343,7 @@ public final class MarchingCubes {
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
-		final BlockPos pos = event.getBlockPos();
-		for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-			if (ModUtil.shouldSmooth(event.getChunkCache().getBlockState(mutablePos))) {
-				event.setResult(Event.Result.ALLOW);
-				event.setCanceled(true);
-				break;
-			}
-		}
+		ClientUtil.handleTransparentBlocksRenderType(event);
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
