@@ -20,7 +20,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
-import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraft.world.IBlockAccess;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 
 /**
  * Implementation of the MarchingCubes algorithm in Minecraft
@@ -348,7 +351,6 @@ public final class MarchingCubes {
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
-		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 		final MutableBlockPos pos = event.getBlockPos();
 		final ChunkCache cache = event.getChunkCache();
 		final IBlockState state = event.getBlockState();
@@ -356,101 +358,6 @@ public final class MarchingCubes {
 
 		MutableBlockPos texturePos = pos;
 		IBlockState textureState = state;
-
-		//TODO: check if this is the right point order
-		final Vec3[] points = new Vec3[]{
-				new Vec3(0, 0, 1), // 0
-				new Vec3(1, 0, 1), // 1
-				new Vec3(1, 0, 0), // 2
-				new Vec3(0, 0, 0), // 3
-				new Vec3(0, 1, 1), // 4
-				new Vec3(1, 1, 1), // 5
-				new Vec3(1, 1, 0), // 6
-				new Vec3(0, 1, 0)  // 7
-		};
-		final int x = pos.getX();
-		final int y = pos.getY();
-		final int z = pos.getZ();
-
-		for (int i = 0; i < points.length; i++) {
-			points[i] = points[i].offset(x, y, z);
-		}
-
-		final float[] neighbourDensities = new float[8];
-		{
-			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
-			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
-				//local variable for speed
-				final Vec3 point = points[neighbourIndex];
-				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
-				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
-				neighbourDensities[neighbourIndex] = neighbourDensity;
-//				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
-				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
-				}
-			}
-			mutablePos.release();
-		}
-
-		int cubeIndex = 0b00000000;
-
-		if (neighbourDensities[0] < isosurfaceLevel) cubeIndex |= 0b00000001;
-		if (neighbourDensities[1] < isosurfaceLevel) cubeIndex |= 0b00000010;
-		if (neighbourDensities[2] < isosurfaceLevel) cubeIndex |= 0b00000100;
-		if (neighbourDensities[3] < isosurfaceLevel) cubeIndex |= 0b00001000;
-		if (neighbourDensities[4] < isosurfaceLevel) cubeIndex |= 0b00010000;
-		if (neighbourDensities[5] < isosurfaceLevel) cubeIndex |= 0b00100000;
-		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
-		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
-
-//		if (ModConfig.shouldSmoothLiquids)
-//			ClientUtil.extendLiquids(event);
-
-		// 0x00 = completely inside, 0xFF = completely outside
-//		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
-//			if ((cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks) || cubeIndex == 0b00000000)
-//				event.setCanceled(ModUtil.shouldSmooth(state));
-//			return;
-//		}
-
-		// 0x00 = completely inside, 0xFF = completely outside
-		if (cubeIndex == 0b00000000) {
-			event.setCanceled(ModUtil.shouldSmooth(state));
-		} else if (cubeIndex == 0b11111111) {
-			if (ModConfig.hideOutsideBlocks) {
-				event.setCanceled(ModUtil.shouldSmooth(state));
-			}
-
-		}
-
-		final Vec3[] vertices = new Vec3[12];
-		final int edgeMask = EDGE_TABLE[cubeIndex];
-
-		if ((edgeMask & 1) == 1)
-			vertices[0] = vertexInterpolation(isosurfaceLevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
-		if ((edgeMask & 2) == 2)
-			vertices[1] = vertexInterpolation(isosurfaceLevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
-		if ((edgeMask & 4) == 4)
-			vertices[2] = vertexInterpolation(isosurfaceLevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
-		if ((edgeMask & 8) == 8)
-			vertices[3] = vertexInterpolation(isosurfaceLevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
-		if ((edgeMask & 16) == 16)
-			vertices[4] = vertexInterpolation(isosurfaceLevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
-		if ((edgeMask & 32) == 32)
-			vertices[5] = vertexInterpolation(isosurfaceLevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
-		if ((edgeMask & 64) == 64)
-			vertices[6] = vertexInterpolation(isosurfaceLevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
-		if ((edgeMask & 128) == 128)
-			vertices[7] = vertexInterpolation(isosurfaceLevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
-		if ((edgeMask & 256) == 256)
-			vertices[8] = vertexInterpolation(isosurfaceLevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
-		if ((edgeMask & 512) == 512)
-			vertices[9] = vertexInterpolation(isosurfaceLevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
-		if ((edgeMask & 1024) == 1024)
-			vertices[10] = vertexInterpolation(isosurfaceLevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
-		if ((edgeMask & 2048) == 2048)
-			vertices[11] = vertexInterpolation(isosurfaceLevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
 
 		// get texture
 		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
@@ -485,32 +392,52 @@ public final class MarchingCubes {
 
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
-		// local variable for speed
-		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
+		final Vec3[] points = getPoints(pos, cache);
 
-		//shit I don't understand (lookup table)
-		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
-			// local variable for speed
-			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
-			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
-			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
-			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
-
-			// triangle -> quad UVs
-			if (triangleIndex % 6 == 0) {
-				//bottom right triangle (if facing north)
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			} else {
-				//top left triangle (if facing north)
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			}
+		if (points == null) {
+			event.setCanceled(ModUtil.shouldSmooth(state));
+			return;
 		}
+
+		for (int i = 0; i + 4 <= points.length; i += 4) {
+			final Vec3 vertex0 = points[i];
+			final Vec3 vertex1 = points[i + 1];
+			final Vec3 vertex2 = points[i + 2];
+			final Vec3 vertex3 = points[i + 3];
+
+			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+		}
+
+//		// local variable for speed
+//		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
+//
+//		//shit I don't understand (lookup table)
+//		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
+//			// local variable for speed
+//			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
+//			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
+//			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
+//			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
+//
+//			// triangle -> quad UVs
+//			if (triangleIndex % 6 == 0) {
+//				//bottom right triangle (if facing north)
+//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//			} else {
+//				//top left triangle (if facing north)
+//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+//			}
+//		}
 
 		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] = true;
 
@@ -530,6 +457,138 @@ public final class MarchingCubes {
 
 		event.setCanceled(cancelEvent && ModUtil.shouldSmooth(state));
 
+	}
+
+	@Nullable
+	public static Vec3[] getPoints(BlockPos pos, IBlockAccess world) {
+
+		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
+
+		//TODO: check if this is the right point order
+		final Vec3[] points = new Vec3[]{
+				new Vec3(0, 0, 1), // 0
+				new Vec3(1, 0, 1), // 1
+				new Vec3(1, 0, 0), // 2
+				new Vec3(0, 0, 0), // 3
+				new Vec3(0, 1, 1), // 4
+				new Vec3(1, 1, 1), // 5
+				new Vec3(1, 1, 0), // 6
+				new Vec3(0, 1, 0)  // 7
+		};
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
+
+		for (int i = 0; i < points.length; i++) {
+			points[i] = points[i].offset(x, y, z);
+		}
+
+		final float[] neighbourDensities = new float[8];
+		{
+			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
+			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
+				//local variable for speed
+				final Vec3 point = points[neighbourIndex];
+				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
+				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, world);
+				neighbourDensities[neighbourIndex] = neighbourDensity;
+//				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
+				if (ModConfig.offsetVertices) {
+					ModUtil.givePointRoughness(point);
+				}
+			}
+			mutablePos.release();
+		}
+
+		int cubeIndex = 0b00000000;
+
+		if (neighbourDensities[0] < isosurfaceLevel) cubeIndex |= 0b00000001;
+		if (neighbourDensities[1] < isosurfaceLevel) cubeIndex |= 0b00000010;
+		if (neighbourDensities[2] < isosurfaceLevel) cubeIndex |= 0b00000100;
+		if (neighbourDensities[3] < isosurfaceLevel) cubeIndex |= 0b00001000;
+		if (neighbourDensities[4] < isosurfaceLevel) cubeIndex |= 0b00010000;
+		if (neighbourDensities[5] < isosurfaceLevel) cubeIndex |= 0b00100000;
+		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
+		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
+
+//		if (ModConfig.shouldSmoothLiquids)
+//			ClientUtil.extendLiquids(event);
+
+		// 0x00 = completely inside, 0xFF = completely outside
+//		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
+//			if ((cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks) || cubeIndex == 0b00000000)
+//				event.setCanceled(ModUtil.shouldSmooth(state));
+//			return;
+//		}
+
+		// 0x00 = completely inside, 0xFF = completely outside
+//		if (cubeIndex == 0b00000000) {
+//			event.setCanceled(ModUtil.shouldSmooth(state));
+//		} else if (cubeIndex == 0b11111111) {
+//			if (ModConfig.hideOutsideBlocks) {
+//				event.setCanceled(ModUtil.shouldSmooth(state));
+//			}
+//
+//		}
+		if (cubeIndex == 0 || cubeIndex == 0xFF) {
+			return null;
+		}
+
+		final Vec3[] vertices = new Vec3[12];
+		final int edgeMask = EDGE_TABLE[cubeIndex];
+
+		if ((edgeMask & 1) == 1)
+			vertices[0] = vertexInterpolation(isosurfaceLevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
+		if ((edgeMask & 2) == 2)
+			vertices[1] = vertexInterpolation(isosurfaceLevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
+		if ((edgeMask & 4) == 4)
+			vertices[2] = vertexInterpolation(isosurfaceLevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
+		if ((edgeMask & 8) == 8)
+			vertices[3] = vertexInterpolation(isosurfaceLevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
+		if ((edgeMask & 16) == 16)
+			vertices[4] = vertexInterpolation(isosurfaceLevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
+		if ((edgeMask & 32) == 32)
+			vertices[5] = vertexInterpolation(isosurfaceLevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
+		if ((edgeMask & 64) == 64)
+			vertices[6] = vertexInterpolation(isosurfaceLevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
+		if ((edgeMask & 128) == 128)
+			vertices[7] = vertexInterpolation(isosurfaceLevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
+		if ((edgeMask & 256) == 256)
+			vertices[8] = vertexInterpolation(isosurfaceLevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
+		if ((edgeMask & 512) == 512)
+			vertices[9] = vertexInterpolation(isosurfaceLevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
+		if ((edgeMask & 1024) == 1024)
+			vertices[10] = vertexInterpolation(isosurfaceLevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
+		if ((edgeMask & 2048) == 2048)
+			vertices[11] = vertexInterpolation(isosurfaceLevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
+
+		// local variable for speed
+		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
+
+		final ArrayList<Vec3> returnPoints = new ArrayList<>();
+
+		//shit I don't understand (lookup table)
+		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
+			// local variable for speed
+			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
+			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
+			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
+			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
+
+			//pretend I'm a quad
+			returnPoints.add(vertex0);
+			returnPoints.add(vertex0);
+			returnPoints.add(vertex1);
+			returnPoints.add(vertex2);
+
+		}
+
+		// ew
+		while (returnPoints.size() < 8) {
+			returnPoints.add(new Vec3().offset(x, y, z));
+		}
+
+		return returnPoints.toArray(new Vec3[0]);
 	}
 
 	private static Vec3 vertexInterpolation(final float isoLevel, final Vec3 p1, final Vec3 p2, final float valp1, final float valp2) {

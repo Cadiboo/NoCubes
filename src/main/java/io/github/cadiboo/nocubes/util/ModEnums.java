@@ -8,8 +8,11 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /**
@@ -54,11 +57,11 @@ public final class ModEnums {
 
 	public enum RenderAlgorithm implements IEnumNameFormattable {
 
-		SURFACE_NETS(SurfaceNets::renderPre, SurfaceNets::renderLayer, SurfaceNets::renderType, SurfaceNets::renderBlock, SurfaceNets::renderPost),
+		SURFACE_NETS(SurfaceNets::renderPre, SurfaceNets::renderLayer, SurfaceNets::renderType, SurfaceNets::renderBlock, SurfaceNets::renderPost, SurfaceNets::getPoints),
 
-		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost),
+		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost, MarchingCubes::getPoints),
 
-		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost),
+		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost, OldNoCubes::getPoints),
 
 //		SURFACE_NETS_CHUNK(SurfaceNetsChunk::renderPre, SurfaceNetsChunk::renderLayer, SurfaceNetsChunk::renderType, SurfaceNetsChunk::renderBlock, SurfaceNetsChunk::renderPost),
 
@@ -69,13 +72,15 @@ public final class ModEnums {
 		private final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType;
 		private final Consumer<RebuildChunkBlockEvent> renderBlock;
 		private final Consumer<RebuildChunkPostEvent> renderPost;
+		private final BiFunction<BlockPos, World, Vec3[]> getPoints;
 
-		RenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderPre, final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer, final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType, final Consumer<RebuildChunkBlockEvent> renderBlock, final Consumer<RebuildChunkPostEvent> renderPost) {
+		RenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderPre, final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer, final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType, final Consumer<RebuildChunkBlockEvent> renderBlock, final Consumer<RebuildChunkPostEvent> renderPost, final BiFunction<BlockPos, World, Vec3[]> getPoints) {
 			this.renderPre = renderPre;
 			this.renderLayer = renderLayer;
 			this.renderType = renderType;
 			this.renderBlock = renderBlock;
 			this.renderPost = renderPost;
+			this.getPoints = getPoints;
 		}
 
 		public void renderPre(final RebuildChunkPreEvent event) {
@@ -98,6 +103,9 @@ public final class ModEnums {
 			renderPost.accept(event);
 		}
 
+		public Vec3[] getPoints(final BlockPos blockPos, final World world) {
+			return getPoints.apply(blockPos, world);
+		}
 	}
 
 }

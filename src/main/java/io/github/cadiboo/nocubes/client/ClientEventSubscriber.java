@@ -79,8 +79,6 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onDrawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
-		if (true) return;
-
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
@@ -95,12 +93,12 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		final Vec3[] vertices = OldNoCubes.getPoints(rayTraceResult.getBlockPos(), player.world);
+		final Vec3[] vertices = ModConfig.activeRenderingAlgorithm.getPoints(rayTraceResult.getBlockPos(), player.world);
 		if (vertices == null) {
 			return;
 		}
 
-		event.setCanceled(true);
+//		event.setCanceled(true);
 
 		final Profiler profiler = player.world.profiler;
 		profiler.startSection("drawing dynamic block highlights");
