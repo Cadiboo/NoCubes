@@ -412,6 +412,8 @@ public final class MarchingCubes {
 //				event.setCanceled(ModUtil.shouldSmooth(state));
 //			return;
 //		}
+
+		// 0x00 = completely inside, 0xFF = completely outside
 		if (cubeIndex == 0b00000000) {
 			event.setCanceled(ModUtil.shouldSmooth(state));
 		} else if (cubeIndex == 0b11111111) {
