@@ -357,15 +357,16 @@ public final class MarchingCubes {
 		MutableBlockPos texturePos = pos;
 		IBlockState textureState = state;
 
+		//TODO: check if this is the right point order
 		final Vec3[] points = new Vec3[]{
-				new Vec3(0.0D, 0.0D, 1.0D),
-				new Vec3(1.0D, 0.0D, 1.0D),
-				new Vec3(1.0D, 0.0D, 0.0D),
-				new Vec3(0.0D, 0.0D, 0.0D),
-				new Vec3(0.0D, 1.0D, 1.0D),
-				new Vec3(1.0D, 1.0D, 1.0D),
-				new Vec3(1.0D, 1.0D, 0.0D),
-				new Vec3(0.0D, 1.0D, 0.0D)
+				new Vec3(0, 0, 1), // 0
+				new Vec3(1, 0, 1), // 1
+				new Vec3(1, 0, 0), // 2
+				new Vec3(0, 0, 0), // 3
+				new Vec3(0, 1, 1), // 4
+				new Vec3(1, 1, 1), // 5
+				new Vec3(1, 1, 0), // 6
+				new Vec3(0, 1, 0)  // 7
 		};
 		final int x = pos.getX();
 		final int y = pos.getY();
