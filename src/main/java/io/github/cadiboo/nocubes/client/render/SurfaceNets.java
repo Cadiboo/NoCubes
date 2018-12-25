@@ -1,11 +1,16 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ChunkCache;
 
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
@@ -68,7 +73,42 @@ public final class SurfaceNets {
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
+		final ChunkCache cache = event.getChunkCache();
+		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
+		final Vec3[] points = new Vec3[]{
+				new Vec3(0.0D, 0.0D, 1.0D),
+				new Vec3(1.0D, 0.0D, 1.0D),
+				new Vec3(1.0D, 0.0D, 0.0D),
+				new Vec3(0.0D, 0.0D, 0.0D),
+				new Vec3(0.0D, 1.0D, 1.0D),
+				new Vec3(1.0D, 1.0D, 1.0D),
+				new Vec3(1.0D, 1.0D, 0.0D),
+				new Vec3(0.0D, 1.0D, 0.0D)
+		};
+
+		// Read in 8 field values around this vertex and store them in an array
+		final float[] neighbourDensities = new float[8];
+		// Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
+		int neighbourMask = 0; // called cubeIndex by lots of implementation
+		{
+			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
+			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
+				//local variable for speed
+				final Vec3 point = points[neighbourIndex];
+				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
+				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
+				neighbourDensities[neighbourIndex] = neighbourDensity;
+				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
+				neighbourMask |= neighborIsInsideIsosurface ? 1 << neighbourIndex : 0;
+				if (ModConfig.offsetVertices) {
+					ModUtil.givePointRoughness(point);
+				}
+			}
+			mutablePos.release();
+		}
+
+		
 
 	}
 
