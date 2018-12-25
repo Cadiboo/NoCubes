@@ -81,6 +81,11 @@ public final class SurfaceNets {
 
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 		final BlockPos.MutableBlockPos pos = event.getBlockPos();
+		final float[] posAsFloatArray = {
+				pos.getX(),
+				pos.getY(),
+				pos.getZ()
+		};
 		final ChunkCache cache = event.getChunkCache();
 		final IBlockState state = event.getBlockState();
 		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
@@ -113,9 +118,6 @@ public final class SurfaceNets {
 				neighbourDensities[neighbourIndex] = neighbourDensity;
 				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
 				neighbourMask |= neighborIsInsideIsosurface ? 1 << neighbourIndex : 0;
-				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
-				}
 			}
 			mutablePos.release();
 		}
@@ -212,7 +214,32 @@ public final class SurfaceNets {
 			}
 		}
 
-		
+		// Now we just average the edge intersections and add them to coordinate
+		final float s = isosurfaceLevel / edgeCrossingCount;
+		for (int axis = 0; axis < 3; ++axis) {
+			vertex[axis] = posAsFloatArray[axis] + (s * vertex[axis]);
+		}
+
+		//TODO compare this to the ModUtil version
+		if (ModConfig.offsetVertices) {
+//			ModUtil.givePointRoughness(point);
+
+//			final int tx = x[0] == 16 ? 0 : x[0];
+//			final int ty = x[1] == 16 ? 0 : x[1];
+//			final int tz = x[2] == 16 ? 0 : x[2];
+			final int tx = (int) (posAsFloatArray[0] % 16);
+			final int ty = (int) (posAsFloatArray[1] % 16);
+			final int tz = (int) (posAsFloatArray[2] % 16);
+
+			long i1 = (tx * 3129871) ^ (tz * 116129781L) ^ ty;
+			i1 = (i1 * i1 * 42317861L) + (i1 * 11L);
+
+			vertex[0] = (float) (vertex[0] - (((((i1 >> 16) & 15L) / 15.0F) - 0.5D) * 0.2D));
+			vertex[1] = (float) (vertex[1] - (((((i1 >> 20) & 15L) / 15.0F) - 1.0D) * 0.2D));
+			vertex[2] = (float) (vertex[2] - (((((i1 >> 24) & 15L) / 15.0F) - 0.5D) * 0.2D));
+		}
+
+		// now comes the pain...
 
 	}
 
