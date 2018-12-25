@@ -78,7 +78,9 @@ public final class ClientUtil {
 	/**
 	 * A field reference to the rawIntBuffer of the BufferBuilder class. Need reflection since the field is private.
 	 */
-	private static final Field bufferBuilder_rawIntBuffer = ReflectionHelper.findField(BufferBuilder.class, "rawIntBuffer", "field_178999_b");
+	// use the old (Class, String...) instead of the new (Class, String, String) for backwards compatibility
+	//TODO: change back to (Class, String, String) soon
+	private static final Field bufferBuilder_rawIntBuffer = ReflectionHelper.findField(BufferBuilder.class, "rawIntBuffer", "field_178999_b", "field_178999_b");
 
 	/**
 	 * Rotation algorithm Taken off Max_the_Technomancer from <a href= "https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/modification-development/2772267-tesr-getting-darker-and-lighter-as-it-rotates">here</a>
