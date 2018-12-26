@@ -170,4 +170,16 @@ public final class ModUtil {
 		return total / values.length;
 	}
 
+	public static void offsetVertex(final float[] nv) {
+
+		/* Begin Click_Me's Code (Modified by Cadiboo) */
+		long i = (long) (nv[0] * 3129871.0D) ^ (long) nv[1] * 116129781L ^ (long) nv[2];
+		i = i * i * 42317861L + i * 11L;
+		nv[0] += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
+		nv[1] += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
+		nv[2] += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
+		/* End Click_Me's Code (Modified by Cadiboo) */
+
+	}
+
 }

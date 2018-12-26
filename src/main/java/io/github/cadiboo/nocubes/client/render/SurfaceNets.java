@@ -104,7 +104,10 @@ public final class SurfaceNets {
 		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
 
-		final int[] dims = {16, 16, 16};
+//		final int[] dims = {16, 16, 16};
+		// make the algorithm look on the sides of chunks aswell
+		// I tweaked the loop in Marching cubes, this time I just edited dims
+		final int[] dims = {18, 18, 18};
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final ArrayList<float[]> vertices = new ArrayList<>();
 
@@ -202,6 +205,8 @@ public final class SurfaceNets {
 
 					//Add vertex to buffer, store pointer to vertex index in buffer
 					buffer[m] = vertices.size();
+					if(ModConfig.offsetVertices)
+						ModUtil.offsetVertex(v);
 					vertices.add(v);
 
 					final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
@@ -249,9 +254,8 @@ public final class SurfaceNets {
 						int du = R[iu], dv = R[iv];
 
 						//TODO: remove float[] -> Vec3 -> float shit
-						//FIXME:  cunt wtf why do I have to swap vertices
-
 						//Remember to flip orientation depending on the sign of the corner.
+						//FIXME:  cunt wtf why do I have to swap vertices (First one is CORRECT but doesnt work)
 //						if ((mask & 1) != 0) {
 						if ((mask & 1) == 0) {
 //							faces.add([buffer[m], buffer[m - du], buffer[m - du - dv], buffer[m - dv]]);

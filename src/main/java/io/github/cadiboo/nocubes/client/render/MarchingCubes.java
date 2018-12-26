@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -403,6 +404,8 @@ public final class MarchingCubes {
 						for (int j = 0; j < 3; ++j) {
 							nv[j] = (c[j] + x[j] + p0[j]) + t * (p1[j] - p0[j]);
 						}
+						if(ModConfig.offsetVertices)
+							ModUtil.offsetVertex(nv);
 						vertices.add(nv);
 					}
 
