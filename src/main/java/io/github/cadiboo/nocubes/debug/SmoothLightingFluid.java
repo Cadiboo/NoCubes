@@ -56,6 +56,8 @@ public final class SmoothLightingFluid {
 //		}
 	}
 
+	//TODO: smooth lighting & cleanup code
+
 	private static class SmoothLightingFluidRenderer extends BlockFluidRenderer {
 
 		private static final Class<?> BlockModelRenderer_AmbientOcclusionFace = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "AmbientOcclusionFace");
