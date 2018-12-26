@@ -433,19 +433,37 @@ public final class MarchingCubes {
 
 					}
 
-				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
-						cancelEvent = true;
-						break;
+					//Add faces
+					int[] f = TRIANGLE_TABLE[cube_index];
+					for (int i = 0; i < f.length; i += 3) {
+//						faces.push({edges[f[i]], edges[f[i+1]], edges[f[i+2]]});
+//						final float[] vert0 = vertices.get(edges[f[i]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i + 2]]);
+						// legit wtf cunt why
+						final float[] vert0 = vertices.get(edges[f[i + 2]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i]]);
+
+						final Vec3 vertex0 = new Vec3(vert0),
+								vertex1 = new Vec3(vert1),
+								vertex2 = new Vec3(vert2);
+
+						//pretend they're quads & try and get good textures
+						if (i % 6 == 0) {
+							//bottom right triangle (if facing north)
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						} else {
+							//top left triangle (if facing north)
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						}
 					}
 
 				}
 			}
 		}
-
-		event.setCanceled(cancelEvent && ModUtil.shouldSmooth(state));
-
 		pos.release();
 		pooledMutablePos.release();
 	}
