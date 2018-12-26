@@ -31,7 +31,11 @@ public final class EventSubscriber {
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(@Nonnull final PlayerSPPushOutOfBlocksEvent event) {
 
-		if(!ModConfig.Debug.debugEnabled) {
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+
+		if (!ModConfig.Debug.debugEnabled) {
 			return;
 		}
 

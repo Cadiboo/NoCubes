@@ -33,9 +33,15 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (!ModConfig.Debug.debugEnabled) {
+			return;
+		}
+
 		ModConfig.Debug.activeRenderingAlgorithm.getVertices(event.getBlockPos(), event.getChunkCache());
 	}
 
@@ -43,6 +49,10 @@ public final class ClientEventSubscriber {
 	public static void onDrawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
 		if (!NoCubes.isEnabled()) {
+			return;
+		}
+
+		if (!ModConfig.Debug.debugEnabled) {
 			return;
 		}
 
