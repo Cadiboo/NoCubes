@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -12,13 +13,17 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -36,6 +41,8 @@ import org.lwjgl.util.vector.Vector4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.nio.IntBuffer;
 import java.util.Arrays;
@@ -560,10 +567,10 @@ public final class ClientUtil {
 		final ChunkCache cache = event.getChunkCache();
 		final BlockPos pos = event.getBlockPos();
 
-		BlockPos.MutableBlockPos liquidPos = null;
+		MutableBlockPos liquidPos = null;
 		IBlockState liquidState = null;
 
-		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
 			final IBlockState tempState = cache.getBlockState(mutablePos);
 			if (tempState.getBlock() instanceof BlockLiquid) {
 				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
@@ -590,6 +597,87 @@ public final class ClientUtil {
 				event.setCanceled(true);
 				break;
 			}
+		}
+	}
+
+	public static void extendLiquids(final RebuildChunkPreEvent event) {
+		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
+		final ChunkCache cache = event.getChunkCache();
+
+		// 18 * 18 * 18 add 1 block on each side of chunk
+		final boolean[] isLiquid = new boolean[5832];
+
+		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition.add(-1, -1, -1), renderChunkPosition.add(16, 16, 16))) {
+			final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+			final int x = sub.getX() + 1;
+			final int y = sub.getY() + 1;
+			final int z = sub.getZ() + 1;
+			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid;
+		}
+
+		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
+			IF:
+			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
+				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+				final int x = sub.getX() + 1;
+				final int y = sub.getY() + 1;
+				final int z = sub.getZ() + 1;
+				for (int xOff = -1; xOff <= 1; xOff++) {
+					for (int zOff = -1; zOff <= 1; zOff++) {
+						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
+
+							renderLiquidInPre(event, mutableBlockPos, cache, cache.getBlockState(mutableBlockPos.add(xOff, 0, zOff)));
+
+							break IF;
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
+
+		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+		final CompiledChunk compiledChunk = event.getCompiledChunk();
+		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+
+		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+			compiledChunk.setLayerStarted(blockRenderLayer);
+			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+			//pre render blocks
+			bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
+			bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
+
+		}
+
+		Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(liquidState, pos, world, bufferBuilder);
+
+	}
+
+	private static final MethodHandle compiledChunk_setLayerUsed;
+	static {
+		try {
+			// newer forge versions
+//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
+			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	private static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
+		try {
+			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
+		} catch (Throwable throwable) {
+			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
 		}
 	}
 

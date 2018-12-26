@@ -339,6 +339,8 @@ public final class MarchingCubes {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
+		ClientUtil.extendLiquids(event);
+
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {

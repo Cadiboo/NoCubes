@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render;
+package io.github.cadiboo.nocubes.debug.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
@@ -13,6 +13,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -21,9 +22,12 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.client.model.pipeline.UnpackedBakedQuad;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import static net.minecraft.client.renderer.vertex.DefaultVertexFormats.BLOCK;
 
 /**
  * Reimplementation of the NoCubes algorithm for NoCubes 0.3 (by Click_Me)
@@ -31,7 +35,7 @@ import javax.annotation.Nullable;
  * @author Click_Me
  * @author Cadiboo
  */
-public final class OldNoCubes {
+public final class OldNoCubesQuads {
 
 	/* Begin Click_Me's code */
 	// The shadow values.
@@ -43,7 +47,26 @@ public final class OldNoCubes {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
-		ClientUtil.extendLiquids(event);
+		try {
+
+			final UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(BLOCK);
+			builder.setTexture(Minecraft.getMinecraft().getTextureMapBlocks().getMissingSprite());
+			builder.setApplyDiffuseLighting(true);
+			builder.setContractUVs(true);
+			builder.setQuadOrientation(EnumFacing.UP);
+
+			// a quad is a float[vertex][element][data] -> floats
+			for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++) {
+				for (int elementIndex = 0; elementIndex < builder.getVertexFormat().getElementCount(); elementIndex++) {
+					builder.put(elementIndex, 0);
+				}
+			}
+
+			builder.build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 

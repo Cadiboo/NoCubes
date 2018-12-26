@@ -77,14 +77,14 @@ dependencies {
 
 jar {
 
-	// Until I figure out how to use gradle tests in IntelliJ
-	sourceSets {
-		main {
-			java {
-				exclude '**/debug/**'
-			}
-		}
-	}
+	// // Until I figure out how to use gradle tests in IntelliJ
+	// sourceSets {
+	// 	main {
+	// 		java {
+	// 			exclude '**/debug/**'
+	// 		}
+	// 	}
+	// }
 
 }
 

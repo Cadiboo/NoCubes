@@ -1,6 +1,8 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.util.ModEnums;
+import io.github.cadiboo.nocubes.util.ModEnums.StableRenderAlgorithm;
 import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
@@ -60,9 +62,13 @@ import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 import static net.minecraft.init.Blocks.STAINED_HARDENED_CLAY;
 import static net.minecraft.init.Blocks.STONE;
-import static net.minecraft.item.EnumDyeColor.*;
-
-import io.github.cadiboo.nocubes.util.ModEnums.RenderAlgorithm;
+import static net.minecraft.item.EnumDyeColor.BLACK;
+import static net.minecraft.item.EnumDyeColor.BROWN;
+import static net.minecraft.item.EnumDyeColor.ORANGE;
+import static net.minecraft.item.EnumDyeColor.RED;
+import static net.minecraft.item.EnumDyeColor.SILVER;
+import static net.minecraft.item.EnumDyeColor.WHITE;
+import static net.minecraft.item.EnumDyeColor.YELLOW;
 
 /**
  * Our Mod's configuration
@@ -80,8 +86,8 @@ public final class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
-	public static RenderAlgorithm activeRenderingAlgorithm = RenderAlgorithm.MARCHING_CUBES;
+	@LangKey(ModReference.MOD_ID + ".config.activeStableRenderingAlgorithm")
+	public static StableRenderAlgorithm activeStableRenderingAlgorithm = StableRenderAlgorithm.MARCHING_CUBES;
 
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
@@ -89,11 +95,8 @@ public final class ModConfig {
 //	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
 //	public static boolean shouldFixFaceCulling = true;
 
-//	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
-//	public static boolean shouldSmoothLiquids = false;
-
-//	@LangKey(ModReference.MOD_ID + ".config.shouldDrawWireframe")
-//	public static boolean shouldDrawWireframe = false;
+	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
+	public static boolean shouldSmoothLiquids = false;
 
 	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
@@ -110,6 +113,20 @@ public final class ModConfig {
 
 	@LangKey(ModReference.MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices;
+
+	@LangKey(ModReference.MOD_ID + ".config.debug")
+	public static class Debug {
+
+		@LangKey(ModReference.MOD_ID + ".config.debug.shouldDrawWireframe")
+		public static boolean shouldDrawWireframe = false;
+
+		@LangKey(ModReference.MOD_ID + ".config.debug.activeRenderingAlgorithm")
+		public static ModEnums.DebugRenderAlgorithm activeRenderingAlgorithm = ModEnums.DebugRenderAlgorithm.OLD_NO_CUBES;
+
+		@LangKey(ModReference.MOD_ID + ".config.debug.debugEnabled")
+		public static boolean debugEnabled = false;
+
+	}
 
 	static {
 

@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render;
+package io.github.cadiboo.nocubes.debug.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
