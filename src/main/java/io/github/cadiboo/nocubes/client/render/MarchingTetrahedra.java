@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -9,8 +10,6 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -18,6 +17,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 import java.util.ArrayList;
 
@@ -59,6 +59,8 @@ public final class MarchingTetrahedra {
 			v[i] += p0[i] + t * (p1[i] - p0[i]);
 		}
 
+		if(ModConfig.offsetVertices)
+			ModUtil.offsetVertex(v);
 		Vec3 vec = new Vec3(v[0], v[1], v[2]);
 		vertices.add(vec);
 		return vec;
@@ -77,9 +79,12 @@ public final class MarchingTetrahedra {
 
 		int n = 0;
 		float[] grid = new float[8];
-		int[] x = {0, 0, 0};
+		final int[] x = {0, 0, 0};
 
-		int[] dims = {16, 16, 16};
+		//		final int[] dims = {16, 16, 16};
+		// make the algorithm look on the sides of chunks aswell
+		// I tweaked the loop in Marching cubes, this time I just edited dims
+		final int[] dims = {17, 17, 17};
 
 		//March over the volume
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0]) {
@@ -236,19 +241,21 @@ public final class MarchingTetrahedra {
 								final Vec3 vertex1 = face[1];
 								final Vec3 vertex2 = face[2];
 								//pretend its a quad
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								// legit wtf cunt why do I have to swap them???
 								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							} else {
 								final Vec3 vertex0 = face[0];
 								final Vec3 vertex1 = face[1];
 								final Vec3 vertex2 = face[2];
 								final Vec3 vertex3 = face[3];
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								// legit wtf cunt why do I have to swap them???
 								bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							}
 
 						});
@@ -265,13 +272,25 @@ public final class MarchingTetrahedra {
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
 
 	}
 

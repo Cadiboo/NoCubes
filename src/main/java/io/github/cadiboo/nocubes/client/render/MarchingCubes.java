@@ -441,7 +441,7 @@ public final class MarchingCubes {
 					for (int i = 0; i < f.length; i += 3) {
 //						faces.push({edges[f[i]], edges[f[i+1]], edges[f[i+2]]});
 //						final float[] vert0 = vertices.get(edges[f[i]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i + 2]]);
-						// legit wtf cunt why
+						// legit wtf cunt why do I have to swap them???
 						final float[] vert0 = vertices.get(edges[f[i + 2]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i]]);
 
 						final Vec3 vertex0 = new Vec3(vert0),

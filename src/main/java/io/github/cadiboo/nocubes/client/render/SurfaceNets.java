@@ -16,6 +16,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -295,11 +296,19 @@ public final class SurfaceNets {
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
-		ClientUtil.handleTransparentBlocksRenderType(event);
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
 
 	}
 
