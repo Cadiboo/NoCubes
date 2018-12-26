@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -15,8 +14,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
@@ -41,9 +39,9 @@ public final class OldNoCubes {
 	private static final float SHADOW_RIGHT = 0.8F;
 	/* End Click_Me's code */
 
-	public static void renderPre(final RebuildChunkPreEvent event) {
+	//TODO: I should fix the shadows
 
-		ClientUtil.extendLiquids(event);
+	public static void renderPre(final RebuildChunkPreEvent event) {
 
 	}
 
@@ -64,26 +62,21 @@ public final class OldNoCubes {
 		final BlockPos pos = event.getBlockPos();
 
 		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
-
-		final BakedQuad quad = ClientUtil.getQuad(state, pos, blockRendererDispatcher);
-		if (quad == null) {
-			return;
-		}
-		final TextureAtlasSprite sprite = quad.getSprite();
 		final ChunkCache cache = event.getChunkCache();
-		final int color = ClientUtil.getColor(quad, state, cache, pos);
-		final float colorRed = ((color >> 16) & 255) / 255.0F;
-		final float colorGreen = ((color >> 8) & 255) / 255.0F;
-		final float colorBlue = (color & 255) / 255.0F;
 
-		final double minU = ClientUtil.getMinU(sprite);
-		final double minV = ClientUtil.getMinV(sprite);
-		final double maxU = ClientUtil.getMaxU(sprite);
-		final double maxV = ClientUtil.getMaxV(sprite);
+		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
-		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
-		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+		final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+		final float redFloat = renderData.getRed() / 255F;
+		final float greenFloat = renderData.getGreen() / 255F;
+		final float blueFloat = renderData.getBlue() / 255F;
+		final float alpha = renderData.getAlpha() / 255F;
+		final float minU = renderData.getMinU();
+		final float maxU = renderData.getMaxU();
+		final float minV = renderData.getMinV();
+		final float maxV = renderData.getMaxV();
+		final int lightmapSkyLight = renderData.getLightmapSkyLight();
+		final int lightmapBlockLight = renderData.getLightmapBlockLight();
 
 		final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
@@ -150,6 +143,8 @@ public final class OldNoCubes {
 			// (1,1,0) (1,1,1)
 			// (1,0,1) (1,0,0)
 
+			//TODO: I should fix the points
+
 			/* Begin Click_Me's code */
 			switch (facing) {
 				default:
@@ -202,11 +197,10 @@ public final class OldNoCubes {
 
 			final float
 					/* Begin Click_Me's code */
-					red = SHADOW_TOP * colorFactor * colorRed,
-					green = SHADOW_TOP * colorFactor * colorGreen,
-					blue = SHADOW_TOP * colorFactor * colorBlue,
-					/* End Click_Me's code */
-					alpha = 1.0F;
+					red = SHADOW_TOP * colorFactor * redFloat,
+					green = SHADOW_TOP * colorFactor * greenFloat,
+					blue = SHADOW_TOP * colorFactor * blueFloat;
+			/* End Click_Me's code */
 
 			// And finally the side is going to be rendered!
 			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();

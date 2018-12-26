@@ -35,7 +35,11 @@ public final class EventSubscriber {
 			return;
 		}
 
-		if (!ModConfig.Debug.debugEnabled) {
+		if (!ModConfig.debug.debugEnabled) {
+			return;
+		}
+
+		if (!ModConfig.debug.realisticCollisions) {
 			return;
 		}
 
@@ -70,9 +74,15 @@ public final class EventSubscriber {
 	@SubscribeEvent
 	public static void onGetCollisionBoxesEvent(@Nonnull final GetCollisionBoxesEvent event) {
 
-		if (true) return;
-
 		if (!NoCubes.isEnabled()) {
+			return;
+		}
+
+		if (!ModConfig.debug.debugEnabled) {
+			return;
+		}
+
+		if (!ModConfig.debug.realisticCollisions) {
 			return;
 		}
 

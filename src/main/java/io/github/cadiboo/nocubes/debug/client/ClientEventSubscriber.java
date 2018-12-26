@@ -38,11 +38,11 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		if (!ModConfig.Debug.debugEnabled) {
+		if (!ModConfig.debug.debugEnabled) {
 			return;
 		}
 
-		ModConfig.Debug.activeRenderingAlgorithm.getVertices(event.getBlockPos(), event.getChunkCache());
+		ModConfig.debug.activeRenderingAlgorithm.getVertices(event.getBlockPos(), event.getChunkCache());
 	}
 
 	@SubscribeEvent
@@ -52,7 +52,11 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		if (!ModConfig.Debug.debugEnabled) {
+		if (!ModConfig.debug.debugEnabled) {
+			return;
+		}
+
+		if (!ModConfig.debug.highlightVertices) {
 			return;
 		}
 

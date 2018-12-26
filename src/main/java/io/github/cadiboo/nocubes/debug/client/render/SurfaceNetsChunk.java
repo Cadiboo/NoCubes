@@ -89,8 +89,6 @@ public final class SurfaceNetsChunk {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
-		ClientUtil.extendLiquids(event);
-
 		final BlockPos.MutableBlockPos renderChunkPosition = event.getRenderChunkPosition();
 
 		final int[] r = new int[]{1, 19, 361};

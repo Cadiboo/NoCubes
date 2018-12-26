@@ -147,7 +147,7 @@ public final class ModUtil {
 	 * @param point the point
 	 * @return the point with offset applied
 	 */
-	public static Vec3 givePointRoughness(Vec3 point) {
+	public static void givePointRoughness(Vec3 point) {
 		// yay magic numbers
 		/* Begin Click_Me's Code (Modified by Cadiboo) */
 		long i = (long) (point.xCoord * 3129871.0D) ^ (long) point.yCoord * 116129781L ^ (long) point.zCoord;
@@ -155,8 +155,19 @@ public final class ModUtil {
 		point.xCoord += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
 		point.yCoord += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
 		point.zCoord += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
-		return point;
 		/* End Click_Me's Code (Modified by Cadiboo) */
+	}
+
+	public static double average(double... values) {
+		if (values.length == 0) return 0;
+
+		double total = 0L;
+
+		for (double value : values) {
+			total += value;
+		}
+
+		return total / values.length;
 	}
 
 }

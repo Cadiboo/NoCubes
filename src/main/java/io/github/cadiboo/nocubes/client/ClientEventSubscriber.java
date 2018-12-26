@@ -23,41 +23,74 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (ModConfig.debug.debugEnabled) {
+			return;
+		}
+
+		if(ModConfig.shouldSmoothLiquids)
+			ClientUtil.extendLiquids(event);
+
 		ModConfig.activeStableRenderingAlgorithm.renderPre(event);
 	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockRenderInLayerEvent(final RebuildChunkBlockRenderInLayerEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (ModConfig.debug.debugEnabled) {
+			return;
+		}
+
 		ModConfig.activeStableRenderingAlgorithm.renderLayer(event);
 	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockRenderInTypeEvent(final RebuildChunkBlockRenderInTypeEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (ModConfig.debug.debugEnabled) {
+			return;
+		}
+
 		ModConfig.activeStableRenderingAlgorithm.renderType(event);
 	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (ModConfig.debug.debugEnabled) {
+			return;
+		}
+
 		ModConfig.activeStableRenderingAlgorithm.renderBlock(event);
 	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkPostEvent(final RebuildChunkPostEvent event) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+
+		if (ModConfig.debug.debugEnabled) {
+			return;
+		}
+
 		ModConfig.activeStableRenderingAlgorithm.renderPost(event);
 	}
 

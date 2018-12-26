@@ -115,7 +115,7 @@ public final class SmoothLightingFluid {
 				if (shouldRenderUp) {
 					wasAnythingRendered = true;
 					float slopeAngle = BlockLiquid.getSlopeAngle(blockAccess, blockPosIn, material, blockStateIn);
-					TextureAtlasSprite textureatlassprite = slopeAngle > -999.0F ? sprites[1] : sprites[0];
+					TextureAtlasSprite textureAtlasSprite = slopeAngle > -999.0F ? sprites[1] : sprites[0];
 					fluidHeight -= 0.001F;
 					fluidHeightSouth -= 0.001F;
 					fluidHeightEastSouth -= 0.001F;
@@ -130,11 +130,11 @@ public final class SmoothLightingFluid {
 					float v_f20;
 
 					if (slopeAngle < -999.0F) {
-						minU = textureatlassprite.getInterpolatedU(0.0D);
-						minV = textureatlassprite.getInterpolatedV(0.0D);
+						minU = textureAtlasSprite.getInterpolatedU(0.0D);
+						minV = textureAtlasSprite.getInterpolatedV(0.0D);
 						u_f14 = minU;
-						maxV = textureatlassprite.getInterpolatedV(16.0D);
-						maxU = textureatlassprite.getInterpolatedU(16.0D);
+						maxV = textureAtlasSprite.getInterpolatedV(16.0D);
+						maxU = textureAtlasSprite.getInterpolatedU(16.0D);
 						v_f19 = maxV;
 						u_f16 = maxU;
 						v_f20 = minV;
@@ -142,14 +142,14 @@ public final class SmoothLightingFluid {
 						float sinSlopeAngle = MathHelper.sin(slopeAngle) * 0.25F;
 						float cosSlopeAngle = MathHelper.cos(slopeAngle) * 0.25F;
 //						float f23 = 8.0F;
-						minU = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
-						minV = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
-						u_f14 = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
-						maxV = textureatlassprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
-						maxU = textureatlassprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
-						v_f19 = textureatlassprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
-						u_f16 = textureatlassprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
-						v_f20 = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
+						minU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
+						minV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
+						u_f14 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
+						maxV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
+						maxU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
+						v_f19 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
+						u_f16 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
+						v_f20 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
 					}
 
 					int packedLightmapCoords = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn);

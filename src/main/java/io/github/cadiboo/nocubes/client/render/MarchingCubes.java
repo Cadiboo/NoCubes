@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -10,17 +9,19 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
  * Implementation of the MarchingCubes algorithm in Minecraft
  *
  * @author Cadiboo
+ * @see "http://mikolalysenko.github.io/Isosurface/js/marchingcubes.js"
  */
 public final class MarchingCubes {
 
@@ -68,546 +70,413 @@ public final class MarchingCubes {
 	};
 
 	private static final int[][] TRIANGLE_TABLE = {
-			{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 8, 3, 9, 8, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 2, 10, 0, 2, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{2, 8, 3, 2, 10, 8, 10, 9, 8, -1, -1, -1, -1, -1, -1, -1},
-			{3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 11, 2, 8, 11, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 9, 0, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 11, 2, 1, 9, 11, 9, 8, 11, -1, -1, -1, -1, -1, -1, -1},
-			{3, 10, 1, 11, 10, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 10, 1, 0, 8, 10, 8, 11, 10, -1, -1, -1, -1, -1, -1, -1},
-			{3, 9, 0, 3, 11, 9, 11, 10, 9, -1, -1, -1, -1, -1, -1, -1},
-			{9, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 3, 0, 7, 3, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 1, 9, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 1, 9, 4, 7, 1, 7, 3, 1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 4, 7, 3, 0, 4, 1, 2, 10, -1, -1, -1, -1, -1, -1, -1},
-			{9, 2, 10, 9, 0, 2, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1},
-			{2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4, -1, -1, -1, -1},
-			{8, 4, 7, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{11, 4, 7, 11, 2, 4, 2, 0, 4, -1, -1, -1, -1, -1, -1, -1},
-			{9, 0, 1, 8, 4, 7, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1},
-			{4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1, -1, -1, -1, -1},
-			{3, 10, 1, 3, 11, 10, 7, 8, 4, -1, -1, -1, -1, -1, -1, -1},
-			{1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4, -1, -1, -1, -1},
-			{4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3, -1, -1, -1, -1},
-			{4, 7, 11, 4, 11, 9, 9, 11, 10, -1, -1, -1, -1, -1, -1, -1},
-			{9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 5, 4, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 5, 4, 1, 5, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{8, 5, 4, 8, 3, 5, 3, 1, 5, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 0, 8, 1, 2, 10, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1},
-			{5, 2, 10, 5, 4, 2, 4, 0, 2, -1, -1, -1, -1, -1, -1, -1},
-			{2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8, -1, -1, -1, -1},
-			{9, 5, 4, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 11, 2, 0, 8, 11, 4, 9, 5, -1, -1, -1, -1, -1, -1, -1},
-			{0, 5, 4, 0, 1, 5, 2, 3, 11, -1, -1, -1, -1, -1, -1, -1},
-			{2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5, -1, -1, -1, -1},
-			{10, 3, 11, 10, 1, 3, 9, 5, 4, -1, -1, -1, -1, -1, -1, -1},
-			{4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10, -1, -1, -1, -1},
-			{5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3, -1, -1, -1, -1},
-			{5, 4, 8, 5, 8, 10, 10, 8, 11, -1, -1, -1, -1, -1, -1, -1},
-			{9, 7, 8, 5, 7, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 3, 0, 9, 5, 3, 5, 7, 3, -1, -1, -1, -1, -1, -1, -1},
-			{0, 7, 8, 0, 1, 7, 1, 5, 7, -1, -1, -1, -1, -1, -1, -1},
-			{1, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 7, 8, 9, 5, 7, 10, 1, 2, -1, -1, -1, -1, -1, -1, -1},
-			{10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3, -1, -1, -1, -1},
-			{8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2, -1, -1, -1, -1},
-			{2, 10, 5, 2, 5, 3, 3, 5, 7, -1, -1, -1, -1, -1, -1, -1},
-			{7, 9, 5, 7, 8, 9, 3, 11, 2, -1, -1, -1, -1, -1, -1, -1},
-			{9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11, -1, -1, -1, -1},
-			{2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7, -1, -1, -1, -1},
-			{11, 2, 1, 11, 1, 7, 7, 1, 5, -1, -1, -1, -1, -1, -1, -1},
-			{9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11, -1, -1, -1, -1},
-			{5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0, -1},
-			{11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0, -1},
-			{11, 10, 5, 7, 11, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 0, 1, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 8, 3, 1, 9, 8, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1},
-			{1, 6, 5, 2, 6, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 6, 5, 1, 2, 6, 3, 0, 8, -1, -1, -1, -1, -1, -1, -1},
-			{9, 6, 5, 9, 0, 6, 0, 2, 6, -1, -1, -1, -1, -1, -1, -1},
-			{5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8, -1, -1, -1, -1},
-			{2, 3, 11, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{11, 0, 8, 11, 2, 0, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1},
-			{0, 1, 9, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1, -1, -1, -1},
-			{5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11, -1, -1, -1, -1},
-			{6, 3, 11, 6, 5, 3, 5, 1, 3, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6, -1, -1, -1, -1},
-			{3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9, -1, -1, -1, -1},
-			{6, 5, 9, 6, 9, 11, 11, 9, 8, -1, -1, -1, -1, -1, -1, -1},
-			{5, 10, 6, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 3, 0, 4, 7, 3, 6, 5, 10, -1, -1, -1, -1, -1, -1, -1},
-			{1, 9, 0, 5, 10, 6, 8, 4, 7, -1, -1, -1, -1, -1, -1, -1},
-			{10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4, -1, -1, -1, -1},
-			{6, 1, 2, 6, 5, 1, 4, 7, 8, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7, -1, -1, -1, -1},
-			{8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6, -1, -1, -1, -1},
-			{7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9, -1},
-			{3, 11, 2, 7, 8, 4, 10, 6, 5, -1, -1, -1, -1, -1, -1, -1},
-			{5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11, -1, -1, -1, -1},
-			{0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6, -1, -1, -1, -1},
-			{9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6, -1},
-			{8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6, -1, -1, -1, -1},
-			{5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11, -1},
-			{0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7, -1},
-			{6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9, -1, -1, -1, -1},
-			{10, 4, 9, 6, 4, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 10, 6, 4, 9, 10, 0, 8, 3, -1, -1, -1, -1, -1, -1, -1},
-			{10, 0, 1, 10, 6, 0, 6, 4, 0, -1, -1, -1, -1, -1, -1, -1},
-			{8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10, -1, -1, -1, -1},
-			{1, 4, 9, 1, 2, 4, 2, 6, 4, -1, -1, -1, -1, -1, -1, -1},
-			{3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4, -1, -1, -1, -1},
-			{0, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{8, 3, 2, 8, 2, 4, 4, 2, 6, -1, -1, -1, -1, -1, -1, -1},
-			{10, 4, 9, 10, 6, 4, 11, 2, 3, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6, -1, -1, -1, -1},
-			{3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10, -1, -1, -1, -1},
-			{6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1, -1},
-			{9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3, -1, -1, -1, -1},
-			{8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1, -1},
-			{3, 11, 6, 3, 6, 0, 0, 6, 4, -1, -1, -1, -1, -1, -1, -1},
-			{6, 4, 8, 11, 6, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{7, 10, 6, 7, 8, 10, 8, 9, 10, -1, -1, -1, -1, -1, -1, -1},
-			{0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10, -1, -1, -1, -1},
-			{10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0, -1, -1, -1, -1},
-			{10, 6, 7, 10, 7, 1, 1, 7, 3, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7, -1, -1, -1, -1},
-			{2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9, -1},
-			{7, 8, 0, 7, 0, 6, 6, 0, 2, -1, -1, -1, -1, -1, -1, -1},
-			{7, 3, 2, 6, 7, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7, -1, -1, -1, -1},
-			{2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7, -1},
-			{1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11, -1},
-			{11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1, -1, -1, -1, -1},
-			{8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6, -1},
-			{0, 9, 1, 11, 6, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0, -1, -1, -1, -1},
-			{7, 11, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 0, 8, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 1, 9, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{8, 1, 9, 8, 3, 1, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1},
-			{10, 1, 2, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, 3, 0, 8, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1},
-			{2, 9, 0, 2, 10, 9, 6, 11, 7, -1, -1, -1, -1, -1, -1, -1},
-			{6, 11, 7, 2, 10, 3, 10, 8, 3, 10, 9, 8, -1, -1, -1, -1},
-			{7, 2, 3, 6, 2, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{7, 0, 8, 7, 6, 0, 6, 2, 0, -1, -1, -1, -1, -1, -1, -1},
-			{2, 7, 6, 2, 3, 7, 0, 1, 9, -1, -1, -1, -1, -1, -1, -1},
-			{1, 6, 2, 1, 8, 6, 1, 9, 8, 8, 7, 6, -1, -1, -1, -1},
-			{10, 7, 6, 10, 1, 7, 1, 3, 7, -1, -1, -1, -1, -1, -1, -1},
-			{10, 7, 6, 1, 7, 10, 1, 8, 7, 1, 0, 8, -1, -1, -1, -1},
-			{0, 3, 7, 0, 7, 10, 0, 10, 9, 6, 10, 7, -1, -1, -1, -1},
-			{7, 6, 10, 7, 10, 8, 8, 10, 9, -1, -1, -1, -1, -1, -1, -1},
-			{6, 8, 4, 11, 8, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 6, 11, 3, 0, 6, 0, 4, 6, -1, -1, -1, -1, -1, -1, -1},
-			{8, 6, 11, 8, 4, 6, 9, 0, 1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 4, 6, 9, 6, 3, 9, 3, 1, 11, 3, 6, -1, -1, -1, -1},
-			{6, 8, 4, 6, 11, 8, 2, 10, 1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, 3, 0, 11, 0, 6, 11, 0, 4, 6, -1, -1, -1, -1},
-			{4, 11, 8, 4, 6, 11, 0, 2, 9, 2, 10, 9, -1, -1, -1, -1},
-			{10, 9, 3, 10, 3, 2, 9, 4, 3, 11, 3, 6, 4, 6, 3, -1},
-			{8, 2, 3, 8, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1},
-			{0, 4, 2, 4, 6, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 9, 0, 2, 3, 4, 2, 4, 6, 4, 3, 8, -1, -1, -1, -1},
-			{1, 9, 4, 1, 4, 2, 2, 4, 6, -1, -1, -1, -1, -1, -1, -1},
-			{8, 1, 3, 8, 6, 1, 8, 4, 6, 6, 10, 1, -1, -1, -1, -1},
-			{10, 1, 0, 10, 0, 6, 6, 0, 4, -1, -1, -1, -1, -1, -1, -1},
-			{4, 6, 3, 4, 3, 8, 6, 10, 3, 0, 3, 9, 10, 9, 3, -1},
-			{10, 9, 4, 6, 10, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 9, 5, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, 4, 9, 5, 11, 7, 6, -1, -1, -1, -1, -1, -1, -1},
-			{5, 0, 1, 5, 4, 0, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1},
-			{11, 7, 6, 8, 3, 4, 3, 5, 4, 3, 1, 5, -1, -1, -1, -1},
-			{9, 5, 4, 10, 1, 2, 7, 6, 11, -1, -1, -1, -1, -1, -1, -1},
-			{6, 11, 7, 1, 2, 10, 0, 8, 3, 4, 9, 5, -1, -1, -1, -1},
-			{7, 6, 11, 5, 4, 10, 4, 2, 10, 4, 0, 2, -1, -1, -1, -1},
-			{3, 4, 8, 3, 5, 4, 3, 2, 5, 10, 5, 2, 11, 7, 6, -1},
-			{7, 2, 3, 7, 6, 2, 5, 4, 9, -1, -1, -1, -1, -1, -1, -1},
-			{9, 5, 4, 0, 8, 6, 0, 6, 2, 6, 8, 7, -1, -1, -1, -1},
-			{3, 6, 2, 3, 7, 6, 1, 5, 0, 5, 4, 0, -1, -1, -1, -1},
-			{6, 2, 8, 6, 8, 7, 2, 1, 8, 4, 8, 5, 1, 5, 8, -1},
-			{9, 5, 4, 10, 1, 6, 1, 7, 6, 1, 3, 7, -1, -1, -1, -1},
-			{1, 6, 10, 1, 7, 6, 1, 0, 7, 8, 7, 0, 9, 5, 4, -1},
-			{4, 0, 10, 4, 10, 5, 0, 3, 10, 6, 10, 7, 3, 7, 10, -1},
-			{7, 6, 10, 7, 10, 8, 5, 4, 10, 4, 8, 10, -1, -1, -1, -1},
-			{6, 9, 5, 6, 11, 9, 11, 8, 9, -1, -1, -1, -1, -1, -1, -1},
-			{3, 6, 11, 0, 6, 3, 0, 5, 6, 0, 9, 5, -1, -1, -1, -1},
-			{0, 11, 8, 0, 5, 11, 0, 1, 5, 5, 6, 11, -1, -1, -1, -1},
-			{6, 11, 3, 6, 3, 5, 5, 3, 1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 10, 9, 5, 11, 9, 11, 8, 11, 5, 6, -1, -1, -1, -1},
-			{0, 11, 3, 0, 6, 11, 0, 9, 6, 5, 6, 9, 1, 2, 10, -1},
-			{11, 8, 5, 11, 5, 6, 8, 0, 5, 10, 5, 2, 0, 2, 5, -1},
-			{6, 11, 3, 6, 3, 5, 2, 10, 3, 10, 5, 3, -1, -1, -1, -1},
-			{5, 8, 9, 5, 2, 8, 5, 6, 2, 3, 8, 2, -1, -1, -1, -1},
-			{9, 5, 6, 9, 6, 0, 0, 6, 2, -1, -1, -1, -1, -1, -1, -1},
-			{1, 5, 8, 1, 8, 0, 5, 6, 8, 3, 8, 2, 6, 2, 8, -1},
-			{1, 5, 6, 2, 1, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 3, 6, 1, 6, 10, 3, 8, 6, 5, 6, 9, 8, 9, 6, -1},
-			{10, 1, 0, 10, 0, 6, 9, 5, 0, 5, 6, 0, -1, -1, -1, -1},
-			{0, 3, 8, 5, 6, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{10, 5, 6, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{11, 5, 10, 7, 5, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{11, 5, 10, 11, 7, 5, 8, 3, 0, -1, -1, -1, -1, -1, -1, -1},
-			{5, 11, 7, 5, 10, 11, 1, 9, 0, -1, -1, -1, -1, -1, -1, -1},
-			{10, 7, 5, 10, 11, 7, 9, 8, 1, 8, 3, 1, -1, -1, -1, -1},
-			{11, 1, 2, 11, 7, 1, 7, 5, 1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, 1, 2, 7, 1, 7, 5, 7, 2, 11, -1, -1, -1, -1},
-			{9, 7, 5, 9, 2, 7, 9, 0, 2, 2, 11, 7, -1, -1, -1, -1},
-			{7, 5, 2, 7, 2, 11, 5, 9, 2, 3, 2, 8, 9, 8, 2, -1},
-			{2, 5, 10, 2, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1},
-			{8, 2, 0, 8, 5, 2, 8, 7, 5, 10, 2, 5, -1, -1, -1, -1},
-			{9, 0, 1, 5, 10, 3, 5, 3, 7, 3, 10, 2, -1, -1, -1, -1},
-			{9, 8, 2, 9, 2, 1, 8, 7, 2, 10, 2, 5, 7, 5, 2, -1},
-			{1, 3, 5, 3, 7, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 7, 0, 7, 1, 1, 7, 5, -1, -1, -1, -1, -1, -1, -1},
-			{9, 0, 3, 9, 3, 5, 5, 3, 7, -1, -1, -1, -1, -1, -1, -1},
-			{9, 8, 7, 5, 9, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{5, 8, 4, 5, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1},
-			{5, 0, 4, 5, 11, 0, 5, 10, 11, 11, 3, 0, -1, -1, -1, -1},
-			{0, 1, 9, 8, 4, 10, 8, 10, 11, 10, 4, 5, -1, -1, -1, -1},
-			{10, 11, 4, 10, 4, 5, 11, 3, 4, 9, 4, 1, 3, 1, 4, -1},
-			{2, 5, 1, 2, 8, 5, 2, 11, 8, 4, 5, 8, -1, -1, -1, -1},
-			{0, 4, 11, 0, 11, 3, 4, 5, 11, 2, 11, 1, 5, 1, 11, -1},
-			{0, 2, 5, 0, 5, 9, 2, 11, 5, 4, 5, 8, 11, 8, 5, -1},
-			{9, 4, 5, 2, 11, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{2, 5, 10, 3, 5, 2, 3, 4, 5, 3, 8, 4, -1, -1, -1, -1},
-			{5, 10, 2, 5, 2, 4, 4, 2, 0, -1, -1, -1, -1, -1, -1, -1},
-			{3, 10, 2, 3, 5, 10, 3, 8, 5, 4, 5, 8, 0, 1, 9, -1},
-			{5, 10, 2, 5, 2, 4, 1, 9, 2, 9, 4, 2, -1, -1, -1, -1},
-			{8, 4, 5, 8, 5, 3, 3, 5, 1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 4, 5, 1, 0, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{8, 4, 5, 8, 5, 3, 9, 0, 5, 0, 3, 5, -1, -1, -1, -1},
-			{9, 4, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 11, 7, 4, 9, 11, 9, 10, 11, -1, -1, -1, -1, -1, -1, -1},
-			{0, 8, 3, 4, 9, 7, 9, 11, 7, 9, 10, 11, -1, -1, -1, -1},
-			{1, 10, 11, 1, 11, 4, 1, 4, 0, 7, 4, 11, -1, -1, -1, -1},
-			{3, 1, 4, 3, 4, 8, 1, 10, 4, 7, 4, 11, 10, 11, 4, -1},
-			{4, 11, 7, 9, 11, 4, 9, 2, 11, 9, 1, 2, -1, -1, -1, -1},
-			{9, 7, 4, 9, 11, 7, 9, 1, 11, 2, 11, 1, 0, 8, 3, -1},
-			{11, 7, 4, 11, 4, 2, 2, 4, 0, -1, -1, -1, -1, -1, -1, -1},
-			{11, 7, 4, 11, 4, 2, 8, 3, 4, 3, 2, 4, -1, -1, -1, -1},
-			{2, 9, 10, 2, 7, 9, 2, 3, 7, 7, 4, 9, -1, -1, -1, -1},
-			{9, 10, 7, 9, 7, 4, 10, 2, 7, 8, 7, 0, 2, 0, 7, -1},
-			{3, 7, 10, 3, 10, 2, 7, 4, 10, 1, 10, 0, 4, 0, 10, -1},
-			{1, 10, 2, 8, 7, 4, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 9, 1, 4, 1, 7, 7, 1, 3, -1, -1, -1, -1, -1, -1, -1},
-			{4, 9, 1, 4, 1, 7, 0, 8, 1, 8, 7, 1, -1, -1, -1, -1},
-			{4, 0, 3, 7, 4, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{4, 8, 7, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{9, 10, 8, 10, 11, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 0, 9, 3, 9, 11, 11, 9, 10, -1, -1, -1, -1, -1, -1, -1},
-			{0, 1, 10, 0, 10, 8, 8, 10, 11, -1, -1, -1, -1, -1, -1, -1},
-			{3, 1, 10, 11, 3, 10, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 2, 11, 1, 11, 9, 9, 11, 8, -1, -1, -1, -1, -1, -1, -1},
-			{3, 0, 9, 3, 9, 11, 1, 2, 9, 2, 11, 9, -1, -1, -1, -1},
-			{0, 2, 11, 8, 0, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{3, 2, 11, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{2, 3, 8, 2, 8, 10, 10, 8, 9, -1, -1, -1, -1, -1, -1, -1},
-			{9, 10, 2, 0, 9, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{2, 3, 8, 2, 8, 10, 0, 1, 8, 1, 10, 8, -1, -1, -1, -1},
-			{1, 10, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{1, 3, 8, 9, 1, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 9, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
+			{},
+			{0, 8, 3},
+			{0, 1, 9},
+			{1, 8, 3, 9, 8, 1},
+			{1, 2, 10},
+			{0, 8, 3, 1, 2, 10},
+			{9, 2, 10, 0, 2, 9},
+			{2, 8, 3, 2, 10, 8, 10, 9, 8},
+			{3, 11, 2},
+			{0, 11, 2, 8, 11, 0},
+			{1, 9, 0, 2, 3, 11},
+			{1, 11, 2, 1, 9, 11, 9, 8, 11},
+			{3, 10, 1, 11, 10, 3},
+			{0, 10, 1, 0, 8, 10, 8, 11, 10},
+			{3, 9, 0, 3, 11, 9, 11, 10, 9},
+			{9, 8, 10, 10, 8, 11},
+			{4, 7, 8},
+			{4, 3, 0, 7, 3, 4},
+			{0, 1, 9, 8, 4, 7},
+			{4, 1, 9, 4, 7, 1, 7, 3, 1},
+			{1, 2, 10, 8, 4, 7},
+			{3, 4, 7, 3, 0, 4, 1, 2, 10},
+			{9, 2, 10, 9, 0, 2, 8, 4, 7},
+			{2, 10, 9, 2, 9, 7, 2, 7, 3, 7, 9, 4},
+			{8, 4, 7, 3, 11, 2},
+			{11, 4, 7, 11, 2, 4, 2, 0, 4},
+			{9, 0, 1, 8, 4, 7, 2, 3, 11},
+			{4, 7, 11, 9, 4, 11, 9, 11, 2, 9, 2, 1},
+			{3, 10, 1, 3, 11, 10, 7, 8, 4},
+			{1, 11, 10, 1, 4, 11, 1, 0, 4, 7, 11, 4},
+			{4, 7, 8, 9, 0, 11, 9, 11, 10, 11, 0, 3},
+			{4, 7, 11, 4, 11, 9, 9, 11, 10},
+			{9, 5, 4},
+			{9, 5, 4, 0, 8, 3},
+			{0, 5, 4, 1, 5, 0},
+			{8, 5, 4, 8, 3, 5, 3, 1, 5},
+			{1, 2, 10, 9, 5, 4},
+			{3, 0, 8, 1, 2, 10, 4, 9, 5},
+			{5, 2, 10, 5, 4, 2, 4, 0, 2},
+			{2, 10, 5, 3, 2, 5, 3, 5, 4, 3, 4, 8},
+			{9, 5, 4, 2, 3, 11},
+			{0, 11, 2, 0, 8, 11, 4, 9, 5},
+			{0, 5, 4, 0, 1, 5, 2, 3, 11},
+			{2, 1, 5, 2, 5, 8, 2, 8, 11, 4, 8, 5},
+			{10, 3, 11, 10, 1, 3, 9, 5, 4},
+			{4, 9, 5, 0, 8, 1, 8, 10, 1, 8, 11, 10},
+			{5, 4, 0, 5, 0, 11, 5, 11, 10, 11, 0, 3},
+			{5, 4, 8, 5, 8, 10, 10, 8, 11},
+			{9, 7, 8, 5, 7, 9},
+			{9, 3, 0, 9, 5, 3, 5, 7, 3},
+			{0, 7, 8, 0, 1, 7, 1, 5, 7},
+			{1, 5, 3, 3, 5, 7},
+			{9, 7, 8, 9, 5, 7, 10, 1, 2},
+			{10, 1, 2, 9, 5, 0, 5, 3, 0, 5, 7, 3},
+			{8, 0, 2, 8, 2, 5, 8, 5, 7, 10, 5, 2},
+			{2, 10, 5, 2, 5, 3, 3, 5, 7},
+			{7, 9, 5, 7, 8, 9, 3, 11, 2},
+			{9, 5, 7, 9, 7, 2, 9, 2, 0, 2, 7, 11},
+			{2, 3, 11, 0, 1, 8, 1, 7, 8, 1, 5, 7},
+			{11, 2, 1, 11, 1, 7, 7, 1, 5},
+			{9, 5, 8, 8, 5, 7, 10, 1, 3, 10, 3, 11},
+			{5, 7, 0, 5, 0, 9, 7, 11, 0, 1, 0, 10, 11, 10, 0},
+			{11, 10, 0, 11, 0, 3, 10, 5, 0, 8, 0, 7, 5, 7, 0},
+			{11, 10, 5, 7, 11, 5},
+			{10, 6, 5},
+			{0, 8, 3, 5, 10, 6},
+			{9, 0, 1, 5, 10, 6},
+			{1, 8, 3, 1, 9, 8, 5, 10, 6},
+			{1, 6, 5, 2, 6, 1},
+			{1, 6, 5, 1, 2, 6, 3, 0, 8},
+			{9, 6, 5, 9, 0, 6, 0, 2, 6},
+			{5, 9, 8, 5, 8, 2, 5, 2, 6, 3, 2, 8},
+			{2, 3, 11, 10, 6, 5},
+			{11, 0, 8, 11, 2, 0, 10, 6, 5},
+			{0, 1, 9, 2, 3, 11, 5, 10, 6},
+			{5, 10, 6, 1, 9, 2, 9, 11, 2, 9, 8, 11},
+			{6, 3, 11, 6, 5, 3, 5, 1, 3},
+			{0, 8, 11, 0, 11, 5, 0, 5, 1, 5, 11, 6},
+			{3, 11, 6, 0, 3, 6, 0, 6, 5, 0, 5, 9},
+			{6, 5, 9, 6, 9, 11, 11, 9, 8},
+			{5, 10, 6, 4, 7, 8},
+			{4, 3, 0, 4, 7, 3, 6, 5, 10},
+			{1, 9, 0, 5, 10, 6, 8, 4, 7},
+			{10, 6, 5, 1, 9, 7, 1, 7, 3, 7, 9, 4},
+			{6, 1, 2, 6, 5, 1, 4, 7, 8},
+			{1, 2, 5, 5, 2, 6, 3, 0, 4, 3, 4, 7},
+			{8, 4, 7, 9, 0, 5, 0, 6, 5, 0, 2, 6},
+			{7, 3, 9, 7, 9, 4, 3, 2, 9, 5, 9, 6, 2, 6, 9},
+			{3, 11, 2, 7, 8, 4, 10, 6, 5},
+			{5, 10, 6, 4, 7, 2, 4, 2, 0, 2, 7, 11},
+			{0, 1, 9, 4, 7, 8, 2, 3, 11, 5, 10, 6},
+			{9, 2, 1, 9, 11, 2, 9, 4, 11, 7, 11, 4, 5, 10, 6},
+			{8, 4, 7, 3, 11, 5, 3, 5, 1, 5, 11, 6},
+			{5, 1, 11, 5, 11, 6, 1, 0, 11, 7, 11, 4, 0, 4, 11},
+			{0, 5, 9, 0, 6, 5, 0, 3, 6, 11, 6, 3, 8, 4, 7},
+			{6, 5, 9, 6, 9, 11, 4, 7, 9, 7, 11, 9},
+			{10, 4, 9, 6, 4, 10},
+			{4, 10, 6, 4, 9, 10, 0, 8, 3},
+			{10, 0, 1, 10, 6, 0, 6, 4, 0},
+			{8, 3, 1, 8, 1, 6, 8, 6, 4, 6, 1, 10},
+			{1, 4, 9, 1, 2, 4, 2, 6, 4},
+			{3, 0, 8, 1, 2, 9, 2, 4, 9, 2, 6, 4},
+			{0, 2, 4, 4, 2, 6},
+			{8, 3, 2, 8, 2, 4, 4, 2, 6},
+			{10, 4, 9, 10, 6, 4, 11, 2, 3},
+			{0, 8, 2, 2, 8, 11, 4, 9, 10, 4, 10, 6},
+			{3, 11, 2, 0, 1, 6, 0, 6, 4, 6, 1, 10},
+			{6, 4, 1, 6, 1, 10, 4, 8, 1, 2, 1, 11, 8, 11, 1},
+			{9, 6, 4, 9, 3, 6, 9, 1, 3, 11, 6, 3},
+			{8, 11, 1, 8, 1, 0, 11, 6, 1, 9, 1, 4, 6, 4, 1},
+			{3, 11, 6, 3, 6, 0, 0, 6, 4},
+			{6, 4, 8, 11, 6, 8},
+			{7, 10, 6, 7, 8, 10, 8, 9, 10},
+			{0, 7, 3, 0, 10, 7, 0, 9, 10, 6, 7, 10},
+			{10, 6, 7, 1, 10, 7, 1, 7, 8, 1, 8, 0},
+			{10, 6, 7, 10, 7, 1, 1, 7, 3},
+			{1, 2, 6, 1, 6, 8, 1, 8, 9, 8, 6, 7},
+			{2, 6, 9, 2, 9, 1, 6, 7, 9, 0, 9, 3, 7, 3, 9},
+			{7, 8, 0, 7, 0, 6, 6, 0, 2},
+			{7, 3, 2, 6, 7, 2},
+			{2, 3, 11, 10, 6, 8, 10, 8, 9, 8, 6, 7},
+			{2, 0, 7, 2, 7, 11, 0, 9, 7, 6, 7, 10, 9, 10, 7},
+			{1, 8, 0, 1, 7, 8, 1, 10, 7, 6, 7, 10, 2, 3, 11},
+			{11, 2, 1, 11, 1, 7, 10, 6, 1, 6, 7, 1},
+			{8, 9, 6, 8, 6, 7, 9, 1, 6, 11, 6, 3, 1, 3, 6},
+			{0, 9, 1, 11, 6, 7},
+			{7, 8, 0, 7, 0, 6, 3, 11, 0, 11, 6, 0},
+			{7, 11, 6},
+			{7, 6, 11},
+			{3, 0, 8, 11, 7, 6},
+			{0, 1, 9, 11, 7, 6},
+			{8, 1, 9, 8, 3, 1, 11, 7, 6},
+			{10, 1, 2, 6, 11, 7},
+			{1, 2, 10, 3, 0, 8, 6, 11, 7},
+			{2, 9, 0, 2, 10, 9, 6, 11, 7},
+			{6, 11, 7, 2, 10, 3, 10, 8, 3, 10, 9, 8},
+			{7, 2, 3, 6, 2, 7},
+			{7, 0, 8, 7, 6, 0, 6, 2, 0},
+			{2, 7, 6, 2, 3, 7, 0, 1, 9},
+			{1, 6, 2, 1, 8, 6, 1, 9, 8, 8, 7, 6},
+			{10, 7, 6, 10, 1, 7, 1, 3, 7},
+			{10, 7, 6, 1, 7, 10, 1, 8, 7, 1, 0, 8},
+			{0, 3, 7, 0, 7, 10, 0, 10, 9, 6, 10, 7},
+			{7, 6, 10, 7, 10, 8, 8, 10, 9},
+			{6, 8, 4, 11, 8, 6},
+			{3, 6, 11, 3, 0, 6, 0, 4, 6},
+			{8, 6, 11, 8, 4, 6, 9, 0, 1},
+			{9, 4, 6, 9, 6, 3, 9, 3, 1, 11, 3, 6},
+			{6, 8, 4, 6, 11, 8, 2, 10, 1},
+			{1, 2, 10, 3, 0, 11, 0, 6, 11, 0, 4, 6},
+			{4, 11, 8, 4, 6, 11, 0, 2, 9, 2, 10, 9},
+			{10, 9, 3, 10, 3, 2, 9, 4, 3, 11, 3, 6, 4, 6, 3},
+			{8, 2, 3, 8, 4, 2, 4, 6, 2},
+			{0, 4, 2, 4, 6, 2},
+			{1, 9, 0, 2, 3, 4, 2, 4, 6, 4, 3, 8},
+			{1, 9, 4, 1, 4, 2, 2, 4, 6},
+			{8, 1, 3, 8, 6, 1, 8, 4, 6, 6, 10, 1},
+			{10, 1, 0, 10, 0, 6, 6, 0, 4},
+			{4, 6, 3, 4, 3, 8, 6, 10, 3, 0, 3, 9, 10, 9, 3},
+			{10, 9, 4, 6, 10, 4},
+			{4, 9, 5, 7, 6, 11},
+			{0, 8, 3, 4, 9, 5, 11, 7, 6},
+			{5, 0, 1, 5, 4, 0, 7, 6, 11},
+			{11, 7, 6, 8, 3, 4, 3, 5, 4, 3, 1, 5},
+			{9, 5, 4, 10, 1, 2, 7, 6, 11},
+			{6, 11, 7, 1, 2, 10, 0, 8, 3, 4, 9, 5},
+			{7, 6, 11, 5, 4, 10, 4, 2, 10, 4, 0, 2},
+			{3, 4, 8, 3, 5, 4, 3, 2, 5, 10, 5, 2, 11, 7, 6},
+			{7, 2, 3, 7, 6, 2, 5, 4, 9},
+			{9, 5, 4, 0, 8, 6, 0, 6, 2, 6, 8, 7},
+			{3, 6, 2, 3, 7, 6, 1, 5, 0, 5, 4, 0},
+			{6, 2, 8, 6, 8, 7, 2, 1, 8, 4, 8, 5, 1, 5, 8},
+			{9, 5, 4, 10, 1, 6, 1, 7, 6, 1, 3, 7},
+			{1, 6, 10, 1, 7, 6, 1, 0, 7, 8, 7, 0, 9, 5, 4},
+			{4, 0, 10, 4, 10, 5, 0, 3, 10, 6, 10, 7, 3, 7, 10},
+			{7, 6, 10, 7, 10, 8, 5, 4, 10, 4, 8, 10},
+			{6, 9, 5, 6, 11, 9, 11, 8, 9},
+			{3, 6, 11, 0, 6, 3, 0, 5, 6, 0, 9, 5},
+			{0, 11, 8, 0, 5, 11, 0, 1, 5, 5, 6, 11},
+			{6, 11, 3, 6, 3, 5, 5, 3, 1},
+			{1, 2, 10, 9, 5, 11, 9, 11, 8, 11, 5, 6},
+			{0, 11, 3, 0, 6, 11, 0, 9, 6, 5, 6, 9, 1, 2, 10},
+			{11, 8, 5, 11, 5, 6, 8, 0, 5, 10, 5, 2, 0, 2, 5},
+			{6, 11, 3, 6, 3, 5, 2, 10, 3, 10, 5, 3},
+			{5, 8, 9, 5, 2, 8, 5, 6, 2, 3, 8, 2},
+			{9, 5, 6, 9, 6, 0, 0, 6, 2},
+			{1, 5, 8, 1, 8, 0, 5, 6, 8, 3, 8, 2, 6, 2, 8},
+			{1, 5, 6, 2, 1, 6},
+			{1, 3, 6, 1, 6, 10, 3, 8, 6, 5, 6, 9, 8, 9, 6},
+			{10, 1, 0, 10, 0, 6, 9, 5, 0, 5, 6, 0},
+			{0, 3, 8, 5, 6, 10},
+			{10, 5, 6},
+			{11, 5, 10, 7, 5, 11},
+			{11, 5, 10, 11, 7, 5, 8, 3, 0},
+			{5, 11, 7, 5, 10, 11, 1, 9, 0},
+			{10, 7, 5, 10, 11, 7, 9, 8, 1, 8, 3, 1},
+			{11, 1, 2, 11, 7, 1, 7, 5, 1},
+			{0, 8, 3, 1, 2, 7, 1, 7, 5, 7, 2, 11},
+			{9, 7, 5, 9, 2, 7, 9, 0, 2, 2, 11, 7},
+			{7, 5, 2, 7, 2, 11, 5, 9, 2, 3, 2, 8, 9, 8, 2},
+			{2, 5, 10, 2, 3, 5, 3, 7, 5},
+			{8, 2, 0, 8, 5, 2, 8, 7, 5, 10, 2, 5},
+			{9, 0, 1, 5, 10, 3, 5, 3, 7, 3, 10, 2},
+			{9, 8, 2, 9, 2, 1, 8, 7, 2, 10, 2, 5, 7, 5, 2},
+			{1, 3, 5, 3, 7, 5},
+			{0, 8, 7, 0, 7, 1, 1, 7, 5},
+			{9, 0, 3, 9, 3, 5, 5, 3, 7},
+			{9, 8, 7, 5, 9, 7},
+			{5, 8, 4, 5, 10, 8, 10, 11, 8},
+			{5, 0, 4, 5, 11, 0, 5, 10, 11, 11, 3, 0},
+			{0, 1, 9, 8, 4, 10, 8, 10, 11, 10, 4, 5},
+			{10, 11, 4, 10, 4, 5, 11, 3, 4, 9, 4, 1, 3, 1, 4},
+			{2, 5, 1, 2, 8, 5, 2, 11, 8, 4, 5, 8},
+			{0, 4, 11, 0, 11, 3, 4, 5, 11, 2, 11, 1, 5, 1, 11},
+			{0, 2, 5, 0, 5, 9, 2, 11, 5, 4, 5, 8, 11, 8, 5},
+			{9, 4, 5, 2, 11, 3},
+			{2, 5, 10, 3, 5, 2, 3, 4, 5, 3, 8, 4},
+			{5, 10, 2, 5, 2, 4, 4, 2, 0},
+			{3, 10, 2, 3, 5, 10, 3, 8, 5, 4, 5, 8, 0, 1, 9},
+			{5, 10, 2, 5, 2, 4, 1, 9, 2, 9, 4, 2},
+			{8, 4, 5, 8, 5, 3, 3, 5, 1},
+			{0, 4, 5, 1, 0, 5},
+			{8, 4, 5, 8, 5, 3, 9, 0, 5, 0, 3, 5},
+			{9, 4, 5},
+			{4, 11, 7, 4, 9, 11, 9, 10, 11},
+			{0, 8, 3, 4, 9, 7, 9, 11, 7, 9, 10, 11},
+			{1, 10, 11, 1, 11, 4, 1, 4, 0, 7, 4, 11},
+			{3, 1, 4, 3, 4, 8, 1, 10, 4, 7, 4, 11, 10, 11, 4},
+			{4, 11, 7, 9, 11, 4, 9, 2, 11, 9, 1, 2},
+			{9, 7, 4, 9, 11, 7, 9, 1, 11, 2, 11, 1, 0, 8, 3},
+			{11, 7, 4, 11, 4, 2, 2, 4, 0},
+			{11, 7, 4, 11, 4, 2, 8, 3, 4, 3, 2, 4},
+			{2, 9, 10, 2, 7, 9, 2, 3, 7, 7, 4, 9},
+			{9, 10, 7, 9, 7, 4, 10, 2, 7, 8, 7, 0, 2, 0, 7},
+			{3, 7, 10, 3, 10, 2, 7, 4, 10, 1, 10, 0, 4, 0, 10},
+			{1, 10, 2, 8, 7, 4},
+			{4, 9, 1, 4, 1, 7, 7, 1, 3},
+			{4, 9, 1, 4, 1, 7, 0, 8, 1, 8, 7, 1},
+			{4, 0, 3, 7, 4, 3},
+			{4, 8, 7},
+			{9, 10, 8, 10, 11, 8},
+			{3, 0, 9, 3, 9, 11, 11, 9, 10},
+			{0, 1, 10, 0, 10, 8, 8, 10, 11},
+			{3, 1, 10, 11, 3, 10},
+			{1, 2, 11, 1, 11, 9, 9, 11, 8},
+			{3, 0, 9, 3, 9, 11, 1, 2, 9, 2, 11, 9},
+			{0, 2, 11, 8, 0, 11},
+			{3, 2, 11},
+			{2, 3, 8, 2, 8, 10, 10, 8, 9},
+			{9, 10, 2, 0, 9, 2},
+			{2, 3, 8, 2, 8, 10, 0, 1, 8, 1, 10, 8},
+			{1, 10, 2},
+			{1, 3, 8, 9, 1, 8},
+			{0, 9, 1},
+			{0, 3, 8},
+			{}
 	};
 
-	private static final Vec3[] CUBE_VERTICES = {
-			new Vec3(0, 0, 0),
-			new Vec3(1, 0, 0),
-			new Vec3(1, 1, 0),
-			new Vec3(0, 1, 0),
-			new Vec3(0, 0, 1),
-			new Vec3(1, 0, 1),
-			new Vec3(1, 1, 1),
-			new Vec3(0, 1, 1)
+	private static final int[][] CUBE_VERTS = {
+			{0, 0, 0},
+			{1, 0, 0},
+			{1, 1, 0},
+			{0, 1, 0},
+			{0, 0, 1},
+			{1, 0, 1},
+			{1, 1, 1},
+			{0, 1, 1}
+	};
+	private static final int[][] EDGE_INDEX = {
+			{0, 1},
+			{1, 2},
+			{2, 3},
+			{3, 0},
+			{4, 5},
+			{5, 6},
+			{6, 7},
+			{7, 4},
+			{0, 4},
+			{1, 5},
+			{2, 6},
+			{3, 7}
 	};
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
-		ClientUtil.extendLiquids(event);
+		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
+		final int[] x = {0, 0, 0};
+		final float[] grid = new float[8];
+		final int[] edges = new int[12];
+		final int[] dims = {16, 16, 16};
+		int n = 0;
+		final ArrayList<float[]> vertices = new ArrayList<>();
 
-	}
-
-	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
-
-	}
-
-	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
-		ClientUtil.handleTransparentBlocksRenderType(event);
-	}
-
-	public static void renderBlock(final RebuildChunkBlockEvent event) {
-
-		final MutableBlockPos pos = event.getBlockPos();
+		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
+		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
-		final IBlockState state = event.getBlockState();
-		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
 
-		MutableBlockPos texturePos = pos;
-		IBlockState textureState = state;
+		//March over the volume
+		for (x[2] = 0; x[2] < dims[2]; ++x[2], n += dims[0]) {
+			for (x[1] = 0; x[1] < dims[1]; ++x[1], ++n) {
+				for (x[0] = 0; x[0] < dims[0]; ++x[0], ++n) {
+					pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
+					//For each cell, compute cube mask
+					int cube_index = 0;
+					for (int i = 0; i < 8; ++i) {
+						int[] v = CUBE_VERTS[i];
+//						float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+						pooledMutablePos.setPos(c[0] + x[0] + v[0], c[1] + x[1] + v[1], c[2] + x[2] + v[2]);
+						float s = ModUtil.getBlockDensity(pooledMutablePos, cache);
+						grid[i] = s;
+						cube_index |= (s > 0) ? 1 << i : 0;
+					}
+					//Compute vertices
+					int edge_mask = EDGE_TABLE[cube_index];
+					if (edge_mask == 0) {
+						continue;
+					}
+					for (int i = 0; i < 12; ++i) {
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+						edges[i] = vertices.size();
+						float[] nv = {0, 0, 0};
+						int[] e = EDGE_INDEX[i];
+						int[] p0 = CUBE_VERTS[e[0]], p1 = CUBE_VERTS[e[1]];
+						float a = grid[e[0]], b = grid[e[1]], d = a - b, t = 0;
+						if (Math.abs(d) > 1e-6) {
+							t = a / d;
+						}
+						for (int j = 0; j < 3; ++j) {
+							nv[j] = (c[j] + x[j] + p0[j]) + t * (p1[j] - p0[j]);
+						}
+						vertices.add(nv);
+					}
 
-		// get texture
-		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-			if (ModUtil.shouldSmooth(textureState)) {
-				break;
-			} else {
-				textureState = cache.getBlockState(mutablePos);
-				texturePos = mutablePos;
-			}
-		}
+					final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
-		final BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
-		if (quad == null) {
-			return;
-		}
-		final TextureAtlasSprite sprite = quad.getSprite();
-		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
-		final int red = (color >> 16) & 0xFF;
-		final int green = (color >> 8) & 0xFF;
-		final int blue = color & 0xFF;
-		final int alpha = 0xFF;
+					final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+					final int red = renderData.getRed();
+					final int green = renderData.getGreen();
+					final int blue = renderData.getBlue();
+					final int alpha = renderData.getAlpha();
+					final float minU = renderData.getMinU();
+					final float maxU = renderData.getMaxU();
+					final float minV = renderData.getMinV();
+					final float maxV = renderData.getMaxV();
+					final int lightmapSkyLight = renderData.getLightmapSkyLight();
+					final int lightmapBlockLight = renderData.getLightmapBlockLight();
 
-		final double minU = ClientUtil.getMinU(sprite);
-		final double minV = ClientUtil.getMinV(sprite);
-		final double maxU = ClientUtil.getMaxU(sprite);
-		final double maxV = ClientUtil.getMaxV(sprite);
 
-		// real pos not texturePos
-		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
-		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+					final CompiledChunk compiledChunk = event.getCompiledChunk();
 
-		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+						compiledChunk.setLayerStarted(blockRenderLayer);
+						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+						//pre render blocks
+						bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
+						bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
 
-		final Vec3[] points = getPoints(pos, cache);
+					}
 
-		if (points == null) {
-			event.setCanceled(ModUtil.shouldSmooth(state));
-			return;
-		}
-
-		for (int i = 0; i + 4 <= points.length; i += 4) {
-			final Vec3 vertex0 = points[i];
-			final Vec3 vertex1 = points[i + 1];
-			final Vec3 vertex2 = points[i + 2];
-			final Vec3 vertex3 = points[i + 3];
-
-			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-
-		}
-
-//		// local variable for speed
-//		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
-//
-//		//shit I don't understand (lookup table)
-//		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
-//			// local variable for speed
-//			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
-//			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
-//			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
-//			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
-//
-//			// triangle -> quad UVs
-//			if (triangleIndex % 6 == 0) {
-//				//bottom right triangle (if facing north)
-//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//			} else {
-//				//top left triangle (if facing north)
-//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, 0).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-//			}
-//		}
-
-		event.getUsedBlockRenderLayers()[event.getBlockRenderLayer().ordinal()] = true;
-
-		boolean cancelEvent = true;
-		if (ModConfig.betterFoliageGrassCompatibility) {
-			//render BF grass if not near air
-			if (state.getBlock() instanceof BlockGrass) {
-				cancelEvent = false;
 				for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
 					if (!cache.getBlockState(mutablePos).getMaterial().isSolid()) {
 						cancelEvent = true;
 						break;
+							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 					}
+
 				}
 			}
 		}
 
 		event.setCanceled(cancelEvent && ModUtil.shouldSmooth(state));
 
+		pos.release();
+		pooledMutablePos.release();
+	}
+
+	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
+
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
+	}
+
+	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
+
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
+			event.setResult(Event.Result.DENY);
+			event.setCanceled(true);
+		}
+
+	}
+
+	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
+
 	}
 
 	@Nullable
-	public static Vec3[] getPoints(BlockPos pos, IBlockAccess world) {
-
-		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
-
-		//TODO: check if this is the right point order
-		final Vec3[] points = new Vec3[]{
-				new Vec3(0, 0, 1), // 0
-				new Vec3(1, 0, 1), // 1
-				new Vec3(1, 0, 0), // 2
-				new Vec3(0, 0, 0), // 3
-				new Vec3(0, 1, 1), // 4
-				new Vec3(1, 1, 1), // 5
-				new Vec3(1, 1, 0), // 6
-				new Vec3(0, 1, 0)  // 7
-		};
-		final int x = pos.getX();
-		final int y = pos.getY();
-		final int z = pos.getZ();
-
-		for (int i = 0; i < points.length; i++) {
-			points[i] = points[i].offset(x, y, z);
-		}
-
-		final float[] neighbourDensities = new float[8];
-		{
-			final BlockPos.PooledMutableBlockPos mutablePos = BlockPos.PooledMutableBlockPos.retain();
-			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
-				//local variable for speed
-				final Vec3 point = points[neighbourIndex];
-				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
-				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, world);
-				neighbourDensities[neighbourIndex] = neighbourDensity;
-//				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;
-				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
-				}
-			}
-			mutablePos.release();
-		}
-
-		int cubeIndex = 0b00000000;
-
-		if (neighbourDensities[0] < isosurfaceLevel) cubeIndex |= 0b00000001;
-		if (neighbourDensities[1] < isosurfaceLevel) cubeIndex |= 0b00000010;
-		if (neighbourDensities[2] < isosurfaceLevel) cubeIndex |= 0b00000100;
-		if (neighbourDensities[3] < isosurfaceLevel) cubeIndex |= 0b00001000;
-		if (neighbourDensities[4] < isosurfaceLevel) cubeIndex |= 0b00010000;
-		if (neighbourDensities[5] < isosurfaceLevel) cubeIndex |= 0b00100000;
-		if (neighbourDensities[6] < isosurfaceLevel) cubeIndex |= 0b01000000;
-		if (neighbourDensities[7] < isosurfaceLevel) cubeIndex |= 0b10000000;
-
-//		if (ModConfig.shouldSmoothLiquids)
-//			ClientUtil.extendLiquids(event);
-
-		// 0x00 = completely inside, 0xFF = completely outside
-//		if ((cubeIndex == 0b00000000) || (cubeIndex == 0b11111111)) {
-//			if ((cubeIndex == 0b11111111 && ModConfig.hideOutsideBlocks) || cubeIndex == 0b00000000)
-//				event.setCanceled(ModUtil.shouldSmooth(state));
-//			return;
-//		}
-
-		// 0x00 = completely inside, 0xFF = completely outside
-//		if (cubeIndex == 0b00000000) {
-//			event.setCanceled(ModUtil.shouldSmooth(state));
-//		} else if (cubeIndex == 0b11111111) {
-//			if (ModConfig.hideOutsideBlocks) {
-//				event.setCanceled(ModUtil.shouldSmooth(state));
-//			}
-//
-//		}
-		if (cubeIndex == 0 || cubeIndex == 0xFF) {
-			return null;
-		}
-
-		final Vec3[] vertices = new Vec3[12];
-		final int edgeMask = EDGE_TABLE[cubeIndex];
-
-		if ((edgeMask & 1) == 1)
-			vertices[0] = vertexInterpolation(isosurfaceLevel, points[0], points[1], neighbourDensities[0], neighbourDensities[1]);
-		if ((edgeMask & 2) == 2)
-			vertices[1] = vertexInterpolation(isosurfaceLevel, points[1], points[2], neighbourDensities[1], neighbourDensities[2]);
-		if ((edgeMask & 4) == 4)
-			vertices[2] = vertexInterpolation(isosurfaceLevel, points[2], points[3], neighbourDensities[2], neighbourDensities[3]);
-		if ((edgeMask & 8) == 8)
-			vertices[3] = vertexInterpolation(isosurfaceLevel, points[3], points[0], neighbourDensities[3], neighbourDensities[0]);
-		if ((edgeMask & 16) == 16)
-			vertices[4] = vertexInterpolation(isosurfaceLevel, points[4], points[5], neighbourDensities[4], neighbourDensities[5]);
-		if ((edgeMask & 32) == 32)
-			vertices[5] = vertexInterpolation(isosurfaceLevel, points[5], points[6], neighbourDensities[5], neighbourDensities[6]);
-		if ((edgeMask & 64) == 64)
-			vertices[6] = vertexInterpolation(isosurfaceLevel, points[6], points[7], neighbourDensities[6], neighbourDensities[7]);
-		if ((edgeMask & 128) == 128)
-			vertices[7] = vertexInterpolation(isosurfaceLevel, points[7], points[4], neighbourDensities[7], neighbourDensities[4]);
-		if ((edgeMask & 256) == 256)
-			vertices[8] = vertexInterpolation(isosurfaceLevel, points[0], points[4], neighbourDensities[0], neighbourDensities[4]);
-		if ((edgeMask & 512) == 512)
-			vertices[9] = vertexInterpolation(isosurfaceLevel, points[1], points[5], neighbourDensities[1], neighbourDensities[5]);
-		if ((edgeMask & 1024) == 1024)
-			vertices[10] = vertexInterpolation(isosurfaceLevel, points[2], points[6], neighbourDensities[2], neighbourDensities[6]);
-		if ((edgeMask & 2048) == 2048)
-			vertices[11] = vertexInterpolation(isosurfaceLevel, points[3], points[7], neighbourDensities[3], neighbourDensities[7]);
-
-		// local variable for speed
-		final int[][] TRIANGLE_TABLE = MarchingCubes.TRIANGLE_TABLE;
-
-		final ArrayList<Vec3> returnPoints = new ArrayList<>();
-
-		//shit I don't understand (lookup table)
-		for (int triangleIndex = 0; TRIANGLE_TABLE[cubeIndex][triangleIndex] != -1; triangleIndex += 3) {
-			// local variable for speed
-			int[] currentTriangle = TRIANGLE_TABLE[cubeIndex];
-			final Vec3 vertex0 = vertices[currentTriangle[triangleIndex]];
-			final Vec3 vertex1 = vertices[currentTriangle[triangleIndex + 1]];
-			final Vec3 vertex2 = vertices[currentTriangle[triangleIndex + 2]];
-
-			//pretend I'm a quad
-			returnPoints.add(vertex0);
-			returnPoints.add(vertex0);
-			returnPoints.add(vertex1);
-			returnPoints.add(vertex2);
-
-		}
-
-		// ew
-		while (returnPoints.size() < 8) {
-			returnPoints.add(new Vec3().offset(x, y, z));
-		}
-
-		return returnPoints.toArray(new Vec3[0]);
-	}
-
-	private static Vec3 vertexInterpolation(final float isoLevel, final Vec3 p1, final Vec3 p2, final float valp1, final float valp2) {
-
-		if (MathHelper.abs(isoLevel - valp1) < 1.0E-5F) {
-			return p1;
-		} else if (MathHelper.abs(isoLevel - valp2) < 1.0E-5F) {
-			return p2;
-		} else if (MathHelper.abs(valp1 - valp2) < 1.0E-5F) {
-			return p1;
-		} else {
-			final double mu = (isoLevel - valp1) / (valp2 - valp1);
-			final double x = p1.xCoord + (mu * (p2.xCoord - p1.xCoord));
-			final double y = p1.yCoord + (mu * (p2.yCoord - p1.yCoord));
-			final double z = p1.zCoord + (mu * (p2.zCoord - p1.zCoord));
-			return new Vec3(x, y, z);
-		}
+	public static Vec3[] getPoints(BlockPos pooledMutablePos, IBlockAccess world) {
+		return null;
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {

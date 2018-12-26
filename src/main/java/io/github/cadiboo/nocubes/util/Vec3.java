@@ -22,6 +22,14 @@ public class Vec3 {
 		this.zCoord = z;
 	}
 
+	public Vec3(final float[] vertexAsFloat) {
+		this(
+				vertexAsFloat[0],
+				vertexAsFloat[1],
+				vertexAsFloat[2]
+		);
+	}
+
 	public Vec3 offset(final double x, final double y, final double z) {
 		return new Vec3(
 				this.xCoord + x,

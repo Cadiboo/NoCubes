@@ -10,11 +10,8 @@ nocubes.config.reloadChunksOnConfigChange.tooltip=If chunks should be reloaded w
 nocubes.config.shouldFixFaceCulling=Fix Face Culling (Not Implemented!)
 nocubes.config.shouldFixFaceCulling.tooltip=If Face Culling issues (like the bottom of trees not rendering correctly) should be fixed
 
-nocubes.config.shouldSmoothLiquids=Smooth Liquids (Not Implemented!)
+nocubes.config.shouldSmoothLiquids=Smooth Liquids
 nocubes.config.shouldSmoothLiquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks
-
-nocubes.config.shouldDrawWireframe=Draw Wireframe (Not Implemented!)
-nocubes.config.shouldDrawWireframe.tooltip=If a wireframe should be drawn on non-air blocks
 
 nocubes.config.smoothableBlockStates=Smoothable BlockStates
 nocubes.config.smoothableBlockStates.tooltip=Block States that the Rendering Algorithm will smooth
@@ -27,3 +24,6 @@ nocubes.config.isosurfaceLevel.tooltip=The expansion of the generated surface me
 
 nocubes.config.hideOutsideBlocks=Hide Outside Blocks
 nocubes.config.hideOutsideBlocks.tooltip=Hide blocks that are outside the isosurface (leads to invisible blocks, great for screenshots - bad for survival gameplay)
+
+nocubes.config.debug.shouldDrawWireframe=Draw Wireframe (Not Implemented!)
+nocubes.config.debug.shouldDrawWireframe.tooltip=If a wireframe should be drawn on non-air blocks

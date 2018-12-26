@@ -1,11 +1,13 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.client.render.BlockRenderData;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -465,7 +467,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed minimum U coordinate to use when rendering the sprite
 	 */
-	public static double getMinU(final TextureAtlasSprite sprite) {
+	public static float getMinU(final TextureAtlasSprite sprite) {
 		return sprite.getMinU() + UV_CORRECT;
 	}
 
@@ -475,7 +477,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed maximum U coordinate to use when rendering the sprite
 	 */
-	public static double getMaxU(final TextureAtlasSprite sprite) {
+	public static float getMaxU(final TextureAtlasSprite sprite) {
 		return sprite.getMaxU() - UV_CORRECT;
 	}
 
@@ -485,7 +487,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed minimum V coordinate to use when rendering the sprite
 	 */
-	public static double getMinV(final TextureAtlasSprite sprite) {
+	public static float getMinV(final TextureAtlasSprite sprite) {
 		return sprite.getMinV() + UV_CORRECT;
 	}
 
@@ -495,7 +497,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed maximum V coordinate to use when rendering the sprite
 	 */
-	public static double getMaxV(final TextureAtlasSprite sprite) {
+	public static float getMaxV(final TextureAtlasSprite sprite) {
 		return sprite.getMaxV() - UV_CORRECT;
 	}
 
@@ -600,6 +602,29 @@ public final class ClientUtil {
 		}
 	}
 
+	private static final MethodHandle compiledChunk_setLayerUsed;
+	static {
+		try {
+			// newer forge versions
+//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
+			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	public static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
+		try {
+			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
+		} catch (Throwable throwable) {
+			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
+		}
+	}
+
 	public static void extendLiquids(final RebuildChunkPreEvent event) {
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final ChunkCache cache = event.getChunkCache();
@@ -613,7 +638,7 @@ public final class ClientUtil {
 			final int y = sub.getY() + 1;
 			final int z = sub.getZ() + 1;
 			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid;
+			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid && !(cache.getBlockState(mutableBlockPos.up()).getBlock() instanceof BlockLiquid);
 		}
 
 		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
@@ -627,7 +652,12 @@ public final class ClientUtil {
 					for (int zOff = -1; zOff <= 1; zOff++) {
 						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
 
-							renderLiquidInPre(event, mutableBlockPos, cache, cache.getBlockState(mutableBlockPos.add(xOff, 0, zOff)));
+							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
+							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
+
+							// if source block
+							if (liquidState.getValue(BlockLiquid.LEVEL) == 0)
+								renderLiquidInPre(event, potentialLiquidPos, mutableBlockPos, cache, liquidState);
 
 							break IF;
 						}
@@ -638,7 +668,7 @@ public final class ClientUtil {
 
 	}
 
-	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
+	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
 
 		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
@@ -654,31 +684,87 @@ public final class ClientUtil {
 
 		}
 
-		Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(liquidState, pos, world, bufferBuilder);
+//		Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(liquidState, pos, world, bufferBuilder);
+
+		//copied from BlockFluidRenderer & then simplified
+
+//		if (shouldRenderUp) {
+
+		final TextureAtlasSprite textureAtlasSprite = liquidState.getMaterial() == Material.LAVA ? Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/lava_still") : Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/water_still");
+
+		float minU = getMinU(textureAtlasSprite);
+		float minV = getMinV(textureAtlasSprite);
+		float maxV = getMaxV(textureAtlasSprite);
+		float maxU = getMaxU(textureAtlasSprite);
+
+		int packedLightmapCoords = liquidState.getPackedLightmapCoords(world, liquidPos);
+		int skyLight = packedLightmapCoords >> 16 & 65535;
+		int blockLight = packedLightmapCoords & 65535;
+
+		int x = pos.getX();
+		//14/16
+		float y = pos.getY() + 0.888F;
+		int z = pos.getZ();
+
+		bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+
+//		if (blockliquid.shouldRenderSides(blockAccess, blockPosIn.up())) {
+		if (((BlockLiquid) liquidState.getBlock()).shouldRenderSides(world, liquidPos.up())) {
+			bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+		}
+//		}
 
 	}
 
-	private static final MethodHandle compiledChunk_setLayerUsed;
-	static {
-		try {
-			// newer forge versions
-//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
-			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
-		}
-	}
+	public static BlockRenderData getBlockRenderData(final BlockPos pos, final ChunkCache cache) {
 
-	private static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
-		try {
-			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
-		} catch (Throwable throwable) {
-			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
+		final IBlockState state = cache.getBlockState(pos);
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
+		BlockPos texturePos = pos;
+		IBlockState textureState = state;
+
+		// get texture
+		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+			if (ModUtil.shouldSmooth(textureState)) {
+				break;
+			} else {
+				textureState = cache.getBlockState(mutablePos);
+				texturePos = mutablePos;
+			}
 		}
+
+		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
+		if (quad == null) {
+			quad = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+		}
+		final TextureAtlasSprite sprite = quad.getSprite();
+		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+		final int red = (color >> 16) & 255;
+		final int green = (color >> 8) & 255;
+		final int blue = color & 255;
+		final int alpha = 0xFF;
+
+		final float minU = ClientUtil.getMinU(sprite);
+		final float minV = ClientUtil.getMinV(sprite);
+		final float maxU = ClientUtil.getMaxU(sprite);
+		final float maxV = ClientUtil.getMaxV(sprite);
+
+		//real pos not texture pos
+		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+
+		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+
+		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
+
 	}
 
 }

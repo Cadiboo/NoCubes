@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.client.render.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.debug.client.render.DebugOldNoCubes;
 import io.github.cadiboo.nocubes.client.render.MarchingCubes;
 import io.github.cadiboo.nocubes.client.render.OldNoCubes;
@@ -66,6 +67,8 @@ public final class ModEnums {
 		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost, MarchingCubes::getPoints),
 
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost, OldNoCubes::getPoints),
+
+		MARCHING_TETRAHEDRA(MarchingTetrahedra::renderPre, MarchingTetrahedra::renderLayer, MarchingTetrahedra::renderType, MarchingTetrahedra::renderBlock, MarchingTetrahedra::renderPost, MarchingTetrahedra::getPoints),
 
 		;
 

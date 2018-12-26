@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.util.ModEnums;
 import io.github.cadiboo.nocubes.util.ModEnums.StableRenderAlgorithm;
 import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.Block;
@@ -34,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import static io.github.cadiboo.nocubes.util.ModEnums.DebugRenderAlgorithm;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
 import static net.minecraft.init.Blocks.COAL_ORE;
@@ -86,7 +86,7 @@ public final class ModConfig {
 	@LangKey(ModReference.MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.activeStableRenderingAlgorithm")
+	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
 	public static StableRenderAlgorithm activeStableRenderingAlgorithm = StableRenderAlgorithm.MARCHING_CUBES;
 
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
@@ -115,16 +115,22 @@ public final class ModConfig {
 	public static boolean offsetVertices;
 
 	@LangKey(ModReference.MOD_ID + ".config.debug")
+	public static Debug debug = new Debug();
+
 	public static class Debug {
 
+		@LangKey(ModReference.MOD_ID + ".config.debug.debugEnabled")
+		public boolean debugEnabled = false;
+
 		@LangKey(ModReference.MOD_ID + ".config.debug.shouldDrawWireframe")
-		public static boolean shouldDrawWireframe = false;
+		public boolean shouldDrawWireframe = false;
 
 		@LangKey(ModReference.MOD_ID + ".config.debug.activeRenderingAlgorithm")
-		public static ModEnums.DebugRenderAlgorithm activeRenderingAlgorithm = ModEnums.DebugRenderAlgorithm.OLD_NO_CUBES;
+		public DebugRenderAlgorithm activeRenderingAlgorithm = DebugRenderAlgorithm.OLD_NO_CUBES;
 
-		@LangKey(ModReference.MOD_ID + ".config.debug.debugEnabled")
-		public static boolean debugEnabled = false;
+		public boolean highlightVertices = true;
+
+		public boolean realisticCollisions = true;
 
 	}
 
