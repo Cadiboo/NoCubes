@@ -42,6 +42,8 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 )
 public final class NoCubes {
 
+	//FIXME TODO someone remind me to work on my memory management, I've got some massive memory leaks
+
 	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
 	private static final Logger LOGGER = LogManager.getLogger();
 
