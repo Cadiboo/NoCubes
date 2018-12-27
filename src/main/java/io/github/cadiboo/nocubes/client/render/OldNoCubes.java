@@ -143,6 +143,8 @@ public final class OldNoCubes {
 			// (1,1,0) (1,1,1)
 			// (1,0,1) (1,0,0)
 
+			// Thanks LeBossMax2 for telling me it was the points not the facing that was broken when I first re-implemented this
+
 			//TODO: I should fix the points
 
 			/* Begin Click_Me's code */
