@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.client.render.BlockRenderData;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
@@ -13,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -560,36 +560,36 @@ public final class ClientUtil {
 		}
 	}
 
-	public static void extendLiquids(final RebuildChunkBlockEvent event) {
-
-		final IBlockState state = event.getBlockState();
-		if (!ModUtil.shouldSmooth(state)) {
-			return;
-		}
-		final ChunkCache cache = event.getChunkCache();
-		final BlockPos pos = event.getBlockPos();
-
-		MutableBlockPos liquidPos = null;
-		IBlockState liquidState = null;
-
-		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-			final IBlockState tempState = cache.getBlockState(mutablePos);
-			if (tempState.getBlock() instanceof BlockLiquid) {
-				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
-				liquidPos = mutablePos;
-				liquidState = tempState;
-				break;
-			}
-		}
-
-		// set at same time so can skip
-		if (liquidPos == null /*|| liquidState == null*/) {
-			return;
-		}
-
-		event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, event.getBufferBuilder());
-
-	}
+//	public static void extendLiquids(final RebuildChunkBlockEvent event) {
+//
+//		final IBlockState state = event.getBlockState();
+//		if (!ModUtil.shouldSmooth(state)) {
+//			return;
+//		}
+//		final ChunkCache cache = event.getChunkCache();
+//		final BlockPos pos = event.getBlockPos();
+//
+//		MutableBlockPos liquidPos = null;
+//		IBlockState liquidState = null;
+//
+//		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+//			final IBlockState tempState = cache.getBlockState(mutablePos);
+//			if (tempState.getBlock() instanceof BlockLiquid) {
+//				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
+//				liquidPos = mutablePos;
+//				liquidState = tempState;
+//				break;
+//			}
+//		}
+//
+//		// set at same time so can skip
+//		if (liquidPos == null /*|| liquidState == null*/) {
+//			return;
+//		}
+//
+//		event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, event.getBufferBuilder());
+//
+//	}
 
 	public static void handleTransparentBlocksRenderType(final RebuildChunkBlockRenderInTypeEvent event) {
 		final BlockPos pos = event.getBlockPos();
@@ -625,6 +625,13 @@ public final class ClientUtil {
 		}
 	}
 
+//	static final ThreadLocal<HashMap<BlockPos, Object[]>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, Object[]>>() {
+//		@Override
+//		protected HashMap<BlockPos, Object[]> initialValue() {
+//			return new HashMap<>();
+//		}
+//	};
+
 	public static void extendLiquids(final RebuildChunkPreEvent event) {
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final ChunkCache cache = event.getChunkCache();
@@ -642,8 +649,8 @@ public final class ClientUtil {
 		}
 
 		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
-			IF:
-			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
+//			IF:
+//			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
 				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
 				final int x = sub.getX() + 1;
 				final int y = sub.getY() + 1;
@@ -658,19 +665,96 @@ public final class ClientUtil {
 							// if source block
 							if (liquidState.getValue(BlockLiquid.LEVEL) == 0)
 								renderLiquidInPre(event, potentialLiquidPos, mutableBlockPos, cache, liquidState);
+//								RENDER_LIQUID_POSITIONS.get().put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
 
-							break IF;
+//							break IF;
 						}
 					}
 				}
-			}
+//			}
 		}
 
 	}
 
+//	public static void renderLiquidInBlock(final RebuildChunkBlockEvent event) {
+//
+//		final Object[] data = RENDER_LIQUID_POSITIONS.get().get(event.getBlockPos());
+//		if (data == null) return;
+//
+//		final BlockPos liquidPos = (BlockPos) data[0];
+//		final IBlockState liquidState = (IBlockState) data[1];
+//
+//		final BlockPos pos = event.getBlockPos();
+//		final ChunkCache cache = event.getChunkCache();
+//
+//
+//
+//		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;//liquidState.getBlock().getRenderLayer();
+//		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+//
+//		if(true) {
+//			event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, bufferBuilder);
+//			return;
+//		}
+//
+//		//		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+////		final CompiledChunk compiledChunk = event.getCompiledChunk();
+////		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+////
+////		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+////			compiledChunk.setLayerStarted(blockRenderLayer);
+////			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+////			//pre render blocks
+////			bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
+////			bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
+////
+////		}
+//
+//		final TextureAtlasSprite textureAtlasSprite = liquidState.getMaterial() == Material.LAVA ? Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/lava_still") : Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/water_still");
+//
+//		float minU = getMinU(textureAtlasSprite);
+//		float minV = getMinV(textureAtlasSprite);
+//		float maxV = getMaxV(textureAtlasSprite);
+//		float maxU = getMaxU(textureAtlasSprite);
+//
+//		int packedLightmapCoords = liquidState.getPackedLightmapCoords(cache, liquidPos);
+//		int skyLight = packedLightmapCoords >> 16 & 65535;
+//		int blockLight = packedLightmapCoords & 65535;
+//
+//		int x = pos.getX();
+//		//14/16
+//		float y = pos.getY() + 0.888F;
+//		int z = pos.getZ();
+//
+//		bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+//		bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+//		bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+//		bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+//
+////		if (blockliquid.shouldRenderSides(blockAccess, blockPosIn.up())) {
+//		if (((BlockLiquid) liquidState.getBlock()).shouldRenderSides(cache, liquidPos.up())) {
+//			bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+//			bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+//			bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+//			bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+//		}
+////		}
+//
+//	}
+
+//	public static void extendLiquidInPost(final RebuildChunkPostEvent event) {
+//		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+//
+//		for (MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(15, 15, 15)))
+//			RENDER_LIQUID_POSITIONS.get().remove(mutablePos);
+//
+//	}
+
+	//	@Deprecated
 	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
 
-		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+//		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
@@ -683,6 +767,8 @@ public final class ClientUtil {
 			bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
 
 		}
+
+		OptifineCompatibility.pushShaderThing(liquidState, pos, world, bufferBuilder);
 
 //		Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(liquidState, pos, world, bufferBuilder);
 
@@ -719,6 +805,8 @@ public final class ClientUtil {
 			bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
 		}
 //		}
+
+		OptifineCompatibility.popShaderThing(bufferBuilder);
 
 	}
 
