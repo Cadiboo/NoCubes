@@ -1,18 +1,17 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.client.render.BlockRenderData;
+import io.github.cadiboo.nocubes.client.render.FluidInBlockRenderer;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -649,8 +648,9 @@ public final class ClientUtil {
 		}
 
 		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
-//			IF:
+			IF:
 //			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
+			if (!(cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid)) {
 				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
 				final int x = sub.getX() + 1;
 				final int y = sub.getY() + 1;
@@ -667,11 +667,11 @@ public final class ClientUtil {
 								renderLiquidInPre(event, potentialLiquidPos, mutableBlockPos, cache, liquidState);
 //								RENDER_LIQUID_POSITIONS.get().put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
 
-//							break IF;
+							break IF;
 						}
 					}
 				}
-//			}
+			}
 		}
 
 	}
@@ -768,43 +768,9 @@ public final class ClientUtil {
 
 		}
 
-		OptifineCompatibility.pushShaderThing(liquidState, pos, world, bufferBuilder);
+		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, world, bufferBuilder);
 
-//		Minecraft.getMinecraft().getBlockRendererDispatcher().renderBlock(liquidState, pos, world, bufferBuilder);
-
-		//copied from BlockFluidRenderer & then simplified
-
-//		if (shouldRenderUp) {
-
-		final TextureAtlasSprite textureAtlasSprite = liquidState.getMaterial() == Material.LAVA ? Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/lava_still") : Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/water_still");
-
-		float minU = getMinU(textureAtlasSprite);
-		float minV = getMinV(textureAtlasSprite);
-		float maxV = getMaxV(textureAtlasSprite);
-		float maxU = getMaxU(textureAtlasSprite);
-
-		int packedLightmapCoords = liquidState.getPackedLightmapCoords(world, liquidPos);
-		int skyLight = packedLightmapCoords >> 16 & 65535;
-		int blockLight = packedLightmapCoords & 65535;
-
-		int x = pos.getX();
-		//14/16
-		float y = pos.getY() + 0.888F;
-		int z = pos.getZ();
-
-		bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-		bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-		bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-		bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-
-//		if (blockliquid.shouldRenderSides(blockAccess, blockPosIn.up())) {
-		if (((BlockLiquid) liquidState.getBlock()).shouldRenderSides(world, liquidPos.up())) {
-			bufferBuilder.pos(x + 0, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1, y, z + 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 0, y, z + 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex((double) minU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-		}
-//		}
+		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, world, bufferBuilder);
 
 		OptifineCompatibility.popShaderThing(bufferBuilder);
 
