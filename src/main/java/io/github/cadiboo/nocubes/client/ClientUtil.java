@@ -787,19 +787,43 @@ public final class ClientUtil {
 		BlockPos texturePos = pos;
 		IBlockState textureState = state;
 
-		// get texture
-		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-			if (ModUtil.shouldSmooth(textureState)) {
-				if (ModConfig.shouldBeautifyTextures) {
-					if (textureState.getBlock() == Blocks.GRASS || textureState.getBlock() == Blocks.SNOW_LAYER)
-						break;
-				} else {
-					break;
+		IF:
+		if (ModConfig.shouldBeautifyTextures) {
+
+			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+				final IBlockState tempState = cache.getBlockState(mutablePos);
+				if (tempState.getBlock() == Blocks.SNOW_LAYER) {
+					textureState = tempState;
+					texturePos = mutablePos;
+					break IF;
+				} else if (ModUtil.shouldSmooth(tempState)) {
+					textureState = tempState;
+					texturePos = mutablePos;
 				}
 			}
 
-			textureState = cache.getBlockState(mutablePos);
-			texturePos = mutablePos;
+			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+				final IBlockState tempState = cache.getBlockState(mutablePos);
+				if (tempState.getBlock() == Blocks.GRASS) {
+					textureState = tempState;
+					texturePos = mutablePos;
+					break IF;
+				} else if (ModUtil.shouldSmooth(tempState)) {
+					textureState = tempState;
+					texturePos = mutablePos;
+				}
+			}
+
+		} else {
+			// get texture
+			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+				if (ModUtil.shouldSmooth(textureState)) {
+					break;
+				} else {
+					textureState = cache.getBlockState(mutablePos);
+					texturePos = mutablePos;
+				}
+			}
 		}
 
 		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
