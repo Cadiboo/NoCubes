@@ -1,10 +1,11 @@
 {
 	"homepage": "https://cadiboo.github.io/projects/nocubes/",
 	"promos": {
-		"1.12.2-latest": "0.1.3",
-		"1.12.2-recommended": "0.1.3"
+		"1.12.2-latest": "0.1.4",
+		"1.12.2-recommended": "0.1.4"
 	},
 	"1.12.2": {
+		"0.1.4": "Cadiboo: Updated the lang",
 		"0.1.3": "Cadiboo: Fix vanilla UV bug with water rendering for fake liquids and R&D fluid renderer\nCadiboo: Add credit to LeBossMax2 for his tip about OldNoCubes\nCadiboo: Improved Beautify Textures option\nCadiboo: Added Beautify Textures option\nCadiboo: Updated config\nCadiboo: Added NONE RenderAlgorithm type\nCadiboo: Improved fake liquid rendering\nCadiboo: Initial compatibility with shaders for our fake liquids\nCadiboo: Update and add the new stuff to the lang\nCadiboo: Made all the renderers work & optimised them a little bit\nCadiboo: Fix chunkPos offset on MarchingTetrahedrons",
 		"0.1.2": "Cadiboo: Added a bunch of debug/R&D stuff and added stable renderers\nCadiboo: Started work on the next gen of renderers\nCadiboo: Added Marching Tetrahedra algorithm",
 		"0.1.2-debug": "Cadiboo: Working on surface nets & debug for Ginez0n",
