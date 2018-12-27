@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
@@ -94,11 +95,15 @@ public class FluidInBlockRenderer {
 				float v_f20;
 
 				if (slopeAngle < -999.0F) {
-					minU = textureAtlasSprite.getInterpolatedU(0.0D);
-					minV = textureAtlasSprite.getInterpolatedV(0.0D);
+//					minU = textureAtlasSprite.getInterpolatedU(0.0D);
+					minU = ClientUtil.getMinU(textureAtlasSprite);
+//					minV = textureAtlasSprite.getInterpolatedV(0.0D);
+					minV = ClientUtil.getMinV(textureAtlasSprite);
 					u_f14 = minU;
-					maxV = textureAtlasSprite.getInterpolatedV(16.0D);
-					maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+//					maxV = textureAtlasSprite.getInterpolatedV(16.0D);
+					maxV = ClientUtil.getMaxV(textureAtlasSprite);
+//					maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+					maxU = ClientUtil.getMaxU(textureAtlasSprite);
 					v_f19 = maxV;
 					u_f16 = maxU;
 					v_f20 = minV;
