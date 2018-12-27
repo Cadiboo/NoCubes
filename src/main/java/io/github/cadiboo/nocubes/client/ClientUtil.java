@@ -750,6 +750,8 @@ public final class ClientUtil {
 //
 //	}
 
+	//TODO: I _could_ use thread local & render the liquids in the block event
+
 	//	@Deprecated
 	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
 
