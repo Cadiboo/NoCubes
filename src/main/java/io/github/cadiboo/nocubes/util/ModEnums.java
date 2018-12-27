@@ -1,10 +1,10 @@
 package io.github.cadiboo.nocubes.util;
 
-import io.github.cadiboo.nocubes.client.render.MarchingTetrahedra;
-import io.github.cadiboo.nocubes.debug.client.render.DebugOldNoCubes;
 import io.github.cadiboo.nocubes.client.render.MarchingCubes;
+import io.github.cadiboo.nocubes.client.render.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.client.render.SurfaceNets;
+import io.github.cadiboo.nocubes.debug.client.render.DebugOldNoCubes;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
@@ -69,6 +69,13 @@ public final class ModEnums {
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost, OldNoCubes::getPoints),
 
 		MARCHING_TETRAHEDRA(MarchingTetrahedra::renderPre, MarchingTetrahedra::renderLayer, MarchingTetrahedra::renderType, MarchingTetrahedra::renderBlock, MarchingTetrahedra::renderPost, MarchingTetrahedra::getPoints),
+
+		NONE(event -> {
+		}, event -> {
+		}, event -> {
+		}, event -> {
+		}, event -> {
+		}, (blockPos, world) -> null),
 
 		;
 

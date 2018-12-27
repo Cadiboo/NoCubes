@@ -106,13 +106,16 @@ public final class ModConfig {
 	public static double isosurfaceLevel = 0.0D;
 
 	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
-	public static boolean betterFoliageGrassCompatibility;
+	public static boolean betterFoliageGrassCompatibility = false;
 
 	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
-	public static boolean hideOutsideBlocks;
+	public static boolean hideOutsideBlocks = false;
 
 	@LangKey(ModReference.MOD_ID + ".config.offsetVertices")
-	public static boolean offsetVertices;
+	public static boolean offsetVertices = true;
+
+	@LangKey(ModReference.MOD_ID + ".config.shouldBeautifyTextures")
+	public static boolean shouldBeautifyTextures = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.debug")
 	public static Debug debug = new Debug();

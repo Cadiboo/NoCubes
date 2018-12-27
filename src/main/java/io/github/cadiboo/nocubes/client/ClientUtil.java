@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.client.render.BlockRenderData;
 import io.github.cadiboo.nocubes.client.render.FluidInBlockRenderer;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
@@ -20,6 +21,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
@@ -649,8 +651,7 @@ public final class ClientUtil {
 
 		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
 			IF:
-//			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
-			if (!(cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid)) {
+			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
 				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
 				final int x = sub.getX() + 1;
 				final int y = sub.getY() + 1;
@@ -789,11 +790,16 @@ public final class ClientUtil {
 		// get texture
 		for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
 			if (ModUtil.shouldSmooth(textureState)) {
-				break;
-			} else {
-				textureState = cache.getBlockState(mutablePos);
-				texturePos = mutablePos;
+				if (ModConfig.shouldBeautifyTextures) {
+					if (textureState.getBlock() == Blocks.GRASS || textureState.getBlock() == Blocks.SNOW_LAYER)
+						break;
+				} else {
+					break;
+				}
 			}
+
+			textureState = cache.getBlockState(mutablePos);
+			texturePos = mutablePos;
 		}
 
 		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
