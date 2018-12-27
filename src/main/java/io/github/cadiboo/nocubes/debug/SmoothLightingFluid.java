@@ -1,32 +1,26 @@
 package io.github.cadiboo.nocubes.debug;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
-import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.crash.CrashReport;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -132,11 +126,15 @@ public final class SmoothLightingFluid {
 					float v_f20;
 
 					if (slopeAngle < -999.0F) {
-						minU = textureAtlasSprite.getInterpolatedU(0.0D);
-						minV = textureAtlasSprite.getInterpolatedV(0.0D);
+//		    			minU = textureAtlasSprite.getInterpolatedU(0.0D);
+						minU = ClientUtil.getMinU(textureAtlasSprite);
+//		    			minV = textureAtlasSprite.getInterpolatedV(0.0D);
+						minV = ClientUtil.getMinV(textureAtlasSprite);
 						u_f14 = minU;
-						maxV = textureAtlasSprite.getInterpolatedV(16.0D);
-						maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+//		    			maxV = textureAtlasSprite.getInterpolatedV(16.0D);
+						maxV = ClientUtil.getMaxV(textureAtlasSprite);
+//		    			maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+						maxU = ClientUtil.getMaxU(textureAtlasSprite);
 						v_f19 = maxV;
 						u_f16 = maxU;
 						v_f20 = minV;
@@ -334,12 +332,10 @@ public final class SmoothLightingFluid {
 			BitSet bitset = new BitSet(3);
 			Object blockmodelrenderer$ambientocclusionface = BlockModelRenderer_AmbientOcclusionFace_constructor.newInstance();
 
-			for (EnumFacing enumfacing : EnumFacing.values())
-			{
+			for (EnumFacing enumfacing : EnumFacing.values()) {
 				List<BakedQuad> list = modelIn.getQuads(stateIn, enumfacing, rand);
 
-				if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, enumfacing)))
-				{
+				if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, enumfacing))) {
 					this.renderQuadsSmooth(worldIn, stateIn, posIn, buffer, list, afloat, bitset, blockmodelrenderer$ambientocclusionface);
 					flag = true;
 				}
@@ -347,8 +343,7 @@ public final class SmoothLightingFluid {
 
 			List<BakedQuad> list1 = modelIn.getQuads(stateIn, null, rand);
 
-			if (!list1.isEmpty())
-			{
+			if (!list1.isEmpty()) {
 				this.renderQuadsSmooth(worldIn, stateIn, posIn, buffer, list1, afloat, bitset, blockmodelrenderer$ambientocclusionface);
 				flag = true;
 			}
@@ -356,8 +351,7 @@ public final class SmoothLightingFluid {
 			return flag;
 		}
 
-		private void renderQuadsSmooth(IBlockAccess blockAccessIn, IBlockState stateIn, BlockPos posIn, BufferBuilder buffer, List<BakedQuad> list, float[] quadBounds, BitSet bitSet, Object aoFace)
-		{
+		private void renderQuadsSmooth(IBlockAccess blockAccessIn, IBlockState stateIn, BlockPos posIn, BufferBuilder buffer, List<BakedQuad> list, float[] quadBounds, BitSet bitSet, Object aoFace) {
 //			Vec3d vec3d = stateIn.getOffset(blockAccessIn, posIn);
 //			double d0 = (double)posIn.getX() + vec3d.x;
 //			double d1 = (double)posIn.getY() + vec3d.y;
