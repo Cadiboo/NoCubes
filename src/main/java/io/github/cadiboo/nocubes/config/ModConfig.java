@@ -87,7 +87,7 @@ public final class ModConfig {
 	public static boolean isEnabled = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
-	public static StableRenderAlgorithm activeStableRenderingAlgorithm = StableRenderAlgorithm.MARCHING_CUBES;
+	public static StableRenderAlgorithm activeStableRenderingAlgorithm = StableRenderAlgorithm.SURFACE_NETS;
 
 	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
@@ -103,7 +103,7 @@ public final class ModConfig {
 
 	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -10, max = 10)
-	public static double isosurfaceLevel = 0.0D;
+	public static double isosurfaceLevel = 1.0D;
 
 	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
 	public static boolean betterFoliageGrassCompatibility = false;
@@ -133,7 +133,7 @@ public final class ModConfig {
 
 		public boolean highlightVertices = true;
 
-		public boolean realisticCollisions = true;
+		public boolean realisticCollisions = false;
 
 	}
 
