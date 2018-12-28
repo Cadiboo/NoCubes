@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModEnums.StableRenderAlgorithm;
-import io.github.cadiboo.nocubes.util.ModReference;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGrass;
@@ -34,7 +33,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import static io.github.cadiboo.nocubes.util.ModEnums.DebugRenderAlgorithm;
-import static io.github.cadiboo.nocubes.util.ModReference.*;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
 import static net.minecraft.init.Blocks.COAL_ORE;
