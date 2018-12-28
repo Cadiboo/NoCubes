@@ -23,8 +23,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.compiledChunk_setLayerUsed;
-
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
  *
@@ -310,18 +308,18 @@ public final class SurfaceNets {
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 
 //		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.ALLOW);
-			event.setCanceled(true);
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
 //		}
 
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
-//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+		if (ModUtil.shouldSmooth(event.getBlockState())) {
 			event.setResult(Event.Result.ALLOW);
 			event.setCanceled(true);
-//		}
+		}
 
 	}
 
@@ -329,7 +327,7 @@ public final class SurfaceNets {
 
 		final IBlockState state = event.getBlockState();
 
-//		event.setCanceled(ModUtil.shouldSmooth(state));
+		event.setCanceled(ModUtil.shouldSmooth(state));
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
 		final HashMap<BlockPos, ArrayList<Vec3[]>> map = VERTICES.get().get(renderChunkPos);
@@ -347,7 +345,6 @@ public final class SurfaceNets {
 		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
 		final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
-//		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 		final int red = renderData.getRed();
 		final int green = renderData.getGreen();
 		final int blue = renderData.getBlue();
@@ -365,7 +362,7 @@ public final class SurfaceNets {
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
-			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+//			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
 			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
 			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 		}
