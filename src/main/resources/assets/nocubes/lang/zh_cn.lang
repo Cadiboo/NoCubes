@@ -10,8 +10,8 @@ nocubes.config.reloadChunksOnConfigChange.tooltip=是否需要在配置文件被
 nocubes.config.shouldFixFaceCulling=修复'面剔除'(未实现!)
 nocubes.config.shouldFixFaceCulling.tooltip=修复'面剔除'引发的问题(例如树木根部渲染不正确)
 
-nocubes.config.shouldSmoothLiquids=平滑液体
-nocubes.config.shouldSmoothLiquids.tooltip=是否需要使液体(熔岩和水)贴合平滑的方块\n提醒我用着色器实现熔岩的波纹效果!
+nocubes.config.shouldExtendLiquids=平滑液体
+nocubes.config.shouldExtendLiquids.tooltip=是否需要使液体(熔岩和水)贴合平滑的方块\n提醒我用着色器实现熔岩的波纹效果!
 
 nocubes.config.smoothableBlockStates=可平滑的方块
 nocubes.config.smoothableBlockStates.tooltip=选择需要使用渲染算法的方块
