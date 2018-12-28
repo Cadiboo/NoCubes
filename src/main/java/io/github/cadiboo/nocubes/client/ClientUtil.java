@@ -758,7 +758,6 @@ public final class ClientUtil {
 //		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
 		final RenderChunk renderChunk = event.getRenderChunk();
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
