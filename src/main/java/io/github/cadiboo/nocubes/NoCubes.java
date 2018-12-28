@@ -17,10 +17,12 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -118,12 +120,18 @@ public final class NoCubes {
 		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
 			LOGGER.info("Resetting config file " + configFile.getName());
 			//copied from Configuration
-			{
-				File fileBak = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
+			File backupFile = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
+			try {
+				FileUtils.copyFile(configFile, backupFile, true);
+			} catch (IOException e) {
+				LOGGER.error("We don't really care about this error", e);
 			}
 			configFile.delete();
+			//refresh
 			config.load();
+			//save version
 			config.save();
+			//save default config
 			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 		}
 
@@ -135,7 +143,9 @@ public final class NoCubes {
 //				isosurfaceLevel.set(0.0D);
 //		}
 
+		//save (Unnecessary?)
 		config.save();
+		//save
 		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 	}
 
