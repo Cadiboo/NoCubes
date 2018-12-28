@@ -55,4 +55,6 @@ public final class ModReference {
 	 */
 	public static final String VERSION = "@VERSION@";
 
+	public static final String CONFIG_VERSION = "0.1.0";
+
 }

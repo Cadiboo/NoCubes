@@ -2,11 +2,12 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.util.ReportedException;
 import net.minecraftforge.common.ForgeModContainer;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -15,11 +16,19 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+
 import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
 import static io.github.cadiboo.nocubes.util.ModReference.CLIENT_PROXY_CLASS;
+import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
@@ -62,22 +71,70 @@ public final class NoCubes {
 	@EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {
 		LOGGER.debug("preInit");
-		final Configuration config = new Configuration(event.getSuggestedConfigurationFile());
-		fixConfig(config);
+		fixConfig(event.getSuggestedConfigurationFile());
 		proxy.logPhysicalSide(NO_CUBES_LOG);
 
 	}
 
-	private void fixConfig(final Configuration config) {
-		LOGGER.debug("fixing Config");
-		config.load();
-		// fix Isosurface level
-		{
-			final double oldDefaultValue = 0.001D;
-			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-			if (isosurfaceLevel.isDefault())
-				isosurfaceLevel.set(0.0D);
+	//TODO: remove this backwards compatibility
+	private static final Field configuration_definedConfigVersion = ReflectionHelper.findField(Configuration.class, "definedConfigVersion");
+	private static final Field configManager_CONFIGS = ReflectionHelper.findField(ConfigManager.class, "CONFIGS");
+
+	private void fixConfig(final File configFile) {
+
+		//Fix config file versioning while still using @Config
+		final Map<String, Configuration> CONFIGS;
+		try {
+			//Map of full file path -> configuration
+			CONFIGS = (Map<String, Configuration>) configManager_CONFIGS.get(null);
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting field for ConfigManager.CONFIGS!", e);
+			crashReport.makeCategory("Reflectively Accessing ConfigManager.CONFIGS");
+			throw new ReportedException(crashReport);
 		}
+
+		//copied from ConfigManager
+		Configuration config = CONFIGS.get(configFile.getAbsolutePath());
+		if (config == null) {
+			config = new Configuration(configFile, CONFIG_VERSION);
+			config.load();
+			CONFIGS.put(configFile.getAbsolutePath(), config);
+		}
+
+		try {
+			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
+			config.save();
+			config.load();
+		} catch (IllegalAccessException | IllegalArgumentException e) {
+			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
+			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
+			throw new ReportedException(crashReport);
+		}
+
+		LOGGER.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
+		config.load();
+
+		// reset config if old version
+		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
+			LOGGER.info("Resetting config file " + configFile.getName());
+			//copied from Configuration
+			{
+				File fileBak = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
+			}
+			configFile.delete();
+			config.load();
+			config.save();
+			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+		}
+
+//		// fix Isosurface level (mod version 0.1.2?)
+//		{
+//			final double oldDefaultValue = 0.001D;
+//			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+//			if (isosurfaceLevel.isDefault())
+//				isosurfaceLevel.set(0.0D);
+//		}
+
 		config.save();
 		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 	}
