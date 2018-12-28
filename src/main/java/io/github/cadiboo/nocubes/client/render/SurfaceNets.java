@@ -114,11 +114,11 @@ public final class SurfaceNets {
 
 		final float[] data = new float[dims[0] * dims[1] * dims[2]];
 
-		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos.add(-1, -1, -1), renderChunkPos.add(16, 16, 16))) {
+		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
 			final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
-			final int x = sub.getX() + 1;
-			final int y = sub.getY() + 1;
-			final int z = sub.getZ() + 1;
+			final int x = sub.getX();
+			final int y = sub.getY();
+			final int z = sub.getZ();
 			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 			data[x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
 		}
@@ -161,10 +161,10 @@ public final class SurfaceNets {
 								// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 								// assuming i = x, j = y, k = z
 //								pooledMutablePos.setPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k);
-//								float p = data[idx];
-//								float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
+								final float p = data[idx];
+//								final float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
 
-								float p = data[(x[0] + i) + 18 * ((x[1] + j) + 18 * (x[2] + k))];
+//								final float p = data[(x[0] + i) + 18 * ((x[1] + j) + 18 * (x[2] + k))];
 
 								grid[g] = p;
 								mask |= (p < 0) ? (1 << g) : 0;
