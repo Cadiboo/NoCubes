@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.debug.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;

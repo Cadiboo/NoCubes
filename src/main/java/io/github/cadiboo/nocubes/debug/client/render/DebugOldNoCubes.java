@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.debug.client.render;
 
-import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
