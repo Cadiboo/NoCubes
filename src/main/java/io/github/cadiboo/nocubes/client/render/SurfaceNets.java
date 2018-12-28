@@ -16,7 +16,6 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -103,7 +102,7 @@ public final class SurfaceNets {
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
 		final RenderChunk renderChunk = event.getRenderChunk();
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
-		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
+//		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
 
 //		final int[] dims = {16, 16, 16};
@@ -112,6 +111,17 @@ public final class SurfaceNets {
 		final int[] dims = {18, 18, 18};
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final ArrayList<float[]> vertices = new ArrayList<>();
+
+		final float[] data = new float[dims[0] * dims[1] * dims[2]];
+
+		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos.add(-1, -1, -1), renderChunkPos.add(16, 16, 16))) {
+			final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
+			final int x = sub.getX() + 1;
+			final int y = sub.getY() + 1;
+			final int z = sub.getZ() + 1;
+			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+			data[x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+		}
 
 		//Internal buffer, this may get resized at run time
 		final int[] buffer;
@@ -148,10 +158,14 @@ public final class SurfaceNets {
 					for (int k = 0; k < 2; ++k, idx += dims[0] * (dims[1] - 2))
 						for (int j = 0; j < 2; ++j, idx += dims[0] - 2)
 							for (int i = 0; i < 2; ++i, ++g, ++idx) {
+								// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 								// assuming i = x, j = y, k = z
-								pooledMutablePos.setPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k);
+//								pooledMutablePos.setPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k);
 //								float p = data[idx];
-								float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
+//								float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
+
+								float p = data[(x[0] + i) + 18 * ((x[1] + j) + 18 * (x[2] + k))];
+
 								grid[g] = p;
 								mask |= (p < 0) ? (1 << g) : 0;
 							}
@@ -207,7 +221,7 @@ public final class SurfaceNets {
 
 					//Add vertex to buffer, store pointer to vertex index in buffer
 					buffer[m] = vertices.size();
-					if(ModConfig.offsetVertices)
+					if (ModConfig.offsetVertices)
 						ModUtil.offsetVertex(v);
 					vertices.add(v);
 
@@ -294,19 +308,19 @@ public final class SurfaceNets {
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 
-		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.DENY);
-			event.setCanceled(true);
-		}
+//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
+//		}
 
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
-		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.DENY);
-			event.setCanceled(true);
-		}
+//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
+//		}
 
 	}
 

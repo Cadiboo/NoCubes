@@ -270,19 +270,19 @@ public final class MarchingTetrahedra {
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
 
-		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.DENY);
-			event.setCanceled(true);
-		}
+//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
+//		}
 
 	}
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
-		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.DENY);
-			event.setCanceled(true);
-		}
+//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
+//		}
 
 	}
 

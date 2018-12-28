@@ -5,7 +5,9 @@ import io.github.cadiboo.nocubes.client.render.FluidInBlockRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
@@ -50,6 +52,7 @@ import java.lang.reflect.Field;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -633,9 +636,12 @@ public final class ClientUtil {
 //		}
 //	};
 
-	public static void extendLiquids(final RebuildChunkPreEvent event) {
+	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final ChunkCache cache = event.getChunkCache();
+
+		final HashMap<BlockPos, Object[]> map = new HashMap<>();
+		RENDER_LIQUID_POSITIONS.get().put(renderChunkPosition, map);
 
 		// 18 * 18 * 18 add 1 block on each side of chunk
 		final boolean[] isLiquid = new boolean[5832];
@@ -663,11 +669,15 @@ public final class ClientUtil {
 							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
 							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
 
-							// if source block
-							if (liquidState.getValue(BlockLiquid.LEVEL) == 0)
-								renderLiquidInPre(event, potentialLiquidPos, mutableBlockPos, cache, liquidState);
-//								RENDER_LIQUID_POSITIONS.get().put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
+							if (!(liquidState.getBlock() instanceof BlockLiquid)) {
+								continue;
+							}
 
+							// if not source block
+							if (liquidState.getValue(BlockLiquid.LEVEL) != 0) {
+								continue;
+							}
+							map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
 							break IF;
 						}
 					}
@@ -751,29 +761,78 @@ public final class ClientUtil {
 
 	//TODO: I _could_ use thread local & render the liquids in the block event
 
-	//	@Deprecated
-	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
+//	@Deprecated
+//	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
+//
+//		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+////		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
+//		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+//		final CompiledChunk compiledChunk = event.getCompiledChunk();
+//		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+//		final RenderChunk renderChunk = event.getRenderChunk();
+//
+//		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+//			compiledChunk.setLayerStarted(blockRenderLayer);
+//			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+//			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+//		}
+//
+//		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, world, bufferBuilder);
+//
+//		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, world, bufferBuilder);
+//
+//		OptifineCompatibility.popShaderThing(bufferBuilder);
+//
+//	}
+
+	public static void handleExtendedLiquidRender(final RebuildChunkBlockEvent event) {
+
+		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final HashMap<BlockPos, Object[]> map = RENDER_LIQUID_POSITIONS.get().get(renderChunkPos.toImmutable());
+		final BlockPos pos = event.getBlockPos();
+		final Object[] data = map.get(pos.toImmutable());
+
+		if (data == null) {
+			return;
+		}
+
+//		map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
+
+		final BlockPos liquidPos = (BlockPos) data[0];
+		final IBlockState liquidState = (IBlockState) data[1];
+		final ChunkCache cache = event.getChunkCache();
 
 		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
 //		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final BlockPos renderChunkPos = event.getRenderChunkPosition();
 		final RenderChunk renderChunk = event.getRenderChunk();
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
-			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+//			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
 			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 		}
 
-		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, world, bufferBuilder);
+		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, cache, bufferBuilder);
 
-		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, world, bufferBuilder);
+		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, cache, bufferBuilder);
 
 		OptifineCompatibility.popShaderThing(bufferBuilder);
-
 	}
+
+	public static void cleanupExtendedLiquids(final RebuildChunkPostEvent event) {
+		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+		RENDER_LIQUID_POSITIONS.get().remove(renderChunkPos);
+	}
+
+	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
+		@Override
+		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
+			return new HashMap<>();
+		}
+	};
 
 	public static BlockRenderData getBlockRenderData(final BlockPos pos, final ChunkCache cache) {
 

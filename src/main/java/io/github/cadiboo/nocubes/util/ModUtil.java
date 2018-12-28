@@ -4,7 +4,7 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -107,7 +107,7 @@ public final class ModUtil {
 
 		float density = 0.0F;
 
-		final MutableBlockPos mutablePos = new MutableBlockPos(pos);
+		final PooledMutableBlockPos mutablePos = PooledMutableBlockPos.retain(pos);
 
 		for (int x = 0; x < 2; ++x) {
 			for (int y = 0; y < 2; ++y) {
@@ -137,6 +137,8 @@ public final class ModUtil {
 				}
 			}
 		}
+
+		mutablePos.release();
 
 		return density;
 	}
