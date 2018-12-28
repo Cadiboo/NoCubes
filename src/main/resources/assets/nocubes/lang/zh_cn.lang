@@ -1,0 +1,51 @@
+nocubes.config.isEnabled=启用模组
+nocubes.config.isEnabled.tooltip=是否启用该模组
+
+nocubes.config.activeRenderingAlgorithm=渲染算法
+nocubes.config.activeRenderingAlgorithm.tooltip=使用哪种算法渲染你的世界\n旧版NoCubes: 由Chick_ME开发的NoCubes 0.3的快速原始渲染器\nMarching Cubes: 自1986年以来一直存在的原始平滑算法 - 快速, 运行良好\nSurface Nets: 一种平滑算法 - 速度稍慢, 三维等值面提取算法!\nMarching Tetrahedra: 一种简单的平滑算法 - 非常慢, 三维等值面提取算法, 非常简单的实现方式\n\n互动例子: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
+
+nocubes.config.reloadChunksOnConfigChange=配置文件修改后重新渲染区块
+nocubes.config.reloadChunksOnConfigChange.tooltip=是否需要在配置文件被修改时重新渲染所有区块
+
+nocubes.config.shouldFixFaceCulling=修复'面剔除'(未实现!)
+nocubes.config.shouldFixFaceCulling.tooltip=修复'面剔除'引发的问题(例如树木根部渲染不正确)
+
+nocubes.config.shouldSmoothLiquids=平滑液体
+nocubes.config.shouldSmoothLiquids.tooltip=是否需要使液体(熔岩和水)贴合平滑的方块\n提醒我用着色器实现熔岩的波纹效果!
+
+nocubes.config.smoothableBlockStates=可平滑的方块
+nocubes.config.smoothableBlockStates.tooltip=选择需要使用渲染算法的方块
+
+nocubes.config.betterFoliageGrassCompatibility=兼容BetterFoliage草地
+nocubes.config.betterFoliageGrassCompatibility.tooltip=是否需要在特定情况下渲染BetterFoliage的草地(需要BetterFoliage)
+
+nocubes.config.isosurfaceLevel=等值面级别
+nocubes.config.isosurfaceLevel.tooltip=生成的表面网格的扩展(难以解释, 只是随便玩玩)\n最佳值:\n    旧版NoCubes: 不适用\n    Marching Cubes: -0.5 或 0\n    Surface Nets: 1.0\n    Marching Tetrahedra: 1.0
+
+nocubes.config.hideOutsideBlocks=隐藏外部方块(未实现!)
+nocubes.config.hideOutsideBlocks.tooltip=隐藏等值面以外的方块\n将导致不可见的区块, 利于截图展示, 不利于生存玩法
+
+nocubes.config.offsetVertices=偏移顶点
+nocubes.config.offsetVertices.tooltip=是否需要将(伪)随机性应用于生成的每个顶点\n将使地形更加崎岖
+
+nocubes.config.shouldBeautifyTextures=美化纹理
+nocubes.config.shouldBeautifyTextures.tooltip=优化雪和草的纹理\n改善地形外观
+
+#debug
+nocubes.config.debug=调试
+nocubes.config.debug.tooltip=调试/实验功能, 风险自负(不会破坏任何东西, 别担心)
+
+nocubes.config.debug.debugEnabled=启用调试
+nocubes.config.debug.debugEnabled.tooltip=是否启用调试内容
+
+nocubes.config.debug.activeRenderingAlgorithm=调试渲染算法(未实现!)
+nocubes.config.debug.activeRenderingAlgorithm.tooltip=使用哪种调试算法渲染你的世界
+
+nocubes.config.debug.realisticCollisions=真实碰撞(问题很多!)
+nocubes.config.debug.realisticCollisions.tooltip=启用该项可能会出现不好的结果, 不要在生存模式尝试
+
+nocubes.config.debug.highlightVertices=高亮顶点(部分实现)
+nocubes.config.debug.highlightVertices.tooltip=根据实际的顶点精确渲染一个选择框\n用于处理方块闭合
+
+nocubes.config.debug.shouldDrawWireframe=绘制线框(未实现!)
+nocubes.config.debug.shouldDrawWireframe.tooltip=是否需要给非空气方块绘制线框
