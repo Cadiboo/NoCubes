@@ -848,7 +848,6 @@ public final class ClientUtil {
 		// check 6 immediate neighbours
 		// check 8 corner neighbours
 
-
 		IF:
 		if (ModConfig.shouldBeautifyTextures) {
 
