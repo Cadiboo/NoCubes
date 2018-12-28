@@ -842,6 +842,13 @@ public final class ClientUtil {
 		BlockPos texturePos = pos;
 		IBlockState textureState = state;
 
+		// TODO:
+		// 1 pooled mutable blockpos
+		// check the block
+		// check 6 immediate neighbours
+		// check 8 corner neighbours
+
+
 		IF:
 		if (ModConfig.shouldBeautifyTextures) {
 
@@ -869,9 +876,22 @@ public final class ClientUtil {
 				}
 			}
 
+			if (ModUtil.shouldSmooth(state)) {
+				texturePos = pos;
+				textureState = state;
+			}
+
 		} else {
+
+			if (ModUtil.shouldSmooth(textureState)) {
+				break IF;
+			}
+
 			// get texture
 			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+				if (mutablePos.equals(pos)) {
+					continue;
+				}
 				if (ModUtil.shouldSmooth(textureState)) {
 					break;
 				} else {
