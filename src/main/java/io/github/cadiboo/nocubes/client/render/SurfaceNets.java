@@ -231,7 +231,7 @@ public final class SurfaceNets {
 					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 						compiledChunk.setLayerStarted(blockRenderLayer);
 						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
+						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 					}
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components

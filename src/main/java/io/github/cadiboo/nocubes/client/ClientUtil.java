@@ -758,12 +758,13 @@ public final class ClientUtil {
 //		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
+		final BlockPos renderChunkPos = event.getRenderChunkPosition();
 		final RenderChunk renderChunk = event.getRenderChunk();
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
+			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 		}
 
 		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, world, bufferBuilder);

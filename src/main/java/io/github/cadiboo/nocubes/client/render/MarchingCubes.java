@@ -424,7 +424,7 @@ public final class MarchingCubes {
 					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 						compiledChunk.setLayerStarted(blockRenderLayer);
 						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
+						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 					}
 
 					//Add faces
