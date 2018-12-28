@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import static io.github.cadiboo.nocubes.util.ModEnums.DebugRenderAlgorithm;
+import static io.github.cadiboo.nocubes.util.ModReference.*;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
 import static net.minecraft.init.Blocks.COAL_ORE;
@@ -76,59 +77,59 @@ import static net.minecraft.item.EnumDyeColor.YELLOW;
  * @author Cadiboo
  */
 @SuppressWarnings("WeakerAccess")
-@Config(modid = ModReference.MOD_ID)
-@LangKey(ModReference.MOD_ID + ".config.title")
+@Config(modid = MOD_ID)
+@LangKey(MOD_ID + ".config.title")
 public final class ModConfig {
 
 	@Config.Ignore
 	private static final HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
 
-	@LangKey(ModReference.MOD_ID + ".config.isEnabled")
+	@LangKey(MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.activeRenderingAlgorithm")
+	@LangKey(MOD_ID + ".config.activeRenderingAlgorithm")
 	public static StableRenderAlgorithm activeStableRenderingAlgorithm = StableRenderAlgorithm.SURFACE_NETS;
 
-	@LangKey(ModReference.MOD_ID + ".config.reloadChunksOnConfigChange")
+	@LangKey(MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
 
 //	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
 //	public static boolean shouldFixFaceCulling = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldExtendLiquids")
+	@LangKey(MOD_ID + ".config.shouldExtendLiquids")
 	public static boolean shouldExtendLiquids = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
+	@LangKey(MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
 
-	@LangKey(ModReference.MOD_ID + ".config.isosurfaceLevel")
+	@LangKey(MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -10, max = 10)
 	public static double isosurfaceLevel = 1.0D;
 
-	@LangKey(ModReference.MOD_ID + ".config.betterFoliageGrassCompatibility")
+	@LangKey(MOD_ID + ".config.betterFoliageGrassCompatibility")
 	public static boolean betterFoliageGrassCompatibility = false;
 
-	@LangKey(ModReference.MOD_ID + ".config.hideOutsideBlocks")
+	@LangKey(MOD_ID + ".config.hideOutsideBlocks")
 	public static boolean hideOutsideBlocks = false;
 
-	@LangKey(ModReference.MOD_ID + ".config.offsetVertices")
+	@LangKey(MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldBeautifyTextures")
+	@LangKey(MOD_ID + ".config.shouldBeautifyTextures")
 	public static boolean shouldBeautifyTextures = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.debug")
+	@LangKey(MOD_ID + ".config.debug")
 	public static Debug debug = new Debug();
 
 	public static class Debug {
 
-		@LangKey(ModReference.MOD_ID + ".config.debug.debugEnabled")
+		@LangKey(MOD_ID + ".config.debug.debugEnabled")
 		public boolean debugEnabled = false;
 
-		@LangKey(ModReference.MOD_ID + ".config.debug.shouldDrawWireframe")
+		@LangKey(MOD_ID + ".config.debug.shouldDrawWireframe")
 		public boolean shouldDrawWireframe = false;
 
-		@LangKey(ModReference.MOD_ID + ".config.debug.activeRenderingAlgorithm")
+		@LangKey(MOD_ID + ".config.debug.activeRenderingAlgorithm")
 		public DebugRenderAlgorithm activeRenderingAlgorithm = DebugRenderAlgorithm.OLD_NO_CUBES;
 
 		public boolean highlightVertices = true;
@@ -238,7 +239,7 @@ public final class ModConfig {
 		return (float) isosurfaceLevel;
 	}
 
-	@Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
+	@Mod.EventBusSubscriber(modid = MOD_ID)
 	private static class EventSubscriber {
 
 		/**
@@ -249,8 +250,8 @@ public final class ModConfig {
 		@SubscribeEvent
 		public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
 
-			if (event.getModID().equals(ModReference.MOD_ID)) {
-				ConfigManager.sync(ModReference.MOD_ID, Config.Type.INSTANCE);
+			if (event.getModID().equals(MOD_ID)) {
+				ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 
 				if (reloadChunksOnConfigChange) {
 					if (Minecraft.getMinecraft().renderGlobal != null) {
