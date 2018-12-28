@@ -9,7 +9,6 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -17,11 +16,9 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.eventhandler.Event;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
@@ -99,13 +96,6 @@ public final class SurfaceNets {
 
 	}
 
-	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, ArrayList<Vec3[]>>>> VERTICES = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, ArrayList<Vec3[]>>>>() {
-		@Override
-		protected HashMap<BlockPos, HashMap<BlockPos, ArrayList<Vec3[]>>> initialValue() {
-			return new HashMap<>();
-		}
-	};
-
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
 		final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
@@ -114,9 +104,6 @@ public final class SurfaceNets {
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 //		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
-
-		final HashMap<BlockPos, ArrayList<Vec3[]>> map = new HashMap<>();
-		VERTICES.get().put(renderChunkPos, map);
 
 //		final int[] dims = {16, 16, 16};
 		// make the algorithm look on the sides of chunks aswell
@@ -238,7 +225,28 @@ public final class SurfaceNets {
 						ModUtil.offsetVertex(v);
 					vertices.add(v);
 
-					final ArrayList<Vec3[]> faces = new ArrayList<>();
+					final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
+
+					final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+					final int red = renderData.getRed();
+					final int green = renderData.getGreen();
+					final int blue = renderData.getBlue();
+					final int alpha = renderData.getAlpha();
+					final float minU = renderData.getMinU();
+					final float maxU = renderData.getMaxU();
+					final float minV = renderData.getMinV();
+					final float maxV = renderData.getMaxV();
+					final int lightmapSkyLight = renderData.getLightmapSkyLight();
+					final int lightmapBlockLight = renderData.getLightmapBlockLight();
+
+					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+					final CompiledChunk compiledChunk = event.getCompiledChunk();
+
+					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+						compiledChunk.setLayerStarted(blockRenderLayer);
+						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+					}
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int i = 0; i < 3; ++i) {
@@ -265,38 +273,31 @@ public final class SurfaceNets {
 						if ((mask & 1) == 0) {
 //							faces.add([buffer[m], buffer[m - du], buffer[m - du - dv], buffer[m - dv]]);
 
-							faces.add(new Vec3[]{
-									new Vec3(vertices.get(buffer[m])),
-									new Vec3(vertices.get(buffer[m - du])),
-									new Vec3(vertices.get(buffer[m - du - dv])),
-									new Vec3(vertices.get(buffer[m - dv]))
-							});
+							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - du]));
+							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - dv]));
 
-//							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
-//							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - du]));
-//							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
-//							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - dv]));
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 						} else {
 //							faces.add([buffer[m], buffer[m - dv], buffer[m - du - dv], buffer[m - du]]);
 
-							faces.add(new Vec3[]{
-									new Vec3(vertices.get(buffer[m])),
-									new Vec3(vertices.get(buffer[m - dv])),
-									new Vec3(vertices.get(buffer[m - du - dv])),
-									new Vec3(vertices.get(buffer[m - du]))
-							});
+							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - dv]));
+							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - du]));
 
-//							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
-//							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - dv]));
-//							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
-//							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - du]));
+							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 						}
 					}
-
-					map.put(pos.toImmutable(), faces);
-
 				}
 		}
 
@@ -316,77 +317,20 @@ public final class SurfaceNets {
 
 	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
 
-		if (ModUtil.shouldSmooth(event.getBlockState())) {
-			event.setResult(Event.Result.ALLOW);
-			event.setCanceled(true);
-		}
+//		if (ModUtil.shouldSmooth(event.getBlockState())) {
+//			event.setResult(Event.Result.DENY);
+//			event.setCanceled(true);
+//		}
 
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
-		final IBlockState state = event.getBlockState();
-
-		event.setCanceled(ModUtil.shouldSmooth(state));
-
-		final BlockPos renderChunkPos = event.getRenderChunkPosition();
-		final HashMap<BlockPos, ArrayList<Vec3[]>> map = VERTICES.get().get(renderChunkPos);
-		final BlockPos pos = event.getBlockPos();
-		final ArrayList<Vec3[]> data = map.get(pos);
-
-		if (data == null) {
-			return;
-		}
-
-//		map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
-
-		final ChunkCache cache = event.getChunkCache();
-
-		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
-
-		final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
-		final int red = renderData.getRed();
-		final int green = renderData.getGreen();
-		final int blue = renderData.getBlue();
-		final int alpha = renderData.getAlpha();
-		final float minU = renderData.getMinU();
-		final float maxU = renderData.getMaxU();
-		final float minV = renderData.getMinV();
-		final float maxV = renderData.getMaxV();
-		final int lightmapSkyLight = renderData.getLightmapSkyLight();
-		final int lightmapBlockLight = renderData.getLightmapBlockLight();
-
-		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
-		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final RenderChunk renderChunk = event.getRenderChunk();
-
-		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-			compiledChunk.setLayerStarted(blockRenderLayer);
-//			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
-			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
-		}
-
-		for (Vec3[] vertices : data) {
-
-			Vec3 vertex0 = vertices[0];
-			Vec3 vertex1 = vertices[1];
-			Vec3 vertex2 = vertices[2];
-			Vec3 vertex3 = vertices[3];
-
-			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-		}
-
-		map.remove(pos);
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
 
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
-
-		VERTICES.get().remove(event.getRenderChunkPosition());
 
 	}
 
