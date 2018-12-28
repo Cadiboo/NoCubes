@@ -95,8 +95,8 @@ public final class ModConfig {
 //	@LangKey(ModReference.MOD_ID + ".config.shouldFixFaceCulling")
 //	public static boolean shouldFixFaceCulling = true;
 
-	@LangKey(ModReference.MOD_ID + ".config.shouldSmoothLiquids")
-	public static boolean shouldSmoothLiquids = false;
+	@LangKey(ModReference.MOD_ID + ".config.shouldExtendLiquids")
+	public static boolean shouldExtendLiquids = true;
 
 	@LangKey(ModReference.MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;

@@ -40,7 +40,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		if (ModConfig.shouldSmoothLiquids)
+		if (ModConfig.shouldExtendLiquids)
 			ClientUtil.extendLiquids(event);
 
 		ModConfig.activeStableRenderingAlgorithm.renderPre(event);

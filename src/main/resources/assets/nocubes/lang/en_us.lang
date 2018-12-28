@@ -10,8 +10,8 @@ nocubes.config.reloadChunksOnConfigChange.tooltip=If all chunks should be re-ren
 nocubes.config.shouldFixFaceCulling=Fix Face Culling (Not Implemented!)
 nocubes.config.shouldFixFaceCulling.tooltip=If Face Culling issues (like the bottom of trees not rendering correctly) should be fixed
 
-nocubes.config.shouldSmoothLiquids=Smooth Liquids
-nocubes.config.shouldSmoothLiquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks\nShout at me to implement the ripple effect for lava with shaders!
+nocubes.config.shouldExtendLiquids=Extend Liquids
+nocubes.config.shouldExtendLiquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks\nShout at me to implement the ripple effect for lava with shaders!
 
 nocubes.config.smoothableBlockStates=Smoothable BlockStates
 nocubes.config.smoothableBlockStates.tooltip=Block States that the Rendering Algorithm will smooth
