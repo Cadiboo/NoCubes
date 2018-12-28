@@ -788,9 +788,9 @@ public final class ClientUtil {
 	public static void handleExtendedLiquidRender(final RebuildChunkBlockEvent event) {
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
-		final HashMap<BlockPos, Object[]> map = RENDER_LIQUID_POSITIONS.get().get(renderChunkPos.toImmutable());
+		final HashMap<BlockPos, Object[]> map = RENDER_LIQUID_POSITIONS.get().get(renderChunkPos);
 		final BlockPos pos = event.getBlockPos();
-		final Object[] data = map.get(pos.toImmutable());
+		final Object[] data = map.get(pos);
 
 		if (data == null) {
 			return;
@@ -820,6 +820,8 @@ public final class ClientUtil {
 		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, cache, bufferBuilder);
 
 		OptifineCompatibility.popShaderThing(bufferBuilder);
+
+		map.remove(pos);
 	}
 
 	public static void cleanupExtendedLiquids(final RebuildChunkPostEvent event) {
