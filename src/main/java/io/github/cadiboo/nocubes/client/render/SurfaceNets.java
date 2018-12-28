@@ -11,6 +11,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEven
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
@@ -101,6 +102,7 @@ public final class SurfaceNets {
 
 		final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final RenderChunk renderChunk = event.getRenderChunk();
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
@@ -230,10 +232,7 @@ public final class SurfaceNets {
 					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 						compiledChunk.setLayerStarted(blockRenderLayer);
 						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						//pre render blocks
-						bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-						bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
-
+						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
 					}
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components

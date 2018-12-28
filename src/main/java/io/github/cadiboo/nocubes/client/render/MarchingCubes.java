@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -10,14 +9,9 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
@@ -357,6 +351,7 @@ public final class MarchingCubes {
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final RenderChunk renderChunk = event.getRenderChunk();
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final int[] x = {0, 0, 0};
 		final float[] grid = new float[8];
@@ -404,7 +399,7 @@ public final class MarchingCubes {
 						for (int j = 0; j < 3; ++j) {
 							nv[j] = (c[j] + x[j] + p0[j]) + t * (p1[j] - p0[j]);
 						}
-						if(ModConfig.offsetVertices)
+						if (ModConfig.offsetVertices)
 							ModUtil.offsetVertex(nv);
 						vertices.add(nv);
 					}
@@ -423,17 +418,13 @@ public final class MarchingCubes {
 					final int lightmapSkyLight = renderData.getLightmapSkyLight();
 					final int lightmapBlockLight = renderData.getLightmapBlockLight();
 
-
 					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 					final CompiledChunk compiledChunk = event.getCompiledChunk();
 
 					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 						compiledChunk.setLayerStarted(blockRenderLayer);
 						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						//pre render blocks
-						bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-						bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
-
+						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
 					}
 
 					//Add faces

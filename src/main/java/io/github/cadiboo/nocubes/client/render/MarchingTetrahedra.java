@@ -12,7 +12,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
@@ -59,7 +59,7 @@ public final class MarchingTetrahedra {
 			v[i] += p0[i] + t * (p1[i] - p0[i]);
 		}
 
-		if(ModConfig.offsetVertices)
+		if (ModConfig.offsetVertices)
 			ModUtil.offsetVertex(v);
 		Vec3 vec = new Vec3(v[0], v[1], v[2]);
 		vertices.add(vec);
@@ -69,6 +69,7 @@ public final class MarchingTetrahedra {
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final RenderChunk renderChunk = event.getRenderChunk();
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
@@ -230,10 +231,7 @@ public final class MarchingTetrahedra {
 							if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 								compiledChunk.setLayerStarted(blockRenderLayer);
 								ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-								//pre render blocks
-								bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-								bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
-
+								ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
 							}
 
 							if (face.length == 3) {

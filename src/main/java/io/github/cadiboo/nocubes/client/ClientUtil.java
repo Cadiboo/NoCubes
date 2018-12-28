@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
@@ -851,6 +852,29 @@ public final class ClientUtil {
 
 		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
 
+	}
+
+	private static final MethodHandle renderChunk_preRenderBlocks;
+	static {
+		try {
+			// newer forge versions
+//			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178573_a", Void.class, BlockRenderLayer.class));
+			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(RenderChunk.class, "preRenderBlocks", "func_178573_a", BufferBuilder.class, BlockPos.class));
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting method handle for RenderChunk#preRenderBlocks!", e);
+			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	public static void renderChunk_preRenderBlocks(final RenderChunk renderChunk, final BufferBuilder bufferBuilder, final BlockPos pos) {
+		try {
+			renderChunk_preRenderBlocks.invokeExact(renderChunk, bufferBuilder, pos);
+		} catch (Throwable throwable) {
+			CrashReport crashReport = new CrashReport("Error invoking method handle for RenderChunk#preRenderBlocks!", throwable);
+			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }
