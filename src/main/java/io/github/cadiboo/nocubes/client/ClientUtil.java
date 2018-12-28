@@ -754,8 +754,8 @@ public final class ClientUtil {
 	//	@Deprecated
 	private static void renderLiquidInPre(final RebuildChunkPreEvent event, final BlockPos liquidPos, final BlockPos pos, final IBlockAccess world, final IBlockState liquidState) {
 
-//		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
-		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
+		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+//		final BlockRenderLayer blockRenderLayer = BlockRenderLayer.TRANSLUCENT;
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
