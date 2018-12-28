@@ -18,7 +18,6 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -688,6 +687,7 @@ public final class ClientUtil {
 //
 //		final BlockPos pos = event.getBlockPos();
 //		final ChunkCache cache = event.getChunkCache();
+//	    final RenderChunk renderChunk = event.getRenderChunk();
 //
 //
 //
@@ -706,10 +706,7 @@ public final class ClientUtil {
 ////		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 ////			compiledChunk.setLayerStarted(blockRenderLayer);
 ////			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-////			//pre render blocks
-////			bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-////			bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
-////
+////            ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
 ////		}
 //
 //		final TextureAtlasSprite textureAtlasSprite = liquidState.getMaterial() == Material.LAVA ? Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/lava_still") : Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/water_still");
@@ -762,14 +759,12 @@ public final class ClientUtil {
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+		final RenderChunk renderChunk = event.getRenderChunk();
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-			//pre render blocks
-			bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-			bufferBuilder.setTranslation((double) (-renderChunkPos.getX()), (double) (-renderChunkPos.getY()), (double) (-renderChunkPos.getZ()));
-
+			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, pos);
 		}
 
 		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, world, bufferBuilder);
