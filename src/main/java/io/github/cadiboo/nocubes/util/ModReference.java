@@ -67,6 +67,6 @@ public final class ModReference {
 	 */
 	public static final String CERTIFICATE_FINGERPRINT = "@FINGERPRINT@";
 
-	public static final String CONFIG_VERSION = "0.1.0";
+	public static final String CONFIG_VERSION = "0.1.1";
 
 }
