@@ -1,7 +1,7 @@
 Minecraft Mod Public License
 ============================
 
-Version 2.0.3
+Version 2.0.4
 
 0. Definitions
 --------------
@@ -75,7 +75,7 @@ The Author may designate a person or organization as a Distributor.
 A Distributor is granted the right to distribute the Mod.  
 The Author may require that a Distributor provides a direct link to the Codebase.  
 The User may not distribute the Mod without being granted distribution rights from the Author.  
-The Author may revoke distribution rights from any Distributor.  
+The Author may revoke distribution rights from any Distributor at any time.  
 
 6. Right to contribute
 --------
