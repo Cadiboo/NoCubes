@@ -302,7 +302,8 @@ public final class SurfaceNets {
 						}
 					}
 			}
-
+//		} catch (final Exception e) {
+//			e.printStackTrace();
 		} finally {
 			pos.release();
 //		    pooledMutablePos.release();

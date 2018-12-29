@@ -471,8 +471,8 @@ public final class MarchingCubes {
 					}
 				}
 			}
-		} catch (final Exception e) {
-			e.printStackTrace();
+//		} catch (final Exception e) {
+//			e.printStackTrace();
 		} finally {
 			pos.release();
 //		    pooledMutablePos.release();
