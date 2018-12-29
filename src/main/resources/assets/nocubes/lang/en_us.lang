@@ -7,11 +7,11 @@ nocubes.config.activeRenderingAlgorithm.tooltip=What algorithm renders your worl
 nocubes.config.reloadChunksOnConfigChange=Re-Render Chunks on Config change
 nocubes.config.reloadChunksOnConfigChange.tooltip=If all chunks should be re-rendered when these settings change
 
-nocubes.config.shouldFixFaceCulling=Fix Face Culling (Not Implemented!)
+nocubes.config.shouldFixFaceCulling=Fix Face Culling (Not Implemented Yet!)
 nocubes.config.shouldFixFaceCulling.tooltip=If Face Culling issues (like the bottom of trees not rendering correctly) should be fixed
 
 nocubes.config.shouldExtendLiquids=Extend Liquids
-nocubes.config.shouldExtendLiquids.tooltip=If liquids (lava and water) should be rendered extended into smoothable blocks\nShout at me to implement the ripple effect for lava with shaders!
+nocubes.config.shouldExtendLiquids.tooltip=If liquids (water and lava) should be rendered extended into smoothable blocks\nShout at me to implement the ripple effect for lava with shaders!
 
 nocubes.config.smoothableBlockStates=Smoothable BlockStates
 nocubes.config.smoothableBlockStates.tooltip=Block States that the Rendering Algorithm will smooth
@@ -31,6 +31,11 @@ nocubes.config.offsetVertices.tooltip=If (pseudo) randomness should be applied t
 nocubes.config.shouldBeautifyTextures=Beautify Textures
 nocubes.config.shouldBeautifyTextures.tooltip=Favour Snow and Grass textures\nImproves the look of the terrain
 
+nocubes.config.shouldForceUpdate=Force Update
+nocubes.config.shouldForceUpdate.tooltip=If the game should crash if an outdated version is detected.
+
+
+
 #debug
 nocubes.config.debug=Debug
 nocubes.config.debug.tooltip=Debug/R&D features, use at your own risk (they won't destroy anything, don't worry)
@@ -38,14 +43,14 @@ nocubes.config.debug.tooltip=Debug/R&D features, use at your own risk (they won'
 nocubes.config.debug.debugEnabled=Debug Enabled
 nocubes.config.debug.debugEnabled.tooltip=If debug stuff is enabled
 
-nocubes.config.debug.activeRenderingAlgorithm=Debug Rendering Algorithm (Not Implemented!)
+nocubes.config.debug.activeRenderingAlgorithm=Debug Rendering Algorithm (Not Implemented Yet!)
 nocubes.config.debug.activeRenderingAlgorithm.tooltip=What debug algorithm renders your world
 
 nocubes.config.debug.realisticCollisions=Realistic Collisons (Very buggy!)
 nocubes.config.debug.realisticCollisions.tooltip=Using this could end badly, don't try it in survival
 
-nocubes.config.debug.highlightVertices=Highlight Vertices (only partially implemented)
+nocubes.config.debug.highlightVertices=Highlight Vertices (Not Fully Implemented Yet!)
 nocubes.config.debug.highlightVertices.tooltip=Accurately render a selection box based on actual vertices\nVery useful when dealing with blocks close up
 
-nocubes.config.debug.shouldDrawWireframe=Draw Wireframe (Not Implemented!)
+nocubes.config.debug.shouldDrawWireframe=Draw Wireframe (Not Implemented Yet!)
 nocubes.config.debug.shouldDrawWireframe.tooltip=If a wireframe should be drawn on non-air blocks
