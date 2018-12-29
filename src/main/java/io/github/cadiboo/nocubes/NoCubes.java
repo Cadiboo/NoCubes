@@ -11,6 +11,7 @@ import net.minecraftforge.common.ForgeVersion.CheckResult;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -166,8 +167,8 @@ public final class NoCubes {
 
 		try {
 			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
-			config.save();
-			config.load();
+//			config.save();
+//			config.load();
 		} catch (IllegalAccessException | IllegalArgumentException e) {
 			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
 			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
@@ -175,7 +176,7 @@ public final class NoCubes {
 		}
 
 		LOGGER.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
-		config.load();
+//		config.load();
 
 		// reset config if old version
 		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
@@ -196,13 +197,23 @@ public final class NoCubes {
 			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 		}
 
-//		// fix Isosurface level (mod version 0.1.2?)
-//		{
-//			final double oldDefaultValue = 0.001D;
-//			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-//			if (isosurfaceLevel.isDefault())
+		// fix Isosurface level (mod version 0.1.2?)
+		{
+			final double oldDefaultValue = 0.001D;
+			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+			if (isosurfaceLevel.isDefault())
+				//edit in version 0.1.6: set to 1
 //				isosurfaceLevel.set(0.0D);
-//		}
+				isosurfaceLevel.set(1.0D);
+		}
+
+		// fix Isosurface level (mod version 0.1.5?)
+		{
+			final double oldDefaultValue = 0.0D;
+			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+			if (isosurfaceLevel.isDefault())
+				isosurfaceLevel.set(1.0D);
+		}
 
 		//save (Unnecessary?)
 		config.save();
