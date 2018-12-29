@@ -134,8 +134,10 @@ public final class ModConfig {
 		@LangKey(MOD_ID + ".config.debug.activeRenderingAlgorithm")
 		public DebugRenderAlgorithm activeRenderingAlgorithm = DebugRenderAlgorithm.OLD_NO_CUBES;
 
+		@LangKey(MOD_ID + ".config.debug.highlightVertices")
 		public boolean highlightVertices = true;
 
+		@LangKey(MOD_ID + ".config.debug.realisticCollisions")
 		public boolean realisticCollisions = false;
 
 	}
