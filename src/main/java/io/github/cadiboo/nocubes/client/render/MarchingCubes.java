@@ -363,15 +363,15 @@ public final class MarchingCubes {
 //		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
 
-		final float[] data = new float[18 * 18 * 18];
+		final float[] data = new float[17 * 17 * 17];
 
-		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
+		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(16, 16, 16))) {
 			final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
 			final int _x = sub.getX();
 			final int y = sub.getY();
 			final int z = sub.getZ();
 			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-			data[_x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+			data[_x + 17 * (y + 17 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
 		}
 
 		try {
@@ -386,7 +386,7 @@ public final class MarchingCubes {
 						for (int i = 0; i < 8; ++i) {
 							int[] v = CUBE_VERTS[i];
 //						float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
-							float s = data[x[0] + v[0] + dims[0] * (x[1] + v[1] + dims[1] * (x[2] + v[2]))];
+							float s = data[x[0] + v[0] + 17 * (x[1] + v[1] + 17 * (x[2] + v[2]))];
 //						pooledMutablePos.setPos(c[0] + x[0] + v[0], c[1] + x[1] + v[1], c[2] + x[2] + v[2]);
 //						float s = ModUtil.getBlockDensity(pooledMutablePos, cache);
 							grid[i] = s;

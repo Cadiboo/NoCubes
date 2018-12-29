@@ -88,15 +88,15 @@ public final class MarchingTetrahedra {
 			float[] grid = new float[8];
 			final int[] x = {0, 0, 0};
 
-			final float[] data = new float[18 * 18 * 18];
+			final float[] data = new float[17 * 17 * 17];
 
-			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
+			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(16, 16, 16))) {
 				final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
 				final int _x = sub.getX();
 				final int y = sub.getY();
 				final int z = sub.getZ();
 				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-				data[_x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+				data[_x + 17 * (y + 17 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
 			}
 
 			//March over the volume
