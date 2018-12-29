@@ -28,8 +28,8 @@ import java.util.ArrayList;
  */
 public final class SurfaceNets {
 
-	private static final int[] CUBE_EDGES = new int[24];
-	private static final int[] EDGE_TABLE = new int[256];
+	public static final int[] CUBE_EDGES = new int[24];
+	public static final int[] EDGE_TABLE = new int[256];
 
 	// because the tables are so big we compute them in a static {} instead of hardcoding them
 	static {
@@ -112,193 +112,200 @@ public final class SurfaceNets {
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final ArrayList<float[]> vertices = new ArrayList<>();
 
-		final float[] data = new float[dims[0] * dims[1] * dims[2]];
+		try {
 
-		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
-			final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
-			final int x = sub.getX();
-			final int y = sub.getY();
-			final int z = sub.getZ();
-			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-			data[x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
-		}
+			final float[] data = new float[dims[0] * dims[1] * dims[2]];
 
-		//Internal buffer, this may get resized at run time
-		final int[] buffer;
+			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
+				final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
+				final int x = sub.getX();
+				final int y = sub.getY();
+				final int z = sub.getZ();
+				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+				data[x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+			}
+
+			//Internal buffer, this may get resized at run time
+			final int[] buffer;
 
 //			var vertices = []
 //    , faces = []
-		int n = 0;
-		final int[] x = new int[3],
-				R = new int[]{1, (dims[0] + 1), (dims[0] + 1) * (dims[1] + 1)};
-		final float[] grid = new float[8];
-		int buf_no = 1;
+			int n = 0;
+			final int[] x = new int[3],
+					R = new int[]{1, (dims[0] + 1), (dims[0] + 1) * (dims[1] + 1)};
+			final float[] grid = new float[8];
+			int buf_no = 1;
 
-		//Resize buffer if necessary
+			//Resize buffer if necessary
 //		if (R[2] * 2 > buffer.length) {
 //			buffer = new Int32Array(R[2] * 2);
 //		}
-		buffer = new int[R[2] * 2];
+			buffer = new int[R[2] * 2];
 
-		//March over the voxel grid
-		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
+			//March over the voxel grid
+			for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
 
-			//m is the pointer into the buffer we are going to use.
-			//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
-			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
-			int m = 1 + (dims[0] + 1) * (1 + buf_no * (dims[1] + 1));
+				//m is the pointer into the buffer we are going to use.
+				//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
+				//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
+				int m = 1 + (dims[0] + 1) * (1 + buf_no * (dims[1] + 1));
 
-			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n, m += 2)
-				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n, ++m) {
-					pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
+				for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n, m += 2)
+					for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n, ++m) {
+						pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
 
-					//Read in 8 field values around this vertex and store them in an array
-					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-					int mask = 0, g = 0, idx = n;
-					for (int k = 0; k < 2; ++k, idx += dims[0] * (dims[1] - 2))
-						for (int j = 0; j < 2; ++j, idx += dims[0] - 2)
-							for (int i = 0; i < 2; ++i, ++g, ++idx) {
-								// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-								// assuming i = x, j = y, k = z
+						//Read in 8 field values around this vertex and store them in an array
+						//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
+						int mask = 0, g = 0, idx = n;
+						for (int k = 0; k < 2; ++k, idx += dims[0] * (dims[1] - 2))
+							for (int j = 0; j < 2; ++j, idx += dims[0] - 2)
+								for (int i = 0; i < 2; ++i, ++g, ++idx) {
+									// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+									// assuming i = x, j = y, k = z
 //								pooledMutablePos.setPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k);
-								final float p = data[idx];
+									final float p = data[idx];
 //								final float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
 
 //								final float p = data[(x[0] + i) + 18 * ((x[1] + j) + 18 * (x[2] + k))];
 
-								grid[g] = p;
-								mask |= (p < 0) ? (1 << g) : 0;
+									grid[g] = p;
+									mask |= (p < 0) ? (1 << g) : 0;
+								}
+
+						//Check for early termination if cell does not intersect boundary
+						if (mask == 0 || mask == 0xFF) {
+							continue;
+						}
+
+						//Sum up edge intersections
+						final int edge_mask = EDGE_TABLE[mask];
+						final float[] v = {0, 0, 0};
+						int e_count = 0;
+
+						//For every edge of the cube...
+						for (int i = 0; i < 12; ++i) {
+
+							//Use edge mask to check if it is crossed
+							if ((edge_mask & (1 << i)) == 0) {
+								continue;
 							}
 
-					//Check for early termination if cell does not intersect boundary
-					if (mask == 0 || mask == 0xFF) {
-						continue;
-					}
+							//If it did, increment number of edge crossings
+							++e_count;
 
-					//Sum up edge intersections
-					final int edge_mask = EDGE_TABLE[mask];
-					final float[] v = {0, 0, 0};
-					int e_count = 0;
-
-					//For every edge of the cube...
-					for (int i = 0; i < 12; ++i) {
-
-						//Use edge mask to check if it is crossed
-						if ((edge_mask & (1 << i)) == 0) {
-							continue;
-						}
-
-						//If it did, increment number of edge crossings
-						++e_count;
-
-						//Now find the point of intersection
-						int e0 = CUBE_EDGES[i << 1]       //Unpack vertices
-								, e1 = CUBE_EDGES[(i << 1) + 1];
-						float g0 = grid[e0]                 //Unpack grid values
-								, g1 = grid[e1], t = g0 - g1;                 //Compute point of intersection
-						if (Math.abs(t) > 1e-6) {
-							t = g0 / t;
-						} else {
-							continue;
-						}
-
-						//Interpolate vertices and add up intersections (this can be done without multiplying)
-						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
-							int a = e0 & k, b = e1 & k;
-							if (a != b) {
-								v[j] += a != 0 ? 1.0 - t : t;
+							//Now find the point of intersection
+							int e0 = CUBE_EDGES[i << 1]       //Unpack vertices
+									, e1 = CUBE_EDGES[(i << 1) + 1];
+							float g0 = grid[e0]                 //Unpack grid values
+									, g1 = grid[e1], t = g0 - g1;                 //Compute point of intersection
+							if (Math.abs(t) > 1e-6) {
+								t = g0 / t;
 							} else {
-								v[j] += a != 0 ? 1.0 : 0;
+								continue;
+							}
+
+							//Interpolate vertices and add up intersections (this can be done without multiplying)
+							for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
+								int a = e0 & k, b = e1 & k;
+								if (a != b) {
+									v[j] += a != 0 ? 1.0 - t : t;
+								} else {
+									v[j] += a != 0 ? 1.0 : 0;
+								}
 							}
 						}
-					}
 
-					//Now we just average the edge intersections and add them to coordinate
-					float s = isoSurfaceLevel / e_count;
-					for (int i = 0; i < 3; ++i) {
-						v[i] = c[i] + x[i] + s * v[i];
-					}
-
-					//Add vertex to buffer, store pointer to vertex index in buffer
-					buffer[m] = vertices.size();
-					if (ModConfig.offsetVertices)
-						ModUtil.offsetVertex(v);
-					vertices.add(v);
-
-					final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
-
-					final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
-					final int red = renderData.getRed();
-					final int green = renderData.getGreen();
-					final int blue = renderData.getBlue();
-					final int alpha = renderData.getAlpha();
-					final float minU = renderData.getMinU();
-					final float maxU = renderData.getMaxU();
-					final float minV = renderData.getMinV();
-					final float maxV = renderData.getMaxV();
-					final int lightmapSkyLight = renderData.getLightmapSkyLight();
-					final int lightmapBlockLight = renderData.getLightmapBlockLight();
-
-					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
-					final CompiledChunk compiledChunk = event.getCompiledChunk();
-
-					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-						compiledChunk.setLayerStarted(blockRenderLayer);
-						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
-					}
-
-					//Now we need to add faces together, to do this we just loop over 3 basis components
-					for (int i = 0; i < 3; ++i) {
-						//The first three entries of the edge_mask count the crossings along the edge
-						if ((edge_mask & (1 << i)) == 0) {
-							continue;
+						//Now we just average the edge intersections and add them to coordinate
+						float s = isoSurfaceLevel / e_count;
+						for (int i = 0; i < 3; ++i) {
+							v[i] = c[i] + x[i] + s * v[i];
 						}
 
-						// i = axes we are point along.  iu, iv = orthogonal axes
-						int iu = (i + 1) % 3, iv = (i + 2) % 3;
+						//Add vertex to buffer, store pointer to vertex index in buffer
+						buffer[m] = vertices.size();
+						if (ModConfig.offsetVertices)
+							ModUtil.offsetVertex(v);
+						vertices.add(v);
 
-						//If we are on a boundary, skip it
-						if (x[iu] == 0 || x[iv] == 0) {
-							continue;
+						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
+
+						final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+						final int red = renderData.getRed();
+						final int green = renderData.getGreen();
+						final int blue = renderData.getBlue();
+						final int alpha = renderData.getAlpha();
+						final float minU = renderData.getMinU();
+						final float maxU = renderData.getMaxU();
+						final float minV = renderData.getMinV();
+						final float maxV = renderData.getMaxV();
+						final int lightmapSkyLight = renderData.getLightmapSkyLight();
+						final int lightmapBlockLight = renderData.getLightmapBlockLight();
+
+						final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+						final CompiledChunk compiledChunk = event.getCompiledChunk();
+
+						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+							compiledChunk.setLayerStarted(blockRenderLayer);
+							ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+							ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
 
-						//Otherwise, look up adjacent edges in buffer
-						int du = R[iu], dv = R[iv];
+						//Now we need to add faces together, to do this we just loop over 3 basis components
+						for (int i = 0; i < 3; ++i) {
+							//The first three entries of the edge_mask count the crossings along the edge
+							if ((edge_mask & (1 << i)) == 0) {
+								continue;
+							}
 
-						//TODO: remove float[] -> Vec3 -> float shit
-						//Remember to flip orientation depending on the sign of the corner.
-						//FIXME:  cunt wtf why do I have to swap vertices (First one is CORRECT but doesnt work)
+							// i = axes we are point along.  iu, iv = orthogonal axes
+							int iu = (i + 1) % 3, iv = (i + 2) % 3;
+
+							//If we are on a boundary, skip it
+							if (x[iu] == 0 || x[iv] == 0) {
+								continue;
+							}
+
+							//Otherwise, look up adjacent edges in buffer
+							int du = R[iu], dv = R[iv];
+
+							//TODO: remove float[] -> Vec3 -> float shit
+							//Remember to flip orientation depending on the sign of the corner.
+							//FIXME:  cunt wtf why do I have to swap vertices (First one is CORRECT but doesnt work)
 //						if ((mask & 1) != 0) {
-						if ((mask & 1) == 0) {
+							if ((mask & 1) == 0) {
 //							faces.add([buffer[m], buffer[m - du], buffer[m - du - dv], buffer[m - dv]]);
 
-							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
-							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - du]));
-							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
-							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - dv]));
+								Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+								Vec3 vertex1 = new Vec3(vertices.get(buffer[m - du]));
+								Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+								Vec3 vertex3 = new Vec3(vertices.get(buffer[m - dv]));
 
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
-						} else {
+							} else {
 //							faces.add([buffer[m], buffer[m - dv], buffer[m - du - dv], buffer[m - du]]);
 
-							Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
-							Vec3 vertex1 = new Vec3(vertices.get(buffer[m - dv]));
-							Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
-							Vec3 vertex3 = new Vec3(vertices.get(buffer[m - du]));
+								Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+								Vec3 vertex1 = new Vec3(vertices.get(buffer[m - dv]));
+								Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+								Vec3 vertex3 = new Vec3(vertices.get(buffer[m - du]));
 
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
+							}
 						}
 					}
-				}
+			}
+
+		} finally {
+			pos.release();
+//		    pooledMutablePos.release();
 		}
 
 		//All done!  Return the result

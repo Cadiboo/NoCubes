@@ -291,13 +291,17 @@ public final class OldNoCubesQuads {
 				}
 
 				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
+					givePointRoughness(point);
 				}
 			}
 		}
 
 		return points;
 
+	}
+
+	private static void givePointRoughness(final Vec3 point) {
+		ModUtil.offsetVertex(point);
 	}
 
 	/**

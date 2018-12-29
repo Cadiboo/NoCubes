@@ -264,13 +264,17 @@ public final class OldNoCubes {
 				}
 
 				if (ModConfig.offsetVertices) {
-					ModUtil.givePointRoughness(point);
+					givePointRoughness(point);
 				}
 			}
 		}
 
 		return points;
 
+	}
+
+	private static void givePointRoughness(final Vec3 point) {
+		ModUtil.offsetVertex(point);
 	}
 
 	/**

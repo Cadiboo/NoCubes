@@ -637,6 +637,9 @@ public final class ClientUtil {
 //	};
 
 	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
+
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
+
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final ChunkCache cache = event.getChunkCache();
 
@@ -684,6 +687,8 @@ public final class ClientUtil {
 				}
 			}
 		}
+
+		Minecraft.getMinecraft().profiler.endSection();
 
 	}
 
@@ -796,6 +801,8 @@ public final class ClientUtil {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquid in Block");
+
 //		map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
 
 		final BlockPos liquidPos = (BlockPos) data[0];
@@ -822,11 +829,20 @@ public final class ClientUtil {
 		OptifineCompatibility.popShaderThing(bufferBuilder);
 
 		map.remove(pos);
+
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 	public static void cleanupExtendedLiquids(final RebuildChunkPostEvent event) {
+
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Post");
+
 		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
 		RENDER_LIQUID_POSITIONS.get().remove(renderChunkPos);
+
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {

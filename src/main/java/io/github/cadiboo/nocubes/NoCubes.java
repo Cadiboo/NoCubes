@@ -3,19 +3,25 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ReportedException;
 import net.minecraftforge.common.ForgeModContainer;
+import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.ForgeVersion.CheckResult;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
+import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.versioning.ComparableVersion;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +34,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
-import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_VERSIONS;
+import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_MINECRAFT_VERSIONS;
+import static io.github.cadiboo.nocubes.util.ModReference.CERTIFICATE_FINGERPRINT;
 import static io.github.cadiboo.nocubes.util.ModReference.CLIENT_PROXY_CLASS;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
@@ -46,10 +53,13 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 		modid = MOD_ID,
 		name = MOD_NAME,
 		version = VERSION,
-		acceptedMinecraftVersions = ACCEPTED_VERSIONS,
+		acceptedMinecraftVersions = ACCEPTED_MINECRAFT_VERSIONS,
+		updateJSON = "https://raw.githubusercontent.com/Cadiboo/NoCubes/master/update.json",
 		dependencies = DEPENDENCIES,
 		clientSideOnly = true,
-		acceptableRemoteVersions = VERSION
+		acceptableRemoteVersions = VERSION,
+		certificateFingerprint = CERTIFICATE_FINGERPRINT
+
 )
 public final class NoCubes {
 
@@ -75,6 +85,57 @@ public final class NoCubes {
 		LOGGER.debug("preInit");
 		fixConfig(event.getSuggestedConfigurationFile());
 		proxy.logPhysicalSide(NO_CUBES_LOG);
+
+		launchUpdateDaemon(Loader.instance().activeModContainer());
+
+	}
+
+	private void launchUpdateDaemon(ModContainer noCubesContainer) {
+
+		new Thread(() -> {
+
+			ComparableVersion outdatedVersion = null;
+			boolean forceUpdate = false;
+
+			WHILE:
+			while (true) {
+
+				final CheckResult checkResult = ForgeVersion.getResult(noCubesContainer);
+
+				switch (checkResult.status) {
+					default:
+					case PENDING:
+						break;
+					case OUTDATED:
+						outdatedVersion = checkResult.target;
+						forceUpdate = ModConfig.shouldForceUpdate;
+					case FAILED:
+					case UP_TO_DATE:
+					case AHEAD:
+					case BETA:
+					case BETA_OUTDATED:
+						break WHILE;
+				}
+
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+
+			}
+
+			final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
+
+			if (forceUpdate) {
+				if (developerEnvironment) {
+					NO_CUBES_LOG.info("Did not crash game because we're in a dev environment");
+				} else {
+					NoCubes.proxy.forceUpdate(outdatedVersion);
+				}
+			}
+
+		}, MOD_NAME + " Update Daemon").start();
 
 	}
 

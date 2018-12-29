@@ -360,105 +360,123 @@ public final class MarchingCubes {
 		final ArrayList<float[]> vertices = new ArrayList<>();
 
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
-		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
+//		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
 		final ChunkCache cache = event.getChunkCache();
 
-		//March over the volume
-		for (x[2] = 0; x[2] < dims[2]; ++x[2], n += dims[0]) {
-			for (x[1] = 0; x[1] < dims[1]; ++x[1], ++n) {
-				for (x[0] = 0; x[0] < dims[0]; ++x[0], ++n) {
-					pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
-					//For each cell, compute cube mask
-					int cube_index = 0;
-					for (int i = 0; i < 8; ++i) {
-						int[] v = CUBE_VERTS[i];
+		final float[] data = new float[18 * 18 * 18];
+
+		for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
+			final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
+			final int _x = sub.getX();
+			final int y = sub.getY();
+			final int z = sub.getZ();
+			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+			data[_x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+		}
+
+		try {
+
+			//March over the volume
+			for (x[2] = 0; x[2] < dims[2]; ++x[2], n += dims[0]) {
+				for (x[1] = 0; x[1] < dims[1]; ++x[1], ++n) {
+					for (x[0] = 0; x[0] < dims[0]; ++x[0], ++n) {
+						pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
+						//For each cell, compute cube mask
+						int cube_index = 0;
+						for (int i = 0; i < 8; ++i) {
+							int[] v = CUBE_VERTS[i];
 //						float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
-						pooledMutablePos.setPos(c[0] + x[0] + v[0], c[1] + x[1] + v[1], c[2] + x[2] + v[2]);
-						float s = ModUtil.getBlockDensity(pooledMutablePos, cache);
-						grid[i] = s;
-						cube_index |= (s > 0) ? 1 << i : 0;
-					}
-					//Compute vertices
-					int edge_mask = EDGE_TABLE[cube_index];
-					if (edge_mask == 0) {
-						continue;
-					}
-					for (int i = 0; i < 12; ++i) {
-						if ((edge_mask & (1 << i)) == 0) {
+							float s = data[x[0] + v[0] + dims[0] * (x[1] + v[1] + dims[1] * (x[2] + v[2]))];
+//						pooledMutablePos.setPos(c[0] + x[0] + v[0], c[1] + x[1] + v[1], c[2] + x[2] + v[2]);
+//						float s = ModUtil.getBlockDensity(pooledMutablePos, cache);
+							grid[i] = s;
+							cube_index |= (s > 0) ? 1 << i : 0;
+						}
+						//Compute vertices
+						int edge_mask = EDGE_TABLE[cube_index];
+						if (edge_mask == 0) {
 							continue;
 						}
-						edges[i] = vertices.size();
-						float[] nv = {0, 0, 0};
-						int[] e = EDGE_INDEX[i];
-						int[] p0 = CUBE_VERTS[e[0]], p1 = CUBE_VERTS[e[1]];
-						float a = grid[e[0]], b = grid[e[1]], d = a - b, t = 0;
-						if (Math.abs(d) > 1e-6) {
-							t = a / d;
+						for (int i = 0; i < 12; ++i) {
+							if ((edge_mask & (1 << i)) == 0) {
+								continue;
+							}
+							edges[i] = vertices.size();
+							float[] nv = {0, 0, 0};
+							int[] e = EDGE_INDEX[i];
+							int[] p0 = CUBE_VERTS[e[0]], p1 = CUBE_VERTS[e[1]];
+							float a = grid[e[0]], b = grid[e[1]], d = a - b, t = 0;
+							if (Math.abs(d) > 1e-6) {
+								t = a / d;
+							}
+							for (int j = 0; j < 3; ++j) {
+								nv[j] = (c[j] + x[j] + p0[j]) + t * (p1[j] - p0[j]);
+							}
+							if (ModConfig.offsetVertices)
+								ModUtil.offsetVertex(nv);
+							vertices.add(nv);
 						}
-						for (int j = 0; j < 3; ++j) {
-							nv[j] = (c[j] + x[j] + p0[j]) + t * (p1[j] - p0[j]);
+
+						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
+
+						final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+						final int red = renderData.getRed();
+						final int green = renderData.getGreen();
+						final int blue = renderData.getBlue();
+						final int alpha = renderData.getAlpha();
+						final float minU = renderData.getMinU();
+						final float maxU = renderData.getMaxU();
+						final float minV = renderData.getMinV();
+						final float maxV = renderData.getMaxV();
+						final int lightmapSkyLight = renderData.getLightmapSkyLight();
+						final int lightmapBlockLight = renderData.getLightmapBlockLight();
+
+						final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+						final CompiledChunk compiledChunk = event.getCompiledChunk();
+
+						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+							compiledChunk.setLayerStarted(blockRenderLayer);
+							ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+							ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
-						if (ModConfig.offsetVertices)
-							ModUtil.offsetVertex(nv);
-						vertices.add(nv);
-					}
 
-					final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
-
-					final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
-					final int red = renderData.getRed();
-					final int green = renderData.getGreen();
-					final int blue = renderData.getBlue();
-					final int alpha = renderData.getAlpha();
-					final float minU = renderData.getMinU();
-					final float maxU = renderData.getMaxU();
-					final float minV = renderData.getMinV();
-					final float maxV = renderData.getMaxV();
-					final int lightmapSkyLight = renderData.getLightmapSkyLight();
-					final int lightmapBlockLight = renderData.getLightmapBlockLight();
-
-					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
-					final CompiledChunk compiledChunk = event.getCompiledChunk();
-
-					if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-						compiledChunk.setLayerStarted(blockRenderLayer);
-						ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-						ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
-					}
-
-					//Add faces
-					int[] f = TRIANGLE_TABLE[cube_index];
-					for (int i = 0; i < f.length; i += 3) {
+						//Add faces
+						int[] f = TRIANGLE_TABLE[cube_index];
+						for (int i = 0; i < f.length; i += 3) {
 //						faces.push({edges[f[i]], edges[f[i+1]], edges[f[i+2]]});
 //						final float[] vert0 = vertices.get(edges[f[i]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i + 2]]);
-						// legit wtf cunt why do I have to swap them???
-						final float[] vert0 = vertices.get(edges[f[i + 2]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i]]);
+							// legit wtf cunt why do I have to swap them???
+							final float[] vert0 = vertices.get(edges[f[i + 2]]), vert1 = vertices.get(edges[f[i + 1]]), vert2 = vertices.get(edges[f[i]]);
 
-						final Vec3 vertex0 = new Vec3(vert0),
-								vertex1 = new Vec3(vert1),
-								vertex2 = new Vec3(vert2);
+							final Vec3 vertex0 = new Vec3(vert0),
+									vertex1 = new Vec3(vert1),
+									vertex2 = new Vec3(vert2);
 
-						//pretend they're quads & try and get good textures
-						if (i % 6 == 0) {
-							//bottom right triangle (if facing north)
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						} else {
-							//top left triangle (if facing north)
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-							bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							//pretend they're quads & try and get good textures
+							if (i % 6 == 0) {
+								//bottom right triangle (if facing north)
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							} else {
+								//top left triangle (if facing north)
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							}
 						}
-					}
 
+					}
 				}
 			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+		} finally {
+			pos.release();
+//		    pooledMutablePos.release();
 		}
-		pos.release();
-		pooledMutablePos.release();
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {

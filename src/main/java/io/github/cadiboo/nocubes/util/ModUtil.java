@@ -149,7 +149,7 @@ public final class ModUtil {
 	 * @param point the point
 	 * @return the point with offset applied
 	 */
-	public static void givePointRoughness(Vec3 point) {
+	public static void offsetVertex(Vec3 point) {
 		// yay magic numbers
 		/* Begin Click_Me's Code (Modified by Cadiboo) */
 		long i = (long) (point.xCoord * 3129871.0D) ^ (long) point.yCoord * 116129781L ^ (long) point.zCoord;
@@ -173,7 +173,6 @@ public final class ModUtil {
 	}
 
 	public static void offsetVertex(final float[] nv) {
-
 		/* Begin Click_Me's Code (Modified by Cadiboo) */
 		long i = (long) (nv[0] * 3129871.0D) ^ (long) nv[1] * 116129781L ^ (long) nv[2];
 		i = i * i * 42317861L + i * 11L;
@@ -181,7 +180,6 @@ public final class ModUtil {
 		nv[1] += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
 		nv[2] += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
 		/* End Click_Me's Code (Modified by Cadiboo) */
-
 	}
 
 }

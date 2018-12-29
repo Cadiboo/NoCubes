@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.debug;
+package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
@@ -9,7 +9,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 /**
  * @author Cadiboo
  */
-public final class SurfaceNetsChunk {
+public final class RendererBase {
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 

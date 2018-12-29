@@ -117,6 +117,9 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.shouldBeautifyTextures")
 	public static boolean shouldBeautifyTextures = true;
 
+	@LangKey(MOD_ID + ".config.shouldForceUpdate")
+	public static boolean shouldForceUpdate = true;
+
 	@LangKey(MOD_ID + ".config.debug")
 	public static Debug debug = new Debug();
 

@@ -8,6 +8,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -32,10 +33,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Pre");
+
 		if (ModConfig.shouldExtendLiquids)
 			ClientUtil.calculateExtendedLiquids(event);
 
 		ModConfig.activeStableRenderingAlgorithm.renderPre(event);
+
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 	@SubscribeEvent
@@ -49,7 +55,11 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Layer");
+
 		ModConfig.activeStableRenderingAlgorithm.renderLayer(event);
+
+		Minecraft.getMinecraft().profiler.endSection();
 	}
 
 	@SubscribeEvent
@@ -63,7 +73,12 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Type");
+
 		ModConfig.activeStableRenderingAlgorithm.renderType(event);
+
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 	@SubscribeEvent
@@ -77,10 +92,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Block");
+
+		ModConfig.activeStableRenderingAlgorithm.renderBlock(event);
+
 		if (ModConfig.shouldExtendLiquids)
 			ClientUtil.handleExtendedLiquidRender(event);
 
-		ModConfig.activeStableRenderingAlgorithm.renderBlock(event);
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 	@SubscribeEvent
@@ -94,10 +114,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Post");
+
 		if (ModConfig.shouldExtendLiquids)
 			ClientUtil.cleanupExtendedLiquids(event);
 
 		ModConfig.activeStableRenderingAlgorithm.renderPost(event);
+
+		Minecraft.getMinecraft().profiler.endSection();
+
 	}
 
 }
