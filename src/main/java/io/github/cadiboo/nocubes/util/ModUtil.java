@@ -1,19 +1,42 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.crash.CrashReport;
 import net.minecraft.init.Blocks;
+import net.minecraft.launchwrapper.Launch;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.versioning.ComparableVersion;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
 import java.util.Random;
+
+import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
+import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 
 /**
  * Util that is used on BOTH physical sides
@@ -24,6 +47,9 @@ import java.util.Random;
 public final class ModUtil {
 
 	private static final Random RANDOM = new Random();
+	//TODO: remove this backwards compatibility
+	private static final Field configuration_definedConfigVersion = ReflectionHelper.findField(Configuration.class, "definedConfigVersion");
+	private static final Field configManager_CONFIGS = ReflectionHelper.findField(ConfigManager.class, "CONFIGS");
 
 	/**
 	 * Returns a random between the specified values;
@@ -180,6 +206,132 @@ public final class ModUtil {
 		nv[1] += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
 		nv[2] += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
 		/* End Click_Me's Code (Modified by Cadiboo) */
+	}
+
+	public static void launchUpdateDaemon(ModContainer noCubesContainer) {
+
+		new Thread(() -> {
+
+			ComparableVersion outdatedVersion = null;
+			boolean forceUpdate = false;
+
+			WHILE:
+			while (true) {
+
+				final ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(noCubesContainer);
+
+				switch (checkResult.status) {
+					default:
+					case PENDING:
+						break;
+					case OUTDATED:
+						outdatedVersion = checkResult.target;
+						forceUpdate = ModConfig.shouldForceUpdate;
+					case FAILED:
+					case UP_TO_DATE:
+					case AHEAD:
+					case BETA:
+					case BETA_OUTDATED:
+						break WHILE;
+				}
+
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+
+			}
+
+			final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
+
+			if (forceUpdate) {
+				if (developerEnvironment) {
+					NO_CUBES_LOG.info("Did not crash game because we're in a dev environment");
+				} else {
+					NoCubes.proxy.forceUpdate(outdatedVersion);
+				}
+			}
+
+		}, MOD_NAME + " Update Daemon").start();
+
+	}
+
+	public static void fixConfig(final File configFile) {
+
+		//Fix config file versioning while still using @Config
+		final Map<String, Configuration> CONFIGS;
+		try {
+			//Map of full file path -> configuration
+			CONFIGS = (Map<String, Configuration>) configManager_CONFIGS.get(null);
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting field for ConfigManager.CONFIGS!", e);
+			crashReport.makeCategory("Reflectively Accessing ConfigManager.CONFIGS");
+			throw new ReportedException(crashReport);
+		}
+
+		//copied from ConfigManager
+		Configuration config = CONFIGS.get(configFile.getAbsolutePath());
+		if (config == null) {
+			config = new Configuration(configFile, CONFIG_VERSION);
+			config.load();
+			CONFIGS.put(configFile.getAbsolutePath(), config);
+		}
+
+		try {
+			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
+//			config.save();
+//			config.load();
+		} catch (IllegalAccessException | IllegalArgumentException e) {
+			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
+			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
+			throw new ReportedException(crashReport);
+		}
+
+		NO_CUBES_LOG.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
+//		config.load();
+
+		// reset config if old version
+		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
+			NO_CUBES_LOG.info("Resetting config file " + configFile.getName());
+			//copied from Configuration
+			File backupFile = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
+			try {
+				FileUtils.copyFile(configFile, backupFile, true);
+			} catch (IOException e) {
+				NO_CUBES_LOG.error("We don't really care about this error", e);
+			}
+			configFile.delete();
+			//refresh
+			config.load();
+			//save version
+			config.save();
+			//save default config
+			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+		}
+
+		// fix Isosurface level (mod version 0.1.2?)
+		{
+			final double oldDefaultValue = 0.001D;
+			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+			if (isosurfaceLevel.isDefault())
+				//edit in version 0.1.6: set to 1
+//				isosurfaceLevel.set(0.0D);
+				isosurfaceLevel.set(1.0D);
+		}
+
+		// fix Isosurface level (mod version 0.1.5?)
+		{
+			final double oldDefaultValue = 0.0D;
+			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+			if (isosurfaceLevel.isDefault())
+				isosurfaceLevel.set(1.0D);
+		}
+
+		//save (Unnecessary?)
+		config.save();
+		//save
+		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 	}
 
 }

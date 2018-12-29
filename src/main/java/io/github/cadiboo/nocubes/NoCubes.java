@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ReportedException;
@@ -67,6 +68,7 @@ public final class NoCubes {
 	//FIXME TODO someone remind me to work on my memory management, I've got some massive memory leaks
 
 	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
+
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	@Instance(MOD_ID)
@@ -74,6 +76,18 @@ public final class NoCubes {
 
 	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
 	public static IProxy proxy;
+
+	public static boolean isEnabled() {
+		//		return isEnabled;
+		return ModConfig.isEnabled;
+	}
+
+	// not implemented unfortunately, we use our config system instead
+	@EventHandler
+	public static void onDisableEvent(final FMLModDisabledEvent event) {
+		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled :o this is... impossible???");
+		//			NoCubes.deactivate();
+	}
 
 	/**
 	 * Run before anything else. <s>Read your config, create blocks, items, etc, and register them with the GameRegistry</s>
@@ -84,142 +98,22 @@ public final class NoCubes {
 	@EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {
 		LOGGER.debug("preInit");
-		fixConfig(event.getSuggestedConfigurationFile());
+		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		proxy.logPhysicalSide(NO_CUBES_LOG);
 
-		launchUpdateDaemon(Loader.instance().activeModContainer());
+		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 
 	}
 
-	private void launchUpdateDaemon(ModContainer noCubesContainer) {
-
-		new Thread(() -> {
-
-			ComparableVersion outdatedVersion = null;
-			boolean forceUpdate = false;
-
-			WHILE:
-			while (true) {
-
-				final CheckResult checkResult = ForgeVersion.getResult(noCubesContainer);
-
-				switch (checkResult.status) {
-					default:
-					case PENDING:
-						break;
-					case OUTDATED:
-						outdatedVersion = checkResult.target;
-						forceUpdate = ModConfig.shouldForceUpdate;
-					case FAILED:
-					case UP_TO_DATE:
-					case AHEAD:
-					case BETA:
-					case BETA_OUTDATED:
-						break WHILE;
-				}
-
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-
-			}
-
-			final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
-
-			if (forceUpdate) {
-				if (developerEnvironment) {
-					NO_CUBES_LOG.info("Did not crash game because we're in a dev environment");
-				} else {
-					NoCubes.proxy.forceUpdate(outdatedVersion);
-				}
-			}
-
-		}, MOD_NAME + " Update Daemon").start();
-
-	}
-
-	//TODO: remove this backwards compatibility
-	private static final Field configuration_definedConfigVersion = ReflectionHelper.findField(Configuration.class, "definedConfigVersion");
-	private static final Field configManager_CONFIGS = ReflectionHelper.findField(ConfigManager.class, "CONFIGS");
-
-	private void fixConfig(final File configFile) {
-
-		//Fix config file versioning while still using @Config
-		final Map<String, Configuration> CONFIGS;
-		try {
-			//Map of full file path -> configuration
-			CONFIGS = (Map<String, Configuration>) configManager_CONFIGS.get(null);
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting field for ConfigManager.CONFIGS!", e);
-			crashReport.makeCategory("Reflectively Accessing ConfigManager.CONFIGS");
-			throw new ReportedException(crashReport);
-		}
-
-		//copied from ConfigManager
-		Configuration config = CONFIGS.get(configFile.getAbsolutePath());
-		if (config == null) {
-			config = new Configuration(configFile, CONFIG_VERSION);
-			config.load();
-			CONFIGS.put(configFile.getAbsolutePath(), config);
-		}
-
-		try {
-			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
-//			config.save();
-//			config.load();
-		} catch (IllegalAccessException | IllegalArgumentException e) {
-			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
-			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
-			throw new ReportedException(crashReport);
-		}
-
-		LOGGER.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
-//		config.load();
-
-		// reset config if old version
-		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
-			LOGGER.info("Resetting config file " + configFile.getName());
-			//copied from Configuration
-			File backupFile = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
-			try {
-				FileUtils.copyFile(configFile, backupFile, true);
-			} catch (IOException e) {
-				LOGGER.error("We don't really care about this error", e);
-			}
-			configFile.delete();
-			//refresh
-			config.load();
-			//save version
-			config.save();
-			//save default config
-			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
-		}
-
-		// fix Isosurface level (mod version 0.1.2?)
-		{
-			final double oldDefaultValue = 0.001D;
-			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-			if (isosurfaceLevel.isDefault())
-				//edit in version 0.1.6: set to 1
-//				isosurfaceLevel.set(0.0D);
-				isosurfaceLevel.set(1.0D);
-		}
-
-		// fix Isosurface level (mod version 0.1.5?)
-		{
-			final double oldDefaultValue = 0.0D;
-			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-			if (isosurfaceLevel.isDefault())
-				isosurfaceLevel.set(1.0D);
-		}
-
-		//save (Unnecessary?)
-		config.save();
-		//save
-		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
-	}
+	//	private static boolean isEnabled;
+	//
+	//	public static void deactivate() {
+	//		isEnabled = false;
+	//	}
+	//
+	//	public static void reactivate() {
+	//		isEnabled = true;
+	//	}
 
 	/**
 	 * Do your mod setup. Build whatever data structures you care about. Register recipes, send FMLInterModComms messages to other mods.
@@ -241,28 +135,6 @@ public final class NoCubes {
 	public void postInit(final FMLPostInitializationEvent event) {
 		LOGGER.debug("postInit");
 //		SmoothLightingFluid.changeFluidRenderer();
-	}
-
-	//	private static boolean isEnabled;
-	//
-	//	public static void deactivate() {
-	//		isEnabled = false;
-	//	}
-	//
-	//	public static void reactivate() {
-	//		isEnabled = true;
-	//	}
-
-	public static boolean isEnabled() {
-		//		return isEnabled;
-		return ModConfig.isEnabled;
-	}
-
-	// not implemented unfortunately, we use our config system instead
-	@EventHandler
-	public static void onDisableEvent(final FMLModDisabledEvent event) {
-		LOGGER.fatal("DEBUG: " + MOD_NAME + " was disabled :o this is... impossible???");
-		//			NoCubes.deactivate();
 	}
 
 }

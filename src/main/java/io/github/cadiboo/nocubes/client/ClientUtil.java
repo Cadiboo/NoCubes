@@ -82,6 +82,12 @@ public final class ClientUtil {
 			new Vector4f(0, 0, 0, 0),
 			new Vector4f(0, 1, 0, 0)
 	};
+	/**
+	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
+	 */
+	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
+	};
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
 	/**
@@ -90,6 +96,37 @@ public final class ClientUtil {
 	// use the old (Class, String...) instead of the new (Class, String, String) for backwards compatibility
 	//TODO: change back to (Class, String, String) soon
 	private static final Field bufferBuilder_rawIntBuffer = ReflectionHelper.findField(BufferBuilder.class, "rawIntBuffer", "field_178999_b", "field_178999_b");
+	private static final MethodHandle compiledChunk_setLayerUsed;
+	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
+		@Override
+		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
+			return new HashMap<>();
+		}
+	};
+	private static final MethodHandle renderChunk_preRenderBlocks;
+	static {
+		try {
+			// newer forge versions
+//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
+			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	static {
+		try {
+			// newer forge versions
+//			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178573_a", Void.class, BlockRenderLayer.class));
+			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(RenderChunk.class, "preRenderBlocks", "func_178573_a", BufferBuilder.class, BlockPos.class));
+		} catch (IllegalAccessException e) {
+			CrashReport crashReport = new CrashReport("Error getting method handle for RenderChunk#preRenderBlocks!", e);
+			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
+			throw new ReportedException(crashReport);
+		}
+	}
 
 	/**
 	 * Rotation algorithm Taken off Max_the_Technomancer from <a href= "https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/modification-development/2772267-tesr-getting-darker-and-lighter-as-it-rotates">here</a>
@@ -233,8 +270,6 @@ public final class ClientUtil {
 		return color(redInt, greenInt, blueInt);
 	}
 
-	// Below are some helper methods to upload data to the buffer for use by FastTESRs
-
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
 		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
 	}
@@ -242,6 +277,8 @@ public final class ClientUtil {
 	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
 		return packedLightmapCoords & 0xFFFF; // get lower 4 bytes
 	}
+
+	/* Below are some helper methods to upload data to the buffer for use by FastTESRs */
 
 	/**
 	 * Renders a simple 2 dimensional quad at a given position to a given buffer with the given transforms, color, texture and lightmap values.
@@ -411,13 +448,6 @@ public final class ClientUtil {
 	}
 
 	/**
-	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
-	 */
-	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
-			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
-	};
-
-	/**
 	 * Gets The first quad of a model for a pos & state or null if the model has no quads
 	 *
 	 * @param state                   the state
@@ -465,6 +495,37 @@ public final class ClientUtil {
 		return color(red, green, blue);
 	}
 
+//	public static void extendLiquids(final RebuildChunkBlockEvent event) {
+//
+//		final IBlockState state = event.getBlockState();
+//		if (!ModUtil.shouldSmooth(state)) {
+//			return;
+//		}
+//		final ChunkCache cache = event.getChunkCache();
+//		final BlockPos pos = event.getBlockPos();
+//
+//		MutableBlockPos liquidPos = null;
+//		IBlockState liquidState = null;
+//
+//		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
+//			final IBlockState tempState = cache.getBlockState(mutablePos);
+//			if (tempState.getBlock() instanceof BlockLiquid) {
+//				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
+//				liquidPos = mutablePos;
+//				liquidState = tempState;
+//				break;
+//			}
+//		}
+//
+//		// set at same time so can skip
+//		if (liquidPos == null /*|| liquidState == null*/) {
+//			return;
+//		}
+//
+//		event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, event.getBufferBuilder());
+//
+//	}
+
 	/**
 	 * Gets the fixed minimum U coordinate to use when rendering the sprite.
 	 *
@@ -504,6 +565,13 @@ public final class ClientUtil {
 	public static float getMaxV(final TextureAtlasSprite sprite) {
 		return sprite.getMaxV() - UV_CORRECT;
 	}
+
+//	static final ThreadLocal<HashMap<BlockPos, Object[]>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, Object[]>>() {
+//		@Override
+//		protected HashMap<BlockPos, Object[]> initialValue() {
+//			return new HashMap<>();
+//		}
+//	};
 
 	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {
 
@@ -562,134 +630,6 @@ public final class ClientUtil {
 				);
 
 		}
-	}
-
-//	public static void extendLiquids(final RebuildChunkBlockEvent event) {
-//
-//		final IBlockState state = event.getBlockState();
-//		if (!ModUtil.shouldSmooth(state)) {
-//			return;
-//		}
-//		final ChunkCache cache = event.getChunkCache();
-//		final BlockPos pos = event.getBlockPos();
-//
-//		MutableBlockPos liquidPos = null;
-//		IBlockState liquidState = null;
-//
-//		for (final MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-//			final IBlockState tempState = cache.getBlockState(mutablePos);
-//			if (tempState.getBlock() instanceof BlockLiquid) {
-//				//usually we would make it immutable, but since it wont be changed anymore we can just reference it without worrying about that
-//				liquidPos = mutablePos;
-//				liquidState = tempState;
-//				break;
-//			}
-//		}
-//
-//		// set at same time so can skip
-//		if (liquidPos == null /*|| liquidState == null*/) {
-//			return;
-//		}
-//
-//		event.getBlockRendererDispatcher().renderBlock(liquidState, pos, cache, event.getBufferBuilder());
-//
-//	}
-
-	public static void handleTransparentBlocksRenderType(final RebuildChunkBlockRenderInTypeEvent event) {
-		final BlockPos pos = event.getBlockPos();
-		for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-			if (ModUtil.shouldSmooth(event.getChunkCache().getBlockState(mutablePos))) {
-				event.setResult(Event.Result.ALLOW);
-				event.setCanceled(true);
-				break;
-			}
-		}
-	}
-
-	private static final MethodHandle compiledChunk_setLayerUsed;
-	static {
-		try {
-			// newer forge versions
-//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
-			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
-		}
-	}
-
-	public static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
-		try {
-			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
-		} catch (Throwable throwable) {
-			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
-		}
-	}
-
-//	static final ThreadLocal<HashMap<BlockPos, Object[]>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, Object[]>>() {
-//		@Override
-//		protected HashMap<BlockPos, Object[]> initialValue() {
-//			return new HashMap<>();
-//		}
-//	};
-
-	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
-
-		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
-
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final ChunkCache cache = event.getChunkCache();
-
-		final HashMap<BlockPos, Object[]> map = new HashMap<>();
-		RENDER_LIQUID_POSITIONS.get().put(renderChunkPosition, map);
-
-		// 18 * 18 * 18 add 1 block on each side of chunk
-		final boolean[] isLiquid = new boolean[5832];
-
-		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition.add(-1, -1, -1), renderChunkPosition.add(16, 16, 16))) {
-			final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
-			final int x = sub.getX() + 1;
-			final int y = sub.getY() + 1;
-			final int z = sub.getZ() + 1;
-			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid && !(cache.getBlockState(mutableBlockPos.up()).getBlock() instanceof BlockLiquid);
-		}
-
-		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
-			IF:
-			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
-				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
-				final int x = sub.getX() + 1;
-				final int y = sub.getY() + 1;
-				final int z = sub.getZ() + 1;
-				for (int xOff = -1; xOff <= 1; xOff++) {
-					for (int zOff = -1; zOff <= 1; zOff++) {
-						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
-
-							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
-							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
-
-							if (!(liquidState.getBlock() instanceof BlockLiquid)) {
-								continue;
-							}
-
-							// if not source block
-							if (liquidState.getValue(BlockLiquid.LEVEL) != 0) {
-								continue;
-							}
-							map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
-							break IF;
-						}
-					}
-				}
-			}
-		}
-
-		Minecraft.getMinecraft().profiler.endSection();
-
 	}
 
 //	public static void renderLiquidInBlock(final RebuildChunkBlockEvent event) {
@@ -790,6 +730,83 @@ public final class ClientUtil {
 //
 //	}
 
+	public static void handleTransparentBlocksRenderType(final RebuildChunkBlockRenderInTypeEvent event) {
+		final BlockPos pos = event.getBlockPos();
+		for (BlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+			if (ModUtil.shouldSmooth(event.getChunkCache().getBlockState(mutablePos))) {
+				event.setResult(Event.Result.ALLOW);
+				event.setCanceled(true);
+				break;
+			}
+		}
+	}
+
+	public static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
+		try {
+			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
+		} catch (Throwable throwable) {
+			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
+			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
+
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
+
+		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
+		final ChunkCache cache = event.getChunkCache();
+
+		final HashMap<BlockPos, Object[]> map = new HashMap<>();
+		RENDER_LIQUID_POSITIONS.get().put(renderChunkPosition, map);
+
+		// 18 * 18 * 18 add 1 block on each side of chunk
+		final boolean[] isLiquid = new boolean[5832];
+
+		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition.add(-1, -1, -1), renderChunkPosition.add(16, 16, 16))) {
+			final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+			final int x = sub.getX() + 1;
+			final int y = sub.getY() + 1;
+			final int z = sub.getZ() + 1;
+			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid && !(cache.getBlockState(mutableBlockPos.up()).getBlock() instanceof BlockLiquid);
+		}
+
+		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
+			IF:
+			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
+				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+				final int x = sub.getX() + 1;
+				final int y = sub.getY() + 1;
+				final int z = sub.getZ() + 1;
+				for (int xOff = -1; xOff <= 1; xOff++) {
+					for (int zOff = -1; zOff <= 1; zOff++) {
+						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
+
+							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
+							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
+
+							if (!(liquidState.getBlock() instanceof BlockLiquid)) {
+								continue;
+							}
+
+							// if not source block
+							if (liquidState.getValue(BlockLiquid.LEVEL) != 0) {
+								continue;
+							}
+							map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
+							break IF;
+						}
+					}
+				}
+			}
+		}
+
+		Minecraft.getMinecraft().profiler.endSection();
+
+	}
+
 	public static void handleExtendedLiquidRender(final RebuildChunkBlockEvent event) {
 
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
@@ -844,13 +861,6 @@ public final class ClientUtil {
 		Minecraft.getMinecraft().profiler.endSection();
 
 	}
-
-	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
-		@Override
-		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
-			return new HashMap<>();
-		}
-	};
 
 	public static BlockRenderData getBlockRenderData(final BlockPos pos, final ChunkCache cache) {
 
@@ -943,19 +953,6 @@ public final class ClientUtil {
 
 		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
 
-	}
-
-	private static final MethodHandle renderChunk_preRenderBlocks;
-	static {
-		try {
-			// newer forge versions
-//			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178573_a", Void.class, BlockRenderLayer.class));
-			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(RenderChunk.class, "preRenderBlocks", "func_178573_a", BufferBuilder.class, BlockPos.class));
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting method handle for RenderChunk#preRenderBlocks!", e);
-			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
-			throw new ReportedException(crashReport);
-		}
 	}
 
 	public static void renderChunk_preRenderBlocks(final RenderChunk renderChunk, final BufferBuilder bufferBuilder, final BlockPos pos) {

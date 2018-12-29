@@ -123,25 +123,6 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.debug")
 	public static Debug debug = new Debug();
 
-	public static class Debug {
-
-		@LangKey(MOD_ID + ".config.debug.debugEnabled")
-		public boolean debugEnabled = false;
-
-		@LangKey(MOD_ID + ".config.debug.shouldDrawWireframe")
-		public boolean shouldDrawWireframe = false;
-
-		@LangKey(MOD_ID + ".config.debug.activeRenderingAlgorithm")
-		public DebugRenderAlgorithm activeRenderingAlgorithm = DebugRenderAlgorithm.OLD_NO_CUBES;
-
-		@LangKey(MOD_ID + ".config.debug.highlightVertices")
-		public boolean highlightVertices = true;
-
-		@LangKey(MOD_ID + ".config.debug.realisticCollisions")
-		public boolean realisticCollisions = false;
-
-	}
-
 	static {
 
 		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{
@@ -241,6 +222,25 @@ public final class ModConfig {
 
 	public static float getIsosurfaceLevel() {
 		return (float) isosurfaceLevel;
+	}
+
+	public static class Debug {
+
+		@LangKey(MOD_ID + ".config.debug.debugEnabled")
+		public boolean debugEnabled = false;
+
+		@LangKey(MOD_ID + ".config.debug.shouldDrawWireframe")
+		public boolean shouldDrawWireframe = false;
+
+		@LangKey(MOD_ID + ".config.debug.activeRenderingAlgorithm")
+		public DebugRenderAlgorithm activeRenderingAlgorithm = DebugRenderAlgorithm.OLD_NO_CUBES;
+
+		@LangKey(MOD_ID + ".config.debug.highlightVertices")
+		public boolean highlightVertices = true;
+
+		@LangKey(MOD_ID + ".config.debug.realisticCollisions")
+		public boolean realisticCollisions = false;
+
 	}
 
 	@Mod.EventBusSubscriber(modid = MOD_ID)

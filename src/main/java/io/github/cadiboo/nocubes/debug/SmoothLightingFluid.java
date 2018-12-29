@@ -75,6 +75,43 @@ public final class SmoothLightingFluid {
 
 		}
 
+
+		//TODO: use reflection
+		private static float getFluidHeight(IBlockAccess blockAccess, BlockPos blockPosIn, Material blockMaterial) {
+			int divisor = 0;
+			float liquidHeightPercentage = 0.0F;
+
+			for (int posAdd = 0; posAdd < 4; ++posAdd) {
+				BlockPos blockpos = blockPosIn.add(-(posAdd & 1), 0, -(posAdd >> 1 & 1));
+
+				if (blockAccess.getBlockState(blockpos.up()).getMaterial() == blockMaterial) {
+					return 1.0F;
+				}
+
+				IBlockState iblockstate = blockAccess.getBlockState(blockpos);
+				Material material = iblockstate.getMaterial();
+
+				if (material != blockMaterial) {
+					if (!material.isSolid()) {
+						++liquidHeightPercentage;
+						++divisor;
+					}
+				} else {
+					int liquidLevel = iblockstate.getValue(BlockLiquid.LEVEL);
+
+					if (liquidLevel >= 8 || liquidLevel == 0) {
+						liquidHeightPercentage += BlockLiquid.getLiquidHeightPercent(liquidLevel) * 10.0F;
+						divisor += 10;
+					}
+
+					liquidHeightPercentage += BlockLiquid.getLiquidHeightPercent(liquidLevel);
+					++divisor;
+				}
+			}
+
+			return 1.0F - liquidHeightPercentage / (float) divisor;
+		}
+
 		@Override
 		public boolean renderFluid(final IBlockAccess blockAccess, final IBlockState blockStateIn, final BlockPos blockPosIn, final BufferBuilder bufferBuilderIn) {
 			BlockLiquid blockliquid = (BlockLiquid) blockStateIn.getBlock();
@@ -288,41 +325,6 @@ public final class SmoothLightingFluid {
 			bufferBuilderIn.pos(x + 1.0D, y, z).color(0.5F, 0.5F, 0.5F, 1.0F).tex((double) maxU, (double) minV).lightmap(skyLight, blockLight).endVertex();
 			bufferBuilderIn.pos(x + 1.0D, y, z + 1.0D).color(0.5F, 0.5F, 0.5F, 1.0F).tex((double) maxU, (double) maxV).lightmap(skyLight, blockLight).endVertex();
 			return true;
-		}
-
-		static float getFluidHeight(IBlockAccess blockAccess, BlockPos blockPosIn, Material blockMaterial) {
-			int divisor = 0;
-			float liquidHeightPercentage = 0.0F;
-
-			for (int posAdd = 0; posAdd < 4; ++posAdd) {
-				BlockPos blockpos = blockPosIn.add(-(posAdd & 1), 0, -(posAdd >> 1 & 1));
-
-				if (blockAccess.getBlockState(blockpos.up()).getMaterial() == blockMaterial) {
-					return 1.0F;
-				}
-
-				IBlockState iblockstate = blockAccess.getBlockState(blockpos);
-				Material material = iblockstate.getMaterial();
-
-				if (material != blockMaterial) {
-					if (!material.isSolid()) {
-						++liquidHeightPercentage;
-						++divisor;
-					}
-				} else {
-					int liquidLevel = iblockstate.getValue(BlockLiquid.LEVEL);
-
-					if (liquidLevel >= 8 || liquidLevel == 0) {
-						liquidHeightPercentage += BlockLiquid.getLiquidHeightPercent(liquidLevel) * 10.0F;
-						divisor += 10;
-					}
-
-					liquidHeightPercentage += BlockLiquid.getLiquidHeightPercent(liquidLevel);
-					++divisor;
-				}
-			}
-
-			return 1.0F - liquidHeightPercentage / (float) divisor;
 		}
 
 		public boolean renderModelSmooth(IBlockAccess worldIn, IBakedModel modelIn, IBlockState stateIn, BlockPos posIn, BufferBuilder buffer, boolean checkSides, long rand) throws IllegalAccessException, InvocationTargetException, InstantiationException {

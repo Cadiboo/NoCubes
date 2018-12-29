@@ -27,39 +27,6 @@ import java.util.function.Consumer;
  */
 public final class ModEnums {
 
-	/**
-	 * provides some default methods for formatting enum names
-	 *
-	 * @author Cadiboo
-	 */
-	public interface IEnumNameFormattable {
-
-		/**
-		 * Converts the name to lowercase as per {@link java.lang.String#toLowerCase() String.toLowerCase}.
-		 */
-		default String getNameLowercase() {
-			return this.name().toLowerCase();
-		}
-
-		/**
-		 * Converts the name to uppercase as per {@link java.lang.String#toUpperCase() String.toUpperCase}.
-		 */
-		default String getNameUppercase() {
-			return this.getNameLowercase().toUpperCase();
-		}
-
-		/**
-		 * Capitalizes the name of the material as per {@link org.apache.commons.lang3.StringUtils#capitalize(String) StringUtils.capitalize}.
-		 */
-		default String getNameFormatted() {
-			return StringUtils.capitalize(this.getNameLowercase());
-		}
-
-		/* not exactly hacky, but this method is provided by enum */
-		String name();
-
-	}
-
 	public enum StableRenderAlgorithm implements IEnumNameFormattable {
 
 		SURFACE_NETS(SurfaceNets::renderPre, SurfaceNets::renderLayer, SurfaceNets::renderType, SurfaceNets::renderBlock, SurfaceNets::renderPost, SurfaceNets::getPoints),
@@ -136,6 +103,39 @@ public final class ModEnums {
 		public List<Vec3> getVertices(final BlockPos blockPos, final IBlockAccess world) {
 			return this.renderAlgorithm.getVertices(blockPos, world);
 		}
+
+	}
+
+	/**
+	 * provides some default methods for formatting enum names
+	 *
+	 * @author Cadiboo
+	 */
+	public interface IEnumNameFormattable {
+
+		/**
+		 * Converts the name to lowercase as per {@link java.lang.String#toLowerCase() String.toLowerCase}.
+		 */
+		default String getNameLowercase() {
+			return this.name().toLowerCase();
+		}
+
+		/**
+		 * Converts the name to uppercase as per {@link java.lang.String#toUpperCase() String.toUpperCase}.
+		 */
+		default String getNameUppercase() {
+			return this.getNameLowercase().toUpperCase();
+		}
+
+		/**
+		 * Capitalizes the name of the material as per {@link org.apache.commons.lang3.StringUtils#capitalize(String) StringUtils.capitalize}.
+		 */
+		default String getNameFormatted() {
+			return StringUtils.capitalize(this.getNameLowercase());
+		}
+
+		/* not exactly hacky, but this method is provided by enum */
+		String name();
 
 	}
 

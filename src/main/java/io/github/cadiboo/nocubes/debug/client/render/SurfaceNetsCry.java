@@ -276,9 +276,6 @@ public final class SurfaceNetsCry {
 
 		// now comes the pain...
 
-
-
-
 		// use
 		// https://github.com/TomaszFoster/NaiveSurfaceNets/blob/master/NaiveSurfaceNets.cs
 		// because IT DOESNT USE A BUFFER!!!

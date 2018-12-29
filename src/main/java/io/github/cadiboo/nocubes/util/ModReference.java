@@ -45,14 +45,6 @@ public final class ModReference {
 			"required-after:render_chunk_rebuild_chunk_hooks@[0.1.1,);" +
 			"";
 
-	static {
-		if (MOD_ID.length() > 64) {
-			final IllegalStateException exception = new IllegalStateException("Mod Id is too long!");
-			CrashReport crashReport = new CrashReport("Mod Id must be 64 characters or shorter!", exception);
-			crashReport.makeCategory("Constructing Mod");
-		}
-	}
-
 	/**
 	 * "@VERSION@" is replaced by build.gradle with the actual version
 	 *
@@ -68,5 +60,13 @@ public final class ModReference {
 	public static final String CERTIFICATE_FINGERPRINT = "@FINGERPRINT@";
 
 	public static final String CONFIG_VERSION = "0.1.1";
+
+	static {
+		if (MOD_ID.length() > 64) {
+			final IllegalStateException exception = new IllegalStateException("Mod Id is too long!");
+			CrashReport crashReport = new CrashReport("Mod Id must be 64 characters or shorter!", exception);
+			crashReport.makeCategory("Constructing Mod");
+		}
+	}
 
 }
