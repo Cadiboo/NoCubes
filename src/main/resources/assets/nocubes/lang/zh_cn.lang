@@ -10,7 +10,7 @@ nocubes.config.reloadChunksOnConfigChange.tooltip=是否需要在配置文件被
 nocubes.config.shouldFixFaceCulling=修复'面剔除'(未实现!)
 nocubes.config.shouldFixFaceCulling.tooltip=修复'面剔除'引发的问题(例如树木根部渲染不正确)
 
-nocubes.config.shouldExtendLiquids=平滑液体
+nocubes.config.shouldExtendLiquids=扩展液体
 nocubes.config.shouldExtendLiquids.tooltip=是否需要使液体(熔岩和水)贴合平滑的方块\n提醒我用着色器实现熔岩的波纹效果!
 
 nocubes.config.smoothableBlockStates=可平滑的方块
@@ -20,7 +20,7 @@ nocubes.config.betterFoliageGrassCompatibility=兼容BetterFoliage草地
 nocubes.config.betterFoliageGrassCompatibility.tooltip=是否需要在特定情况下渲染BetterFoliage的草地(需要BetterFoliage)
 
 nocubes.config.isosurfaceLevel=等值面级别
-nocubes.config.isosurfaceLevel.tooltip=生成的表面网格的扩展(难以解释, 只是随便玩玩)\n最佳值:\n    旧版NoCubes: 不适用\n    Marching Cubes: -0.5 或 0\n    Surface Nets: 1.0\n    Marching Tetrahedra: 1.0
+nocubes.config.isosurfaceLevel.tooltip=生成的表面网格的扩展(难以解释, 试试看就对了)\n最佳值:\n    旧版NoCubes: 不适用\n    Marching Cubes: -0.5 或 0\n    Surface Nets: 1.0\n    Marching Tetrahedra: 1.0
 
 nocubes.config.hideOutsideBlocks=隐藏外部方块(未实现!)
 nocubes.config.hideOutsideBlocks.tooltip=隐藏等值面以外的方块\n将导致不可见的区块, 利于截图展示, 不利于生存玩法
@@ -30,6 +30,11 @@ nocubes.config.offsetVertices.tooltip=是否需要将(伪)随机性应用于生�
 
 nocubes.config.shouldBeautifyTextures=美化纹理
 nocubes.config.shouldBeautifyTextures.tooltip=优化雪和草的纹理\n改善地形外观
+
+nocubes.config.shouldForceUpdate=强制更新
+nocubes.config.shouldForceUpdate.tooltip=是否需要在检测到过时模组版本时将游戏奔溃.
+
+
 
 #debug
 nocubes.config.debug=调试
