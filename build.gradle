@@ -26,7 +26,7 @@ apply plugin: 'net.minecraftforge.gradle.forge'
 //	 PATCH version when you make backwards-compatible bug fixes.
 // Additional labels for pre-release and build metadata are available as extensions to the MAJOR.MINOR.PATCH format.
 // We use the format MCVERSION-MAJOR.MINOR.PATCH
-version = "1.12.2-0.1.6"
+version = "1.12.2-0.1.7-pre1"
 group = "io.github.cadiboo.nocubes" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "NoCubes"
 
