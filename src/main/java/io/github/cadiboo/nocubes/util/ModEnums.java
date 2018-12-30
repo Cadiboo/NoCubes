@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.client.render.MarchingCubes;
 import io.github.cadiboo.nocubes.client.render.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.client.render.SurfaceNets;
+import io.github.cadiboo.nocubes.client.render.SurfaceNetsDev;
 import io.github.cadiboo.nocubes.debug.client.render.DebugOldNoCubes;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -16,6 +17,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -36,6 +38,8 @@ public final class ModEnums {
 		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost, OldNoCubes::getPoints),
 
 		MARCHING_TETRAHEDRA(MarchingTetrahedra::renderPre, MarchingTetrahedra::renderLayer, MarchingTetrahedra::renderType, MarchingTetrahedra::renderBlock, MarchingTetrahedra::renderPost, MarchingTetrahedra::getPoints),
+
+		SURFACE_NETS_DEV(SurfaceNetsDev::renderPre, SurfaceNetsDev::renderLayer, SurfaceNetsDev::renderType, SurfaceNetsDev::renderBlock, SurfaceNetsDev::renderPost, SurfaceNets::getPoints),
 
 		NONE(event -> {
 		}, event -> {
@@ -100,6 +104,7 @@ public final class ModEnums {
 			this.renderAlgorithm = renderAlgorithm;
 		}
 
+		@Nonnull
 		public List<Vec3> getVertices(final BlockPos blockPos, final IBlockAccess world) {
 			return this.renderAlgorithm.getVertices(blockPos, world);
 		}

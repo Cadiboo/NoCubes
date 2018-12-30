@@ -7,10 +7,19 @@ buildscript {
 		classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
 	}
 }
+
+repositories {
+	maven {
+		name = "CurseForge"
+		url = "https://minecraft.curseforge.com/api/maven/"
+	}
+}
+
 apply plugin: 'net.minecraftforge.gradle.forge'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
 // Taken from https://semver.org
+
 // Given a version number MAJOR.MINOR.PATCH, increment the:
 //	 MAJOR version when you make incompatible API changes,
 //	 MINOR version when you add functionality in a backwards-compatible manner, and
@@ -69,6 +78,8 @@ dependencies {
 	// except that these dependencies get remapped to your current MCP mappings
 	//deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 	//deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+	deobfCompile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.12.2:0.2.2"
 
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html

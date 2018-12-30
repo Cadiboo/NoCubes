@@ -9,16 +9,21 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
@@ -29,6 +34,7 @@ import java.util.ArrayList;
 public final class SurfaceNets {
 
 	public static final int[] CUBE_EDGES = new int[24];
+
 	public static final int[] EDGE_TABLE = new int[256];
 
 	// because the tables are so big we compute them in a static {} instead of hardcoding them
@@ -103,7 +109,12 @@ public final class SurfaceNets {
 		final RenderChunk renderChunk = event.getRenderChunk();
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 //		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
-		final ChunkCache cache = event.getChunkCache();
+		final IBlockAccess cache;
+		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+			cache = ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
+		} else {
+			cache = event.getChunkCache();
+		}
 
 //		final int[] dims = {16, 16, 16};
 		// make the algorithm look on the sides of chunks aswell
@@ -116,13 +127,13 @@ public final class SurfaceNets {
 
 			final float[] data = new float[dims[0] * dims[1] * dims[2]];
 
-			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(17, 17, 17))) {
+			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(dims[0] - 1, dims[1] - 1, dims[2] - 1))) {
 				final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
 				final int x = sub.getX();
 				final int y = sub.getY();
 				final int z = sub.getZ();
 				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-				data[x + 18 * (y + 18 * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+				data[x + dims[0] * (y + dims[1] * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
 			}
 
 			//Internal buffer, this may get resized at run time
@@ -246,8 +257,8 @@ public final class SurfaceNets {
 
 						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 							compiledChunk.setLayerStarted(blockRenderLayer);
-							ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-							ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+							compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+							renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
 
 						//Now we need to add faces together, to do this we just loop over 3 basis components

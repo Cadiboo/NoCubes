@@ -21,6 +21,8 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.List;
+
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
@@ -70,8 +72,8 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		final Vec3[] vertices = ModConfig.activeStableRenderingAlgorithm.getPoints(rayTraceResult.getBlockPos(), player.world);
-		if (vertices == null) {
+		final List<Vec3> vertices = ModConfig.debug.activeRenderingAlgorithm.getVertices(rayTraceResult.getBlockPos(), player.world);
+		if (vertices.isEmpty() || vertices.size() < 8) {
 			return;
 		}
 
@@ -109,14 +111,14 @@ public final class ClientEventSubscriber {
 		final double nOffset = -pOffset;
 
 		// vertex for every corner
-		final Vec3 v0 = vertices[0].offset(renderX, renderY, renderZ).offset(nOffset, nOffset, nOffset);
-		final Vec3 v1 = vertices[1].offset(renderX, renderY, renderZ).offset(pOffset, nOffset, nOffset);
-		final Vec3 v2 = vertices[2].offset(renderX, renderY, renderZ).offset(nOffset, nOffset, pOffset);
-		final Vec3 v3 = vertices[3].offset(renderX, renderY, renderZ).offset(pOffset, nOffset, pOffset);
-		final Vec3 v4 = vertices[4].offset(renderX, renderY, renderZ).offset(nOffset, pOffset, nOffset);
-		final Vec3 v5 = vertices[5].offset(renderX, renderY, renderZ).offset(pOffset, pOffset, nOffset);
-		final Vec3 v6 = vertices[6].offset(renderX, renderY, renderZ).offset(nOffset, pOffset, pOffset);
-		final Vec3 v7 = vertices[7].offset(renderX, renderY, renderZ).offset(pOffset, pOffset, pOffset);
+		final Vec3 v0 = vertices.get(0).offset(renderX, renderY, renderZ).offset(nOffset, nOffset, nOffset);
+		final Vec3 v1 = vertices.get(1).offset(renderX, renderY, renderZ).offset(pOffset, nOffset, nOffset);
+		final Vec3 v2 = vertices.get(2).offset(renderX, renderY, renderZ).offset(nOffset, nOffset, pOffset);
+		final Vec3 v3 = vertices.get(3).offset(renderX, renderY, renderZ).offset(pOffset, nOffset, pOffset);
+		final Vec3 v4 = vertices.get(4).offset(renderX, renderY, renderZ).offset(nOffset, pOffset, nOffset);
+		final Vec3 v5 = vertices.get(5).offset(renderX, renderY, renderZ).offset(pOffset, pOffset, nOffset);
+		final Vec3 v6 = vertices.get(6).offset(renderX, renderY, renderZ).offset(nOffset, pOffset, pOffset);
+		final Vec3 v7 = vertices.get(7).offset(renderX, renderY, renderZ).offset(pOffset, pOffset, pOffset);
 
 		Tessellator tessellator = Tessellator.getInstance();
 		BufferBuilder bufferBuilder = tessellator.getBuffer();

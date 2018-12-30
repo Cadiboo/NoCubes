@@ -20,6 +20,9 @@ import net.minecraft.world.IBlockAccess;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
+
 /**
  * Implementation of the MarchingCubes algorithm in Minecraft
  *
@@ -436,8 +439,8 @@ public final class MarchingCubes {
 
 						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 							compiledChunk.setLayerStarted(blockRenderLayer);
-							ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-							ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+							compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+							renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 						}
 
 						//Add faces

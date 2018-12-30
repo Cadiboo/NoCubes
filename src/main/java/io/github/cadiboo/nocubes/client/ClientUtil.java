@@ -46,8 +46,6 @@ import org.lwjgl.util.vector.Vector4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.nio.IntBuffer;
 import java.util.Arrays;
@@ -56,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -82,51 +81,30 @@ public final class ClientUtil {
 			new Vector4f(0, 0, 0, 0),
 			new Vector4f(0, 1, 0, 0)
 	};
+
 	/**
 	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
 	 */
 	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
+
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
+
 	/**
 	 * A field reference to the rawIntBuffer of the BufferBuilder class. Need reflection since the field is private.
 	 */
 	// use the old (Class, String...) instead of the new (Class, String, String) for backwards compatibility
 	//TODO: change back to (Class, String, String) soon
 	private static final Field bufferBuilder_rawIntBuffer = ReflectionHelper.findField(BufferBuilder.class, "rawIntBuffer", "field_178999_b", "field_178999_b");
-	private static final MethodHandle compiledChunk_setLayerUsed;
+
 	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
 		@Override
 		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
 			return new HashMap<>();
 		}
 	};
-	private static final MethodHandle renderChunk_preRenderBlocks;
-	static {
-		try {
-			// newer forge versions
-//			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a", Void.class, BlockRenderLayer.class));
-			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(CompiledChunk.class, "setLayerUsed", "func_178486_a", BlockRenderLayer.class));
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting method handle for CompiledChunk#setLayerUsed!", e);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
-		}
-	}
-
-	static {
-		try {
-			// newer forge versions
-//			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178573_a", Void.class, BlockRenderLayer.class));
-			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(RenderChunk.class, "preRenderBlocks", "func_178573_a", BufferBuilder.class, BlockPos.class));
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting method handle for RenderChunk#preRenderBlocks!", e);
-			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
-			throw new ReportedException(crashReport);
-		}
-	}
 
 	/**
 	 * Rotation algorithm Taken off Max_the_Technomancer from <a href= "https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/modification-development/2772267-tesr-getting-darker-and-lighter-as-it-rotates">here</a>
@@ -575,61 +553,72 @@ public final class ClientUtil {
 
 	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {
 
-		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
-			default:
-			case 0: // Off
-				return new LightmapInfo(240, 0);
-			case 1: // Fast
-				//the block above
-				final BlockPos FAST_BrightnessPos = pos.up();
-				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
-				return new LightmapInfo(
-						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
-						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
-				);
-			case 2: // Fancy
-				//credit to MineAndCraft12
-				int averageSkyLight = 0;
-				int totalBlocksCheckedForSkyLight = 0;
+		final BlockPos FAST_BrightnessPos = pos.up();
+//				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
+		final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
+		return new LightmapInfo(
+				FAST_PackedLightmapCoords >> 20,
+				FAST_PackedLightmapCoords >> 4
+		);
 
-				int averageBlockLight = 0;
-				int totalBlocksCheckedForBlockLight = 0;
-
-				//every neighbour
-				for (EnumFacing facing : EnumFacing.VALUES) {
-					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
-					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
-					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-					if (skyLight > 0) {
-						averageSkyLight += skyLight;
-						totalBlocksCheckedForSkyLight++;
-					}
-					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-					if (blockLight > 0) {
-						averageBlockLight += blockLight;
-						totalBlocksCheckedForBlockLight++;
-					}
-				}
-
-				//this block
-				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
-				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-				if (skyLight > 0) {
-					averageSkyLight += skyLight;
-					totalBlocksCheckedForSkyLight++;
-				}
-				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-				if (blockLight > 0) {
-					averageBlockLight += blockLight;
-					totalBlocksCheckedForBlockLight++;
-				}
-
-				return new LightmapInfo(
-						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
-						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
-				);
-
-		}
+//		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
+//			default:
+//			case 0: // Off
+//				return new LightmapInfo(240, 0);
+//			case 1: // Fast
+//				//the block above
+//				final BlockPos FAST_BrightnessPos = pos.up();
+////				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
+//				final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
+//				return new LightmapInfo(
+//						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
+//						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
+//				);
+//			case 2: // Fancy
+//				//credit to MineAndCraft12
+//				int averageSkyLight = 0;
+//				int totalBlocksCheckedForSkyLight = 0;
+//
+//				int averageBlockLight = 0;
+//				int totalBlocksCheckedForBlockLight = 0;
+//
+//				//every neighbour
+//				for (EnumFacing facing : EnumFacing.VALUES) {
+//					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
+////					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
+//					final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(FANCYISH_BrightnessPos, cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos));
+//					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//					if (skyLight > 0) {
+//						averageSkyLight += skyLight;
+//						totalBlocksCheckedForSkyLight++;
+//					}
+//					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//					if (blockLight > 0) {
+//						averageBlockLight += blockLight;
+//						totalBlocksCheckedForBlockLight++;
+//					}
+//				}
+//
+//				//this block
+////				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+//				final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(pos, cache.getBlockState(pos).getPackedLightmapCoords(cache, pos));
+//				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//				if (skyLight > 0) {
+//					averageSkyLight += skyLight;
+//					totalBlocksCheckedForSkyLight++;
+//				}
+//				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//				if (blockLight > 0) {
+//					averageBlockLight += blockLight;
+//					totalBlocksCheckedForBlockLight++;
+//				}
+//
+//				return new LightmapInfo(
+//						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
+//						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
+//				);
+//
+//		}
 	}
 
 //	public static void renderLiquidInBlock(final RebuildChunkBlockEvent event) {
@@ -741,16 +730,6 @@ public final class ClientUtil {
 		}
 	}
 
-	public static void compiledChunk_setLayerUsed(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer) {
-		try {
-			compiledChunk_setLayerUsed.invokeExact(compiledChunk, blockRenderLayer);
-		} catch (Throwable throwable) {
-			CrashReport crashReport = new CrashReport("Error invoking method handle for CompiledChunk#setLayerUsed!", throwable);
-			crashReport.makeCategory("Reflectively Accessing CompiledChunk#setLayerUsed");
-			throw new ReportedException(crashReport);
-		}
-	}
-
 	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
 
 		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
@@ -836,7 +815,7 @@ public final class ClientUtil {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 //			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
 			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
-			ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 		}
 
 		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, cache, bufferBuilder);
@@ -862,7 +841,7 @@ public final class ClientUtil {
 
 	}
 
-	public static BlockRenderData getBlockRenderData(final BlockPos pos, final ChunkCache cache) {
+	public static BlockRenderData getBlockRenderData(final BlockPos pos, final IBlockAccess cache) {
 
 		final IBlockState state = cache.getBlockState(pos);
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
@@ -953,16 +932,6 @@ public final class ClientUtil {
 
 		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
 
-	}
-
-	public static void renderChunk_preRenderBlocks(final RenderChunk renderChunk, final BufferBuilder bufferBuilder, final BlockPos pos) {
-		try {
-			renderChunk_preRenderBlocks.invokeExact(renderChunk, bufferBuilder, pos);
-		} catch (Throwable throwable) {
-			CrashReport crashReport = new CrashReport("Error invoking method handle for RenderChunk#preRenderBlocks!", throwable);
-			crashReport.makeCategory("Reflectively Accessing RenderChunk#preRenderBlocks");
-			throw new ReportedException(crashReport);
-		}
 	}
 
 }

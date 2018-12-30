@@ -273,7 +273,7 @@ public final class OldNoCubes {
 
 	}
 
-	private static void givePointRoughness(final Vec3 point) {
+	public static void givePointRoughness(final Vec3 point) {
 		ModUtil.offsetVertex(point);
 	}
 
@@ -283,7 +283,7 @@ public final class OldNoCubes {
 	 * @param state the state
 	 * @return if the state is AIR or PLANT or VINE
 	 */
-	private static boolean isBlockAirOrPlant(IBlockState state) {
+	public static boolean isBlockAirOrPlant(IBlockState state) {
 		Material material = state.getMaterial();
 		return material == Material.AIR || material == Material.PLANTS || material == Material.VINE;
 	}
@@ -295,7 +295,7 @@ public final class OldNoCubes {
 	 * @param point the point
 	 * @return if the block's top side intersects with air.
 	 */
-	private static boolean doesPointTopIntersectWithAir(IBlockAccess world, Vec3 point) {
+	public static boolean doesPointTopIntersectWithAir(IBlockAccess world, Vec3 point) {
 		boolean intersects = false;
 
 		for (int i = 0; i < 4; ++i) {
@@ -320,7 +320,7 @@ public final class OldNoCubes {
 	 * @param point the point
 	 * @return if the block's bottom side intersects with air.
 	 */
-	private static boolean doesPointBottomIntersectWithAir(IBlockAccess world, Vec3 point) {
+	public static boolean doesPointBottomIntersectWithAir(IBlockAccess world, Vec3 point) {
 		boolean intersects = false;
 		boolean notOnly = false;
 
@@ -350,7 +350,7 @@ public final class OldNoCubes {
 	 * @param point the point
 	 * @return if the point is intersecting with a smoothable block.
 	 */
-	private static boolean doesPointIntersectWithSmoothable(IBlockAccess world, Vec3 point) {
+	public static boolean doesPointIntersectWithSmoothable(IBlockAccess world, Vec3 point) {
 		for (int i = 0; i < 4; ++i) {
 			int x1 = (int) (point.xCoord - (double) (i & 1));
 			int z1 = (int) (point.yCoord - (double) (i >> 1 & 1));

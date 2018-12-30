@@ -8,21 +8,24 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.ChunkCache;
+import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
 
 /**
  * @author Cadiboo
  */
-public final class SurfaceNetsChunk {
+public final class SurfaceNetsDev {
 
-	private static float getBlockDensity(final boolean[] isSmoothableCache, final IBlockState[] statesCache, final int scanSize, final ChunkCache cache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final int x, final int y, final int z, PooledMutableBlockPos pooledMutableBlockPos) {
+	private static float getBlockDensity(final boolean[] isSmoothableCache, final IBlockState[] statesCache, final int scanSize, final IBlockAccess cache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final int x, final int y, final int z, PooledMutableBlockPos pooledMutableBlockPos) {
 
 		float density = 0.0F;
 
@@ -67,8 +70,15 @@ public final class SurfaceNetsChunk {
 		final int renderChunkPosX = renderChunkPos.getX();
 		final int renderChunkPosY = renderChunkPos.getY();
 		final int renderChunkPosZ = renderChunkPos.getZ();
-		final ChunkCache cache = event.getChunkCache();
+		final IBlockAccess cache;
+		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+			cache = ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
+		} else {
+			cache = event.getChunkCache();
+		}
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+
+		int mutableIndex = 0;
 
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
@@ -118,19 +128,19 @@ public final class SurfaceNetsChunk {
 
 			final float[] densities = new float[(scanSizeX + 1) * (scanSizeY + 1) * (scanSizeZ + 1)];
 
+
+			mutableIndex = 0;
 			// transverse the chunk + 2 blocks on every positive axis side
-			for (int xOffset = 0; xOffset < scanSizeX + 1; xOffset++) {
-				for (int yOffset = 0; yOffset < scanSizeY + 1; yOffset++) {
-					for (int zOffset = 0; zOffset < scanSizeZ + 1; zOffset++) {
+			for (int x = 0; x < scanSizeX + 1; x++) {
+				for (int y = 0; y < scanSizeY + 1; y++) {
+					for (int z = 0; z < scanSizeZ + 1; z++) {
+//						mutableIndex++;
 
-						final int x = xOffset;
-						final int y = yOffset;
-						final int z = zOffset;
+						//
+//						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+//						final int index = x + scanSizeX * (y + scanSizeY * z);
 
-						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-						final int index = x + scanSizeX * (y + scanSizeY * z);
-
-						densities[index] = getBlockDensity(isSmoothable, states, scanSizeX, cache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, x, y, z, pooledMutableBlockPos);
+						densities[mutableIndex] = getBlockDensity(isSmoothable, states, scanSizeX, cache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, x, y, z, pooledMutableBlockPos);
 
 					}
 				}

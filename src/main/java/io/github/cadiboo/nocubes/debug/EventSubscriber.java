@@ -88,22 +88,22 @@ public final class EventSubscriber {
 
 		final AxisAlignedBB aabb = event.getAabb();
 
-		final Vec3[] vertices = OldNoCubes.getPoints(new BlockPos(aabb.minX, aabb.minY, aabb.minZ), event.getWorld());
+		final List<Vec3> vertices = ModConfig.debug.activeRenderingAlgorithm.getVertices(new BlockPos(aabb.minX, aabb.minY, aabb.minZ), event.getWorld());
 
-		if (vertices == null) {
+		if (vertices.isEmpty() || vertices.size() < 8) {
 			return;
 		}
 
 		final List<AxisAlignedBB> collisionBoxes = event.getCollisionBoxesList();
 
-		final Vec3 v0 = vertices[0];
-		final Vec3 v1 = vertices[1];
-		final Vec3 v2 = vertices[2];
-		final Vec3 v3 = vertices[3];
-		final Vec3 v4 = vertices[4];
-		final Vec3 v5 = vertices[5];
-		final Vec3 v6 = vertices[6];
-		final Vec3 v7 = vertices[7];
+		final Vec3 v0 = vertices.get(0);
+		final Vec3 v1 = vertices.get(1);
+		final Vec3 v2 = vertices.get(2);
+		final Vec3 v3 = vertices.get(3);
+		final Vec3 v4 = vertices.get(4);
+		final Vec3 v5 = vertices.get(5);
+		final Vec3 v6 = vertices.get(6);
+		final Vec3 v7 = vertices.get(7);
 
 //		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);
 		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);

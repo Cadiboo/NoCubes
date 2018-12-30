@@ -20,6 +20,9 @@ import net.minecraft.world.World;
 
 import java.util.ArrayList;
 
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
+
 /**
  * @author Cadiboo
  * @see "http://mikolalysenko.github.io/Isosurface/js/marchingtetrahedra.js"
@@ -242,8 +245,8 @@ public final class MarchingTetrahedra {
 
 								if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 									compiledChunk.setLayerStarted(blockRenderLayer);
-									ClientUtil.compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-									ClientUtil.renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+									compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+									renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 								}
 
 								if (face.length == 3) {
