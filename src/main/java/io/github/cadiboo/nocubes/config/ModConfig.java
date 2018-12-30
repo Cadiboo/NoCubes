@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import static io.github.cadiboo.nocubes.util.ModEnums.DebugRenderAlgorithm;
+import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel;
+import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel.FANCY;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
@@ -119,6 +121,9 @@ public final class ModConfig {
 
 	@LangKey(MOD_ID + ".config.shouldForceUpdate")
 	public static boolean shouldForceUpdate = true;
+
+	@LangKey(MOD_ID + ".config.approximateLightingLevel")
+	public static EffortLevel approximateLightingLevel = FANCY;
 
 	@LangKey(MOD_ID + ".config.debug")
 	public static Debug debug = new Debug();

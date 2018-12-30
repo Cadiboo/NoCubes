@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.client.render.SurfaceNets;
 import io.github.cadiboo.nocubes.client.render.SurfaceNetsDev;
 import io.github.cadiboo.nocubes.debug.client.render.DebugOldNoCubes;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
+import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm.Face;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
@@ -51,10 +52,15 @@ public final class ModEnums {
 		;
 
 		private final Consumer<RebuildChunkPreEvent> renderPre;
+
 		private final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer;
+
 		private final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType;
+
 		private final Consumer<RebuildChunkBlockEvent> renderBlock;
+
 		private final Consumer<RebuildChunkPostEvent> renderPost;
+
 		private final BiFunction<BlockPos, World, Vec3[]> getPoints;
 
 		StableRenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderPre, final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer, final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType, final Consumer<RebuildChunkBlockEvent> renderBlock, final Consumer<RebuildChunkPostEvent> renderPost, final BiFunction<BlockPos, World, Vec3[]> getPoints) {
@@ -109,6 +115,19 @@ public final class ModEnums {
 			return this.renderAlgorithm.getVertices(blockPos, world);
 		}
 
+		@Nonnull
+		public List<Face<Vec3>> getFaces(final BlockPos blockPos, final IBlockAccess world) {
+			return this.renderAlgorithm.getFaces(blockPos, world);
+		}
+
+	}
+
+	public static enum EffortLevel implements IEnumNameFormattable {
+		OFF,
+		FAST,
+		FANCY,
+
+		;
 	}
 
 	/**

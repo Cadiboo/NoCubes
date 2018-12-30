@@ -1,10 +1,17 @@
 package io.github.cadiboo.nocubes.debug.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.render.BlockRenderData;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
+import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm.Face;
 import io.github.cadiboo.nocubes.util.ModReference;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkBlockOptifineEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -15,8 +22,11 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -44,7 +54,66 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		ModConfig.debug.activeRenderingAlgorithm.getVertices(event.getBlockPos(), event.getChunkCache());
+		final BlockPos pos = event.getBlockPos();
+		final IBlockAccess cache;
+		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+			cache = ((RebuildChunkBlockOptifineEvent) event).getChunkCacheOF();
+		} else {
+			cache = event.getChunkCache();
+		}
+
+		final List<Face<Vec3>> faces = ModConfig.debug.activeRenderingAlgorithm.getFaces(event.getBlockPos(), cache);
+
+		if (faces.isEmpty()) {
+			return;
+		}
+
+		final BufferBuilder bufferBuilder = event.getBufferBuilder();
+
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
+		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
+
+		final int red = renderData.getRed();
+		final int green = renderData.getGreen();
+		final int blue = renderData.getBlue();
+		final int alpha = renderData.getAlpha();
+		final float minU = renderData.getMinU();
+		final float maxU = renderData.getMaxU();
+		final float minV = renderData.getMinV();
+		final float maxV = renderData.getMaxV();
+		final int lightmapSkyLight = renderData.getLightmapSkyLight();
+		final int lightmapBlockLight = renderData.getLightmapBlockLight();
+
+		event.setCanceled(true);
+		event.setBlockRenderLayerUsed(event.getBlockRenderLayer(), true);
+
+		EnumFacing[] VALUES = EnumFacing.VALUES;
+		int facingIndex = 0;
+
+		for (IDebugRenderAlgorithm.Face<Vec3> vec3Face : faces) {
+			EnumFacing facing = VALUES[facingIndex++];
+
+			if (!event.getBlockState().shouldSideBeRendered(cache, pos, facing)
+					//hmmmm
+//					&& ModUtil.shouldSmooth(cache.getBlockState(pos.offset(facing)))
+			) {
+				continue;
+			}
+
+			final Vec3 vertex0 = vec3Face.getVertex0();
+			final Vec3 vertex1 = vec3Face.getVertex1();
+			final Vec3 vertex2 = vec3Face.getVertex2();
+			final Vec3 vertex3 = vec3Face.getVertex3();
+			
+			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+		}
+
 	}
 
 	@SubscribeEvent
@@ -94,6 +163,7 @@ public final class ClientEventSubscriber {
 		final double renderZ = -(player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks));
 
 		for (AxisAlignedBB axisAlignedBB : player.world.getCollisionBoxes(player, new AxisAlignedBB(rayTraceResult.getBlockPos()))) {
+			GlStateManager.color(1F, 1F, 1F, 1F);
 			RenderGlobal.drawSelectionBoundingBox(axisAlignedBB.offset(renderX, renderY, renderZ), 1, 0, 0, 1);
 		}
 
@@ -124,6 +194,8 @@ public final class ClientEventSubscriber {
 		BufferBuilder bufferBuilder = tessellator.getBuffer();
 		// yay, magic numbers!
 		bufferBuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
+		GlStateManager.color(1F, 1F, 1F, 1F);
 
 		// bottom
 		// assuming facing north (towards neg z)

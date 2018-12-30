@@ -24,6 +24,41 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 @Mod.EventBusSubscriber(modid = ModReference.MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
+//	public static final HashMap<BlockPos, AtomicInteger> RENDER_PASSES = new HashMap<>();
+//
+//	@SubscribeEvent(priority = HIGHEST)
+//	public static void onRebuildChunkPreEventHighest(final RebuildChunkPreEvent event) {
+//
+//		final BlockPos renderChunkPos = event.getRenderChunkPosition().toImmutable();
+//
+//		final AtomicInteger currentPass = RENDER_PASSES.get(renderChunkPos);
+//
+//		if (currentPass == null) {
+//			RENDER_PASSES.put(renderChunkPos, new AtomicInteger());
+//		} else {
+//			currentPass.getAndIncrement();
+//		}
+//
+//	}
+//
+//	@SubscribeEvent(priority = LOWEST, receiveCanceled = true)
+//	public static void onRebuildChunkPreEventLowest(final RebuildChunkPreEvent event) {
+//
+//		if (event.isCanceled()) {
+//			RENDER_PASSES.remove(event.getRenderChunkPosition().toImmutable());
+//		}
+//
+//	}
+//
+//	@SubscribeEvent(priority = HIGHEST)
+//	public static void onRebuildChunkPostEventHighest(final RebuildChunkPostEvent event) {
+//
+//		NoCubes.NO_CUBES_LOG.info(event.getRenderChunkPosition().toImmutable() + " | " + RENDER_PASSES.get(event.getRenderChunkPosition().toImmutable()));
+//
+//		RENDER_PASSES.remove(event.getRenderChunkPosition().toImmutable());
+//
+//	}
+
 	@SubscribeEvent
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
 
@@ -31,14 +66,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		if (ModConfig.shouldExtendLiquids) {
+			ClientUtil.calculateExtendedLiquids(event);
+		}
+
 		if (ModConfig.debug.debugEnabled) {
 			return;
 		}
 
 		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Pre");
-
-		if (ModConfig.shouldExtendLiquids)
-			ClientUtil.calculateExtendedLiquids(event);
 
 		try {
 			ModConfig.activeStableRenderingAlgorithm.renderPre(event);
@@ -105,6 +141,10 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		if (ModConfig.shouldExtendLiquids) {
+			ClientUtil.handleExtendedLiquidRender(event);
+		}
+
 		if (ModConfig.debug.debugEnabled) {
 			return;
 		}
@@ -119,9 +159,6 @@ public final class ClientEventSubscriber {
 			throw new ReportedException(crashReport);
 		}
 
-		if (ModConfig.shouldExtendLiquids)
-			ClientUtil.handleExtendedLiquidRender(event);
-
 		Minecraft.getMinecraft().profiler.endSection();
 
 	}
@@ -133,14 +170,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		if (ModConfig.shouldExtendLiquids) {
+			ClientUtil.cleanupExtendedLiquids(event);
+		}
+
 		if (ModConfig.debug.debugEnabled) {
 			return;
 		}
 
 		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Post");
-
-		if (ModConfig.shouldExtendLiquids)
-			ClientUtil.cleanupExtendedLiquids(event);
 
 		try {
 			ModConfig.activeStableRenderingAlgorithm.renderPost(event);

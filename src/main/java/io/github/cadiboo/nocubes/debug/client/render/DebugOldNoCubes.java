@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -66,6 +67,77 @@ public class DebugOldNoCubes implements IDebugRenderAlgorithm {
 
 		return points;
 
+	}
+
+	@Nonnull
+	@Override
+	public List<Face<Vec3>> getFaces(final BlockPos pos, final IBlockAccess world) {
+		final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+
+		final List<Vec3> vertices = getVertices(pos, world);
+
+		if (vertices.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		final Vec3 v0 = vertices.get(0);
+		final Vec3 v1 = vertices.get(1);
+		final Vec3 v2 = vertices.get(2);
+		final Vec3 v3 = vertices.get(3);
+		final Vec3 v4 = vertices.get(4);
+		final Vec3 v5 = vertices.get(5);
+		final Vec3 v6 = vertices.get(6);
+		final Vec3 v7 = vertices.get(7);
+
+		//down
+		faces.add(new Face<>(
+				v0,
+				v1,
+				v2,
+				v3
+		));
+
+		//up
+		faces.add(new Face<>(
+				v7,
+				v6,
+				v5,
+				v4
+		));
+
+		//north
+		faces.add(new Face<>(
+				v1,
+				v0,
+				v4,
+				v5
+		));
+
+		//south
+		faces.add(new Face<>(
+				v6,
+				v7,
+				v3,
+				v2
+		));
+
+		//west
+		faces.add(new Face<>(
+				v0,
+				v3,
+				v7,
+				v4
+		));
+
+		//east
+		faces.add(new Face<>(
+				v5,
+				v6,
+				v2,
+				v1
+		));
+
+		return faces;
 	}
 
 }

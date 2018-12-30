@@ -553,72 +553,72 @@ public final class ClientUtil {
 
 	public static LightmapInfo getLightmapInfo(BlockPos pos, IBlockAccess cache) {
 
-		final BlockPos FAST_BrightnessPos = pos.up();
-//				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
-		final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
-		return new LightmapInfo(
-				FAST_PackedLightmapCoords >> 20,
-				FAST_PackedLightmapCoords >> 4
-		);
-
-//		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
-//			default:
-//			case 0: // Off
-//				return new LightmapInfo(240, 0);
-//			case 1: // Fast
-//				//the block above
-//				final BlockPos FAST_BrightnessPos = pos.up();
+//		final BlockPos FAST_BrightnessPos = pos.up();
 ////				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
-//				final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
-//				return new LightmapInfo(
-//						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
-//						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
-//				);
-//			case 2: // Fancy
-//				//credit to MineAndCraft12
-//				int averageSkyLight = 0;
-//				int totalBlocksCheckedForSkyLight = 0;
-//
-//				int averageBlockLight = 0;
-//				int totalBlocksCheckedForBlockLight = 0;
-//
-//				//every neighbour
-//				for (EnumFacing facing : EnumFacing.VALUES) {
-//					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
-////					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
-//					final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(FANCYISH_BrightnessPos, cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos));
-//					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-//					if (skyLight > 0) {
-//						averageSkyLight += skyLight;
-//						totalBlocksCheckedForSkyLight++;
-//					}
-//					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-//					if (blockLight > 0) {
-//						averageBlockLight += blockLight;
-//						totalBlocksCheckedForBlockLight++;
-//					}
-//				}
-//
-//				//this block
-////				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
-//				final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(pos, cache.getBlockState(pos).getPackedLightmapCoords(cache, pos));
-//				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-//				if (skyLight > 0) {
-//					averageSkyLight += skyLight;
-//					totalBlocksCheckedForSkyLight++;
-//				}
-//				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
-//				if (blockLight > 0) {
-//					averageBlockLight += blockLight;
-//					totalBlocksCheckedForBlockLight++;
-//				}
-//
-//				return new LightmapInfo(
-//						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
-//						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
-//				);
-//
-//		}
+//		final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
+//		return new LightmapInfo(
+//				FAST_PackedLightmapCoords >> 20,
+//				FAST_PackedLightmapCoords >> 4
+//		);
+
+		switch (ModConfig.approximateLightingLevel) {
+			default:
+			case OFF:
+				return new LightmapInfo(240, 0);
+			case FAST:
+				//the block above
+				final BlockPos FAST_BrightnessPos = pos.up();
+//				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
+				final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
+				return new LightmapInfo(
+						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
+						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
+				);
+			case FANCY:
+				//credit to MineAndCraft12
+				int averageSkyLight = 0;
+				int totalBlocksCheckedForSkyLight = 0;
+
+				int averageBlockLight = 0;
+				int totalBlocksCheckedForBlockLight = 0;
+
+				//every neighbour
+				for (EnumFacing facing : EnumFacing.VALUES) {
+					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
+//					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
+					final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(FANCYISH_BrightnessPos, cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos));
+					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (skyLight > 0) {
+						averageSkyLight += skyLight;
+						totalBlocksCheckedForSkyLight++;
+					}
+					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					if (blockLight > 0) {
+						averageBlockLight += blockLight;
+						totalBlocksCheckedForBlockLight++;
+					}
+				}
+
+				//this block
+//				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
+				final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(pos, cache.getBlockState(pos).getPackedLightmapCoords(cache, pos));
+				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (skyLight > 0) {
+					averageSkyLight += skyLight;
+					totalBlocksCheckedForSkyLight++;
+				}
+				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				if (blockLight > 0) {
+					averageBlockLight += blockLight;
+					totalBlocksCheckedForBlockLight++;
+				}
+
+				return new LightmapInfo(
+						totalBlocksCheckedForSkyLight > 0 ? averageSkyLight / totalBlocksCheckedForSkyLight : averageSkyLight,
+						totalBlocksCheckedForBlockLight > 0 ? averageBlockLight / totalBlocksCheckedForBlockLight : averageBlockLight
+				);
+
+		}
 	}
 
 //	public static void renderLiquidInBlock(final RebuildChunkBlockEvent event) {
