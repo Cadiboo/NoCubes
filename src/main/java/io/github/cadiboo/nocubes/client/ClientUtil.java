@@ -12,6 +12,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -46,7 +47,9 @@ import org.lwjgl.util.vector.Vector4f;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +57,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel.FANCY;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
@@ -105,6 +109,8 @@ public final class ClientUtil {
 			return new HashMap<>();
 		}
 	};
+
+	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
 
 	/**
 	 * Rotation algorithm Taken off Max_the_Technomancer from <a href= "https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/modification-development/2772267-tesr-getting-darker-and-lighter-as-it-rotates">here</a>
@@ -437,7 +443,36 @@ public final class ClientUtil {
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 		final long posRand = MathHelper.getPositionRandom(pos);
 		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
-		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
+		return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
+	}
+
+	/**
+	 * Gets The first quad of a model for a pos & state or null if the model has no quads
+	 *
+	 * @param state                   the state
+	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
+	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
+	 * @param facing                  the {@link EnumFacing to check first}
+	 * @return The first quad or null if the model has no quads
+	 */
+	@Nullable
+	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
+		final long posRand = MathHelper.getPositionRandom(pos);
+		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+		final BakedQuad quad = getQuad(state, pos, posRand, model, facing);
+		if (quad != null) {
+			return quad;
+		} else {
+			return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
+		}
+	}
+
+	/**
+	 * helper method to actually get the quads
+	 */
+	@Nullable
+	private static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final long posRand, final IBakedModel model, final EnumFacing... facings) {
+		for (EnumFacing facing : facings) {
 			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
 			if (!quads.isEmpty()) {
 				return quads.get(0);
@@ -846,8 +881,38 @@ public final class ClientUtil {
 		final IBlockState state = cache.getBlockState(pos);
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-		BlockPos texturePos = pos;
-		IBlockState textureState = state;
+		final Object[] texturePosAndState = ClientUtil.getTexturePosAndState(cache, pos, state);
+		final BlockPos texturePos = (BlockPos) texturePosAndState[0];
+		final IBlockState textureState = (IBlockState) texturePosAndState[1];
+
+		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
+		if (quad == null) {
+			quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+		}
+		final TextureAtlasSprite sprite = quad.getSprite();
+		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+		final int red = (color >> 16) & 255;
+		final int green = (color >> 8) & 255;
+		final int blue = color & 255;
+		final int alpha = 0xFF;
+
+		final float minU = ClientUtil.getMinU(sprite);
+		final float minV = ClientUtil.getMinV(sprite);
+		final float maxU = ClientUtil.getMaxU(sprite);
+		final float maxV = ClientUtil.getMaxV(sprite);
+
+		//real pos not texture pos
+		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+
+		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+
+		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
+
+	}
+
+	public static Object[] getTexturePosAndState(final IBlockAccess cache, final BlockPos pos, final IBlockState state) {
 
 		// TODO:
 		// 1 pooled mutable blockpos
@@ -855,8 +920,11 @@ public final class ClientUtil {
 		// check 6 immediate neighbours
 		// check 8 corner neighbours
 
+		IBlockState textureState = state;
+		BlockPos texturePos = pos;
+
 		IF:
-		if (ModConfig.shouldBeautifyTextures) {
+		if (ModConfig.beautifyTexturesLevel == FANCY) {
 
 			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
 				final IBlockState tempState = cache.getBlockState(mutablePos);
@@ -901,37 +969,27 @@ public final class ClientUtil {
 				if (ModUtil.shouldSmooth(textureState)) {
 					break;
 				} else {
-					textureState = cache.getBlockState(mutablePos);
 					texturePos = mutablePos;
+					textureState = cache.getBlockState(mutablePos);
 				}
 			}
 		}
 
-		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
-		if (quad == null) {
-			quad = Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+		return new Object[]{
+				texturePos,
+				textureState
+		};
+
+	}
+
+	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
+		try {
+			return ambientOcclusionFace.newInstance();
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
+			crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
+			throw new ReportedException(crashReport);
 		}
-		final TextureAtlasSprite sprite = quad.getSprite();
-		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
-		final int red = (color >> 16) & 255;
-		final int green = (color >> 8) & 255;
-		final int blue = color & 255;
-		final int alpha = 0xFF;
-
-		final float minU = ClientUtil.getMinU(sprite);
-		final float minV = ClientUtil.getMinV(sprite);
-		final float maxU = ClientUtil.getMaxU(sprite);
-		final float maxV = ClientUtil.getMaxV(sprite);
-
-		//real pos not texture pos
-		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
-		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
-
-		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
-
-		return new BlockRenderData(blockRenderLayer, red, green, blue, alpha, minU, maxU, minV, maxV, lightmapSkyLight, lightmapBlockLight);
-
 	}
 
 }

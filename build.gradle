@@ -98,6 +98,10 @@ jar {
 	// 	}
 	// }
 
+	manifest {
+		attributes 'FMLAT': 'nocubes_at.cfg'
+	}
+
 }
 
 processResources {
@@ -118,6 +122,9 @@ processResources {
 	from(sourceSets.main.resources.srcDirs) {
 		exclude 'mcmod.info'
 	}
+
+	//move our Access Transformer to META-INF
+	rename '(.+_at.cfg)', 'META-INF/$1'
 
 }
 

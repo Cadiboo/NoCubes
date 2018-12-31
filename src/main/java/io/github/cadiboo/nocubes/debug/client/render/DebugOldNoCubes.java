@@ -91,26 +91,26 @@ public class DebugOldNoCubes implements IDebugRenderAlgorithm {
 
 		//down
 		faces.add(new Face<>(
-				v0,
-				v1,
 				v2,
-				v3
+				v3,
+				v0,
+				v1
 		));
 
 		//up
 		faces.add(new Face<>(
-				v7,
-				v6,
 				v5,
-				v4
+				v4,
+				v7,
+				v6
 		));
 
 		//north
 		faces.add(new Face<>(
-				v1,
-				v0,
 				v4,
-				v5
+				v5,
+				v1,
+				v0
 		));
 
 		//south
@@ -123,10 +123,10 @@ public class DebugOldNoCubes implements IDebugRenderAlgorithm {
 
 		//west
 		faces.add(new Face<>(
-				v0,
-				v3,
 				v7,
-				v4
+				v4,
+				v0,
+				v3
 		));
 
 		//east

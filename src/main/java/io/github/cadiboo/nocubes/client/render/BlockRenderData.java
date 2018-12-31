@@ -2,18 +2,30 @@ package io.github.cadiboo.nocubes.client.render;
 
 import net.minecraft.util.BlockRenderLayer;
 
+import java.util.Random;
+
 public class BlockRenderData {
 
 	private final BlockRenderLayer blockRenderLayer;
+
 	private final int red;
+
 	private final int green;
+
 	private final int blue;
+
 	private final int alpha;
+
 	private final float minU;
+
 	private final float maxU;
+
 	private final float minV;
+
 	private final float maxV;
+
 	private final int lightmapSkyLight;
+
 	private final int lightmapBlockLight;
 
 	public BlockRenderData(final BlockRenderLayer blockRenderLayer, final int red, final int green, final int blue, final int alpha, final float minU, final float maxU, final float minV, final float maxV, final int lightmapSkyLight, final int lightmapBlockLight) {

@@ -2,25 +2,30 @@ package io.github.cadiboo.nocubes.debug.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.render.BlockRenderData;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm.Face;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModReference;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkBlockOptifineEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.GlStateManager.DestFactor;
 import net.minecraft.client.renderer.GlStateManager.SourceFactor;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -30,9 +35,13 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.BitSet;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel.OFF;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
@@ -73,18 +82,18 @@ public final class ClientEventSubscriber {
 		final int x = pos.getX();
 		final int y = pos.getY();
 		final int z = pos.getZ();
-		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
-		final int red = renderData.getRed();
-		final int green = renderData.getGreen();
-		final int blue = renderData.getBlue();
-		final int alpha = renderData.getAlpha();
-		final float minU = renderData.getMinU();
-		final float maxU = renderData.getMaxU();
-		final float minV = renderData.getMinV();
-		final float maxV = renderData.getMaxV();
-		final int lightmapSkyLight = renderData.getLightmapSkyLight();
-		final int lightmapBlockLight = renderData.getLightmapBlockLight();
+		final IBlockState state = cache.getBlockState(pos);
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
+		final Object[] texturePosAndState = ClientUtil.getTexturePosAndState(cache, pos, state);
+		final BlockPos texturePos = (BlockPos) texturePosAndState[0];
+		final IBlockState textureState = (IBlockState) texturePosAndState[1];
+
+		//real pos not texture pos
+		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+
+		AmbientOcclusionFace aoFace = ClientUtil.makeAmbientOcclusionFace();
 
 		event.setCanceled(true);
 		event.setBlockRenderLayerUsed(event.getBlockRenderLayer(), true);
@@ -96,21 +105,56 @@ public final class ClientEventSubscriber {
 			EnumFacing facing = VALUES[facingIndex++];
 
 			if (!event.getBlockState().shouldSideBeRendered(cache, pos, facing)
-					//hmmmm
+				//hmmmm
 //					&& ModUtil.shouldSmooth(cache.getBlockState(pos.offset(facing)))
 			) {
 				continue;
 			}
+
+			final float[] quadBounds = new float[EnumFacing.VALUES.length * 2];
+			final BitSet bitset = new BitSet(3);
+
+			//updateVertexBrightness(IBlockAccess worldIn, IBlockState state, BlockPos centerPos, EnumFacing direction, float[] faceShape, BitSet shapeState)
+			aoFace.updateVertexBrightness(cache, state, pos, facing, quadBounds, bitset);
+
+//			final int
+			
+			final int lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3;
+			lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = lightmapInfo.getLightmapSkyLight();
+			final int lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3;
+			lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = lightmapInfo.getLightmapBlockLight();
+
+			BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher, facing);
+			if (quad == null) {
+				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+			}
+			TextureAtlasSprite sprite = quad.getSprite();
+			if (ModConfig.beautifyTexturesLevel != OFF) {
+				if (sprite == blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState()).getQuads(Blocks.GRASS.getDefaultState(), EnumFacing.NORTH, 0L).get(0).getSprite()) {
+					quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher, EnumFacing.UP);
+					sprite = quad.getSprite();
+				}
+			}
+			final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+			final int red = (color >> 16) & 255;
+			final int green = (color >> 8) & 255;
+			final int blue = color & 255;
+			final int alpha = 0xFF;
+
+			final float minU = ClientUtil.getMinU(sprite);
+			final float minV = ClientUtil.getMinV(sprite);
+			final float maxU = ClientUtil.getMaxU(sprite);
+			final float maxV = ClientUtil.getMaxV(sprite);
 
 			final Vec3 vertex0 = vec3Face.getVertex0();
 			final Vec3 vertex1 = vec3Face.getVertex1();
 			final Vec3 vertex2 = vec3Face.getVertex2();
 			final Vec3 vertex3 = vec3Face.getVertex3();
 
-			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
 
 		}
 

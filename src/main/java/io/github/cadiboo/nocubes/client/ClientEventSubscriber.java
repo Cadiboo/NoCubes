@@ -8,12 +8,16 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
@@ -189,6 +193,33 @@ public final class ClientEventSubscriber {
 		}
 
 		Minecraft.getMinecraft().profiler.endSection();
+
+	}
+
+	@SubscribeEvent
+	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {
+
+		if (!ClientProxy.toggleSmoothableBlockstate.isPressed()) {
+			return;
+		}
+
+		final Minecraft minecraft = Minecraft.getMinecraft();
+
+		final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
+
+		if (objectMouseOver.typeOfHit != BLOCK) {
+			return;
+		}
+
+		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
+
+		if (ModConfig.getSmoothableBlockStatesCache().contains(state)) {
+			ModConfig.getSmoothableBlockStatesCache().remove(state);
+		} else {
+			ModConfig.getSmoothableBlockStatesCache().add(state);
+		}
+
+		minecraft.renderGlobal.loadRenderers();
 
 	}
 

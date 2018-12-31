@@ -1,6 +1,10 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm;
+import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm.Face;
+import io.github.cadiboo.nocubes.util.LightmapInfo;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -8,22 +12,34 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkBlockOptifineEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel.OFF;
 
 /**
  * @author Cadiboo
  */
 public final class SurfaceNetsDev {
+
+	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, ArrayList<Face<Vec3>>>>> FACES_BLOCKPOS_MAP = ThreadLocal.withInitial(HashMap::new);
 
 	private static float getBlockDensity(final boolean[] isSmoothableCache, final IBlockState[] statesCache, final int scanSize, final IBlockAccess cache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final int x, final int y, final int z, PooledMutableBlockPos pooledMutableBlockPos) {
 
@@ -128,7 +144,6 @@ public final class SurfaceNetsDev {
 
 			final float[] densities = new float[(scanSizeX + 1) * (scanSizeY + 1) * (scanSizeZ + 1)];
 
-
 			mutableIndex = 0;
 			// transverse the chunk + 2 blocks on every positive axis side
 			for (int x = 0; x < scanSizeX + 1; x++) {
@@ -148,11 +163,13 @@ public final class SurfaceNetsDev {
 
 			final float[] neighbourDensityGrid = new float[8];
 
-			final int[] r_noClue = new int[]{1, (scanSizeX + 1), (scanSizeX + 1) * (scanSizeY + 1)};
+			final int[] r_noClue = new int[]{1, scanSizeX, scanSizeX * scanSizeY};
 			int bufNo = 0;
 			final int[] buffer = new int[r_noClue[2] * 2];
 
 			final ArrayList<Vec3> vertices = new ArrayList<>();
+
+			final HashMap<BlockPos, ArrayList<Face<Vec3>>> map = new HashMap<>();
 
 			// transverse the chunk + 1 block on every positive axis side
 			for (int posX = 0; posX < scanSizeX; posX++) {
@@ -249,14 +266,81 @@ public final class SurfaceNetsDev {
 						vertex.zCoord = renderChunkPosZ + posZ + s * vertex.zCoord;
 
 						//Add vertex to buffer, store pointer to vertex index in buffer
-//						buffer[m] = vertices.size();
+						buffer[bufferPointer] = vertices.size();
 						if (ModConfig.offsetVertices)
 							ModUtil.offsetVertex(vertex);
 						vertices.add(vertex);
 
+						final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+
+						for (int axisIndex = 0; axisIndex < 3; ++axisIndex) {
+
+							//The first three entries of the edge_mask count the crossings along the edge
+							if ((edgeMask & (1 << axisIndex)) == 0) {
+								continue;
+							}
+
+							int otherAxisIndex0 = (axisIndex + 1) % 3;
+							int otherAxisIndex1 = (axisIndex + 2) % 3;
+
+							switch (otherAxisIndex0) {
+								default:
+								case 0:
+									if (posX == 0) continue;
+									break;
+								case 1:
+									if (posY == 0) continue;
+									break;
+								case 2:
+									if (posZ == 0) continue;
+									break;
+							}
+							switch (otherAxisIndex1) {
+								default:
+								case 0:
+									if (posX == 0) continue;
+									break;
+								case 1:
+									if (posY == 0) continue;
+									break;
+								case 2:
+									if (posZ == 0) continue;
+									break;
+							}
+
+							int otherAxisEdge0 = r_noClue[otherAxisIndex0];
+							int otherAxisEdge1 = r_noClue[otherAxisIndex1];
+
+							if ((mask & 1) == 0) {
+//							faces.add([buffer[m], buffer[m - du], buffer[m - du - dv], buffer[m - dv]]);
+
+								faces.add(new Face<Vec3>(
+										vertices.get(buffer[bufferPointer]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge0]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge0 - otherAxisEdge1]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge1])
+								));
+
+							} else {
+//							faces.add([buffer[m], buffer[m - dv], buffer[m - du - dv], buffer[m - du]]);
+
+								faces.add(new Face<Vec3>(
+										vertices.get(buffer[bufferPointer]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge1]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge0 - otherAxisEdge1]),
+										vertices.get(buffer[bufferPointer - otherAxisEdge0])
+								));
+							}
+
+						}
+
+						map.put(new BlockPos(renderChunkPosX + posX, renderChunkPosX + posY, renderChunkPosX + posZ), faces);
+
 					}
 				}
 			}
+
+			FACES_BLOCKPOS_MAP.get().put(renderChunkPos, map);
 
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -275,12 +359,93 @@ public final class SurfaceNetsDev {
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
 
+		try {
+
+			final BlockPos pos = event.getBlockPos();
+
+			final ArrayList<Face<Vec3>> faces = FACES_BLOCKPOS_MAP.get().get(event.getRenderChunkPosition()).get(pos);
+
+			if (faces == null || faces.isEmpty()) {
+				return;
+			}
+
+			event.setCanceled(true);
+
+			final IBlockAccess cache;
+			if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+				cache = ((RebuildChunkBlockOptifineEvent) event).getChunkCacheOF();
+			} else {
+				cache = event.getChunkCache();
+			}
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
+			final IBlockState state = cache.getBlockState(pos);
+			final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
+			final Object[] texturePosAndState = ClientUtil.getTexturePosAndState(cache, pos, state);
+			final BlockPos texturePos = (BlockPos) texturePosAndState[0];
+			final IBlockState textureState = (IBlockState) texturePosAndState[1];
+
+			//real pos not texture pos
+			final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+			final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+			final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+
+			event.setCanceled(true);
+			event.setBlockRenderLayerUsed(event.getBlockRenderLayer(), true);
+			final BufferBuilder bufferBuilder = event.getBufferBuilder();
+
+			EnumFacing[] VALUES = EnumFacing.VALUES;
+			int facingIndex = 0;
+
+			for (IDebugRenderAlgorithm.Face<Vec3> vec3Face : faces) {
+				EnumFacing facing = VALUES[facingIndex++];
+
+				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher, facing);
+				if (quad == null) {
+					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+				}
+				TextureAtlasSprite sprite = quad.getSprite();
+				if (ModConfig.beautifyTexturesLevel != OFF) {
+					if (sprite == blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState()).getQuads(Blocks.GRASS.getDefaultState(), EnumFacing.NORTH, 0L).get(0).getSprite()) {
+						quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher, EnumFacing.UP);
+						sprite = quad.getSprite();
+					}
+				}
+				final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+				final int red = (color >> 16) & 255;
+				final int green = (color >> 8) & 255;
+				final int blue = color & 255;
+				final int alpha = 0xFF;
+
+				final float minU = ClientUtil.getMinU(sprite);
+				final float minV = ClientUtil.getMinV(sprite);
+				final float maxU = ClientUtil.getMaxU(sprite);
+				final float maxV = ClientUtil.getMaxV(sprite);
+
+				final Vec3 vertex0 = vec3Face.getVertex0();
+				final Vec3 vertex1 = vec3Face.getVertex1();
+				final Vec3 vertex2 = vec3Face.getVertex2();
+				final Vec3 vertex3 = vec3Face.getVertex3();
+
+				bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+				bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
 
+		FACES_BLOCKPOS_MAP.get().remove(event.getRenderChunkPosition());
+
 	}
 
 }
-
-

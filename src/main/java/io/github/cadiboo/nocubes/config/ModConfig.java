@@ -116,8 +116,8 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices = true;
 
-	@LangKey(MOD_ID + ".config.shouldBeautifyTextures")
-	public static boolean shouldBeautifyTextures = true;
+	@LangKey(MOD_ID + ".config.beautifyTexturesLevel")
+	public static EffortLevel beautifyTexturesLevel = FANCY;
 
 	@LangKey(MOD_ID + ".config.shouldForceUpdate")
 	public static boolean shouldForceUpdate = true;
