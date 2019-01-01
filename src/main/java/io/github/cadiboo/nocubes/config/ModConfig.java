@@ -246,6 +246,18 @@ public final class ModConfig {
 		@LangKey(MOD_ID + ".config.debug.realisticCollisions")
 		public boolean realisticCollisions = false;
 
+		public int marchTerrainSizeX = 16;
+
+		public int marchTerrainSizeY = 16;
+
+		public int marchTerrainSizeZ = 16;
+
+		public int dataSizeX = 16;
+
+		public int dataSizeY = 16;
+
+		public int dataSizeZ = 16;
+
 	}
 
 	@Mod.EventBusSubscriber(modid = MOD_ID)

@@ -18,6 +18,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.client.ForgeHooksClient;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -161,7 +162,7 @@ public final class SurfaceNets {
 				//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
 				int m = 1 + (dims[0] + 1) * (1 + buf_no * (dims[1] + 1));
 
-				for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n, m += 2)
+				for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n, m += 2) {
 					for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n, ++m) {
 						pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
 
@@ -241,6 +242,7 @@ public final class SurfaceNets {
 						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
 						final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+						ForgeHooksClient.setRenderLayer(blockRenderLayer);
 						final int red = renderData.getRed();
 						final int green = renderData.getGreen();
 						final int blue = renderData.getBlue();
@@ -312,6 +314,7 @@ public final class SurfaceNets {
 							}
 						}
 					}
+				}
 			}
 //		} catch (final Exception e) {
 //			e.printStackTrace();
@@ -319,6 +322,8 @@ public final class SurfaceNets {
 			pos.release();
 //		    pooledMutablePos.release();
 		}
+
+		ForgeHooksClient.setRenderLayer(null);
 
 		//All done!  Return the result
 //		return {vertices:vertices, faces:faces };

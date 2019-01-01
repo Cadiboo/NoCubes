@@ -35,9 +35,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.BitSet;
 import java.util.List;
 
@@ -101,6 +99,8 @@ public final class ClientEventSubscriber {
 		EnumFacing[] VALUES = EnumFacing.VALUES;
 		int facingIndex = 0;
 
+		final BitSet bitset = new BitSet(3);
+
 		for (IDebugRenderAlgorithm.Face<Vec3> vec3Face : faces) {
 			EnumFacing facing = VALUES[facingIndex++];
 
@@ -112,17 +112,25 @@ public final class ClientEventSubscriber {
 			}
 
 			final float[] quadBounds = new float[EnumFacing.VALUES.length * 2];
-			final BitSet bitset = new BitSet(3);
 
 			//updateVertexBrightness(IBlockAccess worldIn, IBlockState state, BlockPos centerPos, EnumFacing direction, float[] faceShape, BitSet shapeState)
 			aoFace.updateVertexBrightness(cache, state, pos, facing, quadBounds, bitset);
 
-//			final int
-			
-			final int lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3;
-			lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = lightmapInfo.getLightmapSkyLight();
-			final int lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3;
-			lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = lightmapInfo.getLightmapBlockLight();
+			//FIXME temp hack, fix ur vertex order!
+			final int lightmapCombinedLight1 = aoFace.vertexBrightness[0];
+			final int lightmapCombinedLight2 = aoFace.vertexBrightness[1];
+			final int lightmapCombinedLight3 = aoFace.vertexBrightness[2];
+			final int lightmapCombinedLight0 = aoFace.vertexBrightness[3];
+
+			final int lightmapSkyLight0 = ClientUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(lightmapCombinedLight0);
+			final int lightmapSkyLight1 = ClientUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(lightmapCombinedLight1);
+			final int lightmapSkyLight2 = ClientUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(lightmapCombinedLight2);
+			final int lightmapSkyLight3 = ClientUtil.getLightmapSkyLightCoordsFromPackedLightmapCoords(lightmapCombinedLight3);
+
+			final int lightmapBlockLight0 = ClientUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(lightmapCombinedLight0);
+			final int lightmapBlockLight1 = ClientUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(lightmapCombinedLight1);
+			final int lightmapBlockLight2 = ClientUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(lightmapCombinedLight2);
+			final int lightmapBlockLight3 = ClientUtil.getLightmapBlockLightCoordsFromPackedLightmapCoords(lightmapCombinedLight3);
 
 			BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher, facing);
 			if (quad == null) {
@@ -135,11 +143,14 @@ public final class ClientEventSubscriber {
 					sprite = quad.getSprite();
 				}
 			}
+
+			float diffuse = net.minecraftforge.client.model.pipeline.LightUtil.diffuseLight(facing);
+
 			final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
-			final int red = (color >> 16) & 255;
-			final int green = (color >> 8) & 255;
-			final int blue = color & 255;
-			final int alpha = 0xFF;
+			final float red = (((color >> 16) & 255) / 255F) * diffuse;
+			final float green = (((color >> 8) & 255) / 255F) * diffuse;
+			final float blue = ((color & 255) / 255F) * diffuse;
+			final float alpha = 1.0F;
 
 			final float minU = ClientUtil.getMinU(sprite);
 			final float minV = ClientUtil.getMinV(sprite);

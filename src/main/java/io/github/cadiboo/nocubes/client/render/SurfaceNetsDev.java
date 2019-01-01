@@ -20,19 +20,26 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.init.Blocks;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static io.github.cadiboo.nocubes.config.ModConfig.debug;
 import static io.github.cadiboo.nocubes.util.ModEnums.EffortLevel.OFF;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
  * @author Cadiboo
@@ -63,7 +70,6 @@ public final class SurfaceNetsDev {
 						);
 						final AxisAlignedBB aabb = state.getBoundingBox(cache, pooledMutableBlockPos);
 						density += aabb.maxY - aabb.minY;
-
 					} else {
 						density -= 1;
 					}
@@ -93,112 +99,78 @@ public final class SurfaceNetsDev {
 			cache = event.getChunkCache();
 		}
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-
-		int mutableIndex = 0;
+		final RenderChunk renderChunk = event.getRenderChunk();
 
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
 		final int[] CUBE_EDGES = SurfaceNets.CUBE_EDGES;
 		final int[] EDGE_TABLE = SurfaceNets.EDGE_TABLE;
 
-		//chunk size = 16, this is chunk size + 1 block on every positive axis side
-		final int chunkSizeX = 16;
-		final int chunkSizeY = 16;
-		final int chunkSizeZ = 16;
-		final int scanSizeX = chunkSizeX + 1;
-		final int scanSizeY = chunkSizeY + 1;
-		final int scanSizeZ = chunkSizeZ + 1;
-
-		final boolean[] isSmoothable = new boolean[(scanSizeX + 1) * (scanSizeY + 1) * (scanSizeZ + 1)];
-		final IBlockState[] states = new IBlockState[(scanSizeX + 1) * (scanSizeY + 1) * (scanSizeZ + 1)];
-
-		//http://ngildea.blogspot.com/2014/09/dual-contouring-chunked-terrain.html
-
 		try {
 
-			// -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
-			// transverse the chunk + 2 blocks on every positive axis side, plus 1 block on every side
-			for (int xOffset = -1; xOffset < scanSizeX + 1; xOffset++) {
-				for (int yOffset = -1; yOffset < scanSizeY + 1; yOffset++) {
-					for (int zOffset = -1; zOffset < scanSizeZ + 1; zOffset++) {
+			//		final int[] dims = {16, 16, 16};
+			// make the algorithm look on the sides of chunks aswell
+			// I tweaked the loop in Marching cubes, this time I just edited dims
+			final int[] c = {renderChunkPosX, renderChunkPosY, renderChunkPosZ};
+			final ArrayList<float[]> vertices = new ArrayList<>();
 
-						final int x = (xOffset + 1);
-						final int y = (yOffset + 1);
-						final int z = (zOffset + 1);
+			final float[] data = new float[debug.dataSizeX * debug.dataSizeY * debug.dataSizeZ];
 
-						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-						final int index = x + scanSizeX * (y + scanSizeY * z);
-
-						final IBlockState potentiallySmoothableBlockState = cache.getBlockState(pooledMutableBlockPos.setPos(
-								renderChunkPosX + xOffset,
-								renderChunkPosY + yOffset,
-								renderChunkPosZ + zOffset
-						));
-
-						states[index] = potentiallySmoothableBlockState;
-						isSmoothable[index] = ModUtil.shouldSmooth(potentiallySmoothableBlockState);
-
-					}
-				}
+			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(debug.dataSizeX - 1, debug.dataSizeY - 1, debug.dataSizeZ - 1))) {
+				final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
+				final int x = sub.getX();
+				final int y = sub.getY();
+				final int z = sub.getZ();
+				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+				data[x + debug.dataSizeX * (y + debug.dataSizeY * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
 			}
 
-			final float[] densities = new float[(scanSizeX + 1) * (scanSizeY + 1) * (scanSizeZ + 1)];
+			//Internal buffer, this may get resized at run time
+			final int[] buffer;
 
-			mutableIndex = 0;
-			// transverse the chunk + 2 blocks on every positive axis side
-			for (int x = 0; x < scanSizeX + 1; x++) {
-				for (int y = 0; y < scanSizeY + 1; y++) {
-					for (int z = 0; z < scanSizeZ + 1; z++) {
-//						mutableIndex++;
+//			var vertices = []
+//    , faces = []
+			int n = 0;
+			final int[] x = new int[3],
+					R = new int[]{1, (debug.marchTerrainSizeX + 1), (debug.marchTerrainSizeY + 1) * (debug.marchTerrainSizeZ + 1)};
+			final float[] grid = new float[8];
+			int buf_no = 1;
 
-						//
-//						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-//						final int index = x + scanSizeX * (y + scanSizeY * z);
+			//Resize buffer if necessary
+//		if (R[2] * 2 > buffer.length) {
+//			buffer = new Int32Array(R[2] * 2);
+//		}
+			buffer = new int[R[2] * 2];
 
-						densities[mutableIndex] = getBlockDensity(isSmoothable, states, scanSizeX, cache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, x, y, z, pooledMutableBlockPos);
+			//March over the voxel grid
+			for (x[2] = 0; x[2] < debug.marchTerrainSizeZ - 1; ++x[2], n += debug.marchTerrainSizeX, buf_no ^= 1, R[2] = -R[2]) {
 
-					}
-				}
-			}
+				//m is the pointer into the buffer we are going to use.
+				//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
+				//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
+				int m = 1 + (debug.marchTerrainSizeX + 1) * (1 + buf_no * (debug.marchTerrainSizeX + 1));
 
-			final float[] neighbourDensityGrid = new float[8];
+				for (x[1] = 0; x[1] < debug.marchTerrainSizeY - 1; ++x[1], ++n, m += 2) {
+					for (x[0] = 0; x[0] < debug.marchTerrainSizeX - 1; ++x[0], ++n, ++m) {
+						pooledMutableBlockPos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
 
-			final int[] r_noClue = new int[]{1, scanSizeX, scanSizeX * scanSizeY};
-			int bufNo = 0;
-			final int[] buffer = new int[r_noClue[2] * 2];
-
-			final ArrayList<Vec3> vertices = new ArrayList<>();
-
-			final HashMap<BlockPos, ArrayList<Face<Vec3>>> map = new HashMap<>();
-
-			// transverse the chunk + 1 block on every positive axis side
-			for (int posX = 0; posX < scanSizeX; posX++) {
-				bufNo ^= 1;
-				int bufferPointer = 1 + (scanSizeX + 1) * (1 + bufNo * (scanSizeY + 1));
-				for (int posY = 0; posY < scanSizeY; posY++) {
-					for (int posZ = 0; posZ < scanSizeZ; posZ++) {
-
-						int mask = 0b00000000;
-						int neighbourDensityGridIndex = 0;
-						//every corner of the block
-						for (int xOffset = 0; xOffset < 2; xOffset++) {
-							for (int yOffset = 0; yOffset < 2; yOffset++) {
-								for (int zOffset = 0; zOffset < 2; zOffset++) {
-									final int x = posX + xOffset;
-									final int y = posY + yOffset;
-									final int z = posZ + zOffset;
-
+						//Read in 8 field values around this vertex and store them in an array
+						//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
+						int mask = 0, g = 0, idx = n;
+						for (int k = 0; k < 2; ++k, idx += debug.marchTerrainSizeX * (debug.marchTerrainSizeY - 2))
+							for (int j = 0; j < 2; ++j, idx += debug.marchTerrainSizeX - 2)
+								for (int i = 0; i < 2; ++i, ++g, ++idx) {
 									// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-									final int index = x + scanSizeX * (y + scanSizeY * z);
+									// assuming i = x, j = y, k = z
+//								pooledMutablePos.setPos(c[0] + x[0] + i, c[1] + x[1] + j, c[2] + x[2] + k);
+									final float p = data[idx];
+//								final float p = ModUtil.getBlockDensity(pooledMutablePos, cache);
 
-									float density = densities[index];
-									neighbourDensityGrid[neighbourDensityGridIndex] = density;
-									mask |= (density < 0) ? (1 << neighbourDensityGridIndex) : 0;
+//								final float p = data[(x[0] + i) + 18 * ((x[1] + j) + 18 * (x[2] + k))];
 
-									neighbourDensityGridIndex++;
+									grid[g] = p;
+									mask |= (p < 0) ? (1 << g) : 0;
 								}
-							}
-						}
 
 						//Check for early termination if cell does not intersect boundary
 						if (mask == 0 || mask == 0xFF) {
@@ -206,141 +178,132 @@ public final class SurfaceNetsDev {
 						}
 
 						//Sum up edge intersections
-						final int edgeMask = EDGE_TABLE[mask];
-						final Vec3 vertex = new Vec3();
-						int edgeCrossingCount = 0;
+						final int edge_mask = EDGE_TABLE[mask];
+						final float[] v = {0, 0, 0};
+						int e_count = 0;
 
 						//For every edge of the cube...
-						for (int edgeIndex = 0; edgeIndex < 12; ++edgeIndex) {
+						for (int i = 0; i < 12; ++i) {
 
 							//Use edge mask to check if it is crossed
-							if ((edgeMask & (1 << edgeIndex)) == 0) {
+							if ((edge_mask & (1 << i)) == 0) {
 								continue;
 							}
 
 							//If it did, increment number of edge crossings
-							++edgeCrossingCount;
+							++e_count;
 
 							//Now find the point of intersection
-							int edge0 = CUBE_EDGES[edgeIndex << 1];       //Unpack vertices
-							int edge1 = CUBE_EDGES[(edgeIndex << 1) + 1];
-							float density0 = neighbourDensityGrid[edge0];                 //Unpack grid values
-							float density1 = neighbourDensityGrid[edge1];
-							float pointOfIntersection = density0 - density1;                 //Compute point of intersection
-							if (Math.abs(pointOfIntersection) > 1e-6) {
-								pointOfIntersection = density0 / pointOfIntersection;
+							int e0 = CUBE_EDGES[i << 1]       //Unpack vertices
+									, e1 = CUBE_EDGES[(i << 1) + 1];
+							float g0 = grid[e0]                 //Unpack grid values
+									, g1 = grid[e1], t = g0 - g1;                 //Compute point of intersection
+							if (Math.abs(t) > 1e-6) {
+								t = g0 / t;
 							} else {
 								continue;
 							}
 
-							final int xA = edge0 & 1;
-							final int xB = edge1 & 1;
-							if (xA != xB) {
-								vertex.xCoord += xA != 0 ? 1.0 - pointOfIntersection : pointOfIntersection;
-							} else {
-								vertex.xCoord += xA != 0 ? 1.0 : 0;
+							//Interpolate vertices and add up intersections (this can be done without multiplying)
+							for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
+								int a = e0 & k, b = e1 & k;
+								if (a != b) {
+									v[j] += a != 0 ? 1.0 - t : t;
+								} else {
+									v[j] += a != 0 ? 1.0 : 0;
+								}
 							}
-
-							final int yA = edge0 & 2;
-							final int yB = edge1 & 2;
-							if (yA != yB) {
-								vertex.yCoord += yA != 0 ? 1.0 - pointOfIntersection : pointOfIntersection;
-							} else {
-								vertex.yCoord += yA != 0 ? 1.0 : 0;
-							}
-
-							final int zA = edge0 & 3;
-							final int zB = edge1 & 3;
-							if (zA != zB) {
-								vertex.zCoord += zA != 0 ? 1.0 - pointOfIntersection : pointOfIntersection;
-							} else {
-								vertex.zCoord += zA != 0 ? 1.0 : 0;
-							}
-
 						}
 
 						//Now we just average the edge intersections and add them to coordinate
-						float s = isosurfaceLevel / edgeCrossingCount;
-						vertex.xCoord = renderChunkPosX + posX + s * vertex.xCoord;
-						vertex.yCoord = renderChunkPosY + posY + s * vertex.yCoord;
-						vertex.zCoord = renderChunkPosZ + posZ + s * vertex.zCoord;
+						float s = isosurfaceLevel / e_count;
+						for (int i = 0; i < 3; ++i) {
+							v[i] = c[i] + x[i] + s * v[i];
+						}
 
 						//Add vertex to buffer, store pointer to vertex index in buffer
-						buffer[bufferPointer] = vertices.size();
+						buffer[m] = vertices.size();
 						if (ModConfig.offsetVertices)
-							ModUtil.offsetVertex(vertex);
-						vertices.add(vertex);
+							ModUtil.offsetVertex(v);
+						vertices.add(v);
 
-						final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pooledMutableBlockPos, cache);
 
-						for (int axisIndex = 0; axisIndex < 3; ++axisIndex) {
+						final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
+						ForgeHooksClient.setRenderLayer(blockRenderLayer);
+						final int red = renderData.getRed();
+						final int green = renderData.getGreen();
+						final int blue = renderData.getBlue();
+						final int alpha = renderData.getAlpha();
+						final float minU = renderData.getMinU();
+						final float maxU = renderData.getMaxU();
+						final float minV = renderData.getMinV();
+						final float maxV = renderData.getMaxV();
+						final int lightmapSkyLight = renderData.getLightmapSkyLight();
+						final int lightmapBlockLight = renderData.getLightmapBlockLight();
 
+						final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+						final CompiledChunk compiledChunk = event.getCompiledChunk();
+
+						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+							compiledChunk.setLayerStarted(blockRenderLayer);
+							compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
+							renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+						}
+
+						//Now we need to add faces together, to do this we just loop over 3 basis components
+						for (int i = 0; i < 3; ++i) {
 							//The first three entries of the edge_mask count the crossings along the edge
-							if ((edgeMask & (1 << axisIndex)) == 0) {
+							if ((edge_mask & (1 << i)) == 0) {
 								continue;
 							}
 
-							int otherAxisIndex0 = (axisIndex + 1) % 3;
-							int otherAxisIndex1 = (axisIndex + 2) % 3;
+							// i = axes we are point along.  iu, iv = orthogonal axes
+							int iu = (i + 1) % 3, iv = (i + 2) % 3;
 
-							switch (otherAxisIndex0) {
-								default:
-								case 0:
-									if (posX == 0) continue;
-									break;
-								case 1:
-									if (posY == 0) continue;
-									break;
-								case 2:
-									if (posZ == 0) continue;
-									break;
-							}
-							switch (otherAxisIndex1) {
-								default:
-								case 0:
-									if (posX == 0) continue;
-									break;
-								case 1:
-									if (posY == 0) continue;
-									break;
-								case 2:
-									if (posZ == 0) continue;
-									break;
+							//If we are on a boundary, skip it
+							if (x[iu] == 0 || x[iv] == 0) {
+								continue;
 							}
 
-							int otherAxisEdge0 = r_noClue[otherAxisIndex0];
-							int otherAxisEdge1 = r_noClue[otherAxisIndex1];
+							//Otherwise, look up adjacent edges in buffer
+							int du = R[iu], dv = R[iv];
 
+							//TODO: remove float[] -> Vec3 -> float shit
+							//Remember to flip orientation depending on the sign of the corner.
+							//FIXME:  cunt wtf why do I have to swap vertices (First one is CORRECT but doesnt work)
+//						if ((mask & 1) != 0) {
 							if ((mask & 1) == 0) {
 //							faces.add([buffer[m], buffer[m - du], buffer[m - du - dv], buffer[m - dv]]);
 
-								faces.add(new Face<Vec3>(
-										vertices.get(buffer[bufferPointer]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge0]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge0 - otherAxisEdge1]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge1])
-								));
+								Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+								Vec3 vertex1 = new Vec3(vertices.get(buffer[m - du]));
+								Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+								Vec3 vertex3 = new Vec3(vertices.get(buffer[m - dv]));
+
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 							} else {
 //							faces.add([buffer[m], buffer[m - dv], buffer[m - du - dv], buffer[m - du]]);
 
-								faces.add(new Face<Vec3>(
-										vertices.get(buffer[bufferPointer]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge1]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge0 - otherAxisEdge1]),
-										vertices.get(buffer[bufferPointer - otherAxisEdge0])
-								));
+								Vec3 vertex0 = new Vec3(vertices.get(buffer[m]));
+								Vec3 vertex1 = new Vec3(vertices.get(buffer[m - dv]));
+								Vec3 vertex2 = new Vec3(vertices.get(buffer[m - du - dv]));
+								Vec3 vertex3 = new Vec3(vertices.get(buffer[m - du]));
+
+								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+
 							}
-
 						}
-
-						map.put(new BlockPos(renderChunkPosX + posX, renderChunkPosX + posY, renderChunkPosX + posZ), faces);
-
 					}
 				}
 			}
-
-			FACES_BLOCKPOS_MAP.get().put(renderChunkPos, map);
 
 		} catch (final Exception e) {
 			e.printStackTrace();
@@ -358,6 +321,11 @@ public final class SurfaceNetsDev {
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		if (true) {
+			event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
+			return;
+		}
 
 		try {
 
@@ -438,7 +406,7 @@ public final class SurfaceNetsDev {
 
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
