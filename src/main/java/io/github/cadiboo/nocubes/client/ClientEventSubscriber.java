@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInLayerEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
@@ -23,6 +22,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
@@ -31,7 +32,7 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
  *
  * @author Cadiboo
  */
-@Mod.EventBusSubscriber(modid = ModReference.MOD_ID, value = CLIENT)
+@Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
 	@SubscribeEvent
