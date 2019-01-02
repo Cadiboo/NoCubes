@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
+import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -74,14 +75,15 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Layer");
+
 		try {
-			Minecraft.getMinecraft().profiler.startSection("Rendering smooth world in Layer");
+			ModConfig.activeStableRenderingAlgorithm.renderLayer(event);
 		} catch (Exception e) {
 			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Layer event!", e);
 			crashReport.makeCategory("Rendering smooth chunk");
 			throw new ReportedException(crashReport);
 		}
-		ModConfig.activeStableRenderingAlgorithm.renderLayer(event);
 
 		Minecraft.getMinecraft().profiler.endSection();
 	}
