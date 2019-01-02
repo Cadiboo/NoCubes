@@ -213,10 +213,23 @@ public final class ClientEventSubscriber {
 
 		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
 
+		final String stateAsString = state.toString();
+
 		if (ModConfig.getSmoothableBlockStatesCache().contains(state)) {
-			ModConfig.getSmoothableBlockStatesCache().remove(state);
+			ModConfig.smoothableBlockStates = Arrays.stream(ModConfig.smoothableBlockStates).filter(string -> !string.equals(stateAsString)).toArray(String[]::new);
 		} else {
-			ModConfig.getSmoothableBlockStatesCache().add(state);
+			final ArrayList<String> list = Lists.newArrayList(ModConfig.smoothableBlockStates);
+			list.add(stateAsString);
+			ModConfig.smoothableBlockStates = list.toArray(new String[0]);
+		}
+
+		// Copied from GuiConfig
+		if (Loader.isModLoaded(MOD_ID)) {
+			ConfigChangedEvent configChangedEvent = new ConfigChangedEvent.OnConfigChangedEvent(MOD_ID, null, true, false);
+			MinecraftForge.EVENT_BUS.post(configChangedEvent);
+			if (!configChangedEvent.getResult().equals(Event.Result.DENY)) {
+				MinecraftForge.EVENT_BUS.post(new ConfigChangedEvent.PostConfigChangedEvent(MOD_ID, null, true, false));
+			}
 		}
 
 		minecraft.renderGlobal.loadRenderers();
