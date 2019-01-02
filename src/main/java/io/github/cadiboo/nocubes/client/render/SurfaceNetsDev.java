@@ -19,6 +19,7 @@ import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.stream.IntStream;
 
 /**
  * @author Cadiboo
@@ -133,6 +134,15 @@ public final class SurfaceNetsDev {
 			final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
 			final ArrayList<Vec3> vertices = new ArrayList<>();
 			final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+
+			// seems bad
+//			IntStream.range(0, maxX).parallel().forEachOrdered(x -> {
+//				IntStream.range(0, maxY).parallel().forEachOrdered(y -> {
+//					IntStream.range(0, maxZ).parallel().forEachOrdered(z -> {
+//
+//					});
+//				});
+//			});
 
 			int mutableIndex = 0;
 			for (int x = 0; x < maxX; x++) {
