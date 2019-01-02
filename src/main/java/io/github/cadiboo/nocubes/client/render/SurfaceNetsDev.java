@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.debug.client.render.IDebugRenderAlgorithm.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -10,6 +11,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
@@ -25,17 +27,26 @@ public final class SurfaceNetsDev {
 
 	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, ArrayList<Face<Vec3>>>>> FACES_BLOCKPOS_MAP = ThreadLocal.withInitial(HashMap::new);
 
+	// because surface nets takes the 8 points of a block into account, we need to get the densities for +1 block on every positive axis of the chunk
+	// because of this, we need to cache +2 blocks on every positive axis of the chunk
+
 	private static final int chunkSizeX = 16;
 
 	private static final int chunkSizeY = 16;
 
 	private static final int chunkSizeZ = 16;
 
-	private static final int densityCacheSizeX = chunkSizeX + 1;
+	private static final int meshSizeX = chunkSizeX + 1;
 
-	private static final int densityCacheSizeY = chunkSizeY + 1;
+	private static final int meshSizeY = chunkSizeY + 1;
 
-	private static final int densityCacheSizeZ = chunkSizeZ + 1;
+	private static final int meshSizeZ = chunkSizeZ + 1;
+
+	private static final int densityCacheSizeX = meshSizeX + 1;
+
+	private static final int densityCacheSizeY = meshSizeY + 1;
+
+	private static final int densityCacheSizeZ = meshSizeZ + 1;
 
 	private static final int densityCacheArraySize = densityCacheSizeX * densityCacheSizeY * densityCacheSizeZ;
 
@@ -47,57 +58,28 @@ public final class SurfaceNetsDev {
 
 	private static final int cacheArraySize = cacheSizeX * cacheSizeY * cacheSizeZ;
 
-//	private static float getBlockDensity(final boolean[] smoothableCache, final IBlockState[] stateCache, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final int x, final int y, final int z, PooledMutableBlockPos pooledMutableBlockPos) {
-//
-//		float density = 0.0F;
-//
-//		for (int xOffset = 0; xOffset < 2; ++xOffset) {
-//			for (int yOffset = 0; yOffset < 2; ++yOffset) {
-//				for (int zOffset = 0; zOffset < 2; ++zOffset) {
-//
-//					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-//					final int index = (x + xOffset) + cacheSizeX * ((y + yOffset) + cacheSizeY * (z + zOffset));
-//
-//					final IBlockState state = stateCache[index];
-//					final boolean shouldSmooth = smoothableCache[index];
-//
-//					if (shouldSmooth) {
-//						pooledMutableBlockPos.setPos(
-//								renderChunkPosX + x + xOffset,
-//								renderChunkPosY + y + yOffset,
-//								renderChunkPosZ + z + zOffset
-//						);
-//						final AxisAlignedBB aabb = state.getBoundingBox(cache, pooledMutableBlockPos);
-//						density += aabb.maxY - aabb.minY;
-//					} else {
-//						density -= 1;
-//					}
-//
-//					if (state.getBlock() == Blocks.BEDROCK) {
-//						density += 0.000000000000000000000000000000000000000000001F;
-//					}
-//
-//				}
-//			}
-//		}
-//
-//		return density;
-//
-//	}
-
-	private static float getBlockDensity(final int posX, final int posY, final int posZ, final boolean[] smoothableCache) {
+	private static float getBlockDensity(final int posX, final int posY, final int posZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final PooledMutableBlockPos pos, final IBlockAccess cache) {
 		float density = 0;
-		for (int x = 0; x < 2; x++) {
-			for (int y = 0; y < 2; y++) {
-				for (int z = 0; z < 2; z++) {
+		for (int xOffset = 0; xOffset < 2; xOffset++) {
+			for (int yOffset = 0; yOffset < 2; yOffset++) {
+				for (int zOffset = 0; zOffset < 2; zOffset++) {
+					final int x = (posX + xOffset);
+					final int y = (posY + yOffset);
+					final int z = (posZ + zOffset);
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					final int index = (posX + x) + cacheSizeX * ((posY + y) + cacheSizeY * (posZ + z));
+					final int index = x + cacheSizeX * (y + cacheSizeY * z);
 
-//					final IBlockState state = stateCache[index];
+					final IBlockState state = stateCache[index];
 					final boolean shouldSmooth = smoothableCache[index];
 
 					if (shouldSmooth) {
-						density++;
+						pos.setPos(
+								renderChunkPosX + x,
+								renderChunkPosY + y,
+								renderChunkPosZ + z
+						);
+						final AxisAlignedBB box = state.getBoundingBox(cache, pos);
+						density += box.maxY - box.minY;
 					} else {
 						density--;
 					}
@@ -108,9 +90,6 @@ public final class SurfaceNetsDev {
 	}
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
-
-		// because surface nets takes the 8 points of a block into account, we need to get the densities for +1 block on every positive axis of the chunk
-		// because of this, we need to cache +2 blocks on every positive axis of the chunk
 
 		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
 		final IBlockAccess cache = ClientUtil.getCache(event);
@@ -132,6 +111,132 @@ public final class SurfaceNetsDev {
 			final float[] densities = new float[densityCacheArraySize];
 			fillDensityCache(densities, renderChunkPosX, renderChunkPosY, renderChunkPosZ, cache, pooledMutableBlockPos, states, smoothables);
 
+			final int maxX = meshSizeX;
+			final int maxY = meshSizeY;
+			final int maxZ = meshSizeZ;
+
+			final int[] bufferOffsetAxisIndex = {
+					1,
+					maxX + 1,
+					(maxX + 1) * (maxZ + 1)
+			};
+
+			final int[] buffer = new int[bufferOffsetAxisIndex[2] * 2];
+			int buffNo = 0;
+			int bufferIndex = 0;
+			final float[] neighbourDensities = new float[8];
+			int bitMask = 0b00000000;
+			final int[] EDGE_TABLE = SurfaceNets.EDGE_TABLE;
+			int edgeMask = 0;
+			int edgeCrossingCount = 0;
+			final int[] CUBE_EDGES = SurfaceNets.CUBE_EDGES;
+			final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
+			final ArrayList<Vec3> vertices = new ArrayList<>();
+			final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+
+			int mutableIndex = 0;
+			for (int x = 0; x < maxX; x++) {
+				bufferIndex = 1 + (maxX + 1) * (1 + buffNo * (maxY + 1));
+				for (int y = 0; y < maxY; y++, bufferIndex += 2) {
+					for (int z = 0; z < maxZ; z++, bufferIndex++) {
+
+						bitMask = calculateNeighbourDensitiesAndMask(neighbourDensities, x, y, z, densities);
+
+						//Check for early termination if cell does not intersect boundary
+						if (bitMask == 0 || bitMask == 0xFF) {
+							continue;
+						}
+
+						edgeMask = EDGE_TABLE[bitMask];
+
+						final Vec3 vertex = new Vec3();
+
+						edgeCrossingCount = 0;
+
+						for (int cubeEdgeIndex = 0; cubeEdgeIndex < 12; ++cubeEdgeIndex) {
+
+							if ((edgeMask & (1 << cubeEdgeIndex)) == 0) {
+								continue;
+							}
+
+							edgeCrossingCount++;
+
+							// Unpack vertices
+							final int e0 = CUBE_EDGES[cubeEdgeIndex << 1];
+							final int e1 = CUBE_EDGES[(cubeEdgeIndex << 1) + 1];
+
+							// Unpack grid values
+							final float g0 = neighbourDensities[e0];
+							final float g1 = neighbourDensities[e1];
+							float pointOfIntersection = g0 - g1;                 //Compute point of intersection
+							if (!(Math.abs(pointOfIntersection) > 1e-6)) {
+								continue;
+							}
+
+							pointOfIntersection = g0 / pointOfIntersection;
+
+							// Lerp
+							vertex.xCoord += (e0 & 1) * (1.0 - pointOfIntersection) + (e1 & 1) * pointOfIntersection;
+							vertex.yCoord += (e0 & 2) * (1.0 - pointOfIntersection) + (e1 & 2) * pointOfIntersection;
+							vertex.zCoord += (e0 & 3) * (1.0 - pointOfIntersection) + (e1 & 3) * pointOfIntersection;
+						}
+
+						final float s = isoSurfaceLevel / edgeCrossingCount;
+						vertex.xCoord = renderChunkPosX + x + s * vertex.xCoord;
+						vertex.yCoord = renderChunkPosY + y + s * vertex.yCoord;
+						vertex.zCoord = renderChunkPosZ + z + s * vertex.zCoord;
+
+						if (ModConfig.offsetVertices) {
+							ModUtil.offsetVertex(vertex);
+						}
+
+						buffer[bufferIndex] = vertices.size();
+						vertices.add(vertex);
+
+						for (int axisIndex = 0; axisIndex < 3; axisIndex++) {
+							//The first three entries of the edge_mask count the crossings along the edge
+							if ((edgeMask & (1 << axisIndex)) == 0) {
+								continue;
+							}
+
+							// axisIndex = axes we are point along
+							// otherAxis0, otherAxis1 = orthogonal axes
+							final int otherAxis0 = (axisIndex + 1) % 3;
+							final int otherAxis1 = (axisIndex + 2) % 3;
+
+							final int[] pos = {x, y, z};
+
+							//If we are on a boundary, skip it
+							if (pos[otherAxis0] == 0 || pos[otherAxis1] == 0) {
+								continue;
+							}
+
+							final int adjacentEdge0 = bufferOffsetAxisIndex[otherAxis0];
+							final int adjacentEdge1 = bufferOffsetAxisIndex[otherAxis1];
+
+							// Remember to flip orientation depending on the sign of the corner.
+							if ((bitMask & 1) != 0) {
+								faces.add(new Face<Vec3>(
+										vertices.get(buffer[bufferIndex]),
+										vertices.get(buffer[bufferIndex - adjacentEdge0]),
+										vertices.get(buffer[bufferIndex - adjacentEdge0 - adjacentEdge1]),
+										vertices.get(buffer[bufferIndex - adjacentEdge1])
+								));
+							} else {
+								faces.add(new Face<Vec3>(
+										vertices.get(buffer[bufferIndex]),
+										vertices.get(buffer[bufferIndex - adjacentEdge1]),
+										vertices.get(buffer[bufferIndex - adjacentEdge0 - adjacentEdge1]),
+										vertices.get(buffer[bufferIndex - adjacentEdge0])
+								));
+							}
+
+						}
+
+					}
+				}
+			}
+
 		} catch (final Exception e) {
 			ModUtil.crashIfNotDev(e);
 		} finally {
@@ -140,11 +245,41 @@ public final class SurfaceNetsDev {
 
 	}
 
-	private static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos) {
+	private static int calculateNeighbourDensitiesAndMask(final float[] neighbourDensities, final int x, final int y, final int z, final float[] densityCache) {
+
+		final int maxX = densityCacheSizeX;
+		final int maxY = densityCacheSizeY;
+
+		int bitMask = 0b0000000;
+		int neighbourDensitiesIndex = 0;
+
+		for (int xOffset = 0; xOffset < 2; xOffset++) {
+			for (int yOffset = 0; yOffset < 2; yOffset++) {
+				for (int zOffset = 0; zOffset < 2; zOffset++) {
+					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+					float density = densityCache[(x + xOffset) + maxX * ((y + yOffset) + maxY * (z + zOffset))];
+					neighbourDensities[neighbourDensitiesIndex] = density;
+					if (density > 0F) {
+						bitMask |= (1 << neighbourDensitiesIndex);
+					}
+					neighbourDensitiesIndex++;
+				}
+			}
+		}
+
+		return bitMask;
+
+	}
+
+	private static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX,
+	                                   final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos) {
+		final int maxX = cacheSizeX;
+		final int maxY = cacheSizeY;
+		final int maxZ = cacheSizeZ;
 		int index = 0;
-		for (int x = 0; x < cacheSizeX; x++) {
-			for (int y = 0; y < cacheSizeY; y++) {
-				for (int z = 0; z < cacheSizeZ; z++) {
+		for (int x = 0; x < maxX; x++) {
+			for (int y = 0; y < maxY; y++) {
+				for (int z = 0; z < maxZ; z++) {
 					stateCache[index] = cache.getBlockState(pos.setPos(renderChunkPosX + x, renderChunkPosY + y, renderChunkPosZ + z));
 					index++;
 				}
@@ -153,10 +288,13 @@ public final class SurfaceNetsDev {
 	}
 
 	private static void fillSmoothableCache(final boolean[] smoothableCache, final IBlockState[] stateCache) {
+		final int maxX = cacheSizeX;
+		final int maxY = cacheSizeY;
+		final int maxZ = cacheSizeZ;
 		int index = 0;
-		for (int x = 0; x < cacheSizeX; x++) {
-			for (int y = 0; y < cacheSizeY; y++) {
-				for (int z = 0; z < cacheSizeZ; z++) {
+		for (int x = 0; x < maxX; x++) {
+			for (int y = 0; y < maxY; y++) {
+				for (int z = 0; z < maxZ; z++) {
 					smoothableCache[index] = ModUtil.shouldSmooth(stateCache[index]);
 					index++;
 				}
@@ -164,13 +302,18 @@ public final class SurfaceNetsDev {
 		}
 	}
 
-	private static void fillDensityCache(final float[] densityCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos, final IBlockState[] statesCache, final boolean[] smoothableCache) {
+	private static void fillDensityCache(final float[] densityCache, final int renderChunkPosX,
+	                                     final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos,
+	                                     final IBlockState[] statesCache, final boolean[] smoothableCache) {
+		final int maxX = densityCacheSizeX;
+		final int maxY = densityCacheSizeY;
+		final int maxZ = densityCacheSizeZ;
 		int index = 0;
-		for (int x = 0; x < 17; x++) {
-			for (int y = 0; y < 17; y++) {
-				for (int z = 0; z < 17; z++) {
+		for (int x = 0; x < maxX; x++) {
+			for (int y = 0; y < maxY; y++) {
+				for (int z = 0; z < maxZ; z++) {
 //					densityCache[index] = getBlockDensity(smoothableCache, statesCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, x, y, z, pos);
-					densityCache[index] = getBlockDensity(x, y, z, smoothableCache);
+					densityCache[index] = getBlockDensity(x, y, z, statesCache, smoothableCache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, pos, cache);
 					index++;
 				}
 			}
