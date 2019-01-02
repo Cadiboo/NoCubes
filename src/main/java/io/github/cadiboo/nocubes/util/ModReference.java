@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import net.minecraft.crash.CrashReport;
 
 /**
  * Holds mod-wide constant values
@@ -41,7 +40,7 @@ public final class ModReference {
 	 */
 	public static final String DEPENDENCIES = "" +
 			"required-after:minecraft;" +
-			"required-after:forge@[14.23.4.2768,);" +
+			"required-after:forge@[14.23.5.2768,);" +
 			"required-after:render_chunk_rebuild_chunk_hooks@[0.2.2,);" +
 			"";
 
@@ -60,13 +59,5 @@ public final class ModReference {
 	public static final String CERTIFICATE_FINGERPRINT = "@FINGERPRINT@";
 
 	public static final String CONFIG_VERSION = "0.1.2";
-
-	static {
-		if (MOD_ID.length() > 64) {
-			final IllegalStateException exception = new IllegalStateException("Mod Id is too long!");
-			CrashReport crashReport = new CrashReport("Mod Id must be 64 characters or shorter!", exception);
-			crashReport.makeCategory("Constructing Mod");
-		}
-	}
 
 }

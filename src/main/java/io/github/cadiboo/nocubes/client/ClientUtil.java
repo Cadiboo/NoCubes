@@ -9,6 +9,8 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEve
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -989,6 +991,14 @@ public final class ClientUtil {
 			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
 			crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
 			throw new ReportedException(crashReport);
+		}
+	}
+
+	public static IBlockAccess getCache(final RebuildChunkPreEvent event) {
+		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+			return ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
+		} else {
+			return event.getChunkCache();
 		}
 	}
 

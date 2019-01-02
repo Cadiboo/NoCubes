@@ -18,6 +18,7 @@ import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.commons.io.FileUtils;
@@ -47,8 +48,10 @@ import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 public final class ModUtil {
 
 	private static final Random RANDOM = new Random();
+
 	//TODO: remove this backwards compatibility
 	private static final Field configuration_definedConfigVersion = ReflectionHelper.findField(Configuration.class, "definedConfigVersion");
+
 	private static final Field configManager_CONFIGS = ReflectionHelper.findField(ConfigManager.class, "CONFIGS");
 
 	/**
@@ -332,6 +335,15 @@ public final class ModUtil {
 		config.save();
 		//save
 		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+	}
+
+	public static void crashIfNotDev(final Exception e) {
+		if (FMLLaunchHandler.isDeobfuscatedEnvironment()) {
+			NO_CUBES_LOG.error("FIX THIS ERROR NOW!", e);
+			return;
+		}
+		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
+		throw new ReportedException(crashReport);
 	}
 
 }
