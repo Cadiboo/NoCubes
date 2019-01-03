@@ -19,7 +19,6 @@ import net.minecraft.world.IBlockAccess;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.stream.IntStream;
 
 /**
  * @author Cadiboo
@@ -119,49 +118,36 @@ public final class SurfaceNetsDev {
 			final int[] bufferOffsetAxisIndex = {
 					1,
 					maxX + 1,
-					(maxX + 1) * (maxZ + 1)
+					(maxX + 1) * (maxY + 1)
 			};
 
 			final int[] buffer = new int[bufferOffsetAxisIndex[2] * 2];
 			int buffNo = 0;
-			int bufferIndex = 0;
-			final float[] neighbourDensities = new float[8];
-			int bitMask = 0b00000000;
 			final int[] EDGE_TABLE = SurfaceNets.EDGE_TABLE;
-			int edgeMask = 0;
-			int edgeCrossingCount = 0;
 			final int[] CUBE_EDGES = SurfaceNets.CUBE_EDGES;
 			final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
 			final ArrayList<Vec3> vertices = new ArrayList<>();
 			final ArrayList<Face<Vec3>> faces = new ArrayList<>();
 
-			// seems bad
-//			IntStream.range(0, maxX).parallel().forEachOrdered(x -> {
-//				IntStream.range(0, maxY).parallel().forEachOrdered(y -> {
-//					IntStream.range(0, maxZ).parallel().forEachOrdered(z -> {
-//
-//					});
-//				});
-//			});
-
 			int mutableIndex = 0;
-			for (int x = 0; x < maxX; x++) {
-				bufferIndex = 1 + (maxX + 1) * (1 + buffNo * (maxY + 1));
-				for (int y = 0; y < maxY; y++, bufferIndex += 2) {
-					for (int z = 0; z < maxZ; z++, bufferIndex++) {
+			for (int z = 0; z < maxZ - 1; ++z, buffNo ^= 1, bufferOffsetAxisIndex[2] = -bufferOffsetAxisIndex[2]) {
+				int bufferIndex = 1 + (maxX + 1) * (1 + buffNo * (maxY + 1));
+				for (int y = 0; y < maxY - 1; ++y, bufferIndex += 2) {
+					for (int x = 0; x < maxX - 1; ++x, ++bufferIndex) {
 
-						bitMask = calculateNeighbourDensitiesAndMask(neighbourDensities, x, y, z, densities);
+						final float[] neighbourDensities = new float[8];
+						int bitMask = calculateNeighbourDensitiesAndMask(neighbourDensities, x, y, z, densities);
 
 						//Check for early termination if cell does not intersect boundary
 						if (bitMask == 0 || bitMask == 0xFF) {
 							continue;
 						}
 
-						edgeMask = EDGE_TABLE[bitMask];
+						final int edgeMask = EDGE_TABLE[bitMask];
 
 						final Vec3 vertex = new Vec3();
 
-						edgeCrossingCount = 0;
+						int edgeCrossingCount = 0;
 
 						for (int cubeEdgeIndex = 0; cubeEdgeIndex < 12; ++cubeEdgeIndex) {
 
@@ -169,26 +155,26 @@ public final class SurfaceNetsDev {
 								continue;
 							}
 
-							edgeCrossingCount++;
+							++edgeCrossingCount;
 
 							// Unpack vertices
-							final int e0 = CUBE_EDGES[cubeEdgeIndex << 1];
-							final int e1 = CUBE_EDGES[(cubeEdgeIndex << 1) + 1];
+							final int cubeEdge0 = CUBE_EDGES[cubeEdgeIndex << 1];
+							final int cubeEdge1 = CUBE_EDGES[(cubeEdgeIndex << 1) + 1];
 
 							// Unpack grid values
-							final float g0 = neighbourDensities[e0];
-							final float g1 = neighbourDensities[e1];
-							float pointOfIntersection = g0 - g1;                 //Compute point of intersection
-							if (!(Math.abs(pointOfIntersection) > 1e-6)) {
+							final float neighbourDensity0 = neighbourDensities[cubeEdge0];
+							final float neighbourDensity1 = neighbourDensities[cubeEdge1];
+							float pointOfIntersection = neighbourDensity0 - neighbourDensity1;                 //Compute point of intersection
+							if (Math.abs(pointOfIntersection) > 1e-6) {
+								pointOfIntersection = neighbourDensity0 / pointOfIntersection;
+							} else {
 								continue;
 							}
 
-							pointOfIntersection = g0 / pointOfIntersection;
-
 							// Lerp
-							vertex.xCoord += (e0 & 1) * (1.0 - pointOfIntersection) + (e1 & 1) * pointOfIntersection;
-							vertex.yCoord += (e0 & 2) * (1.0 - pointOfIntersection) + (e1 & 2) * pointOfIntersection;
-							vertex.zCoord += (e0 & 3) * (1.0 - pointOfIntersection) + (e1 & 3) * pointOfIntersection;
+							vertex.xCoord += (cubeEdge0 & 1) * (1.0 - pointOfIntersection) + (cubeEdge1 & 1) * pointOfIntersection;
+							vertex.yCoord += (cubeEdge0 & 2) * (1.0 - pointOfIntersection) + (cubeEdge1 & 2) * pointOfIntersection;
+							vertex.zCoord += (cubeEdge0 & 3) * (1.0 - pointOfIntersection) + (cubeEdge1 & 3) * pointOfIntersection;
 						}
 
 						final float s = isoSurfaceLevel / edgeCrossingCount;
