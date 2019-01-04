@@ -144,7 +144,7 @@ public final class SurfaceNetsCry {
 			for (int neighbourIndex = 0; neighbourIndex < 8; ++neighbourIndex) {
 				//local variable for speed
 				final Vec3 point = points[neighbourIndex];
-				mutablePos.setPos(point.xCoord, point.yCoord, point.zCoord);
+				mutablePos.setPos(point.x, point.y, point.z);
 				final float neighbourDensity = ModUtil.getBlockDensity(mutablePos, cache);
 				neighbourDensities[neighbourIndex] = neighbourDensity;
 				final boolean neighborIsInsideIsosurface = neighbourDensity > isosurfaceLevel;

@@ -1,12 +1,9 @@
 package io.github.cadiboo.nocubes.debug;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.OldNoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModReference;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -43,32 +40,39 @@ public final class EventSubscriber {
 			return;
 		}
 
-		final AxisAlignedBB bb = event.getEntityBoundingBox();
+		final AxisAlignedBB entityBox = event.getEntityBoundingBox();
 		final World world = event.getEntity().world;
 
-		int minX = MathHelper.floor(bb.minX);
-		int maxX = MathHelper.ceil(bb.maxX);
-		int minY = MathHelper.floor(bb.minY);
-		int maxY = MathHelper.ceil(bb.maxY);
-		int minZ = MathHelper.floor(bb.minZ);
-		int maxZ = MathHelper.ceil(bb.maxZ);
+		int minX = MathHelper.floor(entityBox.minX);
+		int maxX = MathHelper.ceil(entityBox.maxX);
+		int minY = MathHelper.floor(entityBox.minY);
+		int maxY = MathHelper.ceil(entityBox.maxY);
+		int minZ = MathHelper.floor(entityBox.minZ);
+		int maxZ = MathHelper.ceil(entityBox.maxZ);
 		BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain();
 
-		for (int x = minX; x < maxX; ++x) {
-			for (int y = minY; y < maxY; ++y) {
-				for (int z = minZ; z < maxZ; ++z) {
-					IBlockState state = world.getBlockState(pooledMutableBlockPos.setPos(x, y, z));
+		try {
 
-					if (ModUtil.shouldSmooth(state)) {
-						pooledMutableBlockPos.release();
-						event.setCanceled(true);
-						return;
-					}
-				}
-			}
+			event.setCanceled(true);
+//		for (int x = minX; x < maxX; ++x) {
+//			for (int y = minY; y < maxY; ++y) {
+//				for (int z = minZ; z < maxZ; ++z) {
+//					IBlockState state = world.getBlockState(pooledMutableBlockPos.setPos(x, y, z));
+//
+//					if (ModUtil.shouldSmooth(state)) {
+//						pooledMutableBlockPos.release();
+//						event.setCanceled(true);
+//						return;
+//					}
+//				}
+//			}
+//		}
+		} finally {
+			// This gets called right before return, don't worry
+			// (unless theres a BIG error in the try, in which case
+			// releasing the pooled pos is the least of our worries)
+			pooledMutableBlockPos.release();
 		}
-		pooledMutableBlockPos.release();
-
 	}
 
 	@SubscribeEvent
@@ -86,33 +90,47 @@ public final class EventSubscriber {
 			return;
 		}
 
-		final AxisAlignedBB aabb = event.getAabb();
+		BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain();
 
-		final List<Vec3> vertices = ModConfig.debug.activeRenderingAlgorithm.getVertices(new BlockPos(aabb.minX, aabb.minY, aabb.minZ), event.getWorld());
+		try {
+			final AxisAlignedBB aabb = event.getAabb();
 
-		if (vertices.isEmpty() || vertices.size() < 8) {
-			return;
+			final BlockPos pos = new BlockPos(aabb.minX, aabb.minY, aabb.minZ);
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
+			final List<Vec3> vertices = ModConfig.debug.activeRenderingAlgorithm.getVertices(pooledMutableBlockPos, event.getWorld());
+
+			if (vertices.isEmpty() || vertices.size() < 8) {
+				return;
+			}
+
+			final List<AxisAlignedBB> collisionBoxes = event.getCollisionBoxesList();
+
+			final Vec3 v0 = vertices.get(0).offset(x, y, z);
+			final Vec3 v1 = vertices.get(1).offset(x, y, z);
+			final Vec3 v2 = vertices.get(2).offset(x, y, z);
+			final Vec3 v3 = vertices.get(3).offset(x, y, z);
+			final Vec3 v4 = vertices.get(4).offset(x, y, z);
+			final Vec3 v5 = vertices.get(5).offset(x, y, z);
+			final Vec3 v6 = vertices.get(6).offset(x, y, z);
+			final Vec3 v7 = vertices.get(7).offset(x, y, z);
+
+//		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.x, v0.y, v0.z, v6.x, v6.y, v6.z);
+//		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.x, v0.y, v0.z, v6.x, v6.y, v6.z);
+			final AxisAlignedBB box0 = new AxisAlignedBB(x, y, z, v0.x, v0.y, v0.z);
+
+			collisionBoxes.clear();
+			collisionBoxes.add(box0);
+
+//		collisionBoxes.add(new AxisAlignedBB(new BlockPos(16, 16, 16)));
+		} finally {
+			// This gets called right before return, don't worry
+			// (unless theres a BIG error in the try, in which case
+			// releasing the pooled pos is the least of our worries)
+			pooledMutableBlockPos.release();
 		}
-
-		final List<AxisAlignedBB> collisionBoxes = event.getCollisionBoxesList();
-
-		final Vec3 v0 = vertices.get(0);
-		final Vec3 v1 = vertices.get(1);
-		final Vec3 v2 = vertices.get(2);
-		final Vec3 v3 = vertices.get(3);
-		final Vec3 v4 = vertices.get(4);
-		final Vec3 v5 = vertices.get(5);
-		final Vec3 v6 = vertices.get(6);
-		final Vec3 v7 = vertices.get(7);
-
-//		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);
-		final AxisAlignedBB collisionBox = new AxisAlignedBB(v0.xCoord, v0.yCoord, v0.zCoord, v6.xCoord, v6.yCoord, v6.zCoord);
-
-		collisionBoxes.clear();
-//		collisionBoxes.add(collisionBox);
-
-		collisionBoxes.add(new AxisAlignedBB(new BlockPos(16, 16, 16)));
-
 	}
 
 }

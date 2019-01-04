@@ -232,10 +232,10 @@ public final class OldNoCubesQuads {
 					alpha = 1.0F;
 
 			// And finally the side is going to be rendered!
-			bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			bufferBuilder.pos(vertex3.xCoord, vertex3.yCoord, vertex3.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+			bufferBuilder.pos(vertex3.x, vertex3.y, vertex3.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 
 			//TODO: smooth lighting
 
@@ -278,16 +278,16 @@ public final class OldNoCubesQuads {
 			final Vec3 point = points[pointIndex];
 
 			// Give the point the block's coordinates.
-			point.xCoord += (double) x;
-			point.yCoord += (double) y;
-			point.zCoord += (double) z;
+			point.x += (double) x;
+			point.y += (double) y;
+			point.z += (double) z;
 
 			// Check if the point is intersecting with a smoothable block.
 			if (doesPointIntersectWithSmoothable(cache, point)) {
 				if (pointIndex < 4 && doesPointBottomIntersectWithAir(cache, point)) {
-					point.yCoord = (double) y + 1.0D;
+					point.y = (double) y + 1.0D;
 				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point)) {
-					point.yCoord = (double) y;
+					point.y = (double) y;
 				}
 
 				if (ModConfig.offsetVertices) {
@@ -326,13 +326,13 @@ public final class OldNoCubesQuads {
 		boolean intersects = false;
 
 		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.xCoord - (double) (i & 1));
-			int z1 = (int) (point.zCoord - (double) (i >> 1 & 1));
-			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1)))) {
+			int x1 = (int) (point.x - (double) (i & 1));
+			int z1 = (int) (point.z - (double) (i >> 1 & 1));
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.y, z1)))) {
 				return false;
 			}
 
-			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1)))) {
+			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.y - 1, z1)))) {
 				intersects = true;
 			}
 		}
@@ -352,17 +352,17 @@ public final class OldNoCubesQuads {
 		boolean notOnly = false;
 
 		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.xCoord - (double) (i & 1));
-			int z1 = (int) (point.zCoord - (double) (i >> 1 & 1));
-			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1)))) {
+			int x1 = (int) (point.x - (double) (i & 1));
+			int z1 = (int) (point.z - (double) (i >> 1 & 1));
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.y - 1, z1)))) {
 				return false;
 			}
 
-			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord + 1, z1)))) {
+			if (!isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.y + 1, z1)))) {
 				notOnly = true;
 			}
 
-			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1)))) {
+			if (isBlockAirOrPlant(world.getBlockState(new BlockPos(x1, (int) point.y, z1)))) {
 				intersects = true;
 			}
 		}
@@ -379,14 +379,14 @@ public final class OldNoCubesQuads {
 	 */
 	private static boolean doesPointIntersectWithSmoothable(IBlockAccess world, Vec3 point) {
 		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.xCoord - (double) (i & 1));
-			int z1 = (int) (point.yCoord - (double) (i >> 1 & 1));
-			IBlockState block = world.getBlockState(new BlockPos(x1, (int) point.yCoord, z1));
+			int x1 = (int) (point.x - (double) (i & 1));
+			int z1 = (int) (point.y - (double) (i >> 1 & 1));
+			IBlockState block = world.getBlockState(new BlockPos(x1, (int) point.y, z1));
 			if (!isBlockAirOrPlant(block) && !ModUtil.shouldSmooth(block)) {
 				return false;
 			}
 
-			IBlockState block1 = world.getBlockState(new BlockPos(x1, (int) point.yCoord - 1, z1));
+			IBlockState block1 = world.getBlockState(new BlockPos(x1, (int) point.y - 1, z1));
 			if (!isBlockAirOrPlant(block1) && !ModUtil.shouldSmooth(block1)) {
 				return false;
 			}

@@ -9,6 +9,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEve
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkBlockOptifineEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.block.BlockLiquid;
@@ -32,6 +33,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -914,73 +916,86 @@ public final class ClientUtil {
 
 	}
 
+	private static final int[][] OFFSETS_ORDERED = {
+			// check 6 immediate neighbours (DUNSWE?)
+			{0, -1, 0},
+			{0, +1, 0},
+			{+1, 0, 0},
+			{-1, 0, 0},
+			{0, 0, +1},
+			{0, 0, -1},
+			// check 8 corner neighbours
+			{-1, -1, -1},
+			{-1, -1, +1},
+			{+1, -1, -1},
+			{+1, -1, +1},
+			{-1, +1, -1},
+			{-1, +1, +1},
+			{+1, +1, -1},
+			{+1, +1, +1},
+	};
+
 	public static Object[] getTexturePosAndState(final IBlockAccess cache, final BlockPos pos, final IBlockState state) {
 
-		// TODO:
-		// 1 pooled mutable blockpos
-		// check the block
-		// check 6 immediate neighbours
-		// check 8 corner neighbours
+		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain(pos);
 
-		IBlockState textureState = state;
-		BlockPos texturePos = pos;
+		try {
 
-		IF:
-		if (ModConfig.beautifyTexturesLevel == FANCY) {
+			IBlockState textureState = state;
+			BlockPos texturePos = pos;
 
-			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-				final IBlockState tempState = cache.getBlockState(mutablePos);
-				if (tempState.getBlock() == Blocks.SNOW_LAYER) {
-					textureState = tempState;
-					texturePos = mutablePos;
-					break IF;
-				} else if (ModUtil.shouldSmooth(tempState)) {
-					textureState = tempState;
-					texturePos = mutablePos;
+			//check pos first
+			if (ModUtil.shouldSmooth(cache.getBlockState(pos))) {
+				return new Object[]{
+						texturePos,
+						textureState
+				};
+			}
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
+			if (ModConfig.beautifyTexturesLevel == FANCY) {
+
+				for (int[] offset : OFFSETS_ORDERED) {
+					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+					if (tempState.getBlock() == Blocks.SNOW_LAYER) {
+						textureState = tempState;
+						texturePos = pooledMutableBlockPos.toImmutable();
+						break;
+					}
+				}
+
+				for (int[] offset : OFFSETS_ORDERED) {
+					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+					if (tempState.getBlock() == Blocks.GRASS) {
+						textureState = tempState;
+						texturePos = pooledMutableBlockPos.toImmutable();
+						break;
+					}
 				}
 			}
 
-			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-				final IBlockState tempState = cache.getBlockState(mutablePos);
-				if (tempState.getBlock() == Blocks.GRASS) {
+			for (int[] offset : OFFSETS_ORDERED) {
+				final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+				if (ModUtil.shouldSmooth(tempState)) {
 					textureState = tempState;
-					texturePos = mutablePos;
-					break IF;
-				} else if (ModUtil.shouldSmooth(tempState)) {
-					textureState = tempState;
-					texturePos = mutablePos;
-				}
-			}
-
-			if (ModUtil.shouldSmooth(state)) {
-				texturePos = pos;
-				textureState = state;
-			}
-
-		} else {
-
-			if (ModUtil.shouldSmooth(textureState)) {
-				break IF;
-			}
-
-			// get texture
-			for (final BlockPos.MutableBlockPos mutablePos : BlockPos.getAllInBoxMutable(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
-				if (mutablePos.equals(pos)) {
-					continue;
-				}
-				if (ModUtil.shouldSmooth(textureState)) {
+					texturePos = pooledMutableBlockPos.toImmutable();
 					break;
-				} else {
-					texturePos = mutablePos;
-					textureState = cache.getBlockState(mutablePos);
 				}
 			}
-		}
 
-		return new Object[]{
-				texturePos,
-				textureState
-		};
+			return new Object[]{
+					texturePos,
+					textureState
+			};
+		} finally {
+			// This gets called right before return, don't worry
+			// (unless theres a BIG error in the try, in which case
+			// releasing the pooled pos is the least of our worries)
+			pooledMutableBlockPos.release();
+		}
 
 	}
 
@@ -997,6 +1012,14 @@ public final class ClientUtil {
 	public static IBlockAccess getCache(final RebuildChunkPreEvent event) {
 		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
 			return ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
+		} else {
+			return event.getChunkCache();
+		}
+	}
+
+	public static IBlockAccess getCache(final RebuildChunkBlockEvent event) {
+		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
+			return ((RebuildChunkBlockOptifineEvent) event).getChunkCacheOF();
 		} else {
 			return event.getChunkCache();
 		}

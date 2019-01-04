@@ -8,18 +8,20 @@ import net.minecraft.util.math.BlockPos;
  */
 public class Vec3 {
 
-	public double xCoord;
-	public double yCoord;
-	public double zCoord;
+	public double x;
+
+	public double y;
+
+	public double z;
 
 	public Vec3() {
 		this(0, 0, 0);
 	}
 
 	public Vec3(final double x, final double y, final double z) {
-		this.xCoord = x;
-		this.yCoord = y;
-		this.zCoord = z;
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
 
 	public Vec3(final float[] vertexAsFloat) {
@@ -32,14 +34,21 @@ public class Vec3 {
 
 	public Vec3 offset(final double x, final double y, final double z) {
 		return new Vec3(
-				this.xCoord + x,
-				this.yCoord + y,
-				this.zCoord + z
+				this.x + x,
+				this.y + y,
+				this.z + z
 		);
 	}
 
+	public Vec3 move(final double x, final double y, final double z) {
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		return this;
+	}
+
 	public BlockPos toBlockPos() {
-		return new BlockPos(this.xCoord, this.yCoord, this.zCoord);
+		return new BlockPos(this.x, this.y, this.z);
 	}
 
 	public AxisAlignedBB toAxisAlignedBB() {

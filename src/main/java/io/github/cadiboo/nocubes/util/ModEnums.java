@@ -14,6 +14,7 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.StringUtils;
@@ -111,18 +112,18 @@ public final class ModEnums {
 		}
 
 		@Nonnull
-		public List<Vec3> getVertices(final BlockPos blockPos, final IBlockAccess world) {
-			return this.renderAlgorithm.getVertices(blockPos, world);
+		public List<Vec3> getVertices(final PooledMutableBlockPos pooledMutableBlockPos, final IBlockAccess world) {
+			return this.renderAlgorithm.getVertices(pooledMutableBlockPos, world);
 		}
 
 		@Nonnull
-		public List<Face<Vec3>> getFaces(final BlockPos blockPos, final IBlockAccess world) {
-			return this.renderAlgorithm.getFaces(blockPos, world);
+		public List<Face<Vec3>> getFaces(final PooledMutableBlockPos pooledMutableBlockPos, final IBlockAccess world) {
+			return this.renderAlgorithm.getFaces(pooledMutableBlockPos, world);
 		}
 
 	}
 
-	public static enum EffortLevel implements IEnumNameFormattable {
+	public enum EffortLevel implements IEnumNameFormattable {
 		OFF,
 		FAST,
 		FANCY,
@@ -138,21 +139,21 @@ public final class ModEnums {
 	public interface IEnumNameFormattable {
 
 		/**
-		 * Converts the name to lowercase as per {@link java.lang.String#toLowerCase() String.toLowerCase}.
+		 * Converts the name to lowercase as per {@link String#toLowerCase() String.toLowerCase}.
 		 */
 		default String getNameLowercase() {
 			return this.name().toLowerCase();
 		}
 
 		/**
-		 * Converts the name to uppercase as per {@link java.lang.String#toUpperCase() String.toUpperCase}.
+		 * Converts the name to uppercase as per {@link String#toUpperCase() String.toUpperCase}.
 		 */
 		default String getNameUppercase() {
 			return this.getNameLowercase().toUpperCase();
 		}
 
 		/**
-		 * Capitalizes the name of the material as per {@link org.apache.commons.lang3.StringUtils#capitalize(String) StringUtils.capitalize}.
+		 * Capitalizes the name of the material as per {@link StringUtils#capitalize(String) StringUtils.capitalize}.
 		 */
 		default String getNameFormatted() {
 			return StringUtils.capitalize(this.getNameLowercase());

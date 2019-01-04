@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
+import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -181,11 +183,11 @@ public final class ModUtil {
 	public static void offsetVertex(Vec3 point) {
 		// yay magic numbers
 		/* Begin Click_Me's Code (Modified by Cadiboo) */
-		long i = (long) (point.xCoord * 3129871.0D) ^ (long) point.yCoord * 116129781L ^ (long) point.zCoord;
+		long i = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
 		i = i * i * 42317861L + i * 11L;
-		point.xCoord += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
-		point.yCoord += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
-		point.zCoord += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.x += (double) (((float) (i >> 16 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.y += (double) (((float) (i >> 20 & 15L) / 15.0F - 0.5F) * 0.5F);
+		point.z += (double) (((float) (i >> 24 & 15L) / 15.0F - 0.5F) * 0.5F);
 		/* End Click_Me's Code (Modified by Cadiboo) */
 	}
 
@@ -344,6 +346,23 @@ public final class ModUtil {
 		}
 		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
 		throw new ReportedException(crashReport);
+	}
+
+	public static List<Vec3> getBlankVertexList() {
+		return Lists.newArrayList(getBlankVertexArray());
+	}
+
+	private static Vec3[] getBlankVertexArray() {
+		return new Vec3[]{
+				new Vec3(0, 0, 0),
+				new Vec3(1, 0, 0),
+				new Vec3(1, 0, 1),
+				new Vec3(0, 0, 1),
+				new Vec3(0, 1, 0),
+				new Vec3(1, 1, 0),
+				new Vec3(1, 1, 1),
+				new Vec3(0, 1, 1)
+		};
 	}
 
 }

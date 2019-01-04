@@ -31,7 +31,7 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRe
  */
 public final class MarchingCubes {
 
-	private static final int[] EDGE_TABLE = {
+	public static final int[] EDGE_TABLE = {
 			0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 			0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
 			0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -66,7 +66,7 @@ public final class MarchingCubes {
 			0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0
 	};
 
-	private static final int[][] TRIANGLE_TABLE = {
+	public static final int[][] TRIANGLE_TABLE = {
 			{},
 			{0, 8, 3},
 			{0, 1, 9},
@@ -325,7 +325,7 @@ public final class MarchingCubes {
 			{}
 	};
 
-	private static final int[][] CUBE_VERTS = {
+	public static final int[][] CUBE_VERTS = {
 			{0, 0, 0},
 			{1, 0, 0},
 			{1, 1, 0},
@@ -335,7 +335,8 @@ public final class MarchingCubes {
 			{1, 1, 1},
 			{0, 1, 1}
 	};
-	private static final int[][] EDGE_INDEX = {
+
+	public static final int[][] EDGE_INDEX = {
 			{0, 1},
 			{1, 2},
 			{2, 3},
@@ -458,16 +459,16 @@ public final class MarchingCubes {
 							//pretend they're quads & try and get good textures
 							if (i % 6 == 0) {
 								//bottom right triangle (if facing north)
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							} else {
 								//top left triangle (if facing north)
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex0.xCoord, vertex0.yCoord, vertex0.zCoord).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex1.xCoord, vertex1.yCoord, vertex1.zCoord).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-								bufferBuilder.pos(vertex2.xCoord, vertex2.yCoord, vertex2.zCoord).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex0.x, vertex0.y, vertex0.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex1.x, vertex1.y, vertex1.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+								bufferBuilder.pos(vertex2.x, vertex2.y, vertex2.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							}
 						}
 
