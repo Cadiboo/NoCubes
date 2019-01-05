@@ -9,22 +9,13 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRen
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockRenderInTypeEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.optifine.RebuildChunkPreOptifineEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.mod.EnumEventType;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import net.minecraftforge.client.ForgeHooksClient;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
  * Implementation of the SurfaceNets algorithm in Minecraft
@@ -103,39 +94,71 @@ public final class SurfaceNets {
 
 	}
 
+	private static final ThreadLocal<Boolean> hasCompleted = ThreadLocal.withInitial(() -> false);
+
+	private static final ThreadLocal<boolean[]> usedRenderLayersThreadLocal = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
+
 	public static void renderPre(final RebuildChunkPreEvent event) {
+
+	}
+
+	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
+
+	}
+
+	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
+
+	}
+
+	public static void renderBlock(final RebuildChunkBlockEvent event) {
+
+		renderChunkInBlockIfFirst(event);
+
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
+
+		final int blockRenderLayerOrdinal = event.getBlockRenderLayer().ordinal();
+
+		event.getUsedBlockRenderLayers()[blockRenderLayerOrdinal] |= usedRenderLayersThreadLocal.get()[blockRenderLayerOrdinal];
+
+	}
+
+	private static void renderChunkInBlockIfFirst(final RebuildChunkBlockEvent event) {
+
+		if (hasCompleted.get()) {
+			return;
+		}
 
 		final float isoSurfaceLevel = ModConfig.getIsosurfaceLevel();
 		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+		final int renderChunkPosX = renderChunkPos.getX();
+		final int renderChunkPosY = renderChunkPos.getY();
+		final int renderChunkPosZ = renderChunkPos.getZ();
 		final RenderChunk renderChunk = event.getRenderChunk();
-		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
-//		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
-		final IBlockAccess cache;
-		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
-			cache = ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
-		} else {
-			cache = event.getChunkCache();
-		}
-
-//		final int[] dims = {16, 16, 16};
-		// make the algorithm look on the sides of chunks aswell
-		// I tweaked the loop in Marching cubes, this time I just edited dims
-		final int[] dims = {18, 18, 18};
-		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
-		final ArrayList<float[]> vertices = new ArrayList<>();
+		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
+		final IBlockAccess cache = ClientUtil.getCache(event);
 
 		try {
 
+			final int[] dims = {18, 18, 18};
+			final int[] c = {renderChunkPosX, renderChunkPosY, renderChunkPosZ};
+
 			final float[] data = new float[dims[0] * dims[1] * dims[2]];
 
-			for (BlockPos.MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPos, renderChunkPos.add(dims[0] - 1, dims[1] - 1, dims[2] - 1))) {
-				final BlockPos sub = mutableBlockPos.subtract(renderChunkPos);
-				final int x = sub.getX();
-				final int y = sub.getY();
-				final int z = sub.getZ();
-				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-				data[x + dims[0] * (y + dims[1] * z)] = ModUtil.getBlockDensity(mutableBlockPos, cache);
+			for (int x = 0; x < dims[0]; x++) {
+				for (int y = 0; y < dims[1]; y++) {
+					for (int z = 0; z < dims[2]; z++) {
+						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+						data[x + dims[0] * (y + dims[1] * z)] = ModUtil.getBlockDensity(
+								pooledMutablePos.setPos(
+										renderChunkPosX + x,
+										renderChunkPosY + y,
+										renderChunkPosZ + z),
+								cache);
+					}
+				}
 			}
+
+			final ArrayList<float[]> vertices = new ArrayList<>();
 
 			//Internal buffer, this may get resized at run time
 			final int[] buffer;
@@ -164,7 +187,7 @@ public final class SurfaceNets {
 
 				for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n, m += 2) {
 					for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n, ++m) {
-						pos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
+						pooledMutablePos.setPos(c[0] + x[0], c[1] + x[1], c[2] + x[2]);
 
 						//Read in 8 field values around this vertex and store them in an array
 						//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
@@ -239,10 +262,8 @@ public final class SurfaceNets {
 							ModUtil.offsetVertex(v);
 						vertices.add(v);
 
-						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
+						final BlockRenderData renderData = ClientUtil.getBlockRenderData(pooledMutablePos, cache);
 
-						final BlockRenderLayer blockRenderLayer = renderData.getBlockRenderLayer();
-						ForgeHooksClient.setRenderLayer(blockRenderLayer);
 						final int red = renderData.getRed();
 						final int green = renderData.getGreen();
 						final int blue = renderData.getBlue();
@@ -254,14 +275,7 @@ public final class SurfaceNets {
 						final int lightmapSkyLight = renderData.getLightmapSkyLight();
 						final int lightmapBlockLight = renderData.getLightmapBlockLight();
 
-						final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
-						final CompiledChunk compiledChunk = event.getCompiledChunk();
-
-						if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-							compiledChunk.setLayerStarted(blockRenderLayer);
-							compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
-							renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
-						}
+						final BufferBuilder bufferBuilder = event.getBufferBuilder();
 
 						//Now we need to add faces together, to do this we just loop over 3 basis components
 						for (int i = 0; i < 3; ++i) {
@@ -280,6 +294,8 @@ public final class SurfaceNets {
 
 							//Otherwise, look up adjacent edges in buffer
 							int du = R[iu], dv = R[iv];
+
+							usedRenderLayersThreadLocal.get()[event.getBlockRenderLayer().ordinal()] = true;
 
 							//TODO: remove float[] -> Vec3 -> float shit
 							//Remember to flip orientation depending on the sign of the corner.
@@ -316,52 +332,18 @@ public final class SurfaceNets {
 					}
 				}
 			}
-//		} catch (final Exception e) {
-//			e.printStackTrace();
 		} finally {
-			pos.release();
-//		    pooledMutablePos.release();
+			pooledMutablePos.release();
 		}
 
-		ForgeHooksClient.setRenderLayer(null);
-
-		//All done!  Return the result
-//		return {vertices:vertices, faces:faces };
-
-	}
-
-	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
-
-//		if (ModUtil.shouldSmooth(event.getBlockState())) {
-//			event.setResult(Event.Result.DENY);
-//			event.setCanceled(true);
-//		}
-
-	}
-
-	public static void renderType(final RebuildChunkBlockRenderInTypeEvent event) {
-
-//		if (ModUtil.shouldSmooth(event.getBlockState())) {
-//			event.setResult(Event.Result.DENY);
-//			event.setCanceled(true);
-//		}
-
-	}
-
-	public static void renderBlock(final RebuildChunkBlockEvent event) {
-
-		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
+		hasCompleted.set(true);
 
 	}
 
 	public static void renderPost(final RebuildChunkPostEvent event) {
 
-	}
+		hasCompleted.set(false);
 
-	@Nullable
-	public static Vec3[] getPoints(final BlockPos blockPos, final World world) {
-		// D:
-		return null;
 	}
 
 }
