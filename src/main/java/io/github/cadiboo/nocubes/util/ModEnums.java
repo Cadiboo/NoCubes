@@ -33,22 +33,22 @@ public final class ModEnums {
 
 	public enum StableRenderAlgorithm implements IEnumNameFormattable {
 
-		SURFACE_NETS(SurfaceNets::renderPre, SurfaceNets::renderLayer, SurfaceNets::renderType, SurfaceNets::renderBlock, SurfaceNets::renderPost, SurfaceNets::getPoints),
+		SURFACE_NETS(SurfaceNets::renderPre, SurfaceNets::renderLayer, SurfaceNets::renderType, SurfaceNets::renderBlock, SurfaceNets::renderPost),
 
-		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost, MarchingCubes::getPoints),
+		MARCHING_CUBES(MarchingCubes::renderPre, MarchingCubes::renderLayer, MarchingCubes::renderType, MarchingCubes::renderBlock, MarchingCubes::renderPost),
 
-		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost, OldNoCubes::getPoints),
+		OLD_NO_CUBES(OldNoCubes::renderPre, OldNoCubes::renderLayer, OldNoCubes::renderType, OldNoCubes::renderBlock, OldNoCubes::renderPost),
 
-		MARCHING_TETRAHEDRA(MarchingTetrahedra::renderPre, MarchingTetrahedra::renderLayer, MarchingTetrahedra::renderType, MarchingTetrahedra::renderBlock, MarchingTetrahedra::renderPost, MarchingTetrahedra::getPoints),
+		MARCHING_TETRAHEDRA(MarchingTetrahedra::renderPre, MarchingTetrahedra::renderLayer, MarchingTetrahedra::renderType, MarchingTetrahedra::renderBlock, MarchingTetrahedra::renderPost),
 
-		SURFACE_NETS_DEV(SurfaceNetsDev::renderPre, SurfaceNetsDev::renderLayer, SurfaceNetsDev::renderType, SurfaceNetsDev::renderBlock, SurfaceNetsDev::renderPost, SurfaceNets::getPoints),
+		SURFACE_NETS_DEV(SurfaceNetsDev::renderPre, SurfaceNetsDev::renderLayer, SurfaceNetsDev::renderType, SurfaceNetsDev::renderBlock, SurfaceNetsDev::renderPost),
 
 		NONE(event -> {
 		}, event -> {
 		}, event -> {
 		}, event -> {
 		}, event -> {
-		}, (blockPos, world) -> null),
+		}),
 
 		;
 
@@ -62,15 +62,12 @@ public final class ModEnums {
 
 		private final Consumer<RebuildChunkPostEvent> renderPost;
 
-		private final BiFunction<BlockPos, World, Vec3[]> getPoints;
-
-		StableRenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderPre, final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer, final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType, final Consumer<RebuildChunkBlockEvent> renderBlock, final Consumer<RebuildChunkPostEvent> renderPost, final BiFunction<BlockPos, World, Vec3[]> getPoints) {
+		StableRenderAlgorithm(final Consumer<RebuildChunkPreEvent> renderPre, final Consumer<RebuildChunkBlockRenderInLayerEvent> renderLayer, final Consumer<RebuildChunkBlockRenderInTypeEvent> renderType, final Consumer<RebuildChunkBlockEvent> renderBlock, final Consumer<RebuildChunkPostEvent> renderPost) {
 			this.renderPre = renderPre;
 			this.renderLayer = renderLayer;
 			this.renderType = renderType;
 			this.renderBlock = renderBlock;
 			this.renderPost = renderPost;
-			this.getPoints = getPoints;
 		}
 
 		public void renderPre(final RebuildChunkPreEvent event) {
@@ -93,9 +90,6 @@ public final class ModEnums {
 			renderPost.accept(event);
 		}
 
-		public Vec3[] getPoints(final BlockPos blockPos, final World world) {
-			return getPoints.apply(blockPos, world);
-		}
 	}
 
 	public enum DebugRenderAlgorithm implements IEnumNameFormattable {
