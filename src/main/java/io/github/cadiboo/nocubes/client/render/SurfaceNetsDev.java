@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
@@ -25,6 +24,14 @@ import net.minecraftforge.client.ForgeHooksClient;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.CACHE_ARRAY_SIZE;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.DENSITY_CACHE_ARRAY_SIZE;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.MESH_SIZE_X;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.MESH_SIZE_Y;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.MESH_SIZE_Z;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.fillDensityCache;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.fillSmoothableCache;
+import static io.github.cadiboo.nocubes.client.SurfaceNetsUtil.fillStateCache;
 import static io.github.cadiboo.nocubes.client.render.MarchingCubes.EDGE_TABLE;
 import static io.github.cadiboo.nocubes.client.render.MarchingCubes.TRIANGLE_TABLE;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.compiledChunk_setLayerUsed;
@@ -39,65 +46,6 @@ public final class SurfaceNetsDev {
 
 	// because surface nets takes the 8 points of a block into account, we need to get the densities for +1 block on every positive axis of the chunk
 	// because of this, we need to cache +2 blocks on every positive axis of the chunk
-
-	private static final int chunkSizeX = 16;
-
-	private static final int chunkSizeY = 16;
-
-	private static final int chunkSizeZ = 16;
-
-	private static final int meshSizeX = chunkSizeX + 1;
-
-	private static final int meshSizeY = chunkSizeY + 1;
-
-	private static final int meshSizeZ = chunkSizeZ + 1;
-
-	private static final int densityCacheSizeX = meshSizeX + 1;
-
-	private static final int densityCacheSizeY = meshSizeY + 1;
-
-	private static final int densityCacheSizeZ = meshSizeZ + 1;
-
-	private static final int densityCacheArraySize = densityCacheSizeX * densityCacheSizeY * densityCacheSizeZ;
-
-	private static final int cacheSizeX = densityCacheSizeX + 1;
-
-	private static final int cacheSizeY = densityCacheSizeY + 1;
-
-	private static final int cacheSizeZ = densityCacheSizeZ + 1;
-
-	private static final int cacheArraySize = cacheSizeX * cacheSizeY * cacheSizeZ;
-
-	private static float getBlockDensity(final int posX, final int posY, final int posZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final PooledMutableBlockPos pos, final IBlockAccess cache) {
-		float density = 0;
-		for (int xOffset = 0; xOffset < 2; xOffset++) {
-			for (int yOffset = 0; yOffset < 2; yOffset++) {
-				for (int zOffset = 0; zOffset < 2; zOffset++) {
-					final int x = (posX + xOffset);
-					final int y = (posY + yOffset);
-					final int z = (posZ + zOffset);
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					final int index = x + cacheSizeX * (y + cacheSizeY * z);
-
-					final IBlockState state = stateCache[index];
-					final boolean shouldSmooth = smoothableCache[index];
-
-					if (shouldSmooth) {
-						pos.setPos(
-								renderChunkPosX + x,
-								renderChunkPosY + y,
-								renderChunkPosZ + z
-						);
-						final AxisAlignedBB box = state.getBoundingBox(cache, pos);
-						density += box.maxY - box.minY;
-					} else {
-						density--;
-					}
-				}
-			}
-		}
-		return density;
-	}
 
 	public static void renderPre(final RebuildChunkPreEvent event) {
 
@@ -115,18 +63,18 @@ public final class SurfaceNetsDev {
 
 		try {
 			// caches need two extra blocks on every positive axis
-			final IBlockState[] states = new IBlockState[cacheArraySize];
+			final IBlockState[] states = new IBlockState[CACHE_ARRAY_SIZE];
 			fillStateCache(states, renderChunkPosX, renderChunkPosY, renderChunkPosZ, cache, pooledMutableBlockPos);
-			final boolean[] smoothables = new boolean[cacheArraySize];
+			final boolean[] smoothables = new boolean[CACHE_ARRAY_SIZE];
 			fillSmoothableCache(smoothables, states);
 
 			// densities needs 1 extra block on every positive axis
-			final float[] densities = new float[densityCacheArraySize];
+			final float[] densities = new float[DENSITY_CACHE_ARRAY_SIZE];
 			fillDensityCache(densities, renderChunkPosX, renderChunkPosY, renderChunkPosZ, cache, pooledMutableBlockPos, states, smoothables);
 
-			final int maxX = meshSizeX;
-			final int maxY = meshSizeY;
-			final int maxZ = meshSizeZ;
+			final int maxX = MESH_SIZE_X;
+			final int maxY = MESH_SIZE_Y;
+			final int maxZ = MESH_SIZE_Z;
 
 			final float[] neighbourDensities = new float[8];
 			int bitMask = 0;
@@ -137,7 +85,8 @@ public final class SurfaceNetsDev {
 				for (int y = 0; y < maxY; y++) {
 					for (int z = 0; z < maxZ; z++) {
 
-						bitMask = calculateMask(neighbourDensities, x, y, z, densities, isoSurfaceLevel);
+//						bitMask = calculateMask(neighbourDensities, x, y, z, densities, isoSurfaceLevel);
+						bitMask = 0;
 
 						//Check for early termination if cell does not intersect boundary
 						if (bitMask == 0 || bitMask == 0xFF) {
@@ -270,117 +219,6 @@ public final class SurfaceNetsDev {
 				p1.y + mu * (p2.y - p1.y),
 				p1.z + mu * (p2.z - p1.z)
 		);
-	}
-
-	private static int calculateNeighbourDensitiesAndMask(final float[] neighbourDensities, final int x, final int y, final int z, final float[] densityCache) {
-
-		final int maxX = densityCacheSizeX;
-		final int maxY = densityCacheSizeY;
-
-		int bitMask = 0b0000000;
-		int neighbourDensitiesIndex = 0;
-
-		for (int xOffset = 0; xOffset < 2; xOffset++) {
-			for (int yOffset = 0; yOffset < 2; yOffset++) {
-				for (int zOffset = 0; zOffset < 2; zOffset++) {
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					float density = densityCache[(x + xOffset) + maxX * ((y + yOffset) + maxY * (z + zOffset))];
-					neighbourDensities[neighbourDensitiesIndex] = density;
-					if (density > 0F) {
-						bitMask |= (1 << neighbourDensitiesIndex);
-					}
-					neighbourDensitiesIndex++;
-				}
-			}
-		}
-
-		return bitMask;
-	}
-
-	private static int calculateMask(final float[] neighbourDensities, final int x, final int y, final int z, final float[] densityCache, final float isoSurfaceLevel) {
-
-		final int maxX = densityCacheSizeX;
-		final int maxY = densityCacheSizeY;
-
-		int bitMask = 0b0000000;
-
-		final int index0 = (x + 0) + maxX * ((y + 0) + maxY * (z + 0));
-		final int index1 = (x + 1) + maxX * ((y + 0) + maxY * (z + 0));
-		final int index2 = (x + 1) + maxX * ((y + 0) + maxY * (z + 1));
-		final int index3 = (x + 0) + maxX * ((y + 0) + maxY * (z + 1));
-		final int index4 = (x + 0) + maxX * ((y + 1) + maxY * (z + 0));
-		final int index5 = (x + 1) + maxX * ((y + 1) + maxY * (z + 0));
-		final int index6 = (x + 1) + maxX * ((y + 1) + maxY * (z + 1));
-		final int index7 = (x + 0) + maxX * ((y + 1) + maxY * (z + 1));
-
-		neighbourDensities[0] = densityCache[index0];
-		neighbourDensities[1] = densityCache[index1];
-		neighbourDensities[2] = densityCache[index2];
-		neighbourDensities[3] = densityCache[index3];
-		neighbourDensities[4] = densityCache[index4];
-		neighbourDensities[5] = densityCache[index5];
-		neighbourDensities[6] = densityCache[index6];
-		neighbourDensities[7] = densityCache[index7];
-
-		if (neighbourDensities[0] < isoSurfaceLevel) bitMask |= 1;
-		if (neighbourDensities[1] < isoSurfaceLevel) bitMask |= 2;
-		if (neighbourDensities[2] < isoSurfaceLevel) bitMask |= 4;
-		if (neighbourDensities[3] < isoSurfaceLevel) bitMask |= 8;
-		if (neighbourDensities[4] < isoSurfaceLevel) bitMask |= 16;
-		if (neighbourDensities[5] < isoSurfaceLevel) bitMask |= 32;
-		if (neighbourDensities[6] < isoSurfaceLevel) bitMask |= 64;
-		if (neighbourDensities[7] < isoSurfaceLevel) bitMask |= 128;
-
-		return bitMask;
-	}
-
-	private static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX,
-	                                   final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos) {
-		final int maxX = cacheSizeX;
-		final int maxY = cacheSizeY;
-		final int maxZ = cacheSizeZ;
-		int index = 0;
-		for (int x = 0; x < maxX; x++) {
-			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
-					stateCache[index] = cache.getBlockState(pos.setPos(renderChunkPosX + x, renderChunkPosY + y, renderChunkPosZ + z));
-					index++;
-				}
-			}
-		}
-	}
-
-	private static void fillSmoothableCache(final boolean[] smoothableCache, final IBlockState[] stateCache) {
-		final int maxX = cacheSizeX;
-		final int maxY = cacheSizeY;
-		final int maxZ = cacheSizeZ;
-		int index = 0;
-		for (int x = 0; x < maxX; x++) {
-			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
-					smoothableCache[index] = ModUtil.shouldSmooth(stateCache[index]);
-					index++;
-				}
-			}
-		}
-	}
-
-	private static void fillDensityCache(final float[] densityCache, final int renderChunkPosX,
-	                                     final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos,
-	                                     final IBlockState[] statesCache, final boolean[] smoothableCache) {
-		final int maxX = densityCacheSizeX;
-		final int maxY = densityCacheSizeY;
-		final int maxZ = densityCacheSizeZ;
-		int index = 0;
-		for (int x = 0; x < maxX; x++) {
-			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
-//					densityCache[index] = getBlockDensity(smoothableCache, statesCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, x, y, z, pos);
-					densityCache[index] = getBlockDensity(x, y, z, statesCache, smoothableCache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, pos, cache);
-					index++;
-				}
-			}
-		}
 	}
 
 	public static void renderLayer(final RebuildChunkBlockRenderInLayerEvent event) {
