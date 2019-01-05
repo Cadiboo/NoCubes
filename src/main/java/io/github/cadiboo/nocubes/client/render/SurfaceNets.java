@@ -358,10 +358,4 @@ public final class SurfaceNets {
 
 	}
 
-	@Nullable
-	public static Vec3[] getPoints(final BlockPos blockPos, final World world) {
-		// D:
-		return null;
-	}
-
 }
