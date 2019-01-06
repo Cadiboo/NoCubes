@@ -80,7 +80,7 @@ public final class SurfaceNetsDev {
 			int bitMask = 0;
 			final ArrayList<Face<Vec3>> faces = new ArrayList<>();
 
-			int mutableIndex = 0;
+
 			for (int x = 0; x < maxX; x++) {
 				for (int y = 0; y < maxY; y++) {
 					for (int z = 0; z < maxZ; z++) {

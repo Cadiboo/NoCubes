@@ -609,9 +609,13 @@ public final class ClientUtil {
 				final BlockPos FAST_BrightnessPos = pos.up();
 //				final int FAST_PackedLightmapCoords = cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos);
 				final int FAST_PackedLightmapCoords = cache.getCombinedLight(FAST_BrightnessPos, cache.getBlockState(FAST_BrightnessPos).getPackedLightmapCoords(cache, FAST_BrightnessPos));
+//				return new LightmapInfo(
+//						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
+//						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
+//				);
 				return new LightmapInfo(
-						getLightmapSkyLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords),
-						getLightmapBlockLightCoordsFromPackedLightmapCoords(FAST_PackedLightmapCoords)
+						FAST_PackedLightmapCoords >> 20,
+						FAST_PackedLightmapCoords>>>4
 				);
 			case FANCY:
 				//credit to MineAndCraft12
@@ -626,12 +630,14 @@ public final class ClientUtil {
 					final BlockPos FANCYISH_BrightnessPos = pos.offset(facing);
 //					final int FANCYISH_PackedLightmapCoords = cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos);
 					final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(FANCYISH_BrightnessPos, cache.getBlockState(FANCYISH_BrightnessPos).getPackedLightmapCoords(cache, FANCYISH_BrightnessPos));
-					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//					final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					final int skyLight = FANCYISH_PackedLightmapCoords>>20;
 					if (skyLight > 0) {
 						averageSkyLight += skyLight;
 						totalBlocksCheckedForSkyLight++;
 					}
-					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//					final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+					final int blockLight = FANCYISH_PackedLightmapCoords>>4;
 					if (blockLight > 0) {
 						averageBlockLight += blockLight;
 						totalBlocksCheckedForBlockLight++;
@@ -641,12 +647,14 @@ public final class ClientUtil {
 				//this block
 //				final int FANCYISH_PackedLightmapCoords = cache.getBlockState(pos).getPackedLightmapCoords(cache, pos);
 				final int FANCYISH_PackedLightmapCoords = cache.getCombinedLight(pos, cache.getBlockState(pos).getPackedLightmapCoords(cache, pos));
-				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//				final int skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				final int skyLight = FANCYISH_PackedLightmapCoords>>20;
 				if (skyLight > 0) {
 					averageSkyLight += skyLight;
 					totalBlocksCheckedForSkyLight++;
 				}
-				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+//				final int blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(FANCYISH_PackedLightmapCoords);
+				final int blockLight = FANCYISH_PackedLightmapCoords>>4;
 				if (blockLight > 0) {
 					averageBlockLight += blockLight;
 					totalBlocksCheckedForBlockLight++;
@@ -852,7 +860,6 @@ public final class ClientUtil {
 
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
-//			compiledChunk_setLayerUsed(compiledChunk, blockRenderLayer);
 			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
 			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
 		}

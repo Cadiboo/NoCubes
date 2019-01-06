@@ -62,7 +62,7 @@ public final class OldNoCubes {
 		final BlockPos pos = event.getBlockPos();
 
 		final BlockRendererDispatcher blockRendererDispatcher = event.getBlockRendererDispatcher();
-		final ChunkCache cache = event.getChunkCache();
+		final IBlockAccess cache = ClientUtil.getCache(event);
 
 		final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 

@@ -365,7 +365,7 @@ public final class MarchingCubes {
 
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 //		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
-		final ChunkCache cache = event.getChunkCache();
+		final IBlockAccess cache = ClientUtil.getCache(event);
 
 		final float[] data = new float[17 * 17 * 17];
 

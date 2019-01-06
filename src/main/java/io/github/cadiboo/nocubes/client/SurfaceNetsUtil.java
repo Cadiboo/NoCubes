@@ -6,7 +6,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
-public class SurfaceNetsUtil {
+public final class SurfaceNetsUtil {
 
 	public static final int[] CUBE_EDGES = new int[24];
 
@@ -113,9 +113,9 @@ public class SurfaceNetsUtil {
 		int bitMask = 0b0000000;
 		int neighbourDensitiesIndex = 0;
 
-		for (int xOffset = 0; xOffset < 2; xOffset++) {
+		for (int zOffset = 0; zOffset < 2; zOffset++) {
 			for (int yOffset = 0; yOffset < 2; yOffset++) {
-				for (int zOffset = 0; zOffset < 2; zOffset++) {
+				for (int xOffset = 0; xOffset < 2; xOffset++) {
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 					float density = densityCache[(x + xOffset) + maxX * ((y + yOffset) + maxY * (z + zOffset))];
 					neighbourDensities[neighbourDensitiesIndex] = density;
@@ -131,13 +131,13 @@ public class SurfaceNetsUtil {
 	}
 
 	public static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, BlockPos.PooledMutableBlockPos pos) {
-		final int maxX = CACHE_SIZE_X;
-		final int maxY = CACHE_SIZE_Y;
 		final int maxZ = CACHE_SIZE_Z;
+		final int maxY = CACHE_SIZE_Y;
+		final int maxX = CACHE_SIZE_X;
 		int index = 0;
-		for (int x = 0; x < maxX; x++) {
+		for (int z = 0; z < maxZ; z++) {
 			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
+				for (int x = 0; x < maxX; x++) {
 					stateCache[index] = cache.getBlockState(pos.setPos(renderChunkPosX + x, renderChunkPosY + y, renderChunkPosZ + z));
 					index++;
 				}
@@ -146,13 +146,13 @@ public class SurfaceNetsUtil {
 	}
 
 	public static void fillSmoothableCache(final boolean[] smoothableCache, final IBlockState[] stateCache) {
-		final int maxX = CACHE_SIZE_X;
-		final int maxY = CACHE_SIZE_Y;
 		final int maxZ = CACHE_SIZE_Z;
+		final int maxY = CACHE_SIZE_Y;
+		final int maxX = CACHE_SIZE_X;
 		int index = 0;
-		for (int x = 0; x < maxX; x++) {
+		for (int z = 0; z < maxZ; z++) {
 			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
+				for (int x = 0; x < maxX; x++) {
 					smoothableCache[index] = ModUtil.shouldSmooth(stateCache[index]);
 					index++;
 				}
@@ -161,13 +161,13 @@ public class SurfaceNetsUtil {
 	}
 
 	public static void fillDensityCache(final float[] densityCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, BlockPos.PooledMutableBlockPos pos, final IBlockState[] statesCache, final boolean[] smoothableCache) {
-		final int maxX = DENSITY_CACHE_SIZE_X;
-		final int maxY = DENSITY_CACHE_SIZE_Y;
 		final int maxZ = DENSITY_CACHE_SIZE_Z;
+		final int maxY = DENSITY_CACHE_SIZE_Y;
+		final int maxX = DENSITY_CACHE_SIZE_X;
 		int index = 0;
-		for (int x = 0; x < maxX; x++) {
+		for (int z = 0; z < maxZ; z++) {
 			for (int y = 0; y < maxY; y++) {
-				for (int z = 0; z < maxZ; z++) {
+				for (int x = 0; x < maxX; x++) {
 					densityCache[index] = getBlockDensity(x, y, z, statesCache, smoothableCache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, pos, cache);
 					index++;
 				}
@@ -180,9 +180,9 @@ public class SurfaceNetsUtil {
 		final int cacheXSize = CACHE_SIZE_X;
 		final int cacheYSize = CACHE_SIZE_Y;
 		float density = 0;
-		for (int xOffset = 0; xOffset < 2; xOffset++) {
+		for (int zOffset = 0; zOffset < 2; zOffset++) {
 			for (int yOffset = 0; yOffset < 2; yOffset++) {
-				for (int zOffset = 0; zOffset < 2; zOffset++) {
+				for (int xOffset = 0; xOffset < 2; xOffset++) {
 					final int x = (posX + xOffset);
 					final int y = (posY + yOffset);
 					final int z = (posZ + zOffset);

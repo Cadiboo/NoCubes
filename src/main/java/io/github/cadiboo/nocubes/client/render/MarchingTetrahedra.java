@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
@@ -75,7 +76,7 @@ public final class MarchingTetrahedra {
 		final int[] c = {renderChunkPos.getX(), renderChunkPos.getY(), renderChunkPos.getZ()};
 		final BlockPos.PooledMutableBlockPos pos = BlockPos.PooledMutableBlockPos.retain();
 //		final BlockPos.PooledMutableBlockPos pooledMutablePos = BlockPos.PooledMutableBlockPos.retain();
-		final ChunkCache cache = event.getChunkCache();
+		final IBlockAccess cache = ClientUtil.getCache(event);
 
 		final ArrayList<Vec3> vertices = new ArrayList<>();
 		final ArrayList<Vec3[]> faces = new ArrayList<>();
@@ -223,8 +224,6 @@ public final class MarchingTetrahedra {
 								if (face.length != 3 && face.length != 4) {
 									return; //TODO: wtf, how did we get here?
 								}
-
-								final IBlockState state = cache.getBlockState(pos);
 
 								final BlockRenderData renderData = ClientUtil.getBlockRenderData(pos, cache);
 
