@@ -1,0 +1,36 @@
+{
+	"homepage": "https://cadiboo.github.io/projects/nocubes/",
+	"promos": {
+		"1.12.2-latest": "0.1.6",
+		"1.12.2-recommended": "0.1.6"
+	},
+	"1.12.2": {
+		"0.1.6": "Cadiboo: Cleaned up code\nCadiboo: Updated config datafixer\nCadiboo: Added missing lang entries\nCadiboo: Updated license\nCadiboo: Added better exception handling to renderers\nCadiboo: Fixed ArrayIndexOutOfBounds crash in MarchingCubes and MarchingTetrahedra\nCadiboo: Worked on auto-updater\nCadiboo: Added minecraft profiler code\nCadiboo: Optimised MarchingCubes algorithm to be 8x faster\nCadiboo: Optimised MarchingTetrahedra algorithm to be 8x faster\nCadiboo: Started work on custom SurfaceNets implementation that is 52x faster than the original\nCadiboo: Added jar signing\nCadiboo: Optimise liquid rendering\nFrom 0.1.6-pre2:\nCadiboo: Added slightly more accurate textures\nCadiboo: Fixed Surface Nets algorithm\nFrom 0.1.6-pre1:\nCadiboo: 8x speed upgrade to SurfaceNets\nCadiboo:Improved extended fluids\nCadiboo: Created zh_cn.lang",
+		"0.1.6-pre2": "Cadiboo: Added slightly more accurate textures\nCadiboo: Fixed Surface Nets algorithm",
+		"0.1.6-pre1": "Cadiboo: 8x speed upgrade to SurfaceNets\nCadiboo: Improved extended fluids\nCadiboo: Created zh_cn.lang",
+		"0.1.5": "Cadiboo: Fix bug when Optifine's render regions are off\nCadiboo: Code cleanup\nCadiboo: Added versioned config backups\nCadiboo: Added config versioning\nCadiboo: Better default config values\nCadiboo: Possible fix for the world holes bug\nCadiboo: Fixed bug with Optifine's render regions for liquid extension\nCadiboo: Renamed shouldSmoothLiquids to shouldExtendLiquids\nCadiboo: Fixed bug with Optifine's render regions for all stable renderers",
+		"0.1.4": "Cadiboo: Updated the lang",
+		"0.1.3": "Cadiboo: Fix vanilla UV bug with water rendering for fake liquids and R&D fluid renderer\nCadiboo: Add credit to LeBossMax2 for his tip about OldNoCubes\nCadiboo: Improved Beautify Textures option\nCadiboo: Added Beautify Textures option\nCadiboo: Updated config\nCadiboo: Added NONE RenderAlgorithm type\nCadiboo: Improved fake liquid rendering\nCadiboo: Initial compatibility with shaders for our fake liquids\nCadiboo: Update and add the new stuff to the lang\nCadiboo: Made all the renderers work & optimised them a little bit\nCadiboo: Fix chunkPos offset on MarchingTetrahedra",
+		"0.1.2": "Cadiboo: Added a bunch of debug/R&D stuff and added stable renderers\nCadiboo: Started work on the next gen of renderers\nCadiboo: Added Marching Tetrahedra algorithm",
+		"0.1.2-debug": "Cadiboo: Working on surface nets & debug for Ginez0n",
+		"0.1.1": "Cadiboo: Fix crash on older Forge versions",
+		"0.1.0": "First public release\nCadiboo: Made an optimised OldNoCubes algorithm & a semi-optimised MarchingCubes algorithm",
+		"0.0.0-alpha17": "Thanks VoidWalker! \nCadiboo: His suggestion fixed everything\nCadiboo: Surface Nets 3, 4 & 5 work\nCadiboo: Surface Nets 2 works most of the time",
+		"0.0.0-alpha16": "Cadiboo: Working on Surface Nets 2\nCadiboo: Better Foliage grass support",
+		"0.0.0-alpha15": "Cadiboo: Fix #2 for all renderers",
+		"0.0.0-alpha14": "Cadiboo: Removed old comments\nCadiboo: Fix big SurfaceNets bug\nCadiboo: Add SurfaceNets Block algorithm\nCadiboo: Change SurfaceNets2 Algorithm to temporarily render OldNoCubes (it renders it perfectly though)\nCadiboo: Remove unneeded exclusions",
+		"0.0.0-alpha13": "Cadiboo: Added comment\nCadiboo: Fixed cached quad code\nCadiboo: Working on broken surface nets that I don't understand\nCadiboo: Create and update SurfaceNets5\nCadiboo: Remove useless assignment",
+		"0.0.0-alpha12": "Cadiboo: Surface Nets test 4\nCadiboo: Better lighting, thanks MineAndCraft12\nCadiboo: Update todos\nCadiboo: Changed to static imports",
+		"0.0.0-alpha11": "Cadiboo: Added update json to mod",
+		"0.0.0-alpha10": "Cadiboo: Optimise imports & Reformat code\nCadiboo: Fix lang & and add lang for new stuff\nCadiboo: Add IsosurfaceLevel, refactoring, formatting, removed unused code and fixed a pretty stupid bad bug involving vertex y values\nCadiboo: First working surface nets\nCadiboo: Small optimisations & code style\nCadiboo: Quad caching and surface nets 2 & 3",
+		"0.0.0-alpha9": "Cadiboo: Added surface nets OOP algorithm (borked)\nCadiboo: Tweaked OldNoCubes algorithm\nCadiboo: Changed BlockLight in FAST from 240 to 0",
+		"0.0.0-alpha8": "Cadiboo: Update group\nCadiboo: fix lighting bug\nCadiboo: lightmap, bugs & formatting\nCadiboo: fixed the glitch with world holes in MarchingCubes\nCadiboo: Formatting",
+		"0.0.0-alpha7": "Cadiboo: Update MarchingCubes\nCadiboo: Update OldNoCubes\nCadiboo: Update SurfaceNets\nCadiboo: Refactoring and Imports\nCadiboo: renamed FAST_SMOOTHABLE_BLOCK_STATES to SMOOTHABLE_BLOCK_STATES_CACHE\nCadiboo: changed = assignment to |= assignment\nCadiboo: fixed vertices\nCadiboo: Removed unused code",
+		"0.0.0-alpha6": "Cadiboo: Added old NoCubes render algorithm from 0.3\nCadiboo: Repackage to reflect web presence\nCadiboo: Remove RenderType and change lambda to double colon\nCadiboo: Removed smooth liquids\nCadiboo: Update LICENSE",
+		"0.0.0-alpha5": "Cadiboo: Fixed a couple bugs:\nFixed bug in coremod that was being patched -> removed patch from here\nAdded smooth liquids. Then commented it out",
+		"0.0.0-alpha4": "Cadiboo: Almost properly works",
+		"0.0.0-alpha3": "Cadiboo: added approximateLighting option from config",
+		"0.0.0-alpha2": "Cadiboo: Fixed performance issues\nCadiboo: Fixed broken Config internationalisation\nCadiboo: Changed isosurface level from 0.5 to 1.0",
+		"0.0.0-alpha1": "Cadiboo: Nothing works, It lags the game amazingly (20 seconds per chunk render) but its a good starting point"
+	}
+}
