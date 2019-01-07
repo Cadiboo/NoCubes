@@ -96,6 +96,9 @@ processResources {
 		exclude 'mcmod.info'
 	}
 
+	//move our Access Transformer to META-INF
+	rename '(.+_at.cfg)', 'META-INF/$1'
+
 }
 
 task signJar(type: SignJar, dependsOn: reobfJar) {
