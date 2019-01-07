@@ -189,10 +189,10 @@ public final class SurfaceNetsUtil {
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 					final int index = x + cacheXSize * (y + cacheYSize * z);
 
-					final IBlockState state = stateCache[index];
 					final boolean shouldSmooth = smoothableCache[index];
 
 					if (shouldSmooth) {
+						final IBlockState state = stateCache[index];
 						pos.setPos(
 								renderChunkPosX + x,
 								renderChunkPosY + y,
