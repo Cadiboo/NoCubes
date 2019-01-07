@@ -246,6 +246,9 @@ public final class ModConfig {
 		@LangKey(MOD_ID + ".config.debug.realisticCollisions")
 		public boolean realisticCollisions = false;
 
+		@LangKey(MOD_ID + ".config.debug.connectToNormal")
+		public boolean connectToNormal = false;
+
 	}
 
 	@Mod.EventBusSubscriber(modid = MOD_ID)

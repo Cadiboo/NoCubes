@@ -2,8 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
 public final class SurfaceNetsUtil {
@@ -130,7 +129,7 @@ public final class SurfaceNetsUtil {
 		return bitMask;
 	}
 
-	public static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, BlockPos.PooledMutableBlockPos pos) {
+	public static void fillStateCache(final IBlockState[] stateCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos) {
 		final int maxZ = CACHE_SIZE_Z;
 		final int maxY = CACHE_SIZE_Y;
 		final int maxX = CACHE_SIZE_X;
@@ -160,7 +159,7 @@ public final class SurfaceNetsUtil {
 		}
 	}
 
-	public static void fillDensityCache(final float[] densityCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, BlockPos.PooledMutableBlockPos pos, final IBlockState[] statesCache, final boolean[] smoothableCache) {
+	public static void fillDensityCache(final float[] densityCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final IBlockAccess cache, PooledMutableBlockPos pos, final IBlockState[] statesCache, final boolean[] smoothableCache) {
 		final int maxZ = DENSITY_CACHE_SIZE_Z;
 		final int maxY = DENSITY_CACHE_SIZE_Y;
 		final int maxX = DENSITY_CACHE_SIZE_X;
@@ -169,20 +168,22 @@ public final class SurfaceNetsUtil {
 			for (int y = 0; y < maxY; y++) {
 				for (int x = 0; x < maxX; x++) {
 					densityCache[index] = getBlockDensity(x, y, z, statesCache, smoothableCache, renderChunkPosX, renderChunkPosY, renderChunkPosZ, pos, cache);
+//					densityCache[index] = ModUtil.getBlockDensity(pos.setPos(renderChunkPosX + x, renderChunkPosY + y, renderChunkPosZ + z), cache);
 					index++;
 				}
 			}
 		}
 	}
 
-	public static float getBlockDensity(final int posX, final int posY, final int posZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final BlockPos.PooledMutableBlockPos pos, final IBlockAccess cache) {
+	public static float getBlockDensity(final int posX, final int posY, final int posZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final PooledMutableBlockPos pooledMutableBlockPos, final IBlockAccess cache) {
 
 		final int cacheXSize = CACHE_SIZE_X;
 		final int cacheYSize = CACHE_SIZE_Y;
 		float density = 0;
-		for (int zOffset = 0; zOffset < 2; zOffset++) {
-			for (int yOffset = 0; yOffset < 2; yOffset++) {
-				for (int xOffset = 0; xOffset < 2; xOffset++) {
+		// why pre-Increment? We don't know but it works
+		for (int zOffset = 0; zOffset < 2; ++zOffset) {
+			for (int yOffset = 0; yOffset < 2; ++yOffset) {
+				for (int xOffset = 0; xOffset < 2; ++xOffset) {
 					final int x = (posX + xOffset);
 					final int y = (posY + yOffset);
 					final int z = (posZ + zOffset);
@@ -191,21 +192,28 @@ public final class SurfaceNetsUtil {
 
 					final boolean shouldSmooth = smoothableCache[index];
 
-					if (shouldSmooth) {
-						final IBlockState state = stateCache[index];
-						pos.setPos(
-								renderChunkPosX + x,
-								renderChunkPosY + y,
-								renderChunkPosZ + z
-						);
-						final AxisAlignedBB box = state.getBoundingBox(cache, pos);
-						density += box.maxY - box.minY;
-					} else {
-						density--;
-					}
+					final IBlockState state = stateCache[index];
+
+					pooledMutableBlockPos.setPos(
+							renderChunkPosX + x,
+							renderChunkPosY + y,
+							renderChunkPosZ + z
+					);
+					density += ModUtil.getIndividualBlockDensity(shouldSmooth, state, cache, pooledMutableBlockPos);
 				}
 			}
 		}
+
+		pooledMutableBlockPos.setPos(
+				renderChunkPosX + posX,
+				renderChunkPosY + posY,
+				renderChunkPosZ + posZ
+		);
+		final float inefficientDensity = ModUtil.getBlockDensity(pooledMutableBlockPos, cache);
+		if (density != inefficientDensity) {
+			density = inefficientDensity;
+		}
+
 		return density;
 	}
 

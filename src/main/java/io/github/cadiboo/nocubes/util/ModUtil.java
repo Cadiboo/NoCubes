@@ -5,9 +5,9 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.init.Blocks;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -17,6 +17,7 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
@@ -40,6 +41,8 @@ import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static net.minecraft.block.material.Material.VINE;
+import static net.minecraft.init.Blocks.BEDROCK;
 
 /**
  * Util that is used on BOTH physical sides
@@ -135,41 +138,47 @@ public final class ModUtil {
 	 * @return the density for the block
 	 */
 	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
-
 		float density = 0.0F;
+		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+		try {
+			for (int x = 0; x < 2; ++x) {
+				for (int y = 0; y < 2; ++y) {
+					for (int z = 0; z < 2; ++z) {
+						pooledMutableBlockPos.setPos(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
 
-		final PooledMutableBlockPos mutablePos = PooledMutableBlockPos.retain(pos);
+						final IBlockState state = cache.getBlockState(pooledMutableBlockPos);
 
-		for (int x = 0; x < 2; ++x) {
-			for (int y = 0; y < 2; ++y) {
-				for (int z = 0; z < 2; ++z) {
-					mutablePos.setPos(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
-
-					final IBlockState state = cache.getBlockState(mutablePos);
-
-					if (ModUtil.shouldSmooth(state)) {
-						density += state.getBoundingBox(cache, pos).maxY;
-						//					} else if (state.isNormalCube()) {
-						//
-						//					} else if (state.getMaterial() == Material.VINE) {
-						//						density -= 0.75;
-						// Thanks VoidWalker. I'm pretty embarrased.
-						// Uncommenting 2 lines of code fixed the entire algorithm. (else density-=1)
-						// I had been planning to uncomment and redo them after I fixed the algorithm.
-						// If you hadn't taken the time to debug this, I might never have found the bug
-					} else {
-						density -= 1;
+						density += getIndividualBlockDensity(ModUtil.shouldSmooth(state), state, cache, pooledMutableBlockPos);
 					}
-
-					if (state.getBlock() == Blocks.BEDROCK) {
-						density += 0.000000000000000000000000000000000000000000001f;
-					}
-
 				}
 			}
+		} finally {
+			pooledMutableBlockPos.release();
+		}
+		return density;
+	}
+
+	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
+		float density = 0;
+
+		if (shouldSmooth) {
+			final AxisAlignedBB box = state.getBoundingBox(cache, pos);
+			density += box.maxY - box.minY;
+		} else if (ModConfig.debug.connectToNormal && (state.isNormalCube() || state.isBlockNormalCube())) {
+			// NO OP
+		} else if (state.getMaterial() == VINE) {
+			density -= 0.75;
+		} else {
+			// Thanks VoidWalker. I'm pretty embarrassed.
+			// Uncommenting 2 lines of code fixed the entire algorithm. (else density-=1)
+			// I had been planning to uncomment and redo them after I fixed the algorithm.
+			// If you hadn't taken the time to debug this, I might never have found the bug
+			density -= 1;
 		}
 
-		mutablePos.release();
+		if (state.getBlock() == BEDROCK) {
+			density += 0.000000000000000000000000000000000000000000001f;
+		}
 
 		return density;
 	}
@@ -178,7 +187,6 @@ public final class ModUtil {
 	 * Give the point some (pseudo) random offset based on its location
 	 *
 	 * @param point the point
-	 * @return the point with offset applied
 	 */
 	public static void offsetVertex(Vec3 point) {
 		// yay magic numbers
@@ -213,6 +221,10 @@ public final class ModUtil {
 		/* End Click_Me's Code (Modified by Cadiboo) */
 	}
 
+	/**
+	 * Ew
+	 * @param noCubesContainer the {@link ModContainer} for {@link NoCubes}
+	 */
 	public static void launchUpdateDaemon(ModContainer noCubesContainer) {
 
 		new Thread(() -> {
@@ -254,7 +266,16 @@ public final class ModUtil {
 				if (developerEnvironment) {
 					NO_CUBES_LOG.info("Did not crash game because we're in a dev environment");
 				} else {
-					NoCubes.proxy.forceUpdate(outdatedVersion);
+					// FIXME BIG TODO remove this once I'm done with beta releases and start doing actual releases
+					// FIXME This is evil and not good
+					{
+						final String fuck9minecraft = "Your version of NoCubes (" + outdatedVersion + ") is outdated! Download the latest version from https://cadiboo.github.io/projects/nocubes/download/";
+						for (int i = 0; i < 10; i++)
+							NoCubes.NO_CUBES_LOG.error(fuck9minecraft);
+						CrashReport crashReport = new CrashReport(fuck9minecraft, new RuntimeException(fuck9minecraft));
+						FMLCommonHandler.instance().raiseException(new ReportedException(crashReport), fuck9minecraft, true);
+						FMLCommonHandler.instance().exitJava(0, false);
+					}
 				}
 			}
 
@@ -352,7 +373,7 @@ public final class ModUtil {
 		return Lists.newArrayList(getBlankVertexArray());
 	}
 
-	private static Vec3[] getBlankVertexArray() {
+	public static Vec3[] getBlankVertexArray() {
 		return new Vec3[]{
 				new Vec3(0, 0, 0),
 				new Vec3(1, 0, 0),
