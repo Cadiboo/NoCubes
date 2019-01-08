@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGrass;
@@ -84,6 +85,8 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
+	public static MeshGenerator meshGenerator = MeshGenerator.MarchingTetrahedra;
+
 	@LangKey(MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
 
@@ -118,6 +121,10 @@ public final class ModConfig {
 
 	public static float getoffsetAmmount() {
 		return (float) offsetAmmount;
+	}
+
+	public static MeshGenerator getMeshGenerator() {
+		return meshGenerator;
 	}
 
 	@Mod.EventBusSubscriber(modid = MOD_ID)

@@ -1,6 +1,11 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.CacheUtil;
+import io.github.cadiboo.nocubes.util.ChunkInfo;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
@@ -29,14 +34,13 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
@@ -68,13 +72,6 @@ public final class ClientUtil {
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
 
-	/**
-	 * A field reference to the rawIntBuffer of the BufferBuilder class. Need reflection since the field is private.
-	 */
-	// use the old (Class, String...) instead of the new (Class, String, String) for backwards compatibility
-	//TODO: change back to (Class, String, String) soon
-	private static final Field bufferBuilder_rawIntBuffer = ObfuscationReflectionHelper.findField(BufferBuilder.class, "field_178999_b");
-
 	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
 		@Override
 		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
@@ -82,6 +79,7 @@ public final class ClientUtil {
 		}
 	};
 
+	//TODO: stop using ReflectionHelper
 	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
 
 	/**
@@ -444,26 +442,29 @@ public final class ClientUtil {
 			{+1, +1, +1},
 	};
 
-	public static Object[] getTexturePosAndState(final IBlockAccess cache, final BlockPos pos, final IBlockState state) {
+	/**
+	 * @param cache
+	 * @param pos
+	 * @param state
+	 * @param pooledMutableBlockPos
+	 * @return a state and a texture pos which is guaranteed to be immutable
+	 */
+	public static Object[] getTexturePosAndState(final IBlockAccess cache, final BlockPos pos, final IBlockState state, PooledMutableBlockPos pooledMutableBlockPos) {
 
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain(pos);
+		IBlockState textureState = state;
+		BlockPos texturePos = pos;
 
-		try {
+		//check pos first
+		if (ModUtil.shouldSmooth(cache.getBlockState(pos))) {
+			return new Object[]{
+					texturePos,
+					textureState
+			};
+		}
 
-			IBlockState textureState = state;
-			BlockPos texturePos = pos;
-
-			//check pos first
-			if (ModUtil.shouldSmooth(cache.getBlockState(pos))) {
-				return new Object[]{
-						texturePos,
-						textureState
-				};
-			}
-
-			final int x = pos.getX();
-			final int y = pos.getY();
-			final int z = pos.getZ();
+		final int x = pos.getX();
+		final int y = pos.getY();
+		final int z = pos.getZ();
 
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
@@ -486,25 +487,19 @@ public final class ClientUtil {
 //				}
 //			}
 
-			for (int[] offset : OFFSETS_ORDERED) {
-				final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
-				if (ModUtil.shouldSmooth(tempState)) {
-					textureState = tempState;
-					texturePos = pooledMutableBlockPos.toImmutable();
-					break;
-				}
+		for (int[] offset : OFFSETS_ORDERED) {
+			final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+			if (ModUtil.shouldSmooth(tempState)) {
+				textureState = tempState;
+				texturePos = pooledMutableBlockPos.toImmutable();
+				break;
 			}
-
-			return new Object[]{
-					texturePos,
-					textureState
-			};
-		} finally {
-			// This gets called right before return, don't worry
-			// (unless theres a BIG error in the try, in which case
-			// releasing the pooled pos is the least of our worries)
-			pooledMutableBlockPos.release();
 		}
+
+		return new Object[]{
+				texturePos,
+				textureState
+		};
 
 	}
 
@@ -532,6 +527,135 @@ public final class ClientUtil {
 		} else {
 			return event.getChunkCache();
 		}
+	}
+
+	private static final TriConsumer<int[], ChunkInfo, Face<Vec3>> FACE_CONSUMER = ClientUtil::renderFace;
+
+	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
+
+	private static void renderFace(int[] pos, final ChunkInfo chunkInfo, final Face<Vec3> face) {
+
+		if (!(chunkInfo instanceof RenderInfo)) {
+			return;
+		}
+		RenderInfo renderInfo = (RenderInfo) chunkInfo;
+
+		final BlockPos renderChunkPosition = renderInfo.getChunkPos();
+		final int renderChunkPositionX = renderChunkPosition.getX();
+		final int renderChunkPositionY = renderChunkPosition.getY();
+		final int renderChunkPositionZ = renderChunkPosition.getZ();
+
+		final Vec3 v0 = face.getVertex0().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+		final Vec3 v1 = face.getVertex1().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+		final Vec3 v2 = face.getVertex2().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+		final Vec3 v3 = face.getVertex3().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+
+		final PooledMutableBlockPos pooledMutableBlockPos = renderInfo.getPooledMutableBlockPos();
+		pooledMutableBlockPos.setPos(pos[0], pos[1], pos[2]);
+
+		final IBlockAccess cache = renderInfo.getCache();
+		final IBlockState realState = cache.getBlockState(pooledMutableBlockPos);
+
+		final Object[] texturePosAndState = getTexturePosAndState(cache, pooledMutableBlockPos.toImmutable(), realState, pooledMutableBlockPos);
+		final BlockPos texturePos = (BlockPos) texturePosAndState[0];
+		final IBlockState textureState = (IBlockState) texturePosAndState[1];
+
+		//TODO: use Event
+		final BlockRenderLayer blockRenderLayer = textureState.getBlock().getRenderLayer();
+
+		final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+
+		final CompiledChunk compiledChunk = renderInfo.getCompiledChunk();
+		final RenderChunk renderChunk = renderInfo.getRenderChunk();
+		final BufferBuilder bufferBuilder = renderInfo.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
+
+		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+			compiledChunk.setLayerStarted(blockRenderLayer);
+			USED_RENDER_LAYERS.get()[blockRenderLayerOrdinal] = true;
+			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
+		}
+
+		final BlockRendererDispatcher blockRendererDispatcher = renderInfo.getBlockRendererDispatcher();
+
+		BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
+		if (quad == null) {
+			quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+		}
+		final TextureAtlasSprite sprite = quad.getSprite();
+		final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+		final int red = (color >> 16) & 255;
+		final int green = (color >> 8) & 255;
+		final int blue = color & 255;
+		final int alpha = 0xFF;
+
+		final float minU = ClientUtil.getMinU(sprite);
+		final float minV = ClientUtil.getMinV(sprite);
+		final float maxU = ClientUtil.getMaxU(sprite);
+		final float maxV = ClientUtil.getMaxV(sprite);
+
+		//TODO separate pos for this
+		//real pos not texture pos
+//		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
+//		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
+//		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+
+		final int lightmapSkyLight0 = 240;
+		final int lightmapSkyLight1 = 240;
+		final int lightmapSkyLight2 = 240;
+		final int lightmapSkyLight3 = 240;
+
+		final int lightmapBlockLight0 = 0;
+		final int lightmapBlockLight1 = 0;
+		final int lightmapBlockLight2 = 0;
+		final int lightmapBlockLight3 = 0;
+
+		bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+		bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+		bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+		bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+
+	}
+
+	public static void renderChunk(final RebuildChunkPreEvent event) {
+
+		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+
+		try {
+			final BlockPos renderChunkPosition = event.getRenderChunkPosition();
+			final int renderChunkPositionX = renderChunkPosition.getX();
+			final int renderChunkPositionY = renderChunkPosition.getY();
+			final int renderChunkPositionZ = renderChunkPosition.getZ();
+
+			final IBlockAccess cache = getCache(event);
+
+			final float[] data = CacheUtil.generateDensityCache(
+					renderChunkPositionX - 1,
+					renderChunkPositionY - 1,
+					renderChunkPositionZ - 1,
+					renderChunkPositionX + 15,
+					renderChunkPositionY + 15,
+					renderChunkPositionZ + 15,
+					cache,
+					pooledMutableBlockPos
+			);
+
+			//pack the necessary info
+			final RenderInfo chunkInfo = new RenderInfo(cache, renderChunkPosition, pooledMutableBlockPos, Minecraft.getMinecraft().getBlockRendererDispatcher(), event.getRenderChunk(), event.getCompiledChunk(), event.getGenerator());
+
+			final int meshSizeX = 16;
+			final int meshSizeY = 16;
+			final int meshSizeZ = 16;
+
+			ModConfig.getMeshGenerator().generateChunk(chunkInfo, FACE_CONSUMER, data, new int[]{meshSizeX, meshSizeY, meshSizeZ});
+		} finally {
+			pooledMutableBlockPos.release();
+		}
+	}
+
+	public static void renderBlock(final RebuildChunkBlockEvent event) {
+		final int ordinal = event.getBlockRenderLayer().ordinal();
+		event.getUsedBlockRenderLayers()[ordinal] |= USED_RENDER_LAYERS.get()[ordinal];
+		event.setCanceled(ModUtil.shouldSmooth(event.getBlockState()));
 	}
 
 }

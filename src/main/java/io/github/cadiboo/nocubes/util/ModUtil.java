@@ -110,7 +110,8 @@ public final class ModUtil {
 			density += 0.000000000000000000000000000000000000000000001f;
 		}
 
-		return density;
+//		return density;
+		return -density;
 	}
 
 	/**

@@ -1,9 +1,14 @@
 package io.github.cadiboo.nocubes.client;
 
 import com.google.common.collect.Lists;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -14,8 +19,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
@@ -28,6 +31,46 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
  */
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
+
+	@SubscribeEvent
+	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+		synchronized (NoCubes.profiler) {
+			NoCubes.profiler.startSection("renderSmoothChunk");
+		}
+		try {
+			ClientUtil.renderChunk(event);
+		} catch (Exception e) {
+			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
+			crashReport.makeCategory("Rendering smooth chunk");
+			throw new ReportedException(crashReport);
+		}
+		synchronized (NoCubes.profiler) {
+			NoCubes.profiler.endSection();
+		}
+	}
+
+	@SubscribeEvent
+	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+		synchronized (NoCubes.profiler) {
+			NoCubes.profiler.startSection("renderSmoothBlock");
+		}
+		try {
+			ClientUtil.renderBlock(event);
+		} catch (Exception e) {
+			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Block event!", e);
+			crashReport.makeCategory("Rendering smooth chunk");
+			throw new ReportedException(crashReport);
+		}
+		synchronized (NoCubes.profiler) {
+			NoCubes.profiler.endSection();
+		}
+	}
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {

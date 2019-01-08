@@ -1,6 +1,8 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
@@ -36,11 +38,17 @@ public final class NoCubes {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
+	public static final ModProfiler profiler = new ModProfiler();
+
 	@Mod.Instance(MOD_ID)
 	public static NoCubes instance;
 
 	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
 	public static IProxy proxy;
+
+	public static boolean isEnabled() {
+		return ModConfig.isEnabled;
+	}
 
 	@Mod.EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {

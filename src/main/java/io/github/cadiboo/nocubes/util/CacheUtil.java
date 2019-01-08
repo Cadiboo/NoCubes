@@ -1,5 +1,98 @@
 package io.github.cadiboo.nocubes.util;
 
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockAccess;
+
 public final class CacheUtil {
+
+	/**
+	 * start must be < end
+	 */
+	public static float[] generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+		final int densityCacheSizeX = endPosX - startPosX;
+		final int densityCacheSizeY = endPosY - startPosY;
+		final int densityCacheSizeZ = endPosZ - startPosZ;
+
+		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		final int cacheStartPosX = startPosX - 1;
+		final int cacheStartPosY = startPosY - 1;
+		final int cacheStartPosZ = startPosZ - 1;
+
+		// Density takes +1 block on every negative axis into account so we need bigger caches
+		final int cacheSizeX = densityCacheSizeX + 1;
+		final int cacheSizeY = densityCacheSizeY + 1;
+		final int cacheSizeZ = densityCacheSizeZ + 1;
+
+		final IBlockState[] stateCache = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+		final boolean[] smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache);
+		return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+
+	}
+
+	private static IBlockState[] generateStateCache(final int startPosX, final int startPosY, final int startPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, PooledMutableBlockPos pooledMutableBlockPos) {
+		final IBlockState[] stateCache = new IBlockState[cacheSizeX * cacheSizeY * cacheSizeZ];
+		int index = 0;
+		for (int z = 0; z < cacheSizeZ; z++) {
+			for (int y = 0; y < cacheSizeY; y++) {
+				for (int x = 0; x < cacheSizeX; x++) {
+					stateCache[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
+					index++;
+				}
+			}
+		}
+		return stateCache;
+	}
+
+	private static boolean[] generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockState[] stateCache) {
+		final boolean[] smoothableCache = new boolean[cacheSizeX * cacheSizeY * cacheSizeZ];
+		int index = 0;
+		for (int z = 0; z < cacheSizeZ; z++) {
+			for (int y = 0; y < cacheSizeY; y++) {
+				for (int x = 0; x < cacheSizeX; x++) {
+					smoothableCache[index] = ModUtil.shouldSmooth(stateCache[index]);
+					index++;
+				}
+			}
+		}
+		return smoothableCache;
+	}
+
+	private static float[] generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+		final float[] densityCache = new float[densityCacheSizeX * densityCacheSizeY * densityCacheSizeZ];
+		int index = 0;
+		for (int z = 0; z < densityCacheSizeZ; z++) {
+			for (int y = 0; y < densityCacheSizeY; y++) {
+				for (int x = 0; x < densityCacheSizeX; x++) {
+					densityCache[index] = getBlockDensity(startPosX, startPosY, startPosZ, x, y, z, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+					index++;
+				}
+			}
+		}
+		return densityCache;
+	}
+
+	private static float getBlockDensity(final int startPosX, final int startPosY, final int startPosZ, final int posX, final int posY, final int posZ, final IBlockState[] stateCache, final boolean[] smoothableCache, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+		float density = 0;
+		// why pre-Increment? We don't know but it works
+		for (int zOffset = 0; zOffset < 2; ++zOffset) {
+			for (int yOffset = 0; yOffset < 2; ++yOffset) {
+				for (int xOffset = 0; xOffset < 2; ++xOffset) {
+
+					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+					final int index = (posX + xOffset) + cacheSizeX * ((posY + yOffset) + cacheSizeY * (posZ + zOffset));
+
+					pooledMutableBlockPos.setPos(
+							startPosX + posX - xOffset,
+							startPosY + posY - yOffset,
+							startPosZ + posZ - zOffset
+					);
+
+					density += ModUtil.getIndividualBlockDensity(smoothableCache[index], stateCache[index], cache, pooledMutableBlockPos);
+				}
+			}
+		}
+		return density;
+	}
 
 }

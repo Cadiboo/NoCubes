@@ -1,13 +1,13 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.util.ChunkInfo;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec3;
-
-import java.util.function.Consumer;
+import org.apache.logging.log4j.util.TriConsumer;
 
 public enum MeshGenerator {
 
@@ -24,8 +24,8 @@ public enum MeshGenerator {
 		this.meshGenerator = meshGenerator;
 	}
 
-	public void generateChunk(Consumer<Face<Vec3>> faceConsumer) {
-		meshGenerator.generateChunk(faceConsumer);
+	public void generateChunk(final ChunkInfo chunkInfo, final TriConsumer<int[], ChunkInfo, Face<Vec3>> faceConsumer, final float[] data, final int[] dims) {
+		meshGenerator.generateChunk(chunkInfo, faceConsumer, data, dims);
 	}
 
 }
