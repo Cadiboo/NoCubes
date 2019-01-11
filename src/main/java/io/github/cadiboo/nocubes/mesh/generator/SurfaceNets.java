@@ -143,12 +143,14 @@ public class SurfaceNets implements IMeshGenerator {
 						++e_count;
 
 						//Now find the point of intersection
-						final int e0 = cube_edges[i << 1];     //Unpack vertices
+						//Unpack vertices
+						final int e0 = cube_edges[i << 1];
 						final int e1 = cube_edges[(i << 1) + 1];
-						final float g0 = grid[e0]                 //Unpack grid values
-								;
+						//Unpack grid values
+						final float g0 = grid[e0];
 						final float g1 = grid[e1];
-						float t = g0 - g1;                 //Compute point of intersection
+						//Compute point of intersection
+						float t = g0 - g1;
 						if (Math.abs(t) > 1e-6) {
 							t = g0 / t;
 						} else {
@@ -157,11 +159,12 @@ public class SurfaceNets implements IMeshGenerator {
 
 						//Interpolate vertices and add up intersections (this can be done without multiplying)
 						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
-							int a = e0 & k, b = e1 & k;
+							final int a = e0 & k;
+							final int b = e1 & k;
 							if (a != b) {
-								v[j] += a != 0 ? 1.0 - t : t;
+								v[j] += a != 0 ? 1F - t : t;
 							} else {
-								v[j] += a != 0 ? 1.0 : 0;
+								v[j] += a != 0 ? 1F : 0;
 							}
 						}
 					}
@@ -184,7 +187,8 @@ public class SurfaceNets implements IMeshGenerator {
 						}
 
 						// i = axes we are point along.  iu, iv = orthogonal axes
-						int iu = (i + 1) % 3, iv = (i + 2) % 3;
+						final int iu = (i + 1) % 3;
+						final int iv = (i + 2) % 3;
 
 						//If we are on a boundary, skip it
 						if (x[iu] == 0 || x[iv] == 0) {
@@ -192,7 +196,8 @@ public class SurfaceNets implements IMeshGenerator {
 						}
 
 						//Otherwise, look up adjacent edges in buffer
-						int du = R[iu], dv = R[iv];
+						final int du = R[iu];
+						final int dv = R[iv];
 
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
