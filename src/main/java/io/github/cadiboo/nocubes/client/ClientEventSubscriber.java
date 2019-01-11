@@ -1,9 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import com.google.common.annotations.Beta;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import com.google.common.eventbus.Subscribe;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
@@ -12,9 +9,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Loader;
@@ -108,16 +103,6 @@ public final class ClientEventSubscriber {
 			}
 		}
 		minecraft.renderGlobal.loadRenderers();
-	}
-
-	@VisibleForTesting
-	@Beta
-	@SubscribeEvent
-	public static void onTextureStitchEvent(final TextureStitchEvent.Pre event) {
-
-		event.getMap().registerSprite(new ResourceLocation("minecraft", "blocks/debug"));
-		event.getMap().registerSprite(new ResourceLocation("minecraft", "blocks/debug2"));
-
 	}
 
 }

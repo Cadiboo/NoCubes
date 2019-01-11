@@ -610,8 +610,7 @@ public final class ClientUtil {
 			if (quad == null) {
 				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
 			}
-//			final TextureAtlasSprite sprite = quad.getSprite();
-			final TextureAtlasSprite sprite = Minecraft.getMinecraft().getTextureMapBlocks().getAtlasSprite("minecraft:blocks/debug2");
+			final TextureAtlasSprite sprite = quad.getSprite();
 			final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
 			final int red = (color >> 16) & 255;
 			final int green = (color >> 8) & 255;
