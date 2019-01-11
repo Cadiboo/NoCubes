@@ -622,21 +622,30 @@ public final class ClientUtil {
 			final float maxU = ClientUtil.getMaxU(sprite);
 			final float maxV = ClientUtil.getMaxV(sprite);
 
+			pooledMutableBlockPos.setPos(
+					renderChunkPositionX + pos[0],
+					renderChunkPositionY + pos[1],
+					renderChunkPositionZ + pos[2]
+			);
+
 			//TODO separate pos for this
-			//real pos not texture pos
-//		final LightmapInfo lightmapInfo = ClientUtil.getLightmapInfo(pos, cache);
-//		final int lightmapSkyLight = lightmapInfo.getLightmapSkyLight();
-//		final int lightmapBlockLight = lightmapInfo.getLightmapBlockLight();
+			final int skyLight;
+			final int blockLight;
+//			final int packedLight = realState.getPackedLightmapCoords(cache, texturePos);
+//			skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLight);
+//			blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLight);
+			skyLight = 250;
+			blockLight = 0;
 
-			final int lightmapSkyLight0 = 240;
-			final int lightmapSkyLight1 = 240;
-			final int lightmapSkyLight2 = 240;
-			final int lightmapSkyLight3 = 240;
+			final int lightmapSkyLight0 = skyLight;
+			final int lightmapSkyLight1 = skyLight;
+			final int lightmapSkyLight2 = skyLight;
+			final int lightmapSkyLight3 = skyLight;
 
-			final int lightmapBlockLight0 = 0;
-			final int lightmapBlockLight1 = 0;
-			final int lightmapBlockLight2 = 0;
-			final int lightmapBlockLight3 = 0;
+			final int lightmapBlockLight0 = blockLight;
+			final int lightmapBlockLight1 = blockLight;
+			final int lightmapBlockLight2 = blockLight;
+			final int lightmapBlockLight3 = blockLight;
 
 			faces.forEach(face -> {
 
