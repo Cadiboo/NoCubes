@@ -532,7 +532,6 @@ public final class ClientUtil {
 
 	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
 
-
 	public static void renderChunk(final RebuildChunkPreEvent event) {
 
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
@@ -571,7 +570,11 @@ public final class ClientUtil {
 
 		chunkData.forEach((pos, faces) -> {
 
-			pooledMutableBlockPos.setPos(pos[0], pos[1], pos[2]);
+			pooledMutableBlockPos.setPos(
+					renderChunkPositionX + pos[0],
+					renderChunkPositionY + pos[1],
+					renderChunkPositionZ + pos[2]
+			);
 
 			final IBlockState realState = cache.getBlockState(pooledMutableBlockPos);
 
