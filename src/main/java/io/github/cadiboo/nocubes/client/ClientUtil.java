@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -541,9 +542,19 @@ public final class ClientUtil {
 
 			final IBlockAccess cache = getCache(event);
 
-			final int meshSizeX = 17;
-			final int meshSizeY = 17;
-			final int meshSizeZ = 17;
+			final int meshSizeX;
+			final int meshSizeY;
+			final int meshSizeZ;
+			if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
+				//yay, surface nets is special and needs an extra +1. why? no-one knows
+				meshSizeX = 18;
+				meshSizeY = 18;
+				meshSizeZ = 18;
+			} else {
+				meshSizeX = 17;
+				meshSizeY = 17;
+				meshSizeZ = 17;
+			}
 
 			final float[] data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, cache, pooledMutableBlockPos);
 
