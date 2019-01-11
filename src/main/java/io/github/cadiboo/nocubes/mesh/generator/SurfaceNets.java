@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec3;
@@ -98,6 +99,7 @@ public class SurfaceNets implements IMeshGenerator {
 
 		final HashMap<int[], ArrayList<Face<Vec3>>> posToFaces = new HashMap<>();
 		final ArrayList<Face<Vec3>> faces = new ArrayList<>();
+		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
 //March over the voxel grid
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
@@ -170,7 +172,7 @@ public class SurfaceNets implements IMeshGenerator {
 					}
 
 					//Now we just average the edge intersections and add them to coordinate
-					float s = 1F / e_count;
+					float s = isosurfaceLevel / e_count;
 					for (int i = 0; i < 3; ++i) {
 						v[i] = x[i] + s * v[i];
 					}
