@@ -1,16 +1,20 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.util.ChunkInfo;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec3;
-import org.apache.logging.log4j.util.TriConsumer;
+
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 
 public class OldNoCubes implements IMeshGenerator {
 
+	@Nonnull
 	@Override
-	public void generateChunk(final ChunkInfo chunkInfo, final TriConsumer<int[], ChunkInfo, Face<Vec3>> faceConsumer, final float[] data, final int[] dims) {
-
+	public Map<int[], ArrayList<Face<Vec3>>> generateChunk(final float[] data, final int[] dims) {
+		return Collections.emptyMap();
 	}
 
 }

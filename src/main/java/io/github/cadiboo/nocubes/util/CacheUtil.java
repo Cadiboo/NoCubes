@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -93,6 +94,25 @@ public final class CacheUtil {
 			}
 		}
 		return density;
+	}
+
+	public static float[] generateDensityCache(final BlockPos renderChunkPosition, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+
+		final int renderChunkPositionX = renderChunkPosition.getX();
+		final int renderChunkPositionY = renderChunkPosition.getY();
+		final int renderChunkPositionZ = renderChunkPosition.getZ();
+
+		return CacheUtil.generateDensityCache(
+				renderChunkPositionX,
+				renderChunkPositionY,
+				renderChunkPositionZ,
+				renderChunkPositionX + cacheSizeX,
+				renderChunkPositionY + cacheSizeY,
+				renderChunkPositionZ + cacheSizeZ,
+				cache,
+				pooledMutableBlockPos
+		);
+
 	}
 
 }

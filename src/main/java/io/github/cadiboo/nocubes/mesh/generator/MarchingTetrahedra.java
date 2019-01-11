@@ -1,12 +1,13 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.util.ChunkInfo;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec3;
-import org.apache.logging.log4j.util.TriConsumer;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MarchingTetrahedra implements IMeshGenerator {
 
@@ -31,7 +32,8 @@ public class MarchingTetrahedra implements IMeshGenerator {
 	};
 
 	@Override
-	public void generateChunk(final ChunkInfo chunkInfo, final TriConsumer<int[], ChunkInfo, Face<Vec3>> faceConsumer, final float[] data, final int[] dims) {
+	@Nonnull
+	public Map<int[], ArrayList<Face<Vec3>>> generateChunk(final float[] data, final int[] dims) {
 
 		final int[][] cube_vertices = CUBE_VERTICES;
 		final int[][] tetra_list = TETRA_LIST;
@@ -39,6 +41,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 		final int[] x = {0, 0, 0};
 		int n = 0;
 		final float[] grid = new float[8];
+		final HashMap<int[], ArrayList<Face<Vec3>>> posToFaces = new HashMap<>();
 		final ArrayList<Face<Vec3>> faces = new ArrayList<>();
 
 		//March over the volume
@@ -153,13 +156,15 @@ public class MarchingTetrahedra implements IMeshGenerator {
 										, interp(T[3], T[1], grid, x)));
 								break;
 						}
-
-						// Pipe faces
-						faces.forEach(face -> faceConsumer.accept(x, chunkInfo, face));
-						faces.clear();
 					}
 
+					final int[] tempPos = {0, 0, 0};
+					System.arraycopy(x, 0, tempPos, 0, 3);
+					posToFaces.put(tempPos, new ArrayList<>(faces));
+					faces.clear();
 				}
+
+		return posToFaces;
 	}
 
 	private Vec3 interp(final int i0, final int i1, float[] grid, int[] x) {
