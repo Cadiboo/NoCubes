@@ -48,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
+import static net.minecraft.util.BlockRenderLayer.CUTOUT;
+import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -355,7 +357,7 @@ public final class ClientUtil {
 		final IBlockState liquidState = (IBlockState) data[1];
 		final ChunkCache cache = event.getChunkCache();
 
-		final BlockRenderLayer blockRenderLayer = liquidState.getBlock().getRenderLayer();
+		final BlockRenderLayer blockRenderLayer = getRenderLayer(liquidState);
 		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final RenderChunk renderChunk = event.getRenderChunk();
@@ -573,6 +575,20 @@ public final class ClientUtil {
 		}
 	}
 
+	public static BlockRenderLayer getRenderLayer(IBlockState state) {
+		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+		switch (blockRenderLayer) {
+			default:
+			case SOLID:
+			case TRANSLUCENT:
+				return blockRenderLayer;
+			case CUTOUT_MIPPED:
+				return Minecraft.getMinecraft().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
+			case CUTOUT:
+				return Minecraft.getMinecraft().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+		}
+	}
+
 	private static void renderFaces(final IBlockAccess cache, final BlockPos renderChunkPosition, final BlockRendererDispatcher blockRendererDispatcher, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final Map<int[], ArrayList<Face<Vec3>>> chunkData, final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
@@ -594,7 +610,7 @@ public final class ClientUtil {
 			final IBlockState textureState = (IBlockState) texturePosAndState[1];
 
 			//TODO: use Event
-			final BlockRenderLayer blockRenderLayer = textureState.getBlock().getRenderLayer();
+			final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
 
 			final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
