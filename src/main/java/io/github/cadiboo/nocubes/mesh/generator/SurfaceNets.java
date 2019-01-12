@@ -101,7 +101,7 @@ public class SurfaceNets implements IMeshGenerator {
 		final ArrayList<Face<Vec3>> faces = new ArrayList<>();
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
-//March over the voxel grid
+		//March over the voxel grid
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
 
 			//m is the pointer into the buffer we are going to use.
