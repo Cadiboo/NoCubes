@@ -95,7 +95,7 @@ public final class ModConfig {
 
 	@LangKey(MOD_ID + ".config.isosurfaceLevel")
 	@Config.RangeDouble(min = -10, max = 10)
-	public static double isosurfaceLevel = 1.0D;
+	public static double isosurfaceLevel = 1.2D;
 
 	@LangKey(MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices = true;
