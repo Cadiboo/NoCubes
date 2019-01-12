@@ -37,18 +37,29 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		synchronized (NoCubes.profiler) {
-			NoCubes.profiler.startSection("renderSmoothChunk");
+		{
+			final long startTime = System.nanoTime();
+			try {
+				ClientUtil.extendLiquidsPre(event);
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+				crashReport.makeCategory("Extending liquids");
+				throw new ReportedException(crashReport);
+			} finally {
+				NoCubes.profiler.putSection("extendLiquidsPre", System.nanoTime() - startTime);
+			}
 		}
-		try {
-			ClientUtil.renderChunk(event);
-		} catch (Exception e) {
-			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
-			crashReport.makeCategory("Rendering smooth chunk");
-			throw new ReportedException(crashReport);
-		}
-		synchronized (NoCubes.profiler) {
-			NoCubes.profiler.endSection();
+		{
+			final long startTime = System.nanoTime();
+			try {
+				ClientUtil.renderChunk(event);
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
+				crashReport.makeCategory("Rendering smooth chunk");
+				throw new ReportedException(crashReport);
+			} finally {
+				NoCubes.profiler.putSection("renderSmoothChunk", System.nanoTime() - startTime);
+			}
 		}
 	}
 
@@ -57,18 +68,29 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		synchronized (NoCubes.profiler) {
-			NoCubes.profiler.startSection("renderSmoothBlock");
+		{
+			final long startTime = System.nanoTime();
+			try {
+				ClientUtil.extendLiquidsBlock(event);
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error extending liquids in Block event!", e);
+				crashReport.makeCategory("Extending liquids");
+				throw new ReportedException(crashReport);
+			} finally {
+				NoCubes.profiler.putSection("extendLiquidsBlock", System.nanoTime() - startTime);
+			}
 		}
-		try {
-			ClientUtil.renderBlock(event);
-		} catch (Exception e) {
-			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Block event!", e);
-			crashReport.makeCategory("Rendering smooth chunk");
-			throw new ReportedException(crashReport);
-		}
-		synchronized (NoCubes.profiler) {
-			NoCubes.profiler.endSection();
+		{
+			final long startTime = System.nanoTime();
+			try {
+				ClientUtil.renderBlock(event);
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Block event!", e);
+				crashReport.makeCategory("Rendering smooth chunk");
+				throw new ReportedException(crashReport);
+			} finally {
+				NoCubes.profiler.putSection("renderSmoothBlock", System.nanoTime() - startTime);
+			}
 		}
 	}
 
