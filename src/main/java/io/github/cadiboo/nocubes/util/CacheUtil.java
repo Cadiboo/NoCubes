@@ -31,7 +31,7 @@ public final class CacheUtil {
 
 	}
 
-	private static IBlockState[] generateStateCache(final int startPosX, final int startPosY, final int startPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, PooledMutableBlockPos pooledMutableBlockPos) {
+	public static IBlockState[] generateStateCache(final int startPosX, final int startPosY, final int startPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, PooledMutableBlockPos pooledMutableBlockPos) {
 		final IBlockState[] stateCache = new IBlockState[cacheSizeX * cacheSizeY * cacheSizeZ];
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
@@ -45,7 +45,7 @@ public final class CacheUtil {
 		return stateCache;
 	}
 
-	private static boolean[] generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockState[] stateCache) {
+	public static boolean[] generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockState[] stateCache) {
 		final boolean[] smoothableCache = new boolean[cacheSizeX * cacheSizeY * cacheSizeZ];
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
