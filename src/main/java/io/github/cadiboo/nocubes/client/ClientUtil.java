@@ -84,8 +84,17 @@ public final class ClientUtil {
 		}
 	};
 
-	//TODO: stop using ReflectionHelper
-	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
+	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
+	static {
+		try {
+			//TODO: stop using ReflectionHelper
+			ambientOcclusionFace = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
+		} catch (Exception e) {
+			final CrashReport crashReport = new CrashReport("Unable to find constructor for BlockModelRenderer$AmbientOcclusionFace", e);
+			crashReport.makeCategory("Finding Constructor");
+			throw new ReportedException(crashReport);
+		}
+	}
 
 	/**
 	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
