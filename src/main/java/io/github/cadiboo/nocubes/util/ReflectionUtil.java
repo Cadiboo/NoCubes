@@ -4,12 +4,16 @@ import com.google.common.base.Preconditions;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
 import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
+/**
+ * Similar to the old {@link ReflectionHelper}
+ */
 public final class ReflectionUtil {
 
 	@Nonnull
