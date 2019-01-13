@@ -4,9 +4,11 @@ import io.github.cadiboo.nocubes.client.render.ExtendedLiquidRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.PooledDensityCache;
+import io.github.cadiboo.nocubes.util.PooledFace;
+import io.github.cadiboo.nocubes.util.PooledStateCache;
+import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
@@ -34,7 +36,6 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.Side;
@@ -44,7 +45,6 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -77,12 +77,7 @@ public final class ClientUtil {
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
 
-	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = new ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>>() {
-		@Override
-		protected HashMap<BlockPos, HashMap<BlockPos, Object[]>> initialValue() {
-			return new HashMap<>();
-		}
-	};
+//	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = ThreadLocal.withInitial(HashMap::new);
 
 	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
 	static {
@@ -292,114 +287,114 @@ public final class ClientUtil {
 		return sprite.getMaxV() - UV_CORRECT;
 	}
 
-	@Deprecated
-	//FIXME
-	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
-
-		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
-
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final ChunkCache cache = event.getChunkCache();
-
-		final HashMap<BlockPos, Object[]> map = new HashMap<>();
-		RENDER_LIQUID_POSITIONS.get().put(renderChunkPosition, map);
-
-		// 18 * 18 * 18 add 1 block on each side of chunk
-		final boolean[] isLiquid = new boolean[5832];
-
-		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition.add(-1, -1, -1), renderChunkPosition.add(16, 16, 16))) {
-			final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
-			final int x = sub.getX() + 1;
-			final int y = sub.getY() + 1;
-			final int z = sub.getZ() + 1;
-			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid && !(cache.getBlockState(mutableBlockPos.up()).getBlock() instanceof BlockLiquid);
-		}
-
-		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
-			IF:
-			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
-				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
-				final int x = sub.getX() + 1;
-				final int y = sub.getY() + 1;
-				final int z = sub.getZ() + 1;
-				for (int xOff = -1; xOff <= 1; xOff++) {
-					for (int zOff = -1; zOff <= 1; zOff++) {
-						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
-
-							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
-							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
-
-							if (!(liquidState.getBlock() instanceof BlockLiquid)) {
-								continue;
-							}
-
-							// if not source block
-							if (liquidState.getValue(BlockLiquid.LEVEL) != 0) {
-								continue;
-							}
-							map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
-							break IF;
-						}
-					}
-				}
-			}
-		}
-
-		Minecraft.getMinecraft().profiler.endSection();
-
-	}
-
-	public static void handleExtendedLiquidRender(final RebuildChunkBlockEvent event) {
-
-		final BlockPos renderChunkPos = event.getRenderChunkPosition();
-		final HashMap<BlockPos, Object[]> map = RENDER_LIQUID_POSITIONS.get().get(renderChunkPos);
-		final BlockPos pos = event.getBlockPos();
-		final Object[] data = map.get(pos);
-
-		if (data == null) {
-			return;
-		}
-
-		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquid in Block");
-
-		final BlockPos liquidPos = (BlockPos) data[0];
-		final IBlockState liquidState = (IBlockState) data[1];
-		final ChunkCache cache = event.getChunkCache();
-
-		final BlockRenderLayer blockRenderLayer = getRenderLayer(liquidState);
-		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
-		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final RenderChunk renderChunk = event.getRenderChunk();
-
-		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-			compiledChunk.setLayerStarted(blockRenderLayer);
-			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
-			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
-		}
-
-		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, cache, bufferBuilder);
-
-//		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, cache, bufferBuilder);
-
-		OptifineCompatibility.popShaderThing(bufferBuilder);
-
-		map.remove(pos);
-
-		Minecraft.getMinecraft().profiler.endSection();
-
-	}
-
-	public static void cleanupExtendedLiquids(final RebuildChunkPostEvent event) {
-
-		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Post");
-
-		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
-		RENDER_LIQUID_POSITIONS.get().remove(renderChunkPos);
-
-		Minecraft.getMinecraft().profiler.endSection();
-
-	}
+//	@Deprecated
+//	//FIXME
+//	public static void calculateExtendedLiquids(final RebuildChunkPreEvent event) {
+//
+//		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Pre");
+//
+//		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
+//		final ChunkCache cache = event.getChunkCache();
+//
+//		final HashMap<BlockPos, Object[]> map = new HashMap<>();
+//		RENDER_LIQUID_POSITIONS.get().put(renderChunkPosition, map);
+//
+//		// 18 * 18 * 18 add 1 block on each side of chunk
+//		final boolean[] isLiquid = new boolean[5832];
+//
+//		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition.add(-1, -1, -1), renderChunkPosition.add(16, 16, 16))) {
+//			final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+//			final int x = sub.getX() + 1;
+//			final int y = sub.getY() + 1;
+//			final int z = sub.getZ() + 1;
+//			// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+//			isLiquid[x + 18 * (y + 18 * z)] = cache.getBlockState(mutableBlockPos).getBlock() instanceof BlockLiquid && !(cache.getBlockState(mutableBlockPos.up()).getBlock() instanceof BlockLiquid);
+//		}
+//
+//		for (MutableBlockPos mutableBlockPos : BlockPos.getAllInBoxMutable(renderChunkPosition, renderChunkPosition.add(15, 15, 15))) {
+//			IF:
+//			if (ModUtil.shouldSmooth(cache.getBlockState(mutableBlockPos))) {
+//				final BlockPos sub = mutableBlockPos.subtract(renderChunkPosition);
+//				final int x = sub.getX() + 1;
+//				final int y = sub.getY() + 1;
+//				final int z = sub.getZ() + 1;
+//				for (int xOff = -1; xOff <= 1; xOff++) {
+//					for (int zOff = -1; zOff <= 1; zOff++) {
+//						if (isLiquid[(x + xOff) + 18 * (y + 18 * (z + zOff))]) {
+//
+//							final BlockPos potentialLiquidPos = mutableBlockPos.add(xOff, 0, zOff);
+//							final IBlockState liquidState = cache.getBlockState(potentialLiquidPos);
+//
+//							if (!(liquidState.getBlock() instanceof BlockLiquid)) {
+//								continue;
+//							}
+//
+//							// if not source block
+//							if (liquidState.getValue(BlockLiquid.LEVEL) != 0) {
+//								continue;
+//							}
+//							map.put(mutableBlockPos.toImmutable(), new Object[]{potentialLiquidPos.toImmutable(), liquidState});
+//							break IF;
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		Minecraft.getMinecraft().profiler.endSection();
+//
+//	}
+//
+//	public static void handleExtendedLiquidRender(final RebuildChunkBlockEvent event) {
+//
+//		final BlockPos renderChunkPos = event.getRenderChunkPosition();
+//		final HashMap<BlockPos, Object[]> map = RENDER_LIQUID_POSITIONS.get().get(renderChunkPos);
+//		final BlockPos pos = event.getBlockPos();
+//		final Object[] data = map.get(pos);
+//
+//		if (data == null) {
+//			return;
+//		}
+//
+//		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquid in Block");
+//
+//		final BlockPos liquidPos = (BlockPos) data[0];
+//		final IBlockState liquidState = (IBlockState) data[1];
+//		final ChunkCache cache = event.getChunkCache();
+//
+//		final BlockRenderLayer blockRenderLayer = getRenderLayer(liquidState);
+//		final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
+//		final CompiledChunk compiledChunk = event.getCompiledChunk();
+//		final RenderChunk renderChunk = event.getRenderChunk();
+//
+//		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+//			compiledChunk.setLayerStarted(blockRenderLayer);
+//			event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;
+//			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPos);
+//		}
+//
+//		OptifineCompatibility.pushShaderThing(liquidState, liquidPos, cache, bufferBuilder);
+//
+////		FluidInBlockRenderer.renderLiquidInBlock(liquidState, liquidPos, pos, cache, bufferBuilder);
+//
+//		OptifineCompatibility.popShaderThing(bufferBuilder);
+//
+//		map.remove(pos);
+//
+//		Minecraft.getMinecraft().profiler.endSection();
+//
+//	}
+//
+//	public static void cleanupExtendedLiquids(final RebuildChunkPostEvent event) {
+//
+//		Minecraft.getMinecraft().profiler.startSection("Rendering smooth world liquids in Post");
+//
+//		final MutableBlockPos renderChunkPos = event.getRenderChunkPosition();
+//		RENDER_LIQUID_POSITIONS.get().remove(renderChunkPos);
+//
+//		Minecraft.getMinecraft().profiler.endSection();
+//
+//	}
 
 //	public static BlockRenderData getBlockRenderData(final BlockPos pos, final IBlockAccess cache) {
 //
@@ -482,8 +477,8 @@ public final class ClientUtil {
 
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
-//				for (int[] offset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+//				for (int[] withOffset : OFFSETS_ORDERED) {
+//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
 //					if (tempState.getBlock() == Blocks.SNOW_LAYER) {
 //						textureState = tempState;
 //						texturePos = pooledMutableBlockPos.toImmutable();
@@ -491,8 +486,8 @@ public final class ClientUtil {
 //					}
 //				}
 //
-//				for (int[] offset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+//				for (int[] withOffset : OFFSETS_ORDERED) {
+//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
 //					if (tempState.getBlock() == Blocks.GRASS) {
 //						textureState = tempState;
 //						texturePos = pooledMutableBlockPos.toImmutable();
@@ -568,18 +563,21 @@ public final class ClientUtil {
 				meshSizeZ = 17;
 			}
 
-			final float[] data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, cache, pooledMutableBlockPos);
-
-			renderFaces(
-					cache,
-					renderChunkPosition,
-					Minecraft.getMinecraft().getBlockRendererDispatcher(),
-					event.getRenderChunk(),
-					event.getCompiledChunk(),
-					event.getGenerator(),
-					ModConfig.getMeshGenerator().generateChunk(data, new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-					pooledMutableBlockPos
-			);
+			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, cache, pooledMutableBlockPos);
+			try {
+				renderFaces(
+						cache,
+						renderChunkPosition,
+						Minecraft.getMinecraft().getBlockRendererDispatcher(),
+						event.getRenderChunk(),
+						event.getCompiledChunk(),
+						event.getGenerator(),
+						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+						pooledMutableBlockPos
+				);
+			} finally {
+				data.release();
+			}
 		} finally {
 			pooledMutableBlockPos.release();
 		}
@@ -599,7 +597,7 @@ public final class ClientUtil {
 		}
 	}
 
-	private static void renderFaces(final IBlockAccess cache, final BlockPos renderChunkPosition, final BlockRendererDispatcher blockRendererDispatcher, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final Map<int[], ArrayList<Face<Vec3>>> chunkData, final PooledMutableBlockPos pooledMutableBlockPos) {
+	private static void renderFaces(final IBlockAccess cache, final BlockPos renderChunkPosition, final BlockRendererDispatcher blockRendererDispatcher, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final Map<int[], ArrayList<PooledFace>> chunkData, final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
@@ -660,7 +658,7 @@ public final class ClientUtil {
 //			final int packedLight = realState.getPackedLightmapCoords(cache, texturePos);
 //			skyLight = getLightmapSkyLightCoordsFromPackedLightmapCoords(packedLight);
 //			blockLight = getLightmapBlockLightCoordsFromPackedLightmapCoords(packedLight);
-			skyLight = 250;
+			skyLight = 240;
 			blockLight = 0;
 
 			final int lightmapSkyLight0 = skyLight;
@@ -675,15 +673,26 @@ public final class ClientUtil {
 
 			faces.forEach(face -> {
 
-				final Vec3 v0 = face.getVertex0().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-				final Vec3 v1 = face.getVertex1().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-				final Vec3 v2 = face.getVertex2().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-				final Vec3 v3 = face.getVertex3().offset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+				try {
+					final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+					final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+					final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+					final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 
-				bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-				bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-				bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-				bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+					try {
+						bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+						bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+						bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+						bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+					} finally {
+						v0.release();
+						v1.release();
+						v2.release();
+						v3.release();
+					}
+				} finally {
+					face.release();
+				}
 
 			});
 
@@ -709,7 +718,7 @@ public final class ClientUtil {
 
 	private static final int liquidCacheSizeZ = 16 + liquidCacheAddZ + liquidCacheAddZ;
 
-	private static final ThreadLocal<IBlockState[]> LIQUID_CACHE = ThreadLocal.withInitial(() -> new IBlockState[liquidCacheSizeX * liquidCacheSizeY * liquidCacheSizeZ]);
+	private static final ThreadLocal<PooledStateCache> LIQUID_CACHE = new ThreadLocal<>();
 
 	public static void extendLiquidsPre(final RebuildChunkPreEvent event) {
 
@@ -725,7 +734,7 @@ public final class ClientUtil {
 			final int startPosY = renderChunkPositionY - liquidCacheAddY;
 			final int startPosZ = renderChunkPositionZ - liquidCacheAddZ;
 
-			final IBlockState[] stateCache = CacheUtil.generateStateCache(startPosX, startPosY, startPosZ, liquidCacheSizeX, liquidCacheSizeY, liquidCacheSizeZ, getCache(event), pooledMutableBlockPos);
+			final PooledStateCache stateCache = CacheUtil.generateStateCache(startPosX, startPosY, startPosZ, liquidCacheSizeX, liquidCacheSizeY, liquidCacheSizeZ, getCache(event), pooledMutableBlockPos);
 			LIQUID_CACHE.set(stateCache);
 
 		} finally {
@@ -741,7 +750,7 @@ public final class ClientUtil {
 	public static void extendLiquidsBlock(final RebuildChunkBlockEvent event) {
 		final IBlockState state = event.getBlockState();
 		if (ModUtil.shouldSmooth(state)) {
-			final IBlockState[] stateCache = LIQUID_CACHE.get();
+			final IBlockState[] stateCache = LIQUID_CACHE.get().getStateCache();
 			final BlockPos pos = event.getBlockPos();
 			final int posX = pos.getX();
 			final int posY = pos.getY();
@@ -801,6 +810,10 @@ public final class ClientUtil {
 			}
 		}
 
+	}
+
+	public static void extendLiquidsPost(final RebuildChunkPostEvent event) {
+		LIQUID_CACHE.get().release();
 	}
 
 }

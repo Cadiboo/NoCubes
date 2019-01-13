@@ -1,11 +1,9 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.PooledFace;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public interface IMeshGenerator {
@@ -17,9 +15,7 @@ public interface IMeshGenerator {
 	 * @param dims the dimensions of the mesh
 	 */
 	@Nonnull
-	Map<int[], ArrayList<Face<Vec3>>> generateChunk(final float[] data, final int[] dims);
-
-
+	Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims);
 
 //	final int[][] cube_vertices = CUBE_VERTICES;
 //	final int[][] tetra_list = TETRA_LIST;
@@ -36,6 +32,5 @@ public interface IMeshGenerator {
 //	faces.clear();
 //
 //	return posToFaces;
-
 
 }
