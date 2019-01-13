@@ -120,12 +120,12 @@ public final class ModUtil {
 	 * @param point the point
 	 */
 	public static void offsetVertex(Vec3 point) {
-		long i = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
-		i = i * i * 42317861L + i * 11L;
+		long rand = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
+		rand = rand * rand * 42317861L + rand * 11L;
 		final float offsetAmmount = ModConfig.getoffsetAmmount();
-		point.x += (((i >> 16 & 15L) / 15.0F - 0.5F) * offsetAmmount);
-		point.y += (((i >> 20 & 15L) / 15.0F - 0.5F) * offsetAmmount);
-		point.z += (((i >> 24 & 15L) / 15.0F - 0.5F) * offsetAmmount);
+		point.x += (((rand >> 16 & 15L) / 15.0F - 0.5F) * offsetAmmount);
+		point.y += (((rand >> 20 & 15L) / 15.0F - 0.5F) * offsetAmmount);
+		point.z += (((rand >> 24 & 15L) / 15.0F - 0.5F) * offsetAmmount);
 	}
 
 	@Deprecated
