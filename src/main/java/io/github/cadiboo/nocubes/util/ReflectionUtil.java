@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.base.Preconditions;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
-import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,7 +38,7 @@ public final class ReflectionUtil {
 		try {
 			return getField(clazz, fieldName);
 		} catch (NoSuchFieldException e) {
-			final CrashReport crashReport = new CrashReport("Unable to find field \""+fieldName+"\" for class \""+clazz+"\". Field does not exist!", e);
+			final CrashReport crashReport = new CrashReport("Unable to find field \"" + fieldName + "\" for class \"" + clazz + "\". Field does not exist!", e);
 			crashReport.makeCategory("Finding Field");
 			throw new ReportedException(crashReport);
 		}
