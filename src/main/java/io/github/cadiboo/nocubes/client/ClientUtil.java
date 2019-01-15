@@ -522,22 +522,6 @@ public final class ClientUtil {
 		}
 	}
 
-	public static IBlockAccess getCache(final RebuildChunkPreEvent event) {
-		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
-			return ((RebuildChunkPreOptifineEvent) event).getChunkCacheOF();
-		} else {
-			return event.getChunkCache();
-		}
-	}
-
-	public static IBlockAccess getCache(final RebuildChunkBlockEvent event) {
-		if (event.getType() == EnumEventType.FORGE_OPTIFINE) {
-			return ((RebuildChunkBlockOptifineEvent) event).getChunkCacheOF();
-		} else {
-			return event.getChunkCache();
-		}
-	}
-
 	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
 
 	public static void renderChunk(final RebuildChunkPreEvent event) {
@@ -547,7 +531,7 @@ public final class ClientUtil {
 		try {
 			final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 
-			final IBlockAccess cache = getCache(event);
+			final IBlockAccess cache = event.getIBlockAccess();
 
 			final int meshSizeX;
 			final int meshSizeY;
@@ -725,7 +709,7 @@ public final class ClientUtil {
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 
 		try {
-			final MutableBlockPos renderChunkPosition = event.getRenderChunkPosition();
+			final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 			final int renderChunkPositionX = renderChunkPosition.getX();
 			final int renderChunkPositionY = renderChunkPosition.getY();
 			final int renderChunkPositionZ = renderChunkPosition.getZ();
@@ -734,7 +718,7 @@ public final class ClientUtil {
 			final int startPosY = renderChunkPositionY - liquidCacheAddY;
 			final int startPosZ = renderChunkPositionZ - liquidCacheAddZ;
 
-			final PooledStateCache stateCache = CacheUtil.generateStateCache(startPosX, startPosY, startPosZ, liquidCacheSizeX, liquidCacheSizeY, liquidCacheSizeZ, getCache(event), pooledMutableBlockPos);
+			final PooledStateCache stateCache = CacheUtil.generateStateCache(startPosX, startPosY, startPosZ, liquidCacheSizeX, liquidCacheSizeY, liquidCacheSizeZ, event.getIBlockAccess(), pooledMutableBlockPos);
 			LIQUID_CACHE.set(stateCache);
 
 		} finally {
@@ -789,7 +773,7 @@ public final class ClientUtil {
 					final Minecraft minecraft = Minecraft.getMinecraft();
 					final BlockRenderLayer blockRenderLayer = getRenderLayer(potentialLiquidState);
 					final int ordinal = blockRenderLayer.ordinal();
-					final IBlockAccess cache = getCache(event);
+					final IBlockAccess cache = event.getIBlockAccess();
 					final CompiledChunk compiledChunk = event.getCompiledChunk();
 					final BufferBuilder bufferBuilder = event.getGenerator().getRegionRenderCacheBuilder().getWorldRendererByLayerId(ordinal);
 
