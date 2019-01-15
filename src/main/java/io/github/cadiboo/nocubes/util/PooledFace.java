@@ -43,20 +43,20 @@ public class PooledFace {
 	}
 
 	public static PooledFace retain(final PooledVec3 vertex0, final PooledVec3 vertex1, final PooledVec3 vertex2, final PooledVec3 vertex3) {
-		synchronized (POOL) {
-			if (!POOL.isEmpty()) {
-				PooledFace pooledFace = POOL.remove(POOL.size() - 1);
-
-				if (pooledFace != null && pooledFace.released) {
-					pooledFace.released = false;
-					pooledFace.vertex0 = vertex0;
-					pooledFace.vertex1 = vertex1;
-					pooledFace.vertex2 = vertex3;
-					pooledFace.vertex3 = vertex3;
-					return pooledFace;
-				}
-			}
-		}
+//		synchronized (POOL) {
+//			if (!POOL.isEmpty()) {
+//				PooledFace pooledFace = POOL.remove(POOL.size() - 1);
+//
+//				if (pooledFace != null && pooledFace.released) {
+//					pooledFace.released = false;
+//					pooledFace.vertex0 = vertex0;
+//					pooledFace.vertex1 = vertex1;
+//					pooledFace.vertex2 = vertex3;
+//					pooledFace.vertex3 = vertex3;
+//					return pooledFace;
+//				}
+//			}
+//		}
 
 		return new PooledFace(vertex0, vertex1, vertex2, vertex3);
 	}
