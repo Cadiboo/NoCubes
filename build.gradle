@@ -61,7 +61,7 @@ dependencies {
 	//deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 	//deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-	deobfCompile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.12.2:0.2.2"
+//	deobfCompile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.12.2:0.3.0"
 
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
