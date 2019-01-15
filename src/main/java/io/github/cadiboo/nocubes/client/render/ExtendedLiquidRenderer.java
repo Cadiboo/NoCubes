@@ -68,70 +68,11 @@ public class ExtendedLiquidRenderer {
 //				float f11 = 0.001F;
 
 			if (shouldRenderUp) {
-				wasAnythingRendered = true;
-				float slopeAngle = BlockLiquid.getSlopeAngle(blockAccess, liquidPos, material, liquidState);
-				TextureAtlasSprite textureAtlasSprite = slopeAngle > -999.0F ? sprites[1] : sprites[0];
-				fluidHeight -= 0.001F;
-				fluidHeightSouth -= 0.001F;
-				fluidHeightEastSouth -= 0.001F;
-				fluidHeightEast -= 0.001F;
-				float minU;
-				float u_f14;
-				float maxU;
-				float u_f16;
-				float minV;
-				float maxV;
-				float v_f19;
-				float v_f20;
-
-				if (slopeAngle < -999.0F) {
-//					minU = textureAtlasSprite.getInterpolatedU(0.0D);
-					minU = ClientUtil.getMinU(textureAtlasSprite);
-//					minV = textureAtlasSprite.getInterpolatedV(0.0D);
-					minV = ClientUtil.getMinV(textureAtlasSprite);
-					u_f14 = minU;
-//					maxV = textureAtlasSprite.getInterpolatedV(16.0D);
-					maxV = ClientUtil.getMaxV(textureAtlasSprite);
-//					maxU = textureAtlasSprite.getInterpolatedU(16.0D);
-					maxU = ClientUtil.getMaxU(textureAtlasSprite);
-					v_f19 = maxV;
-					u_f16 = maxU;
-					v_f20 = minV;
-				} else {
-					float sinSlopeAngle = MathHelper.sin(slopeAngle) * 0.25F;
-					float cosSlopeAngle = MathHelper.cos(slopeAngle) * 0.25F;
-//						float f23 = 8.0F;
-					minU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
-					minV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
-					u_f14 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
-					maxV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
-					maxU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
-					v_f19 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
-					u_f16 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
-					v_f20 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
-				}
-
-				int packedLightmapCoords = liquidState.getPackedLightmapCoords(blockAccess, liquidPos);
-				int skyLight = packedLightmapCoords >> 16 & 65535;
-				int blockLight = packedLightmapCoords & 65535;
-				float redFloat = 1.0F * red;
-				float greenFloat = 1.0F * green;
-				float blueFloat = 1.0F * blue;
-				bufferBuilder.pos(x + 0.0D, y + (double) fluidHeight, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 0.0D, y + (double) fluidHeightSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f14, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEastSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) maxU, (double) v_f19).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEast, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f16, (double) v_f20).lightmap(skyLight, blockLight).endVertex();
-
-				if (blockliquid.shouldRenderSides(blockAccess, liquidPos.up())) {
-					bufferBuilder.pos(x + 0.0D, y + (double) fluidHeight, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
-					bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEast, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f16, (double) v_f20).lightmap(skyLight, blockLight).endVertex();
-					bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEastSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) maxU, (double) v_f19).lightmap(skyLight, blockLight).endVertex();
-					bufferBuilder.pos(x + 0.0D, y + (double) fluidHeightSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f14, (double) maxV).lightmap(skyLight, blockLight).endVertex();
-				}
+				wasAnythingRendered |= renderFluidUp(blockAccess, liquidPos, material, liquidState, blockliquid, sprites, fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast, red, green, blue, bufferBuilder, x, y, z);
 			}
 
 			if (shouldRenderDown) {
-				wasAnythingRendered = renderFluidDown(sprites, liquidState, blockAccess, liquidPos, bufferBuilder, x, y, z);
+				wasAnythingRendered |= renderFluidDown(sprites, liquidState, blockAccess, liquidPos, bufferBuilder, x, y, z);
 			}
 
 			for (int posAddIndex = 0; posAddIndex < 4; ++posAddIndex) {
@@ -232,6 +173,69 @@ public class ExtendedLiquidRenderer {
 
 			return wasAnythingRendered;
 		}
+	}
+
+	private static boolean renderFluidUp(final IBlockAccess blockAccess, final BlockPos liquidPos, final Material material, final IBlockState liquidState, final BlockLiquid blockliquid, final TextureAtlasSprite[] sprites, float fluidHeight, float fluidHeightSouth, float fluidHeightEastSouth, float fluidHeightEast, final float red, final float green, final float blue, final BufferBuilder bufferBuilder, double x, double y, double z) {
+		float slopeAngle = BlockLiquid.getSlopeAngle(blockAccess, liquidPos, material, liquidState);
+		TextureAtlasSprite textureAtlasSprite = slopeAngle > -999.0F ? sprites[1] : sprites[0];
+		fluidHeight -= 0.001F;
+		fluidHeightSouth -= 0.001F;
+		fluidHeightEastSouth -= 0.001F;
+		fluidHeightEast -= 0.001F;
+		float minU;
+		float u_f14;
+		float maxU;
+		float u_f16;
+		float minV;
+		float maxV;
+		float v_f19;
+		float v_f20;
+
+		if (slopeAngle < -999.0F) {
+//					minU = textureAtlasSprite.getInterpolatedU(0.0D);
+			minU = ClientUtil.getMinU(textureAtlasSprite);
+//					minV = textureAtlasSprite.getInterpolatedV(0.0D);
+			minV = ClientUtil.getMinV(textureAtlasSprite);
+			u_f14 = minU;
+//					maxV = textureAtlasSprite.getInterpolatedV(16.0D);
+			maxV = ClientUtil.getMaxV(textureAtlasSprite);
+//					maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+			maxU = ClientUtil.getMaxU(textureAtlasSprite);
+			v_f19 = maxV;
+			u_f16 = maxU;
+			v_f20 = minV;
+		} else {
+			float sinSlopeAngle = MathHelper.sin(slopeAngle) * 0.25F;
+			float cosSlopeAngle = MathHelper.cos(slopeAngle) * 0.25F;
+//						float f23 = 8.0F;
+			minU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
+			minV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
+			u_f14 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (-cosSlopeAngle + sinSlopeAngle) * 16.0F));
+			maxV = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
+			maxU = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle + sinSlopeAngle) * 16.0F));
+			v_f19 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
+			u_f16 = textureAtlasSprite.getInterpolatedU((double) (8.0F + (cosSlopeAngle - sinSlopeAngle) * 16.0F));
+			v_f20 = textureAtlasSprite.getInterpolatedV((double) (8.0F + (-cosSlopeAngle - sinSlopeAngle) * 16.0F));
+		}
+
+		int packedLightmapCoords = liquidState.getPackedLightmapCoords(blockAccess, liquidPos);
+		int skyLight = packedLightmapCoords >> 16 & 65535;
+		int blockLight = packedLightmapCoords & 65535;
+		float redFloat = 1.0F * red;
+		float greenFloat = 1.0F * green;
+		float blueFloat = 1.0F * blue;
+		bufferBuilder.pos(x + 0.0D, y + (double) fluidHeight, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 0.0D, y + (double) fluidHeightSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f14, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEastSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) maxU, (double) v_f19).lightmap(skyLight, blockLight).endVertex();
+		bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEast, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f16, (double) v_f20).lightmap(skyLight, blockLight).endVertex();
+
+		if (blockliquid.shouldRenderSides(blockAccess, liquidPos.up())) {
+			bufferBuilder.pos(x + 0.0D, y + (double) fluidHeight, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEast, z + 0.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f16, (double) v_f20).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 1.0D, y + (double) fluidHeightEastSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) maxU, (double) v_f19).lightmap(skyLight, blockLight).endVertex();
+			bufferBuilder.pos(x + 0.0D, y + (double) fluidHeightSouth, z + 1.0D).color(redFloat, greenFloat, blueFloat, 1.0F).tex((double) u_f14, (double) maxV).lightmap(skyLight, blockLight).endVertex();
+		}
+		return true;
 	}
 
 	private static boolean renderFluidDown(TextureAtlasSprite[] sprites, IBlockState blockStateIn, IBlockAccess blockAccess, BlockPos liquidPos, BufferBuilder bufferBuilderIn, double x, double y, double z) {
