@@ -80,7 +80,7 @@ import static net.minecraft.item.EnumDyeColor.YELLOW;
 public final class ModConfig {
 
 	@Config.Ignore
-	private static final HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
+	private static final transient HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
 
 	@LangKey(MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
