@@ -656,7 +656,6 @@ public final class ClientUtil {
 			final int lightmapBlockLight3 = blockLight;
 
 			faces.forEach(face -> {
-
 				try {
 					final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 					final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
