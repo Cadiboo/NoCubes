@@ -40,8 +40,8 @@ public final class ModReference {
 	 */
 	public static final String DEPENDENCIES = "" +
 			"required-after:minecraft;" +
-			"required-after:forge@[14.23.5.2768,);" +
-			"required-after:render_chunk_rebuild_chunk_hooks@[0.2.2,);" +
+			"required-after:forge@[14.23.5.2795,);" +
+			"required-after:render_chunk_rebuild_chunk_hooks@[0.3.0,0.4.0);" +
 			"";
 
 	/**
