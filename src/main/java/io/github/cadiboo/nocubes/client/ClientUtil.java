@@ -38,6 +38,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -80,15 +81,26 @@ public final class ClientUtil {
 //	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = ThreadLocal.withInitial(HashMap::new);
 
 	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
+	private static final boolean ambientOcclusionFaceNeedsBlockModelRenderer;
 	static {
+		Constructor<AmbientOcclusionFace> ambientOcclusionFaceConstructor = null;
+		boolean needsBlockModelRenderer = false;
 		try {
-			//TODO: stop using ReflectionHelper
-			ambientOcclusionFace = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
+			try {
+				//TODO: stop using ReflectionHelper
+				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
+			} catch (UnknownConstructorException e) {
+				//TODO: stop using ReflectionHelper
+				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class, BlockModelRenderer.class);
+				needsBlockModelRenderer = true;
+			}
 		} catch (Exception e) {
 			final CrashReport crashReport = new CrashReport("Unable to find constructor for BlockModelRenderer$AmbientOcclusionFace", e);
 			crashReport.makeCategory("Finding Constructor");
 			throw new ReportedException(crashReport);
 		}
+		ambientOcclusionFace = ambientOcclusionFaceConstructor;
+		ambientOcclusionFaceNeedsBlockModelRenderer = needsBlockModelRenderer;
 	}
 
 	/**
@@ -514,7 +526,11 @@ public final class ClientUtil {
 
 	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
 		try {
-			return ambientOcclusionFace.newInstance();
+			if (ambientOcclusionFaceNeedsBlockModelRenderer) {
+				return ambientOcclusionFace.newInstance(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer());
+			} else {
+				return ambientOcclusionFace.newInstance();
+			}
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
 			crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
