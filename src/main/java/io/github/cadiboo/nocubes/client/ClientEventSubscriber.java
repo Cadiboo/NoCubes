@@ -53,6 +53,8 @@ public final class ClientEventSubscriber {
 			final long startTime = System.nanoTime();
 			try {
 				ClientUtil.renderChunk(event);
+			} catch (ReportedException e) {
+				throw e;
 			} catch (Exception e) {
 				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
 				crashReport.makeCategory("Rendering smooth chunk");
