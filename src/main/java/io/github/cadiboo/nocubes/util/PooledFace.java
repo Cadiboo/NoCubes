@@ -47,7 +47,10 @@ public class PooledFace {
 		return retain(copyOfVertex0, vertex0, vertex1, vertex2);
 	}
 
+	private static int debugCounter = 0;
+
 	public static PooledFace retain(final PooledVec3 vertex0, final PooledVec3 vertex1, final PooledVec3 vertex2, final PooledVec3 vertex3) {
+		debugCounter++;
 		synchronized (POOL) {
 			if (!POOL.isEmpty()) {
 				PooledFace pooledFace = POOL.remove(POOL.size() - 1);
@@ -69,6 +72,7 @@ public class PooledFace {
 	public void release() {
 		synchronized (POOL) {
 			if (POOL.size() < 100000) {
+				debugCounter--;
 				POOL.add(this);
 			}
 			this.released = true;

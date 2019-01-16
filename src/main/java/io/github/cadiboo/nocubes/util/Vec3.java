@@ -78,7 +78,10 @@ public class Vec3 {
 			return retain(0, 0, 0);
 		}
 
+		private static int debugCounter = 0;
+
 		public static PooledVec3 retain(final double xIn, final double yIn, final double zIn) {
+			debugCounter++;
 			synchronized (POOL) {
 				if (!POOL.isEmpty()) {
 					PooledVec3 pooledVec3 = POOL.remove(POOL.size() - 1);
@@ -103,6 +106,7 @@ public class Vec3 {
 		public void release() {
 			synchronized (POOL) {
 				if (POOL.size() < 100000) {
+					debugCounter--;
 					POOL.add(this);
 				}
 
@@ -111,6 +115,7 @@ public class Vec3 {
 		}
 
 		@Override
+		@Deprecated
 		public PooledVec3 withOffset(final double x, final double y, final double z) {
 			return new PooledVec3(
 					this.x + x,
