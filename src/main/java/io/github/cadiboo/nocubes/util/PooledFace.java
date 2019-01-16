@@ -2,16 +2,21 @@ package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
 public class PooledFace {
 
+	@Nonnull
 	private PooledVec3 vertex0;
+	@Nonnull
 	private PooledVec3 vertex1;
+	@Nonnull
 	private PooledVec3 vertex2;
+	@Nonnull
 	private PooledVec3 vertex3;
 
-	private PooledFace(final PooledVec3 vertex0, final PooledVec3 vertex1, final PooledVec3 vertex2, final PooledVec3 vertex3) {
+	private PooledFace(@Nonnull final PooledVec3 vertex0, @Nonnull final PooledVec3 vertex1, @Nonnull final PooledVec3 vertex2, @Nonnull final PooledVec3 vertex3) {
 		this.vertex0 = vertex0;
 		this.vertex1 = vertex1;
 		this.vertex2 = vertex2;
