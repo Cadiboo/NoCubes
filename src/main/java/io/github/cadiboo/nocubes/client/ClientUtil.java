@@ -773,7 +773,7 @@ public final class ClientUtil {
 				// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 				final int index = (posX - renderChunkPositionX + offsetPos[0] + liquidCacheAddX) + liquidCacheSizeX * ((posY - renderChunkPositionY + offsetPos[1] + liquidCacheAddY) + liquidCacheSizeY * (posZ - renderChunkPositionZ + offsetPos[2] + liquidCacheAddZ));
 
-				if(index > stateCache.length) {
+				if (index > stateCache.length) {
 					// Fix crash on TP when renderChunkPosition is changed mid-render (somehow)
 					return;
 				}
