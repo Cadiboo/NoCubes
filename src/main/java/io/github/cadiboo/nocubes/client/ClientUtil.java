@@ -26,6 +26,7 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
@@ -637,42 +638,44 @@ public final class ClientUtil {
 			final BlockPos texturePos = (BlockPos) texturePosAndState[0];
 			final IBlockState textureState = (IBlockState) texturePosAndState[1];
 
-			//TODO: use Event
-			final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
+			try {
 
-			final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+				//TODO: use Event
+				final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
 
-			final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
+				final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
-			if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-				compiledChunk.setLayerStarted(blockRenderLayer);
-				USED_RENDER_LAYERS.get()[blockRenderLayerOrdinal] = true;
-				renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
-			}
+				final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
 
-			BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
-			if (quad == null) {
-				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
-			}
-			final TextureAtlasSprite sprite = quad.getSprite();
-			final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
-			final int red = (color >> 16) & 255;
-			final int green = (color >> 8) & 255;
-			final int blue = color & 255;
-			final int alpha = 0xFF;
+				if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+					compiledChunk.setLayerStarted(blockRenderLayer);
+					USED_RENDER_LAYERS.get()[blockRenderLayerOrdinal] = true;
+					renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
+				}
 
-			final float minU = ClientUtil.getMinU(sprite);
-			final float minV = ClientUtil.getMinV(sprite);
-			final float maxU = ClientUtil.getMaxU(sprite);
-			final float maxV = ClientUtil.getMaxV(sprite);
+				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
+				if (quad == null) {
+					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+				}
+				final TextureAtlasSprite sprite = quad.getSprite();
+				final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+				final int red = (color >> 16) & 255;
+				final int green = (color >> 8) & 255;
+				final int blue = color & 255;
+				final int alpha = 0xFF;
 
-			pooledMutableBlockPos.setPos(
-					renderChunkPositionX + pos[0],
-					renderChunkPositionY + pos[1],
-					renderChunkPositionZ + pos[2]
-			);
+				final float minU = ClientUtil.getMinU(sprite);
+				final float minV = ClientUtil.getMinV(sprite);
+				final float maxU = ClientUtil.getMaxU(sprite);
+				final float maxV = ClientUtil.getMaxV(sprite);
 
-			//TODO: works "fine", commented out for release
+				pooledMutableBlockPos.setPos(
+						renderChunkPositionX + pos[0],
+						renderChunkPositionY + pos[1],
+						renderChunkPositionZ + pos[2]
+				);
+
+				//TODO: works "fine", commented out for release
 //			// every corner of the block
 //			final int[] packedLight = new int[8];
 //			int index = 0;
@@ -689,37 +692,37 @@ public final class ClientUtil {
 //				}
 //			}
 
-			final int packedLight;
-			if (ModConfig.approximateLighting) {
-				packedLight = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-			} else {
-				//never gets used in this case
-				packedLight = 0;
-			}
-			final int lightmapSkyLight0;
-			final int lightmapSkyLight1;
-			final int lightmapSkyLight2;
-			final int lightmapSkyLight3;
-			if (ModConfig.approximateLighting) {
-				lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = packedLight >> 16;
-			} else {
-				lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
-			}
+				final int packedLight;
+				if (ModConfig.approximateLighting) {
+					packedLight = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
+				} else {
+					//never gets used in this case
+					packedLight = 0;
+				}
+				final int lightmapSkyLight0;
+				final int lightmapSkyLight1;
+				final int lightmapSkyLight2;
+				final int lightmapSkyLight3;
+				if (ModConfig.approximateLighting) {
+					lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = packedLight >> 16;
+				} else {
+					lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
+				}
 
-			final int lightmapBlockLight0;
-			final int lightmapBlockLight1;
-			final int lightmapBlockLight2;
-			final int lightmapBlockLight3;
-			if (ModConfig.approximateLighting) {
-				lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = packedLight & 0xFFFF;
-			} else {
-				lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 0;
-			}
+				final int lightmapBlockLight0;
+				final int lightmapBlockLight1;
+				final int lightmapBlockLight2;
+				final int lightmapBlockLight3;
+				if (ModConfig.approximateLighting) {
+					lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = packedLight & 0xFFFF;
+				} else {
+					lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 0;
+				}
 
-			for (int i = 0; i < faces.size(); i++) {
-				final PooledFace face = faces.get(i);
+				for (int i = 0; i < faces.size(); i++) {
+					final PooledFace face = faces.get(i);
 
-				//TODO: works "fine", commented out for release
+					//TODO: works "fine", commented out for release
 //				final int lightmapSkyLight0 = packedLight[0] >> 16;
 //				final int lightmapSkyLight1 = packedLight[1] >> 16;
 //				final int lightmapSkyLight2 = packedLight[2] >> 16;
@@ -730,27 +733,39 @@ public final class ClientUtil {
 //				final int lightmapBlockLight2 = packedLight[2] & 0xFFFF;
 //				final int lightmapBlockLight3 = packedLight[3] & 0xFFFF;
 
-				try {
-					final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-					final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-					final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-					final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
-
 					try {
-						bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-						bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-						bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-						bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-					} finally {
-						v0.release();
-						v1.release();
-						v2.release();
-						v3.release();
-					}
-				} finally {
-					face.release();
-				}
+						final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 
+						try {
+							bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+							bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+							bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+							bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+						} finally {
+							v0.release();
+							v1.release();
+							v2.release();
+							v3.release();
+						}
+					} finally {
+						face.release();
+					}
+
+				}
+			} catch (Exception e) {
+				final CrashReport crashReport = new CrashReport("Rendering smooth block in world", e);
+
+				CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
+				final BlockPos blockPos = new BlockPos(renderChunkPositionX + pos[0], renderChunkPositionX + pos[0], renderChunkPositionX + pos[0]);
+				CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, realState.getBlock(), realState.getBlock().getMetaFromState(realState));
+
+				CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
+				CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePos, textureState.getBlock(), textureState.getBlock().getMetaFromState(textureState));
+
+				throw new ReportedException(crashReport);
 			}
 
 		});
