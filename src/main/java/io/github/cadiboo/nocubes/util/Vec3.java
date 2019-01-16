@@ -34,6 +34,7 @@ public class Vec3 {
 		);
 	}
 
+	@Deprecated
 	public Vec3 withOffset(final double x, final double y, final double z) {
 		return new Vec3(
 				this.x + x,
