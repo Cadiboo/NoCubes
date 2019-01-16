@@ -107,6 +107,9 @@ public final class ModConfig {
 	@Config.RangeDouble(min = -10, max = 10)
 	public static double offsetAmmount = 0.5F;
 
+	public static boolean approximateLighting = true;
+	public static boolean smoothLeavesSeperate = true;
+
 	static {
 		setupSmoothableBlockStates();
 	}

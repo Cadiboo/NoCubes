@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.launchwrapper.Launch;
@@ -30,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Function;
 
 import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
@@ -62,12 +64,16 @@ public final class ModUtil {
 		return ModConfig.getSmoothableBlockStatesCache().contains(state);
 	}
 
+	public static boolean shouldSmoothLeaves(final IBlockState state) {
+		return ModConfig.smoothLeavesSeperate && state.getBlock() instanceof BlockLeaves;
+	}
+
 	/**
 	 * @param pos   the position of the block
 	 * @param cache the cache
 	 * @return the density for the block
 	 */
-	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache) {
+	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache, final Function<IBlockState, Boolean> shouldSmooth) {
 		float density = 0.0F;
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
@@ -78,7 +84,7 @@ public final class ModUtil {
 
 						final IBlockState state = cache.getBlockState(pooledMutableBlockPos);
 
-						density += getIndividualBlockDensity(ModUtil.shouldSmooth(state), state, cache, pooledMutableBlockPos);
+						density += getIndividualBlockDensity(shouldSmooth.apply(state), state, cache, pooledMutableBlockPos);
 					}
 				}
 			}

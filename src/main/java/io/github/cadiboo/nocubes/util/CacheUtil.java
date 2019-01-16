@@ -5,12 +5,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
+import java.util.function.Function;
+
 public final class CacheUtil {
 
 	/**
 	 * start must be < end
 	 */
-	public static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final Function<IBlockState, Boolean> isStateSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
 		final int densityCacheSizeX = endPosX - startPosX;
 		final int densityCacheSizeY = endPosY - startPosY;
 		final int densityCacheSizeZ = endPosZ - startPosZ;
@@ -26,7 +28,7 @@ public final class CacheUtil {
 		final int cacheSizeZ = densityCacheSizeZ + 1;
 
 		final PooledStateCache stateCache = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-		final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache);
+		final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable);
 		try {
 			return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
 		}finally {
@@ -49,13 +51,13 @@ public final class CacheUtil {
 		return stateCache;
 	}
 
-	public static PooledSmoothableCache generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final PooledStateCache stateCache) {
+	public static PooledSmoothableCache generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final PooledStateCache stateCache, Function<IBlockState, Boolean> isStateSmoothable) {
 		final PooledSmoothableCache smoothableCache = PooledSmoothableCache.retain(cacheSizeX * cacheSizeY * cacheSizeZ);
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
 			for (int y = 0; y < cacheSizeY; y++) {
 				for (int x = 0; x < cacheSizeX; x++) {
-					smoothableCache.getSmoothableCache()[index] = ModUtil.shouldSmooth(stateCache.getStateCache()[index]);
+					smoothableCache.getSmoothableCache()[index] = isStateSmoothable.apply(stateCache.getStateCache()[index]);
 					index++;
 				}
 			}
@@ -100,7 +102,7 @@ public final class CacheUtil {
 		return density;
 	}
 
-	public static PooledDensityCache generateDensityCache(final BlockPos renderChunkPosition, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static PooledDensityCache generateDensityCache(final BlockPos renderChunkPosition, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos, final Function<IBlockState, Boolean> isStateSmoothable) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
@@ -114,6 +116,7 @@ public final class CacheUtil {
 				renderChunkPositionY + cacheSizeY,
 				renderChunkPositionZ + cacheSizeZ,
 				cache,
+				isStateSmoothable,
 				pooledMutableBlockPos
 		);
 
