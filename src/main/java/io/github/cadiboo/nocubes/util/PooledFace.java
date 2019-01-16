@@ -56,7 +56,7 @@ public class PooledFace {
 					pooledFace.released = false;
 					pooledFace.vertex0 = vertex0;
 					pooledFace.vertex1 = vertex1;
-					pooledFace.vertex2 = vertex3;
+					pooledFace.vertex2 = vertex2;
 					pooledFace.vertex3 = vertex3;
 					return pooledFace;
 				}
