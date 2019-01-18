@@ -679,22 +679,24 @@ public final class ClientUtil {
 
 				final int[] packedLight;
 				if (ModConfig.approximateLighting) {
-//					packedLight = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-					// every corner of the block
-					packedLight = new int[8];
-					int index = 0;
-					for (int zOffset = 0; zOffset < 2; ++zOffset) {
-						for (int yOffset = 0; yOffset < 2; ++yOffset) {
-							for (int xOffset = 0; xOffset < 2; ++xOffset, index++) {
-								pooledMutableBlockPos.setPos(
-										renderChunkPositionX + pos[0] + xOffset,
-										renderChunkPositionY + pos[1] + yOffset,
-										renderChunkPositionZ + pos[2] + zOffset
-								);
-								packedLight[index] = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-							}
-						}
-					}
+					final int px0 = renderChunkPositionX + pos[0];
+					final int py0 = renderChunkPositionY + pos[1];
+					final int pz0 = renderChunkPositionZ + pos[2];
+					final int px1 = px0 - 1;
+					final int py1 = py0 + 1;
+					final int pz1 = pz0 - 1;
+
+					packedLight = new int[]{
+							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+
+							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos)
+					};
 				} else {
 					//never gets used in this case
 					packedLight = new int[0];
