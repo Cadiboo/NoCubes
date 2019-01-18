@@ -24,3 +24,8 @@ run
 !LICENSE
 !README.*
 !.gitignore
+
+# OPTIONAL - installed mods
+!/run/
+/run/*
+!/run/mods/
