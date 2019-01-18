@@ -727,17 +727,17 @@ public final class ClientUtil {
 							{
 								if (v0.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionX + pos[0],
 											renderChunkPositionY + pos[1] + 1,
-											renderChunkPositionZ + pos[2] + 1
+											renderChunkPositionZ + pos[2]
 									);
 									lightmapSkyLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
 								} else {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionX + pos[0],
 											renderChunkPositionY + pos[1],
-											renderChunkPositionZ + pos[2] + 1
+											renderChunkPositionZ + pos[2]
 									);
 									lightmapSkyLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
@@ -745,17 +745,17 @@ public final class ClientUtil {
 
 								if (v1.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionX + pos[0],
 											renderChunkPositionY + pos[1] + 1,
-											renderChunkPositionZ + pos[2]
+											renderChunkPositionZ + pos[2] - 1
 									);
 									lightmapSkyLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
 								} else {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionX + pos[0],
 											renderChunkPositionY + pos[1],
-											renderChunkPositionZ + pos[2]
+											renderChunkPositionZ + pos[2] - 1
 									);
 									lightmapSkyLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
@@ -763,17 +763,17 @@ public final class ClientUtil {
 
 								if (v2.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0],
+											renderChunkPositionX + pos[0] - 1,
 											renderChunkPositionY + pos[1] + 1,
-											renderChunkPositionZ + pos[2]
+											renderChunkPositionZ + pos[2] - 1
 									);
 									lightmapSkyLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
 								} else {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0],
+											renderChunkPositionX + pos[0] - 1,
 											renderChunkPositionY + pos[1],
-											renderChunkPositionZ + pos[2]
+											renderChunkPositionZ + pos[2] - 1
 									);
 									lightmapSkyLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
@@ -781,17 +781,17 @@ public final class ClientUtil {
 
 								if (v3.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0],
+											renderChunkPositionX + pos[0] - 1,
 											renderChunkPositionY + pos[1] + 1,
-											renderChunkPositionZ + pos[2] + 1
+											renderChunkPositionZ + pos[2]
 									);
 									lightmapSkyLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
 								} else {
 									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + pos[0],
+											renderChunkPositionX + pos[0] - 1,
 											renderChunkPositionY + pos[1],
-											renderChunkPositionZ + pos[2] + 1
+											renderChunkPositionZ + pos[2]
 									);
 									lightmapSkyLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
 									lightmapBlockLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
