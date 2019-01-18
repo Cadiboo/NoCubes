@@ -742,9 +742,8 @@ public final class ClientUtil {
 						final int lightmapBlockLight3;
 
 						if (ModConfig.approximateLighting) {
-							//top
-							{
-								if (v0.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+							final float topFaceHeight = renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount();
+							if (v0.y > topFaceHeight) {
 									// (0, 1, 0)
 									lightmapSkyLight0 = packedLight[4] >> 16 & 0xFFFF;
 									lightmapBlockLight0 = packedLight[4] & 0xFFFF;
@@ -754,7 +753,7 @@ public final class ClientUtil {
 									lightmapBlockLight0 = packedLight[0] & 0xFFFF;
 								}
 
-								if (v1.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+								if (v1.y > topFaceHeight) {
 									// (0, 1, -1)
 									lightmapSkyLight1 = packedLight[5] >> 16 & 0xFFFF;
 									lightmapBlockLight1 = packedLight[5] & 0xFFFF;
@@ -764,7 +763,7 @@ public final class ClientUtil {
 									lightmapBlockLight1 = packedLight[1] & 0xFFFF;
 								}
 
-								if (v2.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+								if (v2.y > topFaceHeight) {
 									// (-1, 1, -1)
 									lightmapSkyLight2 = packedLight[7] >> 16 & 0xFFFF;
 									lightmapBlockLight2 = packedLight[7] & 0xFFFF;
@@ -774,7 +773,8 @@ public final class ClientUtil {
 									lightmapBlockLight2 = packedLight[3] & 0xFFFF;
 								}
 
-								if (v3.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+								//up
+								if (v3.y > topFaceHeight) {
 									// (-1, 1, 0)
 									lightmapSkyLight3 = packedLight[6] >> 16 & 0xFFFF;
 									lightmapBlockLight3 = packedLight[6] & 0xFFFF;
@@ -783,7 +783,6 @@ public final class ClientUtil {
 									lightmapSkyLight3 = packedLight[2] >> 16 & 0xFFFF;
 									lightmapBlockLight3 = packedLight[2] & 0xFFFF;
 								}
-							}
 
 						} else {
 							lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
