@@ -10,7 +10,6 @@ import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.config.Config;
@@ -31,7 +30,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.function.Function;
 
 import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
@@ -66,32 +64,6 @@ public final class ModUtil {
 
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
 		return ModConfig.smoothLeavesSeperate && state.getBlock() instanceof BlockLeaves;
-	}
-
-	/**
-	 * @param pos   the position of the block
-	 * @param cache the cache
-	 * @return the density for the block
-	 */
-	public static float getBlockDensity(final BlockPos pos, final IBlockAccess cache, final Function<IBlockState, Boolean> shouldSmooth) {
-		float density = 0.0F;
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			for (int x = 0; x < 2; ++x) {
-				for (int y = 0; y < 2; ++y) {
-					for (int z = 0; z < 2; ++z) {
-						pooledMutableBlockPos.setPos(pos.getX() - x, pos.getY() - y, pos.getZ() - z);
-
-						final IBlockState state = cache.getBlockState(pooledMutableBlockPos);
-
-						density += getIndividualBlockDensity(shouldSmooth.apply(state), state, cache, pooledMutableBlockPos);
-					}
-				}
-			}
-		} finally {
-			pooledMutableBlockPos.release();
-		}
-		return density;
 	}
 
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
@@ -129,10 +101,10 @@ public final class ModUtil {
 	public static void offsetVertex(Vec3 point) {
 		long rand = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
 		rand = rand * rand * 42317861L + rand * 11L;
-		final float offsetAmmount = ModConfig.getoffsetAmmount();
-		point.x += (((rand >> 16 & 15L) / 15.0F - 0.5F) * offsetAmmount);
-		point.y += (((rand >> 20 & 15L) / 15.0F - 0.5F) * offsetAmmount);
-		point.z += (((rand >> 24 & 15L) / 15.0F - 0.5F) * offsetAmmount);
+		final float offsetAmount = ModConfig.getoffsetAmount();
+		point.x += (((rand >> 16 & 15L) / 15.0F - 0.5F) * offsetAmount);
+		point.y += (((rand >> 20 & 15L) / 15.0F - 0.5F) * offsetAmount);
+		point.z += (((rand >> 24 & 15L) / 15.0F - 0.5F) * offsetAmount);
 	}
 
 	@Deprecated

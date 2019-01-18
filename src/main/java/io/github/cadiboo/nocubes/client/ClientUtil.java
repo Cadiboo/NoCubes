@@ -676,68 +676,132 @@ public final class ClientUtil {
 				);
 
 				//TODO: works "fine", commented out for release
-//			// every corner of the block
-//			final int[] packedLight = new int[8];
-//			int index = 0;
-//			for (int zOffset = 0; zOffset < 2; ++zOffset) {
-//				for (int yOffset = 0; yOffset < 2; ++yOffset) {
-//					for (int xOffset = 0; xOffset < 2; ++xOffset, index++) {
-//						pooledMutableBlockPos.setPos(
-//								renderChunkPositionX + pos[0] + xOffset,
-//								renderChunkPositionY + pos[1] + yOffset,
-//								renderChunkPositionZ + pos[2] + zOffset
-//						);
-//						packedLight[index] = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-//					}
-//				}
-//			}
 
-				final int packedLight;
+				final int[] packedLight;
 				if (ModConfig.approximateLighting) {
-					packedLight = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
+//					packedLight = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
+					// every corner of the block
+					packedLight = new int[8];
+					int index = 0;
+					for (int zOffset = 0; zOffset < 2; ++zOffset) {
+						for (int yOffset = 0; yOffset < 2; ++yOffset) {
+							for (int xOffset = 0; xOffset < 2; ++xOffset, index++) {
+								pooledMutableBlockPos.setPos(
+										renderChunkPositionX + pos[0] + xOffset,
+										renderChunkPositionY + pos[1] + yOffset,
+										renderChunkPositionZ + pos[2] + zOffset
+								);
+								packedLight[index] = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos);
+							}
+						}
+					}
 				} else {
 					//never gets used in this case
-					packedLight = 0;
-				}
-				final int lightmapSkyLight0;
-				final int lightmapSkyLight1;
-				final int lightmapSkyLight2;
-				final int lightmapSkyLight3;
-				if (ModConfig.approximateLighting) {
-					lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = packedLight >> 16;
-				} else {
-					lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
-				}
-
-				final int lightmapBlockLight0;
-				final int lightmapBlockLight1;
-				final int lightmapBlockLight2;
-				final int lightmapBlockLight3;
-				if (ModConfig.approximateLighting) {
-					lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = packedLight & 0xFFFF;
-				} else {
-					lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 0;
+					packedLight = new int[]{0};
 				}
 
 				for (int i = 0; i < faces.size(); i++) {
 					final PooledFace face = faces.get(i);
-
-					//TODO: works "fine", commented out for release
-//				final int lightmapSkyLight0 = packedLight[0] >> 16;
-//				final int lightmapSkyLight1 = packedLight[1] >> 16;
-//				final int lightmapSkyLight2 = packedLight[2] >> 16;
-//				final int lightmapSkyLight3 = packedLight[3] >> 16;
-//
-//				final int lightmapBlockLight0 = packedLight[0] & 0xFFFF;
-//				final int lightmapBlockLight1 = packedLight[1] & 0xFFFF;
-//				final int lightmapBlockLight2 = packedLight[2] & 0xFFFF;
-//				final int lightmapBlockLight3 = packedLight[3] & 0xFFFF;
-
 					try {
+						//south east when looking down onto up face
 						final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						//north east when looking down onto up face
 						final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						//north west when looking down onto up face
 						final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						//south west when looking down onto up face
 						final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+
+						final int lightmapSkyLight0;
+						final int lightmapSkyLight1;
+						final int lightmapSkyLight2;
+						final int lightmapSkyLight3;
+
+						final int lightmapBlockLight0;
+						final int lightmapBlockLight1;
+						final int lightmapBlockLight2;
+						final int lightmapBlockLight3;
+
+						if (ModConfig.approximateLighting) {
+							//top
+							{
+								if (v0.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionY + pos[1] + 1,
+											renderChunkPositionZ + pos[2] + 1
+									);
+									lightmapSkyLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								} else {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionY + pos[1],
+											renderChunkPositionZ + pos[2] + 1
+									);
+									lightmapSkyLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight0 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								}
+
+								if (v1.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionY + pos[1] + 1,
+											renderChunkPositionZ + pos[2]
+									);
+									lightmapSkyLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								} else {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0] + 1,
+											renderChunkPositionY + pos[1],
+											renderChunkPositionZ + pos[2]
+									);
+									lightmapSkyLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight1 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								}
+
+								if (v2.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0],
+											renderChunkPositionY + pos[1] + 1,
+											renderChunkPositionZ + pos[2]
+									);
+									lightmapSkyLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								} else {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0],
+											renderChunkPositionY + pos[1],
+											renderChunkPositionZ + pos[2]
+									);
+									lightmapSkyLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight2 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								}
+
+								if (v3.y > renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount()) {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0],
+											renderChunkPositionY + pos[1] + 1,
+											renderChunkPositionZ + pos[2] + 1
+									);
+									lightmapSkyLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								} else {
+									pooledMutableBlockPos.setPos(
+											renderChunkPositionX + pos[0],
+											renderChunkPositionY + pos[1],
+											renderChunkPositionZ + pos[2] + 1
+									);
+									lightmapSkyLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) >> 16 & 0xFFFF;
+									lightmapBlockLight3 = cache.getBlockState(pooledMutableBlockPos).getPackedLightmapCoords(cache, pooledMutableBlockPos) & 0xFFFF;
+								}
+							}
+
+						} else {
+							lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
+							lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 0;
+						}
 
 						try {
 							bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
@@ -797,6 +861,8 @@ public final class ClientUtil {
 
 	public static void extendLiquidsPre(final RebuildChunkPreEvent event) {
 
+		if (true) return;
+
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 
 		try {
@@ -823,6 +889,8 @@ public final class ClientUtil {
 	}
 
 	public static void extendLiquidsBlock(final RebuildChunkBlockEvent event) {
+
+		if (true) return;
 		final IBlockState state = event.getBlockState();
 		if (ModUtil.shouldSmooth(state)) {
 			final IBlockState[] stateCache = LIQUID_CACHE.get().getStateCache();
@@ -893,7 +961,10 @@ public final class ClientUtil {
 	}
 
 	public static void extendLiquidsPost(final RebuildChunkPostEvent event) {
-		LIQUID_CACHE.get().release();
+		final PooledStateCache pooledStateCache = LIQUID_CACHE.get();
+		//it only gets generated if the worldview is not empty, this gets called even if the worldview was empty
+		if (pooledStateCache != null)
+			pooledStateCache.release();
 	}
 
 }

@@ -4,10 +4,12 @@ import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.MinecraftForge;
@@ -76,7 +78,8 @@ public final class ClientEventSubscriber {
 				ClientUtil.extendLiquidsBlock(event);
 			} catch (Exception e) {
 				CrashReport crashReport = new CrashReport("Error extending liquids in Block event!", e);
-				crashReport.makeCategory("Extending liquids");
+				final CrashReportCategory crashReportCategory = crashReport.makeCategory("Block being rendered");
+				CrashReportCategory.addBlockInfo(crashReportCategory, event.getBlockPos(), event.getBlockState());
 				throw new ReportedException(crashReport);
 			} finally {
 				NoCubes.profiler.putSection("extendLiquidsBlock", System.nanoTime() - startTime);
@@ -92,6 +95,25 @@ public final class ClientEventSubscriber {
 				throw new ReportedException(crashReport);
 			} finally {
 				NoCubes.profiler.putSection("renderSmoothBlock", System.nanoTime() - startTime);
+			}
+		}
+	}
+
+	@SubscribeEvent
+	public static void onRebuildChunkPostEvent(final RebuildChunkPostEvent event) {
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+		{
+			final long startTime = System.nanoTime();
+			try {
+				ClientUtil.extendLiquidsPost(event);
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+				crashReport.makeCategory("Extending liquids");
+				throw new ReportedException(crashReport);
+			} finally {
+				NoCubes.profiler.putSection("extendLiquidsPost", System.nanoTime() - startTime);
 			}
 		}
 	}

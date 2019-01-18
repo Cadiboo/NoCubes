@@ -85,7 +85,8 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
-	public static MeshGenerator meshGenerator = MeshGenerator.MarchingTetrahedra;
+	@LangKey(MOD_ID + ".config.meshGenerator")
+	public static MeshGenerator meshGenerator = MeshGenerator.SurfaceNets;
 
 	@LangKey(MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
@@ -97,11 +98,11 @@ public final class ModConfig {
 	@Config.RangeDouble(min = -10, max = 10)
 	public static double isosurfaceLevel = 1.2D;
 
-	@LangKey(MOD_ID + ".config.offsetVertices")
-	public static boolean offsetVertices = true;
-
 	@LangKey(MOD_ID + ".config.shouldForceUpdate")
 	public static boolean shouldForceUpdate = true;
+
+	@LangKey(MOD_ID + ".config.offsetVertices")
+	public static boolean offsetVertices = true;
 
 	@LangKey(MOD_ID + ".config.offsetAmmount")
 	@Config.RangeDouble(min = -10, max = 10)
@@ -122,7 +123,10 @@ public final class ModConfig {
 		return (float) isosurfaceLevel;
 	}
 
-	public static float getoffsetAmmount() {
+	public static float getoffsetAmount() {
+		if (!offsetVertices) {
+			return 0;
+		}
 		return (float) offsetAmmount;
 	}
 

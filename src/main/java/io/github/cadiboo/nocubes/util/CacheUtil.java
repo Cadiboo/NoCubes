@@ -31,7 +31,7 @@ public final class CacheUtil {
 		final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable);
 		try {
 			return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-		}finally {
+		} finally {
 			stateCache.release();
 			smoothableCache.release();
 		}
