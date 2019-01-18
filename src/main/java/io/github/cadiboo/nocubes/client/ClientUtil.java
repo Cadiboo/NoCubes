@@ -697,7 +697,7 @@ public final class ClientUtil {
 					}
 				} else {
 					//never gets used in this case
-					packedLight = new int[]{0};
+					packedLight = new int[0];
 				}
 
 				for (int i = 0; i < faces.size(); i++) {
