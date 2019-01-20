@@ -39,6 +39,7 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.util.vector.Vector3f;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
@@ -742,47 +743,71 @@ public final class ClientUtil {
 						final int lightmapBlockLight3;
 
 						if (ModConfig.approximateLighting) {
-							final float topFaceHeight = renderChunkPositionY + pos[1] + ModConfig.getoffsetAmount();
-							if (v0.y > topFaceHeight) {
+
+							final double normalCalcX0 = v1.x - v0.x;
+							final double normalCalcY0 = v1.y - v0.z;
+							final double normalCalcZ0 = v1.z - v0.z;
+							final double normalCalcX1 = v2.x - v0.x;
+							final double normalCalcY1 = v2.y - v0.z;
+							final double normalCalcZ1 = v2.z - v0.z;
+
+							final double normalX = normalCalcY0 * normalCalcZ1 - normalCalcZ0 * normalCalcY1;
+							final double normalY = normalCalcZ0 * normalCalcX1 - normalCalcX0 * normalCalcZ1;
+							final double normalZ = normalCalcX0 * normalCalcY1 - normalCalcY0 * normalCalcX1;
+
+//							final EnumFacing facing = EnumFacing.getFacingFromVector((float) normalX, (float) normalY, (float) normalZ);
+
+//							final EnumFacing facing = LightUtil.toSide((float) normalX, (float) normalY, (float) normalZ);
+
+							final EnumFacing facing = getFacingFromVertexData(
+									(float) v0.x, (float) v0.y, (float) v0.z,
+									(float) v0.x, (float) v0.y, (float) v0.z,
+									(float) v0.x, (float) v0.y, (float) v0.z);
+
+							switch (facing) {
+								case DOWN:
+//									// (0, 0, 0)
+//									lightmapSkyLight0 = packedLight[0] >> 16 & 0xFFFF;
+//									lightmapBlockLight0 = packedLight[0] & 0xFFFF;
+//									// (0, 0, -1)
+//									lightmapSkyLight1 = packedLight[1] >> 16 & 0xFFFF;
+//									lightmapBlockLight1 = packedLight[1] & 0xFFFF;
+//									// (-1, 0, -1)
+//									lightmapSkyLight2 = packedLight[3] >> 16 & 0xFFFF;
+//									lightmapBlockLight2 = packedLight[3] & 0xFFFF;
+//									// (-1, 0, 0)
+//									lightmapSkyLight3 = packedLight[2] >> 16 & 0xFFFF;
+//									lightmapBlockLight3 = packedLight[2] & 0xFFFF;
+									lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
+									lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 240;
+									break;
+								default:
+								case UP:
 									// (0, 1, 0)
 									lightmapSkyLight0 = packedLight[4] >> 16 & 0xFFFF;
 									lightmapBlockLight0 = packedLight[4] & 0xFFFF;
-								} else {
-									// (0, 0, 0)
-									lightmapSkyLight0 = packedLight[0] >> 16 & 0xFFFF;
-									lightmapBlockLight0 = packedLight[0] & 0xFFFF;
-								}
-
-								if (v1.y > topFaceHeight) {
 									// (0, 1, -1)
 									lightmapSkyLight1 = packedLight[5] >> 16 & 0xFFFF;
 									lightmapBlockLight1 = packedLight[5] & 0xFFFF;
-								} else {
-									// (0, 0, -1)
-									lightmapSkyLight1 = packedLight[1] >> 16 & 0xFFFF;
-									lightmapBlockLight1 = packedLight[1] & 0xFFFF;
-								}
-
-								if (v2.y > topFaceHeight) {
 									// (-1, 1, -1)
 									lightmapSkyLight2 = packedLight[7] >> 16 & 0xFFFF;
 									lightmapBlockLight2 = packedLight[7] & 0xFFFF;
-								} else {
-									// (-1, 0, -1)
-									lightmapSkyLight2 = packedLight[3] >> 16 & 0xFFFF;
-									lightmapBlockLight2 = packedLight[3] & 0xFFFF;
-								}
-
-								//up
-								if (v3.y > topFaceHeight) {
 									// (-1, 1, 0)
 									lightmapSkyLight3 = packedLight[6] >> 16 & 0xFFFF;
 									lightmapBlockLight3 = packedLight[6] & 0xFFFF;
-								} else {
-									// (-1, 0, 0)
-									lightmapSkyLight3 = packedLight[2] >> 16 & 0xFFFF;
-									lightmapBlockLight3 = packedLight[2] & 0xFFFF;
-								}
+									break;
+								case NORTH:
+
+//									break;
+								case SOUTH:
+//									break;
+								case WEST:
+//									break;
+								case EAST:
+									lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
+									lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 240;
+									break;
+							}
 
 						} else {
 							lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
@@ -951,6 +976,41 @@ public final class ClientUtil {
 		//it only gets generated if the worldview is not empty, this gets called even if the worldview was empty
 		if (pooledStateCache != null)
 			pooledStateCache.release();
+	}
+
+	public static EnumFacing getFacingFromVertexData(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2) {
+		Vector3f vector3f0 = new Vector3f(x0, y0, z0);
+		Vector3f vector3f1 = new Vector3f(x1, y1, z1);
+		Vector3f vector3f2 = new Vector3f(x2, y2, z2);
+		Vector3f vector3f3 = new Vector3f();
+		Vector3f vector3f4 = new Vector3f();
+		Vector3f vector3f5 = new Vector3f();
+		Vector3f.sub(vector3f0, vector3f1, vector3f3);
+		Vector3f.sub(vector3f2, vector3f1, vector3f4);
+		Vector3f.cross(vector3f4, vector3f3, vector3f5);
+		float f = (float) Math.sqrt((double) (vector3f5.x * vector3f5.x + vector3f5.y * vector3f5.y + vector3f5.z * vector3f5.z));
+		vector3f5.x /= f;
+		vector3f5.y /= f;
+		vector3f5.z /= f;
+		EnumFacing enumfacing = null;
+		float f1 = 0.0F;
+
+		for (EnumFacing enumfacing1 : EnumFacing.values()) {
+			Vec3i vec3i = enumfacing1.getDirectionVec();
+			Vector3f vector3f6 = new Vector3f((float) vec3i.getX(), (float) vec3i.getY(), (float) vec3i.getZ());
+			float f2 = Vector3f.dot(vector3f5, vector3f6);
+
+			if (f2 >= 0.0F && f2 > f1) {
+				f1 = f2;
+				enumfacing = enumfacing1;
+			}
+		}
+
+		if (enumfacing == null) {
+			return EnumFacing.UP;
+		} else {
+			return enumfacing;
+		}
 	}
 
 }
