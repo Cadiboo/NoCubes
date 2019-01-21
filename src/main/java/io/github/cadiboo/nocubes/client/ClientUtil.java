@@ -39,7 +39,6 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.util.vector.Vector3f;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
@@ -50,6 +49,10 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.lang.Math.round;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 import static net.minecraft.util.EnumFacing.DOWN;
@@ -58,6 +61,8 @@ import static net.minecraft.util.EnumFacing.NORTH;
 import static net.minecraft.util.EnumFacing.SOUTH;
 import static net.minecraft.util.EnumFacing.UP;
 import static net.minecraft.util.EnumFacing.WEST;
+import static net.minecraft.util.math.MathHelper.clamp;
+import static net.minecraft.util.math.MathHelper.getPositionRandom;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -111,9 +116,9 @@ public final class ClientUtil {
 	 */
 	public static int color(int red, int green, int blue) {
 
-		red = MathHelper.clamp(red, 0x00, 0xFF);
-		green = MathHelper.clamp(green, 0x00, 0xFF);
-		blue = MathHelper.clamp(blue, 0x00, 0xFF);
+		red = clamp(red, 0x00, 0xFF);
+		green = clamp(green, 0x00, 0xFF);
+		blue = clamp(blue, 0x00, 0xFF);
 
 		final int alpha = 0xFF;
 
@@ -137,9 +142,9 @@ public final class ClientUtil {
 	 * @return the color in ARGB format
 	 */
 	public static int colorf(final float red, final float green, final float blue) {
-		final int redInt = Math.max(0, Math.min(255, Math.round(red * 255)));
-		final int greenInt = Math.max(0, Math.min(255, Math.round(green * 255)));
-		final int blueInt = Math.max(0, Math.min(255, Math.round(blue * 255)));
+		final int redInt = max(0, min(255, round(red * 255)));
+		final int greenInt = max(0, min(255, round(green * 255)));
+		final int blueInt = max(0, min(255, round(blue * 255)));
 		return color(redInt, greenInt, blueInt);
 	}
 
@@ -161,7 +166,7 @@ public final class ClientUtil {
 	 */
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-		final long posRand = MathHelper.getPositionRandom(pos);
+		final long posRand = getPositionRandom(pos);
 		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
 		return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
 	}
@@ -177,7 +182,7 @@ public final class ClientUtil {
 	 */
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
-		final long posRand = MathHelper.getPositionRandom(pos);
+		final long posRand = getPositionRandom(pos);
 		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
 		final BakedQuad quad = getQuad(state, pos, posRand, model, facing);
 		if (quad != null) {
@@ -695,7 +700,7 @@ public final class ClientUtil {
 
 				//TODO: works "fine", commented out for release
 
-				final int[] packedLight;
+				final int[][][] packedLight;
 				if (ModConfig.approximateLighting) {
 					final int px0 = renderChunkPositionX + pos[0];
 					final int py0 = renderChunkPositionY + pos[1];
@@ -704,20 +709,28 @@ public final class ClientUtil {
 					final int py1 = py0 + 1;
 					final int pz1 = pz0 - 1;
 
-					packedLight = new int[]{
-							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-
-							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
-							cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos)
-					};
+					packedLight = new int[][][]{{
+							{
+									cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+									cache.getBlockState(pooledMutableBlockPos.setPos(px1, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							},
+							{
+									cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+									cache.getBlockState(pooledMutableBlockPos.setPos(px1, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							}
+					}, {
+							{
+									cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+									cache.getBlockState(pooledMutableBlockPos.setPos(px0, py0, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							},
+							{
+									cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz1)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+									cache.getBlockState(pooledMutableBlockPos.setPos(px0, py1, pz0)).getPackedLightmapCoords(cache, pooledMutableBlockPos),
+							}
+					}};
 				} else {
 					//never gets used in this case
-					packedLight = new int[0];
+					packedLight = new int[0][0][0];
 				}
 
 				for (int i = 0; i < faces.size(); i++) {
@@ -744,70 +757,32 @@ public final class ClientUtil {
 
 						if (ModConfig.approximateLighting) {
 
-							final double normalCalcX0 = v1.x - v0.x;
-							final double normalCalcY0 = v1.y - v0.z;
-							final double normalCalcZ0 = v1.z - v0.z;
-							final double normalCalcX1 = v2.x - v0.x;
-							final double normalCalcY1 = v2.y - v0.z;
-							final double normalCalcZ1 = v2.z - v0.z;
+							//TODO: change to ModUtil#map
+							//<editor-fold desc="Snap to integer coords and light index">
+							final int v0X = clamp((round(v0.x) - pos[0] - renderChunkPositionX), 0, 1);
+							final int v0Y = clamp((round(v0.y) - pos[1] - renderChunkPositionY), 0, 1);
+							final int v0Z = clamp((round(v0.z) - pos[2] - renderChunkPositionZ), 0, 1);
+							final int v1X = clamp((round(v1.x) - pos[0] - renderChunkPositionX), 0, 1);
+							final int v1Y = clamp((round(v1.y) - pos[1] - renderChunkPositionY), 0, 1);
+							final int v1Z = clamp((round(v1.z) - pos[2] - renderChunkPositionZ), 0, 1);
+							final int v2X = clamp((round(v2.x) - pos[0] - renderChunkPositionX), 0, 1);
+							final int v2Y = clamp((round(v2.y) - pos[1] - renderChunkPositionY), 0, 1);
+							final int v2Z = clamp((round(v2.z) - pos[2] - renderChunkPositionZ), 0, 1);
+							final int v3X = clamp((round(v3.x) - pos[0] - renderChunkPositionX), 0, 1);
+							final int v3Y = clamp((round(v3.y) - pos[1] - renderChunkPositionY), 0, 1);
+							final int v3Z = clamp((round(v3.z) - pos[2] - renderChunkPositionZ), 0, 1);
+							//</editor-fold>
 
-							final double normalX = normalCalcY0 * normalCalcZ1 - normalCalcZ0 * normalCalcY1;
-							final double normalY = normalCalcZ0 * normalCalcX1 - normalCalcX0 * normalCalcZ1;
-							final double normalZ = normalCalcX0 * normalCalcY1 - normalCalcY0 * normalCalcX1;
-
-//							final EnumFacing facing = EnumFacing.getFacingFromVector((float) normalX, (float) normalY, (float) normalZ);
-
-//							final EnumFacing facing = LightUtil.toSide((float) normalX, (float) normalY, (float) normalZ);
-
-							final EnumFacing facing = getFacingFromVertexData(
-									(float) v0.x, (float) v0.y, (float) v0.z,
-									(float) v0.x, (float) v0.y, (float) v0.z,
-									(float) v0.x, (float) v0.y, (float) v0.z);
-
-							switch (facing) {
-								case DOWN:
-//									// (0, 0, 0)
-//									lightmapSkyLight0 = packedLight[0] >> 16 & 0xFFFF;
-//									lightmapBlockLight0 = packedLight[0] & 0xFFFF;
-//									// (0, 0, -1)
-//									lightmapSkyLight1 = packedLight[1] >> 16 & 0xFFFF;
-//									lightmapBlockLight1 = packedLight[1] & 0xFFFF;
-//									// (-1, 0, -1)
-//									lightmapSkyLight2 = packedLight[3] >> 16 & 0xFFFF;
-//									lightmapBlockLight2 = packedLight[3] & 0xFFFF;
-//									// (-1, 0, 0)
-//									lightmapSkyLight3 = packedLight[2] >> 16 & 0xFFFF;
-//									lightmapBlockLight3 = packedLight[2] & 0xFFFF;
-									lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
-									lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 240;
-									break;
-								default:
-								case UP:
-									// (0, 1, 0)
-									lightmapSkyLight0 = packedLight[4] >> 16 & 0xFFFF;
-									lightmapBlockLight0 = packedLight[4] & 0xFFFF;
-									// (0, 1, -1)
-									lightmapSkyLight1 = packedLight[5] >> 16 & 0xFFFF;
-									lightmapBlockLight1 = packedLight[5] & 0xFFFF;
-									// (-1, 1, -1)
-									lightmapSkyLight2 = packedLight[7] >> 16 & 0xFFFF;
-									lightmapBlockLight2 = packedLight[7] & 0xFFFF;
-									// (-1, 1, 0)
-									lightmapSkyLight3 = packedLight[6] >> 16 & 0xFFFF;
-									lightmapBlockLight3 = packedLight[6] & 0xFFFF;
-									break;
-								case NORTH:
-
-//									break;
-								case SOUTH:
-//									break;
-								case WEST:
-//									break;
-								case EAST:
-									lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
-									lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 240;
-									break;
-							}
+							//<editor-fold desc="get and unpack lightmap coords">
+							lightmapSkyLight0 = packedLight[v0X][v0Y][v0Z] >> 16 & 0xFFFF;
+							lightmapBlockLight0 = packedLight[v0X][v0Y][v0Z] & 0xFFFF;
+							lightmapSkyLight1 = packedLight[v1X][v1Y][v1Z] >> 16 & 0xFFFF;
+							lightmapBlockLight1 = packedLight[v1X][v1Y][v1Z] & 0xFFFF;
+							lightmapSkyLight2 = packedLight[v2X][v2Y][v2Z] >> 16 & 0xFFFF;
+							lightmapBlockLight2 = packedLight[v2X][v2Y][v2Z] & 0xFFFF;
+							lightmapSkyLight3 = packedLight[v3X][v3Y][v3Z] >> 16 & 0xFFFF;
+							lightmapBlockLight3 = packedLight[v3X][v3Y][v3Z] & 0xFFFF;
+							//</editor-fold>
 
 						} else {
 							lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
@@ -976,41 +951,6 @@ public final class ClientUtil {
 		//it only gets generated if the worldview is not empty, this gets called even if the worldview was empty
 		if (pooledStateCache != null)
 			pooledStateCache.release();
-	}
-
-	public static EnumFacing getFacingFromVertexData(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2) {
-		Vector3f vector3f0 = new Vector3f(x0, y0, z0);
-		Vector3f vector3f1 = new Vector3f(x1, y1, z1);
-		Vector3f vector3f2 = new Vector3f(x2, y2, z2);
-		Vector3f vector3f3 = new Vector3f();
-		Vector3f vector3f4 = new Vector3f();
-		Vector3f vector3f5 = new Vector3f();
-		Vector3f.sub(vector3f0, vector3f1, vector3f3);
-		Vector3f.sub(vector3f2, vector3f1, vector3f4);
-		Vector3f.cross(vector3f4, vector3f3, vector3f5);
-		float f = (float) Math.sqrt((double) (vector3f5.x * vector3f5.x + vector3f5.y * vector3f5.y + vector3f5.z * vector3f5.z));
-		vector3f5.x /= f;
-		vector3f5.y /= f;
-		vector3f5.z /= f;
-		EnumFacing enumfacing = null;
-		float f1 = 0.0F;
-
-		for (EnumFacing enumfacing1 : EnumFacing.values()) {
-			Vec3i vec3i = enumfacing1.getDirectionVec();
-			Vector3f vector3f6 = new Vector3f((float) vec3i.getX(), (float) vec3i.getY(), (float) vec3i.getZ());
-			float f2 = Vector3f.dot(vector3f5, vector3f6);
-
-			if (f2 >= 0.0F && f2 > f1) {
-				f1 = f2;
-				enumfacing = enumfacing1;
-			}
-		}
-
-		if (enumfacing == null) {
-			return EnumFacing.UP;
-		} else {
-			return enumfacing;
-		}
 	}
 
 }
