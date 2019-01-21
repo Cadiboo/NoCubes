@@ -12,15 +12,15 @@ import java.util.ArrayList;
  */
 public class Vec3 {
 
-	public double x;
-	public double y;
-	public double z;
+	public float x;
+	public float y;
+	public float z;
 
 	public Vec3() {
 		this(0, 0, 0);
 	}
 
-	public Vec3(final double x, final double y, final double z) {
+	public Vec3(final float x, final float y, final float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -35,7 +35,7 @@ public class Vec3 {
 	}
 
 	@Deprecated
-	public Vec3 withOffset(final double x, final double y, final double z) {
+	public Vec3 withOffset(final float x, final float y, final float z) {
 		return new Vec3(
 				this.x + x,
 				this.y + y,
@@ -43,7 +43,7 @@ public class Vec3 {
 		);
 	}
 
-	public Vec3 addOffset(final double x, final double y, final double z) {
+	public Vec3 addOffset(final float x, final float y, final float z) {
 		this.x += x;
 		this.y += y;
 		this.z += z;
@@ -67,7 +67,7 @@ public class Vec3 {
 			super();
 		}
 
-		private PooledVec3(final double x, final double y, final double z) {
+		private PooledVec3(final float x, final float y, final float z) {
 			super(x, y, z);
 		}
 
@@ -81,7 +81,7 @@ public class Vec3 {
 
 		private static int debugCounter = 0;
 
-		public static PooledVec3 retain(final double xIn, final double yIn, final double zIn) {
+		public static PooledVec3 retain(final float xIn, final float yIn, final float zIn) {
 			debugCounter++;
 			synchronized (POOL) {
 				if (!POOL.isEmpty()) {
@@ -117,7 +117,7 @@ public class Vec3 {
 
 		@Override
 		@Deprecated
-		public PooledVec3 withOffset(final double x, final double y, final double z) {
+		public PooledVec3 withOffset(final float x, final float y, final float z) {
 			return new PooledVec3(
 					this.x + x,
 					this.y + y,
@@ -126,7 +126,7 @@ public class Vec3 {
 		}
 
 		@Override
-		public PooledVec3 addOffset(final double x, final double y, final double z) {
+		public PooledVec3 addOffset(final float x, final float y, final float z) {
 			return (PooledVec3) super.addOffset(x, y, z);
 		}
 
