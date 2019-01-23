@@ -63,7 +63,7 @@ public final class ModUtil {
 	}
 
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
-		return ModConfig.smoothLeavesSeperate && state.getBlock() instanceof BlockLeaves;
+		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
 	}
 
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {

@@ -94,22 +94,22 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
 
-	@LangKey(MOD_ID + ".config.isosurfaceLevel")
-	@Config.RangeDouble(min = -10, max = 10)
+//	@LangKey(MOD_ID + ".config.isosurfaceLevel")
+//	@Config.RangeDouble(min = -10, max = 10)
 	public static double isosurfaceLevel = 1.2D;
 
-	@LangKey(MOD_ID + ".config.shouldForceUpdate")
+//	@LangKey(MOD_ID + ".config.shouldForceUpdate")
 	public static boolean shouldForceUpdate = true;
 
-	@LangKey(MOD_ID + ".config.offsetVertices")
+//	@LangKey(MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices = true;
 
-	@LangKey(MOD_ID + ".config.offsetAmmount")
-	@Config.RangeDouble(min = -10, max = 10)
+//	@LangKey(MOD_ID + ".config.offsetAmmount")
+//	@Config.RangeDouble(min = -10, max = 10)
 	public static double offsetAmmount = 0.5F;
 
 	public static boolean approximateLighting = true;
-	public static boolean smoothLeavesSeperate = true;
+	public static boolean smoothLeavesSeparate = true;
 
 	static {
 		setupSmoothableBlockStates();
