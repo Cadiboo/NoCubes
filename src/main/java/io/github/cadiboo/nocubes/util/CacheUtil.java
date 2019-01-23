@@ -27,13 +27,10 @@ public final class CacheUtil {
 		final int cacheSizeY = densityCacheSizeY + 1;
 		final int cacheSizeZ = densityCacheSizeZ + 1;
 
-		final PooledStateCache stateCache = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-		final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable);
-		try {
+		try (final PooledStateCache stateCache = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable);
+		) {
 			return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-		} finally {
-			stateCache.release();
-			smoothableCache.release();
 		}
 	}
 

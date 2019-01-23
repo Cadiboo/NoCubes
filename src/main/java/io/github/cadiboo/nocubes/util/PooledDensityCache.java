@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * @author Cadiboo
  */
-public class PooledDensityCache {
+public class PooledDensityCache implements AutoCloseable {
 
 	private float[] densityCache;
 	private boolean released;
@@ -54,6 +54,11 @@ public class PooledDensityCache {
 			LogManager.getLogger().error("PooledDensityCache gotten after it was released!", new Throwable());
 		}
 		return densityCache;
+	}
+
+	@Override
+	public void close() {
+		this.release();
 	}
 
 }

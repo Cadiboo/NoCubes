@@ -58,7 +58,7 @@ public class Vec3 {
 		return new AxisAlignedBB(this.toBlockPos());
 	}
 
-	public static class PooledVec3 extends Vec3 {
+	public static class PooledVec3 extends Vec3 implements AutoCloseable {
 
 		private boolean released;
 		private static final ArrayList<PooledVec3> POOL = new ArrayList<>();
@@ -128,6 +128,11 @@ public class Vec3 {
 		@Override
 		public PooledVec3 addOffset(final float x, final float y, final float z) {
 			return (PooledVec3) super.addOffset(x, y, z);
+		}
+
+		@Override
+		public void close() {
+			this.release();
 		}
 
 	}

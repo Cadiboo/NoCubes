@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * @author Cadiboo
  */
-public class PooledStateCache {
+public class PooledStateCache implements AutoCloseable {
 
 	private IBlockState[] stateCache;
 	private boolean released;
@@ -55,6 +55,11 @@ public class PooledStateCache {
 			LogManager.getLogger().error("PooledStateCache gotten after it was released!", new Throwable());
 		}
 		return stateCache;
+	}
+
+	@Override
+	public void close() {
+		this.release();
 	}
 
 }

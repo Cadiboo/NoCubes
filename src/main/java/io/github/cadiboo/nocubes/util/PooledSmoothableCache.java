@@ -7,7 +7,7 @@ import java.util.ArrayList;
 /**
  * @author Cadiboo
  */
-public class PooledSmoothableCache {
+public class PooledSmoothableCache implements AutoCloseable {
 
 	private boolean[] smoothableCache;
 	private boolean released;
@@ -54,6 +54,11 @@ public class PooledSmoothableCache {
 			LogManager.getLogger().error("PooledSmoothableCache gotten after it was released!", new Throwable());
 		}
 		return smoothableCache;
+	}
+
+	@Override
+	public void close() {
+		this.release();
 	}
 
 }

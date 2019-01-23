@@ -5,7 +5,7 @@ import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
-public class PooledFace {
+public class PooledFace implements AutoCloseable {
 
 	@Nonnull
 	private PooledVec3 vertex0;
@@ -77,6 +77,11 @@ public class PooledFace {
 			}
 			this.released = true;
 		}
+	}
+
+	@Override
+	public void close() {
+		this.release();
 	}
 
 }
