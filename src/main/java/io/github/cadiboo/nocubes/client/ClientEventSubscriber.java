@@ -42,7 +42,7 @@ public final class ClientEventSubscriber {
 		{
 			final long startTime = System.nanoTime();
 			try {
-				ClientUtil.renderExtendedLiquidsChunk(event);
+				ClientUtil.extendLiquidsPre(event);
 			} catch (Exception e) {
 				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
 				crashReport.makeCategory("Extending liquids");
