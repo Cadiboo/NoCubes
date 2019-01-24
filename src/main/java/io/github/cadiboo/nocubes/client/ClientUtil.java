@@ -556,7 +556,8 @@ public final class ClientUtil {
 			}
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
-			crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
+			final CrashReportCategory crashReportCategory = crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
+			crashReportCategory.addCrashSection("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
 			throw new ReportedException(crashReport);
 		}
 	}
