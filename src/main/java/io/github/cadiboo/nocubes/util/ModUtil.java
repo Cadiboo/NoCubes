@@ -6,7 +6,6 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -16,9 +15,8 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.versioning.ComparableVersion;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.apache.commons.io.FileUtils;
 
@@ -35,6 +33,7 @@ import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
 
@@ -123,27 +122,27 @@ public final class ModUtil {
 	/**
 	 * Ew
 	 *
-	 * @param noCubesContainer the {@link ModContainer} for {@link NoCubes}
+	 * @param modContainer the {@link ModContainer} for {@link NoCubes}
 	 */
-	public static void launchUpdateDaemon(ModContainer noCubesContainer) {
+	public static void launchUpdateDaemon(ModContainer modContainer) {
 
 		new Thread(() -> {
-
-			ComparableVersion outdatedVersion = null;
-			boolean forceUpdate = false;
-
 			WHILE:
 			while (true) {
 
-				final ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(noCubesContainer);
+				final ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(modContainer);
 
 				switch (checkResult.status) {
 					default:
 					case PENDING:
 						break;
 					case OUTDATED:
-						outdatedVersion = checkResult.target;
-						forceUpdate = ModConfig.shouldForceUpdate;
+						try {
+							BadAutoUpdater.update(modContainer.getVersion(), checkResult.target.toString());
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+						//fallthrough
 					case FAILED:
 					case UP_TO_DATE:
 					case AHEAD:
@@ -156,26 +155,6 @@ public final class ModUtil {
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
-				}
-
-			}
-
-			final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
-
-			if (forceUpdate) {
-				if (developerEnvironment) {
-					NO_CUBES_LOG.info("Did not crash game because we're in a dev environment");
-				} else {
-					// FIXME BIG TODO remove this once I'm done with beta releases and start doing actual releases
-					// FIXME This is evil and not good
-					{
-						final String fuck9minecraft = "Your version of NoCubes (" + outdatedVersion + ") is outdated! Download the latest version from https://cadiboo.github.io/projects/nocubes/download/";
-						for (int i = 0; i < 10; i++)
-							NoCubes.NO_CUBES_LOG.error(fuck9minecraft);
-						CrashReport crashReport = new CrashReport(fuck9minecraft, new RuntimeException(fuck9minecraft));
-						FMLCommonHandler.instance().raiseException(new ReportedException(crashReport), fuck9minecraft, true);
-						FMLCommonHandler.instance().exitJava(0, false);
-					}
 				}
 			}
 
