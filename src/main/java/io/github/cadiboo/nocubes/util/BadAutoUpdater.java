@@ -23,15 +23,20 @@ public final class BadAutoUpdater {
 
 		final Path pathToNewJar = new File(modsDir, newJarFileName).toPath();
 
-//		final URI updateUri = new URI("https://github.com/Cadiboo/NoCubes/releases/download/" + newVersion + "/" + newJarFileName);
-		final URI updateUri = new URI("file:///Users/Cadiboo/Desktop/NoCubesJars/download/" + newJarFileName);
+		final URI updateUri = new URI("https://github.com/Cadiboo/NoCubes/releases/download/" + newVersion + "/" + newJarFileName);
+//		final URI updateUri = new URI("file:///Users/Cadiboo/Desktop/NoCubesJars/download/" + newJarFileName);
+
+		boolean somethingWasDone = false;
 
 		try (BufferedInputStream inputStream = new BufferedInputStream(updateUri.toURL().openStream())) {
-			Files.copy(inputStream, pathToNewJar);
+			somethingWasDone = Files.copy(inputStream, pathToNewJar) > 0;
 		}
 
+		if (!somethingWasDone) {
+			return;
+		}
+		
 		//delete the current jar
-
 		final String oldJarFileName = "NoCubes-" + currentVersion + ".jar";
 		final Path pathToOldJar = new File(modsDir, oldJarFileName).toPath();
 
