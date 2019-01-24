@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.launchwrapper.Launch;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -16,6 +17,12 @@ import java.nio.file.Path;
 public final class BadAutoUpdater {
 
 	public static void update(final String currentVersion, final String newVersion) throws Exception {
+
+		final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
+		if (developerEnvironment) {
+			return;
+		}
+
 		final File modsDir = new File(Minecraft.getMinecraft().gameDir.getCanonicalFile(), "mods");
 //		final File modsDir = new File(Minecraft.getMinecraft().gameDir.getCanonicalFile(), "mods");
 
@@ -35,14 +42,12 @@ public final class BadAutoUpdater {
 		if (!somethingWasDone) {
 			return;
 		}
-		
+
 		//delete the current jar
 		final String oldJarFileName = "NoCubes-" + currentVersion + ".jar";
 		final Path pathToOldJar = new File(modsDir, oldJarFileName).toPath();
 
 		Files.delete(pathToOldJar);
-
-//		final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
 	}
 
