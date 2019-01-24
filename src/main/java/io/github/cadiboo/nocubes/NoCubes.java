@@ -54,13 +54,6 @@ public final class NoCubes {
 	@Mod.EventHandler
 	public void preInit(final FMLPreInitializationEvent event) {
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
-
-		try {
-			BadAutoUpdater.update(Loader.instance().activeModContainer().getVersion(), "1.12.2-0.2.0-pre5");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
 
