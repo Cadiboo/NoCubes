@@ -121,6 +121,18 @@ public class MeshRenderer {
 
 						if (ModConfig.approximateLighting) {
 
+//							final LightmapInfo lightmapInfo = ClientUtil.generateLightmapInfo(args...);
+//							lightmapSkyLight0 = lightmapInfo.skylight0;
+//							lightmapSkyLight1 = lightmapInfo.skylight1;
+//							lightmapSkyLight2 = lightmapInfo.skylight2;
+//							lightmapSkyLight3 = lightmapInfo.skylight3;
+//							lightmapBlockLight0 = lightmapInfo.blocklight0;
+//							lightmapBlockLight1 = lightmapInfo.blocklight1;
+//							lightmapBlockLight2 = lightmapInfo.blocklight2;
+//							lightmapBlockLight3 = lightmapInfo.blocklight3;
+
+							//FIXME: MAX PRIORITY FOR 0.2.0
+							//TODO: FIX THIS SHIT
 							final double pos0X = v0.x + ((v0.x - pos[0] - renderChunkPositionX) * ModConfig.isosurfaceLevel);
 							final double pos0Y = v0.y + ((v0.y - pos[1] - renderChunkPositionY) * ModConfig.isosurfaceLevel);
 							final double pos0Z = v0.z + (v0.z - pos[2] - renderChunkPositionZ) * ModConfig.isosurfaceLevel;
