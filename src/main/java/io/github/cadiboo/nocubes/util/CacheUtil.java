@@ -13,18 +13,14 @@ public final class CacheUtil {
 	private static PooledDensityCache generateDensityCache(
 			final int densityCacheStartPosX, final int densityCacheStartPosY, final int densityCacheStartPosZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			final PooledStateCache stateCache, final PooledSmoothableCache smoothableCache,
 			final int cachesStartPosX, final int cachesStartPosY, final int cachesStartPosZ,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
 			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-
-		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
-		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
-		) {
-			return generateDensityCache(densityCacheStartPosX, densityCacheStartPosY, densityCacheStartPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
-		}
+		return generateDensityCache(densityCacheStartPosX, densityCacheStartPosY, densityCacheStartPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
 	}
 
 ////	/**
@@ -160,15 +156,21 @@ public final class CacheUtil {
 		final int cachesSizeY = densityCacheSizeY + 1;
 		final int cachesSizeZ = densityCacheSizeZ + 1;
 
-		return CacheUtil.generateDensityCache(
-				renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-				densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
-				cachesStartPosX, cachesStartPosY, cachesStartPosZ,
-				cachesSizeX, cachesSizeY, cachesSizeZ,
-				isStateSmoothable,
-				cache,
-				pooledMutableBlockPos
-		);
+		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
+		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
+		) {
+
+			return CacheUtil.generateDensityCache(
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
+					stateCache, smoothableCache,
+					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
+					cachesSizeX, cachesSizeY, cachesSizeZ,
+					isStateSmoothable,
+					cache,
+					pooledMutableBlockPos
+			);
+		}
 
 	}
 
