@@ -43,12 +43,12 @@ import static java.lang.Math.floor;
 public class MeshRenderer {
 
 	private static void renderFaces(
-			@Nonnull final IBlockAccess cache,
-			@Nonnull final BlockPos renderChunkPosition,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final IBlockAccess cache,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Map<int[], ArrayList<PooledFace>> chunkData,
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -308,12 +308,12 @@ public class MeshRenderer {
 						)
 				) {
 					renderFaces(
-							blockAccess,
-							renderChunkPosition,
-							blockRendererDispatcher,
 							renderChunk,
-							compiledChunk,
 							generator,
+							compiledChunk,
+							renderChunkPosition,
+							blockAccess,
+							blockRendererDispatcher,
 							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
@@ -334,12 +334,12 @@ public class MeshRenderer {
 						)
 				) {
 					renderFaces(
-							blockAccess,
-							renderChunkPosition,
-							blockRendererDispatcher,
 							renderChunk,
-							compiledChunk,
 							generator,
+							compiledChunk,
+							renderChunkPosition,
+							blockAccess,
+							blockRendererDispatcher,
 							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
 							LEAVES_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, true
