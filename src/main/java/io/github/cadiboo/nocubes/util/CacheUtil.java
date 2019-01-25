@@ -10,34 +10,6 @@ import java.util.function.Function;
 
 public final class CacheUtil {
 
-////	/**
-////	 * start must be < end
-////	 */
-//	public static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final PooledSmoothableCache smoothableCache, final PooledStateCache stateCache, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
-//		final int densityCacheSizeX = endPosX - startPosX;
-//		final int densityCacheSizeY = endPosY - startPosY;
-//		final int densityCacheSizeZ = endPosZ - startPosZ;
-////		return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-//
-//		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-//		final int cacheStartPosX = startPosX - 1;
-//		final int cacheStartPosY = startPosY - 1;
-//		final int cacheStartPosZ = startPosZ - 1;
-//
-//		// Density takes +1 block on every negative axis into account so we need bigger caches
-//		final int cacheSizeX2 = densityCacheSizeX + 1;
-//		final int cacheSizeY2 = densityCacheSizeY + 1;
-//		final int cacheSizeZ2 = densityCacheSizeZ + 1;
-//
-//		try (final PooledStateCache stateCache2 = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX2, cacheSizeY2, cacheSizeZ2, cache, pooledMutableBlockPos);
-//		     final PooledSmoothableCache smoothableCache2 = generateSmoothableCache(cacheSizeX2, cacheSizeY2, cacheSizeZ2, stateCache, ModUtil::shouldSmooth);
-//		) {
-//			return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX2, cacheSizeY2, cacheSizeZ2, cache, pooledMutableBlockPos);
-//		}
-//
-////		return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-//	}
-
 	public static PooledStateCache generateStateCache(final int startPosX, final int startPosY, final int startPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, PooledMutableBlockPos pooledMutableBlockPos) {
 		final PooledStateCache stateCache = PooledStateCache.retain(cacheSizeX * cacheSizeY * cacheSizeZ);
 		int index = 0;
@@ -102,25 +74,6 @@ public final class CacheUtil {
 		}
 		return density;
 	}
-
-//	public static PooledDensityCache generateDensityCache(final BlockPos renderChunkPosition, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final PooledStateCache stateCache, final PooledSmoothableCache smoothableCache, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
-//
-//		final int renderChunkPositionX = renderChunkPosition.getX();
-//		final int renderChunkPositionY = renderChunkPosition.getY();
-//		final int renderChunkPositionZ = renderChunkPosition.getZ();
-//
-//		return CacheUtil.generateDensityCache(
-//				renderChunkPositionX,
-//				renderChunkPositionY,
-//				renderChunkPositionZ,
-//				renderChunkPositionX + cacheSizeX,
-//				renderChunkPositionY + cacheSizeY,
-//				renderChunkPositionZ + cacheSizeZ,
-//				cacheSizeX, cacheSizeY, cacheSizeZ,
-//				smoothableCache, stateCache, cache, pooledMutableBlockPos
-//		);
-//
-//	}
 
 	public static PooledDensityCache generateDensityCache(
 			@Nonnull final BlockPos renderChunkPosition,
