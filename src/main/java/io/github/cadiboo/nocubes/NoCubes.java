@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.BadAutoUpdater;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -11,6 +10,8 @@ import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.ArrayList;
 
 import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_MINECRAFT_VERSIONS;
 import static io.github.cadiboo.nocubes.util.ModReference.CERTIFICATE_FINGERPRINT;
@@ -39,7 +40,13 @@ public final class NoCubes {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	public static final ModProfiler profiler = new ModProfiler();
+	private static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
+
+	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
+		final ModProfiler profiler = new ModProfiler();
+		PROFILERS.add(profiler);
+		return profiler;
+	});
 
 	@Mod.Instance(MOD_ID)
 	public static NoCubes instance;
@@ -49,6 +56,10 @@ public final class NoCubes {
 
 	public static boolean isEnabled() {
 		return ModConfig.isEnabled;
+	}
+
+	public static ModProfiler getProfiler() {
+		return PROFILER.get();
 	}
 
 	@Mod.EventHandler

@@ -9,7 +9,6 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.MinecraftForge;
@@ -39,32 +38,7 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		{
-			final long startTime = System.nanoTime();
-			try {
-				ClientUtil.extendLiquidsPre(event);
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-				crashReport.makeCategory("Extending liquids");
-				throw new ReportedException(crashReport);
-			} finally {
-				NoCubes.profiler.putSection("extendLiquidsPre", System.nanoTime() - startTime);
-			}
-		}
-		{
-			final long startTime = System.nanoTime();
-			try {
-				ClientUtil.renderChunk(event);
-			} catch (ReportedException e) {
-				throw e;
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
-				crashReport.makeCategory("Rendering smooth chunk");
-				throw new ReportedException(crashReport);
-			} finally {
-				NoCubes.profiler.putSection("renderSmoothChunk", System.nanoTime() - startTime);
-			}
-		}
+		ClientUtil.renderChunk(event);
 	}
 
 	@SubscribeEvent
@@ -72,49 +46,13 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		{
-			final long startTime = System.nanoTime();
-			try {
-				ClientUtil.extendLiquidsBlock(event);
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error extending liquids in Block event!", e);
-				final CrashReportCategory crashReportCategory = crashReport.makeCategory("Block being rendered");
-				CrashReportCategory.addBlockInfo(crashReportCategory, event.getBlockPos(), event.getBlockState());
-				throw new ReportedException(crashReport);
-			} finally {
-				NoCubes.profiler.putSection("extendLiquidsBlock", System.nanoTime() - startTime);
-			}
-		}
-		{
-			final long startTime = System.nanoTime();
-			try {
-				ClientUtil.renderBlock(event);
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Block event!", e);
-				crashReport.makeCategory("Rendering smooth chunk");
-				throw new ReportedException(crashReport);
-			} finally {
-				NoCubes.profiler.putSection("renderSmoothBlock", System.nanoTime() - startTime);
-			}
-		}
+		ClientUtil.renderBlock(event);
 	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkPostEvent(final RebuildChunkPostEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
-		}
-		{
-			final long startTime = System.nanoTime();
-			try {
-				ClientUtil.extendLiquidsPost(event);
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-				crashReport.makeCategory("Extending liquids");
-				throw new ReportedException(crashReport);
-			} finally {
-				NoCubes.profiler.putSection("extendLiquidsPost", System.nanoTime() - startTime);
-			}
 		}
 	}
 
