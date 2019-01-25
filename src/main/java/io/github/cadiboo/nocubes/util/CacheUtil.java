@@ -10,19 +10,6 @@ import java.util.function.Function;
 
 public final class CacheUtil {
 
-	private static PooledDensityCache generateDensityCache(
-			final int densityCacheStartPosX, final int densityCacheStartPosY, final int densityCacheStartPosZ,
-			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
-			final PooledStateCache stateCache, final PooledSmoothableCache smoothableCache,
-			final int cachesStartPosX, final int cachesStartPosY, final int cachesStartPosZ,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
-			@Nonnull final IBlockAccess cache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
-	) {
-		return generateDensityCache(densityCacheStartPosX, densityCacheStartPosY, densityCacheStartPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
-	}
-
 ////	/**
 ////	 * start must be < end
 ////	 */
@@ -164,9 +151,7 @@ public final class CacheUtil {
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
 					stateCache, smoothableCache,
-					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
 					cachesSizeX, cachesSizeY, cachesSizeZ,
-					isStateSmoothable,
 					cache,
 					pooledMutableBlockPos
 			);
