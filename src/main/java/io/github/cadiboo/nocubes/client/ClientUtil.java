@@ -605,6 +605,8 @@ public final class ClientUtil {
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
+		profiler.startSection("generateStateCache");
+
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
 		final int stateCacheStartPosX = renderChunkPositionX - 1;
 		final int stateCacheStartPosY = renderChunkPositionY - 1;
