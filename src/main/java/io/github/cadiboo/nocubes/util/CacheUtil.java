@@ -101,25 +101,20 @@ public final class CacheUtil {
 	public static PooledDensityCache generateDensityCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
-			final int cachesStartPosX, final int cachesStartPosY, final int cachesStartPosZ,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final IBlockAccess cache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final PooledStateCache stateCache,
+			@Nonnull final PooledSmoothableCache smoothableCache
 	) {
-		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
-		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
-		) {
-			return CacheUtil.generateDensityCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
-					stateCache, smoothableCache,
-					cachesSizeX, cachesSizeY, cachesSizeZ,
-					cache,
-					pooledMutableBlockPos
-			);
-		}
-
+		return CacheUtil.generateDensityCache(
+				renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+				densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
+				stateCache, smoothableCache,
+				cachesSizeX, cachesSizeY, cachesSizeZ,
+				cache,
+				pooledMutableBlockPos
+		);
 	}
 
 }

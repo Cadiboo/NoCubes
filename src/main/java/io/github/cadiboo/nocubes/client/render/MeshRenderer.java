@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.PooledDensityCache;
 import io.github.cadiboo.nocubes.util.PooledFace;
+import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
@@ -303,57 +304,61 @@ public class MeshRenderer {
 		final int cachesSizeY = meshSizeY + 1;
 		final int cachesSizeZ = meshSizeZ + 1;
 
-		//normal terrain
-		{
-			final PooledDensityCache data = CacheUtil.generateDensityCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					meshSizeX, meshSizeY, meshSizeZ,
-					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
-					cachesSizeX, cachesSizeY, cachesSizeZ,
-					TERRAIN_SMOOTHABLE,
-					blockAccess,
-					pooledMutableBlockPos
-			);
-			try {
-				renderFaces(
-						blockAccess,
-						renderChunkPosition,
-						blockRendererDispatcher,
-						renderChunk,
-						compiledChunk,
-						generator,
-						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						TERRAIN_SMOOTHABLE,
-						pooledMutableBlockPos, usedBlockRenderLayers, false
-				);
-			} finally {
-				data.release();
+		try (PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
+			//normal terrain
+			{
+				final PooledDensityCache data;
+				try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
+					data = CacheUtil.generateDensityCache(
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							meshSizeX, meshSizeY, meshSizeZ,
+							cachesSizeX, cachesSizeY, cachesSizeZ,
+							blockAccess,
+							pooledMutableBlockPos, stateCache, smoothableCache
+					);
+				}
+				try {
+					renderFaces(
+							blockAccess,
+							renderChunkPosition,
+							blockRendererDispatcher,
+							renderChunk,
+							compiledChunk,
+							generator,
+							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+							TERRAIN_SMOOTHABLE,
+							pooledMutableBlockPos, usedBlockRenderLayers, false
+					);
+				} finally {
+					data.release();
+				}
 			}
-		}
-		if (ModConfig.smoothLeavesSeparate) {
-			final PooledDensityCache data = CacheUtil.generateDensityCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					meshSizeX, meshSizeY, meshSizeZ,
-					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
-					cachesSizeX, cachesSizeY, cachesSizeZ,
-					LEAVES_SMOOTHABLE,
-					blockAccess,
-					pooledMutableBlockPos
-			);
-			try {
-				renderFaces(
-						blockAccess,
-						renderChunkPosition,
-						blockRendererDispatcher,
-						renderChunk,
-						compiledChunk,
-						generator,
-						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						LEAVES_SMOOTHABLE,
-						pooledMutableBlockPos, usedBlockRenderLayers, true
-				);
-			} finally {
-				data.release();
+			if (ModConfig.smoothLeavesSeparate) {
+				final PooledDensityCache data;
+				try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
+					data = CacheUtil.generateDensityCache(
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							meshSizeX, meshSizeY, meshSizeZ,
+							cachesSizeX, cachesSizeY, cachesSizeZ,
+							blockAccess,
+							pooledMutableBlockPos, stateCache, smoothableCache
+					);
+				}
+				try {
+					renderFaces(
+							blockAccess,
+							renderChunkPosition,
+							blockRendererDispatcher,
+							renderChunk,
+							compiledChunk,
+							generator,
+							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+							LEAVES_SMOOTHABLE,
+							pooledMutableBlockPos, usedBlockRenderLayers, true
+					);
+				} finally {
+					data.release();
+				}
 			}
 		}
 	}
