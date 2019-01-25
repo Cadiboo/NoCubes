@@ -292,7 +292,6 @@ public class MeshRenderer {
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-		//normal terrain
 
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
 		final int cachesStartPosX = renderChunkPositionX - 1;
@@ -304,6 +303,7 @@ public class MeshRenderer {
 		final int cachesSizeY = meshSizeY + 1;
 		final int cachesSizeZ = meshSizeZ + 1;
 
+		//normal terrain
 		{
 			final PooledDensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
