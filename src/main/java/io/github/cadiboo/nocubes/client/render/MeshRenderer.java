@@ -277,7 +277,7 @@ public class MeshRenderer {
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 		//normal terrain
 		{
-			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos, ModUtil::shouldSmooth);
+			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, ModUtil::shouldSmooth, blockAccess, pooledMutableBlockPos);
 			try {
 				renderFaces(
 						blockAccess,
@@ -294,7 +294,7 @@ public class MeshRenderer {
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos, ModUtil::shouldSmoothLeaves);
+			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, ModUtil::shouldSmoothLeaves, blockAccess, pooledMutableBlockPos);
 			try {
 				renderFaces(
 						blockAccess,

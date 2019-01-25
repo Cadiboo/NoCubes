@@ -5,29 +5,25 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nonnull;
 import java.util.function.Function;
 
 public final class CacheUtil {
 
-	/**
-	 * start must be < end
-	 */
-	private static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ, final Function<IBlockState, Boolean> isStateSmoothable, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
+	private static PooledDensityCache generateDensityCache(
+			final int densityCacheStartPosX, final int densityCacheStartPosY, final int densityCacheStartPosZ,
+			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			final int cachesStartPosX, final int cachesStartPosY, final int cachesStartPosZ,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
+			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
+			@Nonnull final IBlockAccess cache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
 
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cacheStartPosX = startPosX - 1;
-		final int cacheStartPosY = startPosY - 1;
-		final int cacheStartPosZ = startPosZ - 1;
-
-		// Density takes +1 block on every negative axis into account so we need bigger caches
-		final int cacheSizeX = densityCacheSizeX + 1;
-		final int cacheSizeY = densityCacheSizeY + 1;
-		final int cacheSizeZ = densityCacheSizeZ + 1;
-
-		try (final PooledStateCache stateCache = generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
-		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable);
+		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
+		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
 		) {
-			return generateDensityCache(startPosX, startPosY, startPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+			return generateDensityCache(densityCacheStartPosX, densityCacheStartPosY, densityCacheStartPosZ, densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ, stateCache, smoothableCache, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
 		}
 	}
 
@@ -143,17 +139,32 @@ public final class CacheUtil {
 //
 //	}
 
-	public static PooledDensityCache generateDensityCache(final BlockPos renderChunkPosition, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos, final Function<IBlockState, Boolean> isStateSmoothable) {
+	public static PooledDensityCache generateDensityCache(
+			@Nonnull final BlockPos renderChunkPosition,
+			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
+			@Nonnull final IBlockAccess cache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
+		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		final int cachesStartPosX = renderChunkPositionX - 1;
+		final int cachesStartPosY = renderChunkPositionY - 1;
+		final int cachesStartPosZ = renderChunkPositionZ - 1;
+
+		// Density takes +1 block on every negative axis into account so we need bigger caches
+		final int cachesSizeX = densityCacheSizeX + 1;
+		final int cachesSizeY = densityCacheSizeY + 1;
+		final int cachesSizeZ = densityCacheSizeZ + 1;
+
 		return CacheUtil.generateDensityCache(
-				renderChunkPositionX,
-				renderChunkPositionY,
-				renderChunkPositionZ,
-				cacheSizeX, cacheSizeY, cacheSizeZ,
+				renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+				densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
+				cachesStartPosX, cachesStartPosY, cachesStartPosZ,
+				cachesSizeX, cachesSizeY, cachesSizeZ,
 				isStateSmoothable,
 				cache,
 				pooledMutableBlockPos
