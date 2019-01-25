@@ -2,7 +2,7 @@
 	"modid": "nocubes",
 	"name": "NoCubes",
 	"description": "Client-side smooth-world mod. Refactor, port to 1.12.2 and continued development by Cadiboo.
-This mod uses code from the Open Source reimplementation of NoCubes by CosmicDan for 1.12.2. This reimplementation was based off  work originally by Click_Me and code decompiled from bytecode released by Click_Me",
+This mod uses code from the Open Source reimplementation of NoCubes by CosmicDan for 1.12.2. This reimplementation was based off work originally by Click_Me and code decompiled from bytecode released by Click_Me",
 	"version": "${version}",
 	"mcversion": "${mcversion}",
 	"url": "https://Cadiboo.github.io/projects/nocubes/",
