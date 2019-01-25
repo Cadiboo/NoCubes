@@ -12,7 +12,7 @@ public final class CacheUtil {
 	/**
 	 * start must be < end
 	 */
-	public static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final Function<IBlockState, Boolean> isStateSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
+	private static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final Function<IBlockState, Boolean> isStateSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
 		final int densityCacheSizeX = endPosX - startPosX;
 		final int densityCacheSizeY = endPosY - startPosY;
 		final int densityCacheSizeZ = endPosZ - startPosZ;
