@@ -121,7 +121,7 @@ public class ExtendedLiquidChunkRenderer {
 							final Minecraft minecraft = Minecraft.getMinecraft();
 							final TextureMap textureMap = minecraft.getTextureMapBlocks();
 							final BlockColors blockColors = minecraft.getBlockColors();
-							usedBlockRenderLayers[blockRenderLayerOrdinal] = ExtendedLiquidBlockRenderer.renderExtendedLiquid(
+							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
 									textureMap, blockColors,
 									renderChunkPositionX + x,
 									renderChunkPositionY + y,

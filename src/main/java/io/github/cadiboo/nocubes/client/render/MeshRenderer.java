@@ -80,6 +80,7 @@ public class MeshRenderer {
 				final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
 				final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 				final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+				usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {
