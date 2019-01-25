@@ -613,9 +613,10 @@ public final class ClientUtil {
 		final int stateCacheStartPosZ = renderChunkPositionZ - 1;
 
 		// Density takes +1 block on every negative axis into account so we need bigger caches
-		final int stateCacheSizeX = meshSizeX + 1;
-		final int stateCacheSizeY = meshSizeY + 1;
-		final int stateCacheSizeZ = meshSizeZ + 1;
+		// Also the ExtendedLiquidChunkRenderer needs +1 block on every positive axis so we need even bigger caches
+		final int stateCacheSizeX = meshSizeX + 1 + 1;
+		final int stateCacheSizeY = meshSizeY + 1 + 1;
+		final int stateCacheSizeZ = meshSizeZ + 1 + 1;
 
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
@@ -627,7 +628,19 @@ public final class ClientUtil {
 
 				profiler.startSection("extendLiquids");
 				try {
-					ExtendedLiquidChunkRenderer.renderChunk();
+					ExtendedLiquidChunkRenderer.renderChunk(
+							renderChunk,
+							generator,
+							compiledChunk,
+							renderChunkPosition,
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							blockAccess,
+							pooledMutableBlockPos,
+							usedBlockRenderLayers,
+							blockRendererDispatcher,
+							stateCache,
+							stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ
+					);
 				} catch (ReportedException e) {
 					throw e;
 				} catch (Exception e) {
