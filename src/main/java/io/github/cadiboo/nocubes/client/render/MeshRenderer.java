@@ -10,7 +10,6 @@ import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -34,7 +33,6 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.getRenderLayer;
 import static io.github.cadiboo.nocubes.client.ClientUtil.getTexturePosAndState;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.floor;
 
 /**
@@ -80,16 +78,8 @@ public class MeshRenderer {
 
 				//TODO: use Event
 				final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
-
 				final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-
-				final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
-
-				if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-					compiledChunk.setLayerStarted(blockRenderLayer);
-					usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
-					renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
-				}
+				final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {

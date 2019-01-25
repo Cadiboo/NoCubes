@@ -98,9 +98,6 @@ public final class ModConfig {
 //	@Config.RangeDouble(min = -10, max = 10)
 	public static double isosurfaceLevel = 1.2D;
 
-//	@LangKey(MOD_ID + ".config.shouldForceUpdate")
-	public static boolean shouldForceUpdate = true;
-
 //	@LangKey(MOD_ID + ".config.offsetVertices")
 	public static boolean offsetVertices = true;
 
@@ -110,6 +107,7 @@ public final class ModConfig {
 
 	public static boolean approximateLighting = true;
 	public static boolean smoothLeavesSeparate = true;
+	public static boolean extendLiquids = true;
 
 	static {
 		setupSmoothableBlockStates();

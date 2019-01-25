@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
@@ -45,6 +46,7 @@ import java.util.List;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
@@ -626,29 +628,31 @@ public final class ClientUtil {
 				final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
 				final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-				profiler.startSection("extendLiquids");
-				try {
-					ExtendedLiquidChunkRenderer.renderChunk(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							blockAccess,
-							pooledMutableBlockPos,
-							usedBlockRenderLayers,
-							blockRendererDispatcher,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ
-					);
-				} catch (ReportedException e) {
-					throw e;
-				} catch (Exception e) {
-					CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-					crashReport.makeCategory("Extending liquids");
-					throw new ReportedException(crashReport);
+				if (ModConfig.extendLiquids) {
+					profiler.startSection("extendLiquids");
+					try {
+						ExtendedLiquidChunkRenderer.renderChunk(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								pooledMutableBlockPos,
+								usedBlockRenderLayers,
+								blockRendererDispatcher,
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ
+						);
+					} catch (ReportedException e) {
+						throw e;
+					} catch (Exception e) {
+						CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+						crashReport.makeCategory("Extending liquids");
+						throw new ReportedException(crashReport);
+					}
+					profiler.endSection();
 				}
-				profiler.endSection();
 
 				profiler.startSection("renderSmoothChunk");
 				try {
@@ -795,6 +799,15 @@ public final class ClientUtil {
 			throw new ReportedException(crashReport);
 		}
 		profiler.endSection();
+	}
+
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
+		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
+		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
+			compiledChunk.setLayerStarted(blockRenderLayer);
+			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
+		}
+		return bufferBuilder;
 	}
 
 }

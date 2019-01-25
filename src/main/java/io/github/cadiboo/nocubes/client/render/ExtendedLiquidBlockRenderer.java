@@ -24,6 +24,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nonnull;
+
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
@@ -31,7 +33,16 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRe
  */
 public class ExtendedLiquidBlockRenderer {
 
-	public static boolean renderExtendedLiquid(final TextureMap textureMap, final BlockColors blockColors, final BlockPos renderPos, final BlockPos liquidPos, final IBlockAccess blockAccess, final IBlockState smoothableState, final IBlockState liquidState, final BufferBuilder bufferBuilder) {
+	public static boolean renderExtendedLiquid(
+			@Nonnull final TextureMap textureMap,
+			@Nonnull final BlockColors blockColors,
+			final double renderPosX, final double renderPosY, final double renderPosZ,
+			@Nonnull final BlockPos liquidPos,
+			@Nonnull final IBlockAccess blockAccess,
+			//TODO: eventually do better liquid rendering for 0.3.0
+//			@Nonnull final IBlockState smoothableState,
+			@Nonnull final IBlockState liquidState,
+			@Nonnull final BufferBuilder bufferBuilder) {
 
 		final TextureAtlasSprite[] atlasSpritesLava = {
 				textureMap.getAtlasSprite("minecraft:blocks/lava_still"),
@@ -74,9 +85,12 @@ public class ExtendedLiquidBlockRenderer {
 			float fluidHeightSouth = getFluidHeight(blockAccess, liquidPos.south(), material);
 			float fluidHeightEastSouth = getFluidHeight(blockAccess, liquidPos.east().south(), material);
 			float fluidHeightEast = getFluidHeight(blockAccess, liquidPos.east(), material);
-			double x = (double) renderPos.getX();
-			double y = (double) renderPos.getY();
-			double z = (double) renderPos.getZ();
+//			double x = (double) renderPos.getX();
+//			double y = (double) renderPos.getY();
+//			double z = (double) renderPos.getZ();
+			final double x = renderPosX;
+			final double y = renderPosY;
+			final double z = renderPosZ;
 //				float f11 = 0.001F;
 
 			if (shouldRenderUp) {
