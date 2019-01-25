@@ -45,7 +45,7 @@ public final class CacheUtil {
 		return smoothableCache;
 	}
 
-	private static PooledDensityCache generateDensityCache(
+	public static PooledDensityCache generateDensityCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
 			@Nonnull final PooledStateCache stateCache,
@@ -96,25 +96,6 @@ public final class CacheUtil {
 			}
 		}
 		return density;
-	}
-
-	public static PooledDensityCache generateDensityCache(
-			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			@Nonnull final IBlockAccess cache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final PooledStateCache stateCache,
-			@Nonnull final PooledSmoothableCache smoothableCache
-	) {
-		return CacheUtil.generateDensityCache(
-				renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-				densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,
-				stateCache, smoothableCache,
-				cachesSizeX, cachesSizeY, cachesSizeZ,
-				cache,
-				pooledMutableBlockPos
-		);
 	}
 
 }

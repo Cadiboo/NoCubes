@@ -312,9 +312,10 @@ public class MeshRenderer {
 					data = CacheUtil.generateDensityCache(
 							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 							meshSizeX, meshSizeY, meshSizeZ,
+							stateCache, smoothableCache,
 							cachesSizeX, cachesSizeY, cachesSizeZ,
 							blockAccess,
-							pooledMutableBlockPos, stateCache, smoothableCache
+							pooledMutableBlockPos
 					);
 				}
 				try {
@@ -339,9 +340,10 @@ public class MeshRenderer {
 					data = CacheUtil.generateDensityCache(
 							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 							meshSizeX, meshSizeY, meshSizeZ,
+							stateCache, smoothableCache,
 							cachesSizeX, cachesSizeY, cachesSizeZ,
 							blockAccess,
-							pooledMutableBlockPos, stateCache, smoothableCache
+							pooledMutableBlockPos
 					);
 				}
 				try {
