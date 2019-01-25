@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
