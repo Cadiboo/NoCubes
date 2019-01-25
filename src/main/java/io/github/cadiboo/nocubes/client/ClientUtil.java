@@ -78,7 +78,7 @@ public final class ClientUtil {
 	};
 
 	// add or subtract from the sprites UV location to remove transparent lines in between textures
-	private static final float UV_CORRECT = 1 / 10000F;
+	public static final float UV_CORRECT = 1 / 10000F;
 
 //	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = ThreadLocal.withInitial(HashMap::new);
 

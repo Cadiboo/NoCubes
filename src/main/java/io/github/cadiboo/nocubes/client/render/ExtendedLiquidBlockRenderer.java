@@ -1,32 +1,20 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.OptifineCompatibility;
-import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.PooledStateCache;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPostEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
-
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
  * @author Cadiboo
@@ -171,7 +159,8 @@ public class ExtendedLiquidBlockRenderer {
 					}
 
 					wasAnythingRendered = true;
-					float u_f41 = textureatlassprite1.getInterpolatedU(0.0D);
+//					float u_f41 = textureatlassprite1.getInterpolatedU(0.0D);
+					final float u_f41 = ClientUtil.getMinU(textureatlassprite1);
 					float u_f27 = textureatlassprite1.getInterpolatedU(8.0D);
 					float f28 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd_f39) * 16.0F * 0.5F));
 					float v_f29 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd_f40) * 16.0F * 0.5F));
@@ -218,14 +207,14 @@ public class ExtendedLiquidBlockRenderer {
 		float v_f20;
 
 		if (slopeAngle < -999.0F) {
-//					minU = textureAtlasSprite.getInterpolatedU(0.0D);
+//			minU = textureAtlasSprite.getInterpolatedU(0.0D);
 			minU = ClientUtil.getMinU(textureAtlasSprite);
-//					minV = textureAtlasSprite.getInterpolatedV(0.0D);
+//			minV = textureAtlasSprite.getInterpolatedV(0.0D);
 			minV = ClientUtil.getMinV(textureAtlasSprite);
 			u_f14 = minU;
-//					maxV = textureAtlasSprite.getInterpolatedV(16.0D);
+//			maxV = textureAtlasSprite.getInterpolatedV(16.0D);
 			maxV = ClientUtil.getMaxV(textureAtlasSprite);
-//					maxU = textureAtlasSprite.getInterpolatedU(16.0D);
+//			maxU = textureAtlasSprite.getInterpolatedU(16.0D);
 			maxU = ClientUtil.getMaxU(textureAtlasSprite);
 			v_f19 = maxV;
 			u_f16 = maxU;
