@@ -42,17 +42,18 @@ import static java.lang.Math.floor;
  */
 public class MeshRenderer {
 
-	public static void renderChunk(
-			@Nonnull final BlockPos renderChunkPosition,
-			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
-			@Nonnull final PooledStateCache stateCache,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final int cacheSizeX, final int cacheSizeZ, final int cacheSizeY,
-			@Nonnull final IBlockAccess blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final boolean[] usedBlockRenderLayers) {
+
+//	public static void renderChunk(
+//			@Nonnull final BlockPos renderChunkPosition,
+//			@Nonnull final RenderChunk renderChunk,
+//			@Nonnull final CompiledChunk compiledChunk,
+//			@Nonnull final ChunkCompileTaskGenerator generator,
+//			@Nonnull final PooledStateCache stateCache,
+//			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+//			final int cacheSizeX, final int cacheSizeZ, final int cacheSizeY,
+//			@Nonnull final IBlockAccess blockAccess,
+//			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+//			@Nonnull final boolean[] usedBlockRenderLayers) {
 //		//normal terrain
 //		{
 //			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmooth;
@@ -88,7 +89,7 @@ public class MeshRenderer {
 //				}
 //			}
 //		}
-	}
+//	}
 
 	private static void renderFaces(
 			@Nonnull final IBlockAccess cache,
@@ -286,7 +287,14 @@ public class MeshRenderer {
 
 	}
 
-	public static void renderChunk2(final BlockPos renderChunkPosition, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final int meshSizeX, final int meshSizeY, final int meshSizeZ, final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos, final boolean[] usedBlockRenderLayers) {
+	public static void renderChunk(
+			@Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final ChunkCompileTaskGenerator generator,
+			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos, final int dsfad) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
@@ -305,20 +313,49 @@ public class MeshRenderer {
 		final int cachesSizeZ = meshSizeZ + 1;
 
 		try (PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
-			//normal terrain
-			{
-				final PooledDensityCache data;
-				try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
-					data = CacheUtil.generateDensityCache(
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							meshSizeX, meshSizeY, meshSizeZ,
-							stateCache, smoothableCache,
-							cachesSizeX, cachesSizeY, cachesSizeZ,
-							blockAccess,
-							pooledMutableBlockPos
-					);
-				}
-				try {
+			renderChunk(
+					renderChunkPosition,
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					renderChunk,
+					compiledChunk,
+					generator,
+					meshSizeX, meshSizeY, meshSizeZ,
+					stateCache,
+					cachesSizeX, cachesSizeY, cachesSizeZ,
+					blockRendererDispatcher,
+					new boolean[Integer.MAX_VALUE],
+					blockAccess, pooledMutableBlockPos
+			);
+		}
+	}
+
+	public static void renderChunk(
+			@Nonnull final BlockPos renderChunkPosition,
+			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final ChunkCompileTaskGenerator generator,
+			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+			final PooledStateCache stateCache,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+		//normal terrain
+		{
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
+				try (
+						final PooledDensityCache data = CacheUtil.generateDensityCache(
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								meshSizeX, meshSizeY, meshSizeZ,
+								stateCache, smoothableCache,
+								cachesSizeX, cachesSizeY, cachesSizeZ,
+								blockAccess,
+								pooledMutableBlockPos
+						)
+				) {
 					renderFaces(
 							blockAccess,
 							renderChunkPosition,
@@ -330,23 +367,21 @@ public class MeshRenderer {
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
 					);
-				} finally {
-					data.release();
 				}
 			}
-			if (ModConfig.smoothLeavesSeparate) {
-				final PooledDensityCache data;
-				try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
-					data = CacheUtil.generateDensityCache(
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							meshSizeX, meshSizeY, meshSizeZ,
-							stateCache, smoothableCache,
-							cachesSizeX, cachesSizeY, cachesSizeZ,
-							blockAccess,
-							pooledMutableBlockPos
-					);
-				}
-				try {
+		}
+		if (ModConfig.smoothLeavesSeparate) {
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
+				try (
+						final PooledDensityCache data = CacheUtil.generateDensityCache(
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								meshSizeX, meshSizeY, meshSizeZ,
+								stateCache, smoothableCache,
+								cachesSizeX, cachesSizeY, cachesSizeZ,
+								blockAccess,
+								pooledMutableBlockPos
+						)
+				) {
 					renderFaces(
 							blockAccess,
 							renderChunkPosition,
@@ -358,8 +393,6 @@ public class MeshRenderer {
 							LEAVES_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, true
 					);
-				} finally {
-					data.release();
 				}
 			}
 		}

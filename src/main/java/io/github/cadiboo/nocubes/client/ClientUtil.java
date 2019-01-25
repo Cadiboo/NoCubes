@@ -621,7 +621,17 @@ public final class ClientUtil {
 
 			profiler.startSection("renderSmoothChunk");
 			try {
-				MeshRenderer.renderChunk2(
+//				MeshRenderer.renderChunk(
+//						renderChunkPosition,
+//						renderChunk,
+//						compiledChunk,
+//						generator,
+//						meshSizeX, meshSizeY, meshSizeZ,
+//						blockAccess,
+//						pooledMutableBlockPos,
+//						usedBlockRenderLayers
+//				);
+				MeshRenderer.renderChunk(
 						renderChunkPosition,
 						renderChunk,
 						compiledChunk,
@@ -629,7 +639,7 @@ public final class ClientUtil {
 						meshSizeX, meshSizeY, meshSizeZ,
 						blockAccess,
 						pooledMutableBlockPos,
-						usedBlockRenderLayers
+						0
 				);
 			} catch (ReportedException e) {
 				throw e;
