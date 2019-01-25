@@ -155,8 +155,7 @@ public class MeshRenderer {
 				final float maxU = ClientUtil.getMaxU(sprite);
 				final float maxV = ClientUtil.getMaxV(sprite);
 
-				for (int i = 0; i < faces.size(); i++) {
-					final PooledFace face = faces.get(i);
+				for (final PooledFace face : faces) {
 					try {
 						//south east when looking down onto up face
 						final Vec3.PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
