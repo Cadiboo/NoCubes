@@ -15,7 +15,6 @@ import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.apache.commons.io.FileUtils;
@@ -33,7 +32,6 @@ import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
 
@@ -51,6 +49,9 @@ public final class ModUtil {
 
 	private static final Field configManager_CONFIGS = ReflectionUtil.getFieldOrCrash(ConfigManager.class, "CONFIGS");
 
+	public static final IIsSmoothable TERRAIN_SMOOTHABLE = ModUtil::shouldSmooth;
+	public static final IIsSmoothable LEAVES_SMOOTHABLE = ModUtil::shouldSmoothLeaves;
+
 	/**
 	 * If the state should be smoothed
 	 *
@@ -61,6 +62,12 @@ public final class ModUtil {
 		return ModConfig.getSmoothableBlockStatesCache().contains(state);
 	}
 
+	/**
+	 * If the state should be smoothed
+	 *
+	 * @param state the state
+	 * @return If the state should be smoothed
+	 */
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
 		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
 	}

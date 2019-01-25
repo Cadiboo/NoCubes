@@ -1,11 +1,9 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
-import java.util.function.Function;
 
 public final class CacheUtil {
 
@@ -23,13 +21,15 @@ public final class CacheUtil {
 		return stateCache;
 	}
 
-	public static PooledSmoothableCache generateSmoothableCache(final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final PooledStateCache stateCache, Function<IBlockState, Boolean> isStateSmoothable) {
+	public static PooledSmoothableCache generateSmoothableCache(
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final PooledStateCache stateCache, @Nonnull final IIsSmoothable isStateSmoothable) {
 		final PooledSmoothableCache smoothableCache = PooledSmoothableCache.retain(cacheSizeX * cacheSizeY * cacheSizeZ);
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
 			for (int y = 0; y < cacheSizeY; y++) {
 				for (int x = 0; x < cacheSizeX; x++) {
-					smoothableCache.getSmoothableCache()[index] = isStateSmoothable.apply(stateCache.getStateCache()[index]);
+					smoothableCache.getSmoothableCache()[index] = isStateSmoothable.isSmoothable(stateCache.getStateCache()[index]);
 					index++;
 				}
 			}
@@ -77,7 +77,7 @@ public final class CacheUtil {
 	public static PooledDensityCache generateDensityCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
-			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
+			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {

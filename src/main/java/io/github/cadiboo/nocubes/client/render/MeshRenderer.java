@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.PooledDensityCache;
 import io.github.cadiboo.nocubes.util.PooledFace;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
@@ -32,6 +32,8 @@ import java.util.function.Function;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getRenderLayer;
 import static io.github.cadiboo.nocubes.client.ClientUtil.getTexturePosAndState;
+import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.floor;
 
@@ -88,7 +90,19 @@ public class MeshRenderer {
 //		}
 	}
 
-	private static void renderFaces(final IBlockAccess cache, final BlockPos renderChunkPosition, final BlockRendererDispatcher blockRendererDispatcher, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final Map<int[], ArrayList<PooledFace>> chunkData, final Function<IBlockState, Boolean> isStateSmoothable, final PooledMutableBlockPos pooledMutableBlockPos, final boolean[] usedBlockRenderLayers, final boolean renderOpposite) {
+	private static void renderFaces(
+			@Nonnull final IBlockAccess cache,
+			@Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final Map<int[], ArrayList<PooledFace>> chunkData,
+			@Nonnull final IIsSmoothable isStateSmoothable,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			final boolean renderOpposite
+	) {
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
@@ -282,11 +296,10 @@ public class MeshRenderer {
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 		//normal terrain
 		{
-			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmooth;
 			final PooledDensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
-					isStateSmoothable,
+					TERRAIN_SMOOTHABLE,
 					blockAccess,
 					pooledMutableBlockPos
 			);
@@ -299,18 +312,18 @@ public class MeshRenderer {
 						compiledChunk,
 						generator,
 						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, false
+						TERRAIN_SMOOTHABLE,
+						pooledMutableBlockPos, usedBlockRenderLayers, false
 				);
 			} finally {
 				data.release();
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmoothLeaves;
 			final PooledDensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
-					isStateSmoothable,
+					LEAVES_SMOOTHABLE,
 					blockAccess,
 					pooledMutableBlockPos
 			);
@@ -323,7 +336,8 @@ public class MeshRenderer {
 						compiledChunk,
 						generator,
 						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, true
+						LEAVES_SMOOTHABLE,
+						pooledMutableBlockPos, usedBlockRenderLayers, true
 				);
 			} finally {
 				data.release();

@@ -17,6 +17,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
+import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 
 /**
@@ -71,7 +72,7 @@ public class ExtendedLiquidChunkRenderer {
 
 		if (true) return;
 		final IBlockState state = event.getBlockState();
-		if (ModUtil.shouldSmooth(state)) {
+		if (TERRAIN_SMOOTHABLE.isSmoothable(state)) {
 			final IBlockState[] stateCache = LIQUID_CACHE.get().getStateCache();
 			final BlockPos pos = event.getBlockPos();
 			final int posX = pos.getX();
