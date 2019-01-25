@@ -250,17 +250,17 @@ public class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final PooledStateCache stateCache,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
+			final int stateCacheSizeX, final int stateCacheSizeY, final int stateCacheSizeZ
 	) {
 		//normal terrain
 		{
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
 				try (
 						final PooledDensityCache data = CacheUtil.generateDensityCache(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
 								stateCache, smoothableCache,
-								cachesSizeX, cachesSizeY, cachesSizeZ,
+								stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ,
 								blockAccess,
 								pooledMutableBlockPos
 						)
@@ -280,13 +280,13 @@ public class MeshRenderer {
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
 				try (
 						final PooledDensityCache data = CacheUtil.generateDensityCache(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
 								stateCache, smoothableCache,
-								cachesSizeX, cachesSizeY, cachesSizeZ,
+								stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ,
 								blockAccess,
 								pooledMutableBlockPos
 						)

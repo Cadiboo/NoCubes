@@ -606,18 +606,18 @@ public final class ClientUtil {
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cachesStartPosX = renderChunkPositionX - 1;
-		final int cachesStartPosY = renderChunkPositionY - 1;
-		final int cachesStartPosZ = renderChunkPositionZ - 1;
+		final int stateCacheStartPosX = renderChunkPositionX - 1;
+		final int stateCacheStartPosY = renderChunkPositionY - 1;
+		final int stateCacheStartPosZ = renderChunkPositionZ - 1;
 
 		// Density takes +1 block on every negative axis into account so we need bigger caches
-		final int cachesSizeX = meshSizeX + 1;
-		final int cachesSizeY = meshSizeY + 1;
-		final int cachesSizeZ = meshSizeZ + 1;
+		final int stateCacheSizeX = meshSizeX + 1;
+		final int stateCacheSizeY = meshSizeY + 1;
+		final int stateCacheSizeZ = meshSizeZ + 1;
 
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
-			try (PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
+			try (PooledStateCache stateCache = CacheUtil.generateStateCache(stateCacheStartPosX, stateCacheStartPosY, stateCacheStartPosZ, stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ, blockAccess, pooledMutableBlockPos)) {
 				profiler.endSection();
 
 				final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
@@ -649,7 +649,7 @@ public final class ClientUtil {
 							blockRendererDispatcher,
 							meshSizeX, meshSizeY, meshSizeZ,
 							stateCache,
-							cachesSizeX, cachesSizeY, cachesSizeZ
+							stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ
 					);
 				} catch (ReportedException e) {
 					throw e;
