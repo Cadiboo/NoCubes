@@ -101,21 +101,12 @@ public final class CacheUtil {
 	public static PooledDensityCache generateDensityCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			final int cachesStartPosX, final int cachesStartPosY, final int cachesStartPosZ,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cachesStartPosX = renderChunkPositionX - 1;
-		final int cachesStartPosY = renderChunkPositionY - 1;
-		final int cachesStartPosZ = renderChunkPositionZ - 1;
-
-		// Density takes +1 block on every negative axis into account so we need bigger caches
-		final int cachesSizeX = densityCacheSizeX + 1;
-		final int cachesSizeY = densityCacheSizeY + 1;
-		final int cachesSizeZ = densityCacheSizeZ + 1;
-
 		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
 		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
 		) {

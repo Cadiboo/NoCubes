@@ -28,7 +28,6 @@ import net.minecraft.world.IBlockAccess;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.function.Function;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getRenderLayer;
 import static io.github.cadiboo.nocubes.client.ClientUtil.getTexturePosAndState;
@@ -294,10 +293,23 @@ public class MeshRenderer {
 
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 		//normal terrain
+
+		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		final int cachesStartPosX = renderChunkPositionX - 1;
+		final int cachesStartPosY = renderChunkPositionY - 1;
+		final int cachesStartPosZ = renderChunkPositionZ - 1;
+
+		// Density takes +1 block on every negative axis into account so we need bigger caches
+		final int cachesSizeX = meshSizeX + 1;
+		final int cachesSizeY = meshSizeY + 1;
+		final int cachesSizeZ = meshSizeZ + 1;
+
 		{
 			final PooledDensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
+					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
+					cachesSizeX, cachesSizeY, cachesSizeZ,
 					TERRAIN_SMOOTHABLE,
 					blockAccess,
 					pooledMutableBlockPos
@@ -322,6 +334,8 @@ public class MeshRenderer {
 			final PooledDensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
+					cachesStartPosX, cachesStartPosY, cachesStartPosZ,
+					cachesSizeX, cachesSizeY, cachesSizeZ,
 					LEAVES_SMOOTHABLE,
 					blockAccess,
 					pooledMutableBlockPos
