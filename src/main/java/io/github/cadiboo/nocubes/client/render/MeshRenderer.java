@@ -42,55 +42,6 @@ import static java.lang.Math.floor;
  */
 public class MeshRenderer {
 
-
-//	public static void renderChunk(
-//			@Nonnull final BlockPos renderChunkPosition,
-//			@Nonnull final RenderChunk renderChunk,
-//			@Nonnull final CompiledChunk compiledChunk,
-//			@Nonnull final ChunkCompileTaskGenerator generator,
-//			@Nonnull final PooledStateCache stateCache,
-//			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-//			final int cacheSizeX, final int cacheSizeZ, final int cacheSizeY,
-//			@Nonnull final IBlockAccess blockAccess,
-//			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-//			@Nonnull final boolean[] usedBlockRenderLayers) {
-//		//normal terrain
-//		{
-//			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmooth;
-//			try (final PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable)) {
-//				try (final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
-//					renderFaces(
-//							blockAccess,
-//							renderChunkPosition,
-//							Minecraft.getMinecraft().getBlockRendererDispatcher(),
-//							renderChunk,
-//							compiledChunk,
-//							generator,
-//							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-//							isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, false
-//					);
-//				}
-//			}
-//		}
-//		if (ModConfig.smoothLeavesSeparate) {
-//			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmoothLeaves;
-//			try (final PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cacheSizeX, cacheSizeY, cacheSizeZ, stateCache, isStateSmoothable)) {
-//				try (final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
-//					renderFaces(
-//							blockAccess,
-//							renderChunkPosition,
-//							Minecraft.getMinecraft().getBlockRendererDispatcher(),
-//							renderChunk,
-//							compiledChunk,
-//							generator,
-//							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-//							isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, true
-//					);
-//				}
-//			}
-//		}
-//	}
-
 	private static void renderFaces(
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final BlockPos renderChunkPosition,
