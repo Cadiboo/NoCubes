@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
@@ -33,7 +34,6 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.getRenderLayer;
 import static io.github.cadiboo.nocubes.client.ClientUtil.getTexturePosAndState;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
-import static java.lang.Math.floor;
 
 /**
  * @author Cadiboo
@@ -121,81 +121,16 @@ public class MeshRenderer {
 
 						if (ModConfig.approximateLighting) {
 
-//							final LightmapInfo lightmapInfo = ClientUtil.generateLightmapInfo(args...);
-//							lightmapSkyLight0 = lightmapInfo.skylight0;
-//							lightmapSkyLight1 = lightmapInfo.skylight1;
-//							lightmapSkyLight2 = lightmapInfo.skylight2;
-//							lightmapSkyLight3 = lightmapInfo.skylight3;
-//							lightmapBlockLight0 = lightmapInfo.blocklight0;
-//							lightmapBlockLight1 = lightmapInfo.blocklight1;
-//							lightmapBlockLight2 = lightmapInfo.blocklight2;
-//							lightmapBlockLight3 = lightmapInfo.blocklight3;
-
-							//FIXME: MAX PRIORITY FOR 0.2.0
-							//TODO: FIX THIS SHIT
-							final double pos0X = v0.x + ((v0.x - pos[0] - renderChunkPositionX) * ModConfig.isosurfaceLevel);
-							final double pos0Y = v0.y + ((v0.y - pos[1] - renderChunkPositionY) * ModConfig.isosurfaceLevel);
-							final double pos0Z = v0.z + (v0.z - pos[2] - renderChunkPositionZ) * ModConfig.isosurfaceLevel;
-
-							final int packedLight0 = cache.getBlockState(pooledMutableBlockPos.setPos(floor(pos0X), floor(pos0Y), floor(pos0Z))).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-
-							lightmapSkyLight0 = packedLight0 >> 16 & 0xFFFF;
-							lightmapBlockLight0 = packedLight0 & 0xFFFF;
-
-							final double pos1X = v1.x + ((v1.x - pos[0] - renderChunkPositionX) * ModConfig.isosurfaceLevel);
-							final double pos1Y = v1.y + ((v1.y - pos[1] - renderChunkPositionY) * ModConfig.isosurfaceLevel);
-							final double pos1Z = v1.z + (v1.z - pos[2] - renderChunkPositionZ) * ModConfig.isosurfaceLevel;
-
-							final int packedLight1 = cache.getBlockState(pooledMutableBlockPos.setPos(floor(pos1X), floor(pos1Y), floor(pos1Z))).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-
-							lightmapSkyLight1 = packedLight1 >> 16 & 0xFFFF;
-							lightmapBlockLight1 = packedLight1 & 0xFFFF;
-
-							final double pos2X = v2.x + ((v2.x - pos[0] - renderChunkPositionX) * ModConfig.isosurfaceLevel);
-							final double pos2Y = v2.y + ((v2.y - pos[1] - renderChunkPositionY) * ModConfig.isosurfaceLevel);
-							final double pos2Z = v2.z + (v2.z - pos[2] - renderChunkPositionZ) * ModConfig.isosurfaceLevel;
-
-							final int packedLight2 = cache.getBlockState(pooledMutableBlockPos.setPos(floor(pos2X), floor(pos2Y), floor(pos2Z))).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-
-							lightmapSkyLight2 = packedLight2 >> 16 & 0xFFFF;
-							lightmapBlockLight2 = packedLight2 & 0xFFFF;
-
-							final double pos3X = v3.x + ((v3.x - pos[0] - renderChunkPositionX) * ModConfig.isosurfaceLevel);
-							final double pos3Y = v3.y + ((v3.y - pos[1] - renderChunkPositionY) * ModConfig.isosurfaceLevel);
-							final double pos3Z = v3.z + (v3.z - pos[2] - renderChunkPositionZ) * ModConfig.isosurfaceLevel;
-
-							final int packedLight3 = cache.getBlockState(pooledMutableBlockPos.setPos(floor(pos3X), floor(pos3Y), floor(pos3Z))).getPackedLightmapCoords(cache, pooledMutableBlockPos);
-
-							lightmapSkyLight3 = packedLight3 >> 16 & 0xFFFF;
-							lightmapBlockLight3 = packedLight3 & 0xFFFF;
-
-//							//v0 =
-//							//TODO: change to ModUtil#map
-//							//<editor-fold desc="Snap to integer coords and light index">
-//							final int v0X = clamp((round(v0.x) - pos[0] - renderChunkPositionX), 0, 1);
-//							final int v0Y = clamp((round(v0.y) - pos[1] - renderChunkPositionY), 0, 1);
-//							final int v0Z = clamp((round(v0.z) - pos[2] - renderChunkPositionZ), 0, 1);
-//							final int v1X = clamp((round(v1.x) - pos[0] - renderChunkPositionX), 0, 1);
-//							final int v1Y = clamp((round(v1.y) - pos[1] - renderChunkPositionY), 0, 1);
-//							final int v1Z = clamp((round(v1.z) - pos[2] - renderChunkPositionZ), 0, 1);
-//							final int v2X = clamp((round(v2.x) - pos[0] - renderChunkPositionX), 0, 1);
-//							final int v2Y = clamp((round(v2.y) - pos[1] - renderChunkPositionY), 0, 1);
-//							final int v2Z = clamp((round(v2.z) - pos[2] - renderChunkPositionZ), 0, 1);
-//							final int v3X = clamp((round(v3.x) - pos[0] - renderChunkPositionX), 0, 1);
-//							final int v3Y = clamp((round(v3.y) - pos[1] - renderChunkPositionY), 0, 1);
-//							final int v3Z = clamp((round(v3.z) - pos[2] - renderChunkPositionZ), 0, 1);
-//							//</editor-fold>
-//
-//							//<editor-fold desc="get and unpack lightmap coords">
-//							lightmapSkyLight0 = packedLight[v0X][v0Y][v0Z] >> 16 & 0xFFFF;
-//							lightmapBlockLight0 = packedLight[v0X][v0Y][v0Z] & 0xFFFF;
-//							lightmapSkyLight1 = packedLight[v1X][v1Y][v1Z] >> 16 & 0xFFFF;
-//							lightmapBlockLight1 = packedLight[v1X][v1Y][v1Z] & 0xFFFF;
-//							lightmapSkyLight2 = packedLight[v2X][v2Y][v2Z] >> 16 & 0xFFFF;
-//							lightmapBlockLight2 = packedLight[v2X][v2Y][v2Z] & 0xFFFF;
-//							lightmapSkyLight3 = packedLight[v3X][v3Y][v3Z] >> 16 & 0xFFFF;
-//							lightmapBlockLight3 = packedLight[v3X][v3Y][v3Z] & 0xFFFF;
-//							//</editor-fold>
+							//TODO: do this better
+							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, cache, pooledMutableBlockPos);
+							lightmapSkyLight0 = lightmapInfo.skylight0;
+							lightmapSkyLight1 = lightmapInfo.skylight1;
+							lightmapSkyLight2 = lightmapInfo.skylight2;
+							lightmapSkyLight3 = lightmapInfo.skylight3;
+							lightmapBlockLight0 = lightmapInfo.blocklight0;
+							lightmapBlockLight1 = lightmapInfo.blocklight1;
+							lightmapBlockLight2 = lightmapInfo.blocklight2;
+							lightmapBlockLight3 = lightmapInfo.blocklight3;
 
 						} else {
 							lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
