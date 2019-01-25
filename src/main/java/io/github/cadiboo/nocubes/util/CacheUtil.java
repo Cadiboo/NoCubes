@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -76,15 +75,12 @@ public final class CacheUtil {
 	}
 
 	public static PooledDensityCache generateDensityCache(
-			@Nonnull final BlockPos renderChunkPosition,
+			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
 			@Nonnull final Function<IBlockState, Boolean> isStateSmoothable,
 			@Nonnull final IBlockAccess cache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
-
-		final int renderChunkPositionX = renderChunkPosition.getX();
-		final int renderChunkPositionY = renderChunkPosition.getY();
-		final int renderChunkPositionZ = renderChunkPosition.getZ();
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
 
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
 		final int cachesStartPosX = renderChunkPositionX - 1;
@@ -99,7 +95,6 @@ public final class CacheUtil {
 		try (final PooledStateCache stateCache = generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, cache, pooledMutableBlockPos);
 		     final PooledSmoothableCache smoothableCache = generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, isStateSmoothable);
 		) {
-
 			return CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ,

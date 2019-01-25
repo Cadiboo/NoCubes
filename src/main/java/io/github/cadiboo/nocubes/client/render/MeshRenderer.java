@@ -274,10 +274,22 @@ public class MeshRenderer {
 	}
 
 	public static void renderChunk2(final BlockPos renderChunkPosition, final RenderChunk renderChunk, final CompiledChunk compiledChunk, final ChunkCompileTaskGenerator generator, final int meshSizeX, final int meshSizeY, final int meshSizeZ, final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos, final boolean[] usedBlockRenderLayers) {
+
+		final int renderChunkPositionX = renderChunkPosition.getX();
+		final int renderChunkPositionY = renderChunkPosition.getY();
+		final int renderChunkPositionZ = renderChunkPosition.getZ();
+
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 		//normal terrain
 		{
-			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, ModUtil::shouldSmooth, blockAccess, pooledMutableBlockPos);
+			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmooth;
+			final PooledDensityCache data = CacheUtil.generateDensityCache(
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					meshSizeX, meshSizeY, meshSizeZ,
+					isStateSmoothable,
+					blockAccess,
+					pooledMutableBlockPos
+			);
 			try {
 				renderFaces(
 						blockAccess,
@@ -287,14 +299,21 @@ public class MeshRenderer {
 						compiledChunk,
 						generator,
 						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						ModUtil::shouldSmooth, pooledMutableBlockPos, usedBlockRenderLayers, false
+						isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, false
 				);
 			} finally {
 				data.release();
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			final PooledDensityCache data = CacheUtil.generateDensityCache(renderChunkPosition, meshSizeX, meshSizeY, meshSizeZ, ModUtil::shouldSmoothLeaves, blockAccess, pooledMutableBlockPos);
+			final Function<IBlockState, Boolean> isStateSmoothable = ModUtil::shouldSmoothLeaves;
+			final PooledDensityCache data = CacheUtil.generateDensityCache(
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					meshSizeX, meshSizeY, meshSizeZ,
+					isStateSmoothable,
+					blockAccess,
+					pooledMutableBlockPos
+			);
 			try {
 				renderFaces(
 						blockAccess,
@@ -304,7 +323,7 @@ public class MeshRenderer {
 						compiledChunk,
 						generator,
 						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						ModUtil::shouldSmoothLeaves, pooledMutableBlockPos, usedBlockRenderLayers, true
+						isStateSmoothable, pooledMutableBlockPos, usedBlockRenderLayers, true
 				);
 			} finally {
 				data.release();
