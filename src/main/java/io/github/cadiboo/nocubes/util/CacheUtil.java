@@ -12,10 +12,7 @@ public final class CacheUtil {
 	/**
 	 * start must be < end
 	 */
-	private static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int endPosX, final int endPosY, final int endPosZ, final IBlockAccess cache, final Function<IBlockState, Boolean> isStateSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
-		final int densityCacheSizeX = endPosX - startPosX;
-		final int densityCacheSizeY = endPosY - startPosY;
-		final int densityCacheSizeZ = endPosZ - startPosZ;
+	private static PooledDensityCache generateDensityCache(final int startPosX, final int startPosY, final int startPosZ, final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ, final Function<IBlockState, Boolean> isStateSmoothable, final IBlockAccess cache, final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
 		final int cacheStartPosX = startPosX - 1;
@@ -156,11 +153,9 @@ public final class CacheUtil {
 				renderChunkPositionX,
 				renderChunkPositionY,
 				renderChunkPositionZ,
-				renderChunkPositionX + cacheSizeX,
-				renderChunkPositionY + cacheSizeY,
-				renderChunkPositionZ + cacheSizeZ,
-				cache,
+				cacheSizeX, cacheSizeY, cacheSizeZ,
 				isStateSmoothable,
+				cache,
 				pooledMutableBlockPos
 		);
 
