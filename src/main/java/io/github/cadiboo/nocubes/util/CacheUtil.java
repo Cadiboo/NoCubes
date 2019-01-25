@@ -5,6 +5,7 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
+//TODO: javadocs
 public final class CacheUtil {
 
 	public static PooledStateCache generateStateCache(
