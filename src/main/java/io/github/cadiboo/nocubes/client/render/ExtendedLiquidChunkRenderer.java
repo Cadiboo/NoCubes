@@ -92,52 +92,64 @@ public class ExtendedLiquidChunkRenderer {
 			isSmoothable[i] = ModUtil.TERRAIN_SMOOTHABLE.isSmoothable(stateCache[i]) || ModUtil.LEAVES_SMOOTHABLE.isSmoothable(stateCache[i]);
 		}
 
-		int index = 0;
+		final Minecraft minecraft = Minecraft.getMinecraft();
+		final TextureMap textureMap = minecraft.getTextureMapBlocks();
+		final BlockColors blockColors = minecraft.getBlockColors();
+
 		for (int z = 0; z < 16; z++) {
 			for (int y = 0; y < 16; y++) {
-				for (int x = 0; x < 16; x++, index++) {
+				for (int x = 0; x < 16; x++) {
 
-					if (!isSmoothable[index]) {
+					//TODO: set the index in the loop with whatever black magic mikelasko uses
+					final int smoothableIndex = (x + 1) + stateCacheSizeX * (y + 1 + stateCacheSizeY * (z + 1));
+
+					if (!isSmoothable[smoothableIndex]) {
 						continue;
 					}
 
 					// For offset = -1, offset = 1;
-					for (int xOffset = -1; xOffset < 2; xOffset += 2) {
-						for (int zOffset = -1; zOffset < 2; zOffset += 2) {
+					for (int xOffset = -1; xOffset < 2; ++xOffset) {
+						for (int yOffset = -1; yOffset < 2; ++yOffset) {
+							for (int zOffset = -1; zOffset < 2; ++zOffset) {
 
-							// Add 1 to account for offset=-1
-							final int liquidStateIndex = (x + xOffset + 1) + stateCacheSizeX * (y + stateCacheSizeY * (z + zOffset + 1));
-							if (!isLiquid[liquidStateIndex]) {
-								continue;
+								//no point in checking myself
+//							    if (xOffset == 0 && zOffset == 0) {
+								if (xOffset == 0 && yOffset == 0 && zOffset == 0) {
+									continue;
+								}
+
+								// Add 1 to account for offset=-1
+								// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+//								final int liquidStateIndex = (x + xOffset + 1) + stateCacheSizeX * (y + 1 + stateCacheSizeY * (z + zOffset + 1));
+								final int liquidStateIndex = (x + xOffset + 1) + stateCacheSizeX * (y + yOffset + 1 + stateCacheSizeY * (z + zOffset + 1));
+								if (!isLiquid[liquidStateIndex]) {
+									continue;
+								}
+
+								final IBlockState liquidState = stateCache[liquidStateIndex];
+
+								final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
+								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+
+								final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+								usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
+										textureMap, blockColors,
+										renderChunkPositionX + x,
+										renderChunkPositionY + y,
+										renderChunkPositionZ + z,
+										pooledMutableBlockPos.setPos(
+												renderChunkPositionX + x + xOffset,
+												renderChunkPositionY + y,
+												renderChunkPositionZ + z + zOffset
+										),
+										blockAccess,
+										liquidState,
+										bufferBuilder
+								);
+
+								break;
+
 							}
-
-							final IBlockState liquidState = stateCache[liquidStateIndex];
-
-							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
-							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-
-							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-
-							final Minecraft minecraft = Minecraft.getMinecraft();
-							final TextureMap textureMap = minecraft.getTextureMapBlocks();
-							final BlockColors blockColors = minecraft.getBlockColors();
-							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
-									textureMap, blockColors,
-									renderChunkPositionX + x,
-									renderChunkPositionY + y,
-									renderChunkPositionZ + z,
-									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + x + xOffset,
-											renderChunkPositionY + y,
-											renderChunkPositionZ + z + zOffset
-									),
-									blockAccess,
-									liquidState,
-									bufferBuilder
-							);
-
-							break;
-
 						}
 					}
 				}
