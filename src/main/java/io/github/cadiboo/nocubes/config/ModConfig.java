@@ -101,7 +101,7 @@ public final class ModConfig {
 
 	//	@LangKey(MOD_ID + ".config.offsetVertices")
 	@Config.Ignore
-	public static boolean offsetVertices = true;
+	public static boolean offsetVertices = false;
 
 	//	@LangKey(MOD_ID + ".config.offsetAmmount")
 //	@Config.RangeDouble(min = -10, max = 10)
