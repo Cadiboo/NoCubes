@@ -5,8 +5,10 @@ import io.github.cadiboo.nocubes.client.render.ExtendedLiquidChunkRenderer;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.PooledStateCache;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
@@ -580,9 +582,9 @@ public final class ClientUtil {
 		final ModProfiler profiler = NoCubes.getProfiler();
 
 		final RenderChunk renderChunk = event.getRenderChunk();
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final ChunkCompileTaskGenerator generator = event.getGenerator();
+		final CompiledChunk compiledChunk = event.getCompiledChunk();
+		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final IBlockAccess blockAccess = event.getIBlockAccess();
 
 		final int meshSizeX;
@@ -599,57 +601,65 @@ public final class ClientUtil {
 			meshSizeZ = 17;
 		}
 
+		final int renderChunkPositionX = renderChunkPosition.getX();
+		final int renderChunkPositionY = renderChunkPosition.getY();
+		final int renderChunkPositionZ = renderChunkPosition.getZ();
+
+		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		final int cachesStartPosX = renderChunkPositionX - 1;
+		final int cachesStartPosY = renderChunkPositionY - 1;
+		final int cachesStartPosZ = renderChunkPositionZ - 1;
+
+		// Density takes +1 block on every negative axis into account so we need bigger caches
+		final int cachesSizeX = meshSizeX + 1;
+		final int cachesSizeY = meshSizeY + 1;
+		final int cachesSizeZ = meshSizeZ + 1;
+
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
-//			try (final PooledStateCache stateCache = CacheUtil.generateStateCache(cacheStartPosX, cacheStartPosY, cacheStartPosZ, cacheSizeX, cacheSizeY, cacheSizeZ, blockAccess, pooledMutableBlockPos)) {
-//				public static PooledStateCache generateStateCache(final int startPosX, final int startPosY, final int startPosZ, final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ, final IBlockAccess cache, PooledMutableBlockPos pooledMutableBlockPos) {
-//				profiler.endSection();
+			try (PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
+				profiler.endSection();
 
-			final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
+				final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
+				final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-			profiler.startSection("extendLiquids");
-			try {
-				ExtendedLiquidChunkRenderer.renderChunk();
-			} catch (ReportedException e) {
-				throw e;
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-				crashReport.makeCategory("Extending liquids");
-				throw new ReportedException(crashReport);
+				profiler.startSection("extendLiquids");
+				try {
+					ExtendedLiquidChunkRenderer.renderChunk();
+				} catch (ReportedException e) {
+					throw e;
+				} catch (Exception e) {
+					CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+					crashReport.makeCategory("Extending liquids");
+					throw new ReportedException(crashReport);
+				}
+				profiler.endSection();
+
+				profiler.startSection("renderSmoothChunk");
+				try {
+					MeshRenderer.renderChunk(
+							renderChunk,
+							generator,
+							compiledChunk,
+							renderChunkPosition,
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							blockAccess,
+							pooledMutableBlockPos,
+							usedBlockRenderLayers,
+							blockRendererDispatcher,
+							meshSizeX, meshSizeY, meshSizeZ,
+							stateCache,
+							cachesSizeX, cachesSizeY, cachesSizeZ
+					);
+				} catch (ReportedException e) {
+					throw e;
+				} catch (Exception e) {
+					CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
+					crashReport.makeCategory("Rendering smooth chunk");
+					throw new ReportedException(crashReport);
+				}
+				profiler.endSection();
 			}
-			profiler.endSection();
-
-			profiler.startSection("renderSmoothChunk");
-			try {
-//				MeshRenderer.renderChunk(
-//						renderChunkPosition,
-//						renderChunk,
-//						compiledChunk,
-//						generator,
-//						meshSizeX, meshSizeY, meshSizeZ,
-//						blockAccess,
-//						pooledMutableBlockPos,
-//						usedBlockRenderLayers
-//				);
-				MeshRenderer.renderChunk(
-						renderChunkPosition,
-						renderChunk,
-						compiledChunk,
-						generator,
-						meshSizeX, meshSizeY, meshSizeZ,
-						blockAccess,
-						pooledMutableBlockPos,
-						0
-				);
-			} catch (ReportedException e) {
-				throw e;
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
-				crashReport.makeCategory("Rendering smooth chunk");
-				throw new ReportedException(crashReport);
-			}
-			profiler.endSection();
-//			}
 		} finally {
 			pooledMutableBlockPos.release();
 		}

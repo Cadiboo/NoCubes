@@ -239,60 +239,18 @@ public class MeshRenderer {
 	}
 
 	public static void renderChunk(
-			@Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final ChunkCompileTaskGenerator generator,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			@Nonnull final IBlockAccess blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos, final int dsfad) {
-
-		final int renderChunkPositionX = renderChunkPosition.getX();
-		final int renderChunkPositionY = renderChunkPosition.getY();
-		final int renderChunkPositionZ = renderChunkPosition.getZ();
-
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cachesStartPosX = renderChunkPositionX - 1;
-		final int cachesStartPosY = renderChunkPositionY - 1;
-		final int cachesStartPosZ = renderChunkPositionZ - 1;
-
-		// Density takes +1 block on every negative axis into account so we need bigger caches
-		final int cachesSizeX = meshSizeX + 1;
-		final int cachesSizeY = meshSizeY + 1;
-		final int cachesSizeZ = meshSizeZ + 1;
-
-		try (PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
-			renderChunk(
-					renderChunkPosition,
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					renderChunk,
-					compiledChunk,
-					generator,
-					meshSizeX, meshSizeY, meshSizeZ,
-					stateCache,
-					cachesSizeX, cachesSizeY, cachesSizeZ,
-					blockRendererDispatcher,
-					new boolean[Integer.MAX_VALUE],
-					blockAccess, pooledMutableBlockPos
-			);
-		}
-	}
-
-	public static void renderChunk(
+			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final PooledStateCache stateCache,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final IBlockAccess blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
 	) {
 		//normal terrain
 		{
