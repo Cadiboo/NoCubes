@@ -72,6 +72,9 @@ public final class ModUtil {
 		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
 	}
 
+	/**
+	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
+	 */
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
 		float density = 0;
 
