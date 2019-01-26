@@ -109,7 +109,7 @@ public class ExtendedLiquidChunkRenderer {
 					}
 
 					// For offset = -1, offset = 1;
-					for (int xOffset = -1; xOffset < 2; ++xOffset) {
+					OFFSET: for (int xOffset = -1; xOffset < 2; ++xOffset) {
 						for (int zOffset = -1; zOffset < 2; ++zOffset) {
 
 							//no point in checking myself
@@ -151,7 +151,7 @@ public class ExtendedLiquidChunkRenderer {
 							);
 							OptifineCompatibility.popShaderThing(bufferBuilder);
 
-							break;
+							break OFFSET;
 
 						}
 					}
