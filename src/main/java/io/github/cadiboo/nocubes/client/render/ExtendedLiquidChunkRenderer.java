@@ -126,6 +126,12 @@ public class ExtendedLiquidChunkRenderer {
 								continue;
 							}
 
+							// only render if block up is air/not a normal cube
+							final int upStateIndex = (x + xOffset + 1) + cachesSizeX * (y + 1 + 1 + cachesSizeY * (z + zOffset + 1));
+							if (stateCache[upStateIndex].isNormalCube()) {
+								continue;
+							}
+
 							final IBlockState liquidState = stateCache[liquidStateIndex];
 
 							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
