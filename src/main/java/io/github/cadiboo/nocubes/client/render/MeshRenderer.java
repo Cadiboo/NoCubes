@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
+import io.github.cadiboo.nocubes.client.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.PooledPackedLightCache;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
@@ -46,7 +47,7 @@ public class MeshRenderer {
 			@Nonnull final ChunkCompileTaskGenerator generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
 			@Nonnull final PooledPackedLightCache pooledPackedLightCache,
@@ -71,9 +72,9 @@ public class MeshRenderer {
 					renderChunkPositionZ + pos[2]
 			);
 
-			final IBlockState realState = cache.getBlockState(pooledMutableBlockPos);
+			final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
 
-			final Object[] texturePosAndState = getTexturePosAndState(cache, pooledMutableBlockPos.toImmutable(), realState, isStateSmoothable, pooledMutableBlockPos);
+			final Object[] texturePosAndState = getTexturePosAndState(blockAccess, pooledMutableBlockPos.toImmutable(), realState, isStateSmoothable, pooledMutableBlockPos);
 			final BlockPos texturePos = (BlockPos) texturePosAndState[0];
 			final IBlockState textureState = (IBlockState) texturePosAndState[1];
 
@@ -84,13 +85,14 @@ public class MeshRenderer {
 				final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 				final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
 				usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
+				OptifineCompatibility.pushShaderThing(textureState,texturePos, blockAccess, bufferBuilder);
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {
 					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
 				}
 				final TextureAtlasSprite sprite = quad.getSprite();
-				final int color = ClientUtil.getColor(quad, textureState, cache, texturePos);
+				final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
 				final int red = (color >> 16) & 255;
 				final int green = (color >> 8) & 255;
 				final int blue = color & 255;
@@ -125,7 +127,7 @@ public class MeshRenderer {
 						if (ModConfig.approximateLighting) {
 
 							//TODO: do this better
-							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, cachesSizeX, cachesSizeY, cachesSizeZ, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, cache, pooledMutableBlockPos);
+							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, cachesSizeX, cachesSizeY, cachesSizeZ, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, blockAccess, pooledMutableBlockPos);
 							lightmapSkyLight0 = lightmapInfo.skylight0;
 							lightmapSkyLight1 = lightmapInfo.skylight1;
 							lightmapSkyLight2 = lightmapInfo.skylight2;
@@ -162,6 +164,9 @@ public class MeshRenderer {
 					}
 
 				}
+
+				OptifineCompatibility.popShaderThing(bufferBuilder);
+
 			} catch (Exception e) {
 				final CrashReport crashReport = new CrashReport("Rendering smooth block in world", e);
 
