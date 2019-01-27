@@ -18,3 +18,6 @@ nocubes.config.smoothLeavesSeparate.tooltip=If leaves should be smoothed (separa
 
 nocubes.config.extendLiquids=Extend Liquids
 nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rendered extended into smoothable blocks
+
+nocubes.key.toggleSmoothableBlockstate=Toggle Smoothable Blockstate
+nocubes.key.toggleSmoothableBlockstate.tooltip=(the block you are looking at)
