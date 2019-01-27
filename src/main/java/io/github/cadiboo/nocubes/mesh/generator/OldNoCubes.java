@@ -11,6 +11,9 @@ import java.util.Map;
 
 public class OldNoCubes implements IMeshGenerator {
 
+	// TODO FIXME this entire thing is broken and not really compatible with the current rendering model.
+	// should I add a special-snowflake renderer for OldNoCubes?
+
 	@Nonnull
 	@Override
 	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
