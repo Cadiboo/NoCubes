@@ -99,7 +99,7 @@ public final class ModConfig {
 	//	@LangKey(MOD_ID + ".config.isosurfaceLevel")
 //	@Config.RangeDouble(min = -10, max = 10)
 	@Config.Ignore
-	public static double isosurfaceLevel = 1.2D;
+	public static double isosurfaceLevel = 1.0D;
 
 	//	@LangKey(MOD_ID + ".config.offsetVertices")
 	@Config.Ignore
