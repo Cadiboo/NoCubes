@@ -1,18 +1,19 @@
 {
 	"homepage": "https://cadiboo.github.io/projects/nocubes/",
 	"promos": {
-		"1.12.2-latest": "1.12.2-0.2.0",
-		"1.12.2-recommended": "1.12.2-0.2.0"
+		"1.12.2-latest": "1.12.2-0.2.1",
+		"1.12.2-recommended": "1.12.2-0.2.1"
 	},
 	"1.12.2": {
-		"1.12.2-0.2.0": "Big update",
-		"1.12.2-0.1.6": "Cadiboo: Cleaned up code\nCadiboo: Updated config datafixer\nCadiboo: Added missing lang entries\nCadiboo: Updated license\nCadiboo: Added better exception handling to renderers\nCadiboo: Fixed ArrayIndexOutOfBounds crash in MarchingCubes and MarchingTetrahedra\nCadiboo: Worked on auto-updater\nCadiboo: Added minecraft profiler code\nCadiboo: Optimised MarchingCubes algorithm to be 8x faster\nCadiboo: Optimised MarchingTetrahedra algorithm to be 8x faster\nCadiboo: Started work on custom SurfaceNets implementation that is 52x faster than the original\nCadiboo: Added jar signing\nCadiboo: Optimise liquid rendering\nFrom 0.1.6-pre2:\nCadiboo: Added slightly more accurate textures\nCadiboo: Fixed Surface Nets algorithm\nFrom 0.1.6-pre1:\nCadiboo: 8x speed upgrade to SurfaceNets\nCadiboo:Improved extended fluids\nCadiboo: Created zh_cn.lang",
-		"1.12.2-0.1.5": "Cadiboo: Fix bug when Optifine's render regions are off\nCadiboo: Code cleanup\nCadiboo: Added versioned config backups\nCadiboo: Added config versioning\nCadiboo: Better default config values\nCadiboo: Possible fix for the world holes bug\nCadiboo: Fixed bug with Optifine's render regions for liquid extension\nCadiboo: Renamed shouldSmoothLiquids to shouldExtendLiquids\nCadiboo: Fixed bug with Optifine's render regions for all stable renderers",
-		"1.12.2-0.1.4": "Cadiboo: Updated the lang",
-		"1.12.2-0.1.3": "Cadiboo: Fix vanilla UV bug with water rendering for fake liquids and R&D fluid renderer\nCadiboo: Add credit to LeBossMax2 for his tip about OldNoCubes\nCadiboo: Improved Beautify Textures option\nCadiboo: Added Beautify Textures option\nCadiboo: Updated config\nCadiboo: Added NONE RenderAlgorithm type\nCadiboo: Improved fake liquid rendering\nCadiboo: Initial compatibility with shaders for our fake liquids\nCadiboo: Update and add the new stuff to the lang\nCadiboo: Made all the renderers work & optimised them a little bit\nCadiboo: Fix chunkPos offset on MarchingTetrahedra",
-		"1.12.2-0.1.2": "Cadiboo: Added a bunch of debug/R&D stuff and added stable renderers\nCadiboo: Started work on the next gen of renderers\nCadiboo: Added Marching Tetrahedra algorithm",
-		"1.12.2-0.1.2-debug": "Cadiboo: Working on surface nets & debug for Ginez0n",
-		"1.12.2-0.1.1": "Cadiboo: Fix crash on older Forge versions",
-		"1.12.2-0.1.0": "First public release\nCadiboo: Made an optimised OldNoCubes algorithm & a semi-optimised MarchingCubes algorithm"
-		}
+		"1.12.2-0.2.1": "Small bug fix update",
+		"1.12.2-0.2.0": "Big update and total re-write. Now 61x faster and many more features",
+		"1.12.2-0.1.6": "Translations, optimisations and bug fixes",
+		"1.12.2-0.1.5": "Bug fixes and Config versioning",
+		"1.12.2-0.1.4": "Small Translations update",
+		"1.12.2-0.1.3": "Optimsation and bug fix update based around Textures, Compatibility and Shaders",
+		"1.12.2-0.1.2": "Added Debug/R&D features and a new render algorithm",
+		"1.12.2-0.1.2-debug": "Working on surface nets & debug for Ginez0n",
+		"1.12.2-0.1.1": "Fix crash on older Forge versions",
+		"1.12.2-0.1.0": "First public release! Made an optimised OldNoCubes algorithm & a semi-optimised MarchingCubes algorithm"
+	}
 }
