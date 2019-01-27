@@ -80,7 +80,12 @@ public final class ModUtil {
 
 		if (shouldSmooth) {
 			final AxisAlignedBB box = state.getBoundingBox(cache, pos);
-			density += box.maxY - box.minY;
+			final double boxHeight = box.maxY - box.minY;
+			if (boxHeight >= 1) {
+				density += boxHeight;
+			} else {
+				density -= 1 - boxHeight;
+			}
 		} else if (/*ModConfig.debug.connectToNormal && */(state.isNormalCube() || state.isBlockNormalCube())) {
 			// NO OP
 			// OK OK OK OK OK LordPhrozen, I've done it (kinda)
