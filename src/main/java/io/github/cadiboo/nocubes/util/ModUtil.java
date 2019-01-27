@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockLog;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
@@ -70,8 +69,7 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
-		return ModConfig.smoothLeavesSeparate &&
-				(state.getBlock() instanceof BlockLeaves || state.getBlock() instanceof BlockLog);
+		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
 	}
 
 	/**
