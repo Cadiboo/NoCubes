@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
+import io.github.cadiboo.nocubes.client.PooledPackedLightCache;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
@@ -47,6 +48,8 @@ public class MeshRenderer {
 			@Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
+			@Nonnull final PooledPackedLightCache pooledPackedLightCache,
 			@Nonnull final Map<int[], ArrayList<PooledFace>> chunkData,
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -122,7 +125,7 @@ public class MeshRenderer {
 						if (ModConfig.approximateLighting) {
 
 							//TODO: do this better
-							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, cache, pooledMutableBlockPos);
+							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, cachesSizeX, cachesSizeY, cachesSizeZ, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, cache, pooledMutableBlockPos);
 							lightmapSkyLight0 = lightmapInfo.skylight0;
 							lightmapSkyLight1 = lightmapInfo.skylight1;
 							lightmapSkyLight2 = lightmapInfo.skylight2;
@@ -187,18 +190,18 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final PooledStateCache stateCache,
-			final int stateCacheSizeX, final int stateCacheSizeY, final int stateCacheSizeZ
+			final PooledStateCache stateCache, final PooledPackedLightCache pooledPackedLightCache,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
 	) {
 		//normal terrain
 		{
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
 				try (
 						final PooledDensityCache data = CacheUtil.generateDensityCache(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
 								stateCache, smoothableCache,
-								stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ,
+								cachesSizeX, cachesSizeY, cachesSizeZ,
 								blockAccess,
 								pooledMutableBlockPos
 						)
@@ -210,6 +213,8 @@ public class MeshRenderer {
 							renderChunkPosition,
 							blockAccess,
 							blockRendererDispatcher,
+							cachesSizeX, cachesSizeY, cachesSizeZ,
+							pooledPackedLightCache,
 							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
@@ -218,13 +223,13 @@ public class MeshRenderer {
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
+			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
 				try (
 						final PooledDensityCache data = CacheUtil.generateDensityCache(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
 								stateCache, smoothableCache,
-								stateCacheSizeX, stateCacheSizeY, stateCacheSizeZ,
+								cachesSizeX, cachesSizeY, cachesSizeZ,
 								blockAccess,
 								pooledMutableBlockPos
 						)
@@ -236,6 +241,8 @@ public class MeshRenderer {
 							renderChunkPosition,
 							blockAccess,
 							blockRendererDispatcher,
+							cachesSizeX, cachesSizeY, cachesSizeZ,
+							pooledPackedLightCache,
 							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
 							LEAVES_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, true

@@ -5,7 +5,7 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
 import static java.lang.Math.floor;
-import static java.lang.Math.round;
+import static net.minecraft.util.math.MathHelper.clamp;
 
 /**
  * @author Cadiboo
@@ -35,6 +35,8 @@ public class LightmapInfo {
 	public final int blocklight3;
 
 	public static LightmapInfo generateLightmapInfo(
+			final PooledPackedLightCache pooledPackedLightCache,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
 			final PooledVec3 v0,
 			final PooledVec3 v1,
 			final PooledVec3 v2,
@@ -46,128 +48,281 @@ public class LightmapInfo {
 			final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
-		final int packedLight0m10m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x) - 1, floor(v0.y), floor(v0.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight0m100 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x) - 1, floor(v0.y), floor(v0.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight0m11m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x) - 1, floor(v0.y) + 1, floor(v0.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight0m110 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x) - 1, floor(v0.y) + 1, floor(v0.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight000m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x), floor(v0.y), floor(v0.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight0000 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x), floor(v0.y), floor(v0.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight001m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x), floor(v0.y) + 1, floor(v0.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight0010 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v0.x), floor(v0.y) + 1, floor(v0.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
+		final int[] packedLightCache = pooledPackedLightCache.getPackedLightCache();
 
-		final int packedLight1m10m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x) - 1, floor(v1.y), floor(v1.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight1m100 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x) - 1, floor(v1.y), floor(v1.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight1m11m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x) - 1, floor(v1.y) + 1, floor(v1.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight1m110 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x) - 1, floor(v1.y) + 1, floor(v1.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight100m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x), floor(v1.y), floor(v1.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight1000 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x), floor(v1.y), floor(v1.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight101m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x), floor(v1.y) + 1, floor(v1.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight1010 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v1.x), floor(v1.y) + 1, floor(v1.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
+		// 3*3*3
+		final int[] packedLight0 = new int[27];
+		final int[] packedLight1 = new int[27];
+		final int[] packedLight2 = new int[27];
+		final int[] packedLight3 = new int[27];
 
-		final int packedLight2m10m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x) - 1, floor(v2.y), floor(v2.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight2m100 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x) - 1, floor(v2.y), floor(v2.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight2m11m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x) - 1, floor(v2.y) + 1, floor(v2.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight2m110 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x) - 1, floor(v2.y) + 1, floor(v2.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight200m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x), floor(v2.y), floor(v2.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight2000 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x), floor(v2.y), floor(v2.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight201m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x), floor(v2.y) + 1, floor(v2.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight2010 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v2.x), floor(v2.y) + 1, floor(v2.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
+		final int v0XOffset = clamp((int) floor(v0.x) - renderChunkPositionX, 0, 15);
+		final int v0YOffset = clamp((int) floor(v0.y) - renderChunkPositionY, 0, 15);
+		final int v0ZOffset = clamp((int) floor(v0.z) - renderChunkPositionZ, 0, 15);
 
-		final int packedLight3m10m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x) - 1, floor(v3.y), floor(v3.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight3m100 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x) - 1, floor(v3.y), floor(v3.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight3m11m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x) - 1, floor(v3.y) + 1, floor(v3.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight3m110 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x) - 1, floor(v3.y) + 1, floor(v3.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight300m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x), floor(v3.y), floor(v3.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight3000 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x), floor(v3.y), floor(v3.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight301m1 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x), floor(v3.y) + 1, floor(v3.z) - 1)).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
-		final int packedLight3010 = blockAccess.getBlockState(pooledMutableBlockPos.setPos(floor(v3.x), floor(v3.y) + 1, floor(v3.z))).getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
+		final int v1XOffset = clamp((int) floor(v1.x) - renderChunkPositionX, 0, 15);
+		final int v1YOffset = clamp((int) floor(v1.y) - renderChunkPositionY, 0, 15);
+		final int v1ZOffset = clamp((int) floor(v1.z) - renderChunkPositionZ, 0, 15);
+
+		final int v2XOffset = clamp((int) floor(v2.x) - renderChunkPositionX, 0, 15);
+		final int v2YOffset = clamp((int) floor(v2.y) - renderChunkPositionY, 0, 15);
+		final int v2ZOffset = clamp((int) floor(v2.z) - renderChunkPositionZ, 0, 15);
+
+		final int v3XOffset = clamp((int) floor(v3.x) - renderChunkPositionX, 0, 15);
+		final int v3YOffset = clamp((int) floor(v3.y) - renderChunkPositionY, 0, 15);
+		final int v3ZOffset = clamp((int) floor(v3.z) - renderChunkPositionZ, 0, 15);
+
+		int index = 0;
+		for (int zOffset = -1; zOffset < 2; zOffset++) {
+			for (int yOffset = -1; yOffset < 2; yOffset++) {
+				for (int xOffset = -1; xOffset < 2; xOffset++, index++) {
+					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+					packedLight0[index] = packedLightCache[(v0XOffset + xOffset + 1) + cachesSizeX * ((v0YOffset + yOffset + 1) + cachesSizeY * (v0ZOffset + zOffset + 1))];
+					packedLight1[index] = packedLightCache[(v1XOffset + xOffset + 1) + cachesSizeX * ((v1YOffset + yOffset + 1) + cachesSizeY * (v1ZOffset + zOffset + 1))];
+					packedLight2[index] = packedLightCache[(v2XOffset + xOffset + 1) + cachesSizeX * ((v2YOffset + yOffset + 1) + cachesSizeY * (v2ZOffset + zOffset + 1))];
+					packedLight3[index] = packedLightCache[(v3XOffset + xOffset + 1) + cachesSizeX * ((v3YOffset + yOffset + 1) + cachesSizeY * (v3ZOffset + zOffset + 1))];
+				}
+			}
+		}
 
 		final int skylight0 = max(
-				packedLight0m10m1 >> 16 & 0xFFFF,
-				packedLight0m100 >> 16 & 0xFFFF,
-				packedLight0m11m1 >> 16 & 0xFFFF,
-				packedLight0m110 >> 16 & 0xFFFF,
-				packedLight000m1 >> 16 & 0xFFFF,
-				packedLight0000 >> 16 & 0xFFFF,
-				packedLight001m1 >> 16 & 0xFFFF,
-				packedLight0010 >> 16 & 0xFFFF
+				packedLight0[0] >> 16 & 0xFFFF,
+				packedLight0[1] >> 16 & 0xFFFF,
+				packedLight0[2] >> 16 & 0xFFFF,
+				packedLight0[3] >> 16 & 0xFFFF,
+				packedLight0[4] >> 16 & 0xFFFF,
+				packedLight0[5] >> 16 & 0xFFFF,
+				packedLight0[6] >> 16 & 0xFFFF,
+				packedLight0[7] >> 16 & 0xFFFF,
+				packedLight0[8] >> 16 & 0xFFFF,
+				packedLight0[9] >> 16 & 0xFFFF,
+				packedLight0[10] >> 16 & 0xFFFF,
+				packedLight0[11] >> 16 & 0xFFFF,
+				packedLight0[12] >> 16 & 0xFFFF,
+				packedLight0[13] >> 16 & 0xFFFF,
+				packedLight0[14] >> 16 & 0xFFFF,
+				packedLight0[15] >> 16 & 0xFFFF,
+				packedLight0[16] >> 16 & 0xFFFF,
+				packedLight0[17] >> 16 & 0xFFFF,
+				packedLight0[18] >> 16 & 0xFFFF,
+				packedLight0[19] >> 16 & 0xFFFF,
+				packedLight0[20] >> 16 & 0xFFFF,
+				packedLight0[21] >> 16 & 0xFFFF,
+				packedLight0[22] >> 16 & 0xFFFF,
+				packedLight0[23] >> 16 & 0xFFFF,
+				packedLight0[24] >> 16 & 0xFFFF,
+				packedLight0[25] >> 16 & 0xFFFF,
+				packedLight0[26] >> 16 & 0xFFFF
 		);
 
 		final int skylight1 = max(
-				packedLight1m10m1 >> 16 & 0xFFFF,
-				packedLight1m100 >> 16 & 0xFFFF,
-				packedLight1m11m1 >> 16 & 0xFFFF,
-				packedLight1m110 >> 16 & 0xFFFF,
-				packedLight100m1 >> 16 & 0xFFFF,
-				packedLight1000 >> 16 & 0xFFFF,
-				packedLight101m1 >> 16 & 0xFFFF,
-				packedLight1010 >> 16 & 0xFFFF
+				packedLight1[0] >> 16 & 0xFFFF,
+				packedLight1[1] >> 16 & 0xFFFF,
+				packedLight1[2] >> 16 & 0xFFFF,
+				packedLight1[3] >> 16 & 0xFFFF,
+				packedLight1[4] >> 16 & 0xFFFF,
+				packedLight1[5] >> 16 & 0xFFFF,
+				packedLight1[6] >> 16 & 0xFFFF,
+				packedLight1[7] >> 16 & 0xFFFF,
+				packedLight1[8] >> 16 & 0xFFFF,
+				packedLight1[9] >> 16 & 0xFFFF,
+				packedLight1[10] >> 16 & 0xFFFF,
+				packedLight1[11] >> 16 & 0xFFFF,
+				packedLight1[12] >> 16 & 0xFFFF,
+				packedLight1[13] >> 16 & 0xFFFF,
+				packedLight1[14] >> 16 & 0xFFFF,
+				packedLight1[15] >> 16 & 0xFFFF,
+				packedLight1[16] >> 16 & 0xFFFF,
+				packedLight1[17] >> 16 & 0xFFFF,
+				packedLight1[18] >> 16 & 0xFFFF,
+				packedLight1[19] >> 16 & 0xFFFF,
+				packedLight1[20] >> 16 & 0xFFFF,
+				packedLight1[21] >> 16 & 0xFFFF,
+				packedLight1[22] >> 16 & 0xFFFF,
+				packedLight1[23] >> 16 & 0xFFFF,
+				packedLight1[24] >> 16 & 0xFFFF,
+				packedLight1[25] >> 16 & 0xFFFF,
+				packedLight1[26] >> 16 & 0xFFFF
 		);
 
 		final int skylight2 = max(
-				packedLight2m10m1 >> 16 & 0xFFFF,
-				packedLight2m100 >> 16 & 0xFFFF,
-				packedLight2m11m1 >> 16 & 0xFFFF,
-				packedLight2m110 >> 16 & 0xFFFF,
-				packedLight200m1 >> 16 & 0xFFFF,
-				packedLight2000 >> 16 & 0xFFFF,
-				packedLight201m1 >> 16 & 0xFFFF,
-				packedLight2010 >> 16 & 0xFFFF
+				packedLight2[0] >> 16 & 0xFFFF,
+				packedLight2[1] >> 16 & 0xFFFF,
+				packedLight2[2] >> 16 & 0xFFFF,
+				packedLight2[3] >> 16 & 0xFFFF,
+				packedLight2[4] >> 16 & 0xFFFF,
+				packedLight2[5] >> 16 & 0xFFFF,
+				packedLight2[6] >> 16 & 0xFFFF,
+				packedLight2[7] >> 16 & 0xFFFF,
+				packedLight2[8] >> 16 & 0xFFFF,
+				packedLight2[9] >> 16 & 0xFFFF,
+				packedLight2[10] >> 16 & 0xFFFF,
+				packedLight2[11] >> 16 & 0xFFFF,
+				packedLight2[12] >> 16 & 0xFFFF,
+				packedLight2[13] >> 16 & 0xFFFF,
+				packedLight2[14] >> 16 & 0xFFFF,
+				packedLight2[15] >> 16 & 0xFFFF,
+				packedLight2[16] >> 16 & 0xFFFF,
+				packedLight2[17] >> 16 & 0xFFFF,
+				packedLight2[18] >> 16 & 0xFFFF,
+				packedLight2[19] >> 16 & 0xFFFF,
+				packedLight2[20] >> 16 & 0xFFFF,
+				packedLight2[21] >> 16 & 0xFFFF,
+				packedLight2[22] >> 16 & 0xFFFF,
+				packedLight2[23] >> 16 & 0xFFFF,
+				packedLight2[24] >> 16 & 0xFFFF,
+				packedLight2[25] >> 16 & 0xFFFF,
+				packedLight2[26] >> 16 & 0xFFFF
 		);
 
 		final int skylight3 = max(
-				packedLight3m10m1 >> 16 & 0xFFFF,
-				packedLight3m100 >> 16 & 0xFFFF,
-				packedLight3m11m1 >> 16 & 0xFFFF,
-				packedLight3m110 >> 16 & 0xFFFF,
-				packedLight300m1 >> 16 & 0xFFFF,
-				packedLight3000 >> 16 & 0xFFFF,
-				packedLight301m1 >> 16 & 0xFFFF,
-				packedLight3010 >> 16 & 0xFFFF
+				packedLight3[0] >> 16 & 0xFFFF,
+				packedLight3[1] >> 16 & 0xFFFF,
+				packedLight3[2] >> 16 & 0xFFFF,
+				packedLight3[3] >> 16 & 0xFFFF,
+				packedLight3[4] >> 16 & 0xFFFF,
+				packedLight3[5] >> 16 & 0xFFFF,
+				packedLight3[6] >> 16 & 0xFFFF,
+				packedLight3[7] >> 16 & 0xFFFF,
+				packedLight3[8] >> 16 & 0xFFFF,
+				packedLight3[9] >> 16 & 0xFFFF,
+				packedLight3[10] >> 16 & 0xFFFF,
+				packedLight3[11] >> 16 & 0xFFFF,
+				packedLight3[12] >> 16 & 0xFFFF,
+				packedLight3[13] >> 16 & 0xFFFF,
+				packedLight3[14] >> 16 & 0xFFFF,
+				packedLight3[15] >> 16 & 0xFFFF,
+				packedLight3[16] >> 16 & 0xFFFF,
+				packedLight3[17] >> 16 & 0xFFFF,
+				packedLight3[18] >> 16 & 0xFFFF,
+				packedLight3[19] >> 16 & 0xFFFF,
+				packedLight3[20] >> 16 & 0xFFFF,
+				packedLight3[21] >> 16 & 0xFFFF,
+				packedLight3[22] >> 16 & 0xFFFF,
+				packedLight3[23] >> 16 & 0xFFFF,
+				packedLight3[24] >> 16 & 0xFFFF,
+				packedLight3[25] >> 16 & 0xFFFF,
+				packedLight3[26] >> 16 & 0xFFFF
 		);
 
 		final int blocklight0 = max(
-				packedLight0m10m1 & 0xFFFF,
-				packedLight0m100 & 0xFFFF,
-				packedLight0m11m1 & 0xFFFF,
-				packedLight0m110 & 0xFFFF,
-				packedLight000m1 & 0xFFFF,
-				packedLight0000 & 0xFFFF,
-				packedLight001m1 & 0xFFFF,
-				packedLight0010 & 0xFFFF
+				packedLight0[0] & 0xFFFF,
+				packedLight0[1] & 0xFFFF,
+				packedLight0[2] & 0xFFFF,
+				packedLight0[3] & 0xFFFF,
+				packedLight0[4] & 0xFFFF,
+				packedLight0[5] & 0xFFFF,
+				packedLight0[6] & 0xFFFF,
+				packedLight0[7] & 0xFFFF,
+				packedLight0[8] & 0xFFFF,
+				packedLight0[9] & 0xFFFF,
+				packedLight0[10] & 0xFFFF,
+				packedLight0[11] & 0xFFFF,
+				packedLight0[12] & 0xFFFF,
+				packedLight0[13] & 0xFFFF,
+				packedLight0[14] & 0xFFFF,
+				packedLight0[15] & 0xFFFF,
+				packedLight0[16] & 0xFFFF,
+				packedLight0[17] & 0xFFFF,
+				packedLight0[18] & 0xFFFF,
+				packedLight0[19] & 0xFFFF,
+				packedLight0[20] & 0xFFFF,
+				packedLight0[21] & 0xFFFF,
+				packedLight0[22] & 0xFFFF,
+				packedLight0[23] & 0xFFFF,
+				packedLight0[24] & 0xFFFF,
+				packedLight0[25] & 0xFFFF,
+				packedLight0[26] & 0xFFFF
 		);
 
 		final int blocklight1 = max(
-				packedLight1m10m1 & 0xFFFF,
-				packedLight1m100 & 0xFFFF,
-				packedLight1m11m1 & 0xFFFF,
-				packedLight1m110 & 0xFFFF,
-				packedLight100m1 & 0xFFFF,
-				packedLight1000 & 0xFFFF,
-				packedLight101m1 & 0xFFFF,
-				packedLight1010 & 0xFFFF
+				packedLight1[0] & 0xFFFF,
+				packedLight1[1] & 0xFFFF,
+				packedLight1[2] & 0xFFFF,
+				packedLight1[3] & 0xFFFF,
+				packedLight1[4] & 0xFFFF,
+				packedLight1[5] & 0xFFFF,
+				packedLight1[6] & 0xFFFF,
+				packedLight1[7] & 0xFFFF,
+				packedLight1[8] & 0xFFFF,
+				packedLight1[9] & 0xFFFF,
+				packedLight1[10] & 0xFFFF,
+				packedLight1[11] & 0xFFFF,
+				packedLight1[12] & 0xFFFF,
+				packedLight1[13] & 0xFFFF,
+				packedLight1[14] & 0xFFFF,
+				packedLight1[15] & 0xFFFF,
+				packedLight1[16] & 0xFFFF,
+				packedLight1[17] & 0xFFFF,
+				packedLight1[18] & 0xFFFF,
+				packedLight1[19] & 0xFFFF,
+				packedLight1[20] & 0xFFFF,
+				packedLight1[21] & 0xFFFF,
+				packedLight1[22] & 0xFFFF,
+				packedLight1[23] & 0xFFFF,
+				packedLight1[24] & 0xFFFF,
+				packedLight1[25] & 0xFFFF,
+				packedLight1[26] & 0xFFFF
 		);
 
 		final int blocklight2 = max(
-				packedLight2m10m1 & 0xFFFF,
-				packedLight2m100 & 0xFFFF,
-				packedLight2m11m1 & 0xFFFF,
-				packedLight2m110 & 0xFFFF,
-				packedLight200m1 & 0xFFFF,
-				packedLight2000 & 0xFFFF,
-				packedLight201m1 & 0xFFFF,
-				packedLight2010 & 0xFFFF
+				packedLight2[0] & 0xFFFF,
+				packedLight2[1] & 0xFFFF,
+				packedLight2[2] & 0xFFFF,
+				packedLight2[3] & 0xFFFF,
+				packedLight2[4] & 0xFFFF,
+				packedLight2[5] & 0xFFFF,
+				packedLight2[6] & 0xFFFF,
+				packedLight2[7] & 0xFFFF,
+				packedLight2[8] & 0xFFFF,
+				packedLight2[9] & 0xFFFF,
+				packedLight2[10] & 0xFFFF,
+				packedLight2[11] & 0xFFFF,
+				packedLight2[12] & 0xFFFF,
+				packedLight2[13] & 0xFFFF,
+				packedLight2[14] & 0xFFFF,
+				packedLight2[15] & 0xFFFF,
+				packedLight2[16] & 0xFFFF,
+				packedLight2[17] & 0xFFFF,
+				packedLight2[18] & 0xFFFF,
+				packedLight2[19] & 0xFFFF,
+				packedLight2[20] & 0xFFFF,
+				packedLight2[21] & 0xFFFF,
+				packedLight2[22] & 0xFFFF,
+				packedLight2[23] & 0xFFFF,
+				packedLight2[24] & 0xFFFF,
+				packedLight2[25] & 0xFFFF,
+				packedLight2[26] & 0xFFFF
 		);
 
 		final int blocklight3 = max(
-				packedLight3m10m1 & 0xFFFF,
-				packedLight3m100 & 0xFFFF,
-				packedLight3m11m1 & 0xFFFF,
-				packedLight3m110 & 0xFFFF,
-				packedLight300m1 & 0xFFFF,
-				packedLight3000 & 0xFFFF,
-				packedLight301m1 & 0xFFFF,
-				packedLight3010 & 0xFFFF
+				packedLight3[0] & 0xFFFF,
+				packedLight3[1] & 0xFFFF,
+				packedLight3[2] & 0xFFFF,
+				packedLight3[3] & 0xFFFF,
+				packedLight3[4] & 0xFFFF,
+				packedLight3[5] & 0xFFFF,
+				packedLight3[6] & 0xFFFF,
+				packedLight3[7] & 0xFFFF,
+				packedLight3[8] & 0xFFFF,
+				packedLight3[9] & 0xFFFF,
+				packedLight3[10] & 0xFFFF,
+				packedLight3[11] & 0xFFFF,
+				packedLight3[12] & 0xFFFF,
+				packedLight3[13] & 0xFFFF,
+				packedLight3[14] & 0xFFFF,
+				packedLight3[15] & 0xFFFF,
+				packedLight3[16] & 0xFFFF,
+				packedLight3[17] & 0xFFFF,
+				packedLight3[18] & 0xFFFF,
+				packedLight3[19] & 0xFFFF,
+				packedLight3[20] & 0xFFFF,
+				packedLight3[21] & 0xFFFF,
+				packedLight3[22] & 0xFFFF,
+				packedLight3[23] & 0xFFFF,
+				packedLight3[24] & 0xFFFF,
+				packedLight3[25] & 0xFFFF,
+				packedLight3[26] & 0xFFFF
 		);
 
 		return new LightmapInfo(

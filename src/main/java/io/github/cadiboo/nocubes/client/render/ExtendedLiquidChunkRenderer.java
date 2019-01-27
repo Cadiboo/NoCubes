@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.PooledPackedLightCache;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
@@ -75,8 +76,8 @@ public class ExtendedLiquidChunkRenderer {
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			final PooledStateCache pooledStateCache,
-			final int stateCacheSizeX, final int stateCacheSizeY, final int stateCacheSizeZ
+			@Nonnull final PooledStateCache pooledStateCache, @Nonnull final PooledPackedLightCache pooledPackedLightCache,
+			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
 	) {
 
 		final IBlockState[] stateCache = pooledStateCache.getStateCache();
@@ -102,14 +103,15 @@ public class ExtendedLiquidChunkRenderer {
 				for (int x = 0; x < 16; x++) {
 
 					//TODO: set the index in the loop with whatever black magic mikelasko uses
-					final int smoothableIndex = (x + 1) + stateCacheSizeX * (y + 1 + stateCacheSizeY * (z + 1));
+					final int smoothableIndex = (x + 1) + cachesSizeX * (y + 1 + cachesSizeY * (z + 1));
 
 					if (!isSmoothable[smoothableIndex]) {
 						continue;
 					}
 
 					// For offset = -1, offset = 1;
-					OFFSET: for (int xOffset = -1; xOffset < 2; ++xOffset) {
+					OFFSET:
+					for (int xOffset = -1; xOffset < 2; ++xOffset) {
 						for (int zOffset = -1; zOffset < 2; ++zOffset) {
 
 							//no point in checking myself
@@ -119,7 +121,7 @@ public class ExtendedLiquidChunkRenderer {
 
 							// Add 1 to account for offset=-1
 							// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-							final int liquidStateIndex = (x + xOffset + 1) + stateCacheSizeX * (y + 1 + stateCacheSizeY * (z + zOffset + 1));
+							final int liquidStateIndex = (x + xOffset + 1) + cachesSizeX * (y + 1 + cachesSizeY * (z + zOffset + 1));
 							if (!isLiquid[liquidStateIndex]) {
 								continue;
 							}
@@ -135,6 +137,7 @@ public class ExtendedLiquidChunkRenderer {
 									renderChunkPositionY + y,
 									renderChunkPositionZ + z
 							), blockAccess, bufferBuilder);
+							//TODO lighting?
 							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
 									textureMap, blockColors,
 									renderChunkPositionX + x,
