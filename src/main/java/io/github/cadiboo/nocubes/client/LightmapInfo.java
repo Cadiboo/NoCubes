@@ -56,21 +56,21 @@ public class LightmapInfo {
 		final int[] packedLight2 = new int[27];
 		final int[] packedLight3 = new int[27];
 
-		final int v0XOffset = clamp((int) floor(v0.x) - renderChunkPositionX, 0, 15);
-		final int v0YOffset = clamp((int) floor(v0.y) - renderChunkPositionY, 0, 15);
-		final int v0ZOffset = clamp((int) floor(v0.z) - renderChunkPositionZ, 0, 15);
+		final int v0XOffset = clamp((int) floor(v0.x) - renderChunkPositionX, 0, 16);
+		final int v0YOffset = clamp((int) floor(v0.y) - renderChunkPositionY, 0, 16);
+		final int v0ZOffset = clamp((int) floor(v0.z) - renderChunkPositionZ, 0, 16);
 
-		final int v1XOffset = clamp((int) floor(v1.x) - renderChunkPositionX, 0, 15);
-		final int v1YOffset = clamp((int) floor(v1.y) - renderChunkPositionY, 0, 15);
-		final int v1ZOffset = clamp((int) floor(v1.z) - renderChunkPositionZ, 0, 15);
+		final int v1XOffset = clamp((int) floor(v1.x) - renderChunkPositionX, 0, 16);
+		final int v1YOffset = clamp((int) floor(v1.y) - renderChunkPositionY, 0, 16);
+		final int v1ZOffset = clamp((int) floor(v1.z) - renderChunkPositionZ, 0, 16);
 
-		final int v2XOffset = clamp((int) floor(v2.x) - renderChunkPositionX, 0, 15);
-		final int v2YOffset = clamp((int) floor(v2.y) - renderChunkPositionY, 0, 15);
-		final int v2ZOffset = clamp((int) floor(v2.z) - renderChunkPositionZ, 0, 15);
+		final int v2XOffset = clamp((int) floor(v2.x) - renderChunkPositionX, 0, 16);
+		final int v2YOffset = clamp((int) floor(v2.y) - renderChunkPositionY, 0, 16);
+		final int v2ZOffset = clamp((int) floor(v2.z) - renderChunkPositionZ, 0, 16);
 
-		final int v3XOffset = clamp((int) floor(v3.x) - renderChunkPositionX, 0, 15);
-		final int v3YOffset = clamp((int) floor(v3.y) - renderChunkPositionY, 0, 15);
-		final int v3ZOffset = clamp((int) floor(v3.z) - renderChunkPositionZ, 0, 15);
+		final int v3XOffset = clamp((int) floor(v3.x) - renderChunkPositionX, 0, 16);
+		final int v3YOffset = clamp((int) floor(v3.y) - renderChunkPositionY, 0, 16);
+		final int v3ZOffset = clamp((int) floor(v3.z) - renderChunkPositionZ, 0, 16);
 
 		int index = 0;
 		for (int zOffset = -1; zOffset < 2; zOffset++) {
