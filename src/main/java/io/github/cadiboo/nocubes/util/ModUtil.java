@@ -88,6 +88,11 @@ public final class ModUtil {
 			} else {
 				density -= 1 - boxHeight;
 			}
+
+			if (state.getBlock() == BEDROCK) {
+				density += 0.0005F;
+			}
+
 		} else if (/*ModConfig.debug.connectToNormal && */(state.isNormalCube() || state.isBlockNormalCube())) {
 			// NO OP
 			// OK OK OK OK OK LordPhrozen, I've done it (kinda)
@@ -99,10 +104,6 @@ public final class ModUtil {
 			// I had been planning to uncomment and redo them after I fixed the algorithm.
 			// If you hadn't taken the time to debug this, I might never have found the bug
 			density -= 1;
-		}
-
-		if (state.getBlock() == BEDROCK) {
-			density += 0.000000000000000000000000000000000000000000001f;
 		}
 
 //		return density;
