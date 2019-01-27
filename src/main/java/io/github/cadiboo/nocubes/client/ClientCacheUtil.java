@@ -8,7 +8,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class ClientCacheUtil {
+public final class ClientCacheUtil {
 
 	public static PooledPackedLightCache generatePackedLightCache(
 			final int startPosX, final int startPosY, final int startPosZ,
