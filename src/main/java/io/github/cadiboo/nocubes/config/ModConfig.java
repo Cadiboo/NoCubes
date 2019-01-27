@@ -49,6 +49,7 @@ import static net.minecraft.init.Blocks.HARDENED_CLAY;
 import static net.minecraft.init.Blocks.IRON_ORE;
 import static net.minecraft.init.Blocks.LAPIS_ORE;
 import static net.minecraft.init.Blocks.LIT_REDSTONE_ORE;
+import static net.minecraft.init.Blocks.MAGMA;
 import static net.minecraft.init.Blocks.MONSTER_EGG;
 import static net.minecraft.init.Blocks.MYCELIUM;
 import static net.minecraft.init.Blocks.NETHERRACK;
@@ -59,6 +60,7 @@ import static net.minecraft.init.Blocks.SAND;
 import static net.minecraft.init.Blocks.SANDSTONE;
 import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
+import static net.minecraft.init.Blocks.SOUL_SAND;
 import static net.minecraft.init.Blocks.STAINED_HARDENED_CLAY;
 import static net.minecraft.init.Blocks.STONE;
 import static net.minecraft.item.EnumDyeColor.BLACK;
@@ -268,7 +270,8 @@ public final class ModConfig {
 				BEDROCK.getDefaultState(),
 
 				NETHERRACK.getDefaultState(),
-
+				SOUL_SAND.getDefaultState(),
+				MAGMA.getDefaultState(),
 				GLOWSTONE.getDefaultState(),
 
 				END_STONE.getDefaultState(),
