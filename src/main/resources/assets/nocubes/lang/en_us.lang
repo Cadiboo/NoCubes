@@ -2,7 +2,7 @@ nocubes.config.isEnabled=Enabled
 nocubes.config.isEnabled.tooltip=If the mod is enabled
 
 nocubes.config.meshGenerator=Mesh Generator
-nocubes.config.meshGenerator.tooltip=What algorithm renders your world and generates collisions\nOld NoCubes: The very fast original renderer from NoCubes 0.3 by Click_ME\nMarching Cubes: The original smoothing algorithm that has existed since 1986 - Fast, Well documented\nSurface Nets: A smoothing algorithm - Slightly faster, Dual contouring!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slower, Dual contouring, very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
+nocubes.config.meshGenerator.tooltip=What algorithm renders your world and generates collisions\nOld NoCubes: The very fast original renderer from NoCubes 0.3 by Click_Me (Not implemented yet! Coming Soon!)\nMarching Cubes: The original smoothing algorithm that has existed since 1986 - Fast, Well documented\nSurface Nets: A smoothing algorithm - Slightly faster, Dual contouring!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slower, Dual contouring, very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
 
 nocubes.config.reloadChunksOnConfigChange=Re-Render Chunks on Config change
 nocubes.config.reloadChunksOnConfigChange.tooltip=If all chunks should be re-rendered when these settings change

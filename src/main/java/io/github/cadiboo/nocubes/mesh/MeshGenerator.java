@@ -13,7 +13,7 @@ import java.util.Map;
 
 public enum MeshGenerator {
 
-	OldNoCubes(new OldNoCubes()),
+//	OldNoCubes(new OldNoCubes()),
 	SurfaceNets(new SurfaceNets()),
 	MarchingCubes(new MarchingCubes()),
 	MarchingTetrahedra(new MarchingTetrahedra()),
