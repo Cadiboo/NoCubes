@@ -44,6 +44,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
@@ -626,7 +627,7 @@ public final class ClientUtil {
 				profiler.endSection();
 				profiler.startSection("generatePackedLightCache");
 				//TODO stateCache
-				try (final PooledPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
+				try (final PooledPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(approximateLighting ? cachesStartPosX : 0, approximateLighting ? cachesStartPosY : 0, approximateLighting ? cachesStartPosZ : 0, approximateLighting ? cachesSizeX : 0, approximateLighting ? cachesSizeY : 0, approximateLighting ? cachesSizeZ : 0, blockAccess, pooledMutableBlockPos)) {
 					profiler.endSection();
 					final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
 					final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
