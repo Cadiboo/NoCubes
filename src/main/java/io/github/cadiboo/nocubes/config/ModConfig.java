@@ -121,7 +121,7 @@ public final class ModConfig {
 
 	@Config.Ignore
 	//yenah i dont like it //TODO: remove
-	public static boolean renderEmptyBlocksOrWhatever = true;
+	public static boolean renderEmptyBlocksOrWhatever = false;
 
 	static {
 		setupSmoothableBlockStates();
