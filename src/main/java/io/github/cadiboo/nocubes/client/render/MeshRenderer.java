@@ -85,7 +85,8 @@ public class MeshRenderer {
 				final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 				final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
 				usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
-				OptifineCompatibility.pushShaderThing(textureState,texturePos, blockAccess, bufferBuilder);
+
+				OptifineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {
