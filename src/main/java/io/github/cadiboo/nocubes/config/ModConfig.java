@@ -119,6 +119,10 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.extendLiquids")
 	public static boolean extendLiquids = true;
 
+	@Config.Ignore
+	//yenah i dont like it //TODO: remove
+	public static boolean renderEmptyBlocksOrWhatever = true;
+
 	static {
 		setupSmoothableBlockStates();
 	}

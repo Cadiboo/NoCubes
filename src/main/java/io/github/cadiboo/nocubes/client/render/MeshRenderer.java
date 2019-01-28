@@ -64,7 +64,26 @@ public class MeshRenderer {
 
 		chunkData.forEach((pos, faces) -> {
 
-			if (faces.isEmpty()) return;
+			if (faces.isEmpty()) {
+				if (ModConfig.renderEmptyBlocksOrWhatever) {
+					pooledMutableBlockPos.setPos(
+							renderChunkPositionX + pos[0],
+							renderChunkPositionY + pos[1],
+							renderChunkPositionZ + pos[2]
+					);
+					final IBlockState blockState = blockAccess.getBlockState(pooledMutableBlockPos);
+					final BlockRenderLayer blockRenderLayer = getRenderLayer(blockState);
+					final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+					final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+
+					OptifineCompatibility.pushShaderThing(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
+
+					blockRendererDispatcher.renderBlock(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
+
+					OptifineCompatibility.popShaderThing(bufferBuilder);
+				}
+				return;
+			}
 
 			pooledMutableBlockPos.setPos(
 					renderChunkPositionX + pos[0],
