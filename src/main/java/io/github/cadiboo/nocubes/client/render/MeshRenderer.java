@@ -12,6 +12,7 @@ import io.github.cadiboo.nocubes.util.PooledFace;
 import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -126,13 +127,13 @@ public class MeshRenderer {
 				for (final PooledFace face : faces) {
 					try {
 						//south east when looking down onto up face
-						final Vec3.PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//north east when looking down onto up face
-						final Vec3.PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//north west when looking down onto up face
-						final Vec3.PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//south west when looking down onto up face
-						final Vec3.PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 
 						final int lightmapSkyLight0;
 						final int lightmapSkyLight1;

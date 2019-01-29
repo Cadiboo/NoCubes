@@ -2,12 +2,13 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.PooledFace;
-import io.github.cadiboo.nocubes.util.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 
 public class OldNoCubes implements IMeshGenerator {
 
@@ -47,10 +48,10 @@ public class OldNoCubes implements IMeshGenerator {
 					if (neighbours[2] && neighbours[0] && neighbours[1] && neighbours[3]) {
 						faces.add(
 								PooledFace.retain(
-										Vec3.PooledVec3.retain(x, y + 1, z),
-										Vec3.PooledVec3.retain(x, y, z),
-										Vec3.PooledVec3.retain(x, y, z + 1),
-										Vec3.PooledVec3.retain(x, y + 1, z + 1)
+										PooledVec3.retain(x, y + 1, z),
+										PooledVec3.retain(x, y, z),
+										PooledVec3.retain(x, y, z + 1),
+										PooledVec3.retain(x, y + 1, z + 1)
 								)
 						);
 					}
