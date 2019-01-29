@@ -11,7 +11,6 @@ import io.github.cadiboo.nocubes.util.PooledDensityCache;
 import io.github.cadiboo.nocubes.util.PooledFace;
 import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
-import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
