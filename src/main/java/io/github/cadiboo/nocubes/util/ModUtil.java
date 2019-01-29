@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
@@ -24,7 +23,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -262,23 +260,6 @@ public final class ModUtil {
 		}
 		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
 		throw new ReportedException(crashReport);
-	}
-
-	public static List<Vec3> getBlankVertexList() {
-		return Lists.newArrayList(getBlankVertexArray());
-	}
-
-	public static Vec3[] getBlankVertexArray() {
-		return new Vec3[]{
-				new Vec3(0, 0, 0),
-				new Vec3(1, 0, 0),
-				new Vec3(1, 0, 1),
-				new Vec3(0, 0, 1),
-				new Vec3(0, 1, 0),
-				new Vec3(1, 1, 0),
-				new Vec3(1, 1, 1),
-				new Vec3(0, 1, 1)
-		};
 	}
 
 }
