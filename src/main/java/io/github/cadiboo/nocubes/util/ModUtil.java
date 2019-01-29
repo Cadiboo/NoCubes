@@ -92,8 +92,8 @@ public final class ModUtil {
 			}
 
 		} else if (/*ModConfig.debug.connectToNormal && */(state.isNormalCube() || state.isBlockNormalCube())) {
-			// NO OP
 			// OK OK OK OK OK LordPhrozen, I've done it (kinda)
+			density += (float) ModConfig.smoothOtherBlocksAmount;
 		} else if (state.getMaterial() == VINE) {
 			density -= 0.75;
 		} else {

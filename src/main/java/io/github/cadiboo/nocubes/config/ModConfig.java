@@ -123,6 +123,11 @@ public final class ModConfig {
 	//yenah i dont like it //TODO: remove
 	public static boolean renderEmptyBlocksOrWhatever = false;
 
+
+	@Config.RangeDouble(min = -10, max = 10)
+	public static double smoothOtherBlocksAmount = 0.0F;
+
+
 	static {
 		setupSmoothableBlockStates();
 	}
