@@ -1,14 +1,17 @@
 buildscript {
 	repositories {
+		maven { url = 'https://files.minecraftforge.net/maven' }
 		jcenter()
-		maven { url = "http://files.minecraftforge.net/maven" }
+		mavenCentral()
 	}
 	dependencies {
-		classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
 	}
 }
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.minecraftforge.gradle'
 //Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
+//TODO: do I need this?
+apply plugin: 'eclipse'
 
 version = modMinecraftVersion + "-" + modVersion
 group = modGroup
@@ -30,19 +33,40 @@ repositories {
 
 minecraft {
 
-	version = modMinecraftVersion + "-" + modForgeVersion
+	mappings channel: modMcpMappingsChannel, version: modMcpMappingsVersion
+	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+	
 
-	runDir = "run"
+	//accessTransformer = file('my_at.cfg')
 
-	mappings = modMcpMappings
-
-	replace "@VERSION@", project.version
-	replace '@FINGERPRINT@', project.findProperty('signSHA1')
-	replaceIn modReferenceClass
-
+	// default run configurations.
+	// these can be tweaked, removed, or duplicated as needed.
+	runs {
+		client = {
+			// recommended logging data for a userdev environment
+			properties 'forge.logging.markers': 'SCAN,REGISTRIES,REGISTRYDUMP'
+			// recommended logging level for the console
+			properties 'forge.logging.console.level': 'debug'
+			workingDirectory project.file('run').canonicalPath
+			source sourceSets.main
+		}
+		server = {
+			// recommended logging data for a userdev environment
+			properties 'forge.logging.markers': 'SCAN,REGISTRIES,REGISTRYDUMP'
+			// recommended logging level for the console
+			properties 'forge.logging.console.level': 'debug'
+			workingDirectory project.file('run').canonicalPath
+			source sourceSets.main
+		}
+	}
 }
 
+//TODO: find out how much of this I can move to the properties file
 dependencies {
+	// Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+	// that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
+	minecraft 'net.minecraftforge.test:forge:1.13-24.0.144-1.13-pre'
 
 	// you may put jars on which you depend on in ./libs
 	// or you may define them like so..
@@ -56,12 +80,8 @@ dependencies {
 	// the 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
 	//provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-	// the deobf configurations:  'deobfCompile' and 'deobfProvided' are the same as the normal compile and provided,
-	// except that these dependencies get remapped to your current MCP mappings
-	//deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-	//deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-//	deobfCompile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.12.2:0.3.0"
+	// These dependencies get remapped to your current MCP mappings
+	//deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -69,36 +89,17 @@ dependencies {
 
 }
 
+// Get properties into the manifest for reading by the runtime
 jar {
-
 	manifest {
-		attributes 'FMLAT': 'nocubes_at.cfg'
+		attributes(["Specification-Title": "examplemod",
+					"Specification-Vendor": "examplemodsareus",
+					"Specification-Version": "24.0", // We are version 1 of the modlauncher specification
+					"Implementation-Title": project.name,
+					"Implementation-Version": "${version}",
+					"Implementation-Vendor" :"examplemodsareus",
+					"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")],)
 	}
-
-}
-
-processResources {
-
-	// this will ensure that this task is redone when the versions change.
-	inputs.property "version", project.version
-	inputs.property "mcversion", project.minecraft.version
-
-	// replace stuff in mcmod.info, nothing else
-	from(sourceSets.main.resources.srcDirs) {
-		include 'mcmod.info'
-
-		// replace version and mcversion
-		expand 'version': project.version, 'mcversion': project.minecraft.version
-	}
-
-	// copy everything else except the mcmod.info
-	from(sourceSets.main.resources.srcDirs) {
-		exclude 'mcmod.info'
-	}
-
-	//move our Access Transformer to META-INF
-	rename '(.+_at.cfg)', 'META-INF/$1'
-
 }
 
 task signJar(type: SignJar, dependsOn: reobfJar) {
