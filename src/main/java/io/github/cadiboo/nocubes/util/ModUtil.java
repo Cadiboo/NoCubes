@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 import java.util.Random;
@@ -260,6 +261,35 @@ public final class ModUtil {
 		}
 		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
 		throw new ReportedException(crashReport);
+	}
+
+	public static void fixVertices(final Map<int[], ArrayList<PooledFace>> chunkData) {
+
+		final float resolution = ModConfig.meshResolution;
+
+		chunkData.keySet().forEach(pos -> {
+			pos[0] *= resolution;
+			pos[1] *= resolution;
+			pos[2] *= resolution;
+		});
+
+		chunkData.values().forEach(pooledFaces -> {
+			pooledFaces.forEach(pooledFace -> {
+				pooledFace.getVertex0().x *= resolution;
+				pooledFace.getVertex0().y *= resolution;
+				pooledFace.getVertex0().z *= resolution;
+				pooledFace.getVertex1().x *= resolution;
+				pooledFace.getVertex1().y *= resolution;
+				pooledFace.getVertex1().z *= resolution;
+				pooledFace.getVertex2().x *= resolution;
+				pooledFace.getVertex2().y *= resolution;
+				pooledFace.getVertex2().z *= resolution;
+				pooledFace.getVertex3().x *= resolution;
+				pooledFace.getVertex3().y *= resolution;
+				pooledFace.getVertex3().z *= resolution;
+			});
+		});
+
 	}
 
 }

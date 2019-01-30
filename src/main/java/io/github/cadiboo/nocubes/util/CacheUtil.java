@@ -67,6 +67,30 @@ public final class CacheUtil {
 		return densityCache;
 	}
 
+	public static PooledDensityCache generateDensityCache2(
+			final int startPosX, final int startPosY, final int startPosZ,
+			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			final float densityResolution,
+			@Nonnull final PooledStateCache stateCache,
+			@Nonnull final PooledSmoothableCache smoothableCache,
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final IBlockAccess cache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+		final PooledDensityCache densityCache = PooledDensityCache.retain(densityCacheSizeX * densityCacheSizeY * densityCacheSizeZ);
+		int index = 0;
+
+		for (int z = 0; z < densityCacheSizeZ; ++z) {
+			for (int y = 0; y < densityCacheSizeY; ++y) {
+				for (int x = 0; x < densityCacheSizeX; ++x) {
+					densityCache.getDensityCache()[index] = getBlockDensity(startPosX, startPosY, startPosZ, (int) (x * densityResolution), (int) (y * densityResolution), (int) (z * densityResolution), stateCache, smoothableCache, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos);
+					index++;
+				}
+			}
+		}
+		return densityCache;
+	}
+
 	private static float getBlockDensity(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int posX, final int posY, final int posZ,

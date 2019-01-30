@@ -28,6 +28,7 @@ public enum MeshGenerator {
 
 	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
 		final Map<int[], ArrayList<PooledFace>> chunkData = meshGenerator.generateChunk(data, dims);
+		ModUtil.fixVertices(chunkData);
 		if(ModConfig.offsetVertices) {
 			offsetChunkVertices(chunkData);
 		}

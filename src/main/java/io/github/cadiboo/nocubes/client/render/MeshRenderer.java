@@ -214,17 +214,24 @@ public class MeshRenderer {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+			int meshSizeX, int meshSizeY, int meshSizeZ,
 			final PooledStateCache stateCache, final PooledPackedLightCache pooledPackedLightCache,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
 	) {
+
+		final float resolution = ModConfig.meshResolution;
+		meshSizeX = (int) (meshSizeX / resolution);
+		meshSizeY = (int) (meshSizeY / resolution);
+		meshSizeZ = (int) (meshSizeZ / resolution);
+
 		//normal terrain
 		{
 			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
 				try (
-						final PooledDensityCache data = CacheUtil.generateDensityCache(
+						final PooledDensityCache data = CacheUtil.generateDensityCache2(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
+								resolution,
 								stateCache, smoothableCache,
 								cachesSizeX, cachesSizeY, cachesSizeZ,
 								blockAccess,
@@ -250,9 +257,10 @@ public class MeshRenderer {
 		if (ModConfig.smoothLeavesSeparate) {
 			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
 				try (
-						final PooledDensityCache data = CacheUtil.generateDensityCache(
+						final PooledDensityCache data = CacheUtil.generateDensityCache2(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
+								resolution,
 								stateCache, smoothableCache,
 								cachesSizeX, cachesSizeY, cachesSizeZ,
 								blockAccess,
