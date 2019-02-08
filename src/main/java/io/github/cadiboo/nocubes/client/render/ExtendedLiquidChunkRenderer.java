@@ -74,10 +74,10 @@ public class ExtendedLiquidChunkRenderer {
 						continue;
 					}
 
-					// For offset = -2 to offset = 2;
+					// For offset = -1 to offset = 1;
 					OFFSET:
-					for (int xOffset = -2; xOffset < 4; ++xOffset) {
-						for (int zOffset = -2; zOffset < 4; ++zOffset) {
+					for (int xOffset = -1; xOffset < 2; ++xOffset) {
+						for (int zOffset = -1; zOffset < 2; ++zOffset) {
 
 							//no point in checking myself
 							if (xOffset == 0 && zOffset == 0) {
