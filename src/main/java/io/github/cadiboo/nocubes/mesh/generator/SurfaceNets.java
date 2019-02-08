@@ -221,9 +221,7 @@ public class SurfaceNets implements IMeshGenerator {
 							);
 						}
 					}
-					final int[] tempPos = {0, 0, 0};
-					System.arraycopy(x, 0, tempPos, 0, 3);
-					posToFaces.put(tempPos, new ArrayList<>(faces));
+					posToFaces.put(new int[] {x[0], x[1], x[2]}, new ArrayList<>(faces));
 					faces.clear();
 				}
 		}
