@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
 import io.github.cadiboo.nocubes.util.PooledStateCache;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
@@ -611,31 +612,68 @@ public final class ClientUtil {
 		profiler.startSection("generateStateCache");
 
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		// Also the ExtendedLiquidChunkRenderer needs +2 block on every positive axis so we need even bigger caches
+		// All up this is -1 block (1 for ExtendedLiquidChunkRenderer, including the 1 for Density)
 		final int cachesStartPosX = renderChunkPositionX - 1;
 		final int cachesStartPosY = renderChunkPositionY - 1;
 		final int cachesStartPosZ = renderChunkPositionZ - 1;
 
 		// Density takes +1 block on every negative axis into account so we need bigger caches
 		// Also the ExtendedLiquidChunkRenderer needs +1 block on every positive axis so we need even bigger caches
-		final int cachesSizeX = meshSizeX + 1 + 1;
-		final int cachesSizeY = meshSizeY + 1 + 1;
-		final int cachesSizeZ = meshSizeZ + 1 + 1;
+		// All up this is +2 blocks	(1*2 for ExtendedLiquidChunkRenderer, including the 1*2 for Density)
+		final int cachesSizeX = meshSizeX + 2;
+		final int cachesSizeY = meshSizeY + 2;
+		final int cachesSizeZ = meshSizeZ + 2;
 
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 			try (final PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
 				profiler.endSection();
-				profiler.startSection("generatePackedLightCache");
-				//TODO stateCache
-				try (final PooledPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(approximateLighting ? cachesStartPosX : 0, approximateLighting ? cachesStartPosY : 0, approximateLighting ? cachesStartPosZ : 0, approximateLighting ? cachesSizeX : 0, approximateLighting ? cachesSizeY : 0, approximateLighting ? cachesSizeZ : 0, blockAccess, pooledMutableBlockPos)) {
+				profiler.startSection("generateTerrainSmoothableCache");
+				try (final PooledSmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
 					profiler.endSection();
-					final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
-					final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+					profiler.startSection("generatePackedLightCache");
+					//TODO stateCache
+					try (final PooledPackedLightCache packedLightCache =
+							     ClientCacheUtil.generatePackedLightCache(
+									     approximateLighting ? cachesStartPosX : 0, approximateLighting ? cachesStartPosY : 0, approximateLighting ? cachesStartPosZ : 0,
+									     approximateLighting ? cachesSizeX : 0, approximateLighting ? cachesSizeY : 0, approximateLighting ? cachesSizeZ : 0,
+									     blockAccess, pooledMutableBlockPos
+							     )
+					) {
+						profiler.endSection();
+						final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
+						final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-					if (ModConfig.extendLiquids) {
-						profiler.startSection("extendLiquids");
+						if (ModConfig.extendLiquids) {
+							profiler.startSection("extendLiquids");
+							try {
+								ExtendedLiquidChunkRenderer.renderChunk(
+										renderChunk,
+										generator,
+										compiledChunk,
+										renderChunkPosition,
+										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+										blockAccess,
+										pooledMutableBlockPos,
+										usedBlockRenderLayers,
+										blockRendererDispatcher,
+										stateCache, terrainSmoothableCache, packedLightCache,
+										cachesSizeX, cachesSizeY, cachesSizeZ
+								);
+							} catch (ReportedException e) {
+								throw e;
+							} catch (Exception e) {
+								CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+								crashReport.makeCategory("Extending liquids");
+								throw new ReportedException(crashReport);
+							}
+							profiler.endSection();
+						}
+
+						profiler.startSection("renderSmoothChunk");
 						try {
-							ExtendedLiquidChunkRenderer.renderChunk(
+							MeshRenderer.renderChunk(
 									renderChunk,
 									generator,
 									compiledChunk,
@@ -645,43 +683,19 @@ public final class ClientUtil {
 									pooledMutableBlockPos,
 									usedBlockRenderLayers,
 									blockRendererDispatcher,
-									stateCache, packedLightCache,
+									meshSizeX, meshSizeY, meshSizeZ,
+									stateCache, terrainSmoothableCache, packedLightCache,
 									cachesSizeX, cachesSizeY, cachesSizeZ
 							);
 						} catch (ReportedException e) {
 							throw e;
 						} catch (Exception e) {
-							CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-							crashReport.makeCategory("Extending liquids");
+							CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
+							crashReport.makeCategory("Rendering smooth chunk");
 							throw new ReportedException(crashReport);
 						}
 						profiler.endSection();
 					}
-
-					profiler.startSection("renderSmoothChunk");
-					try {
-						MeshRenderer.renderChunk(
-								renderChunk,
-								generator,
-								compiledChunk,
-								renderChunkPosition,
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								blockAccess,
-								pooledMutableBlockPos,
-								usedBlockRenderLayers,
-								blockRendererDispatcher,
-								meshSizeX, meshSizeY, meshSizeZ,
-								stateCache, packedLightCache,
-								cachesSizeX, cachesSizeY, cachesSizeZ
-						);
-					} catch (ReportedException e) {
-						throw e;
-					} catch (Exception e) {
-						CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
-						crashReport.makeCategory("Rendering smooth chunk");
-						throw new ReportedException(crashReport);
-					}
-					profiler.endSection();
 				}
 			}
 		} finally {

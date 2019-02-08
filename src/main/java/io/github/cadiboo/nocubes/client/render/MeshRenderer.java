@@ -47,6 +47,7 @@ public class MeshRenderer {
 			@Nonnull final ChunkCompileTaskGenerator generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
+			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
@@ -57,10 +58,6 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			final boolean renderOpposite
 	) {
-
-		final int renderChunkPositionX = renderChunkPosition.getX();
-		final int renderChunkPositionY = renderChunkPosition.getY();
-		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
 		chunkData.forEach((pos, faces) -> {
 
@@ -215,45 +212,44 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final PooledStateCache stateCache, final PooledPackedLightCache pooledPackedLightCache,
+			@Nonnull final PooledStateCache stateCache, @Nonnull final PooledSmoothableCache smoothableCache, @Nonnull final PooledPackedLightCache pooledPackedLightCache,
 			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
 	) {
 		//normal terrain
 		{
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
-				try (
-						final PooledDensityCache data = CacheUtil.generateDensityCache(
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								meshSizeX, meshSizeY, meshSizeZ,
-								stateCache, smoothableCache,
-								cachesSizeX, cachesSizeY, cachesSizeZ,
-								blockAccess,
-								pooledMutableBlockPos
-						)
-				) {
-					renderFaces(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							blockAccess,
-							blockRendererDispatcher,
+			try (
+					final PooledDensityCache data = CacheUtil.generateDensityCache(
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							meshSizeX, meshSizeY, meshSizeZ,
+							stateCache, smoothableCache,
 							cachesSizeX, cachesSizeY, cachesSizeZ,
-							pooledPackedLightCache,
-							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-							TERRAIN_SMOOTHABLE,
-							pooledMutableBlockPos, usedBlockRenderLayers, false
-					);
-				}
+							blockAccess,
+							pooledMutableBlockPos
+					)
+			) {
+				renderFaces(
+						renderChunk,
+						generator,
+						compiledChunk,
+						renderChunkPosition,
+						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+						blockAccess,
+						blockRendererDispatcher,
+						cachesSizeX, cachesSizeY, cachesSizeZ,
+						pooledPackedLightCache,
+						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+						TERRAIN_SMOOTHABLE,
+						pooledMutableBlockPos, usedBlockRenderLayers, false
+				);
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			try (PooledSmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
+			try (final PooledSmoothableCache smoothableLeavesCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
 				try (
 						final PooledDensityCache data = CacheUtil.generateDensityCache(
 								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 								meshSizeX, meshSizeY, meshSizeZ,
-								stateCache, smoothableCache,
+								stateCache, smoothableLeavesCache,
 								cachesSizeX, cachesSizeY, cachesSizeZ,
 								blockAccess,
 								pooledMutableBlockPos
@@ -264,6 +260,7 @@ public class MeshRenderer {
 							generator,
 							compiledChunk,
 							renderChunkPosition,
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 							blockAccess,
 							blockRendererDispatcher,
 							cachesSizeX, cachesSizeY, cachesSizeZ,
