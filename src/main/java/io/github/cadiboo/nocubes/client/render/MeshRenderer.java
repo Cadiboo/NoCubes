@@ -121,6 +121,8 @@ public class MeshRenderer {
 
 				for (final Face face : faces) {
 					try {
+						//0 3
+						//1 2
 						//south east when looking down onto up face
 						final Vec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//north east when looking down onto up face
