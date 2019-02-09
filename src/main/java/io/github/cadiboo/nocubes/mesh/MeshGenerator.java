@@ -4,8 +4,8 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -27,7 +27,7 @@ public enum MeshGenerator {
 
 	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
 		final Map<int[], ArrayList<Face>> chunkData = meshGenerator.generateChunk(data, dims);
-		if(ModConfig.offsetVertices) {
+		if (ModConfig.offsetVertices) {
 			offsetChunkVertices(chunkData);
 		}
 		return chunkData;

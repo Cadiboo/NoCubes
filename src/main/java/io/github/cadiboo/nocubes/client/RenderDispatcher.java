@@ -160,7 +160,7 @@ public class RenderDispatcher {
 						usedBlockRenderLayers,
 						blockRendererDispatcher,
 						stateCache, terrainSmoothableCache
-						);
+				);
 			} catch (ReportedException e) {
 				throw e;
 			} catch (Exception e) {

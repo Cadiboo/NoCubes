@@ -17,8 +17,6 @@ import javax.annotation.Nullable;
  */
 public class ModWorldEventListener implements IWorldEventListener {
 
-
-
 	public ModWorldEventListener(final World world) {
 
 	}

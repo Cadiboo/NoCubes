@@ -396,7 +396,7 @@ public class MarchingCubes implements IMeshGenerator {
 								)
 						);
 					}
-					posToFaces.put(new int[] {x[0], x[1], x[2]}, new ArrayList<>(faces));
+					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
 					faces.clear();
 				}
 

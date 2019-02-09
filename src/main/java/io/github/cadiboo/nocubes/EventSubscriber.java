@@ -2,14 +2,9 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.world.ModWorldEventListener;
-import net.minecraft.world.ServerWorldEventHandler;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
-import net.minecraft.world.WorldServerMulti;
-import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 /**
@@ -17,7 +12,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
  */
 @Mod.EventBusSubscriber(modid = ModReference.MOD_ID)
 public final class EventSubscriber {
-
 
 	@SubscribeEvent
 	public static void onWorldLoadEvent(final WorldEvent.Load event) {
