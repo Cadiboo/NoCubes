@@ -4,6 +4,8 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.util.ReportedException;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -11,6 +13,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_MINECRAFT_VERSIONS;
@@ -53,6 +56,17 @@ public final class NoCubes {
 
 	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
 	public static IProxy proxy;
+
+	public NoCubes() {
+		try {
+			//ew hacks
+			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
+		} catch (Exception e) {
+			final CrashReport crashReport = new CrashReport("Something went terribly wrong trying to hack our config", e);
+			crashReport.makeCategory("Initialising NoCubes");
+			throw new ReportedException(crashReport);
+		}
+	}
 
 	public static boolean isEnabled() {
 		return ModConfig.isEnabled;

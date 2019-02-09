@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
@@ -229,22 +230,37 @@ public final class ModUtil {
 			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 		}
 
-		// fix Isosurface level (mod version 0.1.2?)
+
+		//remove Isosurface level (for mod version 0.2.0 onwards, implemented after 0.2.2 and before 0.2.3)
 		{
-			final double oldDefaultValue = 0.001D;
-			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-			if (isosurfaceLevel.isDefault())
-				//edit in version 0.1.6: set to 1
-//				isosurfaceLevel.set(0.0D);
-				isosurfaceLevel.set(1.0D);
+			config.getCategory(Configuration.CATEGORY_GENERAL).remove("isosurfaceLevel");
 		}
 
-		// fix Isosurface level (mod version 0.1.5?)
+		//fix extendLiquids (implemented after 0.2.2 and before 0.2.3)
 		{
-			final double oldDefaultValue = 0.0D;
-			Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-			if (isosurfaceLevel.isDefault())
-				isosurfaceLevel.set(1.0D);
+			Property extendLiquids = config.get(Configuration.CATEGORY_GENERAL, "extendLiquids", ExtendLiquidRange.OneBlock.name());
+			if(extendLiquids.isBooleanValue())
+			config.getCategory(Configuration.CATEGORY_GENERAL).remove("extendLiquids");
+		}
+
+		if (false) {
+			// fix Isosurface level (mod version 0.1.2?)
+			{
+				final double oldDefaultValue = 0.001D;
+				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+				if (isosurfaceLevel.isDefault())
+					//edit in version 0.1.6: set to 1
+//				isosurfaceLevel.set(0.0D);
+					isosurfaceLevel.set(1.0D);
+			}
+
+			// fix Isosurface level (mod version 0.1.5?)
+			{
+				final double oldDefaultValue = 0.0D;
+				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+				if (isosurfaceLevel.isDefault())
+					isosurfaceLevel.set(1.0D);
+			}
 		}
 
 		//save (Unnecessary?)
