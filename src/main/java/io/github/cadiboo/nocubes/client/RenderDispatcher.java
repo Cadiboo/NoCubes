@@ -93,7 +93,7 @@ public class RenderDispatcher {
 		{
 //			for(MeshLayer layer : meshLayers)
 			//TODO get this from world & chunk & layer
-			final StateCache stateCache = generateMeshStateCache(
+			final StateCache stateCache = generateMeshAndLightStateCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
 					blockAccess,
@@ -172,19 +172,24 @@ public class RenderDispatcher {
 		}
 	}
 
-	private static StateCache generateMeshStateCache(
+	private static StateCache generateMeshAndLightStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final IBlockAccess blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
+		// Light uses +1 block on every axis so we need to start at -1 block
 		final int cacheStartPosX = renderChunkPositionX - 1;
 		final int cacheStartPosY = renderChunkPositionY - 1;
 		final int cacheStartPosZ = renderChunkPositionZ - 1;
 
-		// Density takes +1 block on every negative axis into account so we need bigger caches
-		// All up this is +2 (1*2 for Density)
+		//TODO: once caches start getting stored in global data I will only need +1 cache size for density
+		//TODO: once caches start getting stored in global data I will need +2 cache size for light in a separate method
+
+		// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
+		// Light uses +1 block on every axis so we need to add 2 to the size of the cache (it takes +1 on EVERY axis)
+		// All up this is +2 blocks (2 for Light, including the 1 for Density)
 		final int cacheSizeX = meshSizeX + 2;
 		final int cacheSizeY = meshSizeY + 2;
 		final int cacheSizeZ = meshSizeZ + 2;
@@ -207,8 +212,8 @@ public class RenderDispatcher {
 		final int cacheStartPosY = renderChunkPositionY - 2;
 		final int cacheStartPosZ = renderChunkPositionZ - 2;
 
-		// ExtendedWater takes +2 blocks on every negative axis into account so we need bigger caches
-		// All up this is +4 (2*2 for ExtendedWater)
+		// ExtendedWater takes +2 blocks on every negative axis into account so we need to add 4 to the size of the cache (it takes +2 on EVERY axis)
+		// All up this is +4 (4 for ExtendedWater)
 		// 16 is the size of a chunk (blocks 0 -> 15)
 		final int cacheSizeX = 16 + 4;
 		final int cacheSizeY = 16 + 4;
