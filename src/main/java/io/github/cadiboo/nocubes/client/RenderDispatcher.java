@@ -24,6 +24,7 @@ import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
+import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
@@ -104,10 +105,13 @@ public class RenderDispatcher {
 					stateCache, TERRAIN_SMOOTHABLE
 			);
 
-			final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					stateCache, blockAccess, pooledMutableBlockPos
-			);
+			//TODO stateCache
+			final PackedLightCache packedLightCache =
+					ClientCacheUtil.generatePackedLightCache(
+							approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0,
+							approximateLighting ? stateCache.sizeX : 0, approximateLighting ? stateCache.sizeY : 0, approximateLighting ? stateCache.sizeZ : 0,
+							blockAccess, pooledMutableBlockPos
+					);
 
 			profiler.startSection("renderMesh");
 			try {

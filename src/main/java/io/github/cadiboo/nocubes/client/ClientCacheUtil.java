@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -13,28 +12,21 @@ public final class ClientCacheUtil {
 
 	public static PackedLightCache generatePackedLightCache(
 			final int startPosX, final int startPosY, final int startPosZ,
-			@Nonnull StateCache stateCache,
-			@Nonnull final IBlockAccess blockAccess,
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final IBlockAccess cache,
 			@Nonnull BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		final int cacheSizeX = stateCache.sizeX;
-		final int cacheSizeY = stateCache.sizeY;
-		final int cacheSizeZ = stateCache.sizeZ;
-
-		final PackedLightCache packedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
-		final int[] packedLightCacheArray = packedLightCache.getPackedLightCache();
-
+		final PackedLightCache pooledPackedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
 			for (int y = 0; y < cacheSizeY; y++) {
 				for (int x = 0; x < cacheSizeX; x++) {
-					pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z);
-					packedLightCacheArray[index] = stateCache.getStateCache()[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(blockAccess, pooledMutableBlockPos);
+					pooledPackedLightCache.getPackedLightCache()[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z)).getPackedLightmapCoords(cache, pooledMutableBlockPos);
 					index++;
 				}
 			}
 		}
-		return packedLightCache;
+		return pooledPackedLightCache;
 	}
 
 }
