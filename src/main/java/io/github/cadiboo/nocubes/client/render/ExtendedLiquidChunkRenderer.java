@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.BlockLiquid;
@@ -58,13 +59,15 @@ public class ExtendedLiquidChunkRenderer {
 		final TextureMap textureMap = minecraft.getTextureMapBlocks();
 		final BlockColors blockColors = minecraft.getBlockColors();
 
-		final int cacheAddX = 2;
-		final int cacheAddY = 0;
-		final int cacheAddZ = 2;
+		final int extendRange = ClientUtil.getExtendLiquidsRange();
 
-		// For offset = -2 to offset = 2;
-		final int maxXOffset = 1;
-		final int maxZOffset = 1;
+		final int cacheAddX = extendRange;
+		final int cacheAddY = 0;
+		final int cacheAddZ = extendRange;
+
+		// For offset = -1 or -2 to offset = 1 or 2;
+		final int maxXOffset = extendRange;
+		final int maxZOffset = extendRange;
 
 		for (int z = 0; z < 16; z++) {
 			for (int y = 0; y < 16; y++) {
@@ -83,7 +86,7 @@ public class ExtendedLiquidChunkRenderer {
 								continue;
 							}
 
-							// Add 2 to account for offset=-2
+							// Add 1 or 2 to account for offset=-1 or -2
 							final int liquidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
 							if (!isLiquid[liquidStateIndex]) {
 								continue;

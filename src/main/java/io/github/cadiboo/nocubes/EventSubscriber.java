@@ -17,7 +17,7 @@ public final class EventSubscriber {
 	public static void onWorldLoadEvent(final WorldEvent.Load event) {
 
 		final World world = event.getWorld();
-		world.addEventListener(new ModWorldEventListener(world));
+		world.addEventListener(new ModWorldEventListener());
 
 	}
 

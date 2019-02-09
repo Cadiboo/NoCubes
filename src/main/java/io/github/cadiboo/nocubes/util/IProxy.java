@@ -7,4 +7,6 @@ package io.github.cadiboo.nocubes.util;
  */
 public interface IProxy {
 
+	void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately);
+
 }

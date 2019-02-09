@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.world;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,19 +16,21 @@ import javax.annotation.Nullable;
 /**
  * @author Cadiboo
  */
+//TODO this for the server
 public class ModWorldEventListener implements IWorldEventListener {
 
-	public ModWorldEventListener(final World world) {
+	private static final int BLOCK_UPDATE_EXTEND = 2;
 
+	@Override
+	public void notifyBlockUpdate(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
+		int k1 = pos.getX();
+		int l1 = pos.getY();
+		int i2 = pos.getZ();
+		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
 	@Override
-	public void notifyBlockUpdate(final World worldIn, final BlockPos pos, final IBlockState oldState, final IBlockState newState, final int flags) {
-
-	}
-
-	@Override
-	public void notifyLightSet(final BlockPos pos) {
+	public void notifyLightSet(@Nonnull final BlockPos pos) {
 
 	}
 
@@ -47,12 +50,12 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord, final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed, final int... parameters) {
+	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord, final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
 
 	}
 
 	@Override
-	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed, final int... parameters) {
+	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
 
 	}
 
