@@ -77,7 +77,7 @@ public final class NoCubes {
 	}
 
 	@Mod.EventHandler
-	public void preInit(final FMLPreInitializationEvent event) {
+	public void onPreInit(final FMLPreInitializationEvent event) {
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
