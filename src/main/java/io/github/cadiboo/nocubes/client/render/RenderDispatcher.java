@@ -1,6 +1,10 @@
-package io.github.cadiboo.nocubes.client;
+package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientCacheUtil;
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
+import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.client.render.ExtendedLiquidChunkRenderer;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
