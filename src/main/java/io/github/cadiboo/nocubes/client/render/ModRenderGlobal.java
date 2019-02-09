@@ -45,8 +45,16 @@ public class ModRenderGlobal extends DelegatingRenderGlobal {
 		this.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
-	private void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) throws Throwable {
-		RenderGlobal_markBlocksForUpdate.invokeExact(getDelegate(), minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+	private void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
+		try {
+			RenderGlobal_markBlocksForUpdate.invokeExact(getDelegate(), minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+		} catch (ReportedException e) {
+			throw e;
+		} catch (Throwable throwable) {
+			final CrashReport crashReport = new CrashReport("Exception invoking method RenderGlobal.markBlocksForUpdate", throwable);
+			crashReport.makeCategory("Reflectively Invoking Method");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

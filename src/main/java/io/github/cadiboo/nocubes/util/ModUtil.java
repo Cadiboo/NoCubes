@@ -262,4 +262,12 @@ public final class ModUtil {
 		throw new ReportedException(crashReport);
 	}
 
+	public static int max(int... ints) {
+		int max = 0;
+		for (final int anInt : ints) {
+			if (max < anInt) max = anInt;
+		}
+		return max;
+	}
+
 }

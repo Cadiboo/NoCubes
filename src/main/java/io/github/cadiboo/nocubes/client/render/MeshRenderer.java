@@ -3,15 +3,15 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
-import io.github.cadiboo.nocubes.client.PooledPackedLightCache;
+import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
+import io.github.cadiboo.nocubes.util.DensityCache;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
-import io.github.cadiboo.nocubes.util.PooledDensityCache;
-import io.github.cadiboo.nocubes.util.PooledFace;
-import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
-import io.github.cadiboo.nocubes.util.PooledStateCache;
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.util.SmoothableCache;
+import io.github.cadiboo.nocubes.util.StateCache;
+import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -50,9 +50,8 @@ public class MeshRenderer {
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			@Nonnull final PooledPackedLightCache pooledPackedLightCache,
-			@Nonnull final Map<int[], ArrayList<PooledFace>> chunkData,
+			@Nonnull final PackedLightCache pooledPackedLightCache,
+			@Nonnull final Map<int[], ArrayList<Face>> chunkData,
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -120,16 +119,16 @@ public class MeshRenderer {
 				final float maxU = ClientUtil.getMaxU(sprite);
 				final float maxV = ClientUtil.getMaxV(sprite);
 
-				for (final PooledFace face : faces) {
+				for (final Face face : faces) {
 					try {
 						//south east when looking down onto up face
-						final PooledVec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final Vec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//north east when looking down onto up face
-						final PooledVec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final Vec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//north west when looking down onto up face
-						final PooledVec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final Vec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 						//south west when looking down onto up face
-						final PooledVec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+						final Vec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
 
 						final int lightmapSkyLight0;
 						final int lightmapSkyLight1;
@@ -144,7 +143,7 @@ public class MeshRenderer {
 						if (ModConfig.approximateLighting) {
 
 							//TODO: do this better
-							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, cachesSizeX, cachesSizeY, cachesSizeZ, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, blockAccess, pooledMutableBlockPos);
+							final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, blockAccess, pooledMutableBlockPos);
 							lightmapSkyLight0 = lightmapInfo.skylight0;
 							lightmapSkyLight1 = lightmapInfo.skylight1;
 							lightmapSkyLight2 = lightmapInfo.skylight2;
@@ -212,65 +211,55 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			@Nonnull final PooledStateCache stateCache, @Nonnull final PooledSmoothableCache smoothableCache, @Nonnull final PooledPackedLightCache pooledPackedLightCache,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ
+			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache, @Nonnull final PackedLightCache pooledPackedLightCache
 	) {
+
 		//normal terrain
 		{
-			try (
-					final PooledDensityCache data = CacheUtil.generateDensityCache(
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							meshSizeX, meshSizeY, meshSizeZ,
-							stateCache, smoothableCache,
-							cachesSizeX, cachesSizeY, cachesSizeZ,
-							blockAccess,
-							pooledMutableBlockPos
-					)
-			) {
-				renderFaces(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						blockRendererDispatcher,
-						cachesSizeX, cachesSizeY, cachesSizeZ,
-						pooledPackedLightCache,
-						ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-						TERRAIN_SMOOTHABLE,
-						pooledMutableBlockPos, usedBlockRenderLayers, false
-				);
-			}
+			final DensityCache data = CacheUtil.generateDensityCache(
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					stateCache, smoothableCache,
+					blockAccess,
+					pooledMutableBlockPos
+			);
+
+			renderFaces(
+					renderChunk,
+					generator,
+					compiledChunk,
+					renderChunkPosition,
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					blockAccess,
+					blockRendererDispatcher,
+					pooledPackedLightCache,
+					ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+					TERRAIN_SMOOTHABLE,
+					pooledMutableBlockPos, usedBlockRenderLayers, false
+			);
 		}
 		if (ModConfig.smoothLeavesSeparate) {
-			try (final PooledSmoothableCache smoothableLeavesCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, LEAVES_SMOOTHABLE)) {
-				try (
-						final PooledDensityCache data = CacheUtil.generateDensityCache(
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								meshSizeX, meshSizeY, meshSizeZ,
-								stateCache, smoothableLeavesCache,
-								cachesSizeX, cachesSizeY, cachesSizeZ,
-								blockAccess,
-								pooledMutableBlockPos
-						)
-				) {
-					renderFaces(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							blockAccess,
-							blockRendererDispatcher,
-							cachesSizeX, cachesSizeY, cachesSizeZ,
-							pooledPackedLightCache,
-							ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
-							LEAVES_SMOOTHABLE,
-							pooledMutableBlockPos, usedBlockRenderLayers, true
-					);
-				}
-			}
+
+			final SmoothableCache smoothableLeavesCache = CacheUtil.generateSmoothableCache(stateCache, LEAVES_SMOOTHABLE);
+
+			final DensityCache data = CacheUtil.generateDensityCache(
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					stateCache, smoothableLeavesCache,
+					blockAccess,
+					pooledMutableBlockPos
+			);
+			renderFaces(
+					renderChunk,
+					generator,
+					compiledChunk,
+					renderChunkPosition,
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					blockAccess,
+					blockRendererDispatcher,
+					pooledPackedLightCache,
+					ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new int[]{meshSizeX, meshSizeY, meshSizeZ}),
+					LEAVES_SMOOTHABLE,
+					pooledMutableBlockPos, usedBlockRenderLayers, true
+			);
 		}
 	}
 

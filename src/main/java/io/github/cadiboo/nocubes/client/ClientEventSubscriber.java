@@ -36,7 +36,7 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		ClientUtil.renderChunk(event);
+		RenderDispatcher.renderChunk(event);
 	}
 
 	@SubscribeEvent
@@ -44,14 +44,7 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		ClientUtil.renderBlock(event);
-	}
-
-	@SubscribeEvent
-	public static void onRebuildChunkPostEvent(final RebuildChunkPostEvent event) {
-		if (!NoCubes.isEnabled()) {
-			return;
-		}
+		RenderDispatcher.renderBlock(event);
 	}
 
 	@SubscribeEvent

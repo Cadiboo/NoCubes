@@ -1,14 +1,13 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.PooledFace;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
-import static io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
 
 public class OldNoCubes implements IMeshGenerator {
 
@@ -17,10 +16,10 @@ public class OldNoCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
+	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
 
-		final HashMap<int[], ArrayList<PooledFace>> posToFaces = new HashMap<>();
-		final ArrayList<PooledFace> faces = new ArrayList<>();
+		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
+		final ArrayList<Face> faces = new ArrayList<>();
 
 		for (int z = 0; z < dims[0]; ++z) {
 			for (int y = 0; y < dims[1]; ++y) {
@@ -47,11 +46,11 @@ public class OldNoCubes implements IMeshGenerator {
 					// (0, 1, 0), (0, 0, 0), (0, 0, 1), (0, 1, 1)
 					if (neighbours[2] && neighbours[0] && neighbours[1] && neighbours[3]) {
 						faces.add(
-								PooledFace.retain(
-										PooledVec3.retain(x, y + 1, z),
-										PooledVec3.retain(x, y, z),
-										PooledVec3.retain(x, y, z + 1),
-										PooledVec3.retain(x, y + 1, z + 1)
+								Face.retain(
+										Vec3.retain(x, y + 1, z),
+										Vec3.retain(x, y, z),
+										Vec3.retain(x, y, z + 1),
+										Vec3.retain(x, y + 1, z + 1)
 								)
 						);
 					}

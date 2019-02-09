@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.unusedpools;
 
 import net.minecraft.block.state.IBlockState;
 import org.apache.logging.log4j.LogManager;

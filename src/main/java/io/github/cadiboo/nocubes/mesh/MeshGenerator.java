@@ -3,10 +3,9 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
-import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.PooledFace;
+import io.github.cadiboo.nocubes.util.Face;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -26,15 +25,15 @@ public enum MeshGenerator {
 		this.meshGenerator = meshGenerator;
 	}
 
-	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
-		final Map<int[], ArrayList<PooledFace>> chunkData = meshGenerator.generateChunk(data, dims);
+	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
+		final Map<int[], ArrayList<Face>> chunkData = meshGenerator.generateChunk(data, dims);
 		if(ModConfig.offsetVertices) {
 			offsetChunkVertices(chunkData);
 		}
 		return chunkData;
 	}
 
-	private static void offsetChunkVertices(Map<int[], ArrayList<PooledFace>> chunkData) {
+	private static void offsetChunkVertices(Map<int[], ArrayList<Face>> chunkData) {
 		chunkData.forEach((pos, list) -> {
 			list.forEach(face -> {
 				ModUtil.offsetVertex(face.getVertex0());

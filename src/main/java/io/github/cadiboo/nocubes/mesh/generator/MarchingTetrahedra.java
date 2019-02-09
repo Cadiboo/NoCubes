@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.PooledFace;
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
+	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
 
 		final int[][] cube_vertices = CUBE_VERTICES;
 		final int[][] tetra_list = TETRA_LIST;
@@ -41,8 +41,8 @@ public class MarchingTetrahedra implements IMeshGenerator {
 		final int[] x = {0, 0, 0};
 		int n = 0;
 		final float[] grid = new float[8];
-		final HashMap<int[], ArrayList<PooledFace>> posToFaces = new HashMap<>();
-		final ArrayList<PooledFace> faces = new ArrayList<>();
+		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
+		final ArrayList<Face> faces = new ArrayList<>();
 
 		//March over the volume
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
@@ -67,7 +67,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x0E:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[0], T[1], grid, x),
 												interp(T[0], T[3], grid, x),
 												interp(T[0], T[2], grid, x)
@@ -76,7 +76,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x01:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[0], T[1], grid, x),
 												interp(T[0], T[2], grid, x),
 												interp(T[0], T[3], grid, x)
@@ -85,7 +85,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x0D:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[1], T[0], grid, x),
 												interp(T[1], T[2], grid, x),
 												interp(T[1], T[3], grid, x)
@@ -94,7 +94,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x02:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[1], T[0], grid, x),
 												interp(T[1], T[3], grid, x),
 												interp(T[1], T[2], grid, x)
@@ -103,7 +103,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x0C:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[1], T[2], grid, x),
 												interp(T[1], T[3], grid, x),
 												interp(T[0], T[3], grid, x),
@@ -113,7 +113,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x03:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[1], T[2], grid, x),
 												interp(T[0], T[2], grid, x),
 												interp(T[0], T[3], grid, x),
@@ -123,7 +123,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x04:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[2], T[0], grid, x),
 												interp(T[2], T[1], grid, x),
 												interp(T[2], T[3], grid, x)
@@ -132,7 +132,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x0B:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[2], T[0], grid, x),
 												interp(T[2], T[3], grid, x),
 												interp(T[2], T[1], grid, x)
@@ -141,7 +141,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x05:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[0], T[1], grid, x),
 												interp(T[1], T[2], grid, x),
 												interp(T[2], T[3], grid, x),
@@ -151,7 +151,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x0A:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[0], T[1], grid, x),
 												interp(T[0], T[3], grid, x),
 												interp(T[2], T[3], grid, x),
@@ -161,7 +161,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x06:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[2], T[3], grid, x),
 												interp(T[0], T[2], grid, x),
 												interp(T[0], T[1], grid, x),
@@ -171,7 +171,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x09:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[2], T[3], grid, x),
 												interp(T[1], T[3], grid, x),
 												interp(T[0], T[1], grid, x),
@@ -181,7 +181,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x07:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[3], T[0], grid, x),
 												interp(T[3], T[1], grid, x),
 												interp(T[3], T[2], grid, x)
@@ -190,7 +190,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 								break;
 							case 0x08:
 								faces.add(
-										PooledFace.retain(
+										Face.retain(
 												interp(T[3], T[0], grid, x),
 												interp(T[3], T[2], grid, x),
 												interp(T[3], T[1], grid, x)
@@ -200,19 +200,19 @@ public class MarchingTetrahedra implements IMeshGenerator {
 						}
 					}
 
-					posToFaces.put(new int[] {x[0], x[1], x[2]}, new ArrayList<>(faces));
+					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
 					faces.clear();
 				}
 
 		return posToFaces;
 	}
 
-	private PooledVec3 interp(final int i0, final int i1, float[] grid, int[] x) {
+	private Vec3 interp(final int i0, final int i1, float[] grid, int[] x) {
 		final float g0 = grid[i0];
 		final float g1 = grid[i1];
 		int[] p0 = CUBE_VERTICES[i0];
 		final int[] p1 = CUBE_VERTICES[i1];
-		final PooledVec3 v = PooledVec3.retain(x[0], x[1], x[2]);
+		final Vec3 v = Vec3.retain(x[0], x[1], x[2]);
 		float t = g0 - g1;
 		if (Math.abs(t) > 1e-6) {
 			t = g0 / t;

@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.PooledFace;
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -331,7 +331,7 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
+	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
 
 		final int[][] cubeVerts = CUBE_VERTS;
 		final int[] edgeTable = EDGE_TABLE;
@@ -342,8 +342,8 @@ public class MarchingCubes implements IMeshGenerator {
 		int n = 0;
 		final float[] grid = new float[8];
 		final int[] edges = new int[12];
-		final HashMap<int[], ArrayList<PooledFace>> posToFaces = new HashMap<>();
-		final ArrayList<PooledFace> faces = new ArrayList<>();
+		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
+		final ArrayList<Face> faces = new ArrayList<>();
 
 		final ArrayList<float[]> vertices = new ArrayList<>();
 
@@ -389,10 +389,10 @@ public class MarchingCubes implements IMeshGenerator {
 					int[] f = triTable[cube_index];
 					for (int i = 0; i < f.length; i += 3) {
 						faces.add(
-								PooledFace.retain(
-										PooledVec3.retain(vertices.get(edges[f[i]])),
-										PooledVec3.retain(vertices.get(edges[f[i + 1]])),
-										PooledVec3.retain(vertices.get(edges[f[i + 2]]))
+								Face.retain(
+										Vec3.retain(vertices.get(edges[f[i]])),
+										Vec3.retain(vertices.get(edges[f[i + 1]])),
+										Vec3.retain(vertices.get(edges[f[i + 2]]))
 								)
 						);
 					}

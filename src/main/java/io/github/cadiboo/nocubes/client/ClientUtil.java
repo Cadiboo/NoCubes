@@ -1,17 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.ExtendedLiquidChunkRenderer;
-import io.github.cadiboo.nocubes.client.render.MeshRenderer;
-import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
-import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.PooledSmoothableCache;
-import io.github.cadiboo.nocubes.util.PooledStateCache;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
@@ -45,9 +34,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
-import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -315,6 +301,7 @@ public final class ClientUtil {
 	 * @param pooledMutableBlockPos
 	 * @return a state and a texture pos which is guaranteed to be immutable
 	 */
+	//TODO: state cache?
 	public static Object[] getTexturePosAndState(
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final BlockPos pos,
@@ -402,152 +389,6 @@ public final class ClientUtil {
 			case CUTOUT:
 				return Minecraft.getMinecraft().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
 		}
-	}
-
-	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
-
-	public static void renderChunk(final RebuildChunkPreEvent event) {
-		final ModProfiler profiler = NoCubes.getProfiler();
-
-		final RenderChunk renderChunk = event.getRenderChunk();
-		final ChunkCompileTaskGenerator generator = event.getGenerator();
-		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final IBlockAccess blockAccess = event.getIBlockAccess();
-
-		final int meshSizeX;
-		final int meshSizeY;
-		final int meshSizeZ;
-		if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
-			//yay, surface nets is special and needs an extra +1. why? no-one knows
-			meshSizeX = 18;
-			meshSizeY = 18;
-			meshSizeZ = 18;
-		} else {
-			meshSizeX = 17;
-			meshSizeY = 17;
-			meshSizeZ = 17;
-		}
-
-		final int renderChunkPositionX = renderChunkPosition.getX();
-		final int renderChunkPositionY = renderChunkPosition.getY();
-		final int renderChunkPositionZ = renderChunkPosition.getZ();
-
-		profiler.startSection("generateStateCache");
-
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		// Also the ExtendedLiquidChunkRenderer needs +2 block on every positive axis so we need even bigger caches
-		// All up this is -1 block (1 for ExtendedLiquidChunkRenderer, including the 1 for Density)
-		final int cachesStartPosX = renderChunkPositionX - 1;
-		final int cachesStartPosY = renderChunkPositionY - 1;
-		final int cachesStartPosZ = renderChunkPositionZ - 1;
-
-		// Density takes +1 block on every negative axis into account so we need bigger caches
-		// Also the ExtendedLiquidChunkRenderer needs +1 block on every positive axis so we need even bigger caches
-		// All up this is +2 blocks	(1*2 for ExtendedLiquidChunkRenderer, including the 1*2 for Density)
-		final int cachesSizeX = meshSizeX + 2;
-		final int cachesSizeY = meshSizeY + 2;
-		final int cachesSizeZ = meshSizeZ + 2;
-
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			try (final PooledStateCache stateCache = CacheUtil.generateStateCache(cachesStartPosX, cachesStartPosY, cachesStartPosZ, cachesSizeX, cachesSizeY, cachesSizeZ, blockAccess, pooledMutableBlockPos)) {
-				profiler.endSection();
-				profiler.startSection("generateTerrainSmoothableCache");
-				try (final PooledSmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(cachesSizeX, cachesSizeY, cachesSizeZ, stateCache, TERRAIN_SMOOTHABLE)) {
-					profiler.endSection();
-					profiler.startSection("generatePackedLightCache");
-					//TODO stateCache
-					try (final PooledPackedLightCache packedLightCache =
-							     ClientCacheUtil.generatePackedLightCache(
-									     approximateLighting ? cachesStartPosX : 0, approximateLighting ? cachesStartPosY : 0, approximateLighting ? cachesStartPosZ : 0,
-									     approximateLighting ? cachesSizeX : 0, approximateLighting ? cachesSizeY : 0, approximateLighting ? cachesSizeZ : 0,
-									     blockAccess, pooledMutableBlockPos
-							     )
-					) {
-						profiler.endSection();
-						final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
-						final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-
-						if (ModConfig.extendLiquids) {
-							profiler.startSection("extendLiquids");
-							try {
-								ExtendedLiquidChunkRenderer.renderChunk(
-										renderChunk,
-										generator,
-										compiledChunk,
-										renderChunkPosition,
-										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-										blockAccess,
-										pooledMutableBlockPos,
-										usedBlockRenderLayers,
-										blockRendererDispatcher,
-										stateCache, terrainSmoothableCache, packedLightCache,
-										cachesSizeX, cachesSizeY, cachesSizeZ
-								);
-							} catch (ReportedException e) {
-								throw e;
-							} catch (Exception e) {
-								CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-								crashReport.makeCategory("Extending liquids");
-								throw new ReportedException(crashReport);
-							}
-							profiler.endSection();
-						}
-
-						profiler.startSection("renderSmoothChunk");
-						try {
-							MeshRenderer.renderChunk(
-									renderChunk,
-									generator,
-									compiledChunk,
-									renderChunkPosition,
-									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-									blockAccess,
-									pooledMutableBlockPos,
-									usedBlockRenderLayers,
-									blockRendererDispatcher,
-									meshSizeX, meshSizeY, meshSizeZ,
-									stateCache, terrainSmoothableCache, packedLightCache,
-									cachesSizeX, cachesSizeY, cachesSizeZ
-							);
-						} catch (ReportedException e) {
-							throw e;
-						} catch (Exception e) {
-							CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Pre event!", e);
-							crashReport.makeCategory("Rendering smooth chunk");
-							throw new ReportedException(crashReport);
-						}
-						profiler.endSection();
-					}
-				}
-			}
-		} finally {
-			pooledMutableBlockPos.release();
-		}
-	}
-
-	public static void renderBlock(final RebuildChunkBlockEvent event) {
-		final ModProfiler profiler = NoCubes.getProfiler();
-		profiler.startSection("extendLiquids");
-		try {
-
-			final int ordinal = event.getBlockRenderLayer().ordinal();
-			event.getUsedBlockRenderLayers()[ordinal] |= USED_RENDER_LAYERS.get()[ordinal];
-			final IBlockState state = event.getBlockState();
-			event.setCanceled(
-					TERRAIN_SMOOTHABLE.isSmoothable(state) || LEAVES_SMOOTHABLE.isSmoothable(state)
-			);
-
-		} catch (ReportedException e) {
-			throw e;
-		} catch (Exception e) {
-			CrashReport crashReport = new CrashReport("Error rendering smooth chunk in Block event!", e);
-			final CrashReportCategory crashReportCategory = crashReport.makeCategory("Rendering smooth chunk");
-			CrashReportCategory.addBlockInfo(crashReportCategory, event.getBlockPos(), event.getBlockState());
-			throw new ReportedException(crashReport);
-		}
-		profiler.endSection();
 	}
 
 	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {

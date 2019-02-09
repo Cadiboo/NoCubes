@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -35,12 +36,11 @@ public class LightmapInfo {
 	public final int blocklight3;
 
 	public static LightmapInfo generateLightmapInfo(
-			final PooledPackedLightCache pooledPackedLightCache,
-			final int cachesSizeX, final int cachesSizeY, final int cachesSizeZ,
-			final PooledVec3 v0,
-			final PooledVec3 v1,
-			final PooledVec3 v2,
-			final PooledVec3 v3,
+			final PackedLightCache packedLightCache,
+			final Vec3 v0,
+			final Vec3 v1,
+			final Vec3 v2,
+			final Vec3 v3,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
@@ -48,7 +48,11 @@ public class LightmapInfo {
 			final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
-		final int[] packedLightCache = pooledPackedLightCache.getPackedLightCache();
+		final int cachesSizeX = packedLightCache.sizeX;
+		final int cachesSizeY = packedLightCache.sizeY;
+		final int cachesSizeZ = packedLightCache.sizeZ;
+
+		final int[] packedLightCacheArray = packedLightCache.getPackedLightCache();
 
 		// 3*3*3
 		final int[] packedLight0 = new int[27];
@@ -76,16 +80,15 @@ public class LightmapInfo {
 		for (int zOffset = -1; zOffset < 2; zOffset++) {
 			for (int yOffset = -1; yOffset < 2; yOffset++) {
 				for (int xOffset = -1; xOffset < 2; xOffset++, index++) {
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					packedLight0[index] = packedLightCache[(v0XOffset + xOffset + 1) + cachesSizeX * ((v0YOffset + yOffset + 1) + cachesSizeY * (v0ZOffset + zOffset + 1))];
-					packedLight1[index] = packedLightCache[(v1XOffset + xOffset + 1) + cachesSizeX * ((v1YOffset + yOffset + 1) + cachesSizeY * (v1ZOffset + zOffset + 1))];
-					packedLight2[index] = packedLightCache[(v2XOffset + xOffset + 1) + cachesSizeX * ((v2YOffset + yOffset + 1) + cachesSizeY * (v2ZOffset + zOffset + 1))];
-					packedLight3[index] = packedLightCache[(v3XOffset + xOffset + 1) + cachesSizeX * ((v3YOffset + yOffset + 1) + cachesSizeY * (v3ZOffset + zOffset + 1))];
+					packedLight0[index] = packedLightCacheArray[packedLightCache.getIndex(v0XOffset + xOffset + 1, v0YOffset + yOffset + 1, v0ZOffset + zOffset + 1)];
+					packedLight1[index] = packedLightCacheArray[packedLightCache.getIndex(v1XOffset + xOffset + 1, v1YOffset + yOffset + 1, v1ZOffset + zOffset + 1)];
+					packedLight2[index] = packedLightCacheArray[packedLightCache.getIndex(v2XOffset + xOffset + 1, v2YOffset + yOffset + 1, v2ZOffset + zOffset + 1)];
+					packedLight3[index] = packedLightCacheArray[packedLightCache.getIndex(v3XOffset + xOffset + 1, v3YOffset + yOffset + 1, v3ZOffset + zOffset + 1)];
 				}
 			}
 		}
 
-		final int skylight0 = max(
+		final int skylight0 = ModUtil.max(
 				packedLight0[0] >> 16 & 0xFFFF,
 				packedLight0[1] >> 16 & 0xFFFF,
 				packedLight0[2] >> 16 & 0xFFFF,
@@ -115,7 +118,7 @@ public class LightmapInfo {
 				packedLight0[26] >> 16 & 0xFFFF
 		);
 
-		final int skylight1 = max(
+		final int skylight1 = ModUtil.max(
 				packedLight1[0] >> 16 & 0xFFFF,
 				packedLight1[1] >> 16 & 0xFFFF,
 				packedLight1[2] >> 16 & 0xFFFF,
@@ -145,7 +148,7 @@ public class LightmapInfo {
 				packedLight1[26] >> 16 & 0xFFFF
 		);
 
-		final int skylight2 = max(
+		final int skylight2 = ModUtil.max(
 				packedLight2[0] >> 16 & 0xFFFF,
 				packedLight2[1] >> 16 & 0xFFFF,
 				packedLight2[2] >> 16 & 0xFFFF,
@@ -175,7 +178,7 @@ public class LightmapInfo {
 				packedLight2[26] >> 16 & 0xFFFF
 		);
 
-		final int skylight3 = max(
+		final int skylight3 = ModUtil.max(
 				packedLight3[0] >> 16 & 0xFFFF,
 				packedLight3[1] >> 16 & 0xFFFF,
 				packedLight3[2] >> 16 & 0xFFFF,
@@ -205,7 +208,7 @@ public class LightmapInfo {
 				packedLight3[26] >> 16 & 0xFFFF
 		);
 
-		final int blocklight0 = max(
+		final int blocklight0 = ModUtil.max(
 				packedLight0[0] & 0xFFFF,
 				packedLight0[1] & 0xFFFF,
 				packedLight0[2] & 0xFFFF,
@@ -235,7 +238,7 @@ public class LightmapInfo {
 				packedLight0[26] & 0xFFFF
 		);
 
-		final int blocklight1 = max(
+		final int blocklight1 = ModUtil.max(
 				packedLight1[0] & 0xFFFF,
 				packedLight1[1] & 0xFFFF,
 				packedLight1[2] & 0xFFFF,
@@ -265,7 +268,7 @@ public class LightmapInfo {
 				packedLight1[26] & 0xFFFF
 		);
 
-		final int blocklight2 = max(
+		final int blocklight2 = ModUtil.max(
 				packedLight2[0] & 0xFFFF,
 				packedLight2[1] & 0xFFFF,
 				packedLight2[2] & 0xFFFF,
@@ -295,7 +298,7 @@ public class LightmapInfo {
 				packedLight2[26] & 0xFFFF
 		);
 
-		final int blocklight3 = max(
+		final int blocklight3 = ModUtil.max(
 				packedLight3[0] & 0xFFFF,
 				packedLight3[1] & 0xFFFF,
 				packedLight3[2] & 0xFFFF,
@@ -330,14 +333,6 @@ public class LightmapInfo {
 				blocklight0, blocklight1, blocklight2, blocklight3
 		);
 
-	}
-
-	public static final int max(int... ints) {
-		int max = 0;
-		for (final int anInt : ints) {
-			if (max < anInt) max = anInt;
-		}
-		return max;
 	}
 
 }

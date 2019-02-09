@@ -2,8 +2,8 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.PooledFace;
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.Vec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class SurfaceNets implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<PooledFace>> generateChunk(final float[] data, final int[] dims) {
+	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
 
 		final int[] edge_table = EDGE_TABLE;
 		final int[] cube_edges = CUBE_EDGES;
@@ -96,8 +96,8 @@ public class SurfaceNets implements IMeshGenerator {
 
 		final int[] buffer = new int[R[2] * 2];
 
-		final HashMap<int[], ArrayList<PooledFace>> posToFaces = new HashMap<>();
-		final ArrayList<PooledFace> faces = new ArrayList<>();
+		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
+		final ArrayList<Face> faces = new ArrayList<>();
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
 		//March over the voxel grid
@@ -203,25 +203,25 @@ public class SurfaceNets implements IMeshGenerator {
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
 							faces.add(
-									PooledFace.retain(
-											PooledVec3.retain(vertices.get(buffer[m])),
-											PooledVec3.retain(vertices.get(buffer[m - du])),
-											PooledVec3.retain(vertices.get(buffer[m - du - dv])),
-											PooledVec3.retain(vertices.get(buffer[m - dv]))
+									Face.retain(
+											Vec3.retain(vertices.get(buffer[m])),
+											Vec3.retain(vertices.get(buffer[m - du])),
+											Vec3.retain(vertices.get(buffer[m - du - dv])),
+											Vec3.retain(vertices.get(buffer[m - dv]))
 									)
 							);
 						} else {
 							faces.add(
-									PooledFace.retain(
-											PooledVec3.retain(vertices.get(buffer[m])),
-											PooledVec3.retain(vertices.get(buffer[m - dv])),
-											PooledVec3.retain(vertices.get(buffer[m - du - dv])),
-											PooledVec3.retain(vertices.get(buffer[m - du]))
+									Face.retain(
+											Vec3.retain(vertices.get(buffer[m])),
+											Vec3.retain(vertices.get(buffer[m - dv])),
+											Vec3.retain(vertices.get(buffer[m - du - dv])),
+											Vec3.retain(vertices.get(buffer[m - du]))
 									)
 							);
 						}
 					}
-					posToFaces.put(new int[] {x[0], x[1], x[2]}, new ArrayList<>(faces));
+					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
 					faces.clear();
 				}
 		}

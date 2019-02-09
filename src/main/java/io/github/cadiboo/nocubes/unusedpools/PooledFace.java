@@ -1,6 +1,6 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.unusedpools;
 
-import io.github.cadiboo.nocubes.util.Vec3.PooledVec3;
+import io.github.cadiboo.nocubes.unusedpools.Vec3.PooledVec3;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
