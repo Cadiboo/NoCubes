@@ -80,4 +80,11 @@ public final class ClientEventSubscriber {
 		minecraft.renderGlobal.loadRenderers();
 	}
 
+//	@SubscribeEvent
+//	public static void onForgeRenderChunkChunkCacheThingFor1_13(final EventThatDoesntExistIn1_12_2 event) {
+//		if (!NoCubes.isEnabled()) {
+//			return;
+//		}
+//	}
+
 }
