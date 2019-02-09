@@ -246,6 +246,8 @@ public class RenderDispatcher {
 					event.getUsedBlockRenderLayers()[ordinal] |= USED_RENDER_LAYERS.get()[ordinal];
 				}
 				USED_RENDER_LAYERS_SET.set(true);
+				//remove so it gets re-initialised so that we don't get ghost blocks from now-unused render layers
+				USED_RENDER_LAYERS.remove();
 			}
 
 			final IBlockState state = event.getBlockState();
