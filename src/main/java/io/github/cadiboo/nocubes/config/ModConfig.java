@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
@@ -117,13 +118,14 @@ public final class ModConfig {
 	public static boolean smoothLeavesSeparate = true;
 
 	@LangKey(MOD_ID + ".config.extendLiquids")
-	public static boolean extendLiquids = true;
+	public static ExtendLiquidRange extendLiquids = ExtendLiquidRange.OneBlock;
 
 	@Config.Ignore
 	//yenah i dont like it //TODO: remove
 	public static boolean renderEmptyBlocksOrWhatever = false;
 
-	@Config.RangeDouble(min = -10, max = 10)
+	@Config.Ignore
+//	@Config.RangeDouble(min = -10, max = 10)
 	public static double smoothOtherBlocksAmount = 0.0F;
 
 	static {

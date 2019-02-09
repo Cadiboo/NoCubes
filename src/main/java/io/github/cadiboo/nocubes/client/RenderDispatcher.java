@@ -34,6 +34,7 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 public class RenderDispatcher {
 
 	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
+	private static final ThreadLocal<Boolean> USED_RENDER_LAYERS_SET = ThreadLocal.withInitial(() -> false);
 
 	public static void renderChunk(final RebuildChunkPreEvent event) {
 		final RenderChunk renderChunk = event.getRenderChunk();
@@ -89,6 +90,7 @@ public class RenderDispatcher {
 	) {
 		final ModProfiler profiler = NoCubes.getProfiler();
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
+		USED_RENDER_LAYERS_SET.set(false);
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
 		{
@@ -137,19 +139,19 @@ public class RenderDispatcher {
 			}
 		}
 
-		if (ModConfig.extendLiquids) {
+		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
 			profiler.startSection("extendLiquids");
 
 			//TODO get this from world & chunk & layer
 			final StateCache stateCache = generateExtendedWaterStateCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					blockAccess,
-					pooledMutableBlockPos
+					pooledMutableBlockPos,
+					ClientUtil.getExtendLiquidsRange()
 			);
 			//TODO get this from world & chunk & layer
 			final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(
 					stateCache, TERRAIN_SMOOTHABLE
-
 			);
 
 			try {
@@ -209,19 +211,21 @@ public class RenderDispatcher {
 	private static StateCache generateExtendedWaterStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final IBlockAccess blockAccess,
-			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
+			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
+			final int extendLiquidsRange
 	) {
-		// ExtendedWater takes +2 blocks on every negative axis into account so we need to start at -2 blocks
-		final int cacheStartPosX = renderChunkPositionX - 2;
-		final int cacheStartPosY = renderChunkPositionY - 2;
-		final int cacheStartPosZ = renderChunkPositionZ - 2;
+		// ExtendedWater takes +1 or +2 blocks on every horizontal axis into account so we need to start at -1 or -2 blocks
+		final int cacheStartPosX = renderChunkPositionX - extendLiquidsRange;
+		final int cacheStartPosY = renderChunkPositionY;
+		final int cacheStartPosZ = renderChunkPositionZ - extendLiquidsRange;
 
-		// ExtendedWater takes +2 blocks on every negative axis into account so we need to add 4 to the size of the cache (it takes +2 on EVERY axis)
-		// All up this is +4 (4 for ExtendedWater)
+		// ExtendedWater takes +1 or +2 blocks on each side of the chunk (x and z) into account so we need to add 2 or 4 to the size of the cache (it takes +1 or +2 on EVERY HORIZONTAL axis)
+		// ExtendedWater takes +1 block on the Y axis into account so we need to add 1 to the size of the cache (it takes +1 on the POSITIVE Y axis)
+		// All up this is +2 or +4 (2 or 4 for ExtendedWater) for every horizontal axis and +1 for the Y axis
 		// 16 is the size of a chunk (blocks 0 -> 15)
-		final int cacheSizeX = 16 + 4;
-		final int cacheSizeY = 16 + 4;
-		final int cacheSizeZ = 16 + 4;
+		final int cacheSizeX = 16 + extendLiquidsRange * 2;
+		final int cacheSizeY = 16 + 1;
+		final int cacheSizeZ = 16 + extendLiquidsRange * 2;
 
 		return CacheUtil.generateStateCache(
 				cacheStartPosX, cacheStartPosY, cacheStartPosZ,
@@ -232,17 +236,18 @@ public class RenderDispatcher {
 	}
 
 	public static void renderBlock(final RebuildChunkBlockEvent event) {
-		final ModProfiler profiler = NoCubes.getProfiler();
-		profiler.startSection("extendLiquids");
 		try {
+			if (!USED_RENDER_LAYERS_SET.get()) {
+				for (int ordinal = 0; ordinal < BlockRenderLayer.values().length; ++ordinal) {
+					event.getUsedBlockRenderLayers()[ordinal] |= USED_RENDER_LAYERS.get()[ordinal];
+				}
+				USED_RENDER_LAYERS_SET.set(true);
+			}
 
-			final int ordinal = event.getBlockRenderLayer().ordinal();
-			event.getUsedBlockRenderLayers()[ordinal] |= USED_RENDER_LAYERS.get()[ordinal];
 			final IBlockState state = event.getBlockState();
 			event.setCanceled(
 					TERRAIN_SMOOTHABLE.isSmoothable(state) || LEAVES_SMOOTHABLE.isSmoothable(state)
 			);
-
 		} catch (ReportedException e) {
 			throw e;
 		} catch (Exception e) {
@@ -251,7 +256,6 @@ public class RenderDispatcher {
 			CrashReportCategory.addBlockInfo(crashReportCategory, event.getBlockPos(), event.getBlockState());
 			throw new ReportedException(crashReport);
 		}
-		profiler.endSection();
 	}
 
 }

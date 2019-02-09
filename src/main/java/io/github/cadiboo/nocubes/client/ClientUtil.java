@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -398,6 +399,18 @@ public final class ClientUtil {
 			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
 		}
 		return bufferBuilder;
+	}
+
+	public static int getExtendLiquidsRange() {
+		switch (ModConfig.extendLiquids) {
+			default:
+			case Off:
+				return 0;
+			case OneBlock:
+				return 1;
+			case TwoBlocks:
+				return 2;
+		}
 	}
 
 }

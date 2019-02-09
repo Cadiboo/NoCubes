@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
 
@@ -57,9 +58,13 @@ public class ExtendedLiquidChunkRenderer {
 		final TextureMap textureMap = minecraft.getTextureMapBlocks();
 		final BlockColors blockColors = minecraft.getBlockColors();
 
-		final int cacheAddX = 1;
-		final int cacheAddY = 1;
-		final int cacheAddZ = 1;
+		final int cacheAddX = 2;
+		final int cacheAddY = 0;
+		final int cacheAddZ = 2;
+
+		// For offset = -2 to offset = 2;
+		final int maxXOffset = 1;
+		final int maxZOffset = 1;
 
 		for (int z = 0; z < 16; z++) {
 			for (int y = 0; y < 16; y++) {
@@ -69,17 +74,16 @@ public class ExtendedLiquidChunkRenderer {
 						continue;
 					}
 
-					// For offset = -1 to offset = 1;
 					OFFSET:
-					for (int xOffset = -1; xOffset < 2; ++xOffset) {
-						for (int zOffset = -1; zOffset < 2; ++zOffset) {
+					for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+						for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
 
 							//no point in checking myself
 							if (xOffset == 0 && zOffset == 0) {
 								continue;
 							}
 
-							// Add 1 to account for offset=-1
+							// Add 2 to account for offset=-2
 							final int liquidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
 							if (!isLiquid[liquidStateIndex]) {
 								continue;
@@ -101,6 +105,7 @@ public class ExtendedLiquidChunkRenderer {
 									renderChunkPositionY + y,
 									renderChunkPositionZ + z
 							), blockAccess, bufferBuilder);
+
 							//TODO smooth lighting?
 							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
 									textureMap, blockColors,
