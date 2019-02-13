@@ -48,8 +48,15 @@ public final class ClientProxy implements IProxy {
 
 	@Override
 	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
+
+		final RenderGlobal renderGlobal = Minecraft.getMinecraft().renderGlobal;
+
+		if (renderGlobal.world == null || renderGlobal.viewFrustum == null) {
+			return;
+		}
+
 		try {
-			RenderGlobal_markBlocksForUpdate.invokeExact(Minecraft.getMinecraft().renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+			RenderGlobal_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
 		} catch (ReportedException e) {
 			throw e;
 		} catch (Throwable throwable) {
