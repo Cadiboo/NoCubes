@@ -15,6 +15,13 @@ import static net.minecraft.util.math.MathHelper.clamp;
 public class LightmapInfo {
 
 	public final int skylight0;
+	public final int skylight1;
+	public final int skylight2;
+	public final int skylight3;
+	public final int blocklight0;
+	public final int blocklight1;
+	public final int blocklight2;
+	public final int blocklight3;
 
 	public LightmapInfo(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
 		this.skylight0 = skylight0;
@@ -26,14 +33,6 @@ public class LightmapInfo {
 		this.blocklight2 = blocklight2;
 		this.blocklight3 = blocklight3;
 	}
-
-	public final int skylight1;
-	public final int skylight2;
-	public final int skylight3;
-	public final int blocklight0;
-	public final int blocklight1;
-	public final int blocklight2;
-	public final int blocklight3;
 
 	public static LightmapInfo generateLightmapInfo(
 			final PackedLightCache packedLightCache,
