@@ -60,6 +60,7 @@ public class Vec3 implements Cloneable {
 
 	@Nonnull
 	public static Vec3 retain(final float x, final float y, final float z) {
+		// STOPSHIP: 2019-02-13 FIXME TODO POOLED VECS
 		return new Vec3(x, y, z);
 	}
 

@@ -42,6 +42,7 @@ public class Face {
 
 	@Nonnull
 	public static Face retain(@Nonnull final Vec3 vertex0, @Nonnull final Vec3 vertex1, @Nonnull final Vec3 vertex2, @Nonnull final Vec3 vertex3) {
+		// STOPSHIP: 2019-02-13 FIXME TODO POOLED CACHES
 		return new Face(vertex0, vertex1, vertex2, vertex3);
 	}
 
