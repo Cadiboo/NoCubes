@@ -23,6 +23,9 @@ public class ModWorldEventListener implements IWorldEventListener {
 
 	@Override
 	public void notifyBlockUpdate(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
 		int k1 = pos.getX();
 		int l1 = pos.getY();
 		int i2 = pos.getZ();
