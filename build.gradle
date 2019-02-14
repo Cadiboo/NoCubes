@@ -18,6 +18,9 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modCompile "net.fabricmc:fabric:0.2.0.91"
+
+	//@NonNull annotation
+	implementation "com.google.code.findbugs:jsr305:3.0.2"
 }
 
 // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
