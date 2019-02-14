@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 
 /**
  * Removes boxing cost of passing in generic functions with Boolean
@@ -9,6 +9,6 @@ import net.minecraft.block.state.IBlockState;
  */
 public interface IIsSmoothable {
 
-	boolean isSmoothable(final IBlockState state);
+	boolean isSmoothable(final BlockState state);
 
 }
