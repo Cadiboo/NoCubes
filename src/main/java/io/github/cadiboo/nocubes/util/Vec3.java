@@ -1,9 +1,9 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nonnull;
+import net.minecraft.util.math.BoundingBox;
 
 /**
  * Simple 3d vector/point with some util methods
@@ -54,8 +54,8 @@ public class Vec3 implements Cloneable {
 		return new BlockPos(this.x, this.y, this.z);
 	}
 
-	public AxisAlignedBB toAxisAlignedBB() {
-		return new AxisAlignedBB(this.toBlockPos());
+	public BoundingBox toBoundingBox() {
+		return new BoundingBox(this.toBlockPos());
 	}
 
 	@Nonnull
