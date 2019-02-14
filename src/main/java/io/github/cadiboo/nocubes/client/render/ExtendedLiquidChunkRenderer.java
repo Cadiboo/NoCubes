@@ -1,23 +1,25 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import com.sun.prism.TextureMap;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
-import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.FluidBlock;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.block.BiomeColors;
+import net.minecraft.client.render.block.BlockColorMap;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkRenderTask;
+import net.minecraft.client.render.chunk.ChunkRenderer;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.ExtendedBlockView;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
@@ -27,24 +29,24 @@ import javax.annotation.Nonnull;
  */
 public class ExtendedLiquidChunkRenderer {
 
-	public static boolean isLiquidSource(final IBlockState state) {
-		return state.getBlock() instanceof BlockLiquid && state.getValue(BlockLiquid.LEVEL) == 0;
+	public static boolean isLiquidSource(final BlockState state) {
+		return state.getBlock() instanceof FluidBlock && state.get(FluidBlock.field_11278) == 0;
 	}
 
 	public static void renderChunk(
-			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
-			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final ChunkRenderer renderChunk,
+			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final ChunkRenderData compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
-			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final ExtendedBlockView blockAccess,
+			@Nonnull final BlockPos.PooledMutable pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final BlockRenderManager blockRendererDispatcher,
 			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache
 	) {
 
-		final IBlockState[] stateCacheArray = stateCache.getStateCache();
+		final BlockState[] stateCacheArray = stateCache.getStateCache();
 
 		final int stateCacheLength = stateCacheArray.length;
 
@@ -55,9 +57,9 @@ public class ExtendedLiquidChunkRenderer {
 
 		final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
 
-		final Minecraft minecraft = Minecraft.getMinecraft();
-		final TextureMap textureMap = minecraft.getTextureMapBlocks();
-		final BlockColors blockColors = minecraft.getBlockColors();
+		final MinecraftClient minecraft = MinecraftClient.getInstance();
+		final SpriteAtlasTexture textureMap = minecraft.getSpriteAtlas();
+		final BlockColorMap blockColors = minecraft.getBlockColorMap();
 
 		final int extendRange = ClientUtil.getExtendLiquidsRange();
 
@@ -93,17 +95,17 @@ public class ExtendedLiquidChunkRenderer {
 							}
 
 							// only render if block up is air/not a normal cube
-							if (stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
+							if (stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isFullBoundsCubeForCulling()) {
 								continue;
 							}
 
-							final IBlockState liquidState = stateCacheArray[liquidStateIndex];
+							final BlockState liquidState = stateCacheArray[liquidStateIndex];
 
 							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
 							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-							OptifineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
+							OptifineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.set(
 									renderChunkPositionX + x,
 									renderChunkPositionY + y,
 									renderChunkPositionZ + z
@@ -115,7 +117,7 @@ public class ExtendedLiquidChunkRenderer {
 									renderChunkPositionX + x,
 									renderChunkPositionY + y,
 									renderChunkPositionZ + z,
-									pooledMutableBlockPos.setPos(
+									pooledMutableBlockPos.set(
 											renderChunkPositionX + x + xOffset,
 											renderChunkPositionY + y,
 											renderChunkPositionZ + z + zOffset
