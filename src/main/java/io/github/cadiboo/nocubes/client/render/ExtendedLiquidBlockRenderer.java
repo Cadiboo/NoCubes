@@ -2,16 +2,20 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.render.block.BlockColorMap;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
@@ -22,14 +26,14 @@ import javax.annotation.Nonnull;
 public class ExtendedLiquidBlockRenderer {
 
 	public static boolean renderExtendedLiquid(
-			@Nonnull final TextureMap textureMap,
-			@Nonnull final BlockColors blockColors,
+			@Nonnull final SpriteAtlasTexture textureMap,
+			@Nonnull final BlockColorMap blockColors,
 			final double renderPosX, final double renderPosY, final double renderPosZ,
 			@Nonnull final BlockPos liquidPos,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final ExtendedBlockView blockAccess,
 			//TODO: eventually do better liquid rendering for 0.3.0
 //			@Nonnull final IBlockState smoothableState,
-			@Nonnull final IBlockState liquidState,
+			@Nonnull final BlockState liquidState,
 			@Nonnull final BufferBuilder bufferBuilder) {
 
 		final TextureAtlasSprite[] atlasSpritesLava = {
