@@ -1,123 +1,29 @@
-buildscript {
-	repositories {
-		jcenter()
-		maven { url = "http://files.minecraftforge.net/maven" }
-	}
-	dependencies {
-		classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-	}
+plugins {
+	id 'fabric-loom' version '0.2.0-SNAPSHOT'
 }
-apply plugin: 'net.minecraftforge.gradle.forge'
-//Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 
-version = modMinecraftVersion + "-" + modVersion
-group = modGroup
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 archivesBaseName = modFileName
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-
-repositories {
-
-	// Put other remote maven repositories here
-
-	maven {
-		name = "CurseForge"
-		url = "https://minecraft.curseforge.com/api/maven/"
-	}
-
-}
+version = modMinecraftVersion + "-" + modVersion
 
 minecraft {
-
-	version = modMinecraftVersion + "-" + modForgeVersion
-
-	runDir = "run"
-
-	mappings = modMcpMappings
-
-	replace "@VERSION@", project.version
-	replace '@FINGERPRINT@', project.findProperty('signSHA1')
-	replaceIn modReferenceClass
-
 }
 
 dependencies {
+	minecraft "com.mojang:minecraft:19w06a"
+	mappings "net.fabricmc:yarn:19w06a.3"
+	modCompile "net.fabricmc:fabric-loader:0.3.5.106"
 
-	// you may put jars on which you depend on in ./libs
-	// or you may define them like so..
-	//compile "some.group:artifact:version:classifier"
-	//compile "some.group:artifact:version"
-
-	// real examples
-	//compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-	//compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-	// the 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-	//provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-	// the deobf configurations:  'deobfCompile' and 'deobfProvided' are the same as the normal compile and provided,
-	// except that these dependencies get remapped to your current MCP mappings
-	//deobfCompile 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-	//deobfProvided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-//	deobfCompile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.12.2:0.3.0"
-
-	// for more info...
-	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-	// http://www.gradle.org/docs/current/userguide/dependency_management.html
-
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modCompile "net.fabricmc:fabric:0.2.0.91"
 }
 
-jar {
-
-	manifest {
-		attributes 'FMLAT': 'nocubes_at.cfg'
-	}
-
+// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+// if it is present.
+// If you remove this task, sources will not be generated.
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
 }
-
-processResources {
-
-	// this will ensure that this task is redone when the versions change.
-	inputs.property "version", project.version
-	inputs.property "mcversion", project.minecraft.version
-
-	// replace stuff in mcmod.info, nothing else
-	from(sourceSets.main.resources.srcDirs) {
-		include 'mcmod.info'
-
-		// replace version and mcversion
-		expand 'version': project.version, 'mcversion': project.minecraft.version
-	}
-
-	// copy everything else except the mcmod.info
-	from(sourceSets.main.resources.srcDirs) {
-		exclude 'mcmod.info'
-	}
-
-	//move our Access Transformer to META-INF
-	rename '(.+_at.cfg)', 'META-INF/$1'
-
-}
-
-task signJar(type: SignJar, dependsOn: reobfJar) {
-
-	// Skips if the keyStore property is missing.
-	onlyIf {
-		project.hasProperty('keyStore')
-	}
-
-	// findProperty allows us to reference the property without it existing.
-	// Using project.propName would cause the script to fail validation if the property did not exist.
-	keyStore = project.findProperty('keyStore')
-	alias = project.findProperty('keyStoreAlias')
-	storePass = project.findProperty('keyStorePass')
-	keyPass = project.findProperty('keyStoreKeyPass')
-	inputFile = jar.archivePath
-	outputFile = jar.archivePath
-
-}
-
-// Runs this task automatically when build is run.
-build.dependsOn signJar
