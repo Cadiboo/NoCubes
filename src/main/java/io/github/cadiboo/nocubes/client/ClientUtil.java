@@ -59,7 +59,7 @@ public final class ClientUtil {
 	public static final MethodHandle renderChunk_preRenderBlocks;
 	static {
 		renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(
-			
+
 		)
 	}
 
