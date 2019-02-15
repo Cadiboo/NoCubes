@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.max;
 import static java.lang.Math.floor;
@@ -45,7 +45,7 @@ public class LightmapInfo {
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
 			final int[] pos,
-			final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
+			final IWorldReader blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
 		final int cachesSizeX = packedLightCache.sizeX;

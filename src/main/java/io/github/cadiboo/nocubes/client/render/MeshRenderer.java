@@ -15,22 +15,23 @@ import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getRenderLayer;
 import static io.github.cadiboo.nocubes.client.ClientUtil.getTexturePosAndState;
@@ -44,11 +45,11 @@ public class MeshRenderer {
 
 	private static void renderFaces(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
 			@Nonnull final Map<int[], ArrayList<Face>> chunkData,
@@ -57,6 +58,8 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			final boolean renderOpposite
 	) {
+
+		final Random random = new Random();
 
 		chunkData.forEach((pos, faces) -> {
 
@@ -74,7 +77,7 @@ public class MeshRenderer {
 
 					OptifineCompatibility.pushShaderThing(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
 
-					blockRendererDispatcher.renderBlock(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
+					blockRendererDispatcher.renderBlock(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder, random);
 
 					OptifineCompatibility.popShaderThing(bufferBuilder);
 				}
@@ -105,7 +108,7 @@ public class MeshRenderer {
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {
-					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, 0L).get(0);
+					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, random).get(0);
 				}
 				final TextureAtlasSprite sprite = quad.getSprite();
 				final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
@@ -190,10 +193,10 @@ public class MeshRenderer {
 
 				CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
 				final BlockPos blockPos = new BlockPos(renderChunkPositionX + pos[0], renderChunkPositionX + pos[0], renderChunkPositionX + pos[0]);
-				CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, realState.getBlock(), realState.getBlock().getMetaFromState(realState));
+				CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, realState);
 
 				CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
-				CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePos, textureState.getBlock(), textureState.getBlock().getMetaFromState(textureState));
+				CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePos, textureState);
 
 				throw new ReportedException(crashReport);
 			}
@@ -204,11 +207,11 @@ public class MeshRenderer {
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,

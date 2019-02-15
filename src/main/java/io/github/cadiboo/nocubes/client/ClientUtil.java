@@ -2,38 +2,39 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.ReflectionHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.world.IWorldReader;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper.UnknownConstructorException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Random;
 
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.max;
@@ -56,7 +57,7 @@ import static net.minecraft.util.math.MathHelper.getPositionRandom;
  * @author Cadiboo
  */
 @SuppressWarnings("WeakerAccess")
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public final class ClientUtil {
 
 	/**
@@ -152,7 +153,7 @@ public final class ClientUtil {
 	 */
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-		final long posRand = getPositionRandom(pos);
+		final Random posRand = new Random(getPositionRandom(pos));
 		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
 		return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
 	}
@@ -168,7 +169,7 @@ public final class ClientUtil {
 	 */
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
-		final long posRand = getPositionRandom(pos);
+		final Random posRand = new Random(getPositionRandom(pos));
 		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
 		final BakedQuad quad = getQuad(state, pos, posRand, model, facing);
 		if (quad != null) {
@@ -182,7 +183,7 @@ public final class ClientUtil {
 	 * helper method to actually get the quads
 	 */
 	@Nullable
-	private static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final long posRand, final IBakedModel model, final EnumFacing... facings) {
+	private static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final Random posRand, final IBakedModel model, final EnumFacing... facings) {
 		for (EnumFacing facing : facings) {
 			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
 			if (!quads.isEmpty()) {
@@ -201,13 +202,13 @@ public final class ClientUtil {
 	 * @param pos   the pos
 	 * @return the color
 	 */
-	public static int getColor(final BakedQuad quad, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
+	public static int getColor(final BakedQuad quad, final IBlockState state, final IWorldReader cache, final BlockPos pos) {
 		final int red;
 		final int green;
 		final int blue;
 
 		if (quad.hasTintIndex()) {
-			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			final int colorMultiplier = Minecraft.getInstance().getBlockColors().getColor(state, cache, pos, 0);
 			red = (colorMultiplier >> 16) & 255;
 			green = (colorMultiplier >> 8) & 255;
 			blue = colorMultiplier & 255;
@@ -304,7 +305,7 @@ public final class ClientUtil {
 	 */
 	//TODO: state cache?
 	public static Object[] getTexturePosAndState(
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final IWorldReader cache,
 			@Nonnull final BlockPos pos,
 			@Nonnull final IBlockState state,
 			@Nonnull final IIsSmoothable isStateSmoothable,
@@ -366,14 +367,14 @@ public final class ClientUtil {
 	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
 		try {
 			if (ambientOcclusionFaceNeedsBlockModelRenderer) {
-				return ambientOcclusionFace.newInstance(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer());
+				return ambientOcclusionFace.newInstance(Minecraft.getInstance().getBlockRendererDispatcher().getBlockModelRenderer());
 			} else {
 				return ambientOcclusionFace.newInstance();
 			}
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
 			final CrashReportCategory crashReportCategory = crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
-			crashReportCategory.addCrashSection("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
+			crashReportCategory.addDetail("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
 			throw new ReportedException(crashReport);
 		}
 	}
@@ -386,14 +387,14 @@ public final class ClientUtil {
 			case TRANSLUCENT:
 				return blockRenderLayer;
 			case CUTOUT_MIPPED:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
+				return Minecraft.getInstance().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
 			case CUTOUT:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+				return Minecraft.getInstance().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
-		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
+		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);

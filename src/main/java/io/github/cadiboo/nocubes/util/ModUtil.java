@@ -10,13 +10,17 @@ import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -33,6 +37,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
+import static net.minecraftforge.fml.VersionChecker.*;
 
 /**
  * Util that is used on BOTH physical sides
@@ -43,10 +48,10 @@ import static net.minecraft.init.Blocks.BEDROCK;
 public final class ModUtil {
 
 	private static final Random RANDOM = new Random();
-
-	private static final Field configuration_definedConfigVersion = ReflectionUtil.getFieldOrCrash(Configuration.class, "definedConfigVersion");
-
-	private static final Field configManager_CONFIGS = ReflectionUtil.getFieldOrCrash(ConfigManager.class, "CONFIGS");
+//
+//	private static final Field configuration_definedConfigVersion = ReflectionUtil.getFieldOrCrash(Configuration.class, "definedConfigVersion");
+//
+//	private static final Field configManager_CONFIGS = ReflectionUtil.getFieldOrCrash(ConfigManager.class, "CONFIGS");
 
 	public static final IIsSmoothable TERRAIN_SMOOTHABLE = ModUtil::shouldSmooth;
 	public static final IIsSmoothable LEAVES_SMOOTHABLE = ModUtil::shouldSmoothLeaves;
@@ -74,11 +79,11 @@ public final class ModUtil {
 	/**
 	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
-	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
+	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IWorldReader cache, final BlockPos pos) {
 		float density = 0;
 
 		if (shouldSmooth) {
-			final AxisAlignedBB box = state.getBoundingBox(cache, pos);
+			final AxisAlignedBB box = state.getShape(cache, pos).getBoundingBox();
 			final double boxHeight = box.maxY - box.minY;
 			if (boxHeight >= 1) {
 				density += boxHeight;
@@ -139,13 +144,13 @@ public final class ModUtil {
 	 *
 	 * @param modContainer the {@link ModContainer} for {@link NoCubes}
 	 */
-	public static void launchUpdateDaemon(ModContainer modContainer) {
+	public static void launchUpdateDaemon(IModInfo modContainer) {
 
 		new Thread(() -> {
 			WHILE:
 			while (true) {
 
-				final ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(modContainer);
+				final CheckResult checkResult = getResult(modContainer);
 
 				switch (checkResult.status) {
 					default:
@@ -179,103 +184,103 @@ public final class ModUtil {
 
 	public static void fixConfig(final File configFile) {
 
-		//Fix config file versioning while still using @Config
-		final Map<String, Configuration> CONFIGS;
-		try {
-			//Map of full file path -> configuration
-			CONFIGS = (Map<String, Configuration>) configManager_CONFIGS.get(null);
-		} catch (IllegalAccessException e) {
-			CrashReport crashReport = new CrashReport("Error getting field for ConfigManager.CONFIGS!", e);
-			crashReport.makeCategory("Reflectively Accessing ConfigManager.CONFIGS");
-			throw new ReportedException(crashReport);
-		}
-
-		//copied from ConfigManager
-		Configuration config = CONFIGS.get(configFile.getAbsolutePath());
-		if (config == null) {
-			config = new Configuration(configFile, CONFIG_VERSION);
-			config.load();
-			CONFIGS.put(configFile.getAbsolutePath(), config);
-		}
-
-		try {
-			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
-//			config.save();
+//		//Fix config file versioning while still using @Config
+//		final Map<String, Configuration> CONFIGS;
+//		try {
+//			//Map of full file path -> configuration
+//			CONFIGS = (Map<String, Configuration>) configManager_CONFIGS.get(null);
+//		} catch (IllegalAccessException e) {
+//			CrashReport crashReport = new CrashReport("Error getting field for ConfigManager.CONFIGS!", e);
+//			crashReport.makeCategory("Reflectively Accessing ConfigManager.CONFIGS");
+//			throw new ReportedException(crashReport);
+//		}
+//
+//		//copied from ConfigManager
+//		Configuration config = CONFIGS.get(configFile.getAbsolutePath());
+//		if (config == null) {
+//			config = new Configuration(configFile, CONFIG_VERSION);
 //			config.load();
-		} catch (IllegalAccessException | IllegalArgumentException e) {
-			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
-			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
-			throw new ReportedException(crashReport);
-		}
-
-		NO_CUBES_LOG.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
-//		config.load();
-
-		// reset config if old version
-		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
-			NO_CUBES_LOG.info("Resetting config file " + configFile.getName());
-			//copied from Configuration
-			File backupFile = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
-			try {
-				FileUtils.copyFile(configFile, backupFile, true);
-			} catch (IOException e) {
-				NO_CUBES_LOG.error("We don't really care about this error", e);
-			}
-			configFile.delete();
-			//refresh
-			config.load();
-			//save version
-			config.save();
-			//save default config
-			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
-		}
-
-
-		//remove Isosurface level (for mod version 0.2.0 onwards, implemented after 0.2.2 and before 0.2.3)
-		{
-			config.getCategory(Configuration.CATEGORY_GENERAL).remove("isosurfaceLevel");
-		}
-
-		//fix extendLiquids (implemented after 0.2.2 and before 0.2.3)
-		{
-			Property extendLiquids = config.get(Configuration.CATEGORY_GENERAL, "extendLiquids", ExtendLiquidRange.OneBlock.name());
-			if(extendLiquids.isBooleanValue())
-			config.getCategory(Configuration.CATEGORY_GENERAL).remove("extendLiquids");
-		}
-
-		if (false) {
-			// fix Isosurface level (mod version 0.1.2?)
-			{
-				final double oldDefaultValue = 0.001D;
-				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-				if (isosurfaceLevel.isDefault())
-					//edit in version 0.1.6: set to 1
-//				isosurfaceLevel.set(0.0D);
-					isosurfaceLevel.set(1.0D);
-			}
-
-			// fix Isosurface level (mod version 0.1.5?)
-			{
-				final double oldDefaultValue = 0.0D;
-				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
-				if (isosurfaceLevel.isDefault())
-					isosurfaceLevel.set(1.0D);
-			}
-		}
-
-		//save (Unnecessary?)
-		config.save();
-		//save
-		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+//			CONFIGS.put(configFile.getAbsolutePath(), config);
+//		}
+//
+//		try {
+//			configuration_definedConfigVersion.set(config, CONFIG_VERSION);
+////			config.save();
+////			config.load();
+//		} catch (IllegalAccessException | IllegalArgumentException e) {
+//			CrashReport crashReport = new CrashReport("Error setting value of field Configuration.definedConfigVersion!", e);
+//			crashReport.makeCategory("Reflectively Accessing Configuration.definedConfigVersion");
+//			throw new ReportedException(crashReport);
+//		}
+//
+//		NO_CUBES_LOG.debug("fixing Config with version " + config.getDefinedConfigVersion() + ", current version is " + CONFIG_VERSION);
+////		config.load();
+//
+//		// reset config if old version
+//		if (!CONFIG_VERSION.equals(config.getLoadedConfigVersion())) {
+//			NO_CUBES_LOG.info("Resetting config file " + configFile.getName());
+//			//copied from Configuration
+//			File backupFile = new File(configFile.getAbsolutePath() + "_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".version-" + config.getLoadedConfigVersion());
+//			try {
+//				FileUtils.copyFile(configFile, backupFile, true);
+//			} catch (IOException e) {
+//				NO_CUBES_LOG.error("We don't really care about this error", e);
+//			}
+//			configFile.delete();
+//			//refresh
+//			config.load();
+//			//save version
+//			config.save();
+//			//save default config
+//			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+//		}
+//
+//
+//		//remove Isosurface level (for mod version 0.2.0 onwards, implemented after 0.2.2 and before 0.2.3)
+//		{
+//			config.getCategory(Configuration.CATEGORY_GENERAL).remove("isosurfaceLevel");
+//		}
+//
+//		//fix extendLiquids (implemented after 0.2.2 and before 0.2.3)
+//		{
+//			Property extendLiquids = config.get(Configuration.CATEGORY_GENERAL, "extendLiquids", ExtendLiquidRange.OneBlock.name());
+//			if(extendLiquids.isBooleanValue())
+//			config.getCategory(Configuration.CATEGORY_GENERAL).remove("extendLiquids");
+//		}
+//
+//		if (false) {
+//			// fix Isosurface level (mod version 0.1.2?)
+//			{
+//				final double oldDefaultValue = 0.001D;
+//				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+//				if (isosurfaceLevel.isDefault())
+//					//edit in version 0.1.6: set to 1
+////				isosurfaceLevel.set(0.0D);
+//					isosurfaceLevel.set(1.0D);
+//			}
+//
+//			// fix Isosurface level (mod version 0.1.5?)
+//			{
+//				final double oldDefaultValue = 0.0D;
+//				Property isosurfaceLevel = config.get(Configuration.CATEGORY_GENERAL, "isosurfaceLevel", oldDefaultValue);
+//				if (isosurfaceLevel.isDefault())
+//					isosurfaceLevel.set(1.0D);
+//			}
+//		}
+//
+//		//save (Unnecessary?)
+//		config.save();
+//		//save
+//		ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 	}
 
 	public static void crashIfNotDev(final Exception e) {
-		if (FMLLaunchHandler.isDeobfuscatedEnvironment()) {
-			NO_CUBES_LOG.error("FIX THIS ERROR NOW!", e);
-			return;
-		}
-		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
-		throw new ReportedException(crashReport);
+//		if (FMLLaunchHandler.isDeobfuscatedEnvironment()) {
+//			NO_CUBES_LOG.error("FIX THIS ERROR NOW!", e);
+//			return;
+//		}
+//		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
+//		throw new ReportedException(crashReport);
 	}
 
 	public static int max(int... ints) {

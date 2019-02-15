@@ -1,7 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockFlowingFluid;
+import net.minecraft.block.BlockFluid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
@@ -12,7 +13,9 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorld;
+import net.minecraft.world.IWorldReader;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 
@@ -26,11 +29,12 @@ public class ExtendedLiquidBlockRenderer {
 			@Nonnull final BlockColors blockColors,
 			final double renderPosX, final double renderPosY, final double renderPosZ,
 			@Nonnull final BlockPos liquidPos,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReaderBase blockAccess,
 			//TODO: eventually do better liquid rendering for 0.3.0
 //			@Nonnull final IBlockState smoothableState,
 			@Nonnull final IBlockState liquidState,
-			@Nonnull final BufferBuilder bufferBuilder) {
+			@Nonnull final BufferBuilder bufferBuilder
+	) {
 
 		final TextureAtlasSprite[] atlasSpritesLava = {
 				textureMap.getAtlasSprite("minecraft:blocks/lava_still"),
@@ -42,7 +46,7 @@ public class ExtendedLiquidBlockRenderer {
 		};
 		final TextureAtlasSprite atlasSpriteWaterOverlay = textureMap.getAtlasSprite("minecraft:blocks/water_overlay");
 
-		BlockLiquid blockliquid = (BlockLiquid) liquidState.getBlock();
+		BlockFlowingFluid blockliquid = (BlockFlowingFluid) liquidState.getBlock();
 		boolean isLava = liquidState.getMaterial() == Material.LAVA;
 		TextureAtlasSprite[] sprites = isLava ? atlasSpritesLava : atlasSpritesWater;
 
@@ -268,7 +272,7 @@ public class ExtendedLiquidBlockRenderer {
 		return true;
 	}
 
-	private static float getFluidHeight(IBlockAccess blockAccess, BlockPos blockPosIn, Material blockMaterial) {
+	private static float getFluidHeight(IWorldReader blockAccess, BlockPos blockPosIn, Material blockMaterial) {
 		int divisor = 0;
 		float liquidHeightPercentage = 0.0F;
 
@@ -288,10 +292,10 @@ public class ExtendedLiquidBlockRenderer {
 					++divisor;
 				}
 			} else {
-				int liquidLevel = iblockstate.getValue(BlockLiquid.LEVEL);
+				int liquidLevel = iblockstate.get(BlockFlowingFluid.LEVEL);
 
 				if (liquidLevel >= 8 || liquidLevel == 0) {
-					liquidHeightPercentage += BlockLiquid.getLiquidHeightPercent(liquidLevel) * 10.0F;
+					liquidHeightPercentage += BlockFlowingFluid.getLiquidHeightPercent(liquidLevel) * 10.0F;
 					divisor += 10;
 				}
 

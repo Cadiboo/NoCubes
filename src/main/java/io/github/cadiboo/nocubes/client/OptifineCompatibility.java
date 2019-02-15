@@ -1,11 +1,11 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.util.ReflectionHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -48,7 +48,7 @@ public final class OptifineCompatibility {
 
 			{
 				try {
-					pushEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "pushEntity", null, IBlockState.class, BlockPos.class, IBlockAccess.class, BufferBuilder.class));
+					pushEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "pushEntity", null, IBlockState.class, BlockPos.class, IWorldReader.class, BufferBuilder.class));
 				} catch (ReflectionHelper.UnableToFindMethodException e) {
 					//Optifine doesn't exist;
 				} catch (IllegalAccessException e) {
@@ -90,7 +90,7 @@ public final class OptifineCompatibility {
 
 	}
 
-	public static void pushShaderThing(IBlockState blockStateIn, BlockPos blockPosIn, IBlockAccess blockAccess, BufferBuilder worldRendererIn) {
+	public static void pushShaderThing(IBlockState blockStateIn, BlockPos blockPosIn, IWorldReader blockAccess, BufferBuilder worldRendererIn) {
 
 //		if (Config.isShaders()) {
 //			SVertexBuilder.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
@@ -113,7 +113,7 @@ public final class OptifineCompatibility {
 
 	}
 
-	private static void SVertexBuilder_pushEntity(final IBlockState blockStateIn, final BlockPos blockPosIn, final IBlockAccess blockAccess, final BufferBuilder worldRendererIn) {
+	private static void SVertexBuilder_pushEntity(final IBlockState blockStateIn, final BlockPos blockPosIn, final IWorldReader blockAccess, final BufferBuilder worldRendererIn) {
 
 		if (PUSH_ENTITY == null) return;
 
