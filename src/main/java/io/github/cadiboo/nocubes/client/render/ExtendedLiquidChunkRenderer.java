@@ -1,9 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.sun.prism.TextureMap;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
-import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.BlockRenderLayer;
@@ -11,7 +9,6 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.block.BiomeColors;
 import net.minecraft.client.render.block.BlockColorMap;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.chunk.ChunkRenderData;
@@ -20,7 +17,6 @@ import net.minecraft.client.render.chunk.ChunkRenderer;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ExtendedBlockView;
-import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
 
@@ -123,7 +119,7 @@ public class ExtendedLiquidChunkRenderer {
 											renderChunkPositionZ + z + zOffset
 									),
 									blockAccess,
-									liquidState,
+									blockAccess.getFluidState(pooledMutableBlockPos),
 									bufferBuilder
 							);
 							OptifineCompatibility.popShaderThing(bufferBuilder);

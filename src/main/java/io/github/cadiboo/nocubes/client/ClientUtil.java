@@ -2,53 +2,50 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockModelRenderer;
-import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkRenderTask;
+import net.minecraft.client.render.chunk.ChunkRenderer;
+import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.texture.Sprite;
+import net.minecraft.util.crash.CrashException;
+import net.minecraft.util.crash.CrashReport;
+import net.minecraft.util.crash.CrashReportSection;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutable;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.world.ExtendedBlockView;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Random;
 
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
-import static net.minecraft.util.BlockRenderLayer.CUTOUT;
-import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
-import static net.minecraft.util.EnumFacing.DOWN;
-import static net.minecraft.util.EnumFacing.EAST;
-import static net.minecraft.util.EnumFacing.NORTH;
-import static net.minecraft.util.EnumFacing.SOUTH;
-import static net.minecraft.util.EnumFacing.UP;
-import static net.minecraft.util.EnumFacing.WEST;
+import static net.minecraft.block.BlockRenderLayer.CUTOUT;
+import static net.minecraft.block.BlockRenderLayer.MIPPED_CUTOUT;
+import static net.minecraft.util.math.Direction.DOWN;
+import static net.minecraft.util.math.Direction.EAST;
+import static net.minecraft.util.math.Direction.NORTH;
+import static net.minecraft.util.math.Direction.SOUTH;
+import static net.minecraft.util.math.Direction.UP;
+import static net.minecraft.util.math.Direction.WEST;
 import static net.minecraft.util.math.MathHelper.clamp;
-import static net.minecraft.util.math.MathHelper.getPositionRandom;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -56,13 +53,20 @@ import static net.minecraft.util.math.MathHelper.getPositionRandom;
  * @author Cadiboo
  */
 @SuppressWarnings("WeakerAccess")
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class ClientUtil {
 
+	public static final MethodHandle renderChunk_preRenderBlocks;
+	static {
+		renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(
+			
+		)
+	}
+
 	/**
-	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
+	 * The order of {@link Direction} and null used in {@link #getQuad(BlockState, BlockPos, BlockRenderManager)}
 	 */
-	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+	public static final Direction[] ENUMFACING_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
 
@@ -71,28 +75,28 @@ public final class ClientUtil {
 
 //	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = ThreadLocal.withInitial(HashMap::new);
 
-	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
-	private static final boolean ambientOcclusionFaceNeedsBlockModelRenderer;
-	static {
-		Constructor<AmbientOcclusionFace> ambientOcclusionFaceConstructor = null;
-		boolean needsBlockModelRenderer = false;
-		try {
-			try {
-				//TODO: stop using ReflectionHelper
-				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
-			} catch (UnknownConstructorException e) {
-				//TODO: stop using ReflectionHelper
-				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class, BlockModelRenderer.class);
-				needsBlockModelRenderer = true;
-			}
-		} catch (Exception e) {
-			final CrashReport crashReport = new CrashReport("Unable to find constructor for BlockModelRenderer$AmbientOcclusionFace", e);
-			crashReport.makeCategory("Finding Constructor");
-			throw new ReportedException(crashReport);
-		}
-		ambientOcclusionFace = ambientOcclusionFaceConstructor;
-		ambientOcclusionFaceNeedsBlockModelRenderer = needsBlockModelRenderer;
-	}
+//	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
+//	private static final boolean ambientOcclusionFaceNeedsBlockModelRenderer;
+//	static {
+//		Constructor<AmbientOcclusionFace> ambientOcclusionFaceConstructor = null;
+//		boolean needsBlockModelRenderer = false;
+//		try {
+//			try {
+//				//TODO: stop using ReflectionHelper
+//				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
+//			} catch (UnknownConstructorException e) {
+//				//TODO: stop using ReflectionHelper
+//				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class, BlockRenderManager.class);
+//				needsBlockModelRenderer = true;
+//			}
+//		} catch (Exception e) {
+//			final CrashReport crashReport = new CrashReport("Unable to find constructor for BlockModelRenderer$AmbientOcclusionFace", e);
+//			crashReport.addElement("Finding Constructor");
+//			throw new CrashException(crashReport);
+//		}
+//		ambientOcclusionFace = ambientOcclusionFaceConstructor;
+//		ambientOcclusionFaceNeedsBlockModelRenderer = needsBlockModelRenderer;
+//	}
 
 	/**
 	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
@@ -146,14 +150,14 @@ public final class ClientUtil {
 	 * Gets The first quad of a model for a pos & state or null if the model has no quads
 	 *
 	 * @param state                   the state
-	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
-	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
+	 * @param pos                     the position used in {@link MathHelper#hashCode(Vec3i)}
+	 * @param blockRendererDispatcher the {@link BlockRenderManager} to get the model from
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+	public static BakedQuad getQuad(final BlockState state, final BlockPos pos, final BlockRenderManager blockRendererDispatcher) {
+		final long posRand = MathHelper.hashCode(pos);
+		final BakedModel model = blockRendererDispatcher.getModel(state);
 		return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
 	}
 
@@ -161,15 +165,15 @@ public final class ClientUtil {
 	 * Gets The first quad of a model for a pos & state or null if the model has no quads
 	 *
 	 * @param state                   the state
-	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
-	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
-	 * @param facing                  the {@link EnumFacing to check first}
+	 * @param pos                     the position used in {@link MathHelper#hashCode(Vec3i)}
+	 * @param blockRendererDispatcher the {@link BlockRenderManager} to get the model from
+	 * @param facing                  the {@link Direction to check first}
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
-		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
+	public static BakedQuad getQuad(final BlockState state, final BlockPos pos, final BlockRenderManager blockRendererDispatcher, Direction facing) {
+		final long posRand = MathHelper.hashCode(pos);
+		final BakedModel model = blockRendererDispatcher.getModel(state);
 		final BakedQuad quad = getQuad(state, pos, posRand, model, facing);
 		if (quad != null) {
 			return quad;
@@ -182,9 +186,10 @@ public final class ClientUtil {
 	 * helper method to actually get the quads
 	 */
 	@Nullable
-	private static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final long posRand, final IBakedModel model, final EnumFacing... facings) {
-		for (EnumFacing facing : facings) {
-			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
+	private static BakedQuad getQuad(final BlockState state, final BlockPos pos, final long posRand, final BakedModel model, final Direction... facings) {
+		for (Direction facing : facings) {
+			//TODO fix Random
+			final List<BakedQuad> quads = model.getQuads(state, facing, new Random(posRand));
 			if (!quads.isEmpty()) {
 				return quads.get(0);
 			}
@@ -201,13 +206,13 @@ public final class ClientUtil {
 	 * @param pos   the pos
 	 * @return the color
 	 */
-	public static int getColor(final BakedQuad quad, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
+	public static int getColor(final BakedQuad quad, final BlockState state, final ExtendedBlockView cache, final BlockPos pos) {
 		final int red;
 		final int green;
 		final int blue;
 
-		if (quad.hasTintIndex()) {
-			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+		if (quad.hasColor()) {
+			final int colorMultiplier = MinecraftClient.getInstance().getBlockColorMap().getRenderColor(state, cache, pos, 0);
 			red = (colorMultiplier >> 16) & 255;
 			green = (colorMultiplier >> 8) & 255;
 			blue = colorMultiplier & 255;
@@ -225,7 +230,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed minimum U coordinate to use when rendering the sprite
 	 */
-	public static float getMinU(final TextureAtlasSprite sprite) {
+	public static float getMinU(final Sprite sprite) {
 		return sprite.getMinU() + UV_CORRECT;
 	}
 
@@ -235,7 +240,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed maximum U coordinate to use when rendering the sprite
 	 */
-	public static float getMaxU(final TextureAtlasSprite sprite) {
+	public static float getMaxU(final Sprite sprite) {
 		return sprite.getMaxU() - UV_CORRECT;
 	}
 
@@ -245,7 +250,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed minimum V coordinate to use when rendering the sprite
 	 */
-	public static float getMinV(final TextureAtlasSprite sprite) {
+	public static float getMinV(final Sprite sprite) {
 		return sprite.getMinV() + UV_CORRECT;
 	}
 
@@ -255,7 +260,7 @@ public final class ClientUtil {
 	 * @param sprite the sprite
 	 * @return The fixed maximum V coordinate to use when rendering the sprite
 	 */
-	public static float getMaxV(final TextureAtlasSprite sprite) {
+	public static float getMaxV(final Sprite sprite) {
 		return sprite.getMaxV() - UV_CORRECT;
 	}
 
@@ -304,14 +309,14 @@ public final class ClientUtil {
 	 */
 	//TODO: state cache?
 	public static Object[] getTexturePosAndState(
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final ExtendedBlockView cache,
 			@Nonnull final BlockPos pos,
-			@Nonnull final IBlockState state,
+			@Nonnull final BlockState state,
 			@Nonnull final IIsSmoothable isStateSmoothable,
-			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull PooledMutable pooledMutableBlockPos
 	) {
 
-		IBlockState textureState = state;
+		BlockState textureState = state;
 		BlockPos texturePos = pos;
 
 		//check pos first
@@ -329,7 +334,7 @@ public final class ClientUtil {
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
 //				for (int[] withOffset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
+//					final BlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
 //					if (tempState.getBlock() == Blocks.SNOW_LAYER) {
 //						textureState = tempState;
 //						texturePos = pooledMutableBlockPos.toImmutable();
@@ -338,7 +343,7 @@ public final class ClientUtil {
 //				}
 //
 //				for (int[] withOffset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
+//					final BlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
 //					if (tempState.getBlock() == Blocks.GRASS) {
 //						textureState = tempState;
 //						texturePos = pooledMutableBlockPos.toImmutable();
@@ -348,7 +353,7 @@ public final class ClientUtil {
 //			}
 
 		for (int[] offset : OFFSETS_ORDERED) {
-			final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+			final BlockState tempState = cache.getBlockState(pooledMutableBlockPos.set(x + offset[0], y + offset[1], z + offset[2]));
 			if (isStateSmoothable.isSmoothable(tempState)) {
 				textureState = tempState;
 				texturePos = pooledMutableBlockPos.toImmutable();
@@ -363,39 +368,39 @@ public final class ClientUtil {
 
 	}
 
-	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
-		try {
-			if (ambientOcclusionFaceNeedsBlockModelRenderer) {
-				return ambientOcclusionFace.newInstance(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer());
-			} else {
-				return ambientOcclusionFace.newInstance();
-			}
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
-			final CrashReportCategory crashReportCategory = crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
-			crashReportCategory.addCrashSection("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
-			throw new ReportedException(crashReport);
-		}
-	}
+//	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
+//		try {
+//			if (ambientOcclusionFaceNeedsBlockModelRenderer) {
+//				return ambientOcclusionFace.newInstance(MinecraftClient.getInstance().getBlockRenderManager().getModelRenderer());
+//			} else {
+//				return ambientOcclusionFace.newInstance();
+//			}
+//		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+//			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
+//			final CrashReportSection crashReportCategory = crashReport.addElement("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
+//			crashReportCategory.add("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
+//			throw new CrashException(crashReport);
+//		}
+//	}
 
-	public static BlockRenderLayer getRenderLayer(IBlockState state) {
+	public static BlockRenderLayer getRenderLayer(BlockState state) {
 		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 		switch (blockRenderLayer) {
 			default:
 			case SOLID:
 			case TRANSLUCENT:
 				return blockRenderLayer;
-			case CUTOUT_MIPPED:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
+			case MIPPED_CUTOUT:
+				return MinecraftClient.getInstance().options.mipmapLevels == 0 ? CUTOUT : MIPPED_CUTOUT;
 			case CUTOUT:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+				return MinecraftClient.getInstance().options.mipmapLevels != 0 ? MIPPED_CUTOUT : CUTOUT;
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
-		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
-		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
-			compiledChunk.setLayerStarted(blockRenderLayer);
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final ChunkRenderData compiledChunk, final BlockRenderLayer blockRenderLayer, ChunkRenderer renderChunk, BlockPos renderChunkPosition) {
+		final BufferBuilder bufferBuilder = generator.getBufferBuilders().get(blockRenderLayerOrdinal);
+		if (!compiledChunk.isBufferInitialized(blockRenderLayer)) {
+			compiledChunk.markBufferInitialized(blockRenderLayer);
 			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
 		}
 		return bufferBuilder;

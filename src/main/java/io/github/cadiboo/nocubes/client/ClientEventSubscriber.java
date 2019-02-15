@@ -28,10 +28,10 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
  *
  * @author Cadiboo
  */
-@Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
+//@Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
-	@SubscribeEvent
+//	@SubscribeEvent
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
@@ -39,7 +39,7 @@ public final class ClientEventSubscriber {
 		RenderDispatcher.renderChunk(event);
 	}
 
-	@SubscribeEvent
+//	@SubscribeEvent
 	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
@@ -47,38 +47,38 @@ public final class ClientEventSubscriber {
 		RenderDispatcher.renderBlock(event);
 	}
 
-	@SubscribeEvent
-	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {
-		if (!ClientProxy.toggleSmoothableBlockstate.isPressed()) {
-			return;
-		}
-		final Minecraft minecraft = Minecraft.getMinecraft();
-		final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
-		if (objectMouseOver.typeOfHit != BLOCK) {
-			return;
-		}
-		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
-		final String stateAsString = state.toString();
-		if (ModConfig.getSmoothableBlockStatesCache().contains(state)) {
-			ModConfig.smoothableBlockStates = ModConfig.getSmoothableBlockStatesCache().stream()
-					.filter(checkState -> checkState != state)
-					.map(IBlockState::toString)
-					.toArray(String[]::new);
-		} else {
-			final ArrayList<String> list = Lists.newArrayList(ModConfig.smoothableBlockStates);
-			list.add(stateAsString);
-			ModConfig.smoothableBlockStates = list.toArray(new String[0]);
-		}
-		// Copied from GuiConfig
-		if (Loader.isModLoaded(MOD_ID)) {
-			ConfigChangedEvent configChangedEvent = new ConfigChangedEvent.OnConfigChangedEvent(MOD_ID, null, true, false);
-			MinecraftForge.EVENT_BUS.post(configChangedEvent);
-			if (!configChangedEvent.getResult().equals(Event.Result.DENY)) {
-				MinecraftForge.EVENT_BUS.post(new ConfigChangedEvent.PostConfigChangedEvent(MOD_ID, null, true, false));
-			}
-		}
-		minecraft.renderGlobal.loadRenderers();
-	}
+//	@SubscribeEvent
+//	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {
+//		if (!ClientProxy.toggleSmoothableBlockstate.isPressed()) {
+//			return;
+//		}
+//		final Minecraft minecraft = Minecraft.getMinecraft();
+//		final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
+//		if (objectMouseOver.typeOfHit != BLOCK) {
+//			return;
+//		}
+//		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
+//		final String stateAsString = state.toString();
+//		if (ModConfig.getSmoothableBlockStatesCache().contains(state)) {
+//			ModConfig.smoothableBlockStates = ModConfig.getSmoothableBlockStatesCache().stream()
+//					.filter(checkState -> checkState != state)
+//					.map(IBlockState::toString)
+//					.toArray(String[]::new);
+//		} else {
+//			final ArrayList<String> list = Lists.newArrayList(ModConfig.smoothableBlockStates);
+//			list.add(stateAsString);
+//			ModConfig.smoothableBlockStates = list.toArray(new String[0]);
+//		}
+//		// Copied from GuiConfig
+//		if (Loader.isModLoaded(MOD_ID)) {
+//			ConfigChangedEvent configChangedEvent = new ConfigChangedEvent.OnConfigChangedEvent(MOD_ID, null, true, false);
+//			MinecraftForge.EVENT_BUS.post(configChangedEvent);
+//			if (!configChangedEvent.getResult().equals(Event.Result.DENY)) {
+//				MinecraftForge.EVENT_BUS.post(new ConfigChangedEvent.PostConfigChangedEvent(MOD_ID, null, true, false));
+//			}
+//		}
+//		minecraft.renderGlobal.loadRenderers();
+//	}
 
 //	@SubscribeEvent
 //	public static void onForgeRenderChunkChunkCacheThingFor1_13(final EventThatDoesntExistIn1_12_2 event) {
