@@ -103,6 +103,8 @@ jar {
 	}
 }
 
+ import net.minecraftforge.gradle.common.task.SignJar
+
 task signJar(type: SignJar, dependsOn: reobfJar) {
 
 	// Skips if the keyStore property is missing.
