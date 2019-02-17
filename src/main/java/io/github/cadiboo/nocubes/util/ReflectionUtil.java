@@ -2,8 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.util.ReportedException;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraft.crash.ReportedException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;

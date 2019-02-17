@@ -5,28 +5,26 @@ import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
-import io.github.cadiboo.nocubes.client.render.ExtendedLiquidChunkRenderer;
-import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildCanBlockBeRenderedEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreRenderEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 
 import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
@@ -40,12 +38,12 @@ public class RenderDispatcher {
 	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
 	private static final ThreadLocal<Boolean> USED_RENDER_LAYERS_SET = ThreadLocal.withInitial(() -> false);
 
-	public static void renderChunk(final RebuildChunkPreEvent event) {
+	public static void renderChunk(final RebuildChunkPreRenderEvent event) {
 		final RenderChunk renderChunk = event.getRenderChunk();
-		final ChunkCompileTaskGenerator generator = event.getGenerator();
+		final ChunkRenderTask generator = event.getGenerator();
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final IBlockAccess blockAccess = event.getIBlockAccess();
+		final BlockPos renderChunkPosition = event.getRenderChunkStartPosition();
+		final IWorldReader blockAccess = event.getRenderChunkCache();
 
 		final int meshSizeX;
 		final int meshSizeY;
@@ -65,8 +63,7 @@ public class RenderDispatcher {
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
-		final BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain();
-		try {
+		try (final BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain()) {
 			renderChunk(
 					renderChunk,
 					generator,
@@ -77,25 +74,23 @@ public class RenderDispatcher {
 					pooledMutableBlockPos,
 					meshSizeX, meshSizeY, meshSizeZ
 			);
-		} finally {
-			pooledMutableBlockPos.release();
 		}
 	}
 
 	private static void renderChunk(
 			final RenderChunk renderChunk,
-			final ChunkCompileTaskGenerator generator,
+			final ChunkRenderTask generator,
 			final CompiledChunk compiledChunk,
 			final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IBlockAccess blockAccess,
+			final IWorldReader blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ
 	) {
 		final ModProfiler profiler = NoCubes.getProfiler();
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
 		USED_RENDER_LAYERS_SET.set(false);
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
 		{
 //			for(MeshLayer layer : meshLayers)
@@ -185,7 +180,7 @@ public class RenderDispatcher {
 	private static StateCache generateMeshAndLightStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final IBlockAccess blockAccess,
+			final IWorldReader blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
@@ -214,7 +209,7 @@ public class RenderDispatcher {
 
 	private static StateCache generateExtendedWaterStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IBlockAccess blockAccess,
+			final IWorldReader blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			final int extendLiquidsRange
 	) {
@@ -239,7 +234,7 @@ public class RenderDispatcher {
 		);
 	}
 
-	public static void renderBlock(final RebuildChunkBlockEvent event) {
+	public static void renderBlock(final RebuildCanBlockBeRenderedEvent event) {
 		try {
 			if (!USED_RENDER_LAYERS_SET.get()) {
 				for (int ordinal = 0; ordinal < BlockRenderLayer.values().length; ++ordinal) {

@@ -1,14 +1,11 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.ReflectionHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
-import net.minecraftforge.fml.common.Loader;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 
 public final class OptifineCompatibility {
 
@@ -20,57 +17,63 @@ public final class OptifineCompatibility {
 	private static final MethodHandle POP_ENTITY;
 
 	static {
-		Class<?> optifineConfig = null;
-		MethodHandle configIsShaders = null;
-		Class<?> SVertexBuilder = null;
-		MethodHandle pushEntity = null;
-		MethodHandle popEntity = null;
-		try {
-			optifineConfig = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "Config");
-		} catch (ReflectionHelper.UnableToFindClassException e) {
-			//Optifine doesn't exist;
-		}
+//		Class<?> optifineConfig = null;
+//		MethodHandle configIsShaders = null;
+//		Class<?> SVertexBuilder = null;
+//		MethodHandle pushEntity = null;
+//		MethodHandle popEntity = null;
+//		try {
+//			optifineConfig = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "Config");
+//		} catch (ReflectionHelper.UnableToFindClassException e) {
+//			//Optifine doesn't exist;
+//		}
+//
+//		if (optifineConfig != null) {
+//			try {
+//				configIsShaders = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(optifineConfig, "isShaders", null));
+//			} catch (ReflectionHelper.UnableToFindMethodException e) {
+//				//Optifine doesn't exist;
+//			} catch (IllegalAccessException e) {
+//				//Wtf?
+//			}
+//
+//			try {
+//				SVertexBuilder = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "net.optifine.shaders.SVertexBuilder");
+//			} catch (ReflectionHelper.UnableToFindClassException e) {
+//				//Optifine doesn't exist;
+//			}
+//
+//			{
+//				try {
+//					pushEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "pushEntity", null, IBlockState.class, BlockPos.class, IWorldReader.class, BufferBuilder.class));
+//				} catch (ReflectionHelper.UnableToFindMethodException e) {
+//					//Optifine doesn't exist;
+//				} catch (IllegalAccessException e) {
+//					//Wtf?
+//				}
+//			}
+//
+//			{
+//				try {
+//					popEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "popEntity", null, BufferBuilder.class));
+//				} catch (ReflectionHelper.UnableToFindMethodException e) {
+//					//Optifine doesn't exist;
+//				} catch (IllegalAccessException e) {
+//					//Wtf?
+//				}
+//			}
+//		}
+//		OPTIFINE_CONFIG = optifineConfig;
+//		CONFIG_IS_SHADERS = configIsShaders;
+//		S_VERTEX_BUILDER = SVertexBuilder;
+//		PUSH_ENTITY = pushEntity;
+//		POP_ENTITY = popEntity;
 
-		if (optifineConfig != null) {
-			try {
-				configIsShaders = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(optifineConfig, "isShaders", null));
-			} catch (ReflectionHelper.UnableToFindMethodException e) {
-				//Optifine doesn't exist;
-			} catch (IllegalAccessException e) {
-				//Wtf?
-			}
-
-			try {
-				SVertexBuilder = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "net.optifine.shaders.SVertexBuilder");
-			} catch (ReflectionHelper.UnableToFindClassException e) {
-				//Optifine doesn't exist;
-			}
-
-			{
-				try {
-					pushEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "pushEntity", null, IBlockState.class, BlockPos.class, IWorldReader.class, BufferBuilder.class));
-				} catch (ReflectionHelper.UnableToFindMethodException e) {
-					//Optifine doesn't exist;
-				} catch (IllegalAccessException e) {
-					//Wtf?
-				}
-			}
-
-			{
-				try {
-					popEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "popEntity", null, BufferBuilder.class));
-				} catch (ReflectionHelper.UnableToFindMethodException e) {
-					//Optifine doesn't exist;
-				} catch (IllegalAccessException e) {
-					//Wtf?
-				}
-			}
-		}
-		OPTIFINE_CONFIG = optifineConfig;
-		CONFIG_IS_SHADERS = configIsShaders;
-		S_VERTEX_BUILDER = SVertexBuilder;
-		PUSH_ENTITY = pushEntity;
-		POP_ENTITY = popEntity;
+		OPTIFINE_CONFIG = null;
+		CONFIG_IS_SHADERS = null;
+		S_VERTEX_BUILDER = null;
+		PUSH_ENTITY = null;
+		POP_ENTITY = null;
 
 	}
 

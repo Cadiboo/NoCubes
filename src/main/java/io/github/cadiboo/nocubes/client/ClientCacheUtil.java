@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
 
@@ -13,7 +13,7 @@ public final class ClientCacheUtil {
 	public static PackedLightCache generatePackedLightCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final IWorldReader cache,
 			@Nonnull BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		final PackedLightCache pooledPackedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);

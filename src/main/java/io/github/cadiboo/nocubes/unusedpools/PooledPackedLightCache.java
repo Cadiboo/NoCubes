@@ -1,7 +1,5 @@
 package io.github.cadiboo.nocubes.unusedpools;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
@@ -9,7 +7,6 @@ import java.util.ArrayList;
 /**
  * @author Cadiboo
  */
-@SideOnly(Side.CLIENT)
 public class PooledPackedLightCache implements AutoCloseable {
 
 	private int[] packedLightCache;

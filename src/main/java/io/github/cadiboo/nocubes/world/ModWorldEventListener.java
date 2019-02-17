@@ -1,14 +1,14 @@
 package io.github.cadiboo.nocubes.world;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.particles.IParticleData;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldEventListener;
-import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -22,14 +22,14 @@ public class ModWorldEventListener implements IWorldEventListener {
 	private static final int BLOCK_UPDATE_EXTEND = 2;
 
 	@Override
-	public void notifyBlockUpdate(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
-		if (!NoCubes.isEnabled()) {
-			return;
-		}
-		int k1 = pos.getX();
-		int l1 = pos.getY();
-		int i2 = pos.getZ();
-		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
+	public void notifyBlockUpdate(@Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
+//		if (!NoCubes.isEnabled()) {
+//			return;
+//		}
+//		int k1 = pos.getX();
+//		int l1 = pos.getY();
+//		int i2 = pos.getZ();
+//		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
 	@Override
@@ -53,12 +53,12 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord, final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
+	public void addParticle(@Nonnull final IParticleData particleData, final boolean alwaysRender, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed) {
 
 	}
 
 	@Override
-	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
+	public void addParticle(@Nonnull final IParticleData particleData, final boolean ignoreRange, final boolean minimizeLevel, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed) {
 
 	}
 

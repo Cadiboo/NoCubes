@@ -36,7 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Random;
 
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.renderChunk_preRenderBlocks;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;

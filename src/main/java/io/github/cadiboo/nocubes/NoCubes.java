@@ -1,30 +1,14 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.util.ReportedException;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.util.ArrayList;
 
-import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_MINECRAFT_VERSIONS;
-import static io.github.cadiboo.nocubes.util.ModReference.CERTIFICATE_FINGERPRINT;
-import static io.github.cadiboo.nocubes.util.ModReference.CLIENT_PROXY_CLASS;
-import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static io.github.cadiboo.nocubes.util.ModReference.SERVER_PROXY_CLASS;
-import static io.github.cadiboo.nocubes.util.ModReference.UPDATE_JSON;
-import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 
 @Mod(MOD_ID)
 public final class NoCubes {

@@ -1,15 +1,15 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.XYZCache;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class PackedLightCache extends XYZCache {
 
 	@Nonnull

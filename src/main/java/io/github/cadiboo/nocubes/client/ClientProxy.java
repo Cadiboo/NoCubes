@@ -3,11 +3,10 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.util.ReportedException;
-import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraft.crash.ReportedException;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
@@ -25,7 +24,7 @@ public final class ClientProxy implements IProxy {
 
 	private static final int KEY_CODE_N = 49;
 
-	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories.misc");
+	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KEY_CODE_N, "key.categories.nocubes");
 
 	static {
 		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
@@ -34,7 +33,7 @@ public final class ClientProxy implements IProxy {
 	static {
 		try {
 			RenderGlobal_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
-					ObfuscationReflectionHelper.findMethod(RenderGlobal.class, "func_184385_a",
+					ObfuscationReflectionHelper.findMethod(WorldRenderer.class, "func_184385_a",
 							void.class,
 							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
 					)
@@ -49,21 +48,21 @@ public final class ClientProxy implements IProxy {
 	@Override
 	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
 
-		final RenderGlobal renderGlobal = Minecraft.getMinecraft().renderGlobal;
-
-		if (renderGlobal.world == null || renderGlobal.viewFrustum == null) {
-			return;
-		}
-
-		try {
-			RenderGlobal_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
-		} catch (ReportedException e) {
-			throw e;
-		} catch (Throwable throwable) {
-			final CrashReport crashReport = new CrashReport("Exception invoking method RenderGlobal.markBlocksForUpdate", throwable);
-			crashReport.makeCategory("Reflectively Invoking Method");
-			throw new ReportedException(crashReport);
-		}
+//		final WorldRenderer renderGlobal = Minecraft.getInstance().renderGlobal;
+//
+//		if (renderGlobal.world == null || renderGlobal.viewFrustum == null) {
+//			return;
+//		}
+//
+//		try {
+//			RenderGlobal_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+//		} catch (ReportedException e) {
+//			throw e;
+//		} catch (Throwable throwable) {
+//			final CrashReport crashReport = new CrashReport("Exception invoking method RenderGlobal.markBlocksForUpdate", throwable);
+//			crashReport.makeCategory("Reflectively Invoking Method");
+//			throw new ReportedException(crashReport);
+//		}
 	}
 
 }
