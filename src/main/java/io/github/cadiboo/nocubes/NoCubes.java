@@ -26,17 +26,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.SERVER_PROXY_CLASS;
 import static io.github.cadiboo.nocubes.util.ModReference.UPDATE_JSON;
 import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 
-@Mod(
-		modid = MOD_ID,
-		name = MOD_NAME,
-		version = VERSION,
-		acceptedMinecraftVersions = ACCEPTED_MINECRAFT_VERSIONS,
-		updateJSON = UPDATE_JSON,
-		dependencies = DEPENDENCIES,
-		clientSideOnly = true,
-		acceptableRemoteVersions = VERSION,
-		certificateFingerprint = CERTIFICATE_FINGERPRINT
-)
+@Mod(MOD_ID)
 public final class NoCubes {
 
 	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
@@ -51,21 +41,21 @@ public final class NoCubes {
 		return profiler;
 	});
 
-	@Mod.Instance(MOD_ID)
-	public static NoCubes instance;
-
-	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
-	public static IProxy proxy;
+//	@Mod.Instance(MOD_ID)
+//	public static NoCubes instance;
+//
+//	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
+//	public static IProxy proxy;
 
 	public NoCubes() {
-		try {
-			//ew hacks
-			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
-		} catch (Exception e) {
-			final CrashReport crashReport = new CrashReport("Something went terribly wrong trying to hack our config", e);
-			crashReport.makeCategory("Initialising NoCubes");
-			throw new ReportedException(crashReport);
-		}
+//		try {
+//			//ew hacks
+//			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
+//		} catch (Exception e) {
+//			final CrashReport crashReport = new CrashReport("Something went terribly wrong trying to hack our config", e);
+//			crashReport.makeCategory("Initialising NoCubes");
+//			throw new ReportedException(crashReport);
+//		}
 	}
 
 	public static boolean isEnabled() {
@@ -76,10 +66,10 @@ public final class NoCubes {
 		return PROFILER.get();
 	}
 
-	@Mod.EventHandler
-	public void onPreInit(final FMLPreInitializationEvent event) {
-		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
-		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
-	}
+//	@Mod.EventHandler
+//	public void onPreInit(final FMLPreInitializationEvent event) {
+//		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
+//		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
+//	}
 
 }
