@@ -1,43 +1,23 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.IWorldReader;
-import net.minecraftforge.common.ForgeVersion;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
 import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.VersionChecker;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.forgespi.language.IModInfo;
-import org.apache.commons.io.FileUtils;
 
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
-import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
-import static net.minecraftforge.fml.VersionChecker.*;
+import static net.minecraftforge.fml.VersionChecker.CheckResult;
+import static net.minecraftforge.fml.VersionChecker.getResult;
 
 /**
  * Util that is used on BOTH physical sides
