@@ -39,6 +39,10 @@ minecraft {
 	mappings channel: 'snapshot', version: '20180921-1.13'
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
+	// replace "@VERSION@", project.version
+	// replace '@FINGERPRINT@', project.findProperty('signSHA1')
+	// replaceIn modReferenceClass
+
 	accessTransformer = file(modId + "_at.cfg")
 
 	// default run configurations.
