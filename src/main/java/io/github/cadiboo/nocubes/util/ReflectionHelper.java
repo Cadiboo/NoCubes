@@ -29,6 +29,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.ObfuscationReflectionHelper_findMethod;
+
 /**
  * Some reflection helper code.
  *
@@ -37,7 +39,8 @@ import java.lang.reflect.Method;
 public class ReflectionHelper {
 
 	public static Method findMethod(@Nonnull final Class<?> clazz, @Nonnull final String methodName, @Nullable final Class<?>... parameterTypes) {
-		return ObfuscationReflectionHelper.findMethod(clazz, methodName, parameterTypes);
+//		return ObfuscationReflectionHelper.findMethod(clazz, methodName, parameterTypes);
+		return ObfuscationReflectionHelper_findMethod(clazz, methodName, parameterTypes);
 	}
 
 	public static class UnableToFindMethodException extends RuntimeException {

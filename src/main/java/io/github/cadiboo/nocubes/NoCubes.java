@@ -1,7 +1,11 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.server.ServerProxy;
+import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,9 +31,8 @@ public final class NoCubes {
 
 //	@Mod.Instance(MOD_ID)
 //	public static NoCubes instance;
-//
-//	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
-//	public static IProxy proxy;
+
+	public static IProxy proxy = DistExecutor.runForDist(()->()-> new ClientProxy(), ()->()-> new ServerProxy());
 
 	public NoCubes() {
 //		try {

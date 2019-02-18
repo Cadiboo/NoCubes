@@ -14,6 +14,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.ObfuscationReflectionHelper_findMethod;
 
 /**
  * The version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL CLIENT
@@ -29,37 +30,40 @@ public final class ClientProxy implements IProxy {
 	static {
 		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
 	}
-	private static final MethodHandle RenderGlobal_markBlocksForUpdate;
-	static {
-		try {
-			RenderGlobal_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
-					ObfuscationReflectionHelper.findMethod(WorldRenderer.class, "func_184385_a",
-							void.class,
-							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
-					)
-			);
-		} catch (IllegalAccessException e) {
-			final CrashReport crashReport = new CrashReport("Unable to find method RenderGlobal.markBlocksForUpdate. Method does not exist!", e);
-			crashReport.makeCategory("Finding Method");
-			throw new ReportedException(crashReport);
-		}
-	}
+//	private static final MethodHandle WorldRenderer_markBlocksForUpdate;
+//	static {
+//		try {
+//			WorldRenderer_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
+//					//TODO change back once forge isnt bugged
+//					ObfuscationReflectionHelper_findMethod(WorldRenderer.class, "func_184385_a",
+//							void.class,
+//							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
+//					)
+//			);
+//		} catch (IllegalAccessException e) {
+//			final CrashReport crashReport = new CrashReport("Unable to find method WorldRenderer#markBlocksForUpdate!", e);
+//			crashReport.makeCategory("Finding Method");
+//			throw new ReportedException(crashReport);
+//		}
+//	}
 
 	@Override
 	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
 
-//		final WorldRenderer renderGlobal = Minecraft.getInstance().renderGlobal;
-//
-//		if (renderGlobal.world == null || renderGlobal.viewFrustum == null) {
-//			return;
-//		}
-//
+		final WorldRenderer renderGlobal = Minecraft.getInstance().renderGlobal;
+
+		if (renderGlobal.world == null || renderGlobal.viewFrustum == null) {
+			return;
+		}
+
+		renderGlobal.viewFrustum.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+
 //		try {
-//			RenderGlobal_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+//			WorldRenderer_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
 //		} catch (ReportedException e) {
 //			throw e;
 //		} catch (Throwable throwable) {
-//			final CrashReport crashReport = new CrashReport("Exception invoking method RenderGlobal.markBlocksForUpdate", throwable);
+//			final CrashReport crashReport = new CrashReport("Exception invoking method WorldRenderer#markBlocksForUpdate", throwable);
 //			crashReport.makeCategory("Reflectively Invoking Method");
 //			throw new ReportedException(crashReport);
 //		}
