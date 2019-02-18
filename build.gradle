@@ -94,6 +94,8 @@ dependencies {
 
 //	compile fileTree(dir: 'libs', include: '*.jar')
 
+	compile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.13.2:0.4.0:pre2"
+
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
