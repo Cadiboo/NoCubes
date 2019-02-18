@@ -11,7 +11,7 @@ import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildCanBlockBeRenderedEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreRenderEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -234,7 +234,7 @@ public class RenderDispatcher {
 		);
 	}
 
-	public static void renderBlock(final RebuildCanBlockBeRenderedEvent event) {
+	public static void renderBlock(final RebuildChunkBlockEvent event) {
 		try {
 			if (!USED_RENDER_LAYERS_SET.get()) {
 				for (int ordinal = 0; ordinal < BlockRenderLayer.values().length; ++ordinal) {

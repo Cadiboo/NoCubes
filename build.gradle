@@ -21,6 +21,8 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
 
+	mavenLocal()
+
 	// Put other remote maven repositories here
 
 	maven {
@@ -92,9 +94,9 @@ dependencies {
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
 	// http://www.gradle.org/docs/current/userguide/dependency_management.html
 
-//	compile fileTree(dir: 'libs', include: '*.jar')
+//	deobf "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.13.2:0.4.0"
 
-	compile "renderchunk-rebuildchunk-hooks:RenderChunk-rebuildChunk-Hooks:1.13.2:0.4.0:pre2"
+	compile fileTree(dir: 'libs', include: '*.jar')
 
 }
 

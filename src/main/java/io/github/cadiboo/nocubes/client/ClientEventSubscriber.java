@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildCanBlockBeRenderedEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreRenderEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -28,7 +28,7 @@ public final class ClientEventSubscriber {
 	}
 
 	@SubscribeEvent
-	public static void onRebuildChunkBlockEvent(final RebuildCanBlockBeRenderedEvent event) {
+	public static void onRebuildChunkBlockEvent(final RebuildChunkBlockEvent event) {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
