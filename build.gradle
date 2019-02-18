@@ -92,6 +92,8 @@ dependencies {
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
 	// http://www.gradle.org/docs/current/userguide/dependency_management.html
 
+//	compile fileTree(dir: 'libs', include: '*.jar')
+
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..
