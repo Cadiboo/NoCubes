@@ -30,6 +30,7 @@ public class ExtendedLiquidChunkRenderer {
 		return state.getBlock() instanceof BlockFlowingFluid && state.get(BlockFlowingFluid.LEVEL) == 0;
 	}
 
+	//TODO new caches for IFluidStates
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
 			@Nonnull final ChunkRenderTask generator,
