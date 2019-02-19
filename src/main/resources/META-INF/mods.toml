@@ -69,7 +69,7 @@ This mod will soon merge with the NoCubes Reloaded project
 
 # Here's another dependency
 [[dependencies.nocubes]]
-    modId="render_chunk-rebuild_chunk-hooks"
+    modId="renderchunk-rebuildchunk-hooks"
     mandatory=true
     versionRange="[1.13.2-0.6.0,1.13.2-0.7.0)"
     # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
