@@ -3,10 +3,6 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.FaceList;
-import io.github.cadiboo.nocubes.util.Vec3;
-import io.github.cadiboo.nocubes.util.Vec3b;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreRenderEvent;
 import net.minecraft.block.state.IBlockState;
@@ -15,8 +11,6 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
 

@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 

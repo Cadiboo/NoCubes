@@ -8,7 +8,6 @@ import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
-import java.util.Map;
 
 public class MarchingTetrahedra implements IMeshGenerator {
 

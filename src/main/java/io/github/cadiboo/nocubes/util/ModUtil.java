@@ -9,7 +9,6 @@ import net.minecraft.crash.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraftforge.fml.ModContainer;
 
 import java.io.File;

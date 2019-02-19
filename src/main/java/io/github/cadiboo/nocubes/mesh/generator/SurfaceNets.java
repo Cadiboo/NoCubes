@@ -10,7 +10,6 @@ import io.github.cadiboo.nocubes.util.Vec3b;
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class SurfaceNets implements IMeshGenerator {
 

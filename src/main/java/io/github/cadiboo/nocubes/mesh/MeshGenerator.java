@@ -4,12 +4,10 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3b;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 

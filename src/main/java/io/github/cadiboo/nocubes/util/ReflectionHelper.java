@@ -20,7 +20,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import com.google.common.base.Preconditions;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper.UnknownConstructorException;
 
 import javax.annotation.Nonnull;

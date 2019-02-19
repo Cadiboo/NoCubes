@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
 
