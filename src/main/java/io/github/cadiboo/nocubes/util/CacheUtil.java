@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
@@ -11,7 +12,7 @@ public final class CacheUtil {
 	public static StateCache generateStateCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
-			@Nonnull final IWorldReader cache,
+			@Nonnull final IBlockReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
@@ -51,7 +52,7 @@ public final class CacheUtil {
 			final int startPosX, final int startPosY, final int startPosZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		//TODO: Light adds +1 to each side of the cache, once its separated I only need to subtract 1
@@ -83,7 +84,7 @@ public final class CacheUtil {
 			final int posX, final int posY, final int posZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
-			@Nonnull final IWorldReader cache,
+			@Nonnull final IBlockReader cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		float density = 0;

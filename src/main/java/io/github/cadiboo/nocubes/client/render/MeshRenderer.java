@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.VertexHandler;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
@@ -32,6 +33,7 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -229,26 +231,29 @@ public class MeshRenderer {
 
 		//normal terrain
 		{
-			final DensityCache data = CacheUtil.generateDensityCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					stateCache, smoothableCache,
-					blockAccess,
-					pooledMutableBlockPos
-			);
+//			final DensityCache data = CacheUtil.generateDensityCache(
+//					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+//					stateCache, smoothableCache,
+//					blockAccess,
+//					pooledMutableBlockPos
+//			);
 
-			renderFaces(
-					renderChunk,
-					generator,
-					compiledChunk,
-					renderChunkPosition,
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					blockAccess,
-					blockRendererDispatcher,
-					pooledPackedLightCache,
-					ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ}),
-					TERRAIN_SMOOTHABLE,
-					pooledMutableBlockPos, usedBlockRenderLayers, false
-			);
+			final HashMap<Vec3b, FaceList> chunkData = VertexHandler.getChunkData(blockAccess, renderChunkPosition);
+			if (chunkData != null) {
+				renderFaces(
+						renderChunk,
+						generator,
+						compiledChunk,
+						renderChunkPosition,
+						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+						blockAccess,
+						blockRendererDispatcher,
+						pooledPackedLightCache,
+						chunkData,
+						TERRAIN_SMOOTHABLE,
+						pooledMutableBlockPos, usedBlockRenderLayers, false
+				);
+			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {
 

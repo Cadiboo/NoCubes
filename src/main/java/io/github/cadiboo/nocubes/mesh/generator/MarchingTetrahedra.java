@@ -34,7 +34,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
 		final byte[][] cube_vertices = CUBE_VERTICES;
 		final byte[][] tetra_list = TETRA_LIST;

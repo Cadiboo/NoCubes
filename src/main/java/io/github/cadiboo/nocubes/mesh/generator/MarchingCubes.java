@@ -333,7 +333,7 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
 		final byte[][] cubeVerts = CUBE_VERTS;
 		final short[] edgeTable = EDGE_TABLE;

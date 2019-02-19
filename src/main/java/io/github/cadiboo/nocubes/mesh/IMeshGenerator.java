@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.Map;
 
 public interface IMeshGenerator {
@@ -15,6 +16,6 @@ public interface IMeshGenerator {
 	 * @param dims the dimensions of the mesh
 	 */
 	@Nonnull
-	Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims);
+	HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims);
 
 }

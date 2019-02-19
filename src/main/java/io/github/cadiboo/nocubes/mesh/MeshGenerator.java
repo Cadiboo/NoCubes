@@ -10,6 +10,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3b;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public enum MeshGenerator {
@@ -27,8 +28,8 @@ public enum MeshGenerator {
 		this.meshGenerator = meshGenerator;
 	}
 
-	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
-		final Map<Vec3b, FaceList> chunkData = meshGenerator.generateChunk(data, dims);
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+		final HashMap<Vec3b, FaceList> chunkData = meshGenerator.generateChunk(data, dims);
 		if (ModConfig.offsetVertices) {
 			offsetChunkVertices(chunkData);
 		}

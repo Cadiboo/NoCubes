@@ -17,7 +17,7 @@ public class OldNoCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
 		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
 

@@ -8,6 +8,7 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.fml.ModContainer;
 
@@ -62,7 +63,7 @@ public final class ModUtil {
 	/**
 	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
-	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IWorldReader cache, final BlockPos pos) {
+	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockReader cache, final BlockPos pos) {
 		float density = 0;
 
 		if (shouldSmooth) {
