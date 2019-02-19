@@ -75,7 +75,7 @@ package io.github.cadiboo.renderchunkrebuildchunkhooks.hooks;//package io.github
 //	 * @return If vanilla rendering should be stopped
 //	 * @see io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.rebuildChunk_diff and cadiboo.renderchunkrebuildchunkhooks.core.util.rebuildChunkOptifine_diff
 //	 */
-//	public static boolean rebuildChunkCancelRenderingHook(
+//	public static boolean rebuildChunkCancelRenderingPreGeneratingCompiledChunkHook(
 //			@Nonnull final RenderChunk renderChunk,
 //			final float x,
 //			final float y,

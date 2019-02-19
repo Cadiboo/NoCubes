@@ -13,11 +13,11 @@ public class RenderChunkCacheReference {
 		this.reference = reference;
 	}
 
-	public RenderChunkCache getReference() {
+	public RenderChunkCache get() {
 		return reference;
 	}
 
-	public void setReference(final RenderChunkCache reference) {
+	public void set(final RenderChunkCache reference) {
 		this.reference = reference;
 	}
 

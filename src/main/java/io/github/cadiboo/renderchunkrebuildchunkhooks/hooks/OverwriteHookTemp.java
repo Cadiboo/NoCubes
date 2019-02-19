@@ -2,6 +2,7 @@ package io.github.cadiboo.renderchunkrebuildchunkhooks.hooks;
 
 import com.google.common.collect.Sets;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.util.RenderChunkCacheReference;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.util.WorldReference;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -35,7 +36,8 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.renderCh
  */
 public class OverwriteHookTemp {
 
-// - The RebuildChunkPreEvent is called before any chunk rebuilding is done and allows access to the IWorldReader
+// - The RebuildChunkPre is called before any chunk rebuilding is done or the generator's compiledchunk is set. It allows access to, and setting of, the World
+// - The RebuildChunkPreRenderSetupEvent is called before any chunk rebuilding is done and allows access to, and setting of, the RenderChunkCache
 // - The RebuildChunkPreRenderEvent is called before any chunk rendering is done and allows access to the BlockRendererDispatcher and the usedRenderLayer boolean array
 // - The RebuildChunkFluidRenderInLayerEvent allows Modders to modify the BlockRenderLayers that fluids can render in
 // - The RebuildChunkFluidEvent is called for every BlockRenderLayer for every fluid and allows Modders to add their own logic
@@ -57,6 +59,12 @@ public class OverwriteHookTemp {
 		BlockPos blockpos = renderChunk.position.toImmutable();
 		BlockPos blockpos1 = blockpos.add(15, 15, 15);
 		World world = renderChunk.world;
+		//START HOOK
+		final WorldReference worldReference = new WorldReference(world);
+		if (RenderChunkRebuildChunkHooksHooks.rebuildChunkCancelRenderingPreGeneratingCompiledChunkHook(renderChunk, x, y, z, generator, compiledchunk, blockpos, blockpos1, worldReference)) {
+			return;
+		}
+		//END HOOK
 		if (world != null) {
 			generator.getLock().lock();
 
@@ -76,7 +84,7 @@ public class OverwriteHookTemp {
 			HashSet lvt_12_1_ = Sets.newHashSet();
 			//START HOOK
 			final RenderChunkCacheReference lvt_10_1_Reference = new RenderChunkCacheReference(lvt_10_1_);
-			if (RenderChunkRebuildChunkHooksHooks.rebuildChunkCancelRenderingHook(renderChunk, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_Reference, lvt_11_1_, lvt_12_1_)) {
+			if (RenderChunkRebuildChunkHooksHooks.rebuildChunkCancelRenderingPreRenderSetupHook(renderChunk, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_Reference, lvt_11_1_, lvt_12_1_)) {
 				return;
 			}
 			//END HOOK

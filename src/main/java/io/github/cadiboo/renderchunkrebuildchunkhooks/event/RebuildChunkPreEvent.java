@@ -1,27 +1,21 @@
 package io.github.cadiboo.renderchunkrebuildchunkhooks.event;
 
-import io.github.cadiboo.renderchunkrebuildchunkhooks.util.RenderChunkCacheReference;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.util.WorldReference;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.chunk.RenderChunkCache;
-import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.eventbus.api.Cancelable;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 
 /**
  * @author Cadiboo
  */
-@Cancelable
 public class RebuildChunkPreEvent extends RebuildChunkEvent {
 
-	private final RenderChunkCacheReference renderChunkCacheReference;
-	private final VisGraph visGraph;
-	private final HashSet tileEntitiesWithGlobalRenderers;
+	@Nonnull
+	private final WorldReference worldReference;
 
 	public RebuildChunkPreEvent(
 			@Nonnull final RenderChunk renderChunk,
@@ -32,33 +26,24 @@ public class RebuildChunkPreEvent extends RebuildChunkEvent {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkStartPosition,
 			@Nonnull final BlockPos renderChunkEndPosition,
-			@Nonnull final World world,
-			@Nonnull final RenderChunkCacheReference renderChunkCacheReference,
-			@Nonnull final VisGraph visGraph,
-			@Nonnull final HashSet tileEntitiesWithGlobalRenderers
+			@Nonnull final WorldReference worldReference
 	) {
-		super(renderChunk, x, y, z, generator, compiledChunk, renderChunkStartPosition, renderChunkEndPosition, world);
-		this.renderChunkCacheReference = renderChunkCacheReference;
-		this.visGraph = visGraph;
-		this.tileEntitiesWithGlobalRenderers = tileEntitiesWithGlobalRenderers;
+		//pass null in as the world, and override the getWorld method;
+		super(renderChunk, x, y, z, generator, compiledChunk, renderChunkStartPosition, renderChunkEndPosition, null);
+		this.worldReference = worldReference;
 	}
 
-	public RenderChunkCache getRenderChunkCache() {
-		return renderChunkCacheReference.getReference();
+	@Nonnull
+	@Override
+	public World getWorld() {
+		return worldReference.get();
 	}
 
-	public RenderChunkCache setRenderChunkCache(final RenderChunkCache reference) {
-		final RenderChunkCache oldReference = renderChunkCacheReference.getReference();
-		renderChunkCacheReference.setReference(reference);
-		return oldReference;
-	}
-
-	public VisGraph getVisGraph() {
-		return visGraph;
-	}
-
-	public HashSet getTileEntitiesWithGlobalRenderers() {
-		return tileEntitiesWithGlobalRenderers;
+	@Nonnull
+	public World setWorld(World world) {
+		final World oldWorld = worldReference.get();
+		worldReference.set(world);
+		return oldWorld;
 	}
 
 }
