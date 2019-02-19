@@ -51,13 +51,13 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {
 
-		if (Minecraft.getInstance().world != null && Minecraft.getInstance().world.getGameTime() % 100 == 0) {
-			Logger logger = LogManager.getLogger("debug");
-			logger.info("Face " + Face.getInstances() + " " + Face.getPoolSize());
-			logger.info("FaceList " + FaceList.getInstances() + " " + FaceList.getPoolSize());
-			logger.info("Vec3 " + Vec3.getInstances() + " " + Vec3.getPoolSize());
-			logger.info("Vec3b " + Vec3b.getInstances() + " " + Vec3b.getPoolSize());
-		}
+//		if (Minecraft.getInstance().world != null && Minecraft.getInstance().world.getGameTime() % 100 == 0) {
+//			Logger logger = LogManager.getLogger("debug");
+//			logger.info("Face " + Face.getInstances() + " " + Face.getPoolSize());
+//			logger.info("FaceList " + FaceList.getInstances() + " " + FaceList.getPoolSize());
+//			logger.info("Vec3 " + Vec3.getInstances() + " " + Vec3.getPoolSize());
+//			logger.info("Vec3b " + Vec3b.getInstances() + " " + Vec3b.getPoolSize());
+//		}
 
 		if (!ClientProxy.toggleSmoothableBlockstate.isPressed()) {
 			return;
