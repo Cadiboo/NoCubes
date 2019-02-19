@@ -1,8 +1,13 @@
 {
 	"homepage": "https://cadiboo.github.io/projects/nocubes/",
 	"promos": {
+		"1.13.2-latest": "1.13.2-0.2.4",
+		"1.13.2-recommended": "1.13.2-0.2.4",
 		"1.12.2-latest": "1.12.2-0.2.2",
 		"1.12.2-recommended": "1.12.2-0.2.2"
+	},
+	"1.13.2": {
+		"1.13.2-0.2.4": "Update to 1.13.2, Some features (Such as Extend Liquids) are missing"
 	},
 	"1.12.2": {
 		"1.12.2-0.2.2": "Very small bug fix update",
