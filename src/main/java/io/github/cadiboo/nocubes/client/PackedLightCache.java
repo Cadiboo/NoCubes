@@ -10,25 +10,47 @@ import javax.annotation.Nonnull;
  * @author Cadiboo
  */
 @OnlyIn(Dist.CLIENT)
-public class PackedLightCache extends XYZCache {
+public class PackedLightCache extends XYZCache implements AutoCloseable {
+
+	private static final ThreadLocal<PackedLightCache> POOL = ThreadLocal.withInitial(() -> new PackedLightCache(0, 0, 0));
 
 	@Nonnull
-	private final int[] packedLightCache;
+	private int[] cache;
 
 	private PackedLightCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		packedLightCache = new int[sizeX * sizeY * sizeZ];
+		cache = new int[sizeX * sizeY * sizeZ];
 	}
 
 	@Nonnull
 	public int[] getPackedLightCache() {
-		return packedLightCache;
+		return cache;
 	}
 
 	@Nonnull
 	public static PackedLightCache retain(final int sizeX, final int sizeY, final int sizeZ) {
-		// STOPSHIP: 2019-02-13 FIXME TODO POOLED CACHES
-		return new PackedLightCache(sizeX, sizeY, sizeZ);
+
+		final PackedLightCache pooled = POOL.get();
+
+		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
+			return pooled;
+		}
+
+		pooled.sizeX = sizeX;
+		pooled.sizeY = sizeY;
+		pooled.sizeZ = sizeZ;
+
+		final int size = sizeX * sizeY * sizeZ;
+
+		if (pooled.cache.length < size) {
+			pooled.cache = new int[size];
+		}
+
+		return pooled;
+	}
+
+	@Override
+	public void close() {
 	}
 
 }

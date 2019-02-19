@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -381,6 +382,20 @@ public final class ClientUtil {
 
 	public static BlockRenderLayer getRenderLayer(IBlockState state) {
 		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+		switch (blockRenderLayer) {
+			default:
+			case SOLID:
+			case TRANSLUCENT:
+				return blockRenderLayer;
+			case CUTOUT_MIPPED:
+				return Minecraft.getInstance().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
+			case CUTOUT:
+				return Minecraft.getInstance().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+		}
+	}
+
+	public static BlockRenderLayer getRenderLayer(IFluidState state) {
+		final BlockRenderLayer blockRenderLayer = state.getRenderLayer();
 		switch (blockRenderLayer) {
 			default:
 			case SOLID:

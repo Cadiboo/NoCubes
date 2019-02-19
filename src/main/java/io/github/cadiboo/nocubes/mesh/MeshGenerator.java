@@ -5,7 +5,9 @@ import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -25,15 +27,15 @@ public enum MeshGenerator {
 		this.meshGenerator = meshGenerator;
 	}
 
-	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
-		final Map<int[], ArrayList<Face>> chunkData = meshGenerator.generateChunk(data, dims);
+	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+		final Map<Vec3b, FaceList> chunkData = meshGenerator.generateChunk(data, dims);
 		if (ModConfig.offsetVertices) {
 			offsetChunkVertices(chunkData);
 		}
 		return chunkData;
 	}
 
-	private static void offsetChunkVertices(Map<int[], ArrayList<Face>> chunkData) {
+	private static void offsetChunkVertices(Map<Vec3b, FaceList> chunkData) {
 		chunkData.forEach((pos, list) -> {
 			list.forEach(face -> {
 				ModUtil.offsetVertex(face.getVertex0());

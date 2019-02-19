@@ -2,10 +2,11 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,22 +17,21 @@ public class OldNoCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
+	public Map<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
-		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
-		final ArrayList<Face> faces = new ArrayList<>();
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
 
-		for (int z = 0; z < dims[0]; ++z) {
-			for (int y = 0; y < dims[1]; ++y) {
-				for (int x = 0; x < dims[2]; ++x) {
+		for (byte z = 0; z < dims[0]; ++z) {
+			for (byte y = 0; y < dims[1]; ++y) {
+				for (byte x = 0; x < dims[2]; ++x) {
 
 					final boolean[] neighbours = new boolean[8];
 
-					int neighbourIndex = 0;
+					byte neighbourIndex = 0;
 					//neighbours
-					for (int xOffset = 0; xOffset < 2; ++xOffset) {
-						for (int yOffset = 0; yOffset < 2; ++yOffset) {
-							for (int zOffset = 0; zOffset < 2; ++zOffset, ++neighbourIndex) {
+					for (byte xOffset = 0; xOffset < 2; ++xOffset) {
+						for (byte yOffset = 0; yOffset < 2; ++yOffset) {
+							for (byte zOffset = 0; zOffset < 2; ++zOffset, ++neighbourIndex) {
 								//TODO: set the index in the loop with whatever black magic mikelasko uses
 								final int dataIndex = (x + xOffset) + dims[0] * (y + yOffset + dims[1] * (z + zOffset));
 
@@ -42,6 +42,8 @@ public class OldNoCubes implements IMeshGenerator {
 							}
 						}
 					}
+
+					final FaceList faces = FaceList.retain();
 
 					// (0, 1, 0), (0, 0, 0), (0, 0, 1), (0, 1, 1)
 					if (neighbours[2] && neighbours[0] && neighbours[1] && neighbours[3]) {
@@ -55,8 +57,7 @@ public class OldNoCubes implements IMeshGenerator {
 						);
 					}
 
-					posToFaces.put(new int[]{x, y, z}, new ArrayList<>(faces));
-					faces.clear();
+					posToFaces.put(Vec3b.retain(x, y, z), faces);
 				}
 
 			}

@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
@@ -52,10 +53,6 @@ public class ExtendedLiquidChunkRenderer {
 		}
 
 		final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
-
-		final Minecraft minecraft = Minecraft.getInstance();
-		final TextureMap textureMap = minecraft.getTextureMap();
-		final BlockColors blockColors = minecraft.getBlockColors();
 
 		final int extendRange = ClientUtil.getExtendLiquidsRange();
 
@@ -96,8 +93,9 @@ public class ExtendedLiquidChunkRenderer {
 							}
 
 							final IBlockState liquidState = stateCacheArray[liquidStateIndex];
+							final IFluidState fluidState = liquidState.getFluidState();
 
-							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
+							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(fluidState);
 							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
@@ -109,7 +107,6 @@ public class ExtendedLiquidChunkRenderer {
 
 							//TODO smooth lighting?
 							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
-									textureMap, blockColors,
 									renderChunkPositionX + x,
 									renderChunkPositionY + y,
 									renderChunkPositionZ + z,
@@ -120,6 +117,7 @@ public class ExtendedLiquidChunkRenderer {
 									),
 									blockAccess,
 									liquidState,
+									fluidState,
 									bufferBuilder
 							);
 							OptifineCompatibility.popShaderThing(bufferBuilder);

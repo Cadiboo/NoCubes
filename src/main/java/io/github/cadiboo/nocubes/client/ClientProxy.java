@@ -23,29 +23,28 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.Obfuscat
  */
 public final class ClientProxy implements IProxy {
 
-	private static final int KEY_CODE_N = 49;
+	private static final int KEY_CODE_N = 78;
 
 	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KEY_CODE_N, "key.categories.nocubes");
 
 	static {
 		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
 	}
-//	private static final MethodHandle WorldRenderer_markBlocksForUpdate;
-//	static {
-//		try {
-//			WorldRenderer_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
-//					//TODO change back once forge isnt bugged
-//					ObfuscationReflectionHelper_findMethod(WorldRenderer.class, "func_184385_a",
-//							void.class,
-//							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
-//					)
-//			);
-//		} catch (IllegalAccessException e) {
-//			final CrashReport crashReport = new CrashReport("Unable to find method WorldRenderer#markBlocksForUpdate!", e);
-//			crashReport.makeCategory("Finding Method");
-//			throw new ReportedException(crashReport);
-//		}
-//	}
+	private static final MethodHandle WorldRenderer_markBlocksForUpdate;
+	static {
+		try {
+			WorldRenderer_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
+					//TODO change back once forge isn't bugged
+					ObfuscationReflectionHelper_findMethod(WorldRenderer.class, "func_184385_a",
+							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
+					)
+			);
+		} catch (Exception e) {
+			final CrashReport crashReport = new CrashReport("Unable to find method WorldRenderer#markBlocksForUpdate!", e);
+			crashReport.makeCategory("Finding Method");
+			throw new ReportedException(crashReport);
+		}
+	}
 
 	@Override
 	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
@@ -58,15 +57,15 @@ public final class ClientProxy implements IProxy {
 
 		renderGlobal.viewFrustum.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
 
-//		try {
-//			WorldRenderer_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
-//		} catch (ReportedException e) {
-//			throw e;
-//		} catch (Throwable throwable) {
-//			final CrashReport crashReport = new CrashReport("Exception invoking method WorldRenderer#markBlocksForUpdate", throwable);
-//			crashReport.makeCategory("Reflectively Invoking Method");
-//			throw new ReportedException(crashReport);
-//		}
+		try {
+			WorldRenderer_markBlocksForUpdate.invokeExact(renderGlobal, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+		} catch (ReportedException e) {
+			throw e;
+		} catch (Throwable throwable) {
+			final CrashReport crashReport = new CrashReport("Exception invoking method WorldRenderer#markBlocksForUpdate", throwable);
+			crashReport.makeCategory("Reflectively Invoking Method");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

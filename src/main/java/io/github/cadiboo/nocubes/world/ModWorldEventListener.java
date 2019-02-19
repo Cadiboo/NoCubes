@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.world;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -23,13 +24,13 @@ public class ModWorldEventListener implements IWorldEventListener {
 
 	@Override
 	public void notifyBlockUpdate(@Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
-//		if (!NoCubes.isEnabled()) {
-//			return;
-//		}
-//		int k1 = pos.getX();
-//		int l1 = pos.getY();
-//		int i2 = pos.getZ();
-//		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
+		if (!NoCubes.isEnabled()) {
+			return;
+		}
+		int k1 = pos.getX();
+		int l1 = pos.getY();
+		int i2 = pos.getZ();
+		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
 	@Override

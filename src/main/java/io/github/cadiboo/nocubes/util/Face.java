@@ -1,8 +1,11 @@
 package io.github.cadiboo.nocubes.util;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 
-public class Face {
+public class Face implements AutoCloseable {
+
+//	private static int instances = 0;
 
 	@Nonnull
 	private Vec3 vertex0;
@@ -13,11 +16,16 @@ public class Face {
 	@Nonnull
 	private Vec3 vertex3;
 
+//	private boolean released;
+
+	private static final ArrayList<Face> POOL = new ArrayList<>();
+
 	private Face(@Nonnull final Vec3 vertex0, @Nonnull final Vec3 vertex1, @Nonnull final Vec3 vertex2, @Nonnull final Vec3 vertex3) {
 		this.vertex0 = vertex0;
 		this.vertex1 = vertex1;
 		this.vertex2 = vertex2;
 		this.vertex3 = vertex3;
+//		++instances;
 	}
 
 	@Nonnull
@@ -42,7 +50,19 @@ public class Face {
 
 	@Nonnull
 	public static Face retain(@Nonnull final Vec3 vertex0, @Nonnull final Vec3 vertex1, @Nonnull final Vec3 vertex2, @Nonnull final Vec3 vertex3) {
-		// STOPSHIP: 2019-02-13 FIXME TODO POOLED CACHES
+		synchronized (POOL) {
+			if (!POOL.isEmpty()) {
+				Face pooled = POOL.remove(POOL.size() - 1);
+				if (pooled != null /*&& pooled.released*/) {
+//					pooled.released = false;
+					pooled.vertex0 = vertex0;
+					pooled.vertex1 = vertex1;
+					pooled.vertex2 = vertex2;
+					pooled.vertex3 = vertex3;
+					return pooled;
+				}
+			}
+		}
 		return new Face(vertex0, vertex1, vertex2, vertex3);
 	}
 
@@ -51,8 +71,22 @@ public class Face {
 		return retain(vertex0.clone(), vertex0, vertex1, vertex2);
 	}
 
-	public void release() {
-
+	@Override
+	public void close() {
+		synchronized (POOL) {
+			POOL.add(this);
+//			this.released = true;
+		}
 	}
+
+//	static
+//	public int getInstances() {
+//		return instances;
+//	}
+//
+//	static
+//	public int getPoolSize() {
+//		return POOL.size();
+//	}
 
 }

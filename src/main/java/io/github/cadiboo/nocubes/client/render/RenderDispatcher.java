@@ -45,9 +45,9 @@ public class RenderDispatcher {
 		final BlockPos renderChunkPosition = event.getRenderChunkStartPosition();
 		final IWorldReader blockAccess = event.getWorld();
 
-		final int meshSizeX;
-		final int meshSizeY;
-		final int meshSizeZ;
+		final byte meshSizeX;
+		final byte meshSizeY;
+		final byte meshSizeZ;
 		if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
 			//yay, surface nets is special and needs an extra +1. why? no-one knows
 			meshSizeX = 18;
@@ -85,7 +85,7 @@ public class RenderDispatcher {
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final IWorldReader blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ
+			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
 	) {
 		final ModProfiler profiler = NoCubes.getProfiler();
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
@@ -179,7 +179,7 @@ public class RenderDispatcher {
 
 	private static StateCache generateMeshAndLightStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 			final IWorldReader blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {

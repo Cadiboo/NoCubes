@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.world.ModWorldEventListener;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
+import net.minecraftforge.event.world.GetCollisionBoxesEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +24,11 @@ public final class EventSubscriber {
 			((World) iworld).addEventListener(new ModWorldEventListener());
 		}
 
+	}
+
+	@SubscribeEvent
+	public static void getCollisionBoxes(final GetCollisionBoxesEvent event) {
+//		event.getCollisionBoxesList().clear();
 	}
 
 }
