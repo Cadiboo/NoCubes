@@ -24,6 +24,7 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReader;
@@ -108,7 +109,7 @@ public class MeshRenderer {
 
 				BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
 				if (quad == null) {
-					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, null, random).get(0);
+					quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, random).get(0);
 				}
 				final TextureAtlasSprite sprite = quad.getSprite();
 				final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
