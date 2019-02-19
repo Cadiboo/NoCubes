@@ -43,7 +43,7 @@ public class RenderDispatcher {
 		final ChunkRenderTask generator = event.getGenerator();
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final BlockPos renderChunkPosition = event.getRenderChunkStartPosition();
-		final IWorldReader blockAccess = event.getRenderChunkCache();
+		final IWorldReader blockAccess = event.getWorld();
 
 		final int meshSizeX;
 		final int meshSizeY;
