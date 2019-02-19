@@ -55,9 +55,9 @@ public final class CacheUtil {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		//TODO: Light adds +1 to each side of the cache, once its separated I only need to subtract 1
-		final int densityCacheSizeX = stateCache.sizeX - 2;
-		final int densityCacheSizeY = stateCache.sizeY - 2;
-		final int densityCacheSizeZ = stateCache.sizeZ - 2;
+		final int densityCacheSizeX = stateCache.sizeX - 1;
+		final int densityCacheSizeY = stateCache.sizeY - 1;
+		final int densityCacheSizeZ = stateCache.sizeZ - 1;
 
 		final DensityCache densityCache = DensityCache.retain(densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ);
 		final float[] densityCacheArray = densityCache.getDensityCache();
