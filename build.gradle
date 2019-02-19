@@ -21,8 +21,6 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
 
-	mavenLocal()
-
 	// Put other remote maven repositories here
 
 	maven {
@@ -42,10 +40,6 @@ minecraft {
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
-	// replace "@VERSION@", project.version
-	// replace '@FINGERPRINT@', project.findProperty('signSHA1')
-	// replaceIn modReferenceClass
 
 	// default run configurations.
 	// these can be tweaked, removed, or duplicated as needed.
@@ -106,11 +100,12 @@ jar {
 		attributes([
 				"Specification-Title"     : modId,
 				"Specification-Vendor"    : modGroup,
-				"Specification-Version"   : "24.0", // We are version 1 of the modlauncher specification
+				"Specification-Version"   : "25.0", // We are version 1 of the modlauncher specification
 				"Implementation-Title"    : project.name,
 				"Implementation-Version"  : "${version}",
 				"Implementation-Vendor"   : modGroup,
-				"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+				"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+				"Signing-Fingerprint"     : project.findProperty('signSHA1')
 		],)
 	}
 }
@@ -137,3 +132,21 @@ task signJar(type: SignJar, dependsOn: jar) {
 
 // Runs this task automatically when build is run.
 build.dependsOn signJar
+
+processResources {
+	// this will ensure that this task is redone when the versions change.
+	inputs.property 'version', project.version
+
+	// replace stuff in mods.toml, nothing else
+	from(sourceSets.main.resources.srcDirs) {
+		include 'META-INF/mods.toml'
+
+		// replace version and mcversion
+		expand 'version':project.version
+	}
+
+	// copy everything else except the mods.toml
+	from(sourceSets.main.resources.srcDirs) {
+		exclude 'META-INF/mods.toml'
+	}
+}
