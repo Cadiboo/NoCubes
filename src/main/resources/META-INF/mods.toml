@@ -34,7 +34,7 @@ authors="Cadiboo" #optional
 modId="nocubes" #mandatory
 
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
-version="${version}" #mandatory
+version="1.13.2-0.2.4" #mandatory
 
 # A display name for the mod
 displayName="NoCubes" #mandatory
