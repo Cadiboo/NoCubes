@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.RenderChunkRebuildChunkHooks;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -41,6 +42,9 @@ public final class NoCubes {
 	public NoCubes() {
 
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+
+		RenderChunkRebuildChunkHooks.HookConfig.enableRebuildChunkPreRenderEvent();
+		RenderChunkRebuildChunkHooks.HookConfig.enableRebuildChunkBlockEvent();
 
 //		try {
 //			//ew hacks
