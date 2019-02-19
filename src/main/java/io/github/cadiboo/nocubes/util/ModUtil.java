@@ -4,15 +4,18 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.io.File;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
@@ -124,13 +127,13 @@ public final class ModUtil {
 	 *
 	 * @param modContainer the {@link ModContainer} for {@link NoCubes}
 	 */
-	public static void launchUpdateDaemon(IModInfo modContainer) {
+	public static void launchUpdateDaemon(ModContainer modContainer) {
 
 		new Thread(() -> {
 			WHILE:
 			while (true) {
 
-				final CheckResult checkResult = getResult(modContainer);
+				final CheckResult checkResult = getResult(modContainer.getModInfo());
 
 				switch (checkResult.status) {
 					default:
@@ -138,7 +141,7 @@ public final class ModUtil {
 						break;
 					case OUTDATED:
 						try {
-							BadAutoUpdater.update(modContainer.getVersion(), checkResult.target.toString());
+							BadAutoUpdater.update(modContainer.getModInfo().getVersion(), checkResult.target.toString());
 						} catch (Exception e) {
 							throw new RuntimeException(e);
 						}
@@ -255,12 +258,12 @@ public final class ModUtil {
 	}
 
 	public static void crashIfNotDev(final Exception e) {
-//		if (FMLLaunchHandler.isDeobfuscatedEnvironment()) {
-//			NO_CUBES_LOG.error("FIX THIS ERROR NOW!", e);
-//			return;
-//		}
-//		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
-//		throw new ReportedException(crashReport);
+		if (isDeveloperWorkspace()) {
+			NO_CUBES_LOG.error("FIX THIS ERROR NOW!", e);
+			return;
+		}
+		final CrashReport crashReport = new CrashReport("Error in mod " + MOD_ID, e);
+		throw new ReportedException(crashReport);
 	}
 
 	public static int max(int... ints) {
@@ -269,6 +272,14 @@ public final class ModUtil {
 			if (max < anInt) max = anInt;
 		}
 		return max;
+	}
+
+	public static boolean isDeveloperWorkspace() {
+		final String target = System.getenv().get("target");
+		if (target == null) {
+			return false;
+		}
+		return target.contains("userdev");
 	}
 
 }

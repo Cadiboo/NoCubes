@@ -5,8 +5,12 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,9 +36,12 @@ public final class NoCubes {
 //	@Mod.Instance(MOD_ID)
 //	public static NoCubes instance;
 
-	public static IProxy proxy = DistExecutor.runForDist(()->()-> new ClientProxy(), ()->()-> new ServerProxy());
+	public static IProxy proxy = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
 
 	public NoCubes() {
+
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+
 //		try {
 //			//ew hacks
 //			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
@@ -53,10 +60,9 @@ public final class NoCubes {
 		return PROFILER.get();
 	}
 
-//	@Mod.EventHandler
-//	public void onPreInit(final FMLPreInitializationEvent event) {
+	public void setup(final FMLCommonSetupEvent event) {
 //		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
-//		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
-//	}
+		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
+	}
 
 }
