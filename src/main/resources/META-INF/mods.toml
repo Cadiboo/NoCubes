@@ -25,7 +25,7 @@ logoFile="nocubes_logo.png" #optional
 credits="The Forge and FML guys for Forge and FML and Cadiboo for making the mod" #optional
 
 # A text field displayed in the mod UI
-authors="Cadiboo" #optional
+authors="Cadiboo, FellFromTheSky" #optional
 
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
@@ -37,7 +37,7 @@ modId="nocubes" #mandatory
 version="${version}" #mandatory
 
 # A display name for the mod
-displayName="NoCubes" #mandatory
+displayName="NoCubes (Reloaded)" #mandatory
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
