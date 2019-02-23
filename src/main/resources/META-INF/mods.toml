@@ -41,9 +41,7 @@ displayName="NoCubes" #mandatory
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Client-side smooth-world mod. Refactor, port to 1.12.2 and continued development by Cadiboo.
-This mod was made with reference to code from the Open Source reimplementation of NoCubes by CosmicDan for 1.7.10. This reimplementation was based off work originally by Click_Me and code decompiled from bytecode released by Click_Me"
-This mod will soon merge with the NoCubes Reloaded project
+
 '''
 
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
@@ -67,11 +65,3 @@ This mod will soon merge with the NoCubes Reloaded project
     ordering="NONE"
     side="BOTH"
 
-# Here's another dependency
-[[dependencies.nocubes]]
-    modId="renderchunk-rebuildchunk-hooks"
-    mandatory=true
-    versionRange="[1.13.2-0.6.0,1.13.2-0.7.0)"
-    # An ordering relationship for the dependency - BEFORE or AFTER required if the relationship is not mandatory
-    ordering="NONE"
-    side="CLIENT"
