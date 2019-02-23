@@ -6,6 +6,9 @@ import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.vertex.ClientVertexHandler;
+import io.github.cadiboo.nocubes.vertex.IVertexHandler;
+import io.github.cadiboo.nocubes.vertex.ServerVertexHandler;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.RenderChunkRebuildChunkHooks;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
@@ -37,7 +40,8 @@ public final class NoCubes {
 //	@Mod.Instance(MOD_ID)
 //	public static NoCubes instance;
 
-	public static IProxy proxy = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
+	public static final IProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
+	public static final IVertexHandler VERTEX_HANDLER = DistExecutor.runForDist(() -> () -> new ClientVertexHandler(), () -> () -> new ServerVertexHandler());
 
 	public NoCubes() {
 

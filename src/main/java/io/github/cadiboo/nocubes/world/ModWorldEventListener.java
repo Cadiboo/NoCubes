@@ -1,9 +1,7 @@
 package io.github.cadiboo.nocubes.world;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.VertexHandler;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.particles.IParticleData;
@@ -12,6 +10,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldEventListener;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,22 +29,19 @@ public class ModWorldEventListener implements IWorldEventListener {
 			return;
 		}
 
-		//same as isRemote
-		if (worldIn instanceof WorldClient) {
-			return;
+//		//same as isRemote
+//		if (worldIn instanceof WorldClient) {
+//			return;
+//		}
+
+		if (worldIn instanceof IWorldReaderBase) {
+			NoCubes.VERTEX_HANDLER.generateChunkVertices((IWorldReaderBase) worldIn, pos);
 		}
 
-		try (BlockPos.PooledMutableBlockPos chunkPos = BlockPos.PooledMutableBlockPos.retain(
-				(pos.getX() >> 4) << 4,
-				pos.getY(),
-				(pos.getZ() >> 4) << 4
-		)) {
-			VertexHandler.generateVertices(worldIn, chunkPos);
-		}
 		int k1 = pos.getX();
 		int l1 = pos.getY();
 		int i2 = pos.getZ();
-		NoCubes.proxy.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
+		NoCubes.PROXY.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
 	@Override

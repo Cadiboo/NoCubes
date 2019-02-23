@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes;
+package io.github.cadiboo.nocubes.vertex;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -11,6 +11,7 @@ import io.github.cadiboo.nocubes.util.Vec3b;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,18 +22,36 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 /**
  * @author Cadiboo
  */
-public final class VertexHandler {
+public interface IVertexHandler {
 
-	public static final HashMap<IBlockReader, HashMap<BlockPos, HashMap<Vec3b, FaceList>>> VERTICES = new HashMap<>();
+	@Nonnull
+	static BlockPos toImmutableCubeChunkPos(@Nonnull final BlockPos chunkPos) {
+		return new BlockPos(
+				(chunkPos.getX() >> 4) << 4,
+				(chunkPos.getY() >> 4) << 4,
+				(chunkPos.getZ() >> 4) << 4
+		);
+	}
 
-	public static HashMap<Vec3b, FaceList> generateVertices(@Nonnull IBlockReader world, @Nonnull BlockPos chunkPos) {
-		HashMap<BlockPos, HashMap<Vec3b, FaceList>> worldData = VERTICES.computeIfAbsent(world, k -> new HashMap<>());
-		{
-			final HashMap<Vec3b, FaceList> chunkData = worldData.get(chunkPos);
-			if (chunkData != null) {
-				closeChunk(chunkData);
-			}
-		}
+	@Nonnull
+	static PooledMutableBlockPos setCubeChunkPooledPos(@Nonnull final PooledMutableBlockPos chunkPos) {
+		return chunkPos.setPos(
+				(chunkPos.getX() >> 4) << 4,
+				(chunkPos.getY() >> 4) << 4,
+				(chunkPos.getZ() >> 4) << 4
+		);
+	}
+
+	@Nonnull
+	HashMap<Vec3b, FaceList> generateChunkVertices(@Nonnull final IWorldReaderBase world, @Nonnull final BlockPos chunkPos);
+
+	@Nullable
+	FaceList getFaces(@Nonnull final IBlockReader world, @Nonnull final PooledMutableBlockPos pos);
+
+	@Nullable
+	HashMap<Vec3b, FaceList> getChunkData(@Nonnull final IWorldReaderBase world, @Nonnull final BlockPos chunkPos);
+
+	static HashMap<Vec3b, FaceList> calcChunkVertices(@Nonnull final IWorldReaderBase world, @Nonnull final BlockPos chunkPos) {
 
 		final byte meshSizeX;
 		final byte meshSizeY;
@@ -72,18 +91,15 @@ public final class VertexHandler {
 					pooledMutableBlockPos
 			);
 
-			final HashMap<Vec3b, FaceList> chunkData = ModConfig.getMeshGenerator().generateChunk(
+			return ModConfig.getMeshGenerator().generateChunk(
 					data.getDensityCache(),
 					new byte[]{meshSizeX, meshSizeY, meshSizeZ}
 			);
-
-			worldData.put(chunkPos.toImmutable(), chunkData);
-			return chunkData;
 		}
 
 	}
 
-	private static StateCache generateStateCache(
+	static StateCache generateStateCache(
 			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 			final IBlockReader blockAccess,
@@ -108,7 +124,7 @@ public final class VertexHandler {
 		);
 	}
 
-	private static void closeChunk(final HashMap<Vec3b, FaceList> chunkData) {
+	static void closeChunk(final HashMap<Vec3b, FaceList> chunkData) {
 		chunkData.forEach((vec3b, faces) -> {
 			faces.forEach(face -> {
 				face.getVertex0().close();
@@ -120,40 +136,6 @@ public final class VertexHandler {
 			faces.close();
 			vec3b.close();
 		});
-	}
-
-	@Nullable
-	public static FaceList getFaces(@Nonnull IBlockReader world, @Nonnull BlockPos pos) {
-		try (PooledMutableBlockPos chunkPos = PooledMutableBlockPos.retain(
-				(pos.getX() >> 4) << 4,
-				pos.getY(),
-				(pos.getZ() >> 4) << 4
-		)) {
-			try (Vec3b vec3b = Vec3b.retain(
-					(byte) (pos.getX() - chunkPos.getX()),
-					(byte) (pos.getY() - chunkPos.getY()),
-					(byte) (pos.getZ() - chunkPos.getZ())
-			)) {
-				final HashMap<BlockPos, HashMap<Vec3b, FaceList>> worldData = VERTICES.get(world);
-				if (worldData == null) {
-					return null;
-				}
-				final HashMap<Vec3b, FaceList> chunkData = worldData.get(chunkPos);
-				if (chunkData == null) {
-					return null;
-				}
-				return chunkData.get(vec3b);
-			}
-		}
-	}
-
-	@Nullable
-	public static HashMap<Vec3b, FaceList> getChunkData(@Nonnull IBlockReader world, @Nonnull BlockPos chunkPos) {
-		final HashMap<BlockPos, HashMap<Vec3b, FaceList>> worldData = VERTICES.get(world);
-		if (worldData == null) {
-			return null;
-		}
-		return worldData.get(chunkPos);
 	}
 
 }
