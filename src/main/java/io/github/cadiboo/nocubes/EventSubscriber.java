@@ -4,10 +4,12 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.nocubes.world.ModWorldEventListener;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.GetCollisionBoxesEvent;
@@ -69,9 +71,18 @@ public final class EventSubscriber {
 						(byte) ((entityZ - (entityZ >> 4)) << 4)
 				}, grid)
 		) {
-			faces.forEach(
-					event.getCollisionBoxesList().add(new AxisAlignedBB())
-			);
+			faces.forEach(face -> {
+
+				final Vec3 v0 = face.getVertex0();
+				final Vec3 v1 = face.getVertex1();
+				final Vec3 v2 = face.getVertex2();
+				final Vec3 v3 = face.getVertex3();
+				final double minX = MathHelper.min......wtf
+				faces.forEach(
+						event.getCollisionBoxesList().add(new AxisAlignedBB())
+				);
+
+			});
 		}
 
 	}

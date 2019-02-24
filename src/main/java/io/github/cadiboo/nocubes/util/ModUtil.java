@@ -7,7 +7,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraftforge.fml.ModContainer;
@@ -270,7 +269,7 @@ public final class ModUtil {
 	public static int max(int... ints) {
 		int max = 0;
 		for (final int anInt : ints) {
-			if (max < anInt) max = anInt;
+			if (anInt > max) max = anInt;
 		}
 		return max;
 	}
@@ -281,6 +280,22 @@ public final class ModUtil {
 			return false;
 		}
 		return target.contains("userdev");
+	}
+
+	public static int min(int... ints) {
+		int min = 0;
+		for (final int anInt : ints) {
+			if (min > anInt) min = anInt;
+		}
+		return min;
+	}
+
+	public static double min(double... doubles) {
+		double min = 0;
+		for (final double aDouble : doubles) {
+			if (min > aDouble) min = aDouble;
+		}
+		return min;
 	}
 
 }
