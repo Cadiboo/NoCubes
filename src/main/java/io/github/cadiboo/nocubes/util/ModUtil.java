@@ -7,10 +7,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
 
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
 
@@ -42,7 +40,7 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
-		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
+		return /*ModConfig.smoothLeavesSeparate &&*/ state.getBlock() instanceof BlockLeaves;
 	}
 
 	/**

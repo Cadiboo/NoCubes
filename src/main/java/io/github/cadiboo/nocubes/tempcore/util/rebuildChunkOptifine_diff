@@ -1,0 +1,256 @@
+    // ORIGINAL
+    public void rebuildChunk(final float x, final float y, final float z, final ChunkCompileTaskGenerator generator) {
+        final CompiledChunk compiledchunk = new CompiledChunk();
+        final int i = 1;
+        final BlockPos blockpos = new BlockPos((Vec3i)this.position);
+        final BlockPos blockpos2 = blockpos.add(15, 15, 15);
+        generator.getLock().lock();
+        try {
+            if (generator.getStatus() != ChunkCompileTaskGenerator.a.COMPILING) {
+                return;
+            }
+            generator.setCompiledChunk(compiledchunk);
+        }
+        finally {
+            generator.getLock().unlock();
+        }
+        final VisGraph lvt_9_1_ = new VisGraph();
+        final HashSet lvt_10_1_ = Sets.newHashSet();
+        if (!this.isChunkRegionEmpty(blockpos)) {
+            ++RenderChunk.renderChunksUpdated;
+            final ChunkCacheOF blockAccess = this.makeChunkCacheOF(blockpos);
+            blockAccess.renderStart();
+            final boolean[] aboolean = new boolean[RenderChunk.ENUM_WORLD_BLOCK_LAYERS.length];
+            final BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+            final boolean forgeBlockCanRenderInLayerExists = Reflector.ForgeBlock_canRenderInLayer.exists();
+            final boolean forgeHooksSetRenderLayerExists = Reflector.ForgeHooksClient_setRenderLayer.exists();
+            for (final BlockPosM blockpos$mutableblockpos : BlockPosM.getAllInBoxMutable(blockpos, blockpos2)) {
+                final IBlockState iblockstate = blockAccess.getBlockState((BlockPos)blockpos$mutableblockpos);
+                final Block block = iblockstate.getBlock();
+                if (iblockstate.isOpaqueCube()) {
+                    lvt_9_1_.setOpaqueCube((BlockPos)blockpos$mutableblockpos);
+                }
+                if (ReflectorForge.blockHasTileEntity(iblockstate)) {
+                    final TileEntity tileentity = blockAccess.getTileEntity((BlockPos)blockpos$mutableblockpos, Chunk.a.CHECK);
+                    if (tileentity != null) {
+                        final TileEntitySpecialRenderer<TileEntity> tileentityspecialrenderer = (TileEntitySpecialRenderer<TileEntity>)TileEntityRendererDispatcher.instance.getRenderer(tileentity);
+                        if (tileentityspecialrenderer != null) {
+                            if (tileentityspecialrenderer.isGlobalRenderer(tileentity)) {
+                                lvt_10_1_.add(tileentity);
+                            }
+                            else {
+                                compiledchunk.addTileEntity(tileentity);
+                            }
+                        }
+                    }
+                }
+                BlockRenderLayer[] blockLayers;
+                if (forgeBlockCanRenderInLayerExists) {
+                    blockLayers = RenderChunk.ENUM_WORLD_BLOCK_LAYERS;
+                }
+                else {
+                    blockLayers = this.blockLayersSingle;
+                    blockLayers[0] = block.getRenderLayer();
+                }
+                for (int ix = 0; ix < blockLayers.length; ++ix) {
+                    BlockRenderLayer blockrenderlayer1 = blockLayers[ix];
+                    if (forgeBlockCanRenderInLayerExists) {
+                        final boolean canRenderInLayer = Reflector.callBoolean((Object)block, Reflector.ForgeBlock_canRenderInLayer, new Object[] { iblockstate, blockrenderlayer1 });
+                        if (!canRenderInLayer) {
+                            continue;
+                        }
+                    }
+                    if (forgeHooksSetRenderLayerExists) {
+                        Reflector.callVoid(Reflector.ForgeHooksClient_setRenderLayer, new Object[] { blockrenderlayer1 });
+                    }
+                    blockrenderlayer1 = this.fixBlockLayer(iblockstate, blockrenderlayer1);
+                    final int j = blockrenderlayer1.ordinal();
+                    if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE) {
+                        final BufferBuilder bufferbuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(j);
+                        bufferbuilder.setBlockLayer(blockrenderlayer1);
+                        final RenderEnv renderEnv = bufferbuilder.getRenderEnv((IBlockAccess)blockAccess, iblockstate, (BlockPos)blockpos$mutableblockpos);
+                        renderEnv.setRegionRenderCacheBuilder(generator.getRegionRenderCacheBuilder());
+                        if (!compiledchunk.isLayerStarted(blockrenderlayer1)) {
+                            compiledchunk.setLayerStarted(blockrenderlayer1);
+                            this.preRenderBlocks(bufferbuilder, blockpos);
+                        }
+                        final boolean[] array = aboolean;
+                        final int n = j;
+                        array[n] |= blockrendererdispatcher.renderBlock(iblockstate, (BlockPos)blockpos$mutableblockpos, (IBlockAccess)blockAccess, bufferbuilder);
+                        if (renderEnv.isOverlaysRendered()) {
+                            this.postRenderOverlays(generator.getRegionRenderCacheBuilder(), compiledchunk, aboolean);
+                            renderEnv.setOverlaysRendered(false);
+                        }
+                    }
+                }
+                if (forgeHooksSetRenderLayerExists) {
+                    Reflector.callVoid(Reflector.ForgeHooksClient_setRenderLayer, new Object[] { null });
+                }
+            }
+            for (final BlockRenderLayer blockrenderlayer2 : RenderChunk.ENUM_WORLD_BLOCK_LAYERS) {
+                if (aboolean[blockrenderlayer2.ordinal()]) {
+                    compiledchunk.setLayerUsed(blockrenderlayer2);
+                }
+                if (compiledchunk.isLayerStarted(blockrenderlayer2)) {
+                    if (Config.isShaders()) {
+                        SVertexBuilder.calcNormalChunkLayer(generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer2));
+                    }
+                    final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer2);
+                    this.postRenderBlocks(blockrenderlayer2, x, y, z, bufferBuilder, compiledchunk);
+                    if (bufferBuilder.animatedSprites != null) {
+                        compiledchunk.setAnimatedSprites(blockrenderlayer2, (BitSet)bufferBuilder.animatedSprites.clone());
+                    }
+                }
+                else {
+                    compiledchunk.setAnimatedSprites(blockrenderlayer2, (BitSet)null);
+                }
+            }
+            blockAccess.renderFinish();
+        }
+        compiledchunk.setVisibility(lvt_9_1_.computeVisibility());
+        this.lockCompileTask.lock();
+        try {
+            final Set<TileEntity> set = (Set<TileEntity>)Sets.newHashSet((Iterable)lvt_10_1_);
+            final Set<TileEntity> set2 = (Set<TileEntity>)Sets.newHashSet((Iterable)this.setTileEntities);
+            set.removeAll(this.setTileEntities);
+            set2.removeAll(lvt_10_1_);
+            this.setTileEntities.clear();
+            this.setTileEntities.addAll(lvt_10_1_);
+            this.renderGlobal.updateTileEntities((Collection)set2, (Collection)set);
+        }
+        finally {
+            this.lockCompileTask.unlock();
+        }
+    }
+    
+
+    // MODIFIED
+    public void rebuildChunk(final float x, final float y, final float z, final ChunkCompileTaskGenerator generator) {
+        final CompiledChunk compiledchunk = new CompiledChunk();
+        final int i = 1;
+        final BlockPos blockpos = new BlockPos((Vec3i)this.position);
+        final BlockPos blockpos2 = blockpos.add(15, 15, 15);
+        generator.getLock().lock();
+        try {
+            if (generator.getStatus() != ChunkCompileTaskGenerator.a.COMPILING) {
+                return;
+            }
+            generator.setCompiledChunk(compiledchunk);
+        }
+        finally {
+            generator.getLock().unlock();
+        }
+        final VisGraph lvt_9_1_ = new VisGraph();
+        final HashSet lvt_10_1_ = Sets.newHashSet();
+        if (!this.isChunkRegionEmpty(blockpos)) {
+            ++RenderChunk.renderChunksUpdated;
+            final ChunkCacheOF blockAccess = this.makeChunkCacheOF(blockpos);
+            if (RenderChunkRebuildChunkHooksHooksOptifine.rebuildChunkPreHook(params - I can't be bothered to write them down, I keep changing them. Look at the event or method)) {
+                return;
+            }
+            blockAccess.renderStart();
+            final boolean[] aboolean = new boolean[RenderChunk.ENUM_WORLD_BLOCK_LAYERS.length];
+            final BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+            final boolean forgeBlockCanRenderInLayerExists = Reflector.ForgeBlock_canRenderInLayer.exists();
+            final boolean forgeHooksSetRenderLayerExists = Reflector.ForgeHooksClient_setRenderLayer.exists();
+            for (final BlockPosM blockpos$mutableblockpos : BlockPosM.getAllInBoxMutable(blockpos, blockpos2)) {
+                final IBlockState iblockstate = blockAccess.getBlockState((BlockPos)blockpos$mutableblockpos);
+                final Block block = iblockstate.getBlock();
+                if (iblockstate.isOpaqueCube()) {
+                    lvt_9_1_.setOpaqueCube((BlockPos)blockpos$mutableblockpos);
+                }
+                if (ReflectorForge.blockHasTileEntity(iblockstate)) {
+                    final TileEntity tileentity = blockAccess.getTileEntity((BlockPos)blockpos$mutableblockpos, Chunk.a.CHECK);
+                    if (tileentity != null) {
+                        final TileEntitySpecialRenderer<TileEntity> tileentityspecialrenderer = (TileEntitySpecialRenderer<TileEntity>)TileEntityRendererDispatcher.instance.getRenderer(tileentity);
+                        if (tileentityspecialrenderer != null) {
+                            if (tileentityspecialrenderer.isGlobalRenderer(tileentity)) {
+                                lvt_10_1_.add(tileentity);
+                            }
+                            else {
+                                compiledchunk.addTileEntity(tileentity);
+                            }
+                        }
+                    }
+                }
+                BlockRenderLayer[] blockLayers;
+                if (forgeBlockCanRenderInLayerExists) {
+                    blockLayers = RenderChunk.ENUM_WORLD_BLOCK_LAYERS;
+                }
+                else {
+                    blockLayers = this.blockLayersSingle;
+                    blockLayers[0] = block.getRenderLayer();
+                }
+                for (int ix = 0; ix < blockLayers.length; ++ix) {
+                    BlockRenderLayer blockrenderlayer1 = blockLayers[ix];
+                    if (forgeBlockCanRenderInLayerExists) {
+                        final boolean canRenderInLayer = RenderChunkRebuildChunkHooksHooksOptifine.canBlockRenderInLayerHook(params - I can't be bothered to write them down, I keep changing them. Look at the event or method);
+                        if (!canRenderInLayer) {
+                            continue;
+                        }
+                    }
+                    if (forgeHooksSetRenderLayerExists) {
+                        Reflector.callVoid(Reflector.ForgeHooksClient_setRenderLayer, new Object[] { blockrenderlayer1 });
+                    }
+                    blockrenderlayer1 = this.fixBlockLayer(iblockstate, blockrenderlayer1);
+                    final int j = blockrenderlayer1.ordinal();
+                    if (RenderChunkRebuildChunkHooksHooksOptifine.doesBlockTypeAllowRenderHook(params - I can't be bothered to write them down, I keep changing them. Look at the event or method)) {
+                        final BufferBuilder bufferbuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(j);
+                        bufferbuilder.setBlockLayer(blockrenderlayer1);
+                        final RenderEnv renderEnv = bufferbuilder.getRenderEnv((IBlockAccess)blockAccess, iblockstate, (BlockPos)blockpos$mutableblockpos);
+                        renderEnv.setRegionRenderCacheBuilder(generator.getRegionRenderCacheBuilder());
+                        if (!compiledchunk.isLayerStarted(blockrenderlayer1)) {
+                            compiledchunk.setLayerStarted(blockrenderlayer1);
+                            this.preRenderBlocks(bufferbuilder, blockpos);
+                        }
+                        final boolean[] array = aboolean;
+                        final int n = j;
+                        if (!RenderChunkRebuildChunkHooksHooksOptifine.rebuildChunkBlockHook(params - I can't be bothered to write them down, I keep changing them. Look at the event or method)) {
+                            array[n] |= blockrendererdispatcher.renderBlock(iblockstate, (BlockPos)blockpos$mutableblockpos, (IBlockAccess)blockAccess, bufferbuilder);
+                        }
+                        if (renderEnv.isOverlaysRendered()) {
+                            this.postRenderOverlays(generator.getRegionRenderCacheBuilder(), compiledchunk, aboolean);
+                            renderEnv.setOverlaysRendered(false);
+                        }
+                    }
+                }
+                if (forgeHooksSetRenderLayerExists) {
+                    Reflector.callVoid(Reflector.ForgeHooksClient_setRenderLayer, new Object[] { null });
+                }
+            }
+            for (final BlockRenderLayer blockrenderlayer2 : RenderChunk.ENUM_WORLD_BLOCK_LAYERS) {
+                if (aboolean[blockrenderlayer2.ordinal()]) {
+                    compiledchunk.setLayerUsed(blockrenderlayer2);
+                }
+                if (compiledchunk.isLayerStarted(blockrenderlayer2)) {
+                    if (Config.isShaders()) {
+                        SVertexBuilder.calcNormalChunkLayer(generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer2));
+                    }
+                    final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer2);
+                    this.postRenderBlocks(blockrenderlayer2, x, y, z, bufferBuilder, compiledchunk);
+                    if (bufferBuilder.animatedSprites != null) {
+                        compiledchunk.setAnimatedSprites(blockrenderlayer2, (BitSet)bufferBuilder.animatedSprites.clone());
+                    }
+                }
+                else {
+                    compiledchunk.setAnimatedSprites(blockrenderlayer2, (BitSet)null);
+                }
+            }
+            blockAccess.renderFinish();
+        }
+        compiledchunk.setVisibility(lvt_9_1_.computeVisibility());
+        this.lockCompileTask.lock();
+        try {
+            final Set<TileEntity> set = (Set<TileEntity>)Sets.newHashSet((Iterable)lvt_10_1_);
+            final Set<TileEntity> set2 = (Set<TileEntity>)Sets.newHashSet((Iterable)this.setTileEntities);
+            set.removeAll(this.setTileEntities);
+            set2.removeAll(lvt_10_1_);
+            this.setTileEntities.clear();
+            this.setTileEntities.addAll(lvt_10_1_);
+            this.renderGlobal.updateTileEntities((Collection)set2, (Collection)set);
+        }
+        finally {
+            this.lockCompileTask.unlock();
+        }
+        RenderChunkRebuildChunkHooksHooksOptifine.rebuildChunkPostHook(params - I can't be bothered to write them down, I keep changing them. Look at the event or method);
+    }
