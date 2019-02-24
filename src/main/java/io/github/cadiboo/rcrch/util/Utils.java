@@ -2,14 +2,15 @@ package io.github.cadiboo.rcrch.util;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkRenderTask;
+import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import javax.annotation.Nonnull;
 import java.lang.invoke.MethodHandle;
@@ -28,7 +29,7 @@ public final class Utils {
 
 	static {
 		try {
-			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper_findMethod(RenderChunk.class, "func_178573_a",
+			renderChunk_preRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178573_a",
 					BufferBuilder.class, BlockPos.class
 			));
 		} catch (ReportedException e) {
@@ -39,7 +40,7 @@ public final class Utils {
 			throw new ReportedException(crashReport);
 		}
 		try {
-			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper_findMethod(CompiledChunk.class, "func_178486_a",
+			compiledChunk_setLayerUsed = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(CompiledChunk.class, "func_178486_a",
 					BlockRenderLayer.class
 			));
 		} catch (ReportedException e) {
@@ -50,7 +51,7 @@ public final class Utils {
 			throw new ReportedException(crashReport);
 		}
 		try {
-			renderChunk_postRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper_findMethod(RenderChunk.class, "func_178584_a",
+			renderChunk_postRenderBlocks = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(RenderChunk.class, "func_178584_a",
 					BlockRenderLayer.class, float.class, float.class, float.class, BufferBuilder.class, CompiledChunk.class
 			));
 		} catch (ReportedException e) {
@@ -60,25 +61,6 @@ public final class Utils {
 			crashReport.makeCategory("Reflectively Accessing RenderChunk#postRenderBlocks");
 			throw new ReportedException(crashReport);
 		}
-	}
-
-	//FFS
-	public static Method ObfuscationReflectionHelper_findMethod(@Nonnull Class<?> clazz, @Nonnull String methodName, Class<?>... parameterTypes) {
-
-		Preconditions.checkNotNull(clazz);
-		Preconditions.checkNotNull(methodName);
-//		Preconditions.checkArgument(methodName.isEmpty(), "Method name cannot be empty");
-		//FIX "methodName cannot be null, but MUST be empty"
-		Preconditions.checkArgument(!methodName.isEmpty(), "Method name cannot be empty");
-
-		try {
-			Method m = clazz.getDeclaredMethod(ObfuscationReflectionHelper.remapName(methodName), parameterTypes);
-			m.setAccessible(true);
-			return m;
-		} catch (Exception e) {
-			throw new ObfuscationReflectionHelper.UnableToFindMethodException(e);
-		}
-
 	}
 
 	/**
@@ -147,7 +129,7 @@ public final class Utils {
 	 * @param renderChunkPos   the position of the render chunk
 	 * @return the {@link BufferBuilder} for the {@link BlockRenderLayer}
 	 */
-	public BufferBuilder startOrContinueLayer(final BlockRenderLayer blockRenderLayer, final ChunkRenderTask generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
+	public BufferBuilder startOrContinueLayer(final BlockRenderLayer blockRenderLayer, final ChunkCompileTaskGenerator generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
 		return useAndStartOrContinueLayer(blockRenderLayer, generator, renderChunk, compiledChunk, renderChunkPos, false);
 	}
 
@@ -162,7 +144,7 @@ public final class Utils {
 	 * @param renderChunkPos        the position of the render chunk
 	 * @return the {@link BufferBuilder} for the {@link BlockRenderLayer}
 	 */
-	public BufferBuilder useAndStartOrContinueLayer(final boolean[] usedBlockRenderLayers, final BlockRenderLayer blockRenderLayer, final ChunkRenderTask generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
+	public BufferBuilder useAndStartOrContinueLayer(final boolean[] usedBlockRenderLayers, final BlockRenderLayer blockRenderLayer, final ChunkCompileTaskGenerator generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
 		usedBlockRenderLayers[blockRenderLayer.ordinal()] = true;
 		return startOrContinueLayer(blockRenderLayer, generator, renderChunk, compiledChunk, renderChunkPos);
 	}
@@ -180,12 +162,12 @@ public final class Utils {
 	 * @deprecated You probably don't want this, you probably want something like <code>event.getUsedBlockRenderLayers()[blockRenderLayer.ordinal()] = true;</code>
 	 */
 	@Deprecated
-	public BufferBuilder useAndStartOrContinueLayerDirect(final BlockRenderLayer blockRenderLayer, final ChunkRenderTask generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
+	public BufferBuilder useAndStartOrContinueLayerDirect(final BlockRenderLayer blockRenderLayer, final ChunkCompileTaskGenerator generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos) {
 		return useAndStartOrContinueLayer(blockRenderLayer, generator, renderChunk, compiledChunk, renderChunkPos, true);
 	}
 
-	private BufferBuilder useAndStartOrContinueLayer(final BlockRenderLayer blockRenderLayer, final ChunkRenderTask generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos, final boolean setLayerUsedDirect) {
-		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayer);
+	private BufferBuilder useAndStartOrContinueLayer(final BlockRenderLayer blockRenderLayer, final ChunkCompileTaskGenerator generator, RenderChunk renderChunk, CompiledChunk compiledChunk, BlockPos.MutableBlockPos renderChunkPos, final boolean setLayerUsedDirect) {
+		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockRenderLayer);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			if (setLayerUsedDirect) {
