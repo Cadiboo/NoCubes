@@ -239,7 +239,6 @@ public class MeshRenderer {
 //			);
 
 			final HashMap<Vec3b, FaceList> chunkData = VertexHandler.getChunkData(blockAccess, renderChunkPosition);
-//			final HashMap<Vec3b, FaceList> chunkData = VertexHandler.VERTICES.values().iterator().next().values().iterator().next();
 			if (chunkData != null) {
 				renderFaces(
 						renderChunk,
