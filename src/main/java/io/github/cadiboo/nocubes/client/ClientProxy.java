@@ -16,7 +16,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.ObfuscationReflectionHelper_findMethod;
 
 /**
- * The version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT
+ * The version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL CLIENT
  *
  * @author Cadiboo
  */

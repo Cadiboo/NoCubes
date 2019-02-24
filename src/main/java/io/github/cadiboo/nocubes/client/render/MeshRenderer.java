@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.VertexHandler;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
@@ -181,13 +181,13 @@ public class MeshRenderer {
 									bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
 								}
 							} finally {
-//								v0.close();
-//								v1.close();
-//								v2.close();
-//								v3.close();
+								v0.close();
+								v1.close();
+								v2.close();
+								v3.close();
 							}
 						} finally {
-//							face.close();
+							face.close();
 						}
 
 					}
@@ -207,8 +207,8 @@ public class MeshRenderer {
 					throw new ReportedException(crashReport);
 				}
 			} finally {
-//				faces.close();
-//				pos.close();
+				faces.close();
+				pos.close();
 			}
 
 		});
@@ -238,24 +238,22 @@ public class MeshRenderer {
 //					pooledMutableBlockPos
 //			);
 
-			final HashMap<Vec3b, FaceList> chunkData = NoCubes.VERTEX_HANDLER.getChunkData(blockAccess, renderChunkPosition);
+			final HashMap<Vec3b, FaceList> chunkData = VertexHandler.getChunkData(blockAccess, renderChunkPosition);
 //			final HashMap<Vec3b, FaceList> chunkData = VertexHandler.VERTICES.values().iterator().next().values().iterator().next();
 			if (chunkData != null) {
-				synchronized (chunkData) {
-					renderFaces(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							blockAccess,
-							blockRendererDispatcher,
-							pooledPackedLightCache,
-							chunkData,
-							TERRAIN_SMOOTHABLE,
-							pooledMutableBlockPos, usedBlockRenderLayers, false
-					);
-				}
+				renderFaces(
+						renderChunk,
+						generator,
+						compiledChunk,
+						renderChunkPosition,
+						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+						blockAccess,
+						blockRendererDispatcher,
+						pooledPackedLightCache,
+						chunkData,
+						TERRAIN_SMOOTHABLE,
+						pooledMutableBlockPos, usedBlockRenderLayers, false
+				);
 			}
 		}
 		if (ModConfig.smoothLeavesSeparate) {

@@ -21,12 +21,12 @@ public final class ModReference {
 	public static final String MOD_ID = "nocubes";
 
 	/**
-	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT
+	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL CLIENT
 	 */
 	public static final String CLIENT_PROXY_CLASS = "io.github.cadiboo.nocubes.client.ClientProxy";
 
 	/**
-	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL/DEDICATED SERVER
+	 * The fully qualified name of the version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL/DEDICATED SERVER
 	 */
 	public static final String SERVER_PROXY_CLASS = "io.github.cadiboo.nocubes.server.ServerProxy";
 
