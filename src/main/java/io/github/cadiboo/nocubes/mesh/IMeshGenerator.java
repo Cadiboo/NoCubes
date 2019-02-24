@@ -11,10 +11,19 @@ public interface IMeshGenerator {
 	/**
 	 * Generates a chunk WITHOUT OFFSETTING OR TRANSLATING ANY VERTICES
 	 *
-	 * @param data the float[] data
-	 * @param dims the dimensions of the mesh
+	 * @param scalarFieldData the float[] data
+	 * @param dimensions      the dimensions of the mesh
+	 * @return the chunk vertices
 	 */
 	@Nonnull
-	HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims);
+	HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions);
+
+	/**
+	 * @param position             the byte[] position relative to the chunk pos
+	 * @param neighbourDensityGrid the neighbour density grid
+	 * @return the block vertices
+	 */
+	@Nonnull
+	FaceList generateBlock(byte[] position, float[] neighbourDensityGrid);
 
 }

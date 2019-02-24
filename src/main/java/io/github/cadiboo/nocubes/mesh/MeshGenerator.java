@@ -13,7 +13,7 @@ import java.util.Map;
 
 public enum MeshGenerator {
 
-//	OldNoCubes(new OldNoCubes()),
+	//	OldNoCubes(new OldNoCubes()),
 	SurfaceNets(new SurfaceNets()),
 	MarchingCubes(new MarchingCubes()),
 	MarchingTetrahedra(new MarchingTetrahedra()),
@@ -34,6 +34,14 @@ public enum MeshGenerator {
 		return chunkData;
 	}
 
+	public FaceList generateBlock(final byte[] pos, final float[] grid) {
+		final FaceList chunkData = meshGenerator.generateBlock(pos, grid);
+		if (ModConfig.offsetVertices) {
+			offsetBlockVertices(chunkData);
+		}
+		return chunkData;
+	}
+
 	private static void offsetChunkVertices(Map<Vec3b, FaceList> chunkData) {
 		chunkData.forEach((pos, list) -> {
 			list.forEach(face -> {
@@ -42,6 +50,15 @@ public enum MeshGenerator {
 				ModUtil.offsetVertex(face.getVertex2());
 				ModUtil.offsetVertex(face.getVertex3());
 			});
+		});
+	}
+
+	private static void offsetBlockVertices(final FaceList faces) {
+		faces.forEach(face -> {
+			ModUtil.offsetVertex(face.getVertex0());
+			ModUtil.offsetVertex(face.getVertex1());
+			ModUtil.offsetVertex(face.getVertex2());
+			ModUtil.offsetVertex(face.getVertex3());
 		});
 	}
 

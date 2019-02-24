@@ -65,4 +65,10 @@ public class OldNoCubes implements IMeshGenerator {
 		return posToFaces;
 	}
 
+	@Nonnull
+	@Override
+	public FaceList generateBlock(final byte[] position, final float[] neighbourDensityGrid) {
+		return FaceList.retain();
+	}
+
 }
