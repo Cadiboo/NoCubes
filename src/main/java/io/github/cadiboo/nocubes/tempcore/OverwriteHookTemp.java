@@ -273,7 +273,8 @@ public final class OverwriteHookTemp {
 						if (!compiledchunk.isLayerStarted(blockrenderlayer1))
 						{
 							compiledchunk.setLayerStarted(blockrenderlayer1);
-							renderChunk.preRenderBlocks(bufferbuilder, blockpos);
+//							renderChunk.preRenderBlocks(bufferbuilder, blockpos);
+							renderChunk_preRenderBlocks(renderChunk, bufferbuilder, blockpos);
 						}
 
 						aboolean[j] |= blockrendererdispatcher.renderBlock(iblockstate, blockpos$mutableblockpos, renderChunk.worldView, bufferbuilder);
@@ -286,12 +287,14 @@ public final class OverwriteHookTemp {
 			{
 				if (aboolean[blockrenderlayer.ordinal()])
 				{
-					compiledchunk.setLayerUsed(blockrenderlayer);
+//					compiledchunk.setLayerUsed(blockrenderlayer);
+					compiledChunk_setLayerUsed(compiledchunk, blockrenderlayer);
 				}
 
 				if (compiledchunk.isLayerStarted(blockrenderlayer))
 				{
-					renderChunk.postRenderBlocks(blockrenderlayer, x, y, z, generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer), compiledchunk);
+//					renderChunk.postRenderBlocks(blockrenderlayer, x, y, z, generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer), compiledchunk);
+					renderChunk_postRenderBlocks(renderChunk, blockrenderlayer, x, y, z, generator.getRegionRenderCacheBuilder().getWorldRendererByLayer(blockrenderlayer), compiledchunk);
 				}
 			}
 		}
