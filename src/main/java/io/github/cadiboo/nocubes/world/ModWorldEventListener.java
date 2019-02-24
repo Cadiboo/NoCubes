@@ -1,9 +1,7 @@
 package io.github.cadiboo.nocubes.world;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.VertexHandler;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.particles.IParticleData;
@@ -28,19 +26,6 @@ public class ModWorldEventListener implements IWorldEventListener {
 	public void notifyBlockUpdate(@Nonnull IBlockReader worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
 		if (!NoCubes.isEnabled()) {
 			return;
-		}
-
-		//same as isRemote
-		if (worldIn instanceof WorldClient) {
-			return;
-		}
-
-		try (BlockPos.PooledMutableBlockPos chunkPos = BlockPos.PooledMutableBlockPos.retain(
-				(pos.getX() >> 4) << 4,
-				pos.getY(),
-				(pos.getZ() >> 4) << 4
-		)) {
-			VertexHandler.generateVertices(worldIn, chunkPos);
 		}
 		int k1 = pos.getX();
 		int l1 = pos.getY();
