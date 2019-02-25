@@ -9,7 +9,6 @@ import io.github.cadiboo.nocubes.world.ModWorldEventListener;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.GetCollisionBoxesEvent;
@@ -77,10 +76,23 @@ public final class EventSubscriber {
 				final Vec3 v1 = face.getVertex1();
 				final Vec3 v2 = face.getVertex2();
 				final Vec3 v3 = face.getVertex3();
-				final double minX = MathHelper.min......wtf
-				faces.forEach(
-						event.getCollisionBoxesList().add(new AxisAlignedBB())
-				);
+
+				event.getCollisionBoxesList().add(new AxisAlignedBB(
+						v0. x + 0.05, v0.y + 0.05, v0.z + 0.05,
+						v0.x - 0.05, v0.y - 0.05, v0.z - 0.05
+				));
+				event.getCollisionBoxesList().add(new AxisAlignedBB(
+						v1.x + 0.05, v1.y + 0.05, v1.z + 0.05,
+						v1.x - 0.05, v1.y - 0.05, v1.z - 0.05
+				));
+				event.getCollisionBoxesList().add(new AxisAlignedBB(
+						v2.x + 0.05, v2.y + 0.05, v2.z + 0.05,
+						v2.x - 0.05, v2.y - 0.05, v2.z - 0.05
+				));
+				event.getCollisionBoxesList().add(new AxisAlignedBB(
+						v3.x + 0.05, v3.y + 0.05, v3.z + 0.05,
+						v3.x - 0.05, v3.y - 0.05, v3.z - 0.05
+				));
 
 			});
 		}

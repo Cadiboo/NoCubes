@@ -406,7 +406,7 @@ public class MarchingCubes implements IMeshGenerator {
 	@Nonnull
 	@Override
 	public FaceList generateBlock(final byte[] position, final float[] neighbourDensityGrid) {
-		return null;
+		return FaceList.retain();
 	}
 
 }
