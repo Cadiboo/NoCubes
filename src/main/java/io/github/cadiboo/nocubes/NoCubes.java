@@ -57,6 +57,7 @@ public final class NoCubes {
 	}
 
 	public void setup(final FMLCommonSetupEvent event) {
+		//ModLoadingContext.get().getActiveContainer()
 		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
 	}
 

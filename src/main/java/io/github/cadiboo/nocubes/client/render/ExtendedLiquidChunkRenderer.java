@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
@@ -40,6 +41,8 @@ public class ExtendedLiquidChunkRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache
 	) {
+
+		NoCubes.getProfiler().start("renderExtendedLiquid Chunk");
 
 		final IBlockState[] stateCacheArray = stateCache.getStateCache();
 

@@ -31,7 +31,9 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+		NoCubes.getProfiler().start("renderChunk");
 		RenderDispatcher.renderChunk(event);
+		NoCubes.getProfiler().end();
 	}
 
 	@SubscribeEvent
@@ -39,7 +41,9 @@ public final class ClientEventSubscriber {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
+		NoCubes.getProfiler().start("renderBlock");
 		RenderDispatcher.renderBlock(event);
+		NoCubes.getProfiler().end();
 	}
 
 	@SubscribeEvent

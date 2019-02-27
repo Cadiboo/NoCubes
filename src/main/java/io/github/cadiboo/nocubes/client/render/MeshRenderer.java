@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
@@ -60,6 +61,8 @@ public class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			final boolean renderOpposite
 	) {
+
+		NoCubes.getProfiler().start("renderFaces");
 
 		final Random random = new Random();
 
@@ -211,6 +214,8 @@ public class MeshRenderer {
 
 		});
 
+		NoCubes.getProfiler().end();
+
 	}
 
 	public static void renderChunk(
@@ -226,9 +231,11 @@ public class MeshRenderer {
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache, @Nonnull final PackedLightCache pooledPackedLightCache
 	) {
+		NoCubes.getProfiler().start("renderMeshChunk");
 
 		//normal terrain
 		{
+			NoCubes.getProfiler().start("renderNormalTerrain");
 			final DensityCache data = CacheUtil.generateDensityCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					stateCache, smoothableCache,
@@ -249,8 +256,11 @@ public class MeshRenderer {
 					TERRAIN_SMOOTHABLE,
 					pooledMutableBlockPos, usedBlockRenderLayers, false
 			);
+			NoCubes.getProfiler().end();
 		}
 		if (ModConfig.smoothLeavesSeparate) {
+
+			NoCubes.getProfiler().start("renderLeaves");
 
 			final SmoothableCache smoothableLeavesCache = CacheUtil.generateSmoothableCache(stateCache, LEAVES_SMOOTHABLE);
 
@@ -273,7 +283,11 @@ public class MeshRenderer {
 					LEAVES_SMOOTHABLE,
 					pooledMutableBlockPos, usedBlockRenderLayers, true
 			);
+
+			NoCubes.getProfiler().end();
 		}
+
+		NoCubes.getProfiler().end();
 	}
 
 }

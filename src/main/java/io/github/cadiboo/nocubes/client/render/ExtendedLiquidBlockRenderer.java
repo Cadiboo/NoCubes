@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -53,6 +54,7 @@ public class ExtendedLiquidBlockRenderer {
 			@Nonnull final IBlockState liquidState,
 			final IFluidState fluidState, @Nonnull final BufferBuilder bufferBuilder
 	) {
+		NoCubes.getProfiler().start("renderExtendedLiquid");
 		initAtlasSprites();
 
 //		public boolean render(IWorldReader blockAccess, BlockPos fluidPos, BufferBuilder bufferBuilder, IFluidState fluidState) {
@@ -69,6 +71,7 @@ public class ExtendedLiquidBlockRenderer {
 		boolean shouldRenderWest = !isAdjacentFluidSameAs(blockAccess, fluidPos, EnumFacing.WEST, fluidState);
 		boolean shouldRenderEast = !isAdjacentFluidSameAs(blockAccess, fluidPos, EnumFacing.EAST, fluidState);
 		if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
+			NoCubes.getProfiler().end();
 			return false;
 		} else {
 			boolean wasAnythingRendered = false;
@@ -244,6 +247,7 @@ public class ExtendedLiquidBlockRenderer {
 				}
 			}
 
+			NoCubes.getProfiler().end();
 			return wasAnythingRendered;
 		}
 //		}
