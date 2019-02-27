@@ -94,7 +94,7 @@ public final class ClientEventSubscriber {
 //			}
 //		}
 
-		minecraft.renderGlobal.loadRenderers();
+		minecraft.worldRenderer.loadRenderers();
 	}
 
 //	@SubscribeEvent
