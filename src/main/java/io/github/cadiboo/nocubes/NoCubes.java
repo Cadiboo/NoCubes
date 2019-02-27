@@ -46,14 +46,6 @@ public final class NoCubes {
 		RenderChunkRebuildChunkHooks.HookConfig.enableRebuildChunkPreRenderEvent();
 		RenderChunkRebuildChunkHooks.HookConfig.enableRebuildChunkBlockEvent();
 
-//		try {
-//			//ew hacks
-//			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
-//		} catch (Exception e) {
-//			final CrashReport crashReport = new CrashReport("Something went terribly wrong trying to hack our config", e);
-//			crashReport.makeCategory("Initialising NoCubes");
-//			throw new ReportedException(crashReport);
-//		}
 	}
 
 	public static boolean isEnabled() {
@@ -65,7 +57,6 @@ public final class NoCubes {
 	}
 
 	public void setup(final FMLCommonSetupEvent event) {
-//		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
 	}
 
