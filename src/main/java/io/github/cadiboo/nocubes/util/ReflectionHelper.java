@@ -35,7 +35,7 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.util.Utils.Obfuscat
  *
  * @author cpw
  */
-public class ReflectionHelper {
+public final class ReflectionHelper {
 
 	public static Method findMethod(@Nonnull final Class<?> clazz, @Nonnull final String methodName, @Nullable final Class<?>... parameterTypes) {
 //		return ObfuscationReflectionHelper.findMethod(clazz, methodName, parameterTypes);
