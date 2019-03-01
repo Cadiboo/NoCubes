@@ -1,43 +1,17 @@
 package io.github.cadiboo.nocubes.tempcore.util;
 
-import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.RenderChunkRebuildChunkHooksLoadingPlugin.OBFUSCATION_LEVEL;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BETTER_FOLIAGE_HOOKS;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BLOCK;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BLOCK_POS;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BLOCK_POS_M;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BLOCK_RENDERER_DISPATCHER;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BLOCK_RENDER_LAYER;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.BUFFER_BUILDER;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.CHUNK_CACHE;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.CHUNK_CACHE_OF;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.CHUNK_COMPILE_TASK_GENERATOR;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.COMPILED_CHUNK;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.ENUM_BLOCK_RENDER_TYPE;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.HASH_SET;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.I_BLOCK_ACCESS;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.I_BLOCK_STATE;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.OPTIFINE_REFLECTOR;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.OPTIFINE_REFLECTOR_METHOD;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.RCRCH_HOOKS;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.RCRCH_HOOKS_OPTIFINE;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.RENDER_CHUNK;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.RENDER_GLOBAL;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.TILE_ENTITY_RENDERER_DISPATCHER;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass.VIS_GRAPH;
 import static org.objectweb.asm.Type.BOOLEAN_TYPE;
 import static org.objectweb.asm.Type.FLOAT_TYPE;
 import static org.objectweb.asm.Type.INT_TYPE;
@@ -98,16 +72,16 @@ public class ObfuscationHelper implements Opcodes {
 		 * @return the correct internal name for the current environment
 		 */
 		public String getInternalName() {
-			switch (OBFUSCATION_LEVEL) {
-				case DEOBFUSCATED:
+//			switch (OBFUSCATION_LEVEL) {
+//				case DEOBFUSCATED:
 					return this.deobfuscatedName;
-				default: //1.12.2
-				case SRG:
-					return this.srgName;
-				// default: //1.13
-				case OBFUSCATED:
-					return this.obfuscatedName;
-			}
+//				default: //1.12.2
+//				case SRG:
+//					return this.srgName;
+//				// default: //1.13
+//				case OBFUSCATED:
+//					return this.obfuscatedName;
+//			}
 
 		}
 
@@ -167,16 +141,16 @@ public class ObfuscationHelper implements Opcodes {
 		 * @return the correct name for the current environment
 		 */
 		public String getName() {
-			switch (OBFUSCATION_LEVEL) {
-				case DEOBFUSCATED:
+//			switch (OBFUSCATION_LEVEL) {
+//				case DEOBFUSCATED:
 					return this.deobfuscatedName;
-				default: //1.12.2
-				case SRG:
-					return this.srgName;
-				// default: //1.13
-				case OBFUSCATED:
-					return this.obfuscatedName;
-			}
+//				default: //1.12.2
+//				case SRG:
+//					return this.srgName;
+//				// default: //1.13
+//				case OBFUSCATED:
+//					return this.obfuscatedName;
+//			}
 
 		}
 
@@ -356,16 +330,16 @@ public class ObfuscationHelper implements Opcodes {
 		 * @return the correct name for the current environment
 		 */
 		public String getName() {
-			switch (OBFUSCATION_LEVEL) {
-				case DEOBFUSCATED:
-					return this.deobfuscatedName;
-				default: //1.12.2
-				case SRG:
-					return this.srgName;
-				// default: //1.13
-				case OBFUSCATED:
-					return this.obfuscatedName;
-			}
+//			switch (OBFUSCATION_LEVEL) {
+//				case DEOBFUSCATED:
+			return this.deobfuscatedName;
+//				default: //1.12.2
+//				case SRG:
+//					return this.srgName;
+//				// default: //1.13
+//				case OBFUSCATED:
+//					return this.obfuscatedName;
+//			}
 
 		}
 

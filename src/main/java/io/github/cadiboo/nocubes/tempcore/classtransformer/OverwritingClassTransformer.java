@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.tempcore.classtransformer;
 
-import io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.IStacks;
 import jdk.internal.org.objectweb.asm.Opcodes;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.launchwrapper.IClassTransformer;
@@ -22,11 +21,10 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Field;
 
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationClass;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationMethod.RENDER_CHUNK_REBUILD_CHUNK;
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.ObfuscationHelper.ObfuscationMethod.RENDER_CHUNK_RESORT_TRANSPARENCY;
+import static io.github.cadiboo.nocubes.tempcore.util.ObfuscationHelper.ObfuscationClass;
+import static io.github.cadiboo.nocubes.tempcore.util.ObfuscationHelper.ObfuscationMethod.RENDER_CHUNK_REBUILD_CHUNK;
+import static io.github.cadiboo.nocubes.tempcore.util.ObfuscationHelper.ObfuscationMethod.RENDER_CHUNK_RESORT_TRANSPARENCY;
 
 /**
  * @author Cadiboo
@@ -35,7 +33,7 @@ import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.util.Obfuscati
 // useful links:
 // https://text-compare.com
 // http://www.minecraftforge.net/forum/topic/32600-1710-strange-error-with-custom-event-amp-event-handler/?do=findComment&comment=172480
-public final class OverwritingClassTransformer implements IClassTransformer, Opcodes, IStacks {
+public final class OverwritingClassTransformer implements IClassTransformer, Opcodes {
 
 	private static final int CLASS_WRITER_FLAGS = ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES;
 	// skip class reader reading frames if the class writer is going to compute them for us (if it is you should get a warning that this being 0 is dead code)
@@ -198,51 +196,57 @@ public final class OverwritingClassTransformer implements IClassTransformer, Opc
 
 	public void injectHooks(InsnList instructions) {
 
-		AbstractInsnNode NEW_CompiledChunk = null;
-
-		for (AbstractInsnNode instruction : instructions.toArray()) {
-			if (instruction.getOpcode() == Opcodes.NEW) {
-				NEW_CompiledChunk = instruction;
-				LOGGER.info("Found injection point " + instruction);
-				break;
-			}
-
-		}
-
-		if (NEW_CompiledChunk == null) {
-			LOGGER.info("Error: Couldn't find injection point!");
-			return;
-		}
-
-		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(ALOAD, ALOAD_this)); // this
-		LOGGER.info("Injected instruction ALOAD this");
-		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_x)); // x
-		LOGGER.info("Injected instruction FLOAD x");
-		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_y)); // y
-		LOGGER.info("Injected instruction FLOAD y");
-		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_z)); // z
-		LOGGER.info("Injected instruction FLOAD z");
-		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(ALOAD, ALOAD_generator)); // generator
-		LOGGER.info("Injected instruction ALOAD generator");
-		instructions.insertBefore(NEW_CompiledChunk,
-				new MethodInsnNode(
-						//int opcode
-						INVOKESTATIC,
-						//String owner
-						"io/github/cadiboo/nocubes/tempcore/OverwriteHookTemp",
-						//String name
-						"rebuildChunk",
-						//String descriptor
-						"(Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;)V",
-						//boolean isInterface
-						false
-				)
-		);
-		LOGGER.info("Injected instruction INVOKESTATIC io/github/cadiboo/nocubes/tempcore/OverwriteHookTemp rebuildChunk (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;)V false");
-		instructions.insertBefore(NEW_CompiledChunk, new InsnNode(RETURN));
-		LOGGER.info("Injected instruction RETURN");
-
-		LOGGER.info("Successfully inserted instructions!");
+//		AbstractInsnNode NEW_CompiledChunk = null;
+//
+//		for (AbstractInsnNode instruction : instructions.toArray()) {
+//			if (instruction.getOpcode() == Opcodes.NEW) {
+//				NEW_CompiledChunk = instruction;
+//				LOGGER.info("Found injection point " + instruction);
+//				break;
+//			}
+//
+//		}
+//
+//		if (NEW_CompiledChunk == null) {
+//			LOGGER.info("Error: Couldn't find injection point!");
+//			return;
+//		}
+//
+//		int ALOAD_this = 0;
+//		int FLOAD_x = 1;
+//		int FLOAD_y = 2;
+//		int FLOAD_z = 3;
+//		int ALOAD_generator = 4;
+//
+//		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(ALOAD, ALOAD_this)); // this
+//		LOGGER.info("Injected instruction ALOAD this");
+//		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_x)); // x
+//		LOGGER.info("Injected instruction FLOAD x");
+//		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_y)); // y
+//		LOGGER.info("Injected instruction FLOAD y");
+//		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(FLOAD, FLOAD_z)); // z
+//		LOGGER.info("Injected instruction FLOAD z");
+//		instructions.insertBefore(NEW_CompiledChunk, new VarInsnNode(ALOAD, ALOAD_generator)); // generator
+//		LOGGER.info("Injected instruction ALOAD generator");
+//		instructions.insertBefore(NEW_CompiledChunk,
+//				new MethodInsnNode(
+//						//int opcode
+//						INVOKESTATIC,
+//						//String owner
+//						"io/github/cadiboo/nocubes/tempcore/OverwriteHookTemp",
+//						//String name
+//						"rebuildChunk",
+//						//String descriptor
+//						"(Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;)V",
+//						//boolean isInterface
+//						false
+//				)
+//		);
+//		LOGGER.info("Injected instruction INVOKESTATIC io/github/cadiboo/nocubes/tempcore/OverwriteHookTemp rebuildChunk (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;)V false");
+//		instructions.insertBefore(NEW_CompiledChunk, new InsnNode(RETURN));
+//		LOGGER.info("Injected instruction RETURN");
+//
+//		LOGGER.info("Successfully inserted instructions!");
 
 	}
 
