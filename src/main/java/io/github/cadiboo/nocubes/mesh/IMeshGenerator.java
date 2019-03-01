@@ -18,5 +18,12 @@ public interface IMeshGenerator {
 	@Nonnull
 	HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions);
 
+	/**
+	 * @param position             the byte[] position relative to the chunk pos
+	 * @param neighbourDensityGrid the neighbour density grid
+	 * @return the block vertices
+	 */
+	@Nonnull
+	FaceList generateBlock(byte[] position, float[] neighbourDensityGrid);
 
 }

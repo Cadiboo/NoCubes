@@ -231,4 +231,10 @@ public class SurfaceNets implements IMeshGenerator {
 
 	}
 
+	@Nonnull
+	@Override
+	public FaceList generateBlock(final byte[] position, final float[] neighbourDensityGrid) {
+		return FaceList.retain();
+	}
+
 }
