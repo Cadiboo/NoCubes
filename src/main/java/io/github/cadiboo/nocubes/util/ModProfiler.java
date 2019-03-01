@@ -8,4 +8,12 @@ public class ModProfiler extends Profiler {
 //		NoCubes.NO_CUBES_LOG.debug(sectionName + " took approximately " + estimatedTimeTakenNanoseconds + " nanoseconds");
 	}
 
+	public void start(final String name) {
+		startSection(name);
+	}
+
+	public void end() {
+		endSection();
+	}
+
 }
