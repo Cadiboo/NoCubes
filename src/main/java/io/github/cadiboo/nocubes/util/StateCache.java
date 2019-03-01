@@ -7,25 +7,47 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class StateCache extends XYZCache {
+public class StateCache extends XYZCache implements AutoCloseable {
 
 	@Nonnull
-	private final IBlockState[] stateCache;
+	private IBlockState[] cache;
+
+	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
 
 	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		stateCache = new IBlockState[sizeX * sizeY * sizeZ];
+		cache = new IBlockState[sizeX * sizeY * sizeZ];
 	}
 
 	@Nonnull
 	public IBlockState[] getStateCache() {
-		return stateCache;
+		return cache;
 	}
 
 	@Nonnull
 	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
-		// STOPSHIP: 2019-02-13 FIXME TODO POOLED CACHES
-		return new StateCache(sizeX, sizeY, sizeZ);
+
+		final StateCache pooled = POOL.get();
+
+		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
+			return pooled;
+		}
+
+		pooled.sizeX = sizeX;
+		pooled.sizeY = sizeY;
+		pooled.sizeZ = sizeZ;
+
+		final int size = sizeX * sizeY * sizeZ;
+
+		if (pooled.cache.length < size) {
+			pooled.cache = new IBlockState[size];
+		}
+
+		return pooled;
+	}
+
+	@Override
+	public void close() {
 	}
 
 }

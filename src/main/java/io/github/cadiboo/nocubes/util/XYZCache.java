@@ -5,9 +5,9 @@ package io.github.cadiboo.nocubes.util;
  */
 public class XYZCache {
 
-	public final int sizeX;
-	public final int sizeY;
-	public final int sizeZ;
+	public int sizeX;
+	public int sizeY;
+	public int sizeZ;
 
 	public XYZCache(final int sizeX, final int sizeY, final int sizeZ) {
 		this.sizeX = sizeX;
