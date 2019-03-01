@@ -1,13 +1,19 @@
 package io.github.cadiboo.nocubes.util;
 
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.moddiscovery.ModFile;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 
 /**
  * A bad auto-updater until I implement delta-patching
@@ -44,11 +50,14 @@ public final class BadAutoUpdater {
 			return;
 		}
 
-		//delete the current jar
-		final String oldJarFileName = modFileName + "-" + currentVersion + ".jar";
-		final Path pathToOldJar = new File(modsDir, oldJarFileName).toPath();
+//		//delete the current jar
+//		final String oldJarFileName = modFileName + "-" + currentVersion + ".jar";
+//		final Path pathToOldJar = new File(modsDir, oldJarFileName).toPath();
 
-		Files.delete(pathToOldJar);
+		//TODO:
+		final Path modSourceFile = ((ModFileInfo) ModList.get().getModContainerById(MOD_ID).get().getModInfo().getOwningFile()).getFile().getFilePath();
+
+		Files.delete(modSourceFile);
 
 	}
 
