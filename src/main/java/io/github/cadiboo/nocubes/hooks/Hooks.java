@@ -16,7 +16,7 @@ import java.util.List;
 public class Hooks {
 
 	public static void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
-		LogManager.getLogger().info("fsdfuygihj");
+		state.getBlock().addCollisionBoxToList(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 	}
 
 }
