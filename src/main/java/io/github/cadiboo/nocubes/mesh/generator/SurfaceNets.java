@@ -3,12 +3,13 @@ package io.github.cadiboo.nocubes.mesh.generator;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class SurfaceNets implements IMeshGenerator {
 
@@ -44,7 +45,7 @@ public class SurfaceNets implements IMeshGenerator {
 		// This is just the vertex number (number of corners) of each cube
 		int cubeEdgesIndex = 0;
 		// 8 is the number of corners for a cube
-		for (int cubeCornerIndex = 0; cubeCornerIndex < 8; ++cubeCornerIndex) {
+		for (byte cubeCornerIndex = 0; cubeCornerIndex < 8; ++cubeCornerIndex) {
 			for (int em = 1; em <= 4; em <<= 1) {
 				int j = cubeCornerIndex ^ em;
 				if (cubeCornerIndex <= j) {
@@ -68,8 +69,8 @@ public class SurfaceNets implements IMeshGenerator {
 		// Initialize the intersection table.
 		// This is a 2^(cube configuration) ->  2^(edge configuration) map
 		// There is one entry for each possible cube configuration, and the output is a 12-bit vector enumerating all edges crossing the 0-level.
-		for (int edgeTableIndex = 0; edgeTableIndex < 256; ++edgeTableIndex) {
-			int em = 0;
+		for (short edgeTableIndex = 0; edgeTableIndex < 256; ++edgeTableIndex) {
+			short em = 0;
 			for (int cubeEdgesIndex = 0; cubeEdgesIndex < 24; cubeEdgesIndex += 2) {
 				final boolean a = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex])) != 0;
 				final boolean b = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex + 1])) != 0;
@@ -82,22 +83,21 @@ public class SurfaceNets implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
 		final int[] edge_table = EDGE_TABLE;
 		final int[] cube_edges = CUBE_EDGES;
 
 		final ArrayList<float[]> vertices = new ArrayList<>();
 		int n = 0;
-		final int[] x = {0, 0, 0};
+		final byte[] x = {0, 0, 0};
 		final int[] R = {1, (dims[0] + 1), (dims[0] + 1) * (dims[1] + 1)};
 		final float[] grid = new float[8];
 		int buf_no = 1;
 
 		final int[] buffer = new int[R[2] * 2];
 
-		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
-		final ArrayList<Face> faces = new ArrayList<>();
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
 		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
 		//March over the voxel grid
@@ -116,7 +116,7 @@ public class SurfaceNets implements IMeshGenerator {
 					int mask = 0, g = 0, idx = n;
 					for (int k = 0; k < 2; ++k, idx += dims[0] * (dims[1] - 2))
 						for (int j = 0; j < 2; ++j, idx += dims[0] - 2)
-							for (int i = 0; i < 2; ++i, ++g, ++idx) {
+							for (byte i = 0; i < 2; ++i, ++g, ++idx) {
 								float p = data[idx];
 								grid[g] = p;
 								mask |= (p < 0) ? (1 << g) : 0;
@@ -180,6 +180,8 @@ public class SurfaceNets implements IMeshGenerator {
 					buffer[m] = vertices.size();
 					vertices.add(v);
 
+					final FaceList faces = FaceList.retain();
+
 					//Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int i = 0; i < 3; ++i) {
 						//The first three entries of the edge_mask count the crossings along the edge
@@ -221,8 +223,7 @@ public class SurfaceNets implements IMeshGenerator {
 							);
 						}
 					}
-					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
-					faces.clear();
+					posToFaces.put(Vec3b.retain(x[0], x[1], x[2]), faces);
 				}
 		}
 

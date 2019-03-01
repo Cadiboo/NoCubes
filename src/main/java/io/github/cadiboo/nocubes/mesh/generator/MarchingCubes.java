@@ -2,16 +2,17 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class MarchingCubes implements IMeshGenerator {
 
-	private static final int[] EDGE_TABLE = {
+	private static final short[] EDGE_TABLE = {
 			0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 			0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
 			0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -45,7 +46,7 @@ public class MarchingCubes implements IMeshGenerator {
 			0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
 			0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0};
 
-	private static final int[][] TRI_TABLE = {
+	private static final byte[][] TRI_TABLE = {
 			{},
 			{0, 8, 3},
 			{0, 1, 9},
@@ -303,7 +304,7 @@ public class MarchingCubes implements IMeshGenerator {
 			{0, 3, 8},
 			{}};
 
-	private static final int[][] CUBE_VERTS = {
+	private static final byte[][] CUBE_VERTS = {
 			{0, 0, 0},
 			{1, 0, 0},
 			{1, 1, 0},
@@ -314,7 +315,7 @@ public class MarchingCubes implements IMeshGenerator {
 			{0, 1, 1}
 	};
 
-	private static final int[][] EDGE_INDEX = {
+	private static final byte[][] EDGE_INDEX = {
 			{0, 1},
 			{1, 2},
 			{2, 3},
@@ -331,19 +332,18 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
-		final int[][] cubeVerts = CUBE_VERTS;
-		final int[] edgeTable = EDGE_TABLE;
-		final int[][] edgeIndex = EDGE_INDEX;
-		final int[][] triTable = TRI_TABLE;
+		final byte[][] cubeVerts = CUBE_VERTS;
+		final short[] edgeTable = EDGE_TABLE;
+		final byte[][] edgeIndex = EDGE_INDEX;
+		final byte[][] triTable = TRI_TABLE;
 
-		final int[] x = {0, 0, 0};
-		int n = 0;
+		final byte[] x = {0, 0, 0};
+		short n = 0;
 		final float[] grid = new float[8];
 		final int[] edges = new int[12];
-		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
-		final ArrayList<Face> faces = new ArrayList<>();
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
 
 		final ArrayList<float[]> vertices = new ArrayList<>();
 
@@ -352,42 +352,43 @@ public class MarchingCubes implements IMeshGenerator {
 			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
 				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
 					//For each cell, compute cube mask
-					int cube_index = 0;
-					for (int i = 0; i < 8; ++i) {
-						int v[] = cubeVerts[i];
+					short cube_index = 0;
+					for (byte i = 0; i < 8; ++i) {
+						byte v[] = cubeVerts[i];
 						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
 					}
 					//Compute vertices
-					int edge_mask = edgeTable[cube_index];
+					short edge_mask = edgeTable[cube_index];
 					if (edge_mask == 0) {
 						continue;
 					}
-					for (int i = 0; i < 12; ++i) {
+					for (byte i = 0; i < 12; ++i) {
 						if ((edge_mask & (1 << i)) == 0) {
 							continue;
 						}
 						edges[i] = vertices.size();
 						float[] nv = {0, 0, 0};
 
-						int[] e = edgeIndex[i];
-						final int[] p0 = cubeVerts[e[0]];
-						final int[] p1 = cubeVerts[e[1]];
+						byte[] e = edgeIndex[i];
+						final byte[] p0 = cubeVerts[e[0]];
+						final byte[] p1 = cubeVerts[e[1]];
 						final float a = grid[e[0]];
 						final float b = grid[e[1]], d = a - b;
 						float t = 0;
 						if (Math.abs(d) > 1e-6) {
 							t = a / d;
 						}
-						for (int j = 0; j < 3; ++j) {
+						for (byte j = 0; j < 3; ++j) {
 							nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
 						}
 						vertices.add(nv);
 					}
+					final FaceList faces = FaceList.retain();
 					//Add faces
-					int[] f = triTable[cube_index];
-					for (int i = 0; i < f.length; i += 3) {
+					byte[] f = triTable[cube_index];
+					for (byte i = 0; i < f.length; i += 3) {
 						faces.add(
 								Face.retain(
 										Vec3.retain(vertices.get(edges[f[i]])),
@@ -396,8 +397,7 @@ public class MarchingCubes implements IMeshGenerator {
 								)
 						);
 					}
-					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
-					faces.clear();
+					posToFaces.put(Vec3b.retain(x[0], x[1], x[2]), faces);
 				}
 
 		return posToFaces;

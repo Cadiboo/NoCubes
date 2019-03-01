@@ -1,21 +1,22 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashMap;
 
 public interface IMeshGenerator {
 
 	/**
 	 * Generates a chunk WITHOUT OFFSETTING OR TRANSLATING ANY VERTICES
 	 *
-	 * @param data the float[] data
-	 * @param dims the dimensions of the mesh
+	 * @param scalarFieldData the float[] data
+	 * @param dimensions      the dimensions of the mesh
+	 * @return the chunk vertices
 	 */
 	@Nonnull
-	Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims);
+	HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions);
 
 //	final int[][] cube_vertices = CUBE_VERTICES;
 //	final int[][] tetra_list = TETRA_LIST;

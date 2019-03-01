@@ -2,16 +2,16 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3b;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public class MarchingTetrahedra implements IMeshGenerator {
 
-	private final int[][] CUBE_VERTICES = {
+	private final byte[][] CUBE_VERTICES = {
 			{0, 0, 0},
 			{1, 0, 0},
 			{1, 1, 0},
@@ -22,7 +22,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 			{0, 1, 1}
 	};
 
-	private final int[][] TETRA_LIST = {
+	private final byte[][] TETRA_LIST = {
 			{0, 2, 3, 7},
 			{0, 6, 2, 7},
 			{0, 4, 6, 7},
@@ -33,28 +33,28 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public Map<int[], ArrayList<Face>> generateChunk(final float[] data, final int[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
 
-		final int[][] cube_vertices = CUBE_VERTICES;
-		final int[][] tetra_list = TETRA_LIST;
+		final byte[][] cube_vertices = CUBE_VERTICES;
+		final byte[][] tetra_list = TETRA_LIST;
 
-		final int[] x = {0, 0, 0};
-		int n = 0;
+		final byte[] x = {0, 0, 0};
+		short n = 0;
 		final float[] grid = new float[8];
-		final HashMap<int[], ArrayList<Face>> posToFaces = new HashMap<>();
-		final ArrayList<Face> faces = new ArrayList<>();
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
 
 		//March over the volume
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
 			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
 				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
 					//Read in cube
-					for (int i = 0; i < 8; ++i) {
+					for (byte i = 0; i < 8; ++i) {
 						grid[i] = data[n + cube_vertices[i][0] + dims[0] * (cube_vertices[i][1] + dims[1] * cube_vertices[i][2])];
 					}
-					for (int i = 0; i < tetra_list.length; ++i) {
-						int[] T = tetra_list[i];
-						int triindex = 0;
+					final FaceList faces = FaceList.retain();
+					for (byte i = 0; i < tetra_list.length; ++i) {
+						byte[] T = tetra_list[i];
+						byte triindex = 0;
 						if (grid[T[0]] < 0) triindex |= 1;
 						if (grid[T[1]] < 0) triindex |= 2;
 						if (grid[T[2]] < 0) triindex |= 4;
@@ -200,18 +200,17 @@ public class MarchingTetrahedra implements IMeshGenerator {
 						}
 					}
 
-					posToFaces.put(new int[]{x[0], x[1], x[2]}, new ArrayList<>(faces));
-					faces.clear();
+					posToFaces.put(Vec3b.retain(x[0], x[1], x[2]), faces);
 				}
 
 		return posToFaces;
 	}
 
-	private Vec3 interp(final int i0, final int i1, float[] grid, int[] x) {
+	private Vec3 interp(final byte i0, final byte i1, float[] grid, byte[] x) {
 		final float g0 = grid[i0];
 		final float g1 = grid[i1];
-		int[] p0 = CUBE_VERTICES[i0];
-		final int[] p1 = CUBE_VERTICES[i1];
+		byte[] p0 = CUBE_VERTICES[i0];
+		final byte[] p1 = CUBE_VERTICES[i1];
 		final Vec3 v = Vec3.retain(x[0], x[1], x[2]);
 		float t = g0 - g1;
 		if (Math.abs(t) > 1e-6) {
