@@ -94,7 +94,6 @@ public final class CacheUtil {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		float density = 0;
-		// why pre-Increment? We don't know but it works
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {
 			for (int yOffset = 0; yOffset < 2; ++yOffset) {
 				for (int xOffset = 0; xOffset < 2; ++xOffset) {
