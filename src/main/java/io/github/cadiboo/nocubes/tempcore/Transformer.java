@@ -2,6 +2,8 @@ package io.github.cadiboo.nocubes.tempcore;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -22,6 +24,8 @@ import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMet
  * @author Cadiboo
  */
 public class Transformer implements IClassTransformer, Opcodes {
+
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	@Override
 	public byte[] transform(final String name, final String transformedName, final byte[] basicClass) {
@@ -57,6 +61,8 @@ public class Transformer implements IClassTransformer, Opcodes {
 	}
 
 	public static void redirect_addCollisionBoxToList(final ClassNode classNode) {
+
+		LOGGER.info("starting injecting into addCollisionBoxToList");
 
 		final MethodNode addCollisionBoxToList = getMethod(classNode, "func_185908_a", "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V");
 		final InsnList instructions = addCollisionBoxToList.instructions;
@@ -120,6 +126,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 				false
 		));
 		instructions.insertBefore(ALOAD_0, new InsnNode(RETURN));
+		LOGGER.info("finised injecting into addCollisionBoxToList");
 
 	}
 
@@ -128,7 +135,9 @@ public class Transformer implements IClassTransformer, Opcodes {
 	private static class ObfuscationHelper {
 
 		private static String remapMethodName(String internalClassName, String methodName, String desc) {
-			return FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(internalClassName, methodName, desc);
+			final String remappedName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(internalClassName, methodName, desc);
+			LOGGER.info("remapped name " + methodName + " to " + remappedName);
+			return remappedName;
 		}
 
 	}
