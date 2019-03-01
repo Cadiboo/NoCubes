@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.Vec3b;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -12,18 +13,20 @@ import static net.minecraft.util.math.MathHelper.clamp;
  * @author Cadiboo
  */
 //TODO pooling?
-public class LightmapInfo {
+public class LightmapInfo implements AutoCloseable {
 
-	public final int skylight0;
-	public final int skylight1;
-	public final int skylight2;
-	public final int skylight3;
-	public final int blocklight0;
-	public final int blocklight1;
-	public final int blocklight2;
-	public final int blocklight3;
+	public int skylight0;
+	public int skylight1;
+	public int skylight2;
+	public int skylight3;
+	public int blocklight0;
+	public int blocklight1;
+	public int blocklight2;
+	public int blocklight3;
 
-	public LightmapInfo(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
+	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
+
+	private LightmapInfo(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
 		this.skylight0 = skylight0;
 		this.skylight1 = skylight1;
 		this.skylight2 = skylight2;
@@ -44,7 +47,7 @@ public class LightmapInfo {
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			final int[] pos,
+			final Vec3b pos,
 			final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
@@ -329,11 +332,31 @@ public class LightmapInfo {
 				packedLight3[26] & 0xFFFF
 		);
 
-		return new LightmapInfo(
+		return retain(
 				skylight0, skylight1, skylight2, skylight3,
 				blocklight0, blocklight1, blocklight2, blocklight3
 		);
 
+	}
+
+	public static LightmapInfo retain(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
+
+		LightmapInfo pooled = POOL.get();
+
+		pooled.skylight0 = skylight0;
+		pooled.skylight1 = skylight1;
+		pooled.skylight2 = skylight2;
+		pooled.skylight3 = skylight3;
+		pooled.blocklight0 = blocklight0;
+		pooled.blocklight1 = blocklight1;
+		pooled.blocklight2 = blocklight2;
+		pooled.blocklight3 = blocklight3;
+
+		return pooled;
+	}
+
+	@Override
+	public void close() {
 	}
 
 }

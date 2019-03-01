@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -22,6 +23,8 @@ import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
  * @author Cadiboo
  */
 public final class ClientProxy implements IProxy {
+
+	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
 
 	private static final int KEY_CODE_N = 49;
 

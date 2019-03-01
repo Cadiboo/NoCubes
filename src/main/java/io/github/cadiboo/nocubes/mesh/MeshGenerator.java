@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
+import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -13,12 +14,11 @@ import java.util.Map;
 
 public enum MeshGenerator {
 
-//	OldNoCubes(new OldNoCubes()),
 	SurfaceNets(new SurfaceNets()),
 	MarchingCubes(new MarchingCubes()),
 	MarchingTetrahedra(new MarchingTetrahedra()),
 
-	;
+	OldNoCubes(new OldNoCubes());
 
 	private final IMeshGenerator meshGenerator;
 

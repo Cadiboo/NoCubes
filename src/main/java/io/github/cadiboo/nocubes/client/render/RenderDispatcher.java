@@ -5,8 +5,6 @@ import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
-import io.github.cadiboo.nocubes.client.render.ExtendedLiquidChunkRenderer;
-import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
@@ -47,9 +45,9 @@ public class RenderDispatcher {
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
 		final IBlockAccess blockAccess = event.getIBlockAccess();
 
-		final int meshSizeX;
-		final int meshSizeY;
-		final int meshSizeZ;
+		final byte meshSizeX;
+		final byte meshSizeY;
+		final byte meshSizeZ;
 		if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
 			//yay, surface nets is special and needs an extra +1. why? no-one knows
 			meshSizeX = 18;
@@ -90,7 +88,7 @@ public class RenderDispatcher {
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final IBlockAccess blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ
+			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
 	) {
 		final ModProfiler profiler = NoCubes.getProfiler();
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
@@ -100,23 +98,18 @@ public class RenderDispatcher {
 		{
 //			for(MeshLayer layer : meshLayers)
 			//TODO get this from world & chunk & layer
-			final StateCache stateCache = generateMeshAndLightStateCache(
+			final StateCache lightStateCache = generateLightStateCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
 					blockAccess,
 					pooledMutableBlockPos
-			);
-			//TODO get this from world & chunk & layer
-			final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(
-					stateCache, TERRAIN_SMOOTHABLE
 			);
 
 			//TODO stateCache
 			final PackedLightCache packedLightCache =
 					ClientCacheUtil.generatePackedLightCache(
 							approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0,
-							approximateLighting ? stateCache.sizeX : 0, approximateLighting ? stateCache.sizeY : 0, approximateLighting ? stateCache.sizeZ : 0,
-							blockAccess, pooledMutableBlockPos
+							lightStateCache, blockAccess, pooledMutableBlockPos
 					);
 
 			profiler.startSection("renderMesh");
@@ -131,8 +124,7 @@ public class RenderDispatcher {
 						pooledMutableBlockPos,
 						usedBlockRenderLayers,
 						blockRendererDispatcher,
-						meshSizeX, meshSizeY, meshSizeZ,
-						stateCache, terrainSmoothableCache, packedLightCache
+						packedLightCache
 				);
 			} catch (ReportedException e) {
 				throw e;
@@ -182,24 +174,18 @@ public class RenderDispatcher {
 		}
 	}
 
-	private static StateCache generateMeshAndLightStateCache(
+	private static StateCache generateLightStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final IBlockAccess blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
 		// Light uses +1 block on every axis so we need to start at -1 block
 		final int cacheStartPosX = renderChunkPositionX - 1;
 		final int cacheStartPosY = renderChunkPositionY - 1;
 		final int cacheStartPosZ = renderChunkPositionZ - 1;
 
-		//TODO: once caches start getting stored in global data I will only need +1 cache size for density
-		//TODO: once caches start getting stored in global data I will need +2 cache size for light in a separate method
-
-		// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
 		// Light uses +1 block on every axis so we need to add 2 to the size of the cache (it takes +1 on EVERY axis)
-		// All up this is +2 blocks (2 for Light, including the 1 for Density)
 		final int cacheSizeX = meshSizeX + 2;
 		final int cacheSizeY = meshSizeY + 2;
 		final int cacheSizeZ = meshSizeZ + 2;

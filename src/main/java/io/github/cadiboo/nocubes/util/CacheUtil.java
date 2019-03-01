@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -15,41 +16,48 @@ public final class CacheUtil {
 			@Nonnull final IBlockAccess cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		NoCubes.getProfiler().start("generate stateCache");
-		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
-		int index = 0;
-		for (int z = 0; z < cacheSizeZ; z++) {
-			for (int y = 0; y < cacheSizeY; y++) {
-				for (int x = 0; x < cacheSizeX; x++) {
-					stateCache.getStateCache()[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
-					index++;
+		try (ModProfiler ignored = NoCubes.getProfiler().start("generate stateCache")) {
+			final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
+			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+
+			int index = 0;
+			for (int z = 0; z < cacheSizeZ; z++) {
+				for (int y = 0; y < cacheSizeY; y++) {
+					for (int x = 0; x < cacheSizeX; x++) {
+						stateCacheArray[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
+						index++;
+					}
 				}
 			}
+
+			return stateCache;
 		}
-		NoCubes.getProfiler().end();
-		return stateCache;
 	}
 
 	public static SmoothableCache generateSmoothableCache(
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IIsSmoothable isStateSmoothable
 	) {
-		NoCubes.getProfiler().start("generate smoothableCache");
-		final int cacheSizeX = stateCache.sizeX;
-		final int cacheSizeY = stateCache.sizeY;
-		final int cacheSizeZ = stateCache.sizeZ;
-		final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
-		int index = 0;
-		for (int z = 0; z < cacheSizeZ; z++) {
-			for (int y = 0; y < cacheSizeY; y++) {
-				for (int x = 0; x < cacheSizeX; x++) {
-					smoothableCache.getSmoothableCache()[index] = isStateSmoothable.isSmoothable(stateCache.getStateCache()[index]);
-					index++;
+		try (ModProfiler ignored = NoCubes.getProfiler().start("generate smoothableCache")) {
+			final int cacheSizeX = stateCache.sizeX;
+			final int cacheSizeY = stateCache.sizeY;
+			final int cacheSizeZ = stateCache.sizeZ;
+
+			final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
+			final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
+
+			int index = 0;
+			for (int z = 0; z < cacheSizeZ; z++) {
+				for (int y = 0; y < cacheSizeY; y++) {
+					for (int x = 0; x < cacheSizeX; x++) {
+						smoothableCacheArray[index] = isStateSmoothable.isSmoothable(stateCache.getStateCache()[index]);
+						index++;
+					}
 				}
 			}
+
+			return smoothableCache;
 		}
-		NoCubes.getProfiler().end();
-		return smoothableCache;
 	}
 
 	public static DensityCache generateDensityCache(
@@ -59,30 +67,30 @@ public final class CacheUtil {
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		NoCubes.getProfiler().start("generate densityCache");
-		//TODO: Light adds +1 to each side of the cache, once its separated I only need to subtract 1
-		final int densityCacheSizeX = stateCache.sizeX - 2;
-		final int densityCacheSizeY = stateCache.sizeY - 2;
-		final int densityCacheSizeZ = stateCache.sizeZ - 2;
+		try (ModProfiler ignored = NoCubes.getProfiler().start("generate densityCache")) {
+			final int densityCacheSizeX = stateCache.sizeX - 1;
+			final int densityCacheSizeY = stateCache.sizeY - 1;
+			final int densityCacheSizeZ = stateCache.sizeZ - 1;
 
-		final DensityCache densityCache = DensityCache.retain(densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ);
-		final float[] densityCacheArray = densityCache.getDensityCache();
-		int index = 0;
-		for (int z = 0; z < densityCacheSizeZ; z++) {
-			for (int y = 0; y < densityCacheSizeY; y++) {
-				for (int x = 0; x < densityCacheSizeX; x++) {
-					densityCacheArray[index] = getBlockDensity(
-							startPosX, startPosY, startPosZ,
-							x, y, z,
-							stateCache, smoothableCache,
-							blockAccess, pooledMutableBlockPos
-					);
-					index++;
+			final DensityCache densityCache = DensityCache.retain(densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ);
+			final float[] densityCacheArray = densityCache.getDensityCache();
+
+			int index = 0;
+			for (int z = 0; z < densityCacheSizeZ; z++) {
+				for (int y = 0; y < densityCacheSizeY; y++) {
+					for (int x = 0; x < densityCacheSizeX; x++) {
+						densityCacheArray[index] = getBlockDensity(
+								startPosX, startPosY, startPosZ,
+								x, y, z,
+								stateCache, smoothableCache,
+								blockAccess, pooledMutableBlockPos
+						);
+						index++;
+					}
 				}
 			}
+			return densityCache;
 		}
-		NoCubes.getProfiler().end();
-		return densityCache;
 	}
 
 	private static float getBlockDensity(
