@@ -14,6 +14,10 @@ import java.util.List;
 /**
  * @author Cadiboo
  */
+@SuppressWarnings({
+		"unused", // Hooks get invoked by ASM redirects
+		"weakerAccess" // Hooks need to be public to be invoked
+})
 public class Hooks {
 
 	public static void addCollisionBoxToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
