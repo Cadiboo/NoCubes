@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -14,6 +15,7 @@ public final class CacheUtil {
 			@Nonnull final IBlockAccess cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
+		NoCubes.getProfiler().start("generate stateCache");
 		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; z++) {
@@ -24,6 +26,7 @@ public final class CacheUtil {
 				}
 			}
 		}
+		NoCubes.getProfiler().end();
 		return stateCache;
 	}
 
@@ -31,6 +34,7 @@ public final class CacheUtil {
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IIsSmoothable isStateSmoothable
 	) {
+		NoCubes.getProfiler().start("generate smoothableCache");
 		final int cacheSizeX = stateCache.sizeX;
 		final int cacheSizeY = stateCache.sizeY;
 		final int cacheSizeZ = stateCache.sizeZ;
@@ -44,6 +48,7 @@ public final class CacheUtil {
 				}
 			}
 		}
+		NoCubes.getProfiler().end();
 		return smoothableCache;
 	}
 
@@ -54,6 +59,7 @@ public final class CacheUtil {
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
+		NoCubes.getProfiler().start("generate densityCache");
 		//TODO: Light adds +1 to each side of the cache, once its separated I only need to subtract 1
 		final int densityCacheSizeX = stateCache.sizeX - 2;
 		final int densityCacheSizeY = stateCache.sizeY - 2;
@@ -75,6 +81,7 @@ public final class CacheUtil {
 				}
 			}
 		}
+		NoCubes.getProfiler().end();
 		return densityCache;
 	}
 
