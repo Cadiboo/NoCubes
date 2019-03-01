@@ -9,6 +9,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -90,6 +91,8 @@ public class Transformer implements IClassTransformer, Opcodes {
 //		L0
 //		LINENUMBER 463 L0
 //>		ALOAD 0
+//>		GETFIELD net/minecraft/block/state/BlockStateContainer$StateImplementation.block : Lnet/minecraft/block/Block;
+//>		ALOAD 0
 //>		ALOAD 1
 //>		ALOAD 2
 //>		ALOAD 3
@@ -111,6 +114,13 @@ public class Transformer implements IClassTransformer, Opcodes {
 //		LINENUMBER 464 L1
 //				RETURN
 
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
+		instructions.insertBefore(ALOAD_0, new FieldInsnNode(
+				GETFIELD,
+				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
+				"block",
+				"Lnet/minecraft/block/Block;"
+		));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 1));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 2));
