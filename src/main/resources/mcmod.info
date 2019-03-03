@@ -6,7 +6,7 @@ This mod uses code from the Open Source reimplementation of NoCubes by CosmicDan
 	"version": "${version}",
 	"mcversion": "${mcversion}",
 	"url": "https://Cadiboo.github.io/projects/nocubes/",
-	"updateJSON": "https://raw.githubusercontent.com/Cadiboo/NoCubes/master/update.json",
+	"updateJSON": "https://Cadiboo.github.io/projects/nocubes/update.json",
 	"authorList": ["Cadiboo"],
 	"credits": "Click_Me for the original mod, ComsicDan for the reverse-engineering and Cadiboo for making & maintaining the mod for 1.12.2+",
 	"logoFile": "/nocubes.png",
