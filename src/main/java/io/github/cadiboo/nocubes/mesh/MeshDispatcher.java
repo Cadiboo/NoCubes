@@ -7,9 +7,11 @@ import io.github.cadiboo.nocubes.util.DensityCache;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
 import io.github.cadiboo.nocubes.util.Vec3b;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -107,6 +109,53 @@ public class MeshDispatcher {
 				blockAccess,
 				pooledMutableBlockPos
 		);
+	}
+
+	public FaceList generateBlock(final BlockPos pos, final IBlockAccess blockAccess, final IIsSmoothable isSmoothable) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock")) {
+			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+			try {
+				final int posX = pos.getX();
+				final int posY = pos.getY();
+				final int posZ = pos.getZ();
+
+				// Convert block pos to relative block pos
+				// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
+				final byte[] posRelativeToChunk = new byte[]{
+						(byte) (posX - ((posX >> 4) << 4)),
+						(byte) (posY - ((posY >> 4) << 4)),
+						(byte) (posZ - ((posZ >> 4) << 4))
+				};
+
+				final float[] neighbourDensityGrid = generateNeighbourDensityGrid(posX, posY, posZ, blockAccess, isSmoothable, pooledMutableBlockPos);
+				return ModConfig.getMeshGenerator().generateBlock(posRelativeToChunk, neighbourDensityGrid);
+			} finally {
+				pooledMutableBlockPos.release();
+			}
+		}
+	}
+
+	public float[] generateNeighbourDensityGrid(final int posX, final int posY, final int posZ, final IBlockAccess blockAccess, final IIsSmoothable isSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateNeighbourDensityGrid")) {
+			final float[] neighbourDensityGrid = new float[8];
+
+			int neighbourDensityGridIndex = 0;
+			for (int zOffset = 0; zOffset < 2; ++zOffset) {
+				for (int yOffset = 0; yOffset < 2; ++yOffset) {
+					for (byte xOffset = 0; xOffset < 2; ++xOffset, ++neighbourDensityGridIndex) {
+						pooledMutableBlockPos.setPos(
+								posX + xOffset,
+								posY + yOffset,
+								posZ + yOffset
+						);
+						final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+						final boolean isStateSmoothable = isSmoothable.isSmoothable(state);
+						neighbourDensityGrid[neighbourDensityGridIndex] = ModUtil.getIndividualBlockDensity(isStateSmoothable, state, blockAccess, pooledMutableBlockPos);
+					}
+				}
+			}
+			return neighbourDensityGrid;
+		}
 	}
 
 }

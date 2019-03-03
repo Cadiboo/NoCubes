@@ -63,7 +63,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 
 	public static void redirect_addCollisionBoxToList(final ClassNode classNode) {
 
-		LOGGER.info("starting injecting into addCollisionBoxToList");
+		LOGGER.info("Starting injecting into addCollisionBoxToList");
 
 		final MethodNode addCollisionBoxToList = getMethod(classNode, "func_185908_a", "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V");
 		final InsnList instructions = addCollisionBoxToList.instructions;
@@ -99,7 +99,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 //>		ALOAD 4
 //>		ALOAD 5
 //>		ILOAD 6
-//>		INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.addCollisionBoxToList (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V
+//>		INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.addCollisionBoxToList (Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V
 //#		ALOAD 0
 //		GETFIELD net/minecraft/block/state/BlockStateContainer$StateImplementation.block : Lnet/minecraft/block/Block;
 //		ALOAD 0
@@ -132,11 +132,11 @@ public class Transformer implements IClassTransformer, Opcodes {
 				INVOKESTATIC,
 				"io/github/cadiboo/nocubes/hooks/Hooks",
 				"addCollisionBoxToList",
-				"(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V",
+				"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V",
 				false
 		));
 		instructions.insertBefore(ALOAD_0, new InsnNode(RETURN));
-		LOGGER.info("finised injecting into addCollisionBoxToList");
+		LOGGER.info("Finished injecting into addCollisionBoxToList");
 
 	}
 

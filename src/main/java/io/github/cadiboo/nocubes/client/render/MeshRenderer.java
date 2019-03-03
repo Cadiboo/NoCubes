@@ -241,7 +241,7 @@ public class MeshRenderer {
 							blockAccess,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-							ClientProxy.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE),
+							NoCubes.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
 					);
@@ -259,7 +259,7 @@ public class MeshRenderer {
 							blockAccess,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-							ClientProxy.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE),
+							NoCubes.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE),
 							LEAVES_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, true
 					);

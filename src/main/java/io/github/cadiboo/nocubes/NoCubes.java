@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -51,11 +52,13 @@ public final class NoCubes {
 		return profiler;
 	});
 
+	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
+
 	@Mod.Instance(MOD_ID)
-	public static NoCubes instance;
+	public static NoCubes INSTANCE;
 
 	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
-	public static IProxy proxy;
+	public static IProxy PROXY;
 
 	public NoCubes() {
 		try {

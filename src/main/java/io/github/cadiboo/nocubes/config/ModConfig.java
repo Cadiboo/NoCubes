@@ -128,6 +128,9 @@ public final class ModConfig {
 //	@Config.RangeDouble(min = -10, max = 10)
 	public static double smoothOtherBlocksAmount = 0.0F;
 
+	@Config.Ignore
+	public static boolean collisionsEnabled = true;
+
 	static {
 		setupSmoothableBlockStates();
 	}

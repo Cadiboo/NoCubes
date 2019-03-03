@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -18,13 +17,11 @@ import java.lang.invoke.MethodHandles;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 
 /**
- * The version of IProxy that gets injected into {@link NoCubes#proxy} on a PHYSICAL CLIENT
+ * The version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT
  *
  * @author Cadiboo
  */
 public final class ClientProxy implements IProxy {
-
-	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
 
 	private static final int KEY_CODE_N = 49;
 
