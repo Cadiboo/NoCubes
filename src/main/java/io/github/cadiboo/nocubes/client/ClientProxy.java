@@ -10,6 +10,7 @@ import net.minecraft.util.ReportedException;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -33,9 +34,14 @@ public final class ClientProxy implements IProxy {
 	private static final MethodHandle RenderGlobal_markBlocksForUpdate;
 	static {
 		try {
+//			RenderGlobal_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
+//					ObfuscationReflectionHelper.findMethod(RenderGlobal.class, "func_184385_a",
+//							void.class,
+//							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
+//					)
+//			);
 			RenderGlobal_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
-					ObfuscationReflectionHelper.findMethod(RenderGlobal.class, "func_184385_a",
-							void.class,
+					ReflectionHelper.findMethod(RenderGlobal.class, "markBlocksForUpdate", "func_184385_a",
 							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
 					)
 			);
