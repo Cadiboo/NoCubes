@@ -197,7 +197,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 		return new FieldInsnNode(
 				GETFIELD,
 				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
-				ObfuscationHelper.remapFieldName("net/minecraft/block/state/BlockStateContainer$StateImplementation", "block"),
+				ObfuscationHelper.remapFieldName("net/minecraft/block/state/BlockStateContainer$StateImplementation", "field_177239_a"),
 				"Lnet/minecraft/block/Block;"
 		);
 	}
@@ -347,7 +347,9 @@ public class Transformer implements IClassTransformer, Opcodes {
 		}
 
 		private static String remapFieldName(final String internalClassName, final String fieldName) {
-			return FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(internalClassName, fieldName, null);
+			final String remappedName = FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(internalClassName, fieldName, null);
+			LOGGER.info("remapped name " + fieldName + " to " + remappedName);
+			return remappedName;
 		}
 
 	}
