@@ -37,7 +37,7 @@ public class SmoothableCache extends XYZCache implements AutoCloseable {
 
 		final int size = sizeX * sizeY * sizeZ;
 
-		if (pooled.cache.length < size) {
+		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
 			pooled.cache = new boolean[size];
 		}
 
