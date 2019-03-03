@@ -2,14 +2,20 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.profiler.Profiler;
 
-public class ModProfiler extends Profiler {
+public class ModProfiler extends Profiler implements AutoCloseable {
 
-	public void start(final String name) {
+	public ModProfiler start(final String name) {
 //		startSection(name);
+		return this;
 	}
 
 	public void end() {
 //		endSection();
+	}
+
+	@Override
+	public void close() {
+		end();
 	}
 
 //	private LinkedList<String> profiling = new LinkedList<>();
