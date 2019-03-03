@@ -58,7 +58,8 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final TickEvent.ClientTickEvent event) {
-		ObjectPoolingProfiler.onTick();
+		
+//		ObjectPoolingProfiler.onTick();
 
 		if (!ClientProxy.toggleSmoothableBlockstate.isPressed()) {
 			return;
