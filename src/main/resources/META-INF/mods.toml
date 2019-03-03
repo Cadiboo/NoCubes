@@ -10,7 +10,7 @@ modLoader="javafml" #mandatory
 loaderVersion="[0,)" #mandatory
 
 # A URL to query for updates for this mod. See the JSON update specification <here>
-#updateJSONURL="https://raw.githubusercontent.com/Cadiboo/NoCubes/master/update.json" #optional
+updateJSONURL="https://Cadiboo.github.io/projects/nocubes/update.json" #optional
 
 # A URL to refer people to when problems occur with this mod
 issueTrackerURL="https://github.com/Cadiboo/NoCubes/issues" #optional
