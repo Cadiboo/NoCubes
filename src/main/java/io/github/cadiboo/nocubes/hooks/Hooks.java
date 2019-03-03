@@ -37,7 +37,10 @@ public class Hooks {
 	private static final boolean REPOSE_INSTALLED = false;
 
 	public static boolean isEntityInsideOpaqueBlock(Entity entity) {
-		return isEntityInsideOpaqueBlockDefault(entity);
+		if (!NoCubes.isEnabled()) {
+			return isEntityInsideOpaqueBlockDefault(entity);
+		}
+		return false;
 	}
 
 	private static boolean isEntityInsideOpaqueBlockDefault(final Entity entity) {
@@ -84,6 +87,14 @@ public class Hooks {
 		if (!NoCubes.isEnabled() || !ModConfig.collisionsEnabled) {
 			return getCollisionBoundingBoxDefault(block, state, worldIn, pos);
 		}
+		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
+			if (LEAVES_SMOOTHABLE.isSmoothable(state)) {
+				return null;
+			} else {
+				return getCollisionBoundingBoxDefault(block, state, worldIn, pos);
+			}
+		}
+
 		return null;
 	}
 
