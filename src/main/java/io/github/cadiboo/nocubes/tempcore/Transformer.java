@@ -176,12 +176,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 //		IRETURN
 
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
-		instructions.insertBefore(ALOAD_0, new FieldInsnNode(
-				GETFIELD,
-				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
-				"block",
-				"Lnet/minecraft/block/Block;"
-		));
+		instructions.insertBefore(ALOAD_0, BlockStateContainer$StateImplementation_block());
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 1));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 2));
@@ -196,6 +191,15 @@ public class Transformer implements IClassTransformer, Opcodes {
 		instructions.insertBefore(ALOAD_0, new InsnNode(IRETURN));
 		LOGGER.info("Finished injecting into shouldSideBeRendered");
 
+	}
+
+	private static AbstractInsnNode BlockStateContainer$StateImplementation_block() {
+		return new FieldInsnNode(
+				GETFIELD,
+				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
+				ObfuscationHelper.remapFieldName("net/minecraft/block/state/BlockStateContainer$StateImplementation", "block"),
+				"Lnet/minecraft/block/Block;"
+		);
 	}
 
 	public static void redirect_addCollisionBoxToList(final ClassNode classNode) {
@@ -252,12 +256,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 //				RETURN
 
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
-		instructions.insertBefore(ALOAD_0, new FieldInsnNode(
-				GETFIELD,
-				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
-				"block",
-				"Lnet/minecraft/block/Block;"
-		));
+		instructions.insertBefore(ALOAD_0, BlockStateContainer$StateImplementation_block());
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 1));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 2));
@@ -322,12 +321,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 //		ARETURN
 
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
-		instructions.insertBefore(ALOAD_0, new FieldInsnNode(
-				GETFIELD,
-				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
-				"block",
-				"Lnet/minecraft/block/Block;"
-		));
+		instructions.insertBefore(ALOAD_0, BlockStateContainer$StateImplementation_block());
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 1));
 		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 2));
@@ -343,14 +337,17 @@ public class Transformer implements IClassTransformer, Opcodes {
 
 	}
 
-	//Coppied from 1.13 ObfuscationReflectionHelper
-
+	// Copied from  ObfuscationReflectionHelper
 	private static class ObfuscationHelper {
 
-		private static String remapMethodName(String internalClassName, String methodName, String desc) {
+		private static String remapMethodName(final String internalClassName, final String methodName, final String desc) {
 			final String remappedName = FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(internalClassName, methodName, desc);
 			LOGGER.info("remapped name " + methodName + " to " + remappedName);
 			return remappedName;
+		}
+
+		private static String remapFieldName(final String internalClassName, final String fieldName) {
+			return FMLDeobfuscatingRemapper.INSTANCE.mapFieldName(internalClassName, fieldName, null);
 		}
 
 	}
