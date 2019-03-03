@@ -31,9 +31,15 @@ public class Transformer implements IClassTransformer, Opcodes {
 	@Override
 	public byte[] transform(final String name, final String transformedName, final byte[] basicClass) {
 		if (transformedName.equals("net.minecraft.block.state.BlockStateContainer$StateImplementation")) {
-			return transformClass(basicClass, Transformer::redirect_shouldSideBeRendered, Transformer::redirect_getCollisionBoundingBox, Transformer::redirect_addCollisionBoxToList);
+			return transformClass(basicClass,
+					Transformer::redirect_shouldSideBeRendered,
+					Transformer::redirect_getCollisionBoundingBox,
+					Transformer::redirect_addCollisionBoxToList
+			);
 		} else if (transformedName.equals("net.minecraft.entity.Entity")) {
-			return transformClass(basicClass, Transformer::redirect_isEntityInsideOpaqueBlock);
+			return transformClass(basicClass,
+					Transformer::redirect_isEntityInsideOpaqueBlock
+			);
 		}
 		return basicClass;
 	}
