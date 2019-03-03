@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
@@ -284,6 +285,10 @@ public final class ModUtil {
 			if (max < anInt) max = anInt;
 		}
 		return max;
+	}
+
+	public static boolean isLiquidSource(final IBlockState state) {
+		return state.getBlock() instanceof BlockLiquid && state.getValue(BlockLiquid.LEVEL) == 0;
 	}
 
 }

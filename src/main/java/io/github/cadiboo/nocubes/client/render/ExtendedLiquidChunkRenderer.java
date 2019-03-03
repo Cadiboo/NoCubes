@@ -2,10 +2,9 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
-import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -18,7 +17,6 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
 
@@ -26,10 +24,6 @@ import javax.annotation.Nonnull;
  * @author Cadiboo
  */
 public class ExtendedLiquidChunkRenderer {
-
-	public static boolean isLiquidSource(final IBlockState state) {
-		return state.getBlock() instanceof BlockLiquid && state.getValue(BlockLiquid.LEVEL) == 0;
-	}
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
@@ -50,7 +44,7 @@ public class ExtendedLiquidChunkRenderer {
 
 		final boolean[] isLiquid = new boolean[stateCacheLength];
 		for (int i = 0; i < stateCacheLength; i++) {
-			isLiquid[i] = isLiquidSource(stateCacheArray[i]);
+			isLiquid[i] = ModUtil.isLiquidSource(stateCacheArray[i]);
 		}
 
 		final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
