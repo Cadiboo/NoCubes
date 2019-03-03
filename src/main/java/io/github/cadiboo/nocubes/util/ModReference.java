@@ -61,6 +61,6 @@ public final class ModReference {
 
 	public static final String CONFIG_VERSION = "0.1.8";
 
-	public static final String UPDATE_JSON = "https://raw.githubusercontent.com/Cadiboo/NoCubes/master/update.json";
+	public static final String UPDATE_JSON = "https://Cadiboo.github.io/projects/nocubes/update.json";
 
 }
