@@ -129,7 +129,7 @@ public final class ModConfig {
 	public static double smoothOtherBlocksAmount = 0.0F;
 
 	@Config.Ignore
-	public static boolean collisionsEnabled = true;
+	public static boolean collisionsEnabled = false;
 
 	@Config.Ignore
 	public static boolean enablePools = true;
