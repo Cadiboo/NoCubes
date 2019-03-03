@@ -82,7 +82,9 @@ public class Face implements AutoCloseable {
 			return;
 		}
 		synchronized (POOL) {
-			POOL.add(this);
+			if (POOL.size() < 10000) {
+				POOL.add(this);
+			}
 //			this.released = true;
 		}
 	}
