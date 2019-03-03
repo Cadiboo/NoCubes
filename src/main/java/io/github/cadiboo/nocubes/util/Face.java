@@ -1,11 +1,16 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
+
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
+/**
+ * @author Cadiboo
+ */
 public class Face implements AutoCloseable {
 
-//	private static int instances = 0;
+	private static int instances = 0;
 
 	@Nonnull
 	private Vec3 vertex0;
@@ -25,7 +30,7 @@ public class Face implements AutoCloseable {
 		this.vertex1 = vertex1;
 		this.vertex2 = vertex2;
 		this.vertex3 = vertex3;
-//		++instances;
+		++instances;
 	}
 
 	@Nonnull
@@ -73,20 +78,27 @@ public class Face implements AutoCloseable {
 
 	@Override
 	public void close() {
+		if (!ModConfig.enablePools) {
+			return;
+		}
 		synchronized (POOL) {
 			POOL.add(this);
 //			this.released = true;
 		}
 	}
 
-//	static
-//	public int getInstances() {
-//		return instances;
-//	}
-//
-//	static
-//	public int getPoolSize() {
-//		return POOL.size();
-//	}
+	public static int getInstances() {
+		return instances;
+	}
+
+	public static int getPoolSize() {
+		return POOL.size();
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
+	}
 
 }

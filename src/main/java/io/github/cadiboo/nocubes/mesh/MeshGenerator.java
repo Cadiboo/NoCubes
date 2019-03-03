@@ -12,6 +12,9 @@ import io.github.cadiboo.nocubes.util.Vec3b;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @author Cadiboo
+ */
 public enum MeshGenerator {
 
 	SurfaceNets(new SurfaceNets()),

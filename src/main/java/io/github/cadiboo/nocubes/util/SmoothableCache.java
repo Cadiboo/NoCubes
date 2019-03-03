@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
  */
 public class SmoothableCache extends XYZCache implements AutoCloseable {
 
+	private static int instances = 0;
+
 	@Nonnull
 	private boolean[] cache;
 
@@ -15,6 +17,7 @@ public class SmoothableCache extends XYZCache implements AutoCloseable {
 	private SmoothableCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new boolean[sizeX * sizeY * sizeZ];
+		++instances;
 	}
 
 	@Nonnull
@@ -46,6 +49,16 @@ public class SmoothableCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+	}
+
+	public static int getInstances() {
+		return instances;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
 	}
 
 }

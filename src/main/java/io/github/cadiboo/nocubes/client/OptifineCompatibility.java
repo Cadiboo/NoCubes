@@ -10,6 +10,9 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
+/**
+ * @author Cadiboo
+ */
 public final class OptifineCompatibility {
 
 	private static final Class<?> OPTIFINE_CONFIG;

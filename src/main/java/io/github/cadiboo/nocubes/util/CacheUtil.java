@@ -7,6 +7,9 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
+/**
+ * @author Cadiboo
+ */
 //TODO: javadocs
 public final class CacheUtil {
 

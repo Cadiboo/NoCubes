@@ -10,6 +10,9 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Cadiboo
+ */
 public class MarchingCubes implements IMeshGenerator {
 
 	private static final short[] EDGE_TABLE = {

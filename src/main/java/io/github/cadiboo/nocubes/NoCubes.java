@@ -27,6 +27,9 @@ import static io.github.cadiboo.nocubes.util.ModReference.SERVER_PROXY_CLASS;
 import static io.github.cadiboo.nocubes.util.ModReference.UPDATE_JSON;
 import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 
+/**
+ * @author Cadiboo
+ */
 @Mod(
 		modid = MOD_ID,
 		name = MOD_NAME,

@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
+
 import java.util.ArrayList;
 
 /**
@@ -7,14 +9,14 @@ import java.util.ArrayList;
  */
 public class FaceList extends ArrayList<Face> implements AutoCloseable {
 
-//	private static int instances = 0;
+	private static int instances = 0;
 
 //	private boolean released;
 
 	private static final ArrayList<FaceList> POOL = new ArrayList<>();
 
 	private FaceList() {
-//		++instances;
+		++instances;
 	}
 
 	public static FaceList retain() {
@@ -32,20 +34,27 @@ public class FaceList extends ArrayList<Face> implements AutoCloseable {
 	@Override
 	public void close() {
 		this.clear();
+		if (!ModConfig.enablePools) {
+			return;
+		}
 		synchronized (POOL) {
 			POOL.add(this);
 //			this.released = true;
 		}
 	}
 
-//	static
-//	public int getInstances() {
-//		return instances;
-//	}
-//
-//	static
-//	public int getPoolSize() {
-//		return POOL.size();
-//	}
+	public static int getInstances() {
+		return instances;
+	}
+
+	public static int getPoolSize() {
+		return POOL.size();
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
+	}
 
 }

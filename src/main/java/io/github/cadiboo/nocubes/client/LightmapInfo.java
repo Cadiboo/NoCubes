@@ -12,8 +12,9 @@ import static net.minecraft.util.math.MathHelper.clamp;
 /**
  * @author Cadiboo
  */
-//TODO pooling?
 public class LightmapInfo implements AutoCloseable {
+
+	private static int instances = 0;
 
 	public int skylight0;
 	public int skylight1;
@@ -35,6 +36,7 @@ public class LightmapInfo implements AutoCloseable {
 		this.blocklight1 = blocklight1;
 		this.blocklight2 = blocklight2;
 		this.blocklight3 = blocklight3;
+		++instances;
 	}
 
 	public static LightmapInfo generateLightmapInfo(
@@ -357,6 +359,16 @@ public class LightmapInfo implements AutoCloseable {
 
 	@Override
 	public void close() {
+	}
+
+	public static int getInstances() {
+		return instances;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
 	}
 
 }

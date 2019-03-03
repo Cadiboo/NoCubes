@@ -131,6 +131,9 @@ public final class ModConfig {
 	@Config.Ignore
 	public static boolean collisionsEnabled = true;
 
+	@Config.Ignore
+	public static boolean enablePools = true;
+
 	static {
 		setupSmoothableBlockStates();
 	}

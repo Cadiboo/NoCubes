@@ -12,6 +12,8 @@ import java.lang.reflect.Field;
 
 /**
  * Similar to the old {@link ReflectionHelper}
+ *
+ * @author Cadiboo
  */
 public final class ReflectionUtil {
 

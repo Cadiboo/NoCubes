@@ -9,6 +9,8 @@ import javax.annotation.Nonnull;
  */
 public class StateCache extends XYZCache implements AutoCloseable {
 
+	private static int instances = 0;
+
 	@Nonnull
 	private IBlockState[] cache;
 
@@ -17,6 +19,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new IBlockState[sizeX * sizeY * sizeZ];
+		++instances;
 	}
 
 	@Nonnull
@@ -48,6 +51,16 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+	}
+
+	public static int getInstances() {
+		return instances;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
 	}
 
 }

@@ -11,6 +11,9 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * @author Cadiboo
+ */
 public class SurfaceNets implements IMeshGenerator {
 
 	private static final int[] CUBE_EDGES = new int[24];

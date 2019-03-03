@@ -2,6 +2,9 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.profiler.Profiler;
 
+/**
+ * @author Cadiboo
+ */
 public class ModProfiler extends Profiler implements AutoCloseable {
 
 	public void putSection(final String sectionName, final long estimatedTimeTakenNanoseconds) {

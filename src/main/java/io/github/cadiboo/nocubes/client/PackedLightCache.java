@@ -12,6 +12,8 @@ import javax.annotation.Nonnull;
 @SideOnly(Side.CLIENT)
 public class PackedLightCache extends XYZCache implements AutoCloseable {
 
+	private static int instances = 0;
+
 	private static final ThreadLocal<PackedLightCache> POOL = ThreadLocal.withInitial(() -> new PackedLightCache(0, 0, 0));
 
 	@Nonnull
@@ -20,6 +22,7 @@ public class PackedLightCache extends XYZCache implements AutoCloseable {
 	private PackedLightCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new int[sizeX * sizeY * sizeZ];
+		++instances;
 	}
 
 	@Nonnull
@@ -51,6 +54,16 @@ public class PackedLightCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+	}
+
+	public static int getInstances() {
+		return instances;
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		super.finalize();
+		--instances;
 	}
 
 }
