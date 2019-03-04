@@ -10,6 +10,7 @@ import net.minecraft.util.ReportedException;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -86,6 +87,11 @@ public final class NoCubes {
 	public void onPreInit(final FMLPreInitializationEvent event) {
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
+	}
+
+	@Mod.EventHandler
+	public void onPostInit(final FMLPostInitializationEvent event) {
+		PROXY.replaceFluidRendererCauseImBored();
 	}
 
 }

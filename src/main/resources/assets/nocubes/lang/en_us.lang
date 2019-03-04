@@ -19,6 +19,20 @@ nocubes.config.smoothLeavesSeparate.tooltip=If leaves should be smoothed (separa
 nocubes.config.extendLiquids=Extend Liquids
 nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rendered extended into smoothable blocks
 
+nocubes.config.smoothBiomeColors=Smooth Biome Colors
+nocubes.config.smoothBiomeColors.tooltip=If Biome transitions (Swamp -> Plains) should be smoothed
+
+nocubes.config.smoothFluidBiomeColors=Smooth Fluid Biome Colors
+nocubes.config.smoothFluidBiomeColors.tooltip=If smoothed Biome transitions (Swamp -> Plains) should be applied when rendering fluids
+
+nocubes.config.smoothFluidLighting=Smooth Fluid Lighting
+nocubes.config.smoothFluidLighting.tooltip=If Smooth Lighting should be applied when rendering fluids
+
+nocubes.config.naturalFluidTextures=Natural Fluid Textures
+nocubes.config.naturalFluidTextures.tooltip=If Fluid textures should be randomly flipped/rotated to remove the tiling effect
+
+key.categories.nocubes=NoCubes
+
 nocubes.key.toggleSmoothableBlockstate=NoCubes Toggle Smoothable Blockstate
 nocubes.key.toggleSmoothableBlockstate.tooltip=(the block you are looking at)
 

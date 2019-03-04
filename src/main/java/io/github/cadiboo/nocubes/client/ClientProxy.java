@@ -2,14 +2,16 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.IProxy;
+import io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockFluidRenderer;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.invoke.MethodHandle;
@@ -26,7 +28,8 @@ public final class ClientProxy implements IProxy {
 
 	private static final int KEY_CODE_N = 49;
 
-	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories.misc");
+	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories.nocubes");
+	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
 	static {
 		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
@@ -70,6 +73,14 @@ public final class ClientProxy implements IProxy {
 			crashReport.makeCategory("Reflectively Invoking Method");
 			throw new ReportedException(crashReport);
 		}
+	}
+
+	public void replaceFluidRendererCauseImBored() {
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+		final BlockFluidRenderer fluidRenderer = ObfuscationReflectionHelperCopy.getPrivateValue(BlockRendererDispatcher.class, blockRendererDispatcher, "field_175025_e");
+		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(fluidRenderer);
+		ObfuscationReflectionHelperCopy.setPrivateValue(BlockRendererDispatcher.class, blockRendererDispatcher, smoothLightingBlockFluidRenderer, "field_175025_e");
+		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
 	}
 
 }

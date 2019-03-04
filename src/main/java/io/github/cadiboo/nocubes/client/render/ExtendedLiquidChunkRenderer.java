@@ -1,7 +1,9 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
@@ -38,93 +40,99 @@ public class ExtendedLiquidChunkRenderer {
 			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache
 	) {
 
-		final IBlockState[] stateCacheArray = stateCache.getStateCache();
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("render extended fluid chunk")) {
+			try {
+				final IBlockState[] stateCacheArray = stateCache.getStateCache();
 
-		final int stateCacheLength = stateCacheArray.length;
+				final int stateCacheLength = stateCacheArray.length;
 
-		final boolean[] isLiquid = new boolean[stateCacheLength];
-		for (int i = 0; i < stateCacheLength; i++) {
-			isLiquid[i] = ModUtil.isLiquidSource(stateCacheArray[i]);
-		}
+				final boolean[] isLiquid = new boolean[stateCacheLength];
+				for (int i = 0; i < stateCacheLength; i++) {
+					isLiquid[i] = ModUtil.isLiquidSource(stateCacheArray[i]);
+				}
 
-		final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
+				final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
 
-		final Minecraft minecraft = Minecraft.getMinecraft();
-		final TextureMap textureMap = minecraft.getTextureMapBlocks();
-		final BlockColors blockColors = minecraft.getBlockColors();
+				final Minecraft minecraft = Minecraft.getMinecraft();
+				final TextureMap textureMap = minecraft.getTextureMapBlocks();
+				final BlockColors blockColors = minecraft.getBlockColors();
 
-		final int extendRange = ClientUtil.getExtendLiquidsRange();
+				final int extendRange = ClientUtil.getExtendLiquidsRange();
 
-		final int cacheAddX = extendRange;
-		final int cacheAddY = 0;
-		final int cacheAddZ = extendRange;
+				final int cacheAddX = extendRange;
+				final int cacheAddY = 0;
+				final int cacheAddZ = extendRange;
 
-		// For offset = -1 or -2 to offset = 1 or 2;
-		final int maxXOffset = extendRange;
-		final int maxZOffset = extendRange;
+				// For offset = -1 or -2 to offset = 1 or 2;
+				final int maxXOffset = extendRange;
+				final int maxZOffset = extendRange;
 
-		for (int z = 0; z < 16; z++) {
-			for (int y = 0; y < 16; y++) {
-				for (int x = 0; x < 16; x++) {
+				for (int z = 0; z < 16; ++z) {
+					for (int y = 0; y < 16; ++y) {
+						for (int x = 0; x < 16; ++x) {
 
-					if (!isSmoothable[smoothableCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)]) {
-						continue;
-					}
-
-					OFFSET:
-					for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
-						for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
-
-							//no point in checking myself
-							if (xOffset == 0 && zOffset == 0) {
+							if (!isSmoothable[smoothableCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)]) {
 								continue;
 							}
 
-							// Add 1 or 2 to account for offset=-1 or -2
-							final int liquidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
-							if (!isLiquid[liquidStateIndex]) {
-								continue;
-							}
+							OFFSET:
+							for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+								for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
 
-							// only render if block up is air/not a normal cube
-							if (stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
-								continue;
-							}
+									//no point in checking myself
+									if (xOffset == 0 && zOffset == 0) {
+										continue;
+									}
 
-							final IBlockState liquidState = stateCacheArray[liquidStateIndex];
+									// Add 1 or 2 to account for offset=-1 or -2
+									final int liquidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
+									if (!isLiquid[liquidStateIndex]) {
+										continue;
+									}
 
-							final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
-							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+									// only render if block up is air/not a normal cube
+									if (stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
+										continue;
+									}
 
-							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-							OptifineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
-									renderChunkPositionX + x,
-									renderChunkPositionY + y,
-									renderChunkPositionZ + z
-							), blockAccess, bufferBuilder);
+									final IBlockState liquidState = stateCacheArray[liquidStateIndex];
 
-							//TODO smooth lighting?
-							usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
-									textureMap, blockColors,
-									renderChunkPositionX + x,
-									renderChunkPositionY + y,
-									renderChunkPositionZ + z,
-									pooledMutableBlockPos.setPos(
-											renderChunkPositionX + x + xOffset,
+									final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
+									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+
+									final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+									OptifineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
+											renderChunkPositionX + x,
 											renderChunkPositionY + y,
-											renderChunkPositionZ + z + zOffset
-									),
-									blockAccess,
-									liquidState,
-									bufferBuilder
-							);
-							OptifineCompatibility.popShaderThing(bufferBuilder);
+											renderChunkPositionZ + z
+									), blockAccess, bufferBuilder);
 
-							break OFFSET;
+									//TODO smooth lighting?
+									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
+											textureMap, blockColors,
+											renderChunkPositionX + x,
+											renderChunkPositionY + y,
+											renderChunkPositionZ + z,
+											pooledMutableBlockPos.setPos(
+													renderChunkPositionX + x + xOffset,
+													renderChunkPositionY + y,
+													renderChunkPositionZ + z + zOffset
+											),
+											blockAccess,
+											liquidState,
+											bufferBuilder
+									);
+									OptifineCompatibility.popShaderThing(bufferBuilder);
+
+									break OFFSET;
+								}
+							}
+
 						}
 					}
-
 				}
+			} catch (Exception e) {
+				throw e;
 			}
 		}
 

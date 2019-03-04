@@ -134,6 +134,18 @@ public final class ModConfig {
 	@Config.Ignore
 	public static boolean enablePools = true;
 
+	@LangKey(MOD_ID + ".config.smoothBiomeColors")
+	public static boolean smoothBiomeColors = true;
+
+	@LangKey(MOD_ID + ".config.smoothFluidBiomeColors")
+	public static boolean smoothFluidBiomeColors = true;
+
+	@LangKey(MOD_ID + ".config.smoothFluidLighting")
+	public static boolean smoothFluidLighting = true;
+
+	@LangKey(MOD_ID + ".config.naturalFluidTextures")
+	public static boolean naturalFluidTextures = true;
+
 	static {
 		setupSmoothableBlockStates();
 	}

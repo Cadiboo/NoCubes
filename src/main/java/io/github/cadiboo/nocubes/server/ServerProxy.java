@@ -12,7 +12,10 @@ public final class ServerProxy implements IProxy {
 
 	@Override
 	public void markBlocksForUpdate(final int minX, final int minY, final int minZ, final int maxX, final int maxY, final int maxZ, final boolean updateImmediately) {
-	//TODO: regenerate caches
+	}
+
+	@Override
+	public void replaceFluidRendererCauseImBored() {
 	}
 
 }

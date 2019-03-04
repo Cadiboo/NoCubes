@@ -1,14 +1,19 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+
+import static io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy.*;
 
 /**
  * @author Cadiboo
@@ -29,30 +34,30 @@ public final class OptifineCompatibility {
 		MethodHandle pushEntity = null;
 		MethodHandle popEntity = null;
 		try {
-			optifineConfig = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "Config");
-		} catch (ReflectionHelper.UnableToFindClassException e) {
+			optifineConfig = ObfuscationReflectionHelperCopy.getClass(Loader.instance().getModClassLoader(), "Config");
+		} catch (UnableToFindClassException e) {
 			//Optifine doesn't exist;
 		}
 
 		if (optifineConfig != null) {
 			try {
-				configIsShaders = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(optifineConfig, "isShaders", null));
-			} catch (ReflectionHelper.UnableToFindMethodException e) {
+				configIsShaders = MethodHandles.publicLookup().unreflect(findMethod(optifineConfig, "isShaders", boolean.class));
+			} catch (UnableToFindMethodException e) {
 				//Optifine doesn't exist;
 			} catch (IllegalAccessException e) {
 				//Wtf?
 			}
 
 			try {
-				SVertexBuilder = ReflectionHelper.getClass(Loader.instance().getModClassLoader(), "net.optifine.shaders.SVertexBuilder");
-			} catch (ReflectionHelper.UnableToFindClassException e) {
+				SVertexBuilder = ObfuscationReflectionHelperCopy.getClass(Loader.instance().getModClassLoader(), "net.optifine.shaders.SVertexBuilder");
+			} catch (UnableToFindClassException e) {
 				//Optifine doesn't exist;
 			}
 
 			{
 				try {
-					pushEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "pushEntity", null, IBlockState.class, BlockPos.class, IBlockAccess.class, BufferBuilder.class));
-				} catch (ReflectionHelper.UnableToFindMethodException e) {
+					pushEntity = MethodHandles.publicLookup().unreflect(findMethod(SVertexBuilder, "pushEntity", void.class, IBlockState.class, BlockPos.class, IBlockAccess.class, BufferBuilder.class));
+				} catch (UnableToFindMethodException e) {
 					//Optifine doesn't exist;
 				} catch (IllegalAccessException e) {
 					//Wtf?
@@ -61,8 +66,8 @@ public final class OptifineCompatibility {
 
 			{
 				try {
-					popEntity = MethodHandles.publicLookup().unreflect(ReflectionHelper.findMethod(SVertexBuilder, "popEntity", null, BufferBuilder.class));
-				} catch (ReflectionHelper.UnableToFindMethodException e) {
+					popEntity = MethodHandles.publicLookup().unreflect(findMethod(SVertexBuilder, "popEntity", void.class, BufferBuilder.class));
+				} catch (UnableToFindMethodException e) {
 					//Optifine doesn't exist;
 				} catch (IllegalAccessException e) {
 					//Wtf?

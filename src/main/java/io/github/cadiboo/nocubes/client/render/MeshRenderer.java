@@ -106,11 +106,45 @@ public class MeshRenderer {
 							final float v3v = Float.intBitsToFloat(quad.getVertexData()[26]);
 
 //							final TextureAtlasSprite sprite = quad.getSprite();
-							final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
-							final int red = (color >> 16) & 255;
-							final int green = (color >> 8) & 255;
-							final int blue = color & 255;
+							final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
 							final int alpha = 0xFF;
+
+							final int red0 = (color0 >> 16) & 255;
+							final int green0 = (color0 >> 8) & 255;
+							final int blue0 = color0 & 255;
+							final int red1;
+							final int green1;
+							final int blue1;
+							final int red2;
+							final int green2;
+							final int blue2;
+							final int red3;
+							final int green3;
+							final int blue3;
+							if (ModConfig.smoothBiomeColors) {
+								final int color1 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.east());
+								red1 = color1 >> 16 & 255;
+								green1 = color1 >> 8 & 255;
+								blue1 = (color1 & 255);
+								final int color2 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
+								red2 = (color2 >> 16 & 255);
+								green2 = (color2 >> 8 & 255);
+								blue2 = (color2 & 255);
+								final int color3 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south());
+								red3 = (color3 >> 16 & 255);
+								green3 = (color3 >> 8 & 255);
+								blue3 = (color3 & 255);
+							} else {
+								red1 = red0;
+								green1 = green0;
+								blue1 = blue0;
+								red2 = red0;
+								green2 = green0;
+								blue2 = blue0;
+								red3 = red0;
+								green3 = green0;
+								blue3 = blue0;
+							}
 
 //							final float minU = ClientUtil.getMinU(sprite);
 //							final float minV = ClientUtil.getMinV(sprite);
@@ -168,15 +202,15 @@ public class MeshRenderer {
 									}
 
 									try {
-										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0, green0, blue0, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1, green1, blue1, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2, green2, blue2, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3, green3, blue3, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
 										if (renderOppositeSides) {
-											bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-											bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-											bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-											bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+											bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3, green3, blue3, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+											bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2, green2, blue2, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+											bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1, green1, blue1, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+											bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0, green0, blue0, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
 										}
 									} finally {
 										v0.close();
