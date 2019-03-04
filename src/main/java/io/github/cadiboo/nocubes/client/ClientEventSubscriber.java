@@ -115,7 +115,7 @@ public final class ClientEventSubscriber {
 
 		public static void onTick() {
 			--counter;
-			if (counter != 0) {
+			if (counter >= 0) {
 				return;
 			}
 			counter = 20;
