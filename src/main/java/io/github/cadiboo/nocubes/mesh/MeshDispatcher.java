@@ -7,11 +7,9 @@ import io.github.cadiboo.nocubes.util.DensityCache;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
 import io.github.cadiboo.nocubes.util.StateCache;
 import io.github.cadiboo.nocubes.util.Vec3b;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -76,8 +74,8 @@ public class MeshDispatcher {
 
 		try (final StateCache stateCache = generateMeshStateCache(chunkPosX, chunkPosY, chunkPosZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
 			try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
-				try (final DensityCache data = CacheUtil.generateDensityCache(chunkPosX, chunkPosY, chunkPosZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
-					return ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+				try (final DensityCache densityCache = CacheUtil.generateDensityCache(chunkPosX, chunkPosY, chunkPosZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
+					return ModConfig.getMeshGenerator().generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 				}
 			}
 		}
@@ -88,15 +86,15 @@ public class MeshDispatcher {
 	}
 
 	protected StateCache generateMeshStateCache(
-			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
+			final int startPosX, final int startPosY, final int startPosZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final IBlockAccess blockAccess,
 			final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cacheStartPosX = chunkPosX - 1;
-		final int cacheStartPosY = chunkPosY - 1;
-		final int cacheStartPosZ = chunkPosZ - 1;
+		final int cacheStartPosX = startPosX - 1;
+		final int cacheStartPosY = startPosY - 1;
+		final int cacheStartPosZ = startPosZ - 1;
 
 		// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
 		final int cacheSizeX = meshSizeX + 1;
@@ -121,36 +119,46 @@ public class MeshDispatcher {
 
 				// Convert block pos to relative block pos
 				// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
+				final int relativePosX = posX - (posX >> 4) << 4;
+				final int relativePosY = posY - (posY >> 4) << 4;
+				final int relativePosZ = posZ - (posZ >> 4) << 4;
+
 				final byte[] posRelativeToChunk = new byte[]{
-						(byte) (posX - ((posX >> 4) << 4)),
-						(byte) (posY - ((posY >> 4) << 4)),
-						(byte) (posZ - ((posZ >> 4) << 4))
+						(byte) relativePosX,
+						(byte) relativePosY,
+						(byte) relativePosZ
 				};
 
-				final float[] neighbourDensityGrid = generateNeighbourDensityGrid(posX, posY, posZ, blockAccess, isSmoothable, pooledMutableBlockPos);
-				return ModConfig.getMeshGenerator().generateBlock(posRelativeToChunk, neighbourDensityGrid);
+				//TODO: I don't think I need this to be 2
+				final byte meshSizeX = 2;
+				final byte meshSizeY = 2;
+				final byte meshSizeZ = 2;
+
+				try (final StateCache stateCache = generateMeshStateCache(posX, posY, posZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
+					try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
+						try (final DensityCache densityCache = CacheUtil.generateDensityCache(posX, posY, posZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
+							final float[] neighbourDensityGrid = generateNeighbourDensityGrid(densityCache);
+							return ModConfig.getMeshGenerator().generateBlock(posRelativeToChunk, neighbourDensityGrid);
+						}
+					}
+				}
 			} finally {
 				pooledMutableBlockPos.release();
 			}
 		}
 	}
 
-	public float[] generateNeighbourDensityGrid(final int posX, final int posY, final int posZ, final IBlockAccess blockAccess, final IIsSmoothable isSmoothable, final PooledMutableBlockPos pooledMutableBlockPos) {
+	public float[] generateNeighbourDensityGrid(final DensityCache densityCache) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateNeighbourDensityGrid")) {
 			final float[] neighbourDensityGrid = new float[8];
+
+			final float[] densityCacheArray = densityCache.getDensityCache();
 
 			int neighbourDensityGridIndex = 0;
 			for (int zOffset = 0; zOffset < 2; ++zOffset) {
 				for (int yOffset = 0; yOffset < 2; ++yOffset) {
 					for (byte xOffset = 0; xOffset < 2; ++xOffset, ++neighbourDensityGridIndex) {
-						pooledMutableBlockPos.setPos(
-								posX + xOffset,
-								posY + yOffset,
-								posZ + yOffset
-						);
-						final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
-						final boolean isStateSmoothable = isSmoothable.isSmoothable(state);
-						neighbourDensityGrid[neighbourDensityGridIndex] = ModUtil.getIndividualBlockDensity(isStateSmoothable, state, blockAccess, pooledMutableBlockPos);
+						neighbourDensityGrid[neighbourDensityGridIndex] = densityCacheArray[densityCache.getIndex(xOffset, yOffset, zOffset)];
 					}
 				}
 			}
