@@ -96,14 +96,16 @@ public class MeshRenderer {
 
 							// Quads are packed xyz|argb|u|v|ts
 
+							final int formatSize = quad.getFormat().getIntegerSize();
+
 							final float v0u = Float.intBitsToFloat(quad.getVertexData()[4]);
 							final float v0v = Float.intBitsToFloat(quad.getVertexData()[5]);
-							final float v1u = Float.intBitsToFloat(quad.getVertexData()[11]);
-							final float v1v = Float.intBitsToFloat(quad.getVertexData()[12]);
-							final float v2u = Float.intBitsToFloat(quad.getVertexData()[18]);
-							final float v2v = Float.intBitsToFloat(quad.getVertexData()[19]);
-							final float v3u = Float.intBitsToFloat(quad.getVertexData()[25]);
-							final float v3v = Float.intBitsToFloat(quad.getVertexData()[26]);
+							final float v1u = Float.intBitsToFloat(quad.getVertexData()[formatSize + 4]);
+							final float v1v = Float.intBitsToFloat(quad.getVertexData()[formatSize + 5]);
+							final float v2u = Float.intBitsToFloat(quad.getVertexData()[formatSize * 2 + 4]);
+							final float v2v = Float.intBitsToFloat(quad.getVertexData()[formatSize * 2 + 5]);
+							final float v3u = Float.intBitsToFloat(quad.getVertexData()[formatSize * 3 + 4]);
+							final float v3v = Float.intBitsToFloat(quad.getVertexData()[formatSize * 3 + 5]);
 
 //							final TextureAtlasSprite sprite = quad.getSprite();
 							final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
