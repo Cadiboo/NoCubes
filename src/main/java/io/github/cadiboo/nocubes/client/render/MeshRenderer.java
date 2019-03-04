@@ -20,7 +20,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
@@ -97,35 +96,26 @@ public class MeshRenderer {
 
 							// Quads are packed xyz|argb|u|v|ts
 
-//							final float v0u = Float.intBitsToFloat(quad.getVertexData()[4]);
-//							final float v0v = Float.intBitsToFloat(quad.getVertexData()[5]);
-//							final float v1u = Float.intBitsToFloat(quad.getVertexData()[11]);
-//							final float v1v = Float.intBitsToFloat(quad.getVertexData()[12]);
-//							final float v2u = Float.intBitsToFloat(quad.getVertexData()[18]);
-//							final float v2v = Float.intBitsToFloat(quad.getVertexData()[19]);
-//							final float v3u = Float.intBitsToFloat(quad.getVertexData()[25]);
-//							final float v3v = Float.intBitsToFloat(quad.getVertexData()[26]);
+							final float v0u = Float.intBitsToFloat(quad.getVertexData()[4]);
+							final float v0v = Float.intBitsToFloat(quad.getVertexData()[5]);
+							final float v1u = Float.intBitsToFloat(quad.getVertexData()[11]);
+							final float v1v = Float.intBitsToFloat(quad.getVertexData()[12]);
+							final float v2u = Float.intBitsToFloat(quad.getVertexData()[18]);
+							final float v2v = Float.intBitsToFloat(quad.getVertexData()[19]);
+							final float v3u = Float.intBitsToFloat(quad.getVertexData()[25]);
+							final float v3v = Float.intBitsToFloat(quad.getVertexData()[26]);
 
-							final TextureAtlasSprite sprite = quad.getSprite();
+//							final TextureAtlasSprite sprite = quad.getSprite();
 							final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
 							final int red = (color >> 16) & 255;
 							final int green = (color >> 8) & 255;
 							final int blue = color & 255;
 							final int alpha = 0xFF;
 
-							final float minU = ClientUtil.getMinU(sprite);
-							final float minV = ClientUtil.getMinV(sprite);
-							final float maxU = ClientUtil.getMaxU(sprite);
-							final float maxV = ClientUtil.getMaxV(sprite);
-
-							final float v0u = minU;
-							final float v0v = minV;
-							final float v1u = minU;
-							final float v1v = maxV;
-							final float v2u = maxU;
-							final float v2v = maxV;
-							final float v3u = maxU;
-							final float v3v = minV;
+//							final float minU = ClientUtil.getMinU(sprite);
+//							final float minV = ClientUtil.getMinV(sprite);
+//							final float maxU = ClientUtil.getMaxU(sprite);
+//							final float maxV = ClientUtil.getMaxV(sprite);
 
 							//TODO: use Event
 							final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
