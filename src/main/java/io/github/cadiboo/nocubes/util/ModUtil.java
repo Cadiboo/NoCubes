@@ -231,7 +231,6 @@ public final class ModUtil {
 			ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 		}
 
-
 		//remove Isosurface level (for mod version 0.2.0 onwards, implemented after 0.2.2 and before 0.2.3)
 		{
 			config.getCategory(Configuration.CATEGORY_GENERAL).remove("isosurfaceLevel");
@@ -240,8 +239,8 @@ public final class ModUtil {
 		//fix extendLiquids (implemented after 0.2.2 and before 0.2.3)
 		{
 			Property extendLiquids = config.get(Configuration.CATEGORY_GENERAL, "extendLiquids", ExtendLiquidRange.OneBlock.name());
-			if(extendLiquids.isBooleanValue())
-			config.getCategory(Configuration.CATEGORY_GENERAL).remove("extendLiquids");
+			if (extendLiquids.isBooleanValue())
+				config.getCategory(Configuration.CATEGORY_GENERAL).remove("extendLiquids");
 		}
 
 		if (false) {
