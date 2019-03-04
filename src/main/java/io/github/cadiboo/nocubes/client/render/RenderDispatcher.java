@@ -94,19 +94,10 @@ public class RenderDispatcher {
 		USED_RENDER_LAYERS_SET.set(false);
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
+		// Terrain & leaves rendering
 		{
-			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					meshSizeX, meshSizeY, meshSizeZ,
-					blockAccess,
-					pooledMutableBlockPos
-			)) {
-
-				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(
-						approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0,
-						lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos
-				)) {
-
+			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
+				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
 					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
 						try {
 							MeshRenderer.renderChunk(
@@ -135,41 +126,32 @@ public class RenderDispatcher {
 		}
 
 		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
-			NoCubes.getProfiler().startSection("extendLiquids");
-
-			//TODO get this from world & chunk & layer
-			final StateCache stateCache = generateExtendedWaterStateCache(
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					blockAccess,
-					pooledMutableBlockPos,
-					ClientUtil.getExtendLiquidsRange()
-			);
-			//TODO get this from world & chunk & layer
-			final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(
-					stateCache, TERRAIN_SMOOTHABLE
-			);
-
-			try {
-				ExtendedLiquidChunkRenderer.renderChunk(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						pooledMutableBlockPos,
-						usedBlockRenderLayers,
-						blockRendererDispatcher,
-						stateCache, terrainSmoothableCache
-				);
-			} catch (ReportedException e) {
-				throw e;
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-				crashReport.makeCategory("Extending liquids");
-				throw new ReportedException(crashReport);
+			try (final ModProfiler ignored = NoCubes.getProfiler().start("extendLiquids")) {
+				try (final StateCache stateCache = generateExtendedWaterStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, pooledMutableBlockPos, ClientUtil.getExtendLiquidsRange())) {
+					try (final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, TERRAIN_SMOOTHABLE)) {
+						try {
+							ExtendedLiquidChunkRenderer.renderChunk(
+									renderChunk,
+									generator,
+									compiledChunk,
+									renderChunkPosition,
+									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+									blockAccess,
+									pooledMutableBlockPos,
+									usedBlockRenderLayers,
+									blockRendererDispatcher,
+									stateCache, terrainSmoothableCache
+							);
+						} catch (ReportedException e) {
+							throw e;
+						} catch (Exception e) {
+							CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+							crashReport.makeCategory("Extending liquids");
+							throw new ReportedException(crashReport);
+						}
+					}
+				}
 			}
-			NoCubes.getProfiler().endSection();
 		}
 	}
 
