@@ -30,152 +30,158 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	@Override
 	public boolean renderFluid(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn) {
 //		if (true) return super.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
-		BlockLiquid blockliquid = (BlockLiquid) blockStateIn.getBlock();
-		boolean isLava = blockStateIn.getMaterial() == Material.LAVA;
-		TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
-		int color = this.blockColors.colorMultiplier(blockStateIn, blockAccess, blockPosIn, 0);
-		float redFloat = (float) (color >> 16 & 255) / 255.0F;
-		float greenFloat = (float) (color >> 8 & 255) / 255.0F;
-		float blueFloat = (float) (color & 255) / 255.0F;
-		boolean shouldTopBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.UP);
-		boolean shouldBottomBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.DOWN);
-		boolean[] shouldHorizontalSideBeRendered = new boolean[]{blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)};
 
-		if (!shouldTopBeRendered && !shouldBottomBeRendered && !shouldHorizontalSideBeRendered[0] && !shouldHorizontalSideBeRendered[1] && !shouldHorizontalSideBeRendered[2] && !shouldHorizontalSideBeRendered[3]) {
-			return false;
-		} else {
-			boolean wasAnythingRendered = false;
+		OptifineCompatibility.pushShaderThing(blockStateIn, blockPosIn, blockAccess, bufferBuilderIn);
+		try {
+			BlockLiquid blockliquid = (BlockLiquid) blockStateIn.getBlock();
+			boolean isLava = blockStateIn.getMaterial() == Material.LAVA;
+			TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
+			int color = this.blockColors.colorMultiplier(blockStateIn, blockAccess, blockPosIn, 0);
+			float redFloat = (float) (color >> 16 & 255) / 255.0F;
+			float greenFloat = (float) (color >> 8 & 255) / 255.0F;
+			float blueFloat = (float) (color & 255) / 255.0F;
+			boolean shouldTopBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.UP);
+			boolean shouldBottomBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.DOWN);
+			boolean[] shouldHorizontalSideBeRendered = new boolean[]{blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)};
+
+			if (!shouldTopBeRendered && !shouldBottomBeRendered && !shouldHorizontalSideBeRendered[0] && !shouldHorizontalSideBeRendered[1] && !shouldHorizontalSideBeRendered[2] && !shouldHorizontalSideBeRendered[3]) {
+				return false;
+			} else {
+				boolean wasAnythingRendered = false;
 //			float f3 = 0.5F;
 //			float f4 = 1.0F;
 //			float f5 = 0.8F;
 //			float f6 = 0.6F;
-			Material material = blockStateIn.getMaterial();
-			float fluidHeight = this.getFluidHeight(blockAccess, blockPosIn, material);
-			float fluidHeightS = this.getFluidHeight(blockAccess, blockPosIn.south(), material);
-			float fluidHeightES = this.getFluidHeight(blockAccess, blockPosIn.east().south(), material);
-			float fluidHeightE = this.getFluidHeight(blockAccess, blockPosIn.east(), material);
-			double posX = (double) blockPosIn.getX();
-			double posY = (double) blockPosIn.getY();
-			double posZ = (double) blockPosIn.getZ();
+				Material material = blockStateIn.getMaterial();
+				float fluidHeight = this.getFluidHeight(blockAccess, blockPosIn, material);
+				float fluidHeightS = this.getFluidHeight(blockAccess, blockPosIn.south(), material);
+				float fluidHeightES = this.getFluidHeight(blockAccess, blockPosIn.east().south(), material);
+				float fluidHeightE = this.getFluidHeight(blockAccess, blockPosIn.east(), material);
+				double posX = (double) blockPosIn.getX();
+				double posY = (double) blockPosIn.getY();
+				double posZ = (double) blockPosIn.getZ();
 //			float f11 = 0.001F;
 
-			if (shouldTopBeRendered) {
-				wasAnythingRendered = true;
-				float slopeAngle = BlockLiquid.getSlopeAngle(blockAccess, blockPosIn, material, blockStateIn);
-				TextureAtlasSprite textureatlassprite = slopeAngle > -999.0F ? atextureatlassprite[1] : atextureatlassprite[0];
-				fluidHeight -= 0.001F;
-				fluidHeightS -= 0.001F;
-				fluidHeightES -= 0.001F;
-				fluidHeightE -= 0.001F;
-				renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite);
-			}
-
-			if (shouldBottomBeRendered) {
-				wasAnythingRendered = true;
-				renderBottom(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, atextureatlassprite, posX, posY, posZ);
-			}
-
-			for (int horiontalIndex = 0; horiontalIndex < 4; ++horiontalIndex) {
-				int xAdd = 0;
-				int zAdd = 0;
-
-				if (horiontalIndex == 0) {
-					--zAdd;
+				if (shouldTopBeRendered) {
+					wasAnythingRendered = true;
+					float slopeAngle = BlockLiquid.getSlopeAngle(blockAccess, blockPosIn, material, blockStateIn);
+					TextureAtlasSprite textureatlassprite = slopeAngle > -999.0F ? atextureatlassprite[1] : atextureatlassprite[0];
+					fluidHeight -= 0.001F;
+					fluidHeightS -= 0.001F;
+					fluidHeightES -= 0.001F;
+					fluidHeightE -= 0.001F;
+					renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite);
 				}
 
-				if (horiontalIndex == 1) {
-					++zAdd;
+				if (shouldBottomBeRendered) {
+					wasAnythingRendered = true;
+					renderBottom(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, atextureatlassprite, posX, posY, posZ);
 				}
 
-				if (horiontalIndex == 2) {
-					--xAdd;
-				}
-
-				if (horiontalIndex == 3) {
-					++xAdd;
-				}
-
-				BlockPos blockpos = blockPosIn.add(xAdd, 0, zAdd);
-				TextureAtlasSprite textureatlassprite1 = atextureatlassprite[1];
-
-				if (!isLava) {
-					IBlockState state = blockAccess.getBlockState(blockpos);
-
-					if (state.getBlockFaceShape(blockAccess, blockpos, EnumFacing.VALUES[horiontalIndex + 2].getOpposite()) == net.minecraft.block.state.BlockFaceShape.SOLID) {
-						textureatlassprite1 = this.atlasSpriteWaterOverlay;
-					}
-				}
-
-				if (shouldHorizontalSideBeRendered[horiontalIndex]) {
-					float yAdd1;
-					float yAdd0;
-					double posX0;
-					double posZ0;
-					double posX1;
-					double posZ1;
+				for (int horiontalIndex = 0; horiontalIndex < 4; ++horiontalIndex) {
+					int xAdd = 0;
+					int zAdd = 0;
 
 					if (horiontalIndex == 0) {
-						yAdd1 = fluidHeight;
-						yAdd0 = fluidHeightE;
-						posX0 = posX;
-						posX1 = posX + 1.0D;
-						posZ0 = posZ + 0.0010000000474974513D;
-						posZ1 = posZ + 0.0010000000474974513D;
-					} else if (horiontalIndex == 1) {
-						yAdd1 = fluidHeightES;
-						yAdd0 = fluidHeightS;
-						posX0 = posX + 1.0D;
-						posX1 = posX;
-						posZ0 = posZ + 1.0D - 0.0010000000474974513D;
-						posZ1 = posZ + 1.0D - 0.0010000000474974513D;
-					} else if (horiontalIndex == 2) {
-						yAdd1 = fluidHeightS;
-						yAdd0 = fluidHeight;
-						posX0 = posX + 0.0010000000474974513D;
-						posX1 = posX + 0.0010000000474974513D;
-						posZ0 = posZ + 1.0D;
-						posZ1 = posZ;
-					} else {
-						yAdd1 = fluidHeightE;
-						yAdd0 = fluidHeightES;
-						posX0 = posX + 1.0D - 0.0010000000474974513D;
-						posX1 = posX + 1.0D - 0.0010000000474974513D;
-						posZ0 = posZ;
-						posZ1 = posZ + 1.0D;
+						--zAdd;
 					}
 
-					wasAnythingRendered = true;
+					if (horiontalIndex == 1) {
+						++zAdd;
+					}
+
+					if (horiontalIndex == 2) {
+						--xAdd;
+					}
+
+					if (horiontalIndex == 3) {
+						++xAdd;
+					}
+
+					BlockPos blockpos = blockPosIn.add(xAdd, 0, zAdd);
+					TextureAtlasSprite textureatlassprite1 = atextureatlassprite[1];
+
+					if (!isLava) {
+						IBlockState state = blockAccess.getBlockState(blockpos);
+
+						if (state.getBlockFaceShape(blockAccess, blockpos, EnumFacing.VALUES[horiontalIndex + 2].getOpposite()) == net.minecraft.block.state.BlockFaceShape.SOLID) {
+							textureatlassprite1 = this.atlasSpriteWaterOverlay;
+						}
+					}
+
+					if (shouldHorizontalSideBeRendered[horiontalIndex]) {
+						float yAdd1;
+						float yAdd0;
+						double posX0;
+						double posZ0;
+						double posX1;
+						double posZ1;
+
+						if (horiontalIndex == 0) {
+							yAdd1 = fluidHeight;
+							yAdd0 = fluidHeightE;
+							posX0 = posX;
+							posX1 = posX + 1.0D;
+							posZ0 = posZ + 0.0010000000474974513D;
+							posZ1 = posZ + 0.0010000000474974513D;
+						} else if (horiontalIndex == 1) {
+							yAdd1 = fluidHeightES;
+							yAdd0 = fluidHeightS;
+							posX0 = posX + 1.0D;
+							posX1 = posX;
+							posZ0 = posZ + 1.0D - 0.0010000000474974513D;
+							posZ1 = posZ + 1.0D - 0.0010000000474974513D;
+						} else if (horiontalIndex == 2) {
+							yAdd1 = fluidHeightS;
+							yAdd0 = fluidHeight;
+							posX0 = posX + 0.0010000000474974513D;
+							posX1 = posX + 0.0010000000474974513D;
+							posZ0 = posZ + 1.0D;
+							posZ1 = posZ;
+						} else {
+							yAdd1 = fluidHeightE;
+							yAdd0 = fluidHeightES;
+							posX0 = posX + 1.0D - 0.0010000000474974513D;
+							posX1 = posX + 1.0D - 0.0010000000474974513D;
+							posZ0 = posZ;
+							posZ1 = posZ + 1.0D;
+						}
+
+						wasAnythingRendered = true;
 //					float u0 = textureatlassprite1.getInterpolatedU(0.0D);
-					float u0 = ClientUtil.getMinU(textureatlassprite1);
-					float u1 = textureatlassprite1.getInterpolatedU(8.0D);
-					float v0 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd1) * 16.0F * 0.5F));
-					float v1 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd0) * 16.0F * 0.5F));
-					float v2 = textureatlassprite1.getInterpolatedV(8.0D);
+						float u0 = ClientUtil.getMinU(textureatlassprite1);
+						float u1 = textureatlassprite1.getInterpolatedU(8.0D);
+						float v0 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd1) * 16.0F * 0.5F));
+						float v1 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd0) * 16.0F * 0.5F));
+						float v2 = textureatlassprite1.getInterpolatedV(8.0D);
 
-					// Nope, not dealing with smooth side lighting.
-					int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos);
-					int skylight = packedLight >> 16 & 65535;
-					int blocklight = packedLight & 65535;
+						// Nope, not dealing with smooth side lighting.
+						int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos);
+						int skylight = packedLight >> 16 & 65535;
+						int blocklight = packedLight & 65535;
 
-					float diffuseLighting = horiontalIndex < 2 ? 0.8F : 0.6F;
-					float red = 1.0F * diffuseLighting * redFloat;
-					float green = 1.0F * diffuseLighting * greenFloat;
-					float blue = 1.0F * diffuseLighting * blueFloat;
-					bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylight, blocklight).endVertex();
-					bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
-					bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
-					bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
-
-					if (textureatlassprite1 != this.atlasSpriteWaterOverlay) {
-						bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
-						bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
-						bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
+						float diffuseLighting = horiontalIndex < 2 ? 0.8F : 0.6F;
+						float red = 1.0F * diffuseLighting * redFloat;
+						float green = 1.0F * diffuseLighting * greenFloat;
+						float blue = 1.0F * diffuseLighting * blueFloat;
 						bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylight, blocklight).endVertex();
+						bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
+						bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
+						bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
+
+						if (textureatlassprite1 != this.atlasSpriteWaterOverlay) {
+							bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
+							bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
+							bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
+							bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylight, blocklight).endVertex();
+						}
 					}
 				}
-			}
 
-			return wasAnythingRendered;
+				return wasAnythingRendered;
+			}
+		} finally {
+			OptifineCompatibility.popShaderThing(bufferBuilderIn);
 		}
 	}
 
