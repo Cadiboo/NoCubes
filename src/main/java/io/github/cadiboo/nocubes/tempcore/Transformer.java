@@ -33,14 +33,14 @@ public class Transformer implements IClassTransformer, Opcodes {
 		if (transformedName.equals("net.minecraft.block.state.BlockStateContainer$StateImplementation")) {
 			return transformClass(basicClass,
 					Transformer::redirect_shouldSideBeRendered
-//					,
-//					Transformer::redirect_getCollisionBoundingBox,
-//					Transformer::redirect_addCollisionBoxToList
+					,
+					Transformer::redirect_getCollisionBoundingBox,
+					Transformer::redirect_addCollisionBoxToList
 			);
 		} else if (transformedName.equals("net.minecraft.entity.Entity")) {
 			return transformClass(basicClass
-//					,
-//					Transformer::redirect_isEntityInsideOpaqueBlock
+					,
+					Transformer::redirect_isEntityInsideOpaqueBlock
 			);
 		}
 		return basicClass;
