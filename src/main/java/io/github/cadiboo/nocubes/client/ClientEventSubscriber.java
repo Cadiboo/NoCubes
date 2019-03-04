@@ -119,10 +119,9 @@ public final class ClientEventSubscriber {
 	public static void onEntityJoinWorldEvent(final EntityJoinWorldEvent event) {
 		final Entity entity = event.getEntity();
 		if (entity instanceof EntityPlayerSP) {
-			EntityPlayerSP player = (EntityPlayerSP) entity;
-			player.sendChatMessage(MOD_NAME + " " + VERSION + ": The code for Collisions is 90% copied/ported/stolen from the Repose Mod's code. More accurate collisions with less exactly similar code are being worked on. Until then, enjoy and go give Repose some love at https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/2076319-repose-walkable-soil-slopes-give-your-spacebar-a");
+			final EntityPlayerSP player = (EntityPlayerSP) entity;
+			player.sendMessage(net.minecraftforge.common.ForgeHooks.newChatWithLinks(MOD_NAME + " " + VERSION + ": The code for Collisions is 90% copied/ported/stolen from the Repose Mod's code. More accurate collisions with less exactly similar code are being worked on. Until then, enjoy and go give Repose some love at https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/2076319-repose-walkable-soil-slopes-give-your-spacebar-a/"));
 		}
-
 	}
 
 }
