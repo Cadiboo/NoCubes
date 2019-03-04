@@ -21,3 +21,6 @@ nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rende
 
 nocubes.key.toggleSmoothableBlockstate=NoCubes Toggle Smoothable Blockstate
 nocubes.key.toggleSmoothableBlockstate.tooltip=(the block you are looking at)
+
+nocubes.addedSmoothableBlockstate=Added Smoothable Blockstate
+nocubes.removedSmoothableBlockstate=Removed Smoothable Blockstate

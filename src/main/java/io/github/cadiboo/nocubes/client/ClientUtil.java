@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
@@ -422,6 +423,13 @@ public final class ClientUtil {
 				return 1;
 			case TwoBlocks:
 				return 2;
+		}
+	}
+
+	public static void tryReloadRenderers() {
+		final RenderGlobal renderGlobal = Minecraft.getMinecraft().renderGlobal;
+		if (renderGlobal != null) {
+			renderGlobal.loadRenderers();
 		}
 	}
 
