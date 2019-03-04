@@ -33,7 +33,7 @@ nocubes.config.naturalFluidTextures.tooltip=If Fluid textures should be randomly
 
 key.categories.nocubes=NoCubes
 
-nocubes.key.toggleSmoothableBlockstate=NoCubes Toggle Smoothable Blockstate
+nocubes.key.toggleSmoothableBlockstate=Toggle Smoothable Blockstate
 nocubes.key.toggleSmoothableBlockstate.tooltip=(the block you are looking at)
 
 nocubes.addedSmoothableBlockstate=Added Smoothable
