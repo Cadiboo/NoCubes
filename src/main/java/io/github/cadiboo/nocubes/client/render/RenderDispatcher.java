@@ -90,53 +90,52 @@ public class RenderDispatcher {
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
 	) {
-		final ModProfiler profiler = NoCubes.getProfiler();
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
 		USED_RENDER_LAYERS_SET.set(false);
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
 		{
-//			for(MeshLayer layer : meshLayers)
-			//TODO get this from world & chunk & layer
-			final StateCache lightStateCache = generateLightStateCache(
+			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					meshSizeX, meshSizeY, meshSizeZ,
 					blockAccess,
 					pooledMutableBlockPos
-			);
+			)) {
 
-			//TODO stateCache
-			final PackedLightCache packedLightCache =
-					ClientCacheUtil.generatePackedLightCache(
-							approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0,
-							lightStateCache, blockAccess, pooledMutableBlockPos
-					);
+				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(
+						approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0,
+						lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos
+				)) {
 
-			profiler.startSection("renderMesh");
-			try {
-				MeshRenderer.renderChunk(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						pooledMutableBlockPos,
-						usedBlockRenderLayers,
-						blockRendererDispatcher,
-						packedLightCache
-				);
-			} catch (ReportedException e) {
-				throw e;
-			} catch (Exception e) {
-				CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
-				crashReport.makeCategory("Rendering mesh");
-				throw new ReportedException(crashReport);
+					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
+						try {
+							MeshRenderer.renderChunk(
+									renderChunk,
+									generator,
+									compiledChunk,
+									renderChunkPosition,
+									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+									blockAccess,
+									lightAndTexturesStateCache,
+									pooledMutableBlockPos,
+									usedBlockRenderLayers,
+									blockRendererDispatcher,
+									packedLightCache
+							);
+						} catch (ReportedException e) {
+							throw e;
+						} catch (Exception e) {
+							CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
+							crashReport.makeCategory("Rendering mesh");
+							throw new ReportedException(crashReport);
+						}
+					}
+				}
 			}
 		}
 
 		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
-			profiler.startSection("extendLiquids");
+			NoCubes.getProfiler().startSection("extendLiquids");
 
 			//TODO get this from world & chunk & layer
 			final StateCache stateCache = generateExtendedWaterStateCache(
@@ -170,22 +169,26 @@ public class RenderDispatcher {
 				crashReport.makeCategory("Extending liquids");
 				throw new ReportedException(crashReport);
 			}
-			profiler.endSection();
+			NoCubes.getProfiler().endSection();
 		}
 	}
 
-	private static StateCache generateLightStateCache(
+	private static StateCache generateLightAndTexturesStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
 			final IBlockAccess blockAccess,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// Light uses +1 block on every axis so we need to start at -1 block
+		// Textures use +1 block on every axis so we need to start at -1 block
+		// All up this is -1 block
 		final int cacheStartPosX = renderChunkPositionX - 1;
 		final int cacheStartPosY = renderChunkPositionY - 1;
 		final int cacheStartPosZ = renderChunkPositionZ - 1;
 
 		// Light uses +1 block on every axis so we need to add 2 to the size of the cache (it takes +1 on EVERY axis)
+		// Textures uses+1 block on every axis so we need to add 2 to the size of the cache (they take +1 on EVERY axis)
+		// All up this is +2 blocks
 		final int cacheSizeX = meshSizeX + 2;
 		final int cacheSizeY = meshSizeY + 2;
 		final int cacheSizeZ = meshSizeZ + 2;
