@@ -20,6 +20,7 @@ import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -305,7 +306,7 @@ public final class ClientUtil {
 	 */
 	//TODO: state cache?
 	//TODO: texture cache?
-	public static Object[] getTexturePosAndState(
+	public static Tuple<BlockPos, IBlockState> getTexturePosAndState(
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
@@ -313,14 +314,12 @@ public final class ClientUtil {
 			@Nonnull final IIsSmoothable isStateSmoothable
 	) {
 
-		IBlockState textureState = state;
-
 		//check initial first
 		if (isStateSmoothable.isSmoothable(state)) {
-			return new Object[]{
+			return new Tuple<>(
 					texturePooledMutablePos.toImmutable(),
-					textureState
-			};
+					state
+			);
 		}
 
 		final int posX = texturePooledMutablePos.getX();
@@ -354,6 +353,8 @@ public final class ClientUtil {
 //				}
 //			}
 
+		IBlockState textureState = state;
+
 		for (int[] offset : OFFSETS_ORDERED) {
 //			final IBlockState tempState = stateCacheArray[stateCache.getIndex(
 //					relativePosX + offset[0] + 1,
@@ -367,10 +368,10 @@ public final class ClientUtil {
 			}
 		}
 
-		return new Object[]{
+		return new Tuple<>(
 				texturePooledMutablePos.toImmutable(),
 				textureState
-		};
+		);
 
 	}
 
