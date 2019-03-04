@@ -10,6 +10,8 @@ import io.github.cadiboo.nocubes.util.Vec3;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -20,10 +22,14 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
+import static java.lang.Math.max;
 
 /**
  * @author Cadiboo
@@ -33,6 +39,29 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 		"weakerAccess" // Hooks need to be public to be invoked
 })
 public class Hooks {
+
+	private enum Direction {
+
+		North(0, -1),
+		South(0, 1),
+		East(1, 0),
+		West(-1, 0),
+
+		//val NorthEast = North + East
+		NorthEast(North.x + East.x, North.z + East.z),
+		NorthWest(North.x + West.x, North.z + West.z),
+		SouthEast(South.x + East.x, South.z + East.z),
+		SouthWest(South.x + West.x, South.z + West.z);
+		public static final List<Direction> OrdinalDirections = Arrays.asList(NorthEast, NorthWest, SouthEast, SouthWest);
+
+		private final int x;
+		private final int z;
+
+		Direction(final int x, final int z) {
+			this.x = x;
+			this.z = z;
+		}
+	}
 
 	private static final boolean REPOSE_INSTALLED = false;
 
@@ -87,15 +116,18 @@ public class Hooks {
 		if (!NoCubes.isEnabled() || !ModConfig.collisionsEnabled) {
 			return getCollisionBoundingBoxDefault(block, state, worldIn, pos);
 		}
-		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
-			if (LEAVES_SMOOTHABLE.isSmoothable(state)) {
-				return null;
-			} else {
-				return getCollisionBoundingBoxDefault(block, state, worldIn, pos);
-			}
-		}
+//		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
+//			if (LEAVES_SMOOTHABLE.isSmoothable(state)) {
+//				return null;
+//			} else {
+//				return getCollisionBoundingBoxDefault(block, state, worldIn, pos);
+//			}
+//		}
 
-		return null;
+		final AxisAlignedBB box = getCollisionBoundingBoxDefault(block, state, worldIn, pos);
+		return box == null || box.maxY == 0 ? null : box;
+
+//		return null;
 	}
 
 	@Nullable
@@ -115,6 +147,11 @@ public class Hooks {
 
 		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
 			if (LEAVES_SMOOTHABLE.isSmoothable(state)) {
+				if (entityIn != null) {
+					entityIn.motionX *= 0.9;
+					entityIn.motionY *= 0.9;
+					entityIn.motionZ *= 0.9;
+				}
 				return;
 			} else {
 				addCollisionBoxToListDefault(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
@@ -122,6 +159,69 @@ public class Hooks {
 			}
 		}
 
+		if (state.getCollisionBoundingBox(worldIn, pos) != null) { // optimization
+			if (canUseSlope(entityIn) && canSlopeAt(state, worldIn, pos)) {
+				collidingBoxes.addAll(slopingCollisionBoxes(state, worldIn, pos).stream().filter(entityBox::intersects).collect(Collectors.toList()));
+			} else {
+				addCollisionBoxToListDefault(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+			}
+		}
+
+//		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+	}
+
+	private static List<AxisAlignedBB> slopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos) {
+		final double height = blockHeight(pos, world);
+		final ArrayList<AxisAlignedBB> list = new ArrayList<>();
+		for (Direction direction : Direction.OrdinalDirections) {
+			list.add(cornerBox(pos, direction, height, world));
+		}
+		return list;
+	}
+
+	private static AxisAlignedBB cornerBox(final BlockPos pos, Direction direction, double blockHeight, World world) {
+		double stepHeight = blockHeight - 0.5;
+		final double height;
+		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, world) &&
+				stepHigh(pos.add(0, 0, direction.z), stepHeight, world) &&
+				stepHigh(pos.add(direction.x, 0, direction.z), stepHeight, world)) {
+			height = blockHeight;
+		} else {
+			height = stepHeight;
+		}
+
+		return new AxisAlignedBB(
+				pos.getX() + max(0.0, direction.x / 2.0), pos.getY(), pos.getZ() + max(0.0, direction.z / 2.0),
+				pos.getX() + max(0.5, direction.x), pos.getY() + height, pos.getZ() + max(0.5, direction.z)
+		);
+	}
+
+	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, World world) {
+		IBlockState neighbor = world.getBlockState(offsetPos);
+		return neighbor.getBlock().isTopSolid(neighbor) && blockHeight(offsetPos, world) >= stepHeight;
+	}
+
+//	private def cornerBox(pos: BlockPos, d: Direction, blockHeight: Double)(implicit w: World) = {
+//		val stepHeight = blockHeight - 0.5
+//		val height = if(stepHigh(pos.add(d.x, 0,  0 ), stepHeight) &&
+//				stepHigh(pos.add( 0 , 0, d.z), stepHeight) &&
+//				stepHigh(pos.add(d.x, 0, d.z), stepHeight)) blockHeight else stepHeight
+//		new AxisAlignedBB(pos.getX + max(0.0, d.x/2.0), pos.getY         , pos.getZ + max(0.0, d.z/2.0),
+//				pos.getX + max(0.5, d.x    ), pos.getY + height, pos.getZ + max(0.5, d.z    ))
+//	}
+
+	private static double blockHeight(final BlockPos pos, World world) {
+		AxisAlignedBB box = world.getBlockState(pos).getCollisionBoundingBox(world, pos);
+		return box == null ? 0 : box.maxY;
+	}
+
+	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos) {
+		final AxisAlignedBB collisionBoundingBox = state.getCollisionBoundingBox(worldIn, pos);
+		boolean flag = collisionBoundingBox != null && collisionBoundingBox.maxY > 0.5;
+		return TERRAIN_SMOOTHABLE.isSmoothable(state) && flag && worldIn.getBlockState(pos.up()).getCollisionBoundingBox(worldIn, pos.up()) == null;
+	}
+
+	private static void addMeshCollisionBoxesToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 		final float boxRadius = 0.05F;
 
 		try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlock(pos, worldIn, TERRAIN_SMOOTHABLE)) {
@@ -167,6 +267,10 @@ public class Hooks {
 				}
 			}
 		}
+	}
+
+	private static boolean canUseSlope(final Entity entity) {
+		return entity instanceof EntityPlayer || entity instanceof EntityCreature;
 	}
 
 	private static AxisAlignedBB createAndOffsetAxisAlignedBBForVertex(final int posX, final int posY, final int posZ, final Vec3 vec3, final float boxRadius) {
