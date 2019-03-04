@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
@@ -296,35 +297,41 @@ public final class ClientUtil {
 	};
 
 	/**
+	 * @param stateCache
 	 * @param cache
-	 * @param pos
+	 * @param texturePooledMutablePos
 	 * @param state
-	 * @param pooledMutableBlockPos
 	 * @return a state and a texture pos which is guaranteed to be immutable
 	 */
 	//TODO: state cache?
+	//TODO: texture cache?
 	public static Object[] getTexturePosAndState(
+			@Nonnull final StateCache stateCache,
 			@Nonnull final IBlockAccess cache,
-			@Nonnull final BlockPos pos,
+			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
-			@Nonnull final IIsSmoothable isStateSmoothable,
-			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final IIsSmoothable isStateSmoothable
 	) {
 
 		IBlockState textureState = state;
-		BlockPos texturePos = pos;
 
-		//check pos first
-		if (isStateSmoothable.isSmoothable(cache.getBlockState(pos))) {
+		//check initial first
+		if (isStateSmoothable.isSmoothable(state)) {
 			return new Object[]{
-					texturePos,
+					texturePooledMutablePos.toImmutable(),
 					textureState
 			};
 		}
 
-		final int x = pos.getX();
-		final int y = pos.getY();
-		final int z = pos.getZ();
+		final int posX = texturePooledMutablePos.getX();
+		final int posY = texturePooledMutablePos.getY();
+		final int posZ = texturePooledMutablePos.getZ();
+
+//		final byte relativePosX = (byte) (posX - (posX >> 4 << 4));
+//		final byte relativePosY = (byte) (posY - (posY >> 4 << 4));
+//		final byte relativePosZ = (byte) (posZ - (posZ >> 4 << 4));
+//
+//		final IBlockState[] stateCacheArray = stateCache.getStateCache();
 
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
@@ -348,16 +355,20 @@ public final class ClientUtil {
 //			}
 
 		for (int[] offset : OFFSETS_ORDERED) {
-			final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + offset[0], y + offset[1], z + offset[2]));
+//			final IBlockState tempState = stateCacheArray[stateCache.getIndex(
+//					relativePosX + offset[0] + 1,
+//					relativePosY + offset[1] + 2,
+//					relativePosZ + offset[2] + 1
+//			)];
+			final IBlockState tempState = cache.getBlockState(texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]));
 			if (isStateSmoothable.isSmoothable(tempState)) {
 				textureState = tempState;
-				texturePos = pooledMutableBlockPos.toImmutable();
 				break;
 			}
 		}
 
 		return new Object[]{
-				texturePos,
+				texturePooledMutablePos.toImmutable(),
 				textureState
 		};
 
