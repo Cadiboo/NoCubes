@@ -144,7 +144,7 @@ public final class ModConfig {
 	public static boolean smoothFluidLighting = true;
 
 	@LangKey(MOD_ID + ".config.naturalFluidTextures")
-	public static boolean naturalFluidTextures = true;
+	public static boolean naturalFluidTextures = false;
 
 	static {
 		setupSmoothableBlockStates();
