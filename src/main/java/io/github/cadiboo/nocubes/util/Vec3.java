@@ -77,7 +77,7 @@ public class Vec3 implements Cloneable, AutoCloseable {
 			return;
 		}
 		synchronized (POOL) {
-			if (POOL.size() < 30000) {
+			if (POOL.size() < 60000) {
 				POOL.add(this);
 			}
 //			this.released = true;

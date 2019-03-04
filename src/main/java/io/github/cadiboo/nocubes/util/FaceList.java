@@ -38,7 +38,7 @@ public class FaceList extends ArrayList<Face> implements AutoCloseable {
 			return;
 		}
 		synchronized (POOL) {
-			if (POOL.size() < 10000) {
+			if (POOL.size() < 2000) {
 				POOL.add(this);
 			}
 //			this.released = true;
