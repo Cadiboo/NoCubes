@@ -8,8 +8,11 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEve
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
@@ -20,6 +23,8 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.HashSet;
 
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
@@ -109,5 +114,15 @@ public final class ClientEventSubscriber {
 //			return;
 //		}
 //	}
+
+	@SubscribeEvent
+	public static void onEntityJoinWorldEvent(final EntityJoinWorldEvent event) {
+		final Entity entity = event.getEntity();
+		if (entity instanceof EntityPlayerSP) {
+			EntityPlayerSP player = (EntityPlayerSP) entity;
+			player.sendChatMessage(MOD_NAME + " " + VERSION + ": The code for Collisions is 90% copied/ported/stolen from the Repose Mod's code. More accurate collisions with less exactly similar code are being worked on. Until then, enjoy and go give Repose some love at https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/2076319-repose-walkable-soil-slopes-give-your-spacebar-a");
+		}
+
+	}
 
 }
