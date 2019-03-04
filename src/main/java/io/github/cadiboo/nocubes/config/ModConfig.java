@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.Block;
@@ -15,7 +16,6 @@ import net.minecraft.block.BlockSnow;
 import net.minecraft.block.BlockStainedHardenedClay;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.InvalidBlockStateException;
 import net.minecraft.command.NumberInvalidException;
@@ -171,17 +171,24 @@ public final class ModConfig {
 			if (event.getModID().equals(MOD_ID)) {
 				ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 
-				if (reloadChunksOnConfigChange) {
-					if (Minecraft.getMinecraft().renderGlobal != null) {
-						Minecraft.getMinecraft().renderGlobal.loadRenderers();
-					}
+				if (NoCubes.isEnabled() && reloadChunksOnConfigChange) {
+					ClientUtil.tryReloadRenderers();
 				}
 
-				SMOOTHABLE_BLOCK_STATES_CACHE.clear();
+				rebuildSmoothableBlockstatesCache();
 
-				final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
+			}
 
-				for (String blockStateString : smoothableBlockStates) {
+		}
+
+		private static void rebuildSmoothableBlockstatesCache() {
+			SMOOTHABLE_BLOCK_STATES_CACHE.clear();
+
+			final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
+
+			for (String blockStateString : smoothableBlockStates) {
+
+				try {
 					final String[] splitBlockStateString = StringUtils.split(blockStateString, "[");
 					final String blockString = splitBlockStateString[0];
 					final String stateString;
@@ -196,20 +203,21 @@ public final class ModConfig {
 
 					final Block block = BLOCKS.getValue(new ResourceLocation(blockString));
 					if (block == null) {
-						NoCubes.NO_CUBES_LOG.error("Block Parsing error NullPointerException for \"" + blockString + "\"");
+						NoCubes.NO_CUBES_LOG.error("Block Parsing error for \"" + blockString + "\". Block does not exist!");
 						continue;
 					}
 					try {
 						SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
-					} catch (NumberInvalidException | InvalidBlockStateException e) {
-						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\"");
-						continue;
+					} catch (NumberInvalidException e) {
+						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
+					} catch (InvalidBlockStateException e) {
+						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\". Invalid Blockstate!");
 					}
-
+				} catch (Exception e) {
+					NoCubes.NO_CUBES_LOG.error("Smoothable Blockstate Parsing error " + e + " for \"" + blockStateString + "\"");
 				}
 
 			}
-
 		}
 
 	}
