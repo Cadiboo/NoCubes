@@ -159,6 +159,22 @@ public class Hooks {
 			}
 		}
 
+		//NOOOOOO
+//		final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlock(pos, worldIn, TERRAIN_SMOOTHABLE);
+//		if (faces != null) {
+//			if (faces.isEmpty()) {
+//				return;
+//			}
+//			faces.forEach(face -> {
+//				face.getVertex0().close();
+//				face.getVertex1().close();
+//				face.getVertex2().close();
+//				face.getVertex3().close();
+//				face.close();
+//			});
+//			faces.close();
+//		}
+
 		if (state.getCollisionBoundingBox(worldIn, pos) != null) { // optimization
 			if (canUseSlope(entityIn) && canSlopeAt(state, worldIn, pos)) {
 				collidingBoxes.addAll(slopingCollisionBoxes(state, worldIn, pos).stream().filter(entityBox::intersects).collect(Collectors.toList()));
