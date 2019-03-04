@@ -2,21 +2,24 @@
   "nocubes.config.isEnabled": "启用模组",
   "nocubes.config.isEnabled.tooltip": "是否启用该模组",
 
-  "nocubes.config.meshGenerator": "渲染算法",
-  "nocubes.config.meshGenerator.tooltip": "使用哪种算法渲染你的世界\\n旧版NoCubes: 由Chick_ME开发的NoCubes 0.3的快速原始渲染器\\nMarching Cubes: 自1986年以来一直存在的原始平滑算法 - 快速, 运行良好\\nSurface Nets: 一种平滑算法 - 速度稍慢, 三维等值面提取算法!\\nMarching Tetrahedra: 一种简单的平滑算法 - 非常慢, 三维等值面提取算法, 非常简单的实现方式\\n\\n互动例子: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html",
+  "nocubes.config.meshGenerator": "网格生成器(渲染算法)",
+  "nocubes.config.meshGenerator.tooltip": "选择需要使用的渲染算法\\n旧版NoCubes: 由Click_Me开发的NoCubes 0.3非常快速的原始渲染器(未实现! 后续更新!)\\nMarching Cubes: 自1986年以来一直存在的原始平滑算法 - 快速, 运行良好\\nSurface Nets: 一种平滑算法 - 速度稍快, 三维等值面提取算法!\\nMarching Tetrahedra: 一种简单的平滑算法 - 非常慢, 三维等值面提取算法, 非常简单的实现方式\\n\\n互动例子: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html",
 
   "nocubes.config.reloadChunksOnConfigChange": "配置文件修改后重新渲染区块",
-  "nocubes.config.reloadChunksOnConfigChange.tooltip": "是否需要在配置文件被修改时重新渲染所有区块",
+  "nocubes.config.reloadChunksOnConfigChange.tooltip": "是否需要在配置文件被修改后重新渲染所有区块",
 
-  "nocubes.config.smoothableBlockStates": "可平滑的方块",
-  "nocubes.config.smoothableBlockStates.tooltip": "选择需要使用渲染算法的方块",
+  "nocubes.config.smoothableBlockStates": "平滑的方块状态",
+  "nocubes.config.smoothableBlockStates.tooltip": "需要被网格生成器平滑的方块状态",
 
-  "nocubes.config.approximateLighting": "Approximate Lighting",
-  "nocubes.config.approximateLighting.tooltip": "If (approximated) lighting should be applied",
+  "nocubes.config.approximateLighting": "近似照明",
+  "nocubes.config.approximateLighting.tooltip": "是否需要应用(近似)照明",
 
-  "nocubes.config.smoothLeavesSeparate": "Smooth Leaves",
-  "nocubes.config.smoothLeavesSeparate.tooltip": "If leaves should be smoothed (separately from terrain)",
+  "nocubes.config.smoothLeavesSeparate": "平滑树叶",
+  "nocubes.config.smoothLeavesSeparate.tooltip": "是否需要平滑树叶方块(与地形分开)",
 
   "nocubes.config.extendLiquids": "扩展液体",
-  "nocubes.config.extendLiquids.tooltip": "是否需要使液体(熔岩和水)贴合平滑的方块\\n提醒我用着色器实现熔岩的波纹效果!"
+  "nocubes.config.extendLiquids.tooltip": "是否需要使液体(熔岩和水)贴合平滑的方块",
+
+  "nocubes.key.toggleSmoothableBlockstate": "NoCubes切换平滑的方块状态",
+  "nocubes.key.toggleSmoothableBlockstate.tooltip": "(你正在注视的那个方块)"
 }
