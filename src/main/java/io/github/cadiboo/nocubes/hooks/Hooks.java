@@ -148,8 +148,9 @@ public class Hooks {
 		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
 			if (LEAVES_SMOOTHABLE.isSmoothable(state)) {
 				if (entityIn != null) {
+					// TODO
 					entityIn.motionX *= 0.99;
-					entityIn.motionY *= 0.99;
+//					entityIn.motionY *= 0.99;
 					entityIn.motionZ *= 0.99;
 				}
 				return;
