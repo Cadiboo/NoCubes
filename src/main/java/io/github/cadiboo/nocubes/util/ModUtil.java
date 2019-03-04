@@ -109,17 +109,18 @@ public final class ModUtil {
 	}
 
 	/**
-	 * Give the point some (pseudo) random offset based on its location
+	 * Give the vec3 some (pseudo) random offset based on its location.
+	 * This code is from {link MathHelper#getCoordinateRandom} and Block#getOffset
 	 *
-	 * @param point the point
+	 * @param vec3 the vec3
 	 */
-	public static void offsetVertex(Vec3 point) {
-		long rand = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
-		rand = rand * rand * 42317861L + rand * 11L;
-		final float offsetAmount = ModConfig.getoffsetAmount();
-		point.x += (((rand >> 16 & 15L) / 15.0F - 0.5F) * offsetAmount);
-		point.y += (((rand >> 20 & 15L) / 15.0F - 0.5F) * offsetAmount);
-		point.z += (((rand >> 24 & 15L) / 15.0F - 0.5F) * offsetAmount);
+	public static Vec3 offsetVertex(Vec3 vec3) {
+		long rand = (long) (vec3.x * 3129871.0D) ^ (long) vec3.z * 116129781L ^ (long) vec3.y;
+		rand = rand * rand * 42317861L + rand * 11;
+		vec3.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		vec3.y += ((double) ((float) (rand >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D;
+		vec3.z += ((double) ((float) (rand >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		return vec3;
 	}
 
 	@Deprecated
