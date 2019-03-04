@@ -20,12 +20,12 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -56,7 +56,7 @@ public class MeshRenderer {
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			final boolean renderOpposite
+			final boolean renderOppositeSides
 	) {
 
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces")) {
@@ -80,14 +80,42 @@ public class MeshRenderer {
 								renderChunkPositionZ + pos.z
 						);
 
-//						final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
-						final IBlockState realState = stateCache.getStateCache()[stateCache.getIndex(pos.x, pos.y, pos.z)];
+						final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
+//						final IBlockState realState = stateCache.getStateCache()[stateCache.getIndex(pos.x + 1, pos.y + 1, pos.z + 1)];
 
-						final Object[] texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, blockAccess, pooledMutableBlockPos.toImmutable(), realState, isStateSmoothable, pooledMutableBlockPos);
-						final BlockPos texturePos = (BlockPos) texturePosAndState[0];
-						final IBlockState textureState = (IBlockState) texturePosAndState[1];
+						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, blockAccess, pooledMutableBlockPos, realState, isStateSmoothable);
+						BlockPos texturePos = texturePosAndState.getFirst();
+						final IBlockState textureState = texturePosAndState.getSecond();
 
 						try {
+
+							BakedQuad quad = ClientUtil.getQuad(textureState.getActualState(blockAccess, texturePos), texturePos, blockRendererDispatcher);
+							if (quad == null) {
+								quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, 0L).get(0);
+							}
+
+							// Quads are packed xyz|argb|u|v|ts
+
+							final float v0u = Float.intBitsToFloat(quad.getVertexData()[4]);
+							final float v0v = Float.intBitsToFloat(quad.getVertexData()[5]);
+							final float v1u = Float.intBitsToFloat(quad.getVertexData()[11]);
+							final float v1v = Float.intBitsToFloat(quad.getVertexData()[12]);
+							final float v2u = Float.intBitsToFloat(quad.getVertexData()[18]);
+							final float v2v = Float.intBitsToFloat(quad.getVertexData()[19]);
+							final float v3u = Float.intBitsToFloat(quad.getVertexData()[25]);
+							final float v3v = Float.intBitsToFloat(quad.getVertexData()[26]);
+
+//							final TextureAtlasSprite sprite = quad.getSprite();
+							final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
+							final int red = (color >> 16) & 255;
+							final int green = (color >> 8) & 255;
+							final int blue = color & 255;
+							final int alpha = 0xFF;
+
+//							final float minU = ClientUtil.getMinU(sprite);
+//							final float minV = ClientUtil.getMinV(sprite);
+//							final float maxU = ClientUtil.getMaxU(sprite);
+//							final float maxV = ClientUtil.getMaxV(sprite);
 
 							//TODO: use Event
 							final BlockRenderLayer blockRenderLayer = getRenderLayer(textureState);
@@ -96,22 +124,6 @@ public class MeshRenderer {
 							usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
 
 							OptifineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
-
-							BakedQuad quad = ClientUtil.getQuad(textureState, texturePos, blockRendererDispatcher);
-							if (quad == null) {
-								quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, 0L).get(0);
-							}
-							final TextureAtlasSprite sprite = quad.getSprite();
-							final int color = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
-							final int red = (color >> 16) & 255;
-							final int green = (color >> 8) & 255;
-							final int blue = color & 255;
-							final int alpha = 0xFF;
-
-							final float minU = ClientUtil.getMinU(sprite);
-							final float minV = ClientUtil.getMinV(sprite);
-							final float maxU = ClientUtil.getMaxU(sprite);
-							final float maxV = ClientUtil.getMaxV(sprite);
 
 							for (final Face face : faces) {
 								try {
@@ -156,15 +168,15 @@ public class MeshRenderer {
 									}
 
 									try {
-										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-										if (renderOpposite) {
-											bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-											bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-											bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-											bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+										if (renderOppositeSides) {
+											bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+											bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+											bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+											bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
 										}
 									} finally {
 										v0.close();
