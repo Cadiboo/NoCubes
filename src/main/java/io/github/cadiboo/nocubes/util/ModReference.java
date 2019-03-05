@@ -59,7 +59,7 @@ public final class ModReference {
 	 */
 	public static final String CERTIFICATE_FINGERPRINT = "@FINGERPRINT@";
 
-	public static final String CONFIG_VERSION = "0.1.9";
+	public static final String CONFIG_VERSION = "0.1.10";
 
 	public static final String UPDATE_JSON = "https://Cadiboo.github.io/projects/nocubes/update.json";
 

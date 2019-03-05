@@ -102,14 +102,9 @@ public final class ModConfig {
 	@Config.Ignore
 	public static double isosurfaceLevel = 1.0D;
 
-	//	@LangKey(MOD_ID + ".config.offsetVertices")
-	@Config.Ignore
-	public static boolean offsetVertices = false;
-
-	//	@LangKey(MOD_ID + ".config.offsetAmmount")
-//	@Config.RangeDouble(min = -10, max = 10)
-	@Config.Ignore
-	public static double offsetAmmount = 0.5F;
+	@LangKey(MOD_ID + ".config.offsetVertices")
+//	@Config.Ignore
+	public static boolean offsetVertices = true;
 
 	@LangKey(MOD_ID + ".config.approximateLighting")
 	public static boolean approximateLighting = true;
@@ -156,13 +151,6 @@ public final class ModConfig {
 
 	public static float getIsosurfaceLevel() {
 		return (float) isosurfaceLevel;
-	}
-
-	public static float getoffsetAmount() {
-		if (!offsetVertices) {
-			return 0;
-		}
-		return (float) offsetAmmount;
 	}
 
 	public static MeshGenerator getMeshGenerator() {
