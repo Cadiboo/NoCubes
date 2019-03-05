@@ -73,7 +73,7 @@ public class Face implements AutoCloseable {
 
 	@Nonnull
 	public static Face retain(@Nonnull final Vec3 vertex0, @Nonnull final Vec3 vertex1, @Nonnull final Vec3 vertex2) {
-		return retain(vertex0.clone(), vertex0, vertex1, vertex2);
+		return retain(vertex0.copy(), vertex0, vertex1, vertex2);
 	}
 
 	@Override

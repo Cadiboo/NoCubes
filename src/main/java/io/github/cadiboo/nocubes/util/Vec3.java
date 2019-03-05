@@ -10,7 +10,7 @@ import java.util.ArrayList;
  *
  * @author Cadiboo
  */
-public class Vec3 implements Cloneable, AutoCloseable {
+public class Vec3 implements AutoCloseable {
 
 	private static int instances = 0;
 
@@ -62,8 +62,7 @@ public class Vec3 implements Cloneable, AutoCloseable {
 		);
 	}
 
-	@Override
-	public Vec3 clone() {
+	public Vec3 copy() {
 		return new Vec3(
 				this.x,
 				this.y,
