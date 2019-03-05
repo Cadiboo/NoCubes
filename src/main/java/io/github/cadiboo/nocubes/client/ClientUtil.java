@@ -1,8 +1,10 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.tempcompatibility.DynamicTreesCompatibility;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.StateCache;
+import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
@@ -18,6 +20,7 @@ import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
@@ -27,6 +30,7 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
 import net.minecraftforge.fml.relauncher.Side;
@@ -156,8 +160,8 @@ public final class ClientUtil {
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
 		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
-		return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
+		final IBakedModel model = getModel(state, blockRendererDispatcher);
+		return getQuad(state, posRand, model, ENUMFACING_QUADS_ORDERED);
 	}
 
 	/**
@@ -172,20 +176,38 @@ public final class ClientUtil {
 	@Nullable
 	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
 		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = blockRendererDispatcher.getModelForState(state);
-		final BakedQuad quad = getQuad(state, pos, posRand, model, facing);
+		final IBakedModel model = getModel(state, blockRendererDispatcher);
+		final BakedQuad quad = getQuad(state, posRand, model, facing);
 		if (quad != null) {
 			return quad;
 		} else {
-			return getQuad(state, pos, posRand, model, ENUMFACING_QUADS_ORDERED);
+			return getQuad(state, posRand, model, ENUMFACING_QUADS_ORDERED);
 		}
+	}
+
+	@Nonnull
+	/**
+	 * Returns the model or the missing model if there isn't one
+	 */
+	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
+		IBlockState unextendedState = state;
+		if (state instanceof IExtendedBlockState) {
+			unextendedState = ((IExtendedBlockState) state).getClean();
+		}
+		if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
+			return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
+		}
+		if (unextendedState == Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true)) {
+			return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
+		}
+		return blockRendererDispatcher.getModelForState(state);
 	}
 
 	/**
 	 * helper method to actually get the quads
 	 */
 	@Nullable
-	private static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final long posRand, final IBakedModel model, final EnumFacing... facings) {
+	private static BakedQuad getQuad(final IBlockState state, final long posRand, final IBakedModel model, final EnumFacing... facings) {
 		for (EnumFacing facing : facings) {
 			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
 			if (!quads.isEmpty()) {
