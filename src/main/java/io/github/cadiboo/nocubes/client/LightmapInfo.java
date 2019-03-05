@@ -9,6 +9,7 @@ import net.minecraft.world.IBlockAccess;
 import javax.annotation.Nonnull;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.max;
+import static net.minecraft.util.math.MathHelper.*;
 import static net.minecraft.util.math.MathHelper.clamp;
 
 /**
@@ -56,7 +57,7 @@ public class LightmapInfo implements AutoCloseable {
 
 		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
 			case 0:
-				return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+				return generateLightmapInfoFlat(v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
 			default:
 			case 1:
 				return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
@@ -96,21 +97,21 @@ public class LightmapInfo implements AutoCloseable {
 		final int[] packedLight2 = new int[27];
 		final int[] packedLight3 = new int[27];
 
-		final int v0XOffset = clamp(zeroFloor(v0.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v0YOffset = clamp(zeroFloor(v0.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v0ZOffset = clamp(zeroFloor(v0.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v0XOffset = clamp(floor(v0.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v0YOffset = clamp(floor(v0.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v0ZOffset = clamp(floor(v0.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
-		final int v1XOffset = clamp(zeroFloor(v1.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v1YOffset = clamp(zeroFloor(v1.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v1ZOffset = clamp(zeroFloor(v1.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v1XOffset = clamp(floor(v1.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v1YOffset = clamp(floor(v1.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v1ZOffset = clamp(floor(v1.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
-		final int v2XOffset = clamp(zeroFloor(v2.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v2YOffset = clamp(zeroFloor(v2.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v2ZOffset = clamp(zeroFloor(v2.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v2XOffset = clamp(floor(v2.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v2YOffset = clamp(floor(v2.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v2ZOffset = clamp(floor(v2.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
-		final int v3XOffset = clamp(zeroFloor(v3.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v3YOffset = clamp(zeroFloor(v3.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v3ZOffset = clamp(zeroFloor(v3.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v3XOffset = clamp(floor(v3.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v3YOffset = clamp(floor(v3.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v3ZOffset = clamp(floor(v3.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
@@ -142,12 +143,8 @@ public class LightmapInfo implements AutoCloseable {
 		);
 	}
 
-	private static int zeroFloor(final float f) {
-		return (int) (f);
-	}
-
 	private static LightmapInfo generateLightmapInfoFlat(
-			final Vec3 v0,
+			final Vec3 v3,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
@@ -157,11 +154,11 @@ public class LightmapInfo implements AutoCloseable {
 			final int[] packedLightCacheArray
 	) {
 
-		final int v0XOffset = clamp(zeroFloor(v0.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v0YOffset = clamp(zeroFloor(v0.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v0ZOffset = clamp(zeroFloor(v0.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v3XOffset = clamp(floor(v3.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v3YOffset = clamp(floor(v3.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v3ZOffset = clamp(floor(v3.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
-		final int[] packedLight0 = new int[27];
+		final int[] packedLight3 = new int[27];
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
@@ -169,18 +166,18 @@ public class LightmapInfo implements AutoCloseable {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					packedLight0[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
+					packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
 				}
 			}
 		}
 
-		final int skylight0 = getSkylight(packedLight0);
+		final int skylight3 = getSkylight(packedLight3);
 
-		final int blocklight0 = getBlocklight(packedLight0);
+		final int blocklight3 = getBlocklight(packedLight3);
 
 		return retain(
-				skylight0, skylight0, skylight0, skylight0,
-				blocklight0, blocklight0, blocklight0, blocklight0
+				skylight3, skylight3, skylight3, skylight3,
+				blocklight3, blocklight3, blocklight3, blocklight3
 		);
 	}
 
