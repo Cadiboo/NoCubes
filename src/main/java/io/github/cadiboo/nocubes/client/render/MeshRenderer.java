@@ -166,13 +166,13 @@ public class MeshRenderer {
 									//0 3
 									//1 2
 									//south east when looking down onto up face
-									final Vec3 v0 = face.getVertex0().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+									final Vec3 v0 = face.getVertex0();
 									//north east when looking down onto up face
-									final Vec3 v1 = face.getVertex1().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+									final Vec3 v1 = face.getVertex1();
 									//north west when looking down onto up face
-									final Vec3 v2 = face.getVertex2().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+									final Vec3 v2 = face.getVertex2();
 									//south west when looking down onto up face
-									final Vec3 v3 = face.getVertex3().addOffset(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ);
+									final Vec3 v3 = face.getVertex3();
 
 									final int lightmapSkyLight0;
 									final int lightmapSkyLight1;
@@ -294,7 +294,7 @@ public class MeshRenderer {
 							stateCache,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-							NoCubes.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE),
+							NoCubes.MESH_DISPATCHER.generateOffsetChunk(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
 					);
@@ -313,7 +313,7 @@ public class MeshRenderer {
 							stateCache,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-							NoCubes.MESH_DISPATCHER.generateChunk(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE),
+							NoCubes.MESH_DISPATCHER.generateOffsetChunk(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE),
 							LEAVES_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, true
 					);
