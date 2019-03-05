@@ -181,9 +181,10 @@ public final class ModConfig {
 		public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
 
 			if (event.getModID().equals(MOD_ID)) {
+				final boolean wasEnabled = NoCubes.isEnabled();
 				ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
 
-				if (NoCubes.isEnabled() && reloadChunksOnConfigChange) {
+				if ((wasEnabled || NoCubes.isEnabled()) && reloadChunksOnConfigChange) {
 					ClientUtil.tryReloadRenderers();
 				}
 
