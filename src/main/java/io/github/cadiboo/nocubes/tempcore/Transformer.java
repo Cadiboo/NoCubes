@@ -15,10 +15,16 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.util.TraceClassVisitor;
 
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ListIterator;
 import java.util.function.Consumer;
 
+import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.classtransformer.RenderChunkRebuildChunkHooksRenderChunkClassTransformer.DEBUG_DUMP_BYTECODE_DIR;
 import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 /**
@@ -27,19 +33,19 @@ import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMet
 public class Transformer implements IClassTransformer, Opcodes {
 
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static boolean DUMP_BYTECODE = false;
 
 	@Override
 	public byte[] transform(final String name, final String transformedName, final byte[] basicClass) {
 		if (transformedName.equals("net.minecraft.block.state.BlockStateContainer$StateImplementation")) {
-			return transformClass(basicClass,
-					Transformer::redirect_shouldSideBeRendered
-					,
+			return transformClass(basicClass, transformedName,
+					Transformer::redirect_shouldSideBeRendered,
+//					Transformer::redirect_doesSideBlockRendering,
 					Transformer::redirect_getCollisionBoundingBox,
 					Transformer::redirect_addCollisionBoxToList
 			);
 		} else if (transformedName.equals("net.minecraft.entity.Entity")) {
-			return transformClass(basicClass
-					,
+			return transformClass(basicClass, transformedName,
 					Transformer::redirect_isEntityInsideOpaqueBlock
 			);
 		}
@@ -47,15 +53,48 @@ public class Transformer implements IClassTransformer, Opcodes {
 	}
 
 	@SafeVarargs
-	private final byte[] transformClass(final byte[] basicClass, final Consumer<ClassNode>... classNodeAcceptors) {
+	private final byte[] transformClass(final byte[] basicClass, final String transformedName, final Consumer<ClassNode>... classNodeAcceptors) {
 		ClassNode classNode = new ClassNode();
 		ClassReader cr = new ClassReader(basicClass);
+		if (DUMP_BYTECODE) try {
+			Path pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_before_hooks.txt");
+			pathToFile.toFile().getParentFile().mkdirs();
+			PrintWriter filePrinter = new PrintWriter(pathToFile.toFile());
+			ClassReader reader = new ClassReader(basicClass);
+			TraceClassVisitor tracingVisitor = new TraceClassVisitor(filePrinter);
+			reader.accept(tracingVisitor, 0);
+			pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_before_hooks.class");
+			pathToFile.toFile().getParentFile().mkdirs();
+			FileOutputStream fileOutputStream = new FileOutputStream(pathToFile.toFile());
+			fileOutputStream.write(basicClass);
+			fileOutputStream.close();
+		} catch (Exception var16) {
+			LogManager.getLogger().error("Failed to dump bytecode of classes before injecting hooks!", var16);
+		}
 		cr.accept(classNode, 4);
 		for (final Consumer<ClassNode> classNodeAcceptor : classNodeAcceptors) {
 			classNodeAcceptor.accept(classNode);
 		}
 		ClassWriter out = new ClassWriter(3);
 		classNode.accept(out);
+		if (DUMP_BYTECODE) {
+			try {
+				byte[] bytes = out.toByteArray();
+				Path pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_after_hooks.txt");
+				pathToFile.toFile().getParentFile().mkdirs();
+				PrintWriter filePrinter = new PrintWriter(pathToFile.toFile());
+				ClassReader reader = new ClassReader(bytes);
+				TraceClassVisitor tracingVisitor = new TraceClassVisitor(filePrinter);
+				reader.accept(tracingVisitor, 0);
+				Path pathToClass = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_after_hooks.class");
+				pathToClass.toFile().getParentFile().mkdirs();
+				FileOutputStream fileOutputStream = new FileOutputStream(pathToClass.toFile());
+				fileOutputStream.write(bytes);
+				fileOutputStream.close();
+			} catch (Exception var14) {
+				LogManager.getLogger().error("Failed to dump bytecode of classes after injecting hooks!", var14);
+			}
+		}
 		return out.toByteArray();
 	}
 
@@ -191,6 +230,70 @@ public class Transformer implements IClassTransformer, Opcodes {
 		instructions.insertBefore(ALOAD_0, new InsnNode(IRETURN));
 		LOGGER.info("Finished injecting into shouldSideBeRendered");
 
+	}
+
+	private static void redirect_doesSideBlockRendering(final ClassNode classNode) {
+
+		LOGGER.info("Starting injecting into doesSideBlockRendering");
+
+		final MethodNode doesSideBlockRendering;
+		doesSideBlockRendering = getMethod(classNode, "doesSideBlockRendering", "(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z");
+		final InsnList instructions = doesSideBlockRendering.instructions;
+		final ListIterator<AbstractInsnNode> iterator = instructions.iterator();
+		VarInsnNode ALOAD_0 = null;
+		while (iterator.hasNext()) {
+			final AbstractInsnNode insn = iterator.next();
+			if (insn.getOpcode() != ALOAD) {
+				continue;
+			}
+			if (insn.getType() != AbstractInsnNode.VAR_INSN) {
+				continue;
+			}
+			if (((VarInsnNode) insn).var != 0) {
+				continue;
+			}
+			ALOAD_0 = (VarInsnNode) insn;
+			break;
+		}
+
+		if (ALOAD_0 == null) {
+			return;
+		}
+
+//		L0
+//		LINENUMBER 447 L0
+//>		ALOAD 0
+//>		GETFIELD net/minecraft/block/state/BlockStateContainer$StateImplementation.block : Lnet/minecraft/block/Block;
+//>		ALOAD 0
+//>		ALOAD 1
+//>		ALOAD 2
+//>		ALOAD 3
+//>		INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.doesSideBlockRendering (Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z
+//>		IRETURN
+//#		ALOAD 0
+//		GETFIELD net/minecraft/block/state/BlockStateContainer$StateImplementation.block : Lnet/minecraft/block/Block;
+//		ALOAD 0
+//		ALOAD 1
+//		ALOAD 2
+//		ALOAD 3
+//		INVOKEVIRTUAL net/minecraft/block/Block.doesSideBlockRendering (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z
+//		IRETURN
+
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
+		instructions.insertBefore(ALOAD_0, BlockStateContainer$StateImplementation_block());
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 0));
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 1));
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 2));
+		instructions.insertBefore(ALOAD_0, new VarInsnNode(ALOAD, 3));
+		instructions.insertBefore(ALOAD_0, new MethodInsnNode(
+				INVOKESTATIC,
+				"io/github/cadiboo/nocubes/hooks/Hooks",
+				"doesSideBlockRendering",
+				"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z",
+				false
+		));
+		instructions.insertBefore(ALOAD_0, new InsnNode(IRETURN));
+		LOGGER.info("Finished injecting into doesSideBlockRendering");
 	}
 
 	private static AbstractInsnNode BlockStateContainer$StateImplementation_block() {
