@@ -1,8 +1,10 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.tempcompatibility.DynamicTreesCompatibility;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
@@ -73,33 +75,6 @@ public final class ClientUtil {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
 
-	// add or subtract from the sprites UV location to remove transparent lines in between textures
-	public static final float UV_CORRECT = 1 / 10000F;
-
-//	private static final ThreadLocal<HashMap<BlockPos, HashMap<BlockPos, Object[]>>> RENDER_LIQUID_POSITIONS = ThreadLocal.withInitial(HashMap::new);
-
-	private static final Constructor<AmbientOcclusionFace> ambientOcclusionFace;
-	private static final boolean ambientOcclusionFaceNeedsBlockModelRenderer;
-	static {
-		Constructor<AmbientOcclusionFace> ambientOcclusionFaceConstructor = null;
-		boolean needsBlockModelRenderer = false;
-		try {
-			try {
-				//TODO: stop using ReflectionHelper
-				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class);
-			} catch (UnknownConstructorException e) {
-				//TODO: stop using ReflectionHelper
-				ambientOcclusionFaceConstructor = ReflectionHelper.findConstructor(AmbientOcclusionFace.class, BlockModelRenderer.class);
-				needsBlockModelRenderer = true;
-			}
-		} catch (Exception e) {
-			final CrashReport crashReport = new CrashReport("Unable to find constructor for BlockModelRenderer$AmbientOcclusionFace", e);
-			crashReport.makeCategory("Finding Constructor");
-			throw new ReportedException(crashReport);
-		}
-		ambientOcclusionFace = ambientOcclusionFaceConstructor;
-		ambientOcclusionFaceNeedsBlockModelRenderer = needsBlockModelRenderer;
-	}
 
 	/**
 	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
@@ -244,46 +219,6 @@ public final class ClientUtil {
 		return color(red, green, blue);
 	}
 
-	/**
-	 * Gets the fixed minimum U coordinate to use when rendering the sprite.
-	 *
-	 * @param sprite the sprite
-	 * @return The fixed minimum U coordinate to use when rendering the sprite
-	 */
-	public static float getMinU(final TextureAtlasSprite sprite) {
-		return sprite.getMinU() + UV_CORRECT;
-	}
-
-	/**
-	 * Gets the fixed maximum U coordinate to use when rendering the sprite.
-	 *
-	 * @param sprite the sprite
-	 * @return The fixed maximum U coordinate to use when rendering the sprite
-	 */
-	public static float getMaxU(final TextureAtlasSprite sprite) {
-		return sprite.getMaxU() - UV_CORRECT;
-	}
-
-	/**
-	 * Gets the fixed minimum V coordinate to use when rendering the sprite.
-	 *
-	 * @param sprite the sprite
-	 * @return The fixed minimum V coordinate to use when rendering the sprite
-	 */
-	public static float getMinV(final TextureAtlasSprite sprite) {
-		return sprite.getMinV() + UV_CORRECT;
-	}
-
-	/**
-	 * Gets the fixed maximum V coordinate to use when rendering the sprite.
-	 *
-	 * @param sprite the sprite
-	 * @return The fixed maximum V coordinate to use when rendering the sprite
-	 */
-	public static float getMaxV(final TextureAtlasSprite sprite) {
-		return sprite.getMaxV() - UV_CORRECT;
-	}
-
 	//TODO
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
@@ -334,26 +269,24 @@ public final class ClientUtil {
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
-			@Nonnull final IIsSmoothable isStateSmoothable
+			@Nonnull final IIsSmoothable isStateSmoothable,
+			final byte relativePosX, final byte relativePosY, final byte relativePosZ
 	) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getTexturePosAndState")) {
 
-		//check initial first
-		if (isStateSmoothable.isSmoothable(state)) {
-			return new Tuple<>(
-					texturePooledMutablePos.toImmutable(),
-					state
-			);
-		}
+			//check initial first
+			if (isStateSmoothable.isSmoothable(state)) {
+				return new Tuple<>(
+						texturePooledMutablePos.toImmutable(),
+						state
+				);
+			}
 
-		final int posX = texturePooledMutablePos.getX();
-		final int posY = texturePooledMutablePos.getY();
-		final int posZ = texturePooledMutablePos.getZ();
+			final int posX = texturePooledMutablePos.getX();
+			final int posY = texturePooledMutablePos.getY();
+			final int posZ = texturePooledMutablePos.getZ();
 
-//		final byte relativePosX = (byte) (posX - (posX >> 4 << 4));
-//		final byte relativePosY = (byte) (posY - (posY >> 4 << 4));
-//		final byte relativePosZ = (byte) (posZ - (posZ >> 4 << 4));
-//
-//		final IBlockState[] stateCacheArray = stateCache.getStateCache();
+			final IBlockState[] stateCacheArray = stateCache.getStateCache();
 
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
@@ -376,40 +309,26 @@ public final class ClientUtil {
 //				}
 //			}
 
-		IBlockState textureState = state;
+			IBlockState textureState = state;
 
-		for (int[] offset : OFFSETS_ORDERED) {
-//			final IBlockState tempState = stateCacheArray[stateCache.getIndex(
-//					relativePosX + offset[0] + 1,
-//					relativePosY + offset[1] + 2,
-//					relativePosZ + offset[2] + 1
-//			)];
-			final IBlockState tempState = cache.getBlockState(texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]));
-			if (isStateSmoothable.isSmoothable(tempState)) {
-				textureState = tempState;
-				break;
+			for (int[] offset : OFFSETS_ORDERED) {
+				final IBlockState tempState = stateCacheArray[stateCache.getIndex(
+						relativePosX + offset[0] + 1,
+						relativePosY + offset[1] + 1,
+						relativePosZ + offset[2] + 1
+				)];
+//				final IBlockState tempState = cache.getBlockState(texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]));
+				if (isStateSmoothable.isSmoothable(tempState)) {
+					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
+					textureState = tempState;
+					break;
+				}
 			}
-		}
 
-		return new Tuple<>(
-				texturePooledMutablePos.toImmutable(),
-				textureState
-		);
-
-	}
-
-	public static AmbientOcclusionFace makeAmbientOcclusionFace() {
-		try {
-			if (ambientOcclusionFaceNeedsBlockModelRenderer) {
-				return ambientOcclusionFace.newInstance(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelRenderer());
-			} else {
-				return ambientOcclusionFace.newInstance();
-			}
-		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-			CrashReport crashReport = new CrashReport("Instantiating BlockModelRenderer$AmbientOcclusionFace!", e);
-			final CrashReportCategory crashReportCategory = crashReport.makeCategory("Reflectively Accessing BlockModelRenderer$AmbientOcclusionFace");
-			crashReportCategory.addCrashSection("Needs BlockModelRenderer", ambientOcclusionFaceNeedsBlockModelRenderer);
-			throw new ReportedException(crashReport);
+			return new Tuple<>(
+					texturePooledMutablePos.toImmutable(),
+					textureState
+			);
 		}
 	}
 
