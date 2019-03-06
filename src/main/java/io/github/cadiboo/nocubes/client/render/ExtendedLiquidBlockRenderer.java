@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.SmoothLightingBlockFluidRenderer;
+import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
@@ -166,7 +166,7 @@ public class ExtendedLiquidBlockRenderer {
 
 						wasAnythingRendered = true;
 //					    float u0 = textureatlassprite1.getInterpolatedU(0.0D);
-						float u0 = ClientUtil.getMinU(textureatlassprite1);
+						float u0 = UVHelper.getMinU(textureatlassprite1);
 						float u1 = textureatlassprite1.getInterpolatedU(8.0D);
 						float v0 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd1) * 16.0F * 0.5F));
 						float v1 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd0) * 16.0F * 0.5F));
@@ -216,13 +216,13 @@ public class ExtendedLiquidBlockRenderer {
 			if (!ModConfig.naturalFluidTextures) {
 //				u0 = textureatlassprite.getInterpolatedU(0.0D);
 //				v0 = textureatlassprite.getInterpolatedV(0.0D);
-				u0 = ClientUtil.getMinU(textureatlassprite);
-				v0 = ClientUtil.getMinV(textureatlassprite);
+				u0 = UVHelper.getMinU(textureatlassprite);
+				v0 = UVHelper.getMinV(textureatlassprite);
 				u1 = u0;
 //				v1 = textureatlassprite.getInterpolatedV(16.0D);
 //				u2 = textureatlassprite.getInterpolatedU(16.0D);
-				v1 = ClientUtil.getMaxV(textureatlassprite);
-				u2 = ClientUtil.getMaxU(textureatlassprite);
+				v1 = UVHelper.getMaxV(textureatlassprite);
+				u2 = UVHelper.getMaxU(textureatlassprite);
 				v2 = v1;
 				u3 = u2;
 				v3 = v0;
@@ -231,31 +231,31 @@ public class ExtendedLiquidBlockRenderer {
 				switch (rand) {
 					default:
 					case 0:
-						u0 = ClientUtil.getMinU(textureatlassprite);
-						v0 = ClientUtil.getMinV(textureatlassprite);
-						v1 = ClientUtil.getMaxV(textureatlassprite);
-						u2 = ClientUtil.getMaxU(textureatlassprite);
+						u0 = UVHelper.getMinU(textureatlassprite);
+						v0 = UVHelper.getMinV(textureatlassprite);
+						v1 = UVHelper.getMaxV(textureatlassprite);
+						u2 = UVHelper.getMaxU(textureatlassprite);
 						break;
 					case 1:
 					case 2:
-						u0 = ClientUtil.getMaxU(textureatlassprite);
-						v0 = ClientUtil.getMaxV(textureatlassprite);
-						v1 = ClientUtil.getMinV(textureatlassprite);
-						u2 = ClientUtil.getMinU(textureatlassprite);
+						u0 = UVHelper.getMaxU(textureatlassprite);
+						v0 = UVHelper.getMaxV(textureatlassprite);
+						v1 = UVHelper.getMinV(textureatlassprite);
+						u2 = UVHelper.getMinU(textureatlassprite);
 						break;
 					case 3:
 					case 4:
-						u0 = ClientUtil.getMinU(textureatlassprite);
-						v0 = ClientUtil.getMinV(textureatlassprite);
-						v1 = ClientUtil.getMaxV(textureatlassprite);
-						u2 = ClientUtil.getMaxU(textureatlassprite);
+						u0 = UVHelper.getMinU(textureatlassprite);
+						v0 = UVHelper.getMinV(textureatlassprite);
+						v1 = UVHelper.getMaxV(textureatlassprite);
+						u2 = UVHelper.getMaxU(textureatlassprite);
 						break;
 					case 5:
 					case 6:
-						u0 = ClientUtil.getMaxU(textureatlassprite);
-						v0 = ClientUtil.getMaxV(textureatlassprite);
-						v1 = ClientUtil.getMinV(textureatlassprite);
-						u2 = ClientUtil.getMinU(textureatlassprite);
+						u0 = UVHelper.getMaxU(textureatlassprite);
+						v0 = UVHelper.getMaxV(textureatlassprite);
+						v1 = UVHelper.getMinV(textureatlassprite);
+						u2 = UVHelper.getMinU(textureatlassprite);
 						break;
 				}
 				u1 = u0;
