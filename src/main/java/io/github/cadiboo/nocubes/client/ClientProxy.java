@@ -27,12 +27,19 @@ import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 public final class ClientProxy implements IProxy {
 
 	private static final int KEY_CODE_N = 49;
+	private static final int KEY_CODE_O = 24;
+	private static final int KEY_CODE_P = 25;
 
-	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories.nocubes");
+	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories." + MOD_ID);
+	public static final KeyBinding toggleEnabled = new KeyBinding(MOD_ID + ".key.toggleEnabled", KeyConflictContext.IN_GAME, KEY_CODE_O, "key.categories." + MOD_ID);
+	public static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KeyConflictContext.IN_GAME, KEY_CODE_P, "key.categories." + MOD_ID);
+
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
 	static {
 		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
+		ClientRegistry.registerKeyBinding(toggleEnabled);
+		ClientRegistry.registerKeyBinding(toggleProfilers);
 	}
 	private static final MethodHandle RenderGlobal_markBlocksForUpdate;
 	static {

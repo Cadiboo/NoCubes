@@ -8,21 +8,30 @@ import net.minecraft.profiler.Profiler;
  */
 public class ModProfiler extends Profiler implements AutoCloseable {
 
+	private int sections = 0;
+
 	public ModProfiler() {
 		this.profilingEnabled = NoCubes.profilingEnabled;
 	}
 
-	public void putSection(final String sectionName, final long estimatedTimeTakenNanoseconds) {
-//		NoCubes.NO_CUBES_LOG.debug(sectionName + " took approximately " + estimatedTimeTakenNanoseconds + " nanoseconds");
-	}
-
 	public ModProfiler start(final String name) {
+		if (!this.profilingEnabled) {
+			return this;
+		}
+		++sections;
 		startSection(name);
 		// return this to allow use in try-with-resources blocks
 		return this;
 	}
 
 	public void end() {
+		--sections;
+		if (!profilingEnabled || sections < 0) {
+			if (sections < 0) {
+				sections = 0;
+			}
+			return;
+		}
 		endSection();
 	}
 

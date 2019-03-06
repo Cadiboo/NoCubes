@@ -25,6 +25,7 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
 import java.util.HashSet;
@@ -69,10 +70,30 @@ public final class ClientEventSubscriber {
 			ObjectPoolingProfiler.onTick();
 		}
 
-		if (ClientProxy.toggleSmoothableBlockstate.isPressed()) {
-			if (addBlockstateToSmoothable()) {
-				if (NoCubes.isEnabled()) {
-					ClientUtil.tryReloadRenderers();
+		final boolean toggleEnabledPressed = ClientProxy.toggleEnabled.isPressed();
+		final boolean toggleSmoothableBlockstatePressed = ClientProxy.toggleSmoothableBlockstate.isPressed();
+		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
+		if (toggleEnabledPressed || toggleSmoothableBlockstatePressed || toggleProfilersPressed) {
+			if (toggleEnabledPressed) {
+				ModConfig.isEnabled = !ModConfig.isEnabled;
+				fireConfigChangedEvent();
+				ClientUtil.tryReloadRenderers();
+				return;
+			}
+			if (toggleSmoothableBlockstatePressed) {
+				if (addBlockstateToSmoothable()) {
+					if (NoCubes.isEnabled()) {
+						ClientUtil.tryReloadRenderers();
+					}
+					fireConfigChangedEvent();
+					return;
+				}
+			}
+			if (toggleProfilersPressed) {
+				if (NoCubes.profilingEnabled) {
+					NoCubes.disableProfiling();
+				} else {
+					NoCubes.enableProfiling();
 				}
 			}
 		}
@@ -98,18 +119,18 @@ public final class ClientEventSubscriber {
 		minecraft.getToastGui().add(toast);
 
 		syncSmoothableBlockstatesWithCache();
+		return true;
+	}
 
-		// Copied from GuiConfig
-		{
-			if (Loader.isModLoaded(MOD_ID)) {
-				ConfigChangedEvent configChangedEvent = new ConfigChangedEvent.OnConfigChangedEvent(MOD_ID, null, true, false);
-				MinecraftForge.EVENT_BUS.post(configChangedEvent);
-				if (!configChangedEvent.getResult().equals(Event.Result.DENY)) {
-					MinecraftForge.EVENT_BUS.post(new ConfigChangedEvent.PostConfigChangedEvent(MOD_ID, null, true, false));
-				}
+	// Copied from GuiConfig
+	private static void fireConfigChangedEvent() {
+		if (Loader.isModLoaded(MOD_ID)) {
+			ConfigChangedEvent configChangedEvent = new ConfigChangedEvent.OnConfigChangedEvent(MOD_ID, null, true, false);
+			MinecraftForge.EVENT_BUS.post(configChangedEvent);
+			if (!configChangedEvent.getResult().equals(Event.Result.DENY)) {
+				MinecraftForge.EVENT_BUS.post(new ConfigChangedEvent.PostConfigChangedEvent(MOD_ID, null, true, false));
 			}
 		}
-		return true;
 	}
 
 	private static void syncSmoothableBlockstatesWithCache() {
@@ -147,12 +168,16 @@ public final class ClientEventSubscriber {
 
 		minecraft.profiler.startSection("debugNoCubes");
 		GlStateManager.pushMatrix();
-		renderDebugInfoLeft();
+		try {
+			renderProfilers();
+		} catch (Exception e) {
+			LogManager.getLogger(MOD_NAME + " Profile Renderer").error("Error Rendering Profilers.", e);
+		}
 		GlStateManager.popMatrix();
 		minecraft.profiler.endSection();
 	}
 
-	protected static void renderDebugInfoLeft() {
+	protected static void renderProfilers() {
 		final Minecraft mc = Minecraft.getMinecraft();
 
 		for (int profilerIndex = 0; profilerIndex < NoCubes.PROFILERS.size(); profilerIndex++) {
