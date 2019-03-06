@@ -30,11 +30,10 @@ public final class ClientCacheUtil {
 			final IBlockState[] stateCacheArray = stateCache.getStateCache();
 
 			int index = 0;
-			for (int z = 0; z < cacheSizeZ; z++) {
-				for (int y = 0; y < cacheSizeY; y++) {
-					for (int x = 0; x < cacheSizeX; x++) {
+			for (int z = 0; z < cacheSizeZ; ++z) {
+				for (int y = 0; y < cacheSizeY; ++y) {
+					for (int x = 0; x < cacheSizeX; ++x, ++index) {
 						packedLightCacheArray[index] = stateCacheArray[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(cache, pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
-						index++;
 					}
 				}
 			}
