@@ -111,6 +111,19 @@ public class Hooks {
 		return block.shouldSideBeRendered(state, blockAccess, pos, facing);
 	}
 
+	@Deprecated // Not used
+	public static boolean doesSideBlockRendering(final Block block, final IBlockState state, IBlockAccess blockAccess, BlockPos pos, EnumFacing facing) {
+		if (!NoCubes.isEnabled()) {
+			return doesSideBlockRenderingDefault(block, state, blockAccess, pos, facing);
+		}
+		return doesSideBlockRenderingDefault(block, state, blockAccess, pos, facing);
+	}
+
+	@Deprecated // Not used
+	private static boolean doesSideBlockRenderingDefault(final Block block, final IBlockState state, final IBlockAccess blockAccess, final BlockPos pos, final EnumFacing facing) {
+		return block.doesSideBlockRendering(state, blockAccess, pos, facing);
+	}
+
 	@Nullable
 	public static AxisAlignedBB getCollisionBoundingBox(Block block, IBlockState state, IBlockAccess worldIn, BlockPos pos) {
 		if (!NoCubes.isEnabled() || !ModConfig.collisionsEnabled) {
