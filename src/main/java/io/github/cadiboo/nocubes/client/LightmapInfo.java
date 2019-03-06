@@ -1,16 +1,15 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.Vec3;
-import io.github.cadiboo.nocubes.util.Vec3b;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.max;
-import static net.minecraft.util.math.MathHelper.*;
 import static net.minecraft.util.math.MathHelper.clamp;
+import static net.minecraft.util.math.MathHelper.floor;
 
 /**
  * @author Cadiboo
@@ -50,21 +49,19 @@ public class LightmapInfo implements AutoCloseable {
 			final Vec3 v3,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
-			final int renderChunkPositionZ,
-			final Vec3b pos,
-			final IBlockAccess blockAccess, final PooledMutableBlockPos pooledMutableBlockPos
+			final int renderChunkPositionZ
 	) {
-
-		switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
-			case 0:
-				return generateLightmapInfoFlat(v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
-			default:
-			case 1:
-				return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
-			case 2:
-				return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateLightmapInfo")) {
+			switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
+				case 0:
+					return generateLightmapInfoFlat(v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+				default:
+				case 1:
+					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+				case 2:
+					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+			}
 		}
-
 	}
 
 	private static LightmapInfo generateLightmapInfoSmoothAO(

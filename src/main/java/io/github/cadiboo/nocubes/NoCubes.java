@@ -48,7 +48,23 @@ public final class NoCubes {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	private static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
+	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
+
+	public static boolean profilingEnabled = false;
+
+	public static void enableProfiling() {
+		profilingEnabled = true;
+		for (final ModProfiler profiler : PROFILERS) {
+			profiler.profilingEnabled = true;
+		}
+	}
+
+	public static void disableProfiling() {
+		profilingEnabled = false;
+		for (final ModProfiler profiler : PROFILERS) {
+			profiler.profilingEnabled = false;
+		}
+	}
 
 	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
 		final ModProfiler profiler = new ModProfiler();

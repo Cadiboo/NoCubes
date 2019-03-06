@@ -98,9 +98,9 @@ public class RenderDispatcher {
 		{
 			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
 				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
-					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
+//					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
 						try {
-							MeshRenderer.renderChunk(
+							MeshRenderer.renderChunkMeshes(
 									renderChunk,
 									generator,
 									compiledChunk,
@@ -120,7 +120,7 @@ public class RenderDispatcher {
 							crashReport.makeCategory("Rendering mesh");
 							throw new ReportedException(crashReport);
 						}
-					}
+//					}
 				}
 			}
 		}

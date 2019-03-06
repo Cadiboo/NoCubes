@@ -53,10 +53,6 @@ public class ExtendedLiquidChunkRenderer {
 
 				final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
 
-				final Minecraft minecraft = Minecraft.getMinecraft();
-				final TextureMap textureMap = minecraft.getTextureMapBlocks();
-				final BlockColors blockColors = minecraft.getBlockColors();
-
 				final int extendRange = ClientUtil.getExtendLiquidsRange();
 
 				final int cacheAddX = extendRange;
@@ -97,7 +93,7 @@ public class ExtendedLiquidChunkRenderer {
 
 									final IBlockState liquidState = stateCacheArray[liquidStateIndex];
 
-									final BlockRenderLayer blockRenderLayer = ClientUtil.getRenderLayer(liquidState);
+									final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(liquidState);
 									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 									final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
@@ -109,7 +105,6 @@ public class ExtendedLiquidChunkRenderer {
 
 									//TODO smooth lighting?
 									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
-											textureMap, blockColors,
 											renderChunkPositionX + x,
 											renderChunkPositionY + y,
 											renderChunkPositionZ + z,

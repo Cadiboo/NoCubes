@@ -254,7 +254,7 @@ public class Hooks {
 	private static void addMeshCollisionBoxesToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 		final float boxRadius = 0.05F;
 
-		try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateOffsetBlock(pos, worldIn, TERRAIN_SMOOTHABLE)) {
+		try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(pos, worldIn, TERRAIN_SMOOTHABLE)) {
 			for (Face face : faces) {
 				// Ew, Yay, Java 8 variable try-with-resources support
 				try {

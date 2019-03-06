@@ -25,8 +25,6 @@ import javax.annotation.Nonnull;
 public class ExtendedLiquidBlockRenderer {
 
 	public static boolean renderExtendedLiquid(
-			@Nonnull final TextureMap textureMap,
-			@Nonnull final BlockColors blockColors,
 			final double renderPosX, final double renderPosY, final double renderPosZ,
 			@Nonnull final BlockPos liquidPos,
 			@Nonnull final IBlockAccess blockAccess,

@@ -9,8 +9,6 @@ import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockModelRenderer;
-import net.minecraft.client.renderer.BlockModelRenderer.AmbientOcclusionFace;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -19,13 +17,9 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
@@ -33,15 +27,11 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.property.IExtendedBlockState;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import static io.github.cadiboo.renderchunkrebuildchunkhooks.hooks.RenderChunkRebuildChunkHooksHooks.renderChunk_preRenderBlocks;
@@ -69,12 +59,11 @@ import static net.minecraft.util.math.MathHelper.getPositionRandom;
 public final class ClientUtil {
 
 	/**
-	 * The order of {@link EnumFacing} and null used in {@link #getQuad(IBlockState, BlockPos, BlockRendererDispatcher)}
+	 * The order of {@link EnumFacing} and null used in getQuads
 	 */
 	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
-
 
 	/**
 	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
@@ -133,10 +122,12 @@ public final class ClientUtil {
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
-		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = getModel(state, blockRendererDispatcher);
-		return getQuad(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+	public static BakedQuad getQuadFromFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingsOrdered")) {
+			final long posRand = getPositionRandom(pos);
+			final IBakedModel model = getModel(state, blockRendererDispatcher);
+			return getModelQuadsFromFacings(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+		}
 	}
 
 	/**
@@ -149,47 +140,51 @@ public final class ClientUtil {
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuad(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
-		final long posRand = getPositionRandom(pos);
-		final IBakedModel model = getModel(state, blockRendererDispatcher);
-		final BakedQuad quad = getQuad(state, posRand, model, facing);
-		if (quad != null) {
-			return quad;
-		} else {
-			return getQuad(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+	public static BakedQuad getQuadFromFacingOrFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingOrFacingsOrdered")) {
+			final long posRand = getPositionRandom(pos);
+			final IBakedModel model = getModel(state, blockRendererDispatcher);
+			final BakedQuad quad = getModelQuadsFromFacings(state, posRand, model, facing);
+			if (quad != null) {
+				return quad;
+			} else {
+				return getModelQuadsFromFacings(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+			}
 		}
 	}
 
-	@Nonnull
+
+	@Nullable
+	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final long posRand, final IBakedModel model, final EnumFacing... facings) {
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModelQuadsFromFacings")) {
+			for (EnumFacing facing : facings) {
+				final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
+				if (!quads.isEmpty()) {
+					return quads.get(0);
+				}
+			}
+			return null;
+		}
+	}
+
 	/**
 	 * Returns the model or the missing model if there isn't one
 	 */
+	@Nonnull
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
-		IBlockState unextendedState = state;
-		if (state instanceof IExtendedBlockState) {
-			unextendedState = ((IExtendedBlockState) state).getClean();
-		}
-		if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
-			return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
-		}
-		if (unextendedState == Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true)) {
-			return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
-		}
-		return blockRendererDispatcher.getModelForState(state);
-	}
-
-	/**
-	 * helper method to actually get the quads
-	 */
-	@Nullable
-	private static BakedQuad getQuad(final IBlockState state, final long posRand, final IBakedModel model, final EnumFacing... facings) {
-		for (EnumFacing facing : facings) {
-			final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
-			if (!quads.isEmpty()) {
-				return quads.get(0);
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModel")) {
+			IBlockState unextendedState = state;
+			if (state instanceof IExtendedBlockState) {
+				unextendedState = ((IExtendedBlockState) state).getClean();
 			}
+			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
+				return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
+			}
+			if (unextendedState == Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true)) {
+				return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
+			}
+			return blockRendererDispatcher.getModelForState(state);
 		}
-		return null;
 	}
 
 	/**
@@ -257,7 +252,6 @@ public final class ClientUtil {
 
 	/**
 	 * @param stateCache
-	 * @param cache
 	 * @param texturePooledMutablePos
 	 * @param state
 	 * @return a state and a texture pos which is guaranteed to be immutable
@@ -266,7 +260,6 @@ public final class ClientUtil {
 	//TODO: texture cache?
 	public static Tuple<BlockPos, IBlockState> getTexturePosAndState(
 			@Nonnull final StateCache stateCache,
-			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
 			@Nonnull final IIsSmoothable isStateSmoothable,
@@ -317,7 +310,6 @@ public final class ClientUtil {
 						relativePosY + offset[1] + 1,
 						relativePosZ + offset[2] + 1
 				)];
-//				final IBlockState tempState = cache.getBlockState(texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]));
 				if (isStateSmoothable.isSmoothable(tempState)) {
 					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
 					textureState = tempState;
@@ -332,7 +324,7 @@ public final class ClientUtil {
 		}
 	}
 
-	public static BlockRenderLayer getRenderLayer(IBlockState state) {
+	public static BlockRenderLayer getCorrectRenderLayer(IBlockState state) {
 		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
 		switch (blockRenderLayer) {
 			default:
@@ -372,6 +364,30 @@ public final class ClientUtil {
 		if (renderGlobal != null) {
 			renderGlobal.loadRenderers();
 		}
+	}
+
+	/**
+	 * @param chunkPos the chunk position as a {@link BlockPos}
+	 * @param blockPos the {@link BlockPos}
+	 * @return the position relative to the chunkPos
+	 */
+	public static byte getRelativePos(final int chunkPos, final int blockPos) {
+		final int blockPosChunkPos = (blockPos >> 4) << 4;
+		final boolean isInChunk = chunkPos == blockPosChunkPos;
+		if (isInChunk) {
+			return getRelativePos(blockPos);
+		} else {
+			// can be anything. usually between -1 and 16
+			return (byte) (blockPos - chunkPos);
+		}
+	}
+
+	/**
+	 * @param blockPos the {@link BlockPos}
+	 * @return the position (between 0-15) relative to the blockPos's chunk position
+	 */
+	public static byte getRelativePos(final int blockPos) {
+		return (byte) (blockPos & 15);
 	}
 
 }

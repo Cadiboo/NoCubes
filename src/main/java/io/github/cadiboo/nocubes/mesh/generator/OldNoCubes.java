@@ -49,87 +49,99 @@ public class OldNoCubes implements IMeshGenerator {
 		final HashMap<Vec3b, FaceList> map = new HashMap<>();
 		for (final MutableBlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
 
-			final int posX = pos.getX();
-			final int posY = pos.getY();
-			final int posZ = pos.getZ();
+			final FaceList faces = generateBlock(pos, blockAccess, isSmoothable, pooledMutableBlockPos);
 
-			// Convert block pos to relative block pos
-			// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
-			final int relativePosX = posX & 15;
-			final int relativePosY = posY & 15;
-			final int relativePosZ = posZ & 15;
-
-			final IBlockState state = blockAccess.getBlockState(pos);
-			final Vec3[] points = getPoints(posX, posY, posZ, relativePosX, relativePosY, relativePosZ, state, blockAccess, isSmoothable, pooledMutableBlockPos);
-			final FaceList faces = FaceList.retain();
-
-			if (points != null) {
-				for (final EnumFacing facing : EnumFacing.VALUES) {
-					if (isSmoothable.isSmoothable(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
-						continue;
-					}
-
-					final Vec3 vertex0;
-					final Vec3 vertex1;
-					final Vec3 vertex2;
-					final Vec3 vertex3;
-
-					switch (facing) {
-						default:
-						case DOWN:
-							vertex0 = points[0];
-							vertex1 = points[1];
-							vertex2 = points[2];
-							vertex3 = points[3];
-							break;
-						case UP:
-							vertex0 = points[7];
-							vertex1 = points[6];
-							vertex2 = points[5];
-							vertex3 = points[4];
-							break;
-						case NORTH:
-							vertex0 = points[1];
-							vertex1 = points[0];
-							vertex2 = points[4];
-							vertex3 = points[5];
-							break;
-						case SOUTH:
-							vertex0 = points[6];
-							vertex1 = points[7];
-							vertex2 = points[3];
-							vertex3 = points[2];
-							break;
-						case WEST:
-							vertex0 = points[0];
-							vertex1 = points[3];
-							vertex2 = points[7];
-							vertex3 = points[4];
-							break;
-						case EAST:
-							vertex0 = points[5];
-							vertex1 = points[6];
-							vertex2 = points[2];
-							vertex3 = points[1];
-							break;
-					}
-
-					faces.add(Face.retain(
-							Vec3.retain(vertex0.x, vertex0.y, vertex0.z),
-							Vec3.retain(vertex1.x, vertex1.y, vertex1.z),
-							Vec3.retain(vertex2.x, vertex2.y, vertex2.z),
-							Vec3.retain(vertex3.x, vertex3.y, vertex3.z)
-					));
-				}
-
-				for (final Vec3 point : points) {
-					point.close();
-				}
-
-			}
-			map.put(Vec3b.retain((byte) relativePosX, (byte) relativePosY, (byte) relativePosZ), faces);
+			map.put(Vec3b.retain(
+					// Convert block pos to relative block pos
+					// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
+					(byte) (pos.getX() & 15), (byte) (pos.getY() & 15), (byte) (pos.getZ() & 15)
+			), faces);
 		}
 		return map;
+	}
+
+	@Nonnull
+	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		// Convert block pos to relative block pos
+		// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
+		final int relativePosX = posX & 15;
+		final int relativePosY = posY & 15;
+		final int relativePosZ = posZ & 15;
+
+		final IBlockState state = blockAccess.getBlockState(pos);
+		final Vec3[] points = getPoints(posX, posY, posZ, relativePosX, relativePosY, relativePosZ, state, blockAccess, isSmoothable, pooledMutableBlockPos);
+		final FaceList faces = FaceList.retain();
+
+		if (points != null) {
+			for (final EnumFacing facing : EnumFacing.VALUES) {
+				if (isSmoothable.isSmoothable(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
+					continue;
+				}
+
+				final Vec3 vertex0;
+				final Vec3 vertex1;
+				final Vec3 vertex2;
+				final Vec3 vertex3;
+
+				switch (facing) {
+					default:
+					case DOWN:
+						vertex0 = points[0];
+						vertex1 = points[1];
+						vertex2 = points[2];
+						vertex3 = points[3];
+						break;
+					case UP:
+						vertex0 = points[7];
+						vertex1 = points[6];
+						vertex2 = points[5];
+						vertex3 = points[4];
+						break;
+					case NORTH:
+						vertex0 = points[1];
+						vertex1 = points[0];
+						vertex2 = points[4];
+						vertex3 = points[5];
+						break;
+					case SOUTH:
+						vertex0 = points[6];
+						vertex1 = points[7];
+						vertex2 = points[3];
+						vertex3 = points[2];
+						break;
+					case WEST:
+						vertex0 = points[0];
+						vertex1 = points[3];
+						vertex2 = points[7];
+						vertex3 = points[4];
+						break;
+					case EAST:
+						vertex0 = points[5];
+						vertex1 = points[6];
+						vertex2 = points[2];
+						vertex3 = points[1];
+						break;
+				}
+
+				faces.add(Face.retain(
+						Vec3.retain(vertex0.x, vertex0.y, vertex0.z),
+						Vec3.retain(vertex1.x, vertex1.y, vertex1.z),
+						Vec3.retain(vertex2.x, vertex2.y, vertex2.z),
+						Vec3.retain(vertex3.x, vertex3.y, vertex3.z)
+				));
+			}
+
+			for (final Vec3 point : points) {
+				point.close();
+			}
+
+		}
+		return faces;
 	}
 
 	@Nullable
@@ -172,7 +184,7 @@ public class OldNoCubes implements IMeshGenerator {
 				}
 			}
 
-			// Subtract the block's coordinates.
+			// Cadiboo Subtract the block's coordinates.
 			point.x -= (double) posX;
 			point.y -= (double) posY;
 			point.z -= (double) posZ;
@@ -183,7 +195,6 @@ public class OldNoCubes implements IMeshGenerator {
 		}
 
 		return points;
-
 	}
 
 	/**
