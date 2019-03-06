@@ -19,15 +19,24 @@
 
 package io.github.cadiboo.nocubes.util;
 
+import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToAccessFieldException;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnknownConstructorException;
+import org.apache.commons.lang3.StringUtils;
 import org.objectweb.asm.Type;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+
+import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
+import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
+import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 /**
  * Some reflection helper code.
@@ -52,12 +61,23 @@ public class ObfuscationReflectionHelperCopy {
 		return FMLDeobfuscatingRemapper.INSTANCE.mapMethodName(internalClassName, methodName, desc);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T, E> T getPrivateValue(Class<? super E> classToAccess, @Nullable E instance, String srgName) {
-		return ReflectionHelper.getPrivateValue(classToAccess, instance, remapFieldName(classToAccess, srgName), null);
+		final String fieldName = remapFieldName(classToAccess, srgName);
+		try {
+			return (T) findField(classToAccess, fieldName).get(instance);
+		} catch (Exception e) {
+			throw new UnableToAccessFieldException(e);
+		}
 	}
 
 	public static <T, E> void setPrivateValue(Class<? super T> classToAccess, @Nullable T instance, @Nullable E value, String srgName) {
-		ReflectionHelper.setPrivateValue(classToAccess, instance, value, remapFieldName(classToAccess, srgName), null);
+		final String fieldName = remapFieldName(classToAccess, srgName);
+		try {
+			findField(classToAccess, fieldName).set(instance, value);
+		} catch (Exception e) {
+			throw new UnableToAccessFieldException(e);
+		}
 	}
 
 	/**
@@ -71,7 +91,18 @@ public class ObfuscationReflectionHelperCopy {
 	 * @return The field with the specified name in the given class.
 	 */
 	public static Field findField(Class<?> clazz, String srgName) {
-		return ReflectionHelper.findField(clazz, remapFieldName(clazz, srgName), null);
+		Preconditions.checkNotNull(clazz);
+		Preconditions.checkArgument(StringUtils.isNotEmpty(srgName), "Field name cannot be empty");
+
+		String nameToFind = remapFieldName(clazz, srgName);
+
+		try {
+			Field f = clazz.getDeclaredField(nameToFind);
+			f.setAccessible(true);
+			return f;
+		} catch (Exception e) {
+			throw new UnableToFindFieldException(e);
+		}
 	}
 
 	/**
@@ -86,35 +117,47 @@ public class ObfuscationReflectionHelperCopy {
 	 * @param parameterTypes The parameter types of the method to find.
 	 * @return The method with the specified name and type signature in the given class.
 	 */
-	public static Method findMethod(Class<?> clazz, String srgName, Class<?> returnType, Class<?>... parameterTypes) {
-		String mappedName = remapMethodName(clazz, srgName, returnType, parameterTypes);
-		return ReflectionHelper.findMethod(clazz, mappedName, null, parameterTypes);
+	public static Method findMethod(@Nonnull final Class<?> clazz, @Nonnull final String srgName, @Nonnull final Class<?> returnType, @Nullable final Class<?>... parameterTypes) {
+
+		Preconditions.checkNotNull(clazz);
+		Preconditions.checkArgument(StringUtils.isNotEmpty(srgName), "Method name cannot be empty");
+		Preconditions.checkNotNull(returnType);
+
+		final String nameToFind = remapMethodName(clazz, srgName, returnType, parameterTypes);
+
+		try {
+			Method m = clazz.getDeclaredMethod(nameToFind, parameterTypes);
+			m.setAccessible(true);
+			return m;
+		} catch (Exception e) {
+			throw new UnableToFindMethodException(e);
+		}
 	}
 
 	/**
 	 * Finds a constructor in the specified class that has matching parameter types.
 	 *
-	 * @param klass          The class to find the constructor in
+	 * @param clazz          The class to find the constructor in
 	 * @param parameterTypes The parameter types of the constructor.
 	 * @param <T>            The type
 	 * @return The constructor
+	 * @throws NullPointerException        if {@code clazz} is null
+	 * @throws NullPointerException        if {@code parameterTypes} is null
+	 * @throws UnknownConstructorException if the constructor could not be found
 	 */
-	public static <T> Constructor<T> findConstructor(Class<T> klass, Class<?>... parameterTypes) {
-		return ReflectionHelper.findConstructor(klass, parameterTypes);
+	@Nonnull
+	public static <T> Constructor<T> findConstructor(@Nonnull final Class<T> clazz, @Nonnull final Class<?>... parameterTypes) {
+		return ReflectionHelper.findConstructor(clazz, parameterTypes);
 	}
 
 	@SuppressWarnings("unchecked")
-	public static Class<? super Object> getClass(ClassLoader loader, String... classNames) {
-		Exception err = null;
-		for (String className : classNames) {
-			try {
-				return (Class<? super Object>) Class.forName(className, false, loader);
-			} catch (Exception e) {
-				err = e;
-			}
+	@Nonnull
+	public static Class<? super Object> getClass(@Nonnull final ClassLoader loader, @Nonnull final String className) {
+		try {
+			return (Class<? super Object>) Class.forName(className, false, loader);
+		} catch (Exception e) {
+			throw new UnableToFindClassException(new String[]{className}, e);
 		}
-
-		throw new ReflectionHelper.UnableToFindClassException(classNames, err);
 	}
 
 }
