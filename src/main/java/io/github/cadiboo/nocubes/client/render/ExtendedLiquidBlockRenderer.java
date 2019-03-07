@@ -4,13 +4,12 @@ import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.client.SmoothLightingBlockFluidRenderer;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
@@ -50,7 +49,22 @@ public class ExtendedLiquidBlockRenderer {
 			float blueFloat = (float) (color & 255) / 255.0F;
 			boolean shouldTopBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.UP);
 			boolean shouldBottomBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.DOWN);
-			boolean[] shouldHorizontalSideBeRendered = new boolean[]{blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)};
+//			boolean[] shouldHorizontalSideBeRendered = new boolean[]{
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)
+//			};
+			final IBlockState nState = blockAccess.getBlockState(renderPos.offset(EnumFacing.NORTH));
+			final IBlockState sState = blockAccess.getBlockState(renderPos.offset(EnumFacing.SOUTH));
+			final IBlockState wState = blockAccess.getBlockState(renderPos.offset(EnumFacing.WEST));
+			final IBlockState eState = blockAccess.getBlockState(renderPos.offset(EnumFacing.EAST));
+			boolean[] shouldHorizontalSideBeRendered = new boolean[]{
+					!(nState instanceof BlockLiquid) && !ModUtil.TERRAIN_SMOOTHABLE.isSmoothable(nState),
+					!(sState instanceof BlockLiquid) && !ModUtil.TERRAIN_SMOOTHABLE.isSmoothable(sState),
+					!(wState instanceof BlockLiquid) && !ModUtil.TERRAIN_SMOOTHABLE.isSmoothable(wState),
+					!(eState instanceof BlockLiquid) && !ModUtil.TERRAIN_SMOOTHABLE.isSmoothable(eState),
+			};
 
 			if (!shouldTopBeRendered && !shouldBottomBeRendered && !shouldHorizontalSideBeRendered[0] && !shouldHorizontalSideBeRendered[1] && !shouldHorizontalSideBeRendered[2] && !shouldHorizontalSideBeRendered[3]) {
 				return false;
@@ -284,19 +298,19 @@ public class ExtendedLiquidBlockRenderer {
 		if (ModConfig.smoothFluidLighting) {
 			final int realPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south());
 			final int renderPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south());
-			final int packedLightmapCoordsSouth =((realPackedLightmapCoordsSouth >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsSouth >> 16 & 65535) : (realPackedLightmapCoordsSouth >> 16 & 65535)) << 16 |
+			final int packedLightmapCoordsSouth = ((realPackedLightmapCoordsSouth >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsSouth >> 16 & 65535) : (realPackedLightmapCoordsSouth >> 16 & 65535)) << 16 |
 					((realPackedLightmapCoordsSouth & 65535) == 0 ? (renderPackedLightmapCoordsSouth & 65535) : (realPackedLightmapCoordsSouth & 65535));
 
 			final int realPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east());
 			final int renderPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south().east());
 //			final int packedLightmapCoordsSouthEast = (realPackedLightmapCoordsSouthEast & 65535) > (renderPackedLightmapCoordsSouthEast & 65535) ? realPackedLightmapCoordsSouthEast : renderPackedLightmapCoordsSouthEast;
-			final int packedLightmapCoordsSouthEast =((realPackedLightmapCoordsSouthEast >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsSouthEast >> 16 & 65535) : (realPackedLightmapCoordsSouthEast >> 16 & 65535)) << 16 |
+			final int packedLightmapCoordsSouthEast = ((realPackedLightmapCoordsSouthEast >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsSouthEast >> 16 & 65535) : (realPackedLightmapCoordsSouthEast >> 16 & 65535)) << 16 |
 					((realPackedLightmapCoordsSouthEast & 65535) == 0 ? (renderPackedLightmapCoordsSouthEast & 65535) : (realPackedLightmapCoordsSouthEast & 65535));
 
 			final int realPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.east());
 			final int renderPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.east());
 //			final int packedLightmapCoordsEast = (realPackedLightmapCoordsEast & 65535) > (renderPackedLightmapCoordsEast & 65535) ? realPackedLightmapCoordsEast : renderPackedLightmapCoordsEast;
-			final int packedLightmapCoordsEast =((realPackedLightmapCoordsEast >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsEast >> 16 & 65535) : (realPackedLightmapCoordsEast >> 16 & 65535)) << 16 |
+			final int packedLightmapCoordsEast = ((realPackedLightmapCoordsEast >> 16 & 65535) == 0 ? (renderPackedLightmapCoordsEast >> 16 & 65535) : (realPackedLightmapCoordsEast >> 16 & 65535)) << 16 |
 					((realPackedLightmapCoordsEast & 65535) == 0 ? (renderPackedLightmapCoordsEast & 65535) : (realPackedLightmapCoordsEast & 65535));
 
 			fluidRenderer.renderTopSmoothLighting(packedLightmapCoords, packedLightmapCoordsSouth, packedLightmapCoordsSouthEast, packedLightmapCoordsEast, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
