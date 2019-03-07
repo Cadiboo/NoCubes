@@ -25,11 +25,13 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	}
 
 	public void end() {
+		if (!profilingEnabled) {
+			return;
+		}
 		--sections;
-		if (!profilingEnabled || sections < 0) {
-			if (sections < 0) {
-				sections = 0;
-			}
+		if (sections < 0) {
+			sections = 0;
+			this.clearProfiling();
 			return;
 		}
 		endSection();
