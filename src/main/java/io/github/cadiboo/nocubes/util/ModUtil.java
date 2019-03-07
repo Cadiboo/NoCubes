@@ -155,11 +155,11 @@ public final class ModUtil {
 						break;
 					case OUTDATED:
 						try {
-							BadAutoUpdater.update(modContainer.getVersion(), checkResult.target.toString());
+							BadAutoUpdater.update(modContainer, checkResult.target.toString(), "Cadiboo");
 						} catch (Exception e) {
-							throw new RuntimeException(e);
+							throw new RuntimeException("Unable to update Mod", e);
 						}
-						//fallthrough
+						break WHILE;
 					case FAILED:
 					case UP_TO_DATE:
 					case AHEAD:
