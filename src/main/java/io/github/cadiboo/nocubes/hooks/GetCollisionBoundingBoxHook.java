@@ -34,7 +34,7 @@ public final class GetCollisionBoundingBoxHook {
 
 	public static void runGetCollisionBoundingBoxDefaultOnce(final BlockStateContainer.StateImplementation state) {
 		// Filled with ASM
-//		state.runGetCollisionBoundingBoxHookDefaultOnce = true;
+//		state.runGetCollisionBoundingBoxDefaultOnce = true;
 		throw new UnsupportedOperationException("This method should have been filled by ASM!");
 	}
 

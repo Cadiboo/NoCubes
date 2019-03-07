@@ -44,10 +44,10 @@ public class Transformer implements IClassTransformer, Opcodes {
 		if (transformedName.equals("net.minecraft.block.state.BlockStateContainer$StateImplementation")) {
 			return transformClass(basicClass, transformedName,
 //					Transformer::redirect_shouldSideBeRendered,
-					Transformer::hook_isOpaqueCube
+					Transformer::hook_isOpaqueCube,
 //					Transformer::redirect_doesSideBlockRendering,
 //					Transformer::redirect_getCollisionBoundingBox,
-//					Transformer::redirect_addCollisionBoxToList
+					Transformer::hook_getCollisionBoundingBox
 			);
 		} else if (transformedName.equals("net.minecraft.entity.Entity")) {
 //			return transformClass(basicClass, transformedName,
@@ -57,12 +57,11 @@ public class Transformer implements IClassTransformer, Opcodes {
 			return transformClass(basicClass, transformedName,
 					Transformer::add_runIsOpaqueCubeDefaultOnce
 			);
+		} else if (transformedName.equals("io.gitub.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook")) {
+			return transformClass(basicClass, transformedName,
+					Transformer::add_runGetCollisionBoundingBoxDefaultOnce
+			);
 		}
-//		else if (transformedName.equals("io.gitub.cadiboo.nocubes.hooks.IsOpaqueCubeHook")) {
-//			return transformClass(basicClass, transformedName,
-//					Transformer::add_runGetCollisionBoundingBoxHookDefaultOnce
-//			);
-//		}
 		return basicClass;
 	}
 
@@ -250,28 +249,31 @@ public class Transformer implements IClassTransformer, Opcodes {
 	}
 
 	private static void add_runIsOpaqueCubeDefaultOnce(final ClassNode classNode) {
-		final MethodNode runIsOpaqueCubeDefaultOnce;
-		runIsOpaqueCubeDefaultOnce = getMethod(classNode, "runIsOpaqueCubeDefaultOnce", "(Lnet/minecraft/block/state/IBlockState;)V");
-		final InsnList instructions = runIsOpaqueCubeDefaultOnce.instructions;
-		final ListIterator<AbstractInsnNode> iterator = instructions.iterator();
-		final AbstractInsnNode first = instructions.getFirst();
-		final InsnList injectedInstructions = Api.getMethodNode().instructions;
-		injectedInstructions.add(new VarInsnNode(ALOAD, 0));
-		injectedInstructions.add(new InsnNode(ICONST_1));
-		injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runIsOpaqueCubeDefaultOnce", "Z"));
-		injectedInstructions.add(new InsnNode(RETURN));
-		instructions.insert(first, injectedInstructions);
+		LOGGER.info("Starting injecting into runIsOpaqueCubeDefaultOnce");
+		{
+			final MethodNode runIsOpaqueCubeDefaultOnce;
+			runIsOpaqueCubeDefaultOnce = getMethod(classNode, "runIsOpaqueCubeDefaultOnce", "(Lnet/minecraft/block/state/IBlockState;)V");
+			final InsnList instructions = runIsOpaqueCubeDefaultOnce.instructions;
+			final AbstractInsnNode first = instructions.getFirst();
+			final InsnList injectedInstructions = Api.getMethodNode().instructions;
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_1));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runIsOpaqueCubeDefaultOnce", "Z"));
+			injectedInstructions.add(new InsnNode(RETURN));
+			instructions.insert(first, injectedInstructions);
+		}
+		LOGGER.info("Finished injecting into runIsOpaqueCubeDefaultOnce");
 	}
 
 	private static void hook_getCollisionBoundingBox(final ClassNode classNode) {
 
-		LOGGER.info("Starting adding field runIsOpaqueCubeDefaultOnce");
-		classNode.fields.add(new FieldNode(ACC_PUBLIC, "runIsOpaqueCubeDefaultOnce", "Z", null, false));
-		LOGGER.info("Finished adding field runIsOpaqueCubeDefaultOnce");
+		LOGGER.info("Starting adding field runGetCollisionBoundingBoxDefaultOnce");
+		classNode.fields.add(new FieldNode(ACC_PUBLIC, "runGetCollisionBoundingBoxDefaultOnce", "Z", null, false));
+		LOGGER.info("Finished adding field runGetCollisionBoundingBoxDefaultOnce");
 
-		final MethodNode isOpaqueCube;
-		isOpaqueCube = getMethod(classNode, "", "()Z");
-		final InsnList instructions = isOpaqueCube.instructions;
+		final MethodNode getCollisionBoundingBox;
+		getCollisionBoundingBox = getMethod(classNode, "func_185890_d", "(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;");
+		final InsnList instructions = getCollisionBoundingBox.instructions;
 		final ListIterator<AbstractInsnNode> iterator = instructions.iterator();
 		LabelNode FIRST_LABEL = null;
 		while (iterator.hasNext()) {
@@ -290,7 +292,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 			final LabelNode labelNode = new LabelNode(new Label());
 
 			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
-			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runGetCollisionBoundingBoxHookDefaultOnce", "Z"));
+			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runGetCollisionBoundingBoxDefaultOnce", "Z"));
 			injectedInstructions.add(new JumpInsnNode(IFNE, labelNode));
 
 			jumpIfNotEnabled(injectedInstructions, labelNode);
@@ -299,29 +301,104 @@ public class Transformer implements IClassTransformer, Opcodes {
 					INVOKESTATIC,
 					"io/github/cadiboo/nocubes/hooks/GetCollisionBoundingBoxHook",
 					"getCollisionBoundingBox",
-					"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;)Z",
+					"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/AxisAlignedBB;",
 					false
 			));
 			injectedInstructions.add(new InsnNode(IRETURN));
 			injectedInstructions.add(labelNode);
 
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_0));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runGetCollisionBoundingBoxDefaultOnce", "Z"));
+
 			instructions.insert(FIRST_LABEL, injectedInstructions);
 
 		}
-		LOGGER.info("Finished injecting into isOpaqueCube");
+		LOGGER.info("Finished injecting into getCollisionBoundingBox");
 	}
 
-	private static void add_runGetCollisionBoundingBoxHookDefaultOnce(final ClassNode classNode) {
-		final MethodNode runIsOpaqueCubeDefaultOnce;
-		runIsOpaqueCubeDefaultOnce = getMethod(classNode, "runGetCollisionBoundingBoxHookDefaultOnce", "(Lnet/minecraft/block/state/IBlockState;)V");
-		final InsnList instructions = runIsOpaqueCubeDefaultOnce.instructions;
+	private static void add_runGetCollisionBoundingBoxDefaultOnce(final ClassNode classNode) {
+		LOGGER.info("Starting injecting into runGetCollisionBoundingBoxDefaultOnce");
+		{
+			final MethodNode runGetCollisionBoundingBoxDefaultOnce;
+			runGetCollisionBoundingBoxDefaultOnce = getMethod(classNode, "runGetCollisionBoundingBoxDefaultOnce", "(Lnet/minecraft/block/state/IBlockState;)V");
+			final InsnList instructions = runGetCollisionBoundingBoxDefaultOnce.instructions;
+			final AbstractInsnNode first = instructions.getFirst();
+			final InsnList injectedInstructions = Api.getMethodNode().instructions;
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_1));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runGetCollisionBoundingBoxDefaultOnce", "Z"));
+			instructions.insert(first, injectedInstructions);
+		}
+		LOGGER.info("Finished injecting into runGetCollisionBoundingBoxDefaultOnce");
+	}
+
+	private static void hook_addCollisionBoxToList(final ClassNode classNode) {
+
+		LOGGER.info("Starting adding field runAddCollisionBoxToListDefaultOnce");
+		classNode.fields.add(new FieldNode(ACC_PUBLIC, "runAddCollisionBoxToListDefaultOnce", "Z", null, false));
+		LOGGER.info("Finished adding field runAddCollisionBoxToListDefaultOnce");
+
+		final MethodNode getCollisionBoundingBox;
+		getCollisionBoundingBox = getMethod(classNode, "func_185908_a", "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V");
+		final InsnList instructions = getCollisionBoundingBox.instructions;
 		final ListIterator<AbstractInsnNode> iterator = instructions.iterator();
-		final AbstractInsnNode first = instructions.getFirst();
-		final InsnList injectedInstructions = Api.getMethodNode().instructions;
-		injectedInstructions.add(new VarInsnNode(ALOAD, 0));
-		injectedInstructions.add(new InsnNode(ICONST_1));
-		injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runIsOpaqueCubeDefaultOnce", "Z"));
-		instructions.insert(first, injectedInstructions);
+		LabelNode FIRST_LABEL = null;
+		while (iterator.hasNext()) {
+			final AbstractInsnNode insn = iterator.next();
+			if (insn.getType() != AbstractInsnNode.LABEL) {
+				continue;
+			}
+			FIRST_LABEL = (LabelNode) insn;
+			break;
+		}
+
+		LOGGER.info("Starting injecting into addCollisionBoxToList");
+		{
+			//Prep for 1.13
+			final InsnList injectedInstructions = Api.getMethodNode().instructions;
+			final LabelNode labelNode = new LabelNode(new Label());
+
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runAddCollisionBoxToListDefaultOnce", "Z"));
+			injectedInstructions.add(new JumpInsnNode(IFNE, labelNode));
+
+			jumpIfNotEnabled(injectedInstructions, labelNode);
+			loadBlockAndState(injectedInstructions);
+			injectedInstructions.add(new MethodInsnNode(
+					INVOKESTATIC,
+					"io/github/cadiboo/nocubes/hooks/AddCollisionBoxToListHook",
+					"addCollisionBoxToList",
+					"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V",
+					false
+			));
+			injectedInstructions.add(new InsnNode(IRETURN));
+			injectedInstructions.add(labelNode);
+
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_0));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runAddCollisionBoxToListDefaultOnce", "Z"));
+
+			instructions.insert(FIRST_LABEL, injectedInstructions);
+
+		}
+		LOGGER.info("Finished injecting into addCollisionBoxToList");
+	}
+
+	private static void add_runAddCollisionBoxToListDefaultOnce(final ClassNode classNode) {
+		LOGGER.info("Starting injecting into runAddCollisionBoxToListDefaultOnce");
+		{
+			final MethodNode runGetCollisionBoundingBoxDefaultOnce;
+			runGetCollisionBoundingBoxDefaultOnce = getMethod(classNode, "runAddCollisionBoxToListDefaultOnce", "(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/AxisAlignedBB;Ljava/util/List;Lnet/minecraft/entity/Entity;Z)V");
+			final InsnList instructions = runGetCollisionBoundingBoxDefaultOnce.instructions;
+			final AbstractInsnNode first = instructions.getFirst();
+			final InsnList injectedInstructions = Api.getMethodNode().instructions;
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_1));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "runAddCollisionBoxToListDefaultOnce", "Z"));
+			instructions.insert(first, injectedInstructions);
+		}
+		LOGGER.info("Finished injecting into runAddCollisionBoxToListDefaultOnce");
 	}
 
 //	public static void redirect_isEntityInsideOpaqueBlock(final ClassNode classNode) {
@@ -640,7 +717,6 @@ public class Transformer implements IClassTransformer, Opcodes {
 //				false
 //		));
 //		instructions.insertBefore(ALOAD_0, new InsnNode(ARETURN));
-//		LOGGER.info("Finished injecting into getCollisionBoundingBox");
 //
 //	}
 
