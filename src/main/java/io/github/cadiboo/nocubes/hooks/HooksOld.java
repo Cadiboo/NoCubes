@@ -38,7 +38,7 @@ import static java.lang.Math.max;
 		"unused", // Hooks get invoked by ASM redirects
 		"weakerAccess" // Hooks need to be public to be invoked
 })
-public class Hooks {
+public class HooksOld {
 
 	private enum Direction {
 
@@ -200,7 +200,7 @@ public class Hooks {
 //		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 	}
 
-	private static List<AxisAlignedBB> slopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos) {
+	public static List<AxisAlignedBB> slopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos) {
 		final double height = blockHeight(pos, world);
 		final ArrayList<AxisAlignedBB> list = new ArrayList<>();
 		for (Direction direction : Direction.OrdinalDirections) {
@@ -245,7 +245,7 @@ public class Hooks {
 		return box == null ? 0 : box.maxY;
 	}
 
-	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos) {
+	public static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos) {
 		final AxisAlignedBB collisionBoundingBox = state.getCollisionBoundingBox(worldIn, pos);
 		boolean flag = collisionBoundingBox != null && collisionBoundingBox.maxY > 0.5;
 		return TERRAIN_SMOOTHABLE.isSmoothable(state) && flag && worldIn.getBlockState(pos.up()).getCollisionBoundingBox(worldIn, pos.up()) == null;
@@ -299,8 +299,9 @@ public class Hooks {
 		}
 	}
 
-	private static boolean canUseSlope(final Entity entity) {
-		return entity instanceof EntityPlayer || entity instanceof EntityCreature;
+	public static boolean canUseSlope(final Entity entity) {
+//		return entity instanceof EntityPlayer || entity instanceof EntityCreature;
+		return true;
 	}
 
 	private static AxisAlignedBB createAndOffsetAxisAlignedBBForVertex(final int posX, final int posY, final int posZ, final Vec3 vec3, final float boxRadius) {

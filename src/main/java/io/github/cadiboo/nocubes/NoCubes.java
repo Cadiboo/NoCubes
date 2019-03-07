@@ -51,10 +51,15 @@ public final class NoCubes {
 	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
 
 	public static boolean profilingEnabled = false;
+	private static boolean pastInit = false;
 
 	public static void enableProfiling() {
 		profilingEnabled = true;
 		for (final ModProfiler profiler : PROFILERS) {
+			if (profiler == null) { //hmmm....
+				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to enable null profiler!");
+				continue;
+			}
 			profiler.profilingEnabled = true;
 		}
 	}
@@ -62,6 +67,10 @@ public final class NoCubes {
 	public static void disableProfiling() {
 		profilingEnabled = false;
 		for (final ModProfiler profiler : PROFILERS) {
+			if (profiler == null) { //hmmm....
+				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to disable null profiler!");
+				continue;
+			}
 			profiler.profilingEnabled = false;
 		}
 	}
@@ -92,7 +101,10 @@ public final class NoCubes {
 	}
 
 	public static boolean isEnabled() {
-		return ModConfig.isEnabled;
+		if (!pastInit) {
+			return false;
+		}
+		return (ModConfig.isEnabled);
 	}
 
 	public static ModProfiler getProfiler() {
@@ -101,6 +113,7 @@ public final class NoCubes {
 
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
+		pastInit = true;
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}

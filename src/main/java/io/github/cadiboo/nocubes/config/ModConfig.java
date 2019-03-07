@@ -141,6 +141,9 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.naturalFluidTextures")
 	public static boolean naturalFluidTextures = false;
 
+	@LangKey(MOD_ID + ".config.overrideIsOpaqueCube")
+	public static boolean overrideIsOpaqueCube;
+
 	static {
 		setupSmoothableBlockStates();
 	}
