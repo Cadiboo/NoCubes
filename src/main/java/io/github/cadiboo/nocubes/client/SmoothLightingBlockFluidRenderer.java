@@ -14,6 +14,8 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
+import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
+
 /**
  * @author Cadiboo
  */
@@ -42,7 +44,18 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			float blueFloat = (float) (color & 255) / 255.0F;
 			boolean shouldTopBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.UP);
 			boolean shouldBottomBeRendered = blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.DOWN);
-			boolean[] shouldHorizontalSideBeRendered = new boolean[]{blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST), blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)};
+//			boolean[] shouldHorizontalSideBeRendered = new boolean[]{
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST),
+//					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST)
+//			};
+			boolean[] shouldHorizontalSideBeRendered = new boolean[]{
+					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.NORTH) && !TERRAIN_SMOOTHABLE.isSmoothable(blockAccess.getBlockState(blockPosIn.offset(EnumFacing.NORTH))),
+					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.SOUTH) && !TERRAIN_SMOOTHABLE.isSmoothable(blockAccess.getBlockState(blockPosIn.offset(EnumFacing.SOUTH))),
+					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.WEST) && !TERRAIN_SMOOTHABLE.isSmoothable(blockAccess.getBlockState(blockPosIn.offset(EnumFacing.WEST))),
+					blockStateIn.shouldSideBeRendered(blockAccess, blockPosIn, EnumFacing.EAST) && !TERRAIN_SMOOTHABLE.isSmoothable(blockAccess.getBlockState(blockPosIn.offset(EnumFacing.EAST)))
+			};
 
 			if (!shouldTopBeRendered && !shouldBottomBeRendered && !shouldHorizontalSideBeRendered[0] && !shouldHorizontalSideBeRendered[1] && !shouldHorizontalSideBeRendered[2] && !shouldHorizontalSideBeRendered[3]) {
 				return false;
