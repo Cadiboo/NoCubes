@@ -357,7 +357,7 @@ public class MarchingCubes implements IMeshGenerator {
 					//For each cell, compute cube mask
 					short cube_index = 0;
 					for (byte i = 0; i < 8; ++i) {
-						byte v[] = cubeVerts[i];
+						byte[] v = cubeVerts[i];
 						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
