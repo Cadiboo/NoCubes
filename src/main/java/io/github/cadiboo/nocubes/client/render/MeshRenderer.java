@@ -31,6 +31,7 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
+import java.util.ConcurrentModificationException;
 import java.util.Map;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getCorrectRenderLayer;
@@ -79,24 +80,29 @@ public class MeshRenderer {
 
 			switch (ModConfig.smoothLeavesLevel) {
 				case SEPARATE:
-					for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
-						try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState)) {
-							final IIsSmoothable isSmoothable = (checkState) -> checkState == smoothableState;
-							renderMesh(
-									renderChunk,
-									generator,
-									compiledChunk,
-									renderChunkPosition,
-									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-									blockAccess,
-									stateCache,
-									blockRendererDispatcher,
-									pooledPackedLightCache,
-									NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, isSmoothable, ModConfig.leavesMeshGenerator),
-									isSmoothable,
-									pooledMutableBlockPos, usedBlockRenderLayers, true
-							);
+					try {
+						for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
+							try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState)) {
+								final IIsSmoothable isSmoothable = (checkState) -> checkState == smoothableState;
+								renderMesh(
+										renderChunk,
+										generator,
+										compiledChunk,
+										renderChunkPosition,
+										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+										blockAccess,
+										stateCache,
+										blockRendererDispatcher,
+										pooledPackedLightCache,
+										NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, isSmoothable, ModConfig.leavesMeshGenerator),
+										isSmoothable,
+										pooledMutableBlockPos, usedBlockRenderLayers, true
+								);
+							}
 						}
+					} catch (ConcurrentModificationException e) {
+						//REEE I don't want to synchronise because performance tho
+						e.printStackTrace();
 					}
 					break;
 				case TOGETHER:
