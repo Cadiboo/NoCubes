@@ -34,6 +34,7 @@ import javax.annotation.Nonnull;
 import java.util.Map;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getCorrectRenderLayer;
+import static io.github.cadiboo.nocubes.config.ModConfig.smoothBiomeColorTransitions;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
@@ -69,30 +70,55 @@ public class MeshRenderer {
 							stateCache,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-							NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE),
+							NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
 					);
 				}
 			}
 
-			if (ModConfig.smoothLeavesSeparate) {
-				try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves")) {
-					renderMesh(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							blockAccess,
-							stateCache,
-							blockRendererDispatcher,
-							pooledPackedLightCache,
-							NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE),
-							LEAVES_SMOOTHABLE,
-							pooledMutableBlockPos, usedBlockRenderLayers, true
-					);
-				}
+			switch (ModConfig.smoothLeavesLevel) {
+				case SEPARATE:
+					for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
+						try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState)) {
+							final IIsSmoothable isSmoothable = (checkState) -> checkState == smoothableState;
+							renderMesh(
+									renderChunk,
+									generator,
+									compiledChunk,
+									renderChunkPosition,
+									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+									blockAccess,
+									stateCache,
+									blockRendererDispatcher,
+									pooledPackedLightCache,
+									NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, isSmoothable, ModConfig.leavesMeshGenerator),
+									isSmoothable,
+									pooledMutableBlockPos, usedBlockRenderLayers, true
+							);
+						}
+					}
+					break;
+				case TOGETHER:
+					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves")) {
+						renderMesh(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								stateCache,
+								blockRendererDispatcher,
+								pooledPackedLightCache,
+								NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
+								LEAVES_SMOOTHABLE,
+								pooledMutableBlockPos, usedBlockRenderLayers, true
+						);
+					}
+					break;
+				case OFF:
+					break;
 			}
 		}
 
@@ -124,9 +150,6 @@ public class MeshRenderer {
 					try (final FaceList faces = entry.getValue()) {
 
 						if (faces.isEmpty()) {
-							if (ModConfig.renderEmptyBlocksOrWhatever) {
-								renderEmptyBlocksBadly(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledMutableBlockPos, pos);
-							}
 							continue;
 						}
 
@@ -231,7 +254,7 @@ public class MeshRenderer {
 			final int red3;
 			final int green3;
 			final int blue3;
-			if (ModConfig.smoothBiomeColors) {
+			if (smoothBiomeColorTransitions) {
 				final int color1 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.east());
 				red1 = color1 >> 16 & 255;
 				green1 = color1 >> 8 & 255;
@@ -334,35 +357,6 @@ public class MeshRenderer {
 				}
 
 			}
-
-			OptifineCompatibility.popShaderThing(bufferBuilder);
-		}
-	}
-
-	public static void renderEmptyBlocksBadly(
-			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator, @Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final BlockPos renderChunkPosition, final int renderChunkPositionX, final int renderChunkPositionY,
-			final int renderChunkPositionZ, @Nonnull final IBlockAccess blockAccess,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos, final Vec3b pos
-	) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderEmptyBlocksBadly")) {
-
-			pooledMutableBlockPos.setPos(
-					renderChunkPositionX + pos.x,
-					renderChunkPositionY + pos.y,
-					renderChunkPositionZ + pos.z
-			);
-
-			final IBlockState blockState = blockAccess.getBlockState(pooledMutableBlockPos);
-			final BlockRenderLayer blockRenderLayer = getCorrectRenderLayer(blockState);
-			final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-
-			OptifineCompatibility.pushShaderThing(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
-
-			blockRendererDispatcher.renderBlock(blockState, pooledMutableBlockPos, blockAccess, bufferBuilder);
 
 			OptifineCompatibility.popShaderThing(bufferBuilder);
 		}

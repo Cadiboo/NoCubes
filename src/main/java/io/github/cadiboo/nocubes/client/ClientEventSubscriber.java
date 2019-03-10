@@ -109,7 +109,7 @@ public final class ClientEventSubscriber {
 		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
 
 		final BlockStateToast toast;
-		final HashSet<IBlockState> smoothableBlockStatesCache = ModConfig.getSmoothableBlockStatesCache();
+		final HashSet<IBlockState> smoothableBlockStatesCache = ModConfig.getTerrainSmoothableBlockStatesCache();
 		if (!smoothableBlockStatesCache.remove(state)) {
 			smoothableBlockStatesCache.add(state);
 			toast = new BlockStateToast.Add(state);
@@ -134,7 +134,7 @@ public final class ClientEventSubscriber {
 	}
 
 	private static void syncSmoothableBlockstatesWithCache() {
-		ModConfig.smoothableBlockStates = ModConfig.getSmoothableBlockStatesCache().stream()
+		ModConfig.smoothableBlockStates = ModConfig.getTerrainSmoothableBlockStatesCache().stream()
 				.map(IBlockState::toString)
 				.toArray(String[]::new);
 	}

@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -83,24 +84,25 @@ import static net.minecraft.item.EnumDyeColor.YELLOW;
 public final class ModConfig {
 
 	@Config.Ignore
-	private static final transient HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
+	private static final transient HashSet<IBlockState> TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
+
+	@Config.Ignore
+	private static final transient HashSet<IBlockState> LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();
 
 	@LangKey(MOD_ID + ".config.isEnabled")
 	public static boolean isEnabled = true;
 
-	@LangKey(MOD_ID + ".config.meshGenerator")
-	public static MeshGenerator meshGenerator = MeshGenerator.SurfaceNets;
+	@LangKey(MOD_ID + ".config.terrainMeshGenerator")
+	public static MeshGenerator terrainMeshGenerator = MeshGenerator.SurfaceNets;
+
+	@LangKey(MOD_ID + ".config.leavesMeshGenerator")
+	public static MeshGenerator leavesMeshGenerator = MeshGenerator.SurfaceNets;
 
 	@LangKey(MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
 
 	@LangKey(MOD_ID + ".config.smoothableBlockStates")
 	public static String[] smoothableBlockStates;
-
-	//	@LangKey(MOD_ID + ".config.isosurfaceLevel")
-//	@Config.RangeDouble(min = -10, max = 10)
-	@Config.Ignore
-	public static double isosurfaceLevel = 1.0D;
 
 	@LangKey(MOD_ID + ".config.offsetVertices")
 //	@Config.Ignore
@@ -109,55 +111,40 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.approximateLighting")
 	public static boolean approximateLighting = true;
 
-	@LangKey(MOD_ID + ".config.smoothLeavesSeparate")
-	public static boolean smoothLeavesSeparate = true;
+	@LangKey(MOD_ID + ".config.smoothLeavesLevel")
+	public static SmoothLeavesLevel smoothLeavesLevel = SmoothLeavesLevel.SEPARATE;
 
 	@LangKey(MOD_ID + ".config.extendLiquids")
 	public static ExtendLiquidRange extendLiquids = ExtendLiquidRange.OneBlock;
 
-	@Config.Ignore
-	//yenah i dont like it //TODO: remove
-	public static boolean renderEmptyBlocksOrWhatever = false;
+	@LangKey(MOD_ID + ".config.enableCollisions")
+	public static boolean enableCollisions = true;
 
-	@Config.Ignore
-//	@Config.RangeDouble(min = -10, max = 10)
-	public static double smoothOtherBlocksAmount = 0.0F;
-
-	@Config.Ignore
-	public static boolean collisionsEnabled = true;
-
-	@Config.Ignore
+	@LangKey(MOD_ID + ".config.enablePools")
 	public static boolean enablePools = true;
 
-	@LangKey(MOD_ID + ".config.smoothBiomeColors")
-	public static boolean smoothBiomeColors = true;
+	@LangKey(MOD_ID + ".config.smoothBiomeColorTransitions")
+	public static boolean smoothBiomeColorTransitions = true;
 
-	@LangKey(MOD_ID + ".config.smoothFluidBiomeColors")
-	public static boolean smoothFluidBiomeColors = true;
-
-	@LangKey(MOD_ID + ".config.smoothFluidLighting")
-	public static boolean smoothFluidLighting = true;
-
-	@LangKey(MOD_ID + ".config.naturalFluidTextures")
-	public static boolean naturalFluidTextures = false;
+	@LangKey(MOD_ID + ".config.fluid")
+	public static FluidConfig fluid = new FluidConfig();
 
 	@LangKey(MOD_ID + ".config.overrideIsOpaqueCube")
-	public static boolean overrideIsOpaqueCube;
+	public static boolean overrideIsOpaqueCube = true;
+
+	@LangKey(MOD_ID + ".config.smoothOtherBlocksAmount")
+	public static double smoothOtherBlocksAmount = 0;
 
 	static {
 		setupSmoothableBlockStates();
 	}
 
-	public static HashSet<IBlockState> getSmoothableBlockStatesCache() {
-		return SMOOTHABLE_BLOCK_STATES_CACHE;
+	public static HashSet<IBlockState> getTerrainSmoothableBlockStatesCache() {
+		return TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE;
 	}
 
-	public static float getIsosurfaceLevel() {
-		return (float) isosurfaceLevel;
-	}
-
-	public static MeshGenerator getMeshGenerator() {
-		return meshGenerator;
+	public static HashSet<IBlockState> getLeavesSmoothableBlockStatesCache() {
+		return LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE;
 	}
 
 	@Mod.EventBusSubscriber(modid = MOD_ID)
@@ -186,7 +173,7 @@ public final class ModConfig {
 		}
 
 		private static void rebuildSmoothableBlockstatesCache() {
-			SMOOTHABLE_BLOCK_STATES_CACHE.clear();
+			TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE.clear();
 
 			final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
 
@@ -211,7 +198,7 @@ public final class ModConfig {
 						continue;
 					}
 					try {
-						SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
+						TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
 					} catch (NumberInvalidException e) {
 						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
 					} catch (InvalidBlockStateException e) {
@@ -311,11 +298,24 @@ public final class ModConfig {
 		final ArrayList<String> tempSmoothableBlockStates = new ArrayList<>();
 
 		for (IBlockState state : defaultSmoothableBlockStates) {
-			SMOOTHABLE_BLOCK_STATES_CACHE.add(state);
+			TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE.add(state);
 			tempSmoothableBlockStates.add(state.toString());
 		}
 
 		smoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
+	}
+
+	public static class FluidConfig {
+
+		@LangKey(MOD_ID + ".config.fluid.smoothFluidBiomeColorTransitions")
+		public boolean smoothFluidBiomeColorTransitions = true;
+
+		@LangKey(MOD_ID + ".config.fluid.smoothFluidLighting")
+		public boolean smoothFluidLighting = true;
+
+		@LangKey(MOD_ID + ".config.fluid.naturalFluidTextures")
+		public boolean naturalFluidTextures = false;
+
 	}
 
 }

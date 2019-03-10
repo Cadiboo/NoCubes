@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.util;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
@@ -49,7 +48,7 @@ public final class ModUtil {
 
 	private static final Field configManager_CONFIGS = ReflectionUtil.getFieldOrCrash(ConfigManager.class, "CONFIGS");
 
-	public static final IIsSmoothable TERRAIN_SMOOTHABLE = ModUtil::shouldSmooth;
+	public static final IIsSmoothable TERRAIN_SMOOTHABLE = ModUtil::shouldSmoothTerrain;
 	public static final IIsSmoothable LEAVES_SMOOTHABLE = ModUtil::shouldSmoothLeaves;
 
 	/**
@@ -58,8 +57,8 @@ public final class ModUtil {
 	 * @param state the state
 	 * @return If the state should be smoothed
 	 */
-	public static boolean shouldSmooth(final IBlockState state) {
-		return ModConfig.getSmoothableBlockStatesCache().contains(state);
+	public static boolean shouldSmoothTerrain(final IBlockState state) {
+		return ModConfig.getTerrainSmoothableBlockStatesCache().contains(state);
 	}
 
 	/**
@@ -69,7 +68,7 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
-		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
+		return ModConfig.getLeavesSmoothableBlockStatesCache().contains(state);
 	}
 
 	/**

@@ -101,7 +101,6 @@ public class SurfaceNets implements IMeshGenerator {
 		final int[] buffer = new int[R[2] * 2];
 
 		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
-		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
 
 		//March over the voxel grid
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
@@ -174,7 +173,8 @@ public class SurfaceNets implements IMeshGenerator {
 					}
 
 					//Now we just average the edge intersections and add them to coordinate
-					float s = isosurfaceLevel / e_count;
+					// 1.0F = isosurfaceLevel
+					float s = 1.0F / e_count;
 					for (int i = 0; i < 3; ++i) {
 						v[i] = x[i] + s * v[i];
 					}

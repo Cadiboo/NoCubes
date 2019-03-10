@@ -26,7 +26,6 @@ import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
@@ -48,7 +47,7 @@ public class RenderDispatcher {
 		final byte meshSizeX;
 		final byte meshSizeY;
 		final byte meshSizeZ;
-		if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
+		if (ModConfig.terrainMeshGenerator == MeshGenerator.SurfaceNets) {
 			//yay, surface nets is special and needs an extra +1. why? no-one knows
 			meshSizeX = 18;
 			meshSizeY = 18;
@@ -97,29 +96,29 @@ public class RenderDispatcher {
 		// Terrain & leaves rendering
 		{
 			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
-				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(approximateLighting ? renderChunkPositionX - 1 : 0, approximateLighting ? renderChunkPositionY - 1 : 0, approximateLighting ? renderChunkPositionZ - 1 : 0, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
+				try (final PackedLightCache packedLightCache = ModConfig.approximateLighting ? ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos) : PackedLightCache.retain(0, 0, 0)) {
 //					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
-						try {
-							MeshRenderer.renderChunkMeshes(
-									renderChunk,
-									generator,
-									compiledChunk,
-									renderChunkPosition,
-									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-									blockAccess,
-									lightAndTexturesStateCache,
-									pooledMutableBlockPos,
-									usedBlockRenderLayers,
-									blockRendererDispatcher,
-									packedLightCache
-							);
-						} catch (ReportedException e) {
-							throw e;
-						} catch (Exception e) {
-							CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
-							crashReport.makeCategory("Rendering mesh");
-							throw new ReportedException(crashReport);
-						}
+					try {
+						MeshRenderer.renderChunkMeshes(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								lightAndTexturesStateCache,
+								pooledMutableBlockPos,
+								usedBlockRenderLayers,
+								blockRendererDispatcher,
+								packedLightCache
+						);
+					} catch (ReportedException e) {
+						throw e;
+					} catch (Exception e) {
+						CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
+						crashReport.makeCategory("Rendering mesh");
+						throw new ReportedException(crashReport);
+					}
 //					}
 				}
 			}
