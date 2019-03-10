@@ -45,8 +45,8 @@ nocubes.config.smoothBiomeColorTransitions.tooltip=If Biome color transitions (e
 nocubes.config.offsetVertices=[UNSTABLE] Offset Vertices
 nocubes.config.offsetVertices.tooltip=If (pseudo) randomness should be applied to the mesh
 
-nocubes.config.enableCollisions=[INDEV] Offset Vertices
-nocubes.config.enableCollisions.tooltip=If accurate collisions should be calculated. Requires NoCubes to be installed on the server.
+nocubes.config.enableCollisions=[INDEV] Enable Collisions
+nocubes.config.enableCollisions.tooltip=If accurate collisions should be calculated. Requires NoCubes to be installed on the server!
 
 nocubes.config.enablePools=[DEVELOPMENT] Enable Pools
 nocubes.config.enablePools.tooltip=If Object Pools should be used. Object Pools decrease the amount of objects used and should substantially improve performance on low-end machines. Disableable for testing. Note: These pools are optimised for Surface Nets.
