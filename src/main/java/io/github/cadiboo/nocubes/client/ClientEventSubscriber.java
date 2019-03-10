@@ -84,7 +84,7 @@ public final class ClientEventSubscriber {
 			}
 			if (toggleTerrainSmoothableBlockStatePressed) {
 				synchronized (ModConfig.getTerrainSmoothableBlockStatesCache()) {
-					if (addBlockStateToSmoothable(ModConfig.getTerrainSmoothableBlockStatesCache())) {
+					if (addBlockStateToSmoothable(ModConfig.getTerrainSmoothableBlockStatesCache(), true)) {
 						if (NoCubes.isEnabled()) {
 							ClientUtil.tryReloadRenderers();
 						}
@@ -95,7 +95,7 @@ public final class ClientEventSubscriber {
 			}
 			if (toggleLeavesSmoothableBlockStatePressed) {
 				synchronized (ModConfig.getLeavesSmoothableBlockStatesCache()) {
-					if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache())) {
+					if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache(), false)) {
 						if (NoCubes.isEnabled()) {
 							ClientUtil.tryReloadRenderers();
 						}
@@ -116,7 +116,7 @@ public final class ClientEventSubscriber {
 		}
 	}
 
-	private static boolean addBlockStateToSmoothable(final HashSet<IBlockState> cache) {
+	private static boolean addBlockStateToSmoothable(final HashSet<IBlockState> cache, final boolean isTerrainCache) {
 		final Minecraft minecraft = Minecraft.getMinecraft();
 		final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
 		if (objectMouseOver.typeOfHit != BLOCK) {
@@ -134,7 +134,7 @@ public final class ClientEventSubscriber {
 		}
 		minecraft.getToastGui().add(toast);
 
-		syncSmoothableBlockStatesWithCache();
+		syncSmoothableBlockStatesWithCache(cache, isTerrainCache);
 		return true;
 	}
 
@@ -149,10 +149,16 @@ public final class ClientEventSubscriber {
 		}
 	}
 
-	private static void syncSmoothableBlockStatesWithCache() {
-		ModConfig.terrainSmoothableBlockStates = ModConfig.getTerrainSmoothableBlockStatesCache().stream()
-				.map(IBlockState::toString)
-				.toArray(String[]::new);
+	private static void syncSmoothableBlockStatesWithCache(final HashSet<IBlockState> cache, final boolean isTerrainCache) {
+		if (isTerrainCache) {
+			ModConfig.terrainSmoothableBlockStates = cache.stream()
+					.map(IBlockState::toString)
+					.toArray(String[]::new);
+		} else {
+			ModConfig.leavesSmoothableBlockStates = cache.stream()
+					.map(IBlockState::toString)
+					.toArray(String[]::new);
+		}
 	}
 
 	//	@SubscribeEvent
