@@ -151,18 +151,6 @@ public class Transformer implements IClassTransformer, Opcodes {
 		);
 	}
 
-	private static void jumpIfNotEnabled(final InsnList insnList, final LabelNode jumpTo) {
-		insnList.add(new MethodInsnNode(INVOKESTATIC, "io/github/cadiboo/nocubes/NoCubes", "areHooksEnabled", "()Z", false));
-		insnList.add(new JumpInsnNode(IFEQ, jumpTo));
-		insnList.add(new LabelNode(new Label()));
-	}
-
-	private static void loadBlockAndState(InsnList instructions) {
-		instructions.add(new VarInsnNode(ALOAD, 0));
-		instructions.add(BlockStateContainer$StateImplementation_block());
-		instructions.add(new VarInsnNode(ALOAD, 0));
-	}
-
 	// Copied from  ObfuscationReflectionHelper
 	private static class ObfuscationHelper {
 
@@ -211,18 +199,6 @@ public class Transformer implements IClassTransformer, Opcodes {
 		instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", fieldName, "Z"));
 	}
 
-	private static void setRunOnceToFALSE(final InsnList instructions, final String fieldName) {
-		instructions.add(new VarInsnNode(ALOAD, 0));
-		instructions.add(new InsnNode(ICONST_0));
-		instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", fieldName, "Z"));
-	}
-
-	private static void jumpIfRunOnce(final InsnList injectedInstructions, final LabelNode labelNode, final String fieldName) {
-		injectedInstructions.add(new VarInsnNode(ALOAD, 0));
-		injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", fieldName, "Z"));
-		injectedInstructions.add(new JumpInsnNode(IFNE, labelNode));
-	}
-
 	public static final String run_isOpaqueCube_fieldName = "nocubes_RunIsOpaqueCubeDefaultOnce";
 	public static final String run_getCollisionBoundingBox_fieldName = "nocubes_RunGetCollisionBoundingBoxDefaultOnce";
 	public static final String run_addCollisionBoxToList_fieldName = "nocubes_RunAddCollisionBoxToListDefaultOnce";
@@ -251,9 +227,19 @@ public class Transformer implements IClassTransformer, Opcodes {
 			final InsnList injectedInstructions = Api.getMethodNode().instructions;
 			final LabelNode labelNode = new LabelNode(new Label());
 
-			jumpIfRunOnce(injectedInstructions, labelNode, run_isOpaqueCube_fieldName);
-			jumpIfNotEnabled(injectedInstructions, labelNode);
-			loadBlockAndState(injectedInstructions);
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", run_isOpaqueCube_fieldName, "Z"));
+			injectedInstructions.add(new JumpInsnNode(IFNE, labelNode));
+
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new MethodInsnNode(INVOKESTATIC, "io/github/cadiboo/nocubes/NoCubes", "areHooksEnabled", "()Z", false));
+			injectedInstructions.add(new JumpInsnNode(IFEQ, labelNode));
+
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(BlockStateContainer$StateImplementation_block());
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
 			injectedInstructions.add(new MethodInsnNode(
 					INVOKESTATIC,
 					"io/github/cadiboo/nocubes/hooks/IsOpaqueCubeHook",
@@ -261,11 +247,17 @@ public class Transformer implements IClassTransformer, Opcodes {
 					"(Lnet/minecraft/block/Block;Lnet/minecraft/block/state/IBlockState;)Z",
 					false
 			));
+
+			injectedInstructions.add(new LabelNode(new Label()));
 			injectedInstructions.add(new InsnNode(IRETURN));
 			injectedInstructions.add(labelNode);
 
-			setRunOnceToFALSE(injectedInstructions, run_isOpaqueCube_fieldName);
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_0));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", run_isOpaqueCube_fieldName, "Z"));
 
+			injectedInstructions.add(new LabelNode(new Label()));
 			instructions.insert(FIRST_LABEL, injectedInstructions);
 
 //#			L0
