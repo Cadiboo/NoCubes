@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.ModContainer;
 
@@ -17,6 +16,7 @@ import java.nio.file.Path;
  *
  * @author Cadiboo
  */
+@Deprecated
 public final class BadAutoUpdater {
 
 	public static void update(final ModContainer modContainer, final String updateVersion, final String githubUsername) throws IOException, URISyntaxException {
