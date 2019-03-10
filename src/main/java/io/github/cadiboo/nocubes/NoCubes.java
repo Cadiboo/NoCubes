@@ -1,11 +1,15 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
+import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
+import io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.ReportedException;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
@@ -100,11 +104,16 @@ public final class NoCubes {
 		}
 	}
 
-	public static boolean isEnabled() {
+	@SuppressWarnings("unused")
+	public static boolean areHooksEnabled() {
 		if (!pastInit) {
 			return false;
 		}
-		return (ModConfig.isEnabled);
+		return isEnabled();
+	}
+
+	public static boolean isEnabled() {
+		return ModConfig.isEnabled;
 	}
 
 	public static ModProfiler getProfiler() {
@@ -114,6 +123,35 @@ public final class NoCubes {
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
 		pastInit = true;
+
+		{
+			try {
+				IsOpaqueCubeHook.isOpaqueCube(null, null);
+			} catch (NullPointerException e) {
+			}
+			try {
+				GetCollisionBoundingBoxHook.getCollisionBoundingBox(null, null, null, null);
+			} catch (NullPointerException e) {
+			}
+			try {
+				AddCollisionBoxToListHook.addCollisionBoxToList(null, null, null, null, null, null, null, false);
+			} catch (NullPointerException e) {
+			}
+		}
+		{
+			try {
+				Blocks.BED.getDefaultState().isOpaqueCube();
+			} catch (NullPointerException e) {
+			}
+			try {
+				Blocks.BED.getDefaultState().getCollisionBoundingBox(null, null);
+			} catch (NullPointerException e) {
+			}
+			try {
+				Blocks.BED.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
+			} catch (NullPointerException e) {
+			}
+		}
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
