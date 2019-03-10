@@ -74,6 +74,7 @@ public final class ClientEventSubscriber {
 		final boolean toggleTerrainSmoothableBlockStatePressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
 		final boolean toggleLeavesSmoothableBlockStatePressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
 		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
+
 		if (toggleEnabledPressed || toggleTerrainSmoothableBlockStatePressed || toggleLeavesSmoothableBlockStatePressed || toggleProfilersPressed) {
 			if (toggleEnabledPressed) {
 				ModConfig.isEnabled = !ModConfig.isEnabled;
@@ -82,28 +83,34 @@ public final class ClientEventSubscriber {
 				return;
 			}
 			if (toggleTerrainSmoothableBlockStatePressed) {
-				if (addBlockStateToSmoothable(ModConfig.getTerrainSmoothableBlockStatesCache())) {
-					if (NoCubes.isEnabled()) {
-						ClientUtil.tryReloadRenderers();
+				synchronized (ModConfig.getTerrainSmoothableBlockStatesCache()) {
+					if (addBlockStateToSmoothable(ModConfig.getTerrainSmoothableBlockStatesCache())) {
+						if (NoCubes.isEnabled()) {
+							ClientUtil.tryReloadRenderers();
+						}
+						fireConfigChangedEvent();
+						return;
 					}
-					fireConfigChangedEvent();
-					return;
 				}
 			}
 			if (toggleLeavesSmoothableBlockStatePressed) {
-				if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache())) {
-					if (NoCubes.isEnabled()) {
-						ClientUtil.tryReloadRenderers();
+				synchronized (ModConfig.getLeavesSmoothableBlockStatesCache()) {
+					if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache())) {
+						if (NoCubes.isEnabled()) {
+							ClientUtil.tryReloadRenderers();
+						}
+						fireConfigChangedEvent();
+						return;
 					}
-					fireConfigChangedEvent();
-					return;
 				}
 			}
 			if (toggleProfilersPressed) {
-				if (NoCubes.profilingEnabled) {
-					NoCubes.disableProfiling();
-				} else {
-					NoCubes.enableProfiling();
+				synchronized (NoCubes.PROFILERS) {
+					if (NoCubes.profilingEnabled) {
+						NoCubes.disableProfiling();
+					} else {
+						NoCubes.enableProfiling();
+					}
 				}
 			}
 		}
