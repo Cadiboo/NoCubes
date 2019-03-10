@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientProxy;
-import io.github.cadiboo.nocubes.client.SmoothLightingBlockFluidRenderer;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
@@ -17,7 +16,8 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.fluid;
+import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.areNaturalFluidTexturesEnabled;
+import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.isSmoothFluidLightingEnabled;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
 /**
@@ -227,7 +227,7 @@ public class ExtendedLiquidBlockRenderer {
 		float v3;
 
 		if (slopeAngle < -999.0F) {
-			if (!fluid.naturalFluidTextures) {
+			if (!areNaturalFluidTexturesEnabled()) {
 //				u0 = textureatlassprite.getInterpolatedU(0.0D);
 //				v0 = textureatlassprite.getInterpolatedV(0.0D);
 				u0 = UVHelper.getMinU(textureatlassprite);
@@ -297,7 +297,7 @@ public class ExtendedLiquidBlockRenderer {
 		final int blockLightmapCoords = (renderPackedLightmapCoords & 65535) == 0 ? realPackedLightmapCoords & 65535 : renderPackedLightmapCoords & 65535;
 		final int packedLightmapCoords = (skyLightmapCoords << 16) | blockLightmapCoords;
 
-		if (fluid.smoothFluidLighting) {
+		if (isSmoothFluidLightingEnabled()) {
 			final int realPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south());
 			final int renderPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south());
 			final int realPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east());

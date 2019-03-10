@@ -1,6 +1,8 @@
-package io.github.cadiboo.nocubes.client;
+package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.UVHelper;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -14,7 +16,7 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.fluid;
+import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.*;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
 /**
@@ -182,7 +184,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						final int skylightX1Y0Z1;
 						final int blocklightX1Y0Z1;
 
-						if (fluid.smoothFluidLighting) {
+						if (isSmoothFluidLightingEnabled()) {
 							final int packedLightX0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, yAdd0, posZ0 - posZ));
 							final int packedLightX0Y0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, 0, posZ0 - posZ));
 							final int packedLightX1Z1 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX1 - posX, yAdd0, posZ1 - posZ));
@@ -237,7 +239,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	public void renderBottom(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final TextureAtlasSprite[] atextureatlassprite, final double posX, final double posY, final double posZ) {
-		if (fluid.smoothFluidLighting) {
+		if (isSmoothFluidLightingEnabled()) {
 			renderBottomSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().east()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
 		} else {
 			renderBottomFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
@@ -255,7 +257,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		float v3;
 
 		if (slopeAngle < -999.0F) {
-			if (fluid.naturalFluidTextures) {
+			if (areNaturalFluidTexturesEnabled()) {
 				final int rand = (int) (MathHelper.getPositionRandom(blockPosIn) % 7);
 				switch (rand) {
 					default:
@@ -319,7 +321,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-quarterCosSlopeAngle - quarterSinSlopeAngle) * 16.0F));
 		}
 
-		if (fluid.smoothFluidLighting) {
+		if (isSmoothFluidLightingEnabled()) {
 			renderTopSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.east()), blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
 		} else {
 			renderTopFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn), blockAccess, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
@@ -380,7 +382,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		final float red3;
 		final float green3;
 		final float blue3;
-		if (fluid.smoothFluidBiomeColorTransitions) {
+		if (areSmoothFluidBiomeColorTransitionsEnabled()) {
 			final int color1 = this.blockColors.colorMultiplier(blockStateIn, blockAccess, blockPosIn.south(), 0);
 			red1 = (float) (color1 >> 16 & 255) / 255.0F;
 			green1 = (float) (color1 >> 8 & 255) / 255.0F;

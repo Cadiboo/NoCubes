@@ -1,10 +1,13 @@
 package io.github.cadiboo.nocubes.config;
 
+import com.google.common.annotations.Beta;
+import com.google.common.annotations.VisibleForTesting;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGrass;
@@ -16,6 +19,7 @@ import net.minecraft.block.BlockSilverfish;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.BlockStainedHardenedClay;
 import net.minecraft.block.BlockStone;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.InvalidBlockStateException;
@@ -31,6 +35,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashSet;
 
@@ -101,48 +106,57 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.reloadChunksOnConfigChange")
 	public static boolean reloadChunksOnConfigChange = true;
 
-	@LangKey(MOD_ID + ".config.smoothableBlockStates")
-	public static String[] smoothableBlockStates;
+	@LangKey(MOD_ID + ".config.terrainSmoothableBlockStates")
+	public static String[] terrainSmoothableBlockStates;
 
+	@LangKey(MOD_ID + ".config.leavesSmoothableBlockStates")
+	public static String[] leavesSmoothableBlockStates;
+
+	@Beta
 	@LangKey(MOD_ID + ".config.offsetVertices")
 //	@Config.Ignore
-	public static boolean offsetVertices = true;
+	public static boolean offsetVertices = false;
 
 	@LangKey(MOD_ID + ".config.approximateLighting")
 	public static boolean approximateLighting = true;
 
 	@LangKey(MOD_ID + ".config.smoothLeavesLevel")
-	public static SmoothLeavesLevel smoothLeavesLevel = SmoothLeavesLevel.SEPARATE;
+	public static SmoothLeavesLevel smoothLeavesLevel = SmoothLeavesLevel.TOGETHER;
 
 	@LangKey(MOD_ID + ".config.extendLiquids")
 	public static ExtendLiquidRange extendLiquids = ExtendLiquidRange.OneBlock;
 
+	@Beta
 	@LangKey(MOD_ID + ".config.enableCollisions")
 	public static boolean enableCollisions = true;
 
+	@VisibleForTesting
 	@LangKey(MOD_ID + ".config.enablePools")
 	public static boolean enablePools = true;
 
 	@LangKey(MOD_ID + ".config.smoothBiomeColorTransitions")
 	public static boolean smoothBiomeColorTransitions = true;
 
-	@LangKey(MOD_ID + ".config.fluid")
-	public static FluidConfig fluid = new FluidConfig();
+	@LangKey(MOD_ID + ".config.fluid") // Doesn't work for some reason
+	public static FluidConfig fluidConfig = new FluidConfig();
 
 	@LangKey(MOD_ID + ".config.overrideIsOpaqueCube")
 	public static boolean overrideIsOpaqueCube = true;
 
+	@VisibleForTesting
 	@LangKey(MOD_ID + ".config.smoothOtherBlocksAmount")
 	public static double smoothOtherBlocksAmount = 0;
 
 	static {
-		setupSmoothableBlockStates();
+		setupTerrainSmoothableBlockStates();
+		setupLeavesSmoothableBlockStates();
 	}
 
 	public static HashSet<IBlockState> getTerrainSmoothableBlockStatesCache() {
 		return TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE;
 	}
 
+	//FIXME TODO predicates that ignore check_decay and decayable
 	public static HashSet<IBlockState> getLeavesSmoothableBlockStatesCache() {
 		return LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE;
 	}
@@ -166,18 +180,28 @@ public final class ModConfig {
 					ClientUtil.tryReloadRenderers();
 				}
 
-				rebuildSmoothableBlockstatesCache();
+				rebuildTerrainSmoothableBlockStatesCache();
+				rebuildLeavesSmoothableBlockStatesCache();
 
 			}
 
 		}
 
-		private static void rebuildSmoothableBlockstatesCache() {
-			TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE.clear();
+		private static void rebuildTerrainSmoothableBlockStatesCache() {
+			parseBlockStatesToCache(TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE, terrainSmoothableBlockStates);
+		}
+
+		private static void rebuildLeavesSmoothableBlockStatesCache() {
+			parseBlockStatesToCache(LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE, leavesSmoothableBlockStates);
+		}
+
+		private static void parseBlockStatesToCache(@Nonnull final HashSet<IBlockState> cache, @Nonnull final String[] blockStateStrings) {
 
 			final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
 
-			for (String blockStateString : smoothableBlockStates) {
+			cache.clear();
+
+			for (String blockStateString : blockStateStrings) {
 
 				try {
 					final String[] splitBlockStateString = StringUtils.split(blockStateString, "[");
@@ -188,7 +212,7 @@ public final class ModConfig {
 					} else if (splitBlockStateString.length == 2) {
 						stateString = StringUtils.reverse(StringUtils.reverse(StringUtils.split(blockStateString, "[")[1]).replaceFirst("]", ""));
 					} else {
-						NoCubes.NO_CUBES_LOG.error("Block/Blockstate Parsing error for \"" + blockStateString + "\"");
+						NoCubes.NO_CUBES_LOG.error("Block/BlockState Parsing error for \"" + blockStateString + "\"");
 						continue;
 					}
 
@@ -198,14 +222,14 @@ public final class ModConfig {
 						continue;
 					}
 					try {
-						TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE.add(CommandBase.convertArgToBlockState(block, stateString));
+						cache.add(CommandBase.convertArgToBlockState(block, stateString));
 					} catch (NumberInvalidException e) {
-						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
+						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
 					} catch (InvalidBlockStateException e) {
-						NoCubes.NO_CUBES_LOG.error("Blockstate Parsing error " + e + " for \"" + stateString + "\". Invalid Blockstate!");
+						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid BlockState!");
 					}
 				} catch (Exception e) {
-					NoCubes.NO_CUBES_LOG.error("Smoothable Blockstate Parsing error " + e + " for \"" + blockStateString + "\"");
+					NoCubes.NO_CUBES_LOG.error("Smoothable BlockState Parsing error " + e + " for \"" + blockStateString + "\"");
 				}
 
 			}
@@ -213,7 +237,7 @@ public final class ModConfig {
 
 	}
 
-	private static void setupSmoothableBlockStates() {
+	private static void setupTerrainSmoothableBlockStates() {
 		final IBlockState[] defaultSmoothableBlockStates = new IBlockState[]{
 
 				GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true),
@@ -302,19 +326,56 @@ public final class ModConfig {
 			tempSmoothableBlockStates.add(state.toString());
 		}
 
-		smoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
+		terrainSmoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
 	}
 
+	private static void setupLeavesSmoothableBlockStates() {
+
+		final ArrayList<IBlockState> defaultSmoothableBlockStates = new ArrayList<>();
+
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("setupLeavesSmoothableBlockStates")) {
+			for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+				for (final IBlockState state : block.getBlockState().getValidStates()) {
+					if (state.getMaterial() == Material.LEAVES) {
+						defaultSmoothableBlockStates.add(state);
+					}
+				}
+			}
+		}
+
+		final ArrayList<String> tempSmoothableBlockStates = new ArrayList<>();
+
+		for (IBlockState state : defaultSmoothableBlockStates) {
+			LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE.add(state);
+			tempSmoothableBlockStates.add(state.toString());
+		}
+
+		leavesSmoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
+	}
+
+	//	@LangKey(MOD_ID + ".config.fluid")  // Doesn't work for some reason
 	public static class FluidConfig {
 
-		@LangKey(MOD_ID + ".config.fluid.smoothFluidBiomeColorTransitions")
+		//		@LangKey(MOD_ID + ".config.fluid.smoothFluidBiomeColorTransitions") // Doesn't work for some reason
 		public boolean smoothFluidBiomeColorTransitions = true;
 
-		@LangKey(MOD_ID + ".config.fluid.smoothFluidLighting")
+		//		@LangKey(MOD_ID + ".config.fluid.smoothFluidLighting") // Doesn't work for some reason
 		public boolean smoothFluidLighting = true;
 
-		@LangKey(MOD_ID + ".config.fluid.naturalFluidTextures")
+		//		@LangKey(MOD_ID + ".config.fluid.naturalFluidTextures") // Doesn't work for some reason
 		public boolean naturalFluidTextures = false;
+
+		public static boolean areSmoothFluidBiomeColorTransitionsEnabled() {
+			return fluidConfig.smoothFluidBiomeColorTransitions;
+		}
+
+		public static boolean isSmoothFluidLightingEnabled() {
+			return fluidConfig.smoothFluidLighting;
+		}
+
+		public static boolean areNaturalFluidTexturesEnabled() {
+			return fluidConfig.naturalFluidTextures;
+		}
 
 	}
 

@@ -234,7 +234,7 @@ public class BlockStateImplTest implements IBlockState {
 	@Override
 	public boolean isOpaqueCube() {
 		if (!runAddCollisionBoxToListDefaultOnce && NoCubes.areHooksEnabled()) {
-				return IsOpaqueCubeHook.isOpaqueCube(block, this);
+			return IsOpaqueCubeHook.isOpaqueCube(block, this);
 		}
 		runIsOpaqueCubeDefaultOnce = false;
 		// Or whatever code that other coremods have injected
@@ -245,7 +245,7 @@ public class BlockStateImplTest implements IBlockState {
 	@Override
 	public AxisAlignedBB getCollisionBoundingBox(final IBlockAccess worldIn, final BlockPos pos) {
 		if (!runAddCollisionBoxToListDefaultOnce && NoCubes.areHooksEnabled()) {
-				return GetCollisionBoundingBoxHook.getCollisionBoundingBox(block, this, worldIn, pos);
+			return GetCollisionBoundingBoxHook.getCollisionBoundingBox(block, this, worldIn, pos);
 		}
 		runGetCollisionBoundingBoxDefaultOnce = false;
 		// Or whatever code that other coremods have injected

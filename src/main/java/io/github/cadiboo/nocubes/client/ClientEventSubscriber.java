@@ -71,17 +71,27 @@ public final class ClientEventSubscriber {
 		}
 
 		final boolean toggleEnabledPressed = ClientProxy.toggleEnabled.isPressed();
-		final boolean toggleSmoothableBlockstatePressed = ClientProxy.toggleSmoothableBlockstate.isPressed();
+		final boolean toggleTerrainSmoothableBlockStatePressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
+		final boolean toggleLeavesSmoothableBlockStatePressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
 		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
-		if (toggleEnabledPressed || toggleSmoothableBlockstatePressed || toggleProfilersPressed) {
+		if (toggleEnabledPressed || toggleTerrainSmoothableBlockStatePressed || toggleLeavesSmoothableBlockStatePressed || toggleProfilersPressed) {
 			if (toggleEnabledPressed) {
 				ModConfig.isEnabled = !ModConfig.isEnabled;
 				fireConfigChangedEvent();
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
-			if (toggleSmoothableBlockstatePressed) {
-				if (addBlockstateToSmoothable()) {
+			if (toggleTerrainSmoothableBlockStatePressed) {
+				if (addBlockStateToSmoothable(ModConfig.getTerrainSmoothableBlockStatesCache())) {
+					if (NoCubes.isEnabled()) {
+						ClientUtil.tryReloadRenderers();
+					}
+					fireConfigChangedEvent();
+					return;
+				}
+			}
+			if (toggleLeavesSmoothableBlockStatePressed) {
+				if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache())) {
 					if (NoCubes.isEnabled()) {
 						ClientUtil.tryReloadRenderers();
 					}
@@ -99,7 +109,7 @@ public final class ClientEventSubscriber {
 		}
 	}
 
-	private static boolean addBlockstateToSmoothable() {
+	private static boolean addBlockStateToSmoothable(final HashSet<IBlockState> cache) {
 		final Minecraft minecraft = Minecraft.getMinecraft();
 		final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
 		if (objectMouseOver.typeOfHit != BLOCK) {
@@ -109,16 +119,15 @@ public final class ClientEventSubscriber {
 		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
 
 		final BlockStateToast toast;
-		final HashSet<IBlockState> smoothableBlockStatesCache = ModConfig.getTerrainSmoothableBlockStatesCache();
-		if (!smoothableBlockStatesCache.remove(state)) {
-			smoothableBlockStatesCache.add(state);
+		if (!cache.remove(state)) {
+			cache.add(state);
 			toast = new BlockStateToast.Add(state);
 		} else {
 			toast = new BlockStateToast.Remove(state);
 		}
 		minecraft.getToastGui().add(toast);
 
-		syncSmoothableBlockstatesWithCache();
+		syncSmoothableBlockStatesWithCache();
 		return true;
 	}
 
@@ -133,8 +142,8 @@ public final class ClientEventSubscriber {
 		}
 	}
 
-	private static void syncSmoothableBlockstatesWithCache() {
-		ModConfig.smoothableBlockStates = ModConfig.getTerrainSmoothableBlockStatesCache().stream()
+	private static void syncSmoothableBlockStatesWithCache() {
+		ModConfig.terrainSmoothableBlockStates = ModConfig.getTerrainSmoothableBlockStatesCache().stream()
 				.map(IBlockState::toString)
 				.toArray(String[]::new);
 	}

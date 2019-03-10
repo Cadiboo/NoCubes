@@ -1,23 +1,29 @@
 nocubes.config.isEnabled=Enabled
-nocubes.config.isEnabled.tooltip=If the mod is enabled (Does NOT affect water smoothing options)
+nocubes.config.isEnabled.tooltip=If the mod is enabled (Does NOT affect fluid config options)
 
 nocubes.config.terrainMeshGenerator=Terrain Mesh Generator
-nocubes.config.terrainMeshGenerator.tooltip=What algorithm renders your world and generates collisions\nOld NoCubes: The original renderer from NoCubes 0.3 by Click_Me\nMarching Cubes: The original smoothing algorithm that has existed since 1986\nSurface Nets: A smoothing algorithm from 2002 that is Slightly faster than Marching Cubes!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slow but very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
+nocubes.config.terrainMeshGenerator.tooltip=What algorithm renders your world and generates collisions\nOld NoCubes: The original renderer from NoCubes 0.3 by Click_Me\nMarching Cubes: The original smoothing algorithm that has existed since 1986\nSurface Nets: A smoothing algorithm from 2002 that is slightly faster and smoother than Marching Cubes!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slow but very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
 
 nocubes.config.leavesMeshGenerator=Leaves Mesh Generator
-nocubes.config.leavesMeshGenerator.tooltip=What algorithm renders leaves in your world\nOld NoCubes: The original renderer from NoCubes 0.3 by Click_Me\nMarching Cubes: The original smoothing algorithm that has existed since 1986\nSurface Nets: A smoothing algorithm from 2002 that is Slightly faster than Marching Cubes!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slow but very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
+nocubes.config.leavesMeshGenerator.tooltip=What algorithm renders leaves in your world\nOld NoCubes: The original renderer from NoCubes 0.3 by Click_Me\nMarching Cubes: The original smoothing algorithm that has existed since 1986\nSurface Nets: A smoothing algorithm from 2002 that is slightly faster and smoother than Marching Cubes!\nMarching Tetrahedra: A simple smoothing algorithm - Pretty slow but very straightforward to implement\n\nInteractive examples: https://wordsandbuttons.online/interactive_explanation_of_marching_cubes_and_dual_contouring.html
 
 nocubes.config.reloadChunksOnConfigChange=Re-Render Chunks on Config change
 nocubes.config.reloadChunksOnConfigChange.tooltip=If all chunks should be re-rendered when these settings change
 
-nocubes.config.smoothableBlockStates=Smoothable BlockStates
-nocubes.config.smoothableBlockStates.tooltip=Block States that the Mesh Generator will smooth
+nocubes.config.terrainSmoothableBlockStates=Terrain Smoothable BlockStates
+nocubes.config.terrainSmoothableBlockStates.tooltip=BlockStates that the Mesh Generator will smooth for terrain
+
+nocubes.config.leavesSmoothableBlockStates=Leaves Smoothable BlockStates
+nocubes.config.leavesSmoothableBlockStates.tooltip=BlockStates that the Mesh Generator will smooth for leaves rendering
+
+nocubes.config.smoothLeavesLevel=Smooth Leaves
+nocubes.config.smoothLeavesLevel.tooltip=How smooth leaves are rendered\nOFF: Do not smooth leaves\nTOGETHER: All leaves are rendered together in the same pass\nSEPARATE: Each leaves type is rendered in a separate pass. Pretty slow and performance intensive for not much visual gain.
 
 nocubes.config.approximateLighting=Approximate Lighting
 nocubes.config.approximateLighting.tooltip=If (approximated) lighting should be applied. If this is off, a constant light will be applied to all blocks
 
-nocubes.config.smoothLeavesSeparate=Smooth Leaves
-nocubes.config.smoothLeavesSeparate.tooltip=If leaves should be smoothed (separately from terrain)
+nocubes.config.smoothOtherBlocksAmount=[INDEV] Smooth Other Blocks Amount
+nocubes.config.smoothOtherBlocksAmount.tooltip=For testing. How much smoothable blocks should try and connect to non-smoothable blocks
 
 nocubes.config.extendLiquids=Extend Liquids
 nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rendered extended into smoothable blocks
@@ -25,25 +31,35 @@ nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rende
 nocubes.config.smoothBiomeColorTransitions=Smooth Biome Color Transitions
 nocubes.config.smoothBiomeColorTransitions.tooltip=If Biome color transitions (e.g. Swamp -> Plains) should be smoothed when
 
-nocubes.config.fluids.smoothFluidBiomeColorTransitions=Smooth Fluid Biome Color Transitions
-nocubes.config.fluids.smoothFluidBiomeColorTransitions.tooltip=If Biome color transitions (Swamp -> Plains) should be smoothed when rendering fluids
+# nocubes.config.fluids=Fluids
 
-nocubes.config.fluids.smoothFluidLighting=Smooth Fluid Lighting
-nocubes.config.fluids.smoothFluidLighting.tooltip=If Smooth Lighting should be applied when rendering fluids
+# nocubes.config.fluids.smoothFluidBiomeColorTransitions=Smooth Fluid Biome Color Transitions
+# nocubes.config.fluids.smoothFluidBiomeColorTransitions.tooltip=If Biome color transitions (Swamp -> Plains) should be smoothed when rendering fluids
 
-nocubes.config.fluids.naturalFluidTextures=Natural Fluid Textures
-nocubes.config.fluids.naturalFluidTextures.tooltip=If fluid textures should be randomly flipped and/or rotated to remove the gridlike pattern created by repeating blocks of the same type. (Doesn't look nice with shaders that add waves)
+# nocubes.config.fluids.smoothFluidLighting=Smooth Fluid Lighting
+# nocubes.config.fluids.smoothFluidLighting.tooltip=If Smooth Lighting should be applied when rendering fluids
 
-nocubes.config.offsetVertices=Offset Vertices
+# nocubes.config.fluids.naturalFluidTextures=Natural Fluid Textures
+# nocubes.config.fluids.naturalFluidTextures.tooltip=If fluid textures should be randomly flipped and/or rotated to remove the gridlike pattern created by repeating blocks of the same type. (Doesn't look nice with shaders that add waves)
+
+nocubes.config.offsetVertices=[UNSTABLE] Offset Vertices
 nocubes.config.offsetVertices.tooltip=If (pseudo) randomness should be applied to the mesh
+
+nocubes.config.enableCollisions=[INDEV] Offset Vertices
+nocubes.config.enableCollisions.tooltip=If accurate collisions should be calculated. Requires NoCubes to be installed on the server.
+
+nocubes.config.enablePools=[DEVELOPMENT] Enable Pools
+nocubes.config.enablePools.tooltip=If Object Pools should be used. Object Pools decrease the amount of objects used and should substantially improve performance on low-end machines. Disableable for testing. Note: These pools are optimised for Surface Nets.
 
 nocubes.config.overrideIsOpaqueCube=Override isOpaqueCube
 nocubes.config.overrideIsOpaqueCube.tooltip=Fixes issues with sides of blocks not being rendered, however makes everything render a tiny bit slower.
 
 key.categories.nocubes=NoCubes
 
-nocubes.key.toggleSmoothableBlockstate=Toggle Smoothable Blockstate
-nocubes.key.toggleSmoothableBlockstate.tooltip=(the block you are looking at)
+nocubes.key.toggleTerrainSmoothableBlockState=Toggle Terrain Smoothable BlockState
+nocubes.key.toggleLeavesSmoothableBlockState=Toggle Leaves Smoothable BlockState
+nocubes.key.toggleEnabled=Toggle NoCubes Enabled
+nocubes.key.toggleProfilers=[DEVELOPMENT] Toggle Profiling
 
-nocubes.addedSmoothableBlockstate=Added Smoothable
-nocubes.removedSmoothableBlockstate=Removed Smoothable
+nocubes.addedSmoothableBlockState=Added Smoothable
+nocubes.removedSmoothableBlockState=Removed Smoothable

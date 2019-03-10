@@ -1,12 +1,14 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingBlockFluidRenderer;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
@@ -29,15 +31,18 @@ public final class ClientProxy implements IProxy {
 	private static final int KEY_CODE_N = 49;
 	private static final int KEY_CODE_O = 24;
 	private static final int KEY_CODE_P = 25;
+	private static final int KEY_CODE_K = 37;
 
-	public static final KeyBinding toggleSmoothableBlockstate = new KeyBinding(MOD_ID + ".key.toggleSmoothableBlockstate", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories." + MOD_ID);
+	public static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KeyConflictContext.IN_GAME, KEY_CODE_N, "key.categories." + MOD_ID);
+	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", KeyConflictContext.IN_GAME, KEY_CODE_K, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleEnabled = new KeyBinding(MOD_ID + ".key.toggleEnabled", KeyConflictContext.IN_GAME, KEY_CODE_O, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KeyConflictContext.IN_GAME, KEY_CODE_P, "key.categories." + MOD_ID);
 
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
 	static {
-		ClientRegistry.registerKeyBinding(toggleSmoothableBlockstate);
+		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
+		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(toggleEnabled);
 		ClientRegistry.registerKeyBinding(toggleProfilers);
 	}
@@ -88,6 +93,26 @@ public final class ClientProxy implements IProxy {
 		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(fluidRenderer);
 		ObfuscationReflectionHelperCopy.setPrivateValue(BlockRendererDispatcher.class, blockRendererDispatcher, smoothLightingBlockFluidRenderer, "field_175025_e");
 		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
+	}
+
+	@Override
+	public void setupDecentGraphicsSettings() {
+		final GameSettings gameSettings = Minecraft.getMinecraft().gameSettings;
+		boolean needsResave = false;
+		if (gameSettings.ambientOcclusion < 1) {
+			NoCubes.NO_CUBES_LOG.info("Smooth lighting was off. EW! Just set it to MINIMAL");
+			gameSettings.ambientOcclusion = 1;
+			needsResave = true;
+		}
+		if (!gameSettings.fancyGraphics) {
+			NoCubes.NO_CUBES_LOG.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
+			gameSettings.fancyGraphics = true;
+			needsResave = true;
+		}
+		if (needsResave) {
+			gameSettings.saveOptions();
+			gameSettings.loadOptions();
+		}
 	}
 
 }

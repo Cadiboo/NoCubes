@@ -56,7 +56,7 @@ public abstract class BlockStateToast implements IToast {
 
 		@Override
 		public String getUpdateType() {
-			return MOD_ID + ".addedSmoothableBlockstate";
+			return MOD_ID + ".addedSmoothableBlockState";
 		}
 
 	}
@@ -69,7 +69,7 @@ public abstract class BlockStateToast implements IToast {
 
 		@Override
 		public String getUpdateType() {
-			return MOD_ID + ".removedSmoothableBlockstate";
+			return MOD_ID + ".removedSmoothableBlockState";
 		}
 
 	}
