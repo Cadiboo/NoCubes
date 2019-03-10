@@ -432,7 +432,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 
 			injectedInstructions.add(new LabelNode(new Label()));
 			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
-			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockStateContainer$StateImplementation", "block", "Lnet/minecraft/block/Block;"));
+			injectedInstructions.add(BlockStateContainer$StateImplementation_block());
 			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
 			injectedInstructions.add(new VarInsnNode(ALOAD, 1));
 			injectedInstructions.add(new VarInsnNode(ALOAD, 2));
