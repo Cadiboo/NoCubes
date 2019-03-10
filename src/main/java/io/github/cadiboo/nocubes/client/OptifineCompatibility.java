@@ -6,14 +6,13 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
-import static io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy.*;
+import static io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy.findMethod;
 
 /**
  * @author Cadiboo

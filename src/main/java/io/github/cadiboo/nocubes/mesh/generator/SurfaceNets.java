@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.FaceList;

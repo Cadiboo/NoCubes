@@ -1,11 +1,8 @@
 package io.github.cadiboo.nocubes.tempcompatibility;
 
 import com.ferreusveritas.dynamictrees.blocks.BlockRooty;
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.fml.common.Loader;
-
-import java.util.function.Supplier;
 
 /**
  * @author Cadiboo
