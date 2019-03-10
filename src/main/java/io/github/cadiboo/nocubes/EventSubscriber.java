@@ -21,4 +21,6 @@ public final class EventSubscriber {
 		world.addEventListener(new ModWorldEventListener());
 	}
 
+	//TODO: projectile impact event
+
 }
