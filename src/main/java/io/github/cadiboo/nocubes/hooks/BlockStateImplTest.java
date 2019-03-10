@@ -228,26 +228,39 @@ public class BlockStateImplTest implements IBlockState {
 	}
 
 	boolean runIsOpaqueCubeDefaultOnce = false;
+	boolean runGetCollisionBoundingBoxDefaultOnce = false;
+	boolean runAddCollisionBoxToListDefaultOnce = false;
 
 	@Override
 	public boolean isOpaqueCube() {
-		if (runIsOpaqueCubeDefaultOnce) {
-			runIsOpaqueCubeDefaultOnce = false;
-			if (NoCubes.isEnabled())
+		if (!runAddCollisionBoxToListDefaultOnce && NoCubes.areHooksEnabled()) {
 				return IsOpaqueCubeHook.isOpaqueCube(block, this);
 		}
+		runIsOpaqueCubeDefaultOnce = false;
+		// Or whatever code that other coremods have injected
 		return block.isOpaqueCube(this);
 	}
 
 	@Nullable
 	@Override
 	public AxisAlignedBB getCollisionBoundingBox(final IBlockAccess worldIn, final BlockPos pos) {
-		return null;
+		if (!runAddCollisionBoxToListDefaultOnce && NoCubes.areHooksEnabled()) {
+				return GetCollisionBoundingBoxHook.getCollisionBoundingBox(block, this, worldIn, pos);
+		}
+		runGetCollisionBoundingBoxDefaultOnce = false;
+		// Or whatever code that other coremods have injected
+		return block.getCollisionBoundingBox(this, worldIn, pos);
 	}
 
 	@Override
 	public void addCollisionBoxToList(final World worldIn, final BlockPos pos, final AxisAlignedBB entityBox, final List<AxisAlignedBB> collidingBoxes, @Nullable final Entity entityIn, final boolean p_185908_6_) {
-
+		if (!runAddCollisionBoxToListDefaultOnce && NoCubes.areHooksEnabled()) {
+			AddCollisionBoxToListHook.addCollisionBoxToList(block, this, worldIn, pos, entityBox, collidingBoxes, entityIn, p_185908_6_);
+			return;
+		}
+		runAddCollisionBoxToListDefaultOnce = false;
+		// Or whatever code that other coremods have injected
+		block.addCollisionBoxToList(this, worldIn, pos, entityBox, collidingBoxes, entityIn, p_185908_6_);
 	}
 
 	@Override
