@@ -158,6 +158,7 @@ public final class NoCubes {
 
 	@Mod.EventHandler
 	public void onPostInit(final FMLPostInitializationEvent event) {
+		//TODO FIXME
 		PROXY.setupDecentGraphicsSettings();
 		PROXY.replaceFluidRendererCauseImBored();
 	}
