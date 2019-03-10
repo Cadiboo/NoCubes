@@ -55,7 +55,6 @@ public class DensityCache extends XYZCache implements AutoCloseable {
 		return instances;
 	}
 
-
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();

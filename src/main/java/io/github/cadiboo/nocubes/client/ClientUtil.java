@@ -153,7 +153,6 @@ public final class ClientUtil {
 		}
 	}
 
-
 	@Nullable
 	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final long posRand, final IBakedModel model, final EnumFacing... facings) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModelQuadsFromFacings")) {
