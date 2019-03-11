@@ -1,9 +1,11 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec3;
 import io.github.cadiboo.nocubes.util.Vec3b;
 import net.minecraft.block.material.Material;
@@ -182,8 +184,12 @@ public class OldNoCubes implements IMeshGenerator {
 				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point, pooledMutableBlockPos)) {
 					point.y = (float) posY + 0.0002F; // + 0.0002F to prevent z-fighting
 				}
-			}
 
+				if (ModConfig.offsetVertices) {
+					// Offset point if it connects to a smoothable
+					ModUtil.offsetVertex(point);
+				}
+			}
 
 		}
 
