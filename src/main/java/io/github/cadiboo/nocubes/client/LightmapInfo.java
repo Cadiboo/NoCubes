@@ -54,7 +54,7 @@ public class LightmapInfo implements AutoCloseable {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateLightmapInfo")) {
 			switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
 				case 0:
-					return generateLightmapInfoFlat(v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
 				default:
 				case 1:
 					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
@@ -141,7 +141,7 @@ public class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoFlat(
-			final Vec3 v3,
+			final Vec3 v0,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
@@ -151,9 +151,9 @@ public class LightmapInfo implements AutoCloseable {
 			final int[] packedLightCacheArray
 	) {
 
-		final int v3XOffset = clamp(floor(v3.x) - renderChunkPositionX, 0, cachesSizeX - 1);
-		final int v3YOffset = clamp(floor(v3.y) - renderChunkPositionY, 0, cachesSizeY - 1);
-		final int v3ZOffset = clamp(floor(v3.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
+		final int v3XOffset = clamp(floor(v0.x) - renderChunkPositionX, 0, cachesSizeX - 1);
+		final int v3YOffset = clamp(floor(v0.y) - renderChunkPositionY, 0, cachesSizeY - 1);
+		final int v3ZOffset = clamp(floor(v0.z) - renderChunkPositionZ, 0, cachesSizeZ - 1);
 
 		final int[] packedLight3 = new int[27];
 
