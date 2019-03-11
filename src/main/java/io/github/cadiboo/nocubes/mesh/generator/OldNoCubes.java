@@ -184,13 +184,6 @@ public class OldNoCubes implements IMeshGenerator {
 				}
 			}
 
-			// Cadiboo Subtract the block's coordinates.
-			point.x -= (double) posX;
-			point.y -= (double) posY;
-			point.z -= (double) posZ;
-
-			// Add the block's relative coordinates
-			point.addOffset(relativePosX, relativePosY, relativePosZ);
 
 		}
 

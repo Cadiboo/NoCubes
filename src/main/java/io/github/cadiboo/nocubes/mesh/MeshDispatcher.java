@@ -33,6 +33,10 @@ public class MeshDispatcher {
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull final MeshGenerator meshGenerator
 	) {
+		if (meshGenerator == MeshGenerator.OldNoCubes) {
+			return generateChunkMeshOffsetOldNoCubes(chunkPos, blockAccess, isSmoothable);
+		}
+
 		final HashMap<Vec3b, FaceList> chunkData = generateChunkMeshUnOffset(chunkPos, blockAccess, isSmoothable, meshGenerator);
 		return offsetChunkMesh(chunkPos, chunkData);
 	}
@@ -51,10 +55,6 @@ public class MeshDispatcher {
 			@Nonnull MeshGenerator meshGenerator
 	) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMeshUnOffset")) {
-
-			if (meshGenerator == MeshGenerator.OldNoCubes) {
-				return generateChunkMeshUnOffsetOldNoCubes(chunkPos, blockAccess, isSmoothable);
-			}
 
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
@@ -107,7 +107,7 @@ public class MeshDispatcher {
 	}
 
 	@Nonnull
-	protected HashMap<Vec3b, FaceList> generateChunkMeshUnOffsetOldNoCubes(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	protected HashMap<Vec3b, FaceList> generateChunkMeshOffsetOldNoCubes(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 			return OldNoCubes.generateChunk(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos);
@@ -149,6 +149,11 @@ public class MeshDispatcher {
 	 */
 	@Nonnull
 	public FaceList generateBlockMeshOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
+
+		if (meshGenerator == MeshGenerator.OldNoCubes) {
+			return generateOffsetBlockOldNoCubes(pos, blockAccess, isSmoothable);
+		}
+
 		final FaceList chunkData = generateBlockMeshUnOffset(pos, blockAccess, isSmoothable, meshGenerator);
 
 		final int chunkPosX = (pos.getX() >> 4) << 4;
@@ -168,10 +173,6 @@ public class MeshDispatcher {
 	@Nonnull
 	public FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock")) {
-
-			if (meshGenerator == MeshGenerator.OldNoCubes) {
-				return generateUnOffsetBlockOldNoCubes(pos, blockAccess, isSmoothable);
-			}
 
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
@@ -230,7 +231,7 @@ public class MeshDispatcher {
 	}
 
 	@Nonnull
-	protected FaceList generateUnOffsetBlockOldNoCubes(@Nonnull final BlockPos blockPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	protected FaceList generateOffsetBlockOldNoCubes(@Nonnull final BlockPos blockPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 			return OldNoCubes.generateBlock(blockPos, blockAccess, isSmoothable, pooledMutableBlockPos);
