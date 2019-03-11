@@ -20,9 +20,4 @@ public final class ServerProxy implements IProxy {
 		// NOOP client only
 	}
 
-	@Override
-	public void setupDecentGraphicsSettings() {
-		// NOOP client only
-	}
-
 }

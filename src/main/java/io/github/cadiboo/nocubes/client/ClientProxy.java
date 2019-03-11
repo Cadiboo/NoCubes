@@ -8,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
@@ -93,26 +92,6 @@ public final class ClientProxy implements IProxy {
 		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(fluidRenderer);
 		ObfuscationReflectionHelperCopy.setPrivateValue(BlockRendererDispatcher.class, blockRendererDispatcher, smoothLightingBlockFluidRenderer, "field_175025_e");
 		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
-	}
-
-	@Override
-	public void setupDecentGraphicsSettings() {
-		final GameSettings gameSettings = Minecraft.getMinecraft().gameSettings;
-		boolean needsResave = false;
-		if (gameSettings.ambientOcclusion < 1) {
-			NoCubes.NO_CUBES_LOG.info("Smooth lighting was off. EW! Just set it to MINIMAL");
-			gameSettings.ambientOcclusion = 1;
-			needsResave = true;
-		}
-		if (!gameSettings.fancyGraphics) {
-			NoCubes.NO_CUBES_LOG.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
-			gameSettings.fancyGraphics = true;
-			needsResave = true;
-		}
-		if (needsResave) {
-			gameSettings.saveOptions();
-			gameSettings.loadOptions();
-		}
 	}
 
 }

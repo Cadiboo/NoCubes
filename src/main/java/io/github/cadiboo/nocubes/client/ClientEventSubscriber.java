@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.MathHelper;
@@ -37,6 +38,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
+import static net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
@@ -305,6 +307,25 @@ public final class ClientEventSubscriber {
 				s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
 				mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
 			}
+		}
+	}
+
+	@SubscribeEvent
+	public static void onClientConnectedToServerEvent(final ClientConnectedToServerEvent event) {
+		final GameSettings gameSettings = Minecraft.getMinecraft().gameSettings;
+		boolean needsResave = false;
+		if (gameSettings.ambientOcclusion < 1) {
+			NoCubes.NO_CUBES_LOG.info("Smooth lighting was off. EW! Just set it to MINIMAL");
+			gameSettings.ambientOcclusion = 1;
+			needsResave = true;
+		}
+		if (!gameSettings.fancyGraphics) {
+			NoCubes.NO_CUBES_LOG.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
+			gameSettings.fancyGraphics = true;
+			needsResave = true;
+		}
+		if (needsResave) {
+			gameSettings.saveOptions();
 		}
 	}
 

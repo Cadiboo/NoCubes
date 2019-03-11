@@ -11,6 +11,4 @@ public interface IProxy {
 
 	void replaceFluidRendererCauseImBored();
 
-	void setupDecentGraphicsSettings();
-
 }
