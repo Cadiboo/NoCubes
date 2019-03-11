@@ -194,9 +194,9 @@ public class OldNoCubes implements IMeshGenerator {
 			// Check if the point is intersecting with a smoothable block.
 			if (doesPointIntersectWithSmoothable(cache, point, isSmoothable, pooledMutableBlockPos)) {
 				if (pointIndex < 4 && doesPointBottomIntersectWithAir(cache, point, pooledMutableBlockPos)) {
-					point.y = (float) posY + 1.0F;
+					point.y = (float) posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
 				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point, pooledMutableBlockPos)) {
-					point.y = (float) posY + 0.0002F; // + 0.0002F to prevent z-fighting
+					point.y = (float) posY + 0.0001F; // + 0.0001F to prevent z-fighting
 				}
 
 				if (ModConfig.offsetVertices) {
