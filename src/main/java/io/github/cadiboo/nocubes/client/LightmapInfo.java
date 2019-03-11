@@ -116,10 +116,15 @@ public class LightmapInfo implements AutoCloseable {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					packedLight0[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
-					packedLight1[index] = packedLightCacheArray[(v1XOffset + xOffset) + cachesSizeX * ((v1YOffset + yOffset) + cachesSizeY * (v1ZOffset + zOffset))];
-					packedLight2[index] = packedLightCacheArray[(v2XOffset + xOffset) + cachesSizeX * ((v2YOffset + yOffset) + cachesSizeY * (v2ZOffset + zOffset))];
-					packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
+					try {
+						packedLight0[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
+						packedLight1[index] = packedLightCacheArray[(v1XOffset + xOffset) + cachesSizeX * ((v1YOffset + yOffset) + cachesSizeY * (v1ZOffset + zOffset))];
+						packedLight2[index] = packedLightCacheArray[(v2XOffset + xOffset) + cachesSizeX * ((v2YOffset + yOffset) + cachesSizeY * (v2ZOffset + zOffset))];
+						packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
+					} catch (ArrayIndexOutOfBoundsException e) {
+						e.addSuppressed(new Exception("Not the actual Exception (this only exists to show array size)! Array Size: " + packedLightCacheArray.length));
+						throw e;
+					}
 				}
 			}
 		}
