@@ -26,6 +26,16 @@ import java.util.HashMap;
  */
 public class OldNoCubes implements IMeshGenerator {
 
+	// Points order
+	public static final int X0Y0Z0 = 0;
+	public static final int X1Y0Z0 = 1;
+	public static final int X1Y0Z1 = 2;
+	public static final int X0Y0Z1 = 3;
+	public static final int X0Y1Z0 = 4;
+	public static final int X1Y1Z0 = 5;
+	public static final int X1Y1Z1 = 6;
+	public static final int X0Y1Z1 = 7;
+
 	@Nonnull
 	@Override
 	public HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions) {
@@ -90,43 +100,47 @@ public class OldNoCubes implements IMeshGenerator {
 				final Vec3 vertex2;
 				final Vec3 vertex3;
 
+				//0-3
+				//1-2
+				//0,0-1,0
+				//0,1-1,1
 				switch (facing) {
 					default:
 					case DOWN:
-						vertex0 = points[0];
-						vertex1 = points[1];
-						vertex2 = points[2];
-						vertex3 = points[3];
+						vertex0 = points[X0Y0Z1];
+						vertex1 = points[X0Y0Z0];
+						vertex2 = points[X1Y0Z0];
+						vertex3 = points[X1Y0Z1];
 						break;
 					case UP:
-						vertex0 = points[7];
-						vertex1 = points[6];
-						vertex2 = points[5];
-						vertex3 = points[4];
-						break;
-					case NORTH:
-						vertex0 = points[1];
-						vertex1 = points[0];
-						vertex2 = points[4];
+						vertex0 = points[4];
+						vertex1 = points[7];
+						vertex2 = points[6];
 						vertex3 = points[5];
 						break;
-					case SOUTH:
-						vertex0 = points[6];
-						vertex1 = points[7];
-						vertex2 = points[3];
-						vertex3 = points[2];
-						break;
-					case WEST:
-						vertex0 = points[0];
-						vertex1 = points[3];
-						vertex2 = points[7];
+					case NORTH:
+						vertex0 = points[5];
+						vertex1 = points[1];
+						vertex2 = points[0];
 						vertex3 = points[4];
 						break;
-					case EAST:
-						vertex0 = points[5];
-						vertex1 = points[6];
+					case SOUTH:
+						vertex0 = points[7];
+						vertex1 = points[3];
 						vertex2 = points[2];
-						vertex3 = points[1];
+						vertex3 = points[6];
+						break;
+					case WEST:
+						vertex0 = points[4];
+						vertex1 = points[0];
+						vertex2 = points[3];
+						vertex3 = points[7];
+						break;
+					case EAST:
+						vertex0 = points[6];
+						vertex1 = points[2];
+						vertex2 = points[1];
+						vertex3 = points[5];
 						break;
 				}
 
