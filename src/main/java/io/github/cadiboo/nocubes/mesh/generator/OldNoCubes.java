@@ -161,7 +161,7 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	@Nullable
-	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess cache, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		if (!isSmoothable.isSmoothable(state)) {
 			return null;
@@ -187,21 +187,18 @@ public class OldNoCubes implements IMeshGenerator {
 			final Vec3 point = points[pointIndex];
 
 			// Give the point the block's coordinates.
-			point.x += (double) posX;
-			point.y += (double) posY;
-			point.z += (double) posZ;
+			point.x += posX;
+			point.y += posY;
+			point.z += posZ;
 
-			// Check if the point is intersecting with a smoothable block.
-			if (doesPointIntersectWithSmoothable(cache, point, isSmoothable, pooledMutableBlockPos)) {
-				if (pointIndex < 4 && doesPointBottomIntersectWithAir(cache, point, pooledMutableBlockPos)) {
-					point.y = (float) posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-				} else if (pointIndex >= 4 && doesPointTopIntersectWithAir(cache, point, pooledMutableBlockPos)) {
-					point.y = (float) posY + 0.0001F; // + 0.0001F to prevent z-fighting
+			if (!doesPointIntersectWithManufactured(blockAccess, point, pooledMutableBlockPos)) {
+				if ((pointIndex < 4) && (doesPointBottomIntersectWithAir(blockAccess, point, pooledMutableBlockPos))) {
+					point.y = posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
+				} else if ((pointIndex >= 4) && (doesPointTopIntersectWithAir(blockAccess, point, pooledMutableBlockPos))) {
+					point.y = posY + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
 				}
-
 				if (ModConfig.offsetVertices) {
-					// Offset point if it connects to a smoothable
-					ModUtil.offsetVertex(point);
+					givePointRoughness(point);
 				}
 			}
 
@@ -211,96 +208,94 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	/**
+	 * Click_Me's equivalent of our ModUtil.offsetVertex
+	 */
+	@Nonnull
+	public static Vec3 givePointRoughness(@Nonnull final Vec3 point) {
+		long i = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
+
+		i = i * i * 42317861L + i * 11L;
+		point.x += ((float) (i >> 16 & 0xF) / 15.0F - 0.5F) * 0.5F;
+		point.y += ((float) (i >> 20 & 0xF) / 15.0F - 0.5F) * 0.5F;
+		point.z += ((float) (i >> 24 & 0xF) / 15.0F - 0.5F) * 0.5F;
+		return point;
+	}
+
+	/**
 	 * Check if the state is AIR or PLANT or VINE
 	 *
 	 * @param state the state
 	 * @return if the state is AIR or PLANT or VINE
 	 */
-	public static boolean isBlockAirOrPlant(IBlockState state) {
+	public static boolean isBlockAirOrPlant(@Nonnull final IBlockState state) {
 		Material material = state.getMaterial();
-		return material == Material.AIR || material == Material.PLANTS || material == Material.VINE;
+		return (material == Material.AIR) || (material == Material.PLANTS) || (material == Material.VINE);
 	}
 
 	/**
 	 * Check if the block's top side intersects with air.
 	 *
-	 * @param world                 the world
-	 * @param point                 the point
-	 * @param pooledMutableBlockPos
+	 * @param world                 the world to use
+	 * @param point                 the point to use
+	 * @param pooledMutableBlockPos the pooled mutable pos to use
 	 * @return if the block's top side intersects with air.
 	 */
 	public static boolean doesPointTopIntersectWithAir(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		boolean intersects = false;
-
-		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.x - (double) (i & 1));
-			int z1 = (int) (point.z - (double) (i >> 1 & 1));
+		for (int i = 0; i < 4; i++) {
+			int x1 = (int) (point.x - (i & 0x1));
+			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1)))) {
 				return false;
 			}
-
 			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1)))) {
 				intersects = true;
 			}
 		}
-
 		return intersects;
 	}
 
 	/**
 	 * Check if the block's bottom side intersects with air.
 	 *
-	 * @param world                 the world
-	 * @param point                 the point
-	 * @param pooledMutableBlockPos
+	 * @param world                 the world to use
+	 * @param point                 the point to use
+	 * @param pooledMutableBlockPos the pooled mutable pos to use
 	 * @return if the block's bottom side intersects with air.
 	 */
 	public static boolean doesPointBottomIntersectWithAir(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		boolean intersects = false;
 		boolean notOnly = false;
-
-		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.x - (double) (i & 1));
-			int z1 = (int) (point.z - (double) (i >> 1 & 1));
+		for (int i = 0; i < 4; i++) {
+			int x1 = (int) (point.x - (i & 0x1));
+			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1)))) {
 				return false;
 			}
-
 			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y + 1, z1)))) {
 				notOnly = true;
 			}
-
 			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1)))) {
 				intersects = true;
 			}
 		}
-
-		return intersects && notOnly;
+		return (intersects) && (notOnly);
 	}
 
-	/**
-	 * Check if the point is intersecting with a smoothable block.
-	 *
-	 * @param world        the world
-	 * @param point        the point
-	 * @param isSmoothable the smoothable function
-	 * @return if the point is intersecting with a smoothable block.
-	 */
-	public static boolean doesPointIntersectWithSmoothable(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
-		for (int i = 0; i < 4; ++i) {
-			int x1 = (int) (point.x - (float) (i & 1));
-			int z1 = (int) (point.y - (float) (i >> 1 & 1));
-			IBlockState block = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if (!isBlockAirOrPlant(block) && !isSmoothable.isSmoothable(block)) {
-				return false;
+	public static boolean doesPointIntersectWithManufactured(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+		for (int i = 0; i < 4; i++) {
+			int x1 = (int) (point.x - (i & 0x1));
+			int z1 = (int) (point.z - (i >> 1 & 0x1));
+			IBlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
+			if ((!isBlockAirOrPlant(state0)) && (!ModUtil.shouldSmoothTerrain(state0))) {
+				return true;
 			}
-
-			IBlockState block1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if (!isBlockAirOrPlant(block1) && !isSmoothable.isSmoothable(block1)) {
-				return false;
+			IBlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
+			if ((!isBlockAirOrPlant(state1)) && (!ModUtil.shouldSmoothTerrain(state1))) {
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 }
