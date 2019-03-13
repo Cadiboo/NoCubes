@@ -54,7 +54,8 @@ public class MeshDispatcher {
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull MeshGenerator meshGenerator
 	) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMeshUnOffset")) {
+//		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMeshUnOffset"))
+		{
 
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
@@ -98,8 +99,12 @@ public class MeshDispatcher {
 		final int chunkPosZ = chunkPos.getZ();
 
 		try (final StateCache stateCache = generateMeshStateCache(chunkPosX, chunkPosY, chunkPosZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
+			NoCubes.getProfiler().start("generateMeshChunkSmoothableCache");
 			try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
+				NoCubes.getProfiler().end();
+				NoCubes.getProfiler().start("generateMeshChunkDensityCache");
 				try (final DensityCache densityCache = CacheUtil.generateDensityCache(chunkPosX, chunkPosY, chunkPosZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
+					NoCubes.getProfiler().end();
 					return meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 				}
 			}
@@ -123,22 +128,24 @@ public class MeshDispatcher {
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		// Density takes +1 block on every negative axis into account so we need to start at -1 block
-		final int cacheStartPosX = startPosX - 1;
-		final int cacheStartPosY = startPosY - 1;
-		final int cacheStartPosZ = startPosZ - 1;
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateMeshStateCache")) {
+			// Density takes +1 block on every negative axis into account so we need to start at -1 block
+			final int cacheStartPosX = startPosX - 1;
+			final int cacheStartPosY = startPosY - 1;
+			final int cacheStartPosZ = startPosZ - 1;
 
-		// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
-		final int cacheSizeX = meshSizeX + 1;
-		final int cacheSizeY = meshSizeY + 1;
-		final int cacheSizeZ = meshSizeZ + 1;
+			// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
+			final int cacheSizeX = meshSizeX + 1;
+			final int cacheSizeY = meshSizeY + 1;
+			final int cacheSizeZ = meshSizeZ + 1;
 
-		return CacheUtil.generateStateCache(
-				cacheStartPosX, cacheStartPosY, cacheStartPosZ,
-				cacheSizeX, cacheSizeY, cacheSizeZ,
-				blockAccess,
-				pooledMutableBlockPos
-		);
+			return CacheUtil.generateStateCache(
+					cacheStartPosX, cacheStartPosY, cacheStartPosZ,
+					cacheSizeX, cacheSizeY, cacheSizeZ,
+					blockAccess,
+					pooledMutableBlockPos
+			);
+		}
 	}
 
 	/**
@@ -197,9 +204,15 @@ public class MeshDispatcher {
 				final byte meshSizeY = 2;
 				final byte meshSizeZ = 2;
 
+				ignored.start("generateMeshBlockStateCache");
 				try (final StateCache stateCache = generateMeshStateCache(posX, posY, posZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
+					ignored.end();
+					ignored.start("generateMeshBlockSmoothableCache");
 					try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
+						ignored.end();
+						ignored.start("generateMeshBlockDensityCache");
 						try (final DensityCache densityCache = CacheUtil.generateDensityCache(posX, posY, posZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
+							ignored.end();
 							final float[] neighbourDensityGrid = generateNeighbourDensityGrid(densityCache);
 							return meshGenerator.generateBlock(posRelativeToChunk, neighbourDensityGrid);
 						}

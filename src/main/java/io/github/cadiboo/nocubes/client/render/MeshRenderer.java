@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
+import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.config.ModConfig;
@@ -57,10 +58,12 @@ public class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final PackedLightCache pooledPackedLightCache
 	) {
-		try (ModProfiler ignored = NoCubes.getProfiler().start("renderChunkMeshes")) {
+//		try (ModProfiler ignored = NoCubes.getProfiler().start("renderChunkMeshes"))
+		{
 			//normal terrain
 			{
-				try (ModProfiler ignored1 = NoCubes.getProfiler().start("renderNormalTerrain")) {
+//				try (ModProfiler ignored1 = NoCubes.getProfiler().start("renderNormalTerrain"))
+				{
 					renderMesh(
 							renderChunk,
 							generator,
@@ -82,7 +85,8 @@ public class MeshRenderer {
 				case SEPARATE:
 					try {
 						for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
-							try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState)) {
+//							try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState))
+							{
 								final IIsSmoothable isSmoothable = (checkState) -> checkState == smoothableState;
 								renderMesh(
 										renderChunk,
@@ -106,7 +110,8 @@ public class MeshRenderer {
 					}
 					break;
 				case TOGETHER:
-					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves")) {
+//					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeavesTogether"))
+					{
 						renderMesh(
 								renderChunk,
 								generator,
@@ -147,7 +152,8 @@ public class MeshRenderer {
 			final boolean renderOppositeSides
 	) {
 
-		try (final ModProfiler profiler = NoCubes.getProfiler().start("renderMesh")) {
+//		try (final ModProfiler profiler = NoCubes.getProfiler().start("renderMesh"))
+		{
 
 //			final Random random = new Random();
 
@@ -159,7 +165,7 @@ public class MeshRenderer {
 							continue;
 						}
 
-						profiler.start("prepareRenderFaces");
+						NoCubes.getProfiler().start("prepareRenderFaces");
 
 						final int initialPosX = renderChunkPositionX + pos.x;
 						final int initialPosY = renderChunkPositionY + pos.y;
@@ -183,7 +189,7 @@ public class MeshRenderer {
 						final BlockPos texturePos = texturePosAndState.getFirst();
 						final IBlockState textureState = texturePosAndState.getSecond();
 
-						profiler.end();
+						NoCubes.getProfiler().end();
 
 						try {
 							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledPackedLightCache, usedBlockRenderLayers, renderOppositeSides, faces, texturePos, textureState);
@@ -224,15 +230,26 @@ public class MeshRenderer {
 			final IBlockState textureState
 	) {
 
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces")) {
+//		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces"))
+		{
 
-			BakedQuad quad = ClientUtil.getQuadFromFacingsOrdered(textureState.getActualState(blockAccess, texturePos), texturePos, blockRendererDispatcher);
+			//TODO: use Event?
+			final BlockRenderLayer blockRenderLayer = getCorrectRenderLayer(textureState);
+			final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+			usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
+
+			NoCubes.getProfiler().start("getQuad");
+//			BakedQuad quad = ClientUtil.getQuadFromFacingsOrdered(textureState.getActualState(blockAccess, texturePos), texturePos, blockRendererDispatcher);
+			BakedQuad quad = ModelHelper.getQuad(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
 			if (quad == null) {
 				NoCubes.NO_CUBES_LOG.warn("Got null quad for " + textureState.getBlock() + " at " + texturePos);
 				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, 0L).get(0);
 			}
+			NoCubes.getProfiler().end();
 
 			// Quads are packed xyz|argb|u|v|ts
+			NoCubes.getProfiler().start("getUVs");
 
 			final int formatSize = quad.getFormat().getIntegerSize();
 
@@ -244,6 +261,7 @@ public class MeshRenderer {
 			final float v2v = Float.intBitsToFloat(quad.getVertexData()[formatSize * 2 + 5]);
 			final float v3u = Float.intBitsToFloat(quad.getVertexData()[formatSize * 3 + 4]);
 			final float v3v = Float.intBitsToFloat(quad.getVertexData()[formatSize * 3 + 5]);
+			NoCubes.getProfiler().end();
 
 			final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
 			final int alpha = 0xFF;
@@ -284,12 +302,6 @@ public class MeshRenderer {
 				green3 = green0;
 				blue3 = blue0;
 			}
-
-			//TODO: use Event?
-			final BlockRenderLayer blockRenderLayer = getCorrectRenderLayer(textureState);
-			final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-			usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
 
 			OptifineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
 

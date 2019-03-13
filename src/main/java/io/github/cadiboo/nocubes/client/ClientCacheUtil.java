@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.util.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.optifine.DynamicLights;
 
 import javax.annotation.Nonnull;
 
@@ -34,8 +35,13 @@ public final class ClientCacheUtil {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
 						packedLightCacheArray[index] = stateCacheArray[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(cache, pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
-//						pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z);
-//						packedLightCacheArray[index] = cache.getCombinedLight(pooledMutableBlockPos, stateCacheArray[stateCache.getIndex(x, y, z)].getBlock().getLightValue(null));
+//						try {
+//							pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z);
+//							packedLightCacheArray[index] = cache.getCombinedLight(pooledMutableBlockPos, stateCacheArray[stateCache.getIndex(x, y, z)].getBlock().getLightValue(null));
+//							packedLightCacheArray[index] = DynamicLights.getCombinedLight(pooledMutableBlockPos, 0);
+//						} catch (Exception e) {
+//							e.printStackTrace();
+//						}
 					}
 				}
 			}

@@ -49,12 +49,13 @@ public final class CacheUtil {
 			final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
+			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x) {
-						smoothableCacheArray[index] = isStateSmoothable.isSmoothable(stateCache.getStateCache()[index]);
-						index++;
+					for (int x = 0; x < cacheSizeX; ++x, ++index) {
+						smoothableCacheArray[index] = isStateSmoothable.isSmoothable(stateCacheArray[index]);
 					}
 				}
 			}
