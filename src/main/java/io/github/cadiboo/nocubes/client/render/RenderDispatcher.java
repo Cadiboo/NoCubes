@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
@@ -222,7 +223,7 @@ public class RenderDispatcher {
 
 			final IBlockState state = event.getBlockState();
 			event.setCanceled(
-					TERRAIN_SMOOTHABLE.isSmoothable(state) || LEAVES_SMOOTHABLE.isSmoothable(state)
+					TERRAIN_SMOOTHABLE.isSmoothable(state) || (ModConfig.smoothLeavesLevel != SmoothLeavesLevel.OFF && LEAVES_SMOOTHABLE.isSmoothable(state))
 			);
 		} catch (ReportedException e) {
 			throw e;
