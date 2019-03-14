@@ -239,14 +239,14 @@ public class MeshRenderer {
 			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
 			usedBlockRenderLayers[blockRenderLayerOrdinal] = true;
 
-			NoCubes.getProfiler().start("getQuad");
+//			NoCubes.getProfiler().start("getQuad");
 //			BakedQuad quad = ClientUtil.getQuadFromFacingsOrdered(textureState.getActualState(blockAccess, texturePos), texturePos, blockRendererDispatcher);
 			BakedQuad quad = ModelHelper.getQuad(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
 			if (quad == null) {
 				NoCubes.NO_CUBES_LOG.warn("Got null quad for " + textureState.getBlock() + " at " + texturePos);
 				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, 0L).get(0);
 			}
-			NoCubes.getProfiler().end();
+//			NoCubes.getProfiler().end();
 
 			// Quads are packed xyz|argb|u|v|ts
 			NoCubes.getProfiler().start("getUVs");
