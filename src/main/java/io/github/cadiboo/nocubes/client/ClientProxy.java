@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingBlockFluidRenderer;
 import io.github.cadiboo.nocubes.util.IProxy;
-import io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy;
+import io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;

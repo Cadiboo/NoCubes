@@ -1,34 +1,36 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util.pooled.cache;
+
+import net.minecraft.block.state.IBlockState;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-public class DensityCache extends XYZCache implements AutoCloseable {
+public class StateCache extends XYZCache implements AutoCloseable {
 
 	private static int instances = 0;
 
 	@Nonnull
-	private float[] cache;
+	private IBlockState[] cache;
 
-	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0));
+	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
 
-	private DensityCache(final int sizeX, final int sizeY, final int sizeZ) {
+	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		cache = new float[sizeX * sizeY * sizeZ];
+		cache = new IBlockState[sizeX * sizeY * sizeZ];
 		++instances;
 	}
 
 	@Nonnull
-	public float[] getDensityCache() {
+	public IBlockState[] getStateCache() {
 		return cache;
 	}
 
 	@Nonnull
-	public static DensityCache retain(final int sizeX, final int sizeY, final int sizeZ) {
+	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
-		final DensityCache pooled = POOL.get();
+		final StateCache pooled = POOL.get();
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -41,7 +43,7 @@ public class DensityCache extends XYZCache implements AutoCloseable {
 		final int size = sizeX * sizeY * sizeZ;
 
 		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-			pooled.cache = new float[size];
+			pooled.cache = new IBlockState[size];
 		}
 
 		return pooled;

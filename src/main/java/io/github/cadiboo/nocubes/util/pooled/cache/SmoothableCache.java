@@ -1,36 +1,34 @@
-package io.github.cadiboo.nocubes.util;
-
-import net.minecraft.block.state.IBlockState;
+package io.github.cadiboo.nocubes.util.pooled.cache;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-public class StateCache extends XYZCache implements AutoCloseable {
+public class SmoothableCache extends XYZCache implements AutoCloseable {
 
 	private static int instances = 0;
 
 	@Nonnull
-	private IBlockState[] cache;
+	private boolean[] cache;
 
-	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
+	private static final ThreadLocal<SmoothableCache> POOL = ThreadLocal.withInitial(() -> new SmoothableCache(0, 0, 0));
 
-	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
+	private SmoothableCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		cache = new IBlockState[sizeX * sizeY * sizeZ];
+		cache = new boolean[sizeX * sizeY * sizeZ];
 		++instances;
 	}
 
 	@Nonnull
-	public IBlockState[] getStateCache() {
+	public boolean[] getSmoothableCache() {
 		return cache;
 	}
 
 	@Nonnull
-	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
+	public static SmoothableCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
-		final StateCache pooled = POOL.get();
+		final SmoothableCache pooled = POOL.get();
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -43,7 +41,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 		final int size = sizeX * sizeY * sizeZ;
 
 		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-			pooled.cache = new IBlockState[size];
+			pooled.cache = new boolean[size];
 		}
 
 		return pooled;

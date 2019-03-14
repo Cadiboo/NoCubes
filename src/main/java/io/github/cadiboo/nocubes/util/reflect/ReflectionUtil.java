@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util.reflect;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.crash.CrashReport;

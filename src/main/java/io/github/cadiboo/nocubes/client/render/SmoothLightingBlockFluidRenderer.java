@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;

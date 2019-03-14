@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.hooks;
 
-import io.github.cadiboo.nocubes.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockStateContainer.StateImplementation;

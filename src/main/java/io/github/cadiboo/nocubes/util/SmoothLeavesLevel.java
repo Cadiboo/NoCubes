@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes;
+package io.github.cadiboo.nocubes.util;
 
 /**
  * @author Cadiboo

@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.FaceList;
-import io.github.cadiboo.nocubes.util.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

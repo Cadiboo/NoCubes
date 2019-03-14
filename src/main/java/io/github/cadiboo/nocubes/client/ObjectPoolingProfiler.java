@@ -1,13 +1,13 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.DensityCache;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.FaceList;
-import io.github.cadiboo.nocubes.util.SmoothableCache;
-import io.github.cadiboo.nocubes.util.StateCache;
-import io.github.cadiboo.nocubes.util.Vec3;
-import io.github.cadiboo.nocubes.util.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

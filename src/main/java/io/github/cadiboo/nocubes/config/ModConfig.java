@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.config;
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.SmoothLeavesLevel;
+import io.github.cadiboo.nocubes.util.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;

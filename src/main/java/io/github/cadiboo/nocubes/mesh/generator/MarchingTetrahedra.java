@@ -1,10 +1,10 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.FaceList;
-import io.github.cadiboo.nocubes.util.Vec3;
-import io.github.cadiboo.nocubes.util.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;

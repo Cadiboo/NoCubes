@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util.pooled;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
 

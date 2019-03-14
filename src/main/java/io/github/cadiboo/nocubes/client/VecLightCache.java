@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.XYZCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 
 import javax.annotation.Nonnull;
 

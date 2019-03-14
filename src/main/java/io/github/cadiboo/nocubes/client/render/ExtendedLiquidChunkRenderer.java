@@ -2,11 +2,11 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.SmoothableCache;
-import io.github.cadiboo.nocubes.util.StateCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;

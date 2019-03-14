@@ -1,8 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.OptifineCompatibility.BlockModelCustomizer;
-import io.github.cadiboo.nocubes.client.OptifineCompatibility.BufferBuilderOF;
 import io.github.cadiboo.nocubes.tempcompatibility.DynamicTreesCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import net.minecraft.block.BlockGrass;
@@ -24,6 +22,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.BlockModelCustomizer;
+import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.BufferBuilderOF;
+import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.OPTIFINE_INSTALLED;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -117,7 +118,7 @@ public class ModelHelper {
 
 		Object renderEnv = null;
 
-		if (OptifineCompatibility.OPTIFINE_INSTALLED) {
+		if (OPTIFINE_INSTALLED) {
 //		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(blockAccess, state, pos);
 			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
 
@@ -132,7 +133,7 @@ public class ModelHelper {
 				continue;
 			}
 
-			if (OptifineCompatibility.OPTIFINE_INSTALLED) {
+			if (OPTIFINE_INSTALLED) {
 				try (final ModProfiler ignored = NoCubes.getProfiler().start("getRenderQuads")) {
 					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
 					if (quads.isEmpty()) {

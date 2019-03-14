@@ -1,34 +1,34 @@
-package io.github.cadiboo.nocubes.util;
+package io.github.cadiboo.nocubes.util.pooled.cache;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-public class SmoothableCache extends XYZCache implements AutoCloseable {
+public class DensityCache extends XYZCache implements AutoCloseable {
 
 	private static int instances = 0;
 
 	@Nonnull
-	private boolean[] cache;
+	private float[] cache;
 
-	private static final ThreadLocal<SmoothableCache> POOL = ThreadLocal.withInitial(() -> new SmoothableCache(0, 0, 0));
+	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0));
 
-	private SmoothableCache(final int sizeX, final int sizeY, final int sizeZ) {
+	private DensityCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		cache = new boolean[sizeX * sizeY * sizeZ];
+		cache = new float[sizeX * sizeY * sizeZ];
 		++instances;
 	}
 
 	@Nonnull
-	public boolean[] getSmoothableCache() {
+	public float[] getDensityCache() {
 		return cache;
 	}
 
 	@Nonnull
-	public static SmoothableCache retain(final int sizeX, final int sizeY, final int sizeZ) {
+	public static DensityCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
-		final SmoothableCache pooled = POOL.get();
+		final DensityCache pooled = POOL.get();
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -41,7 +41,7 @@ public class SmoothableCache extends XYZCache implements AutoCloseable {
 		final int size = sizeX * sizeY * sizeZ;
 
 		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-			pooled.cache = new boolean[size];
+			pooled.cache = new float[size];
 		}
 
 		return pooled;

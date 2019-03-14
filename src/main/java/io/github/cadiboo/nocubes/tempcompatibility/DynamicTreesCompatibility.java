@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.tempcompatibility;
 
-import io.github.cadiboo.nocubes.util.ObfuscationReflectionHelperCopy;
+import io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.fml.common.Loader;

@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.client.Minecraft;
 
 import javax.annotation.Nonnull;

@@ -1,11 +1,12 @@
-package io.github.cadiboo.nocubes;
+package io.github.cadiboo.nocubes.collision;
 
 import com.google.common.collect.ImmutableList;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.FaceList;
-import io.github.cadiboo.nocubes.util.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -23,13 +24,15 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static java.lang.Math.max;
 
 /**
+ * This is 95% coppied from Repose
+ *
  * @author Cadiboo
  */
 @SuppressWarnings({
 		"unused", // Hooks get invoked by ASM redirects
 		"weakerAccess" // Hooks need to be public to be invoked
 })
-public class CollisionHandler {
+public final class CollisionHandler {
 
 	private enum Direction {
 

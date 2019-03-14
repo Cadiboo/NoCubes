@@ -5,9 +5,9 @@ import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
-import io.github.cadiboo.nocubes.util.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 
 import java.util.HashMap;
 
