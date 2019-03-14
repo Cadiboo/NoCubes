@@ -108,21 +108,26 @@ public final class CacheUtil {
 			@Nonnull final IBlockAccess cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
+		final int cacheSizeX = smoothableCache.sizeX;
+		final int cacheSizeY = smoothableCache.sizeY;
+		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
+		final IBlockState[] stateCacheArray = stateCache.getStateCache();
+
 		float density = 0;
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {
 			for (int yOffset = 0; yOffset < 2; ++yOffset) {
 				for (int xOffset = 0; xOffset < 2; ++xOffset) {
 
 					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					final int index = (posX + xOffset) + smoothableCache.sizeX * ((posY + yOffset) + smoothableCache.sizeY * (posZ + zOffset));
+					final int index = (posX + xOffset) + cacheSizeX * ((posY + yOffset) + cacheSizeY * (posZ + zOffset));
 
-					pooledMutableBlockPos.setPos(
-							startPosX + posX - xOffset,
-							startPosY + posY - yOffset,
-							startPosZ + posZ - zOffset
-					);
+//					pooledMutableBlockPos.setPos(
+//							startPosX + posX - xOffset,
+//							startPosY + posY - yOffset,
+//							startPosZ + posZ - zOffset
+//					);
 
-					density += ModUtil.getIndividualBlockDensity(smoothableCache.getSmoothableCache()[index], stateCache.getStateCache()[index], cache, pooledMutableBlockPos);
+					density += ModUtil.getIndividualBlockDensity(!smoothableCacheArray[index], stateCacheArray[index], cache, pooledMutableBlockPos);
 				}
 			}
 		}
