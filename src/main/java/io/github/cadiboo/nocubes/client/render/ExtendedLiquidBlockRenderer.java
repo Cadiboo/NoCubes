@@ -100,13 +100,13 @@ public class ExtendedLiquidBlockRenderer {
 					fluidHeightES -= 0.001F;
 					fluidHeightE -= 0.001F;
 //					fluidRenderer.renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite);
-					renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite, fluidRenderer, renderPos);
+					renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, isLava, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite, fluidRenderer, renderPos, redFloat);
 				}
 
 				if (shouldBottomBeRendered) {
 					wasAnythingRendered = true;
 //					fluidRenderer.renderBottom(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, atextureatlassprite, posX, posY, posZ);
-					fluidRenderer.renderBottom(blockAccess, blockStateIn, renderPos, bufferBuilderIn, atextureatlassprite, posX, posY, posZ);
+					fluidRenderer.renderBottom(blockAccess, blockStateIn, renderPos, bufferBuilderIn, atextureatlassprite, posX, posY, posZ, isLava);
 				}
 
 				for (int horiontalIndex = 0; horiontalIndex < 4; ++horiontalIndex) {
@@ -186,25 +186,58 @@ public class ExtendedLiquidBlockRenderer {
 						float v1 = textureatlassprite1.getInterpolatedV((double) ((1.0F - yAdd0) * 16.0F * 0.5F));
 						float v2 = textureatlassprite1.getInterpolatedV(8.0D);
 
-						// Nope, not dealing with smooth side lighting.
-						int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos);
-						int skylight = packedLight >> 16 & 65535;
-						int blocklight = packedLight & 65535;
+						final int skylightX0Z0;
+						final int blocklightX0Z0;
+						final int skylightX0Y0Z0;
+						final int blocklightX0Y0Z0;
+						final int skylightX1Z1;
+						final int blocklightX1Z1;
+						final int skylightX1Y0Z1;
+						final int blocklightX1Y0Z1;
+
+						if (!isLava && isSmoothFluidLightingEnabled()) {
+							final int packedLightX0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, yAdd0, posZ0 - posZ));
+							final int packedLightX0Y0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, 0, posZ0 - posZ));
+							final int packedLightX1Z1 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX1 - posX, yAdd0, posZ1 - posZ));
+							final int packedLightX1Y0Z1 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX1 - posX, 0, posZ1 - posZ));
+
+							skylightX0Z0 = packedLightX0Z0 >> 16 & 65535;
+							blocklightX0Z0 = packedLightX0Z0 & 65535;
+							skylightX0Y0Z0 = packedLightX0Y0Z0 >> 16 & 65535;
+							blocklightX0Y0Z0 = packedLightX0Y0Z0 & 65535;
+							skylightX1Z1 = packedLightX1Z1 >> 16 & 65535;
+							blocklightX1Z1 = packedLightX1Z1 & 65535;
+							skylightX1Y0Z1 = packedLightX1Y0Z1 >> 16 & 65535;
+							blocklightX1Y0Z1 = packedLightX1Y0Z1 & 65535;
+						} else {
+							int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos);
+							int skylight = packedLight >> 16 & 65535;
+							int blocklight = packedLight & 65535;
+
+							skylightX0Z0 = skylight;
+							blocklightX0Z0 = blocklight;
+							skylightX0Y0Z0 = skylight;
+							blocklightX0Y0Z0 = blocklight;
+							skylightX1Z1 = skylight;
+							blocklightX1Z1 = blocklight;
+							skylightX1Y0Z1 = skylight;
+							blocklightX1Y0Z1 = blocklight;
+						}
 
 						float diffuseLighting = horiontalIndex < 2 ? 0.8F : 0.6F;
 						float red = 1.0F * diffuseLighting * redFloat;
 						float green = 1.0F * diffuseLighting * greenFloat;
 						float blue = 1.0F * diffuseLighting * blueFloat;
-						bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylight, blocklight).endVertex();
-						bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
-						bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
-						bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
+						bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylightX0Z0, blocklightX0Z0).endVertex();
+						bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylightX1Z1, blocklightX1Z1).endVertex();
+						bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylightX1Y0Z1, blocklightX1Y0Z1).endVertex();
+						bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylightX0Y0Z0, blocklightX0Y0Z0).endVertex();
 
 						if (textureatlassprite1 != fluidRenderer.atlasSpriteWaterOverlay) {
-							bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylight, blocklight).endVertex();
-							bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylight, blocklight).endVertex();
-							bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylight, blocklight).endVertex();
-							bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylight, blocklight).endVertex();
+							bufferBuilderIn.pos(posX0, posY + 0.0D, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v2).lightmap(skylightX0Y0Z0, blocklightX0Y0Z0).endVertex();
+							bufferBuilderIn.pos(posX1, posY + 0.0D, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v2).lightmap(skylightX1Y0Z1, blocklightX1Y0Z1).endVertex();
+							bufferBuilderIn.pos(posX1, posY + (double) yAdd0, posZ1).color(red, green, blue, 1.0F).tex((double) u1, (double) v1).lightmap(skylightX1Z1, blocklightX1Z1).endVertex();
+							bufferBuilderIn.pos(posX0, posY + (double) yAdd1, posZ0).color(red, green, blue, 1.0F).tex((double) u0, (double) v0).lightmap(skylightX0Z0, blocklightX0Z0).endVertex();
 						}
 					}
 				}
@@ -216,7 +249,7 @@ public class ExtendedLiquidBlockRenderer {
 		}
 	}
 
-	private static void renderTop(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final BlockLiquid blockliquid, final float redFloat, final float greenFloat, final float blueFloat, final float fluidHeight, final float fluidHeightS, final float fluidHeightES, final float fluidHeightE, final double posX, final double posY, final double posZ, final float slopeAngle, final TextureAtlasSprite textureatlassprite, final SmoothLightingBlockFluidRenderer fluidRenderer, final BlockPos renderPos) {
+	private static void renderTop(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final BlockLiquid blockliquid, final boolean isLava, final float greenFloat, final float blueFloat, final float fluidHeight, final float fluidHeightS, final float fluidHeightES, final float fluidHeightE, final double posX, final double posY, final double posZ, final float slopeAngle, final TextureAtlasSprite textureatlassprite, final SmoothLightingBlockFluidRenderer fluidRenderer, final BlockPos renderPos, final float redFloat) {
 		float u0;
 		float u1;
 		float u2;
@@ -297,7 +330,7 @@ public class ExtendedLiquidBlockRenderer {
 		final int blockLightmapCoords = (renderPackedLightmapCoords & 65535) == 0 ? realPackedLightmapCoords & 65535 : renderPackedLightmapCoords & 65535;
 		final int packedLightmapCoords = (skyLightmapCoords << 16) | blockLightmapCoords;
 
-		if (isSmoothFluidLightingEnabled()) {
+		if (!isLava && isSmoothFluidLightingEnabled()) {
 			final int realPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south());
 			final int renderPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south());
 			final int realPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east());

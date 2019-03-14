@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.UVHelper;
+import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -70,10 +70,10 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				return false;
 			} else {
 				boolean wasAnythingRendered = false;
-//			float f3 = 0.5F;
-//			float f4 = 1.0F;
-//			float f5 = 0.8F;
-//			float f6 = 0.6F;
+//		    	float f3 = 0.5F;
+//		    	float f4 = 1.0F;
+//		    	float f5 = 0.8F;
+//		    	float f6 = 0.6F;
 				Material material = blockStateIn.getMaterial();
 				float fluidHeight = this.getFluidHeight(blockAccess, blockPosIn, material);
 				float fluidHeightS = this.getFluidHeight(blockAccess, blockPosIn.south(), material);
@@ -82,7 +82,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				double posX = (double) blockPosIn.getX();
 				double posY = (double) blockPosIn.getY();
 				double posZ = (double) blockPosIn.getZ();
-//			float f11 = 0.001F;
+//		    	float f11 = 0.001F;
 
 				if (shouldTopBeRendered) {
 					wasAnythingRendered = true;
@@ -92,12 +92,12 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					fluidHeightS -= 0.001F;
 					fluidHeightES -= 0.001F;
 					fluidHeightE -= 0.001F;
-					renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite);
+					renderTop(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, isLava, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, slopeAngle, textureatlassprite);
 				}
 
 				if (shouldBottomBeRendered) {
 					wasAnythingRendered = true;
-					renderBottom(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, atextureatlassprite, posX, posY, posZ);
+					renderBottom(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, atextureatlassprite, posX, posY, posZ, isLava);
 				}
 
 				for (int horiontalIndex = 0; horiontalIndex < 4; ++horiontalIndex) {
@@ -186,7 +186,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						final int skylightX1Y0Z1;
 						final int blocklightX1Y0Z1;
 
-						if (isSmoothFluidLightingEnabled()) {
+						if (!isLava && isSmoothFluidLightingEnabled()) {
 							final int packedLightX0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, yAdd0, posZ0 - posZ));
 							final int packedLightX0Y0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, 0, posZ0 - posZ));
 							final int packedLightX1Z1 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX1 - posX, yAdd0, posZ1 - posZ));
@@ -240,15 +240,15 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	public void renderBottom(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final TextureAtlasSprite[] atextureatlassprite, final double posX, final double posY, final double posZ) {
-		if (isSmoothFluidLightingEnabled()) {
+	public void renderBottom(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final TextureAtlasSprite[] atextureatlassprite, final double posX, final double posY, final double posZ, final boolean isLava) {
+		if (!isLava && isSmoothFluidLightingEnabled()) {
 			renderBottomSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().east()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
 		} else {
 			renderBottomFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
 		}
 	}
 
-	public void renderTop(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final BlockLiquid blockliquid, final float redFloat, final float greenFloat, final float blueFloat, final float fluidHeight, final float fluidHeightS, final float fluidHeightES, final float fluidHeightE, final double posX, final double posY, final double posZ, final float slopeAngle, final TextureAtlasSprite textureatlassprite) {
+	public void renderTop(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final BlockLiquid blockliquid, final boolean isLava, final float redFloat, final float greenFloat, final float blueFloat, final float fluidHeight, final float fluidHeightS, final float fluidHeightES, final float fluidHeightE, final double posX, final double posY, final double posZ, final float slopeAngle, final TextureAtlasSprite textureatlassprite) {
 		float u0;
 		float u1;
 		float u2;
@@ -323,7 +323,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-quarterCosSlopeAngle - quarterSinSlopeAngle) * 16.0F));
 		}
 
-		if (isSmoothFluidLightingEnabled()) {
+		if (!isLava && isSmoothFluidLightingEnabled()) {
 			renderTopSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.east()), blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
 		} else {
 			renderTopFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn), blockAccess, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
