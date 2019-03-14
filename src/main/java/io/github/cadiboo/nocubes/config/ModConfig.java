@@ -60,6 +60,7 @@ import static net.minecraft.init.Blocks.MAGMA;
 import static net.minecraft.init.Blocks.MONSTER_EGG;
 import static net.minecraft.init.Blocks.MYCELIUM;
 import static net.minecraft.init.Blocks.NETHERRACK;
+import static net.minecraft.init.Blocks.PACKED_ICE;
 import static net.minecraft.init.Blocks.QUARTZ_ORE;
 import static net.minecraft.init.Blocks.REDSTONE_ORE;
 import static net.minecraft.init.Blocks.RED_SANDSTONE;
@@ -293,6 +294,8 @@ public final class ModConfig {
 				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, BROWN),
 				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, RED),
 				STAINED_HARDENED_CLAY.getDefaultState().withProperty(BlockStainedHardenedClay.COLOR, BLACK),
+
+				PACKED_ICE.getDefaultState(),
 
 				SNOW.getDefaultState(),
 
