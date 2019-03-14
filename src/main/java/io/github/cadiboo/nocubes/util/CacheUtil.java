@@ -127,7 +127,7 @@ public final class CacheUtil {
 //							startPosZ + posZ - zOffset
 //					);
 
-					density += ModUtil.getIndividualBlockDensity(!smoothableCacheArray[index], stateCacheArray[index], cache, pooledMutableBlockPos);
+					density += ModUtil.getIndividualBlockDensity(smoothableCacheArray[index], stateCacheArray[index], cache, pooledMutableBlockPos);
 				}
 			}
 		}
