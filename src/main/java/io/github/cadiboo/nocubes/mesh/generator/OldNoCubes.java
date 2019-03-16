@@ -44,7 +44,7 @@ public class OldNoCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(final byte[] position, final float[] neighbourDensityGrid) {
+	public FaceList generateBlock(final float[] scalarFieldData, final byte[] dimensions) {
 		throw new UnsupportedOperationException();
 	}
 

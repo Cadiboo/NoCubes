@@ -27,6 +27,18 @@ public interface IMeshGenerator {
 	 * @return the block vertices
 	 */
 	@Nonnull
-	FaceList generateBlock(byte[] position, float[] neighbourDensityGrid);
+	FaceList generateBlock(final float[] scalarFieldData, final byte[] dimensions);
+
+	default byte getSizeXExtension() {
+		return 0;
+	}
+
+	default byte getSizeYExtension() {
+		return 0;
+	}
+
+	default byte getSizeZExtension() {
+		return 0;
+	}
 
 }

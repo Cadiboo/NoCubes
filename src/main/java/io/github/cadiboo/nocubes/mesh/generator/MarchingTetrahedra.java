@@ -209,156 +209,173 @@ public class MarchingTetrahedra implements IMeshGenerator {
 		return posToFaces;
 	}
 
-	@Override
 	@Nonnull
-	public FaceList generateBlock(final byte[] x, final float[] grid) {
+	@Override
+	public FaceList generateBlock(final float[] data, final byte[] dims) {
 		final FaceList faces = FaceList.retain();
-		for (byte[] T : TETRA_LIST) {
-			byte triindex = 0;
-			if (grid[T[0]] < 0) triindex |= 1;
-			if (grid[T[1]] < 0) triindex |= 2;
-			if (grid[T[2]] < 0) triindex |= 4;
-			if (grid[T[3]] < 0) triindex |= 8;
 
-			//Handle each case
-			switch (triindex) {
-				case 0x00:
-				case 0x0F:
-					break;
-				case 0x0E:
-					faces.add(
-							Face.retain(
-									interp(T[0], T[1], grid, x),
-									interp(T[0], T[3], grid, x),
-									interp(T[0], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x01:
-					faces.add(
-							Face.retain(
-									interp(T[0], T[1], grid, x),
-									interp(T[0], T[2], grid, x),
-									interp(T[0], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x0D:
-					faces.add(
-							Face.retain(
-									interp(T[1], T[0], grid, x),
-									interp(T[1], T[2], grid, x),
-									interp(T[1], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x02:
-					faces.add(
-							Face.retain(
-									interp(T[1], T[0], grid, x),
-									interp(T[1], T[3], grid, x),
-									interp(T[1], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x0C:
-					faces.add(
-							Face.retain(
-									interp(T[1], T[2], grid, x),
-									interp(T[1], T[3], grid, x),
-									interp(T[0], T[3], grid, x),
-									interp(T[0], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x03:
-					faces.add(
-							Face.retain(
-									interp(T[1], T[2], grid, x),
-									interp(T[0], T[2], grid, x),
-									interp(T[0], T[3], grid, x),
-									interp(T[1], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x04:
-					faces.add(
-							Face.retain(
-									interp(T[2], T[0], grid, x),
-									interp(T[2], T[1], grid, x),
-									interp(T[2], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x0B:
-					faces.add(
-							Face.retain(
-									interp(T[2], T[0], grid, x),
-									interp(T[2], T[3], grid, x),
-									interp(T[2], T[1], grid, x)
-							)
-					);
-					break;
-				case 0x05:
-					faces.add(
-							Face.retain(
-									interp(T[0], T[1], grid, x),
-									interp(T[1], T[2], grid, x),
-									interp(T[2], T[3], grid, x),
-									interp(T[0], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x0A:
-					faces.add(
-							Face.retain(
-									interp(T[0], T[1], grid, x),
-									interp(T[0], T[3], grid, x),
-									interp(T[2], T[3], grid, x),
-									interp(T[1], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x06:
-					faces.add(
-							Face.retain(
-									interp(T[2], T[3], grid, x),
-									interp(T[0], T[2], grid, x),
-									interp(T[0], T[1], grid, x),
-									interp(T[1], T[3], grid, x)
-							)
-					);
-					break;
-				case 0x09:
-					faces.add(
-							Face.retain(
-									interp(T[2], T[3], grid, x),
-									interp(T[1], T[3], grid, x),
-									interp(T[0], T[1], grid, x),
-									interp(T[0], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x07:
-					faces.add(
-							Face.retain(
-									interp(T[3], T[0], grid, x),
-									interp(T[3], T[1], grid, x),
-									interp(T[3], T[2], grid, x)
-							)
-					);
-					break;
-				case 0x08:
-					faces.add(
-							Face.retain(
-									interp(T[3], T[0], grid, x),
-									interp(T[3], T[2], grid, x),
-									interp(T[3], T[1], grid, x)
-							)
-					);
-					break;
-			}
-		}
+		final byte[][] cube_vertices = CUBE_VERTICES;
+		final byte[][] tetra_list = TETRA_LIST;
+
+		final byte[] x = {0, 0, 0};
+		short n = 0;
+		final float[] grid = new float[8];
+
+		//March over the volume
+		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
+			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
+				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
+					//Read in cube
+					for (byte i = 0; i < 8; ++i) {
+						grid[i] = data[n + cube_vertices[i][0] + dims[0] * (cube_vertices[i][1] + dims[1] * cube_vertices[i][2])];
+					}
+					for (byte[] T : TETRA_LIST) {
+						byte triindex = 0;
+						if (grid[T[0]] < 0) triindex |= 1;
+						if (grid[T[1]] < 0) triindex |= 2;
+						if (grid[T[2]] < 0) triindex |= 4;
+						if (grid[T[3]] < 0) triindex |= 8;
+
+						//Handle each case
+						switch (triindex) {
+							case 0x00:
+							case 0x0F:
+								break;
+							case 0x0E:
+								faces.add(
+										Face.retain(
+												interp(T[0], T[1], grid, x),
+												interp(T[0], T[3], grid, x),
+												interp(T[0], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x01:
+								faces.add(
+										Face.retain(
+												interp(T[0], T[1], grid, x),
+												interp(T[0], T[2], grid, x),
+												interp(T[0], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x0D:
+								faces.add(
+										Face.retain(
+												interp(T[1], T[0], grid, x),
+												interp(T[1], T[2], grid, x),
+												interp(T[1], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x02:
+								faces.add(
+										Face.retain(
+												interp(T[1], T[0], grid, x),
+												interp(T[1], T[3], grid, x),
+												interp(T[1], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x0C:
+								faces.add(
+										Face.retain(
+												interp(T[1], T[2], grid, x),
+												interp(T[1], T[3], grid, x),
+												interp(T[0], T[3], grid, x),
+												interp(T[0], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x03:
+								faces.add(
+										Face.retain(
+												interp(T[1], T[2], grid, x),
+												interp(T[0], T[2], grid, x),
+												interp(T[0], T[3], grid, x),
+												interp(T[1], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x04:
+								faces.add(
+										Face.retain(
+												interp(T[2], T[0], grid, x),
+												interp(T[2], T[1], grid, x),
+												interp(T[2], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x0B:
+								faces.add(
+										Face.retain(
+												interp(T[2], T[0], grid, x),
+												interp(T[2], T[3], grid, x),
+												interp(T[2], T[1], grid, x)
+										)
+								);
+								break;
+							case 0x05:
+								faces.add(
+										Face.retain(
+												interp(T[0], T[1], grid, x),
+												interp(T[1], T[2], grid, x),
+												interp(T[2], T[3], grid, x),
+												interp(T[0], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x0A:
+								faces.add(
+										Face.retain(
+												interp(T[0], T[1], grid, x),
+												interp(T[0], T[3], grid, x),
+												interp(T[2], T[3], grid, x),
+												interp(T[1], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x06:
+								faces.add(
+										Face.retain(
+												interp(T[2], T[3], grid, x),
+												interp(T[0], T[2], grid, x),
+												interp(T[0], T[1], grid, x),
+												interp(T[1], T[3], grid, x)
+										)
+								);
+								break;
+							case 0x09:
+								faces.add(
+										Face.retain(
+												interp(T[2], T[3], grid, x),
+												interp(T[1], T[3], grid, x),
+												interp(T[0], T[1], grid, x),
+												interp(T[0], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x07:
+								faces.add(
+										Face.retain(
+												interp(T[3], T[0], grid, x),
+												interp(T[3], T[1], grid, x),
+												interp(T[3], T[2], grid, x)
+										)
+								);
+								break;
+							case 0x08:
+								faces.add(
+										Face.retain(
+												interp(T[3], T[0], grid, x),
+												interp(T[3], T[2], grid, x),
+												interp(T[3], T[1], grid, x)
+										)
+								);
+								break;
+						}
+					}
+				}
 		return faces;
 	}
 

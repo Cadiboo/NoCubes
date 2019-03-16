@@ -4,16 +4,16 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -105,7 +105,7 @@ public class MeshDispatcher {
 				NoCubes.getProfiler().start("generateMeshChunkDensityCache");
 				try (final DensityCache densityCache = CacheUtil.generateDensityCache(chunkPosX, chunkPosY, chunkPosZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
 					NoCubes.getProfiler().end();
-					return meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+					return meshGenerator.generateChunk(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
 				}
 			}
 		}
@@ -187,34 +187,39 @@ public class MeshDispatcher {
 				final int posY = pos.getY();
 				final int posZ = pos.getZ();
 
-				// Convert block pos to relative block pos
-				// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
-				final int relativePosX = posX & 15;
-				final int relativePosY = posY & 15;
-				final int relativePosZ = posZ & 15;
+				final int chunkPosX = (pos.getX() >> 4) << 4;
+				final int chunkPosY = (pos.getY() >> 4) << 4;
+				final int chunkPosZ = (pos.getZ() >> 4) << 4;
 
-				final byte[] posRelativeToChunk = new byte[]{
-						(byte) relativePosX,
-						(byte) relativePosY,
-						(byte) relativePosZ
-				};
-
-				//TODO: I don't think I need this to be 2
-				final byte meshSizeX = 2;
-				final byte meshSizeY = 2;
-				final byte meshSizeZ = 2;
+				final byte meshSizeX = (byte) (5 + meshGenerator.getSizeXExtension());
+				final byte meshSizeY = (byte) (5 + meshGenerator.getSizeYExtension());
+				final byte meshSizeZ = (byte) (5 + meshGenerator.getSizeZExtension());
 
 				ignored.start("generateMeshBlockStateCache");
-				try (final StateCache stateCache = generateMeshStateCache(posX, posY, posZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
+				try (final StateCache stateCache = generateMeshStateCache(posX - 2, posY - 2, posZ - 2, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
 					ignored.end();
 					ignored.start("generateMeshBlockSmoothableCache");
 					try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
 						ignored.end();
 						ignored.start("generateMeshBlockDensityCache");
-						try (final DensityCache densityCache = CacheUtil.generateDensityCache(posX, posY, posZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
+						try (final DensityCache densityCache = CacheUtil.generateDensityCache(posX - 2, posY - 2, posZ - 2, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
 							ignored.end();
-							final float[] neighbourDensityGrid = generateNeighbourDensityGrid(densityCache);
-							return meshGenerator.generateBlock(posRelativeToChunk, neighbourDensityGrid);
+							FaceList faces = meshGenerator.generateBlock(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
+
+							for (Face face : faces) {
+								final Vec3 vertex0 = face.getVertex0();
+								final Vec3 vertex1 = face.getVertex1();
+								final Vec3 vertex2 = face.getVertex2();
+								final Vec3 vertex3 = face.getVertex3();
+
+								vertex0.addOffset(-chunkPosX - 2, -chunkPosY - 2, -chunkPosZ - 2);
+								vertex1.addOffset(-chunkPosX - 2, -chunkPosY - 2, -chunkPosZ - 2);
+								vertex2.addOffset(-chunkPosX - 2, -chunkPosY - 2, -chunkPosZ - 2);
+								vertex3.addOffset(-chunkPosX - 2, -chunkPosY - 2, -chunkPosZ - 2);
+
+							}
+
+							return faces;
 						}
 					}
 				}

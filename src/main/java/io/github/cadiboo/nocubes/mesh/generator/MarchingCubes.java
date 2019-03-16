@@ -408,8 +408,73 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(final byte[] position, final float[] neighbourDensityGrid) {
-		return FaceList.retain();
+	public FaceList generateBlock(final float[] data, final byte[] dims) {
+		final byte[][] cubeVerts = CUBE_VERTS;
+		final short[] edgeTable = EDGE_TABLE;
+		final byte[][] edgeIndex = EDGE_INDEX;
+		final byte[][] triTable = TRI_TABLE;
+
+		final byte[] x = {0, 0, 0};
+		short n = 0;
+		final float[] grid = new float[8];
+		final int[] edges = new int[12];
+		final FaceList faces = FaceList.retain();
+
+		final ArrayList<float[]> vertices = new ArrayList<>();
+
+		//March over the volume
+		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
+			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
+				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
+					//For each cell, compute cube mask
+					short cube_index = 0;
+					for (byte i = 0; i < 8; ++i) {
+						byte[] v = cubeVerts[i];
+						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+						grid[i] = s;
+						cube_index |= (s > 0) ? 1 << i : 0;
+					}
+					//Compute vertices
+					short edge_mask = edgeTable[cube_index];
+					if (edge_mask == 0) {
+						continue;
+					}
+					for (byte i = 0; i < 12; ++i) {
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+						edges[i] = vertices.size();
+						float[] nv = {0, 0, 0};
+
+						byte[] e = edgeIndex[i];
+						final byte[] p0 = cubeVerts[e[0]];
+						final byte[] p1 = cubeVerts[e[1]];
+						final float a = grid[e[0]];
+						final float b = grid[e[1]], d = a - b;
+						float t = 0;
+						if (Math.abs(d) > 1e-6) {
+							t = a / d;
+						}
+						for (byte j = 0; j < 3; ++j) {
+							nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
+						}
+						vertices.add(nv);
+					}
+
+					//Add faces
+					byte[] f = triTable[cube_index];
+					for (byte i = 0; i < f.length; i += 3) {
+						faces.add(
+								Face.retain(
+										Vec3.retain(vertices.get(edges[f[i]])),
+										Vec3.retain(vertices.get(edges[f[i + 1]])),
+										Vec3.retain(vertices.get(edges[f[i + 2]]))
+								)
+						);
+					}
+				}
+
+		return faces;
 	}
 
 }
