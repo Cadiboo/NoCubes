@@ -5,9 +5,12 @@ import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
-import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -341,7 +344,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
-		try {
+		{
 			final EntityPlayer player = event.getPlayer();
 			if (player == null) {
 				return;
@@ -364,19 +367,6 @@ public final class ClientEventSubscriber {
 				return;
 			}
 
-			event.setCanceled(true);
-
-//			final AxisAlignedBB oldSelectedBox = blockState.getSelectedBoundingBox(world, pos);
-
-			final List<AxisAlignedBB> boxes = new ArrayList<>();
-
-			blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
-
-//			if (boxes.size() <= 1) {
-//				boxes.clear();
-//				boxes.add(oldSelectedBox);
-//			}
-
 			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
 			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
 			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
@@ -388,12 +378,38 @@ public final class ClientEventSubscriber {
 			GlStateManager.depthMask(false);
 			GlStateManager.disableDepth();
 
-			for (AxisAlignedBB box : boxes) {
+			GlStateManager.color(0, 0, 0, 0);
+			GlStateManager.color(1, 1, 1, 1);
 
-				final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+			{
+//			    final AxisAlignedBB oldSelectedBox = blockState.getSelectedBoundingBox(world, pos);
 
-				RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
-//				RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 0.0F, 0.0F, 0.4F);
+				final List<AxisAlignedBB> boxes = new ArrayList<>();
+
+				blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
+
+//				if (boxes.size() <= 1) {
+//					boxes.clear();
+//					boxes.add(oldSelectedBox);
+//				}
+
+				for (AxisAlignedBB box : boxes) {
+
+					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+
+					RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 1.0F, 0.4F);
+				}
+
+			}
+
+			{
+
+				for (AxisAlignedBB box : world.getCollisionBoxes(player, player.getEntityBoundingBox())) {
+
+					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+
+					RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
+				}
 
 			}
 
@@ -402,8 +418,52 @@ public final class ClientEventSubscriber {
 			GlStateManager.depthMask(true);
 			GlStateManager.enableTexture2D();
 			GlStateManager.disableBlend();
-		} catch (final Exception e) {
-			event.setCanceled(false);
+
+			{
+
+				final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, ModUtil.TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator);
+
+				Tessellator tessellator = Tessellator.getInstance();
+				BufferBuilder bufferbuilder = tessellator.getBuffer();
+
+				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+				GlStateManager.color(0, 0, 0, 0);
+				GlStateManager.color(1, 1, 1, 1);
+
+				for (final Face face : faces) {
+					try {
+
+						final Vec3 v0 = face.getVertex0();
+						final Vec3 v1 = face.getVertex1();
+						final Vec3 v2 = face.getVertex2();
+						final Vec3 v3 = face.getVertex3();
+						try {
+							bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+
+							tessellator.draw();
+						} finally {
+							v0.close();
+							v1.close();
+							v2.close();
+							v3.close();
+						}
+					} finally {
+						face.close();
+					}
+
+				}
+
+				bufferbuilder.setTranslation(0, 0, 0);
+
+			}
+
 		}
 	}
 
