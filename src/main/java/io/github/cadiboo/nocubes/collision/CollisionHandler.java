@@ -98,7 +98,7 @@ public final class CollisionHandler {
 			}
 		}
 
-//		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 	}
 
 	public static List<AxisAlignedBB> slopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos) {
@@ -159,30 +159,86 @@ public final class CollisionHandler {
 					final int posY = pos.getY();
 					final int posZ = pos.getZ();
 
-					final AxisAlignedBB v0box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v0, boxRadius);
-					if (entityBox.intersects(v0box)) {
+					{
+
+						final float t = 0.5F;
+
+						final Vec3 v0v1 = Vec3.retain(
+								v0.x + t * (v1.x - v0.x),
+								v0.y + t * (v1.y - v0.y),
+								v0.z + t * (v1.z - v0.z)
+						);
+
+						final AxisAlignedBB v0v1box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v0v1, boxRadius);
+//						if (entityBox.intersects(v0v1box)) {
+						collidingBoxes.add(v0v1box);
+//						}
+
+						v0v1.close();
+
+						final Vec3 v0v2 = Vec3.retain(
+								v0.x + t * (v2.x - v0.x),
+								v0.y + t * (v2.y - v0.y),
+								v0.z + t * (v2.z - v0.z)
+						);
+
+						final AxisAlignedBB v0v2box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v0v2, boxRadius);
+//						if (entityBox.intersects(v0v2box)) {
+						collidingBoxes.add(v0v2box);
+//						}
+
+						v0v2.close();
+
+						final Vec3 v0v3 = Vec3.retain(
+								v0.x + t * (v3.x - v0.x),
+								v0.y + t * (v3.y - v0.y),
+								v0.z + t * (v3.z - v0.z)
+						);
+
+						final AxisAlignedBB v0v3box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v0v3, boxRadius);
+//						if (entityBox.intersects(v0v3box)) {
+						collidingBoxes.add(v0v3box);
+//						}
+
+						v0v3.close();
+
+//						final AxisAlignedBB v0v2box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v2, boxRadius);
+//						if (entityBox.intersects(v2box)) {
+//							collidingBoxes.add(v2box);
+//						}
+//
+//						final AxisAlignedBB v0v3box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v3, boxRadius);
+//						if (entityBox.intersects(v3box)) {
+//							collidingBoxes.add(v3box);
+//						}
+					}
+
+					{
+						final AxisAlignedBB v0box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v0, boxRadius);
+//						if (entityBox.intersects(v0box)) {
 						collidingBoxes.add(v0box);
-					}
+//						}
 
-					final AxisAlignedBB v1box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v1, boxRadius);
-					if (entityBox.intersects(v1box)) {
+						final AxisAlignedBB v1box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v1, boxRadius);
+//						if (entityBox.intersects(v1box)) {
 						collidingBoxes.add(v1box);
-					}
+//						}
 
-					final AxisAlignedBB v2box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v2, boxRadius);
-					if (entityBox.intersects(v2box)) {
+						final AxisAlignedBB v2box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v2, boxRadius);
+//						if (entityBox.intersects(v2box)) {
 						collidingBoxes.add(v2box);
-					}
+//						}
 
-					final AxisAlignedBB v3box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v3, boxRadius);
-					if (entityBox.intersects(v3box)) {
+						final AxisAlignedBB v3box = createAndOffsetAxisAlignedBBForVertex(posX, posY, posZ, v3, boxRadius);
+//						if (entityBox.intersects(v3box)) {
 						collidingBoxes.add(v3box);
-					}
+//						}
 
-					v0.close();
-					v1.close();
-					v2.close();
-					v3.close();
+						v0.close();
+						v1.close();
+						v2.close();
+						v3.close();
+					}
 
 				} finally {
 					face.close();
