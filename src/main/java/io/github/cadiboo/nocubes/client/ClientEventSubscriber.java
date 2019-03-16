@@ -7,18 +7,26 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.World;
+import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -29,6 +37,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -326,6 +335,75 @@ public final class ClientEventSubscriber {
 		}
 		if (needsResave) {
 			gameSettings.saveOptions();
+		}
+	}
+
+	@SubscribeEvent
+	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
+
+		try {
+			final EntityPlayer player = event.getPlayer();
+			if (player == null) {
+				return;
+			}
+
+			final RayTraceResult rayTraceResult = event.getTarget();
+			if ((rayTraceResult == null) || (rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK)) {
+				return;
+			}
+
+			final World world = player.world;
+			if (world == null) {
+				return;
+			}
+
+			final float partialTicks = event.getPartialTicks();
+			final BlockPos pos = rayTraceResult.getBlockPos();
+			final IBlockState blockState = world.getBlockState(pos);
+			if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
+				return;
+			}
+
+			event.setCanceled(true);
+
+//			final AxisAlignedBB oldSelectedBox = blockState.getSelectedBoundingBox(world, pos);
+
+			final List<AxisAlignedBB> boxes = new ArrayList<>();
+
+			blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
+
+//			if (boxes.size() <= 1) {
+//				boxes.clear();
+//				boxes.add(oldSelectedBox);
+//			}
+
+			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+
+			GlStateManager.enableBlend();
+			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			GlStateManager.glLineWidth(2.0F);
+			GlStateManager.disableTexture2D();
+			GlStateManager.depthMask(false);
+			GlStateManager.disableDepth();
+
+			for (AxisAlignedBB box : boxes) {
+
+				final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+
+				RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
+//				RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 0.0F, 0.0F, 0.4F);
+
+			}
+
+			GlStateManager.enableDepth();
+
+			GlStateManager.depthMask(true);
+			GlStateManager.enableTexture2D();
+			GlStateManager.disableBlend();
+		} catch (final Exception e) {
+			event.setCanceled(false);
 		}
 	}
 
