@@ -285,7 +285,7 @@ public final class ClientEventSubscriber {
 				s11 = s11 + profiler$result.profilerName + ' ';
 			}
 
-			int l2 = 16777215;
+//			int l2 = 16777215;
 			mc.fontRenderer.drawStringWithShadow(s11, (float) (cx - 160), (float) (cy - 80 - 16), 16777215);
 			s11 = decimalformat.format(profiler$result.totalUsePercentage) + "%";
 			mc.fontRenderer.drawStringWithShadow(s11, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s11)), (float) (cy - 80 - 16), 16777215);
