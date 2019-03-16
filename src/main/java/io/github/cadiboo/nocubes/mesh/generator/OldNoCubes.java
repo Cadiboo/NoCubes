@@ -113,34 +113,34 @@ public class OldNoCubes implements IMeshGenerator {
 						vertex3 = points[X1Y0Z1];
 						break;
 					case UP:
-						vertex0 = points[4];
-						vertex1 = points[7];
-						vertex2 = points[6];
-						vertex3 = points[5];
+						vertex0 = points[X0Y1Z0];
+						vertex1 = points[X0Y1Z1];
+						vertex2 = points[X1Y1Z1];
+						vertex3 = points[X1Y1Z0];
 						break;
 					case NORTH:
-						vertex0 = points[5];
-						vertex1 = points[1];
-						vertex2 = points[0];
-						vertex3 = points[4];
+						vertex0 = points[X1Y1Z0];
+						vertex1 = points[X1Y0Z0];
+						vertex2 = points[X0Y0Z0];
+						vertex3 = points[X0Y1Z0];
 						break;
 					case SOUTH:
-						vertex0 = points[7];
-						vertex1 = points[3];
-						vertex2 = points[2];
-						vertex3 = points[6];
+						vertex0 = points[X0Y1Z1];
+						vertex1 = points[X0Y0Z1];
+						vertex2 = points[X1Y0Z1];
+						vertex3 = points[X1Y1Z1];
 						break;
 					case WEST:
-						vertex0 = points[4];
-						vertex1 = points[0];
-						vertex2 = points[3];
-						vertex3 = points[7];
+						vertex0 = points[X0Y1Z0];
+						vertex1 = points[X0Y0Z0];
+						vertex2 = points[X0Y0Z1];
+						vertex3 = points[X0Y1Z1];
 						break;
 					case EAST:
-						vertex0 = points[6];
-						vertex1 = points[2];
-						vertex2 = points[1];
-						vertex3 = points[5];
+						vertex0 = points[X1Y1Z1];
+						vertex1 = points[X1Y0Z1];
+						vertex2 = points[X1Y0Z0];
+						vertex3 = points[X1Y1Z0];
 						break;
 				}
 
