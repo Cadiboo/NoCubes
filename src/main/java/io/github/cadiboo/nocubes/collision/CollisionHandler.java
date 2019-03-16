@@ -89,14 +89,14 @@ public final class CollisionHandler {
 //			faces.close();
 //		}
 
-		final AxisAlignedBB collisionBoundingBox = state.getCollisionBoundingBox(worldIn, pos);
-		if (collisionBoundingBox != null) { // optimization
-			if (canUseSlope(entityIn) && canSlopeAt(state, worldIn, pos, collisionBoundingBox)) {
-				collidingBoxes.addAll(slopingCollisionBoxes(state, worldIn, pos).stream().filter(entityBox::intersects).collect(Collectors.toList()));
-			} else {
-				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
-			}
-		}
+//		final AxisAlignedBB collisionBoundingBox = state.getCollisionBoundingBox(worldIn, pos);
+//		if (collisionBoundingBox != null) { // optimization
+//			if (canUseSlope(entityIn) && canSlopeAt(state, worldIn, pos, collisionBoundingBox)) {
+//				collidingBoxes.addAll(slopingCollisionBoxes(state, worldIn, pos).stream().filter(entityBox::intersects).collect(Collectors.toList()));
+//			} else {
+//				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+//			}
+//		}
 
 		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 	}
