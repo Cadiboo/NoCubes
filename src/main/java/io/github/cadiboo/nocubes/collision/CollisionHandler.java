@@ -98,8 +98,6 @@ public final class CollisionHandler {
 			}
 		}
 
-		if(true)return;
-
 		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 	}
 

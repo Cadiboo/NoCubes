@@ -118,7 +118,7 @@ public class ModelHelper {
 
 		Object renderEnv = null;
 
-		if (false && OPTIFINE_INSTALLED) {
+		if (OPTIFINE_INSTALLED) {
 //		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(blockAccess, state, pos);
 			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
 
@@ -133,7 +133,7 @@ public class ModelHelper {
 				continue;
 			}
 
-			if (false && OPTIFINE_INSTALLED) {
+			if (OPTIFINE_INSTALLED) {
 				try (final ModProfiler ignored = NoCubes.getProfiler().start("getRenderQuads")) {
 					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
 					if (quads.isEmpty()) {
