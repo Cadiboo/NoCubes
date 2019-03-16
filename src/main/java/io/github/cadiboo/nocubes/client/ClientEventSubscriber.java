@@ -340,6 +340,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
+		if(true)return;
 
 		try {
 			final EntityPlayer player = event.getPlayer();
