@@ -30,6 +30,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
+import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -344,7 +345,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
-		{
+		if (ModConfig.smoothBlockHighlighting || ModConfig.collisionsBlockHighlighting) {
 			final EntityPlayer player = event.getPlayer();
 			if (player == null) {
 				return;
@@ -371,55 +372,57 @@ public final class ClientEventSubscriber {
 			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
 			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
 
-			GlStateManager.enableBlend();
-			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-			GlStateManager.glLineWidth(2.0F);
-			GlStateManager.disableTexture2D();
-			GlStateManager.depthMask(false);
-			GlStateManager.disableDepth();
+			if (ModConfig.collisionsBlockHighlighting) {
+				GlStateManager.enableBlend();
+				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+				GlStateManager.glLineWidth(2.0F);
+				GlStateManager.disableTexture2D();
+				GlStateManager.depthMask(false);
+				GlStateManager.disableDepth();
 
-			GlStateManager.color(0, 0, 0, 0);
-			GlStateManager.color(1, 1, 1, 1);
+				GlStateManager.color(0, 0, 0, 0);
+				GlStateManager.color(1, 1, 1, 1);
 
-			{
+				{
 //			    final AxisAlignedBB oldSelectedBox = blockState.getSelectedBoundingBox(world, pos);
 
-				final List<AxisAlignedBB> boxes = new ArrayList<>();
+					final List<AxisAlignedBB> boxes = new ArrayList<>();
 
-				blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
+					blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
 
 //				if (boxes.size() <= 1) {
 //					boxes.clear();
 //					boxes.add(oldSelectedBox);
 //				}
 
-				for (AxisAlignedBB box : boxes) {
+					for (AxisAlignedBB box : boxes) {
 
-					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+						final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
 
-					RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 1.0F, 0.4F);
+						RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 1.0F, 0.4F);
+					}
+
 				}
 
-			}
+				{
 
-			{
+					for (AxisAlignedBB box : world.getCollisionBoxes(player, player.getEntityBoundingBox())) {
 
-				for (AxisAlignedBB box : world.getCollisionBoxes(player, player.getEntityBoundingBox())) {
+						final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
 
-					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+						RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
+					}
 
-					RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
 				}
 
+				GlStateManager.enableDepth();
+
+				GlStateManager.depthMask(true);
+				GlStateManager.enableTexture2D();
+				GlStateManager.disableBlend();
 			}
 
-			GlStateManager.enableDepth();
-
-			GlStateManager.depthMask(true);
-			GlStateManager.enableTexture2D();
-			GlStateManager.disableBlend();
-
-			{
+			if (ModConfig.smoothBlockHighlighting) {
 
 				final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, ModUtil.TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator);
 
@@ -427,6 +430,12 @@ public final class ClientEventSubscriber {
 				BufferBuilder bufferbuilder = tessellator.getBuffer();
 
 				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+				GlStateManager.enableBlend();
+				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+				GlStateManager.glLineWidth(3.0F);
+				GlStateManager.disableTexture2D();
+				GlStateManager.depthMask(false);
 
 				GlStateManager.color(0, 0, 0, 0);
 				GlStateManager.color(1, 1, 1, 1);
@@ -459,6 +468,10 @@ public final class ClientEventSubscriber {
 					}
 
 				}
+
+				GlStateManager.depthMask(true);
+				GlStateManager.enableTexture2D();
+				GlStateManager.disableBlend();
 
 				bufferbuilder.setTranslation(0, 0, 0);
 
