@@ -480,4 +480,15 @@ public final class ClientEventSubscriber {
 		}
 	}
 
+	@SubscribeEvent
+	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
+
+		if (ModConfig.collisionsBlockHighlighting) {
+
+			event.setCanceled(true);
+
+		}
+
+	}
+
 }
