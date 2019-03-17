@@ -149,12 +149,12 @@ public final class ModConfig {
 	public static double smoothOtherBlocksAmount = 0;
 
 	@Beta
-	@LangKey(MOD_ID + ".config.collisionsBlockHighlighting")
-	public static boolean collisionsBlockHighlighting = true;
-
-	@Beta
 	@LangKey(MOD_ID + ".config.smoothBlockHighlighting")
 	public static boolean smoothBlockHighlighting = true;
+
+	@Beta
+	@LangKey(MOD_ID + ".config.collisionsBlockHighlighting")
+	public static boolean collisionsBlockHighlighting = true;
 
 	static {
 		setupTerrainSmoothableBlockStates();
