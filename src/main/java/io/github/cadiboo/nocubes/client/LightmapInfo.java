@@ -122,8 +122,7 @@ public class LightmapInfo implements AutoCloseable {
 						packedLight2[index] = packedLightCacheArray[(v2XOffset + xOffset) + cachesSizeX * ((v2YOffset + yOffset) + cachesSizeY * (v2ZOffset + zOffset))];
 						packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
 					} catch (ArrayIndexOutOfBoundsException e) {
-						e.addSuppressed(new Exception("Not the actual Exception (this only exists to show array size)! Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ));
-						throw e;
+						NoCubes.NO_CUBES_LOG.warn("ArrayIndexOutOfBoundsException at " + e.getStackTrace()[0] + ". Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
 					}
 				}
 			}
