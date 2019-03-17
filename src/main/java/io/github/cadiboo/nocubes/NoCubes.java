@@ -3,12 +3,14 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
 import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
+import io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook;
 import io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ReportedException;
 import net.minecraftforge.fml.common.Loader;
@@ -137,6 +139,10 @@ public final class NoCubes {
 				AddCollisionBoxToListHook.addCollisionBoxToList(null, null, null, null, null, null, null, false);
 			} catch (NullPointerException e) {
 			}
+			try {
+				IsEntityInsideOpaqueBlockHook.isEntityInsideOpaqueBlock(null);
+			} catch (NullPointerException e) {
+			}
 		}
 		{
 			try {
@@ -149,6 +155,10 @@ public final class NoCubes {
 			}
 			try {
 				Blocks.BED.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
+			} catch (NullPointerException e) {
+			}
+			try {
+				new EntityRabbit(null).isEntityInsideOpaqueBlock();
 			} catch (NullPointerException e) {
 			}
 		}
