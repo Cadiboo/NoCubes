@@ -82,6 +82,8 @@ public final class ModUtil {
 		if (true)
 			if (shouldSmooth && state.getBlock() != SNOW_LAYER) {
 				return state.getBlock() == BEDROCK ? -1.0005F : -1;
+			} else if (state.isNormalCube() || state.isBlockNormalCube()) {
+				return state.getBlock() == BEDROCK ? -0.0005F : -0;
 			} else {
 				return state.getBlock() == BEDROCK ? 1.0005F : 1;
 			}
