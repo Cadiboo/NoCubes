@@ -54,6 +54,13 @@ nocubes.config.enablePools.tooltip=If Object Pools should be used. Object Pools 
 nocubes.config.overrideIsOpaqueCube=Override isOpaqueCube
 nocubes.config.overrideIsOpaqueCube.tooltip=Fixes issues with sides of blocks not being rendered, however makes everything render a tiny bit slower.
 
+nocubes.config.smoothBlockHighlighting=[DEVELOPMENT] Smooth Block Highlighting
+nocubes.config.smoothBlockHighlighting.tooltip=Shows the faces of the block you're looking at in white
+
+nocubes.config.collisionsBlockHighlighting=[DEVELOPMENT] Collisions Block Highlighting
+nocubes.config.collisionsBlockHighlighting.tooltip=Shows the collisions of blocks in blue
+
+
 key.categories.nocubes=NoCubes
 
 nocubes.key.toggleTerrainSmoothableBlockState=Toggle Terrain Smoothable BlockState
