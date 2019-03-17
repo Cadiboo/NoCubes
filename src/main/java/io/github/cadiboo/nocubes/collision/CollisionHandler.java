@@ -31,7 +31,9 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 })
 public final class CollisionHandler {
 
-
+	public static boolean isEntityInsideOpaqueBlock(final Entity entityIn) {
+		return false;
+	}
 
 	public static void addCollisionBoxToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 

@@ -54,10 +54,9 @@ public class Transformer implements IClassTransformer, Opcodes {
 						Transformer::hook_addCollisionBoxToList
 				);
 			case "net.minecraft.entity.Entity":
-//		    	return transformClass(basicClass, transformedName,
-//		    			Transformer::redirect_isEntityInsideOpaqueBlock
-//		    	);
-				break;
+				return transformClass(basicClass, transformedName,
+						Transformer::hook_isEntityInsideOpaqueBlock
+				);
 			case "io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook": // WATCH OUT - everything fails if this misses
 				return transformClass(basicClass, transformedName,
 						Transformer::add_runIsOpaqueCubeDefaultOnce
@@ -69,6 +68,10 @@ public class Transformer implements IClassTransformer, Opcodes {
 			case "io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook": // WATCH OUT - everything fails if this misses
 				return transformClass(basicClass, transformedName,
 						Transformer::add_runAddCollisionBoxToListDefaultOnce
+				);
+			case "io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook": // WATCH OUT - everything fails if this misses
+				return transformClass(basicClass, transformedName,
+						Transformer::add_runIsEntityInsideOpaqueBlockDefaultOnce
 				);
 		}
 //		else if (transformedName.equals("io.gitub.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook")) {
@@ -202,6 +205,7 @@ public class Transformer implements IClassTransformer, Opcodes {
 	public static final String run_isOpaqueCube_fieldName = "nocubes_RunIsOpaqueCubeDefaultOnce";
 	public static final String run_getCollisionBoundingBox_fieldName = "nocubes_RunGetCollisionBoundingBoxDefaultOnce";
 	public static final String run_addCollisionBoxToList_fieldName = "nocubes_RunAddCollisionBoxToListDefaultOnce";
+	public static final String add_runIsEntityInsideOpaqueBlock_fieldName = "nocubes_RunIsEntityInsideOpaqueBlockDefaultOnce";
 
 	private static void hook_isOpaqueCube(final ClassNode classNode) {
 
@@ -524,6 +528,68 @@ public class Transformer implements IClassTransformer, Opcodes {
 			);
 		}
 		LOGGER.info("Finished injecting into runAddCollisionBoxToListDefaultOnce");
+	}
+
+	private static void hook_isEntityInsideOpaqueBlock(final ClassNode classNode) {
+
+		addRunOnceFieldToClass(classNode, add_runIsEntityInsideOpaqueBlock_fieldName);
+
+		final MethodNode isEntityInsideOpaqueBlock = getMethod(classNode, "func_70094_T", "()Z");
+		final InsnList instructions = isEntityInsideOpaqueBlock.instructions;
+		final ListIterator<AbstractInsnNode> iterator = instructions.iterator();
+		LabelNode FIRST_LABEL = null;
+		while (iterator.hasNext()) {
+			final AbstractInsnNode insn = iterator.next();
+			if (insn.getType() != AbstractInsnNode.LABEL) {
+				continue;
+			}
+			FIRST_LABEL = (LabelNode) insn;
+			break;
+		}
+
+		LOGGER.info("Starting injecting into isEntityInsideOpaqueBlock");
+		{
+			//Prep for 1.13
+			final InsnList injectedInstructions = Api.getMethodNode().instructions;
+
+			final LabelNode labelNode = new LabelNode(new Label());
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/entity/Entity", add_runIsEntityInsideOpaqueBlock_fieldName, "Z"));
+			injectedInstructions.add(new JumpInsnNode(IFNE, labelNode));
+			injectedInstructions.add(new MethodInsnNode(INVOKESTATIC, "io/github/cadiboo/nocubes/NoCubes", "areHooksEnabled", "()Z", false));
+			injectedInstructions.add(new JumpInsnNode(IFEQ, labelNode));
+
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new MethodInsnNode(INVOKESTATIC, "io/github/cadiboo/nocubes/hooks/IsEntityInsideOpaqueBlockHook", "isEntityInsideOpaqueBlock", "(Lnet/minecraft/entity/Entity;)Z", false));
+
+			injectedInstructions.add(new LabelNode(new Label()));
+			injectedInstructions.add(new InsnNode(IRETURN));
+
+			injectedInstructions.add(labelNode);
+			injectedInstructions.add(new FrameNode(F_SAME, -1, null, -1, null));
+			injectedInstructions.add(new VarInsnNode(ALOAD, 0));
+			injectedInstructions.add(new InsnNode(ICONST_0));
+			injectedInstructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/entity/Entity", add_runIsEntityInsideOpaqueBlock_fieldName, "Z"));
+
+			injectedInstructions.add(new LabelNode(new Label()));
+			instructions.insert(FIRST_LABEL, injectedInstructions);
+
+		}
+		LOGGER.info("Finished injecting into isEntityInsideOpaqueBlock");
+
+	}
+
+	private static void add_runIsEntityInsideOpaqueBlockDefaultOnce(final ClassNode classNode) {
+		LOGGER.info("Starting injecting into runIsEntityInsideOpaqueBlockDefaultOnce");
+		{
+			invokeRunOnceInMethod(
+					getMethod(classNode, "runIsEntityInsideOpaqueBlockDefaultOnce", "(Lnet/minecraft/entity/Entity;)Z"),
+					run_addCollisionBoxToList_fieldName
+			);
+		}
+		LOGGER.info("Finished injecting into runIsEntityInsideOpaqueBlockDefaultOnce");
 	}
 
 }
