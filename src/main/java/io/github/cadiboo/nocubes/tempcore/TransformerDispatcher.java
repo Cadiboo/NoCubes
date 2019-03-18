@@ -43,10 +43,10 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 						GetCollisionBoundingBoxTransformer::hook_getCollisionBoundingBox,
 						AddCollisionBoxToListTransformer::hook_addCollisionBoxToList
 				);
-//			case "net.minecraft.entity.Entity":
-//				return transformClass(basicClass, transformedName,
-//						IsEntityInsideOpaqueBlockTransformer::hook_isEntityInsideOpaqueBlock
-//				);
+			case "net.minecraft.entity.Entity":
+				return transformClass(basicClass, transformedName,
+						IsEntityInsideOpaqueBlockTransformer::hook_isEntityInsideOpaqueBlock
+				);
 			case "io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook": // WATCH OUT - everything fails if this misses
 				return transformClass(basicClass, transformedName,
 						IsOpaqueCubeTransformer::add_runIsOpaqueCubeDefaultOnce
@@ -59,10 +59,10 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 				return transformClass(basicClass, transformedName,
 						AddCollisionBoxToListTransformer::add_runAddCollisionBoxToListDefaultOnce
 				);
-//			case "io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook": // WATCH OUT - everything fails if this misses
-//				return transformClass(basicClass, transformedName,
-//						IsEntityInsideOpaqueBlockTransformer::add_runIsEntityInsideOpaqueBlockDefaultOnce
-//				);
+			case "io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook": // WATCH OUT - everything fails if this misses
+				return transformClass(basicClass, transformedName,
+						IsEntityInsideOpaqueBlockTransformer::add_runIsEntityInsideOpaqueBlockDefaultOnce
+				);
 		}
 //		else if (transformedName.equals("io.gitub.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook")) {
 //			return transformClass(basicClass, transformedName
