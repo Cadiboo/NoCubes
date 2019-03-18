@@ -15,11 +15,11 @@ import static net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.TransformerExc
 @TransformerExclusions("io.github.cadiboo.nocubes.tempcore")
 @MCVersion("1.12.2")
 @SortingIndex(Integer.MAX_VALUE - 100)
-public class LoadingPlugin implements IFMLLoadingPlugin {
+public final class LoadingPlugin implements IFMLLoadingPlugin {
 
 	@Override
 	public String[] getASMTransformerClass() {
-		return new String[]{Transformer.class.getName()};
+		return new String[]{TransformerDispatcher.class.getName()};
 	}
 
 	@Override
