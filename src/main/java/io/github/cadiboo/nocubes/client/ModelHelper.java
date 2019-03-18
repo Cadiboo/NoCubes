@@ -110,9 +110,6 @@ public class ModelHelper {
 			} catch (Exception ignored1) {
 			}
 		}
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getExtendedState")) {
-			state = state.getBlock().getExtendedState(state, blockAccess, pos);
-		}
 
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
@@ -123,6 +120,9 @@ public class ModelHelper {
 			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
 
 			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
+		}
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("getExtendedState")) {
+			state = state.getBlock().getExtendedState(state, blockAccess, pos);
 		}
 
 		final long posRand = getPositionRandom(pos);
