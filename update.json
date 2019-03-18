@@ -1,0 +1,31 @@
+{
+	"homepage": "https://Cadiboo.github.io/projects/nocubes/",
+	"promos": {
+		"1.13.2-latest": "1.13.2-0.2.6",
+		"1.13.2-recommended": "1.13.2-0.2.6",
+		"1.12.2-latest": "1.12.2-0.2.7",
+		"1.12.2-recommended": "1.12.2-0.2.7"
+	},
+	"1.13.2": {
+		"1.13.2-0.2.6": "Update update.json",
+		"1.13.2-0.2.5": "Fix problems with new library versions",
+		"1.13.2-0.2.4": "Update to 1.13.2, Some features (Such as Extend Liquids) are missing"
+	},
+	"1.12.2": {
+		"1.12.2-0.2.7": "Fixed bug with CTM. Big internal changes",
+		"1.12.2-0.2.6": "Massive update. Added collisions and improved performace among many other things",
+	  	"1.12.2-0.2.5": "Update update.json",
+	  	"1.12.2-0.2.4": "Small patch to fix a crash",
+	  	"1.12.2-0.2.3": "Big update",
+		"1.12.2-0.2.2": "Very small bug fix update",
+		"1.12.2-0.2.1": "Small bug fix update",
+		"1.12.2-0.2.0": "Big update and total re-write. Now 61x faster and many more features",
+		"1.12.2-0.1.6": "Translations, optimisations and bug fixes",
+		"1.12.2-0.1.5": "Bug fixes and Config versioning",
+		"1.12.2-0.1.4": "Small Translations update",
+		"1.12.2-0.1.3": "Optimisation and bug fix update based around Textures, Compatibility and Shaders",
+		"1.12.2-0.1.2": "Added Debug/R&D features and a new render algorithm",
+		"1.12.2-0.1.1": "Fix crash on older Forge versions",
+		"1.12.2-0.1.0": "First public release! Made an optimised OldNoCubes algorithm & a semi-optimised MarchingCubes algorithm"
+	}
+}
