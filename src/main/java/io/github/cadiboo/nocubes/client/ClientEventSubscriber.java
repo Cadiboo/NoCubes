@@ -485,7 +485,7 @@ public final class ClientEventSubscriber {
 
 		if (ModConfig.enableCollisions) {
 
-//			event.setCanceled(true);
+			event.setCanceled(true);
 
 		}
 
