@@ -57,7 +57,7 @@ public final class NoCubes {
 	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
 
 	public static boolean profilingEnabled = false;
-	private static boolean pastInit = false;
+	private static boolean pastPreInit = false;
 
 	public static void enableProfiling() {
 		profilingEnabled = true;
@@ -108,7 +108,7 @@ public final class NoCubes {
 
 	@SuppressWarnings("unused")
 	public static boolean areHooksEnabled() {
-		if (!pastInit) {
+		if (!pastPreInit) {
 			return false;
 		}
 		return isEnabled();
@@ -124,7 +124,7 @@ public final class NoCubes {
 
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
-		pastInit = true;
+		pastPreInit = true;
 
 		{
 			try {
@@ -162,6 +162,7 @@ public final class NoCubes {
 			} catch (NullPointerException e) {
 			}
 		}
+
 		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
