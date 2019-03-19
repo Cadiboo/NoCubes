@@ -179,7 +179,9 @@ public class MeshDispatcher {
 	 */
 	@Nonnull
 	public FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock")) {
+//		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock"))
+		final ModProfiler ignored = NoCubes.getProfiler();
+		{
 
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
