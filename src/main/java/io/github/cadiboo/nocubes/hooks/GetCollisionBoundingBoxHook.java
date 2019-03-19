@@ -8,6 +8,8 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nullable;
+
 /**
  * @author Cadiboo
  */
@@ -17,6 +19,7 @@ import net.minecraft.world.IBlockAccess;
 })
 public final class GetCollisionBoundingBoxHook {
 
+	@Nullable
 	public static AxisAlignedBB getCollisionBoundingBox(final Block block, final IBlockState state, final IBlockAccess worldIn, final BlockPos pos) {
 		if (!ModConfig.enableCollisions) {
 			return getCollisionBoundingBoxDefault(state, worldIn, pos);
@@ -26,6 +29,7 @@ public final class GetCollisionBoundingBoxHook {
 		}
 	}
 
+	@Nullable
 	public static AxisAlignedBB getCollisionBoundingBoxDefault(final IBlockState state, final IBlockAccess worldIn, final BlockPos pos) {
 		runGetCollisionBoundingBoxDefaultOnce((StateImplementation) state);
 		return state.getCollisionBoundingBox(worldIn, pos);
