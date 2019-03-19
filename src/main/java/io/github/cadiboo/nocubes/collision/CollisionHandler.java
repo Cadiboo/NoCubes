@@ -16,6 +16,7 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
@@ -30,6 +31,8 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 		"weakerAccess" // Hooks need to be public to be invoked
 })
 public final class CollisionHandler {
+
+	public static final ConcurrentHashMap<BlockPos, CollisionsCache> CACHE = new ConcurrentHashMap<>();
 
 	public static boolean isEntityInsideOpaqueBlock(final Entity entityIn) {
 		return false;
@@ -74,11 +77,19 @@ public final class CollisionHandler {
 
 	private static void addMeshCollisionBoxesToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 
-		final float boxRadius = 0.0625F;
+		final float boxRadius = 0.03125F;
 		final boolean ignoreIntersects = false;
 
 		worldIn.profiler.startSection("addMeshCollisionBoxesToList");
 		try {
+
+			CollisionsCache cached = CACHE.get(pos);
+			if (cached != null) {
+				for (final AxisAlignedBB box : cached.boxes) {
+					addCollisionBoxToList(collidingBoxes, entityBox, box, false);
+				}
+				return;
+			}
 
 			if (entityIn == null) {
 				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
@@ -89,10 +100,14 @@ public final class CollisionHandler {
 			final AxisAlignedBB originalBoxOffset = originalBox == null ? null : originalBox.offset(pos);
 
 			try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(pos, worldIn, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator)) {
+
+				final ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
+
 				for (Face face : faces) {
 					// Ew, Yay, Java 8 variable try-with-resources support
 					try {
 
+						worldIn.profiler.startSection("interpolate");
 						//0___3
 						//_____
 						//_____
@@ -154,9 +169,10 @@ public final class CollisionHandler {
 						//1x*x2
 						final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1 = interp(v0v1v1v2v1v2v2v3, v2v3v3v0v3v0v0v1, 0.5F);
 						final Vec3 v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2 = interp(v1v2v2v3v2v3v3v0, v3v0v0v1v0v1v1v2, 0.5F);
+						worldIn.profiler.endSection();
 
-						{
-
+						try {
+							worldIn.profiler.startSection("createBoxes");
 							//0___3
 							//_____
 							//_____
@@ -218,141 +234,149 @@ public final class CollisionHandler {
 							//1x*x2
 							final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, entityIn, boxRadius, originalBoxOffset);
 							final AxisAlignedBB v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, entityIn, boxRadius, originalBoxOffset);
+							worldIn.profiler.endSection();
 
-							{
-
-								final ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
+							worldIn.profiler.startSection("addBoxes");
+							try {
 
 								//0___3
 								//_____
 								//_____
 								//_____
 								//1___2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3box);
+								boxes.add(v0box);
+								boxes.add(v1box);
+								boxes.add(v2box);
+								boxes.add(v3box);
 
 								//0_*_3
 								//_____
 								//*___*
 								//_____
 								//1_*_2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2v3box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3v0box);
+								boxes.add(v0v1box);
+								boxes.add(v1v2box);
+								boxes.add(v2v3box);
+								boxes.add(v3v0box);
 
 								//0x*x3
 								//x___x
 								//*___*
 								//x___x
 								//1x*x2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1v0box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2v2box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2v3v2box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2v3v3box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3v0v3box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3v0v0box);
+								boxes.add(v0v1v0box);
+								boxes.add(v0v1v1box);
+								boxes.add(v1v2v1box);
+								boxes.add(v1v2v2box);
+								boxes.add(v2v3v2box);
+								boxes.add(v2v3v3box);
+								boxes.add(v3v0v3box);
+								boxes.add(v3v0v0box);
 
 								//0x*x3
 								//xa_ax
 								//*___*
 								//xa_ax
 								//1x*x2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1v1v2box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2v2v3box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2v3v3v0box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3v0v0v1box);
+								boxes.add(v0v1v1v2box);
+								boxes.add(v1v2v2v3box);
+								boxes.add(v2v3v3v0box);
+								boxes.add(v3v0v0v1box);
 
 								//0x*x3
 								//xabax
 								//*b_b*
 								//xabax
 								//1x*x2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1v1v2v1v2v2v3box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2v2v3v2v3v3v0box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v2v3v3v0v3v0v0v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v3v0v0v1v0v1v1v2box);
+								boxes.add(v0v1v1v2v1v2v2v3box);
+								boxes.add(v1v2v2v3v2v3v3v0box);
+								boxes.add(v2v3v3v0v3v0v0v1box);
+								boxes.add(v3v0v0v1v0v1v1v2box);
 
 								//0x*x3
 								//xabax
 								//*bcb*
 								//xabax
 								//1x*x2
-								addCollisionBoxToList(collidingBoxes, entityBox, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box);
-								addCollisionBoxToList(collidingBoxes, entityBox, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box);
+								boxes.add(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box);
+								boxes.add(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box);
 
+							} finally {
+								worldIn.profiler.endSection();
 							}
+						} finally {
+
+							//0___3
+							//_____
+							//_____
+							//_____
+							//1___2
+							v0.close();
+							v1.close();
+							v2.close();
+							v3.close();
+
+							//0_*_3
+							//_____
+							//*___*
+							//_____
+							//1_*_2
+							v0v1.close();
+							v1v2.close();
+							v2v3.close();
+							v3v0.close();
+
+							//0x*x3
+							//x___x
+							//*___*
+							//x___x
+							//1x*x2
+							v0v1v0.close();
+							v0v1v1.close();
+							v1v2v1.close();
+							v1v2v2.close();
+							v2v3v2.close();
+							v2v3v3.close();
+							v3v0v3.close();
+							v3v0v0.close();
+
+							//0x*x3
+							//xa_ax
+							//*___*
+							//xa_ax
+							//1x*x2
+							v0v1v1v2.close();
+							v1v2v2v3.close();
+							v2v3v3v0.close();
+							v3v0v0v1.close();
+
+							//0x*x3
+							//xabax
+							//*b_b*
+							//xabax
+							//1x*x2
+							v0v1v1v2v1v2v2v3.close();
+							v1v2v2v3v2v3v3v0.close();
+							v2v3v3v0v3v0v0v1.close();
+							v3v0v0v1v0v1v1v2.close();
+
+							//0x*x3
+							//xabax
+							//*bcb*
+							//xabax
+							//1x*x2
+							v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1.close();
+							v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2.close();
 						}
-
-						//0___3
-						//_____
-						//_____
-						//_____
-						//1___2
-						v0.close();
-						v1.close();
-						v2.close();
-						v3.close();
-
-						//0_*_3
-						//_____
-						//*___*
-						//_____
-						//1_*_2
-						v0v1.close();
-						v1v2.close();
-						v2v3.close();
-						v3v0.close();
-
-						//0x*x3
-						//x___x
-						//*___*
-						//x___x
-						//1x*x2
-						v0v1v0.close();
-						v0v1v1.close();
-						v1v2v1.close();
-						v1v2v2.close();
-						v2v3v2.close();
-						v2v3v3.close();
-						v3v0v3.close();
-						v3v0v0.close();
-
-						//0x*x3
-						//xa_ax
-						//*___*
-						//xa_ax
-						//1x*x2
-						v0v1v1v2.close();
-						v1v2v2v3.close();
-						v2v3v3v0.close();
-						v3v0v0v1.close();
-
-						//0x*x3
-						//xabax
-						//*b_b*
-						//xabax
-						//1x*x2
-						v0v1v1v2v1v2v2v3.close();
-						v1v2v2v3v2v3v3v0.close();
-						v2v3v3v0v3v0v0v1.close();
-						v3v0v0v1v0v1v1v2.close();
-
-						//0x*x3
-						//xabax
-						//*bcb*
-						//xabax
-						//1x*x2
-						v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1.close();
-						v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2.close();
 
 					} finally {
 						face.close();
 					}
+				}
+				CACHE.put(pos.toImmutable(), new CollisionsCache(boxes));
+
+				for (final AxisAlignedBB box : boxes) {
+					addCollisionBoxToList(collidingBoxes, entityBox, box, false);
 				}
 			}
 		} finally {
@@ -364,8 +388,8 @@ public final class CollisionHandler {
 
 	}
 
-	private static void addCollisionBoxToList(final List<AxisAlignedBB> collidingBoxes, final AxisAlignedBB entityBox, final AxisAlignedBB box) {
-		if (/*ignoreIntersects ||*/ entityBox.intersects(box)) {
+	private static void addCollisionBoxToList(final List<AxisAlignedBB> collidingBoxes, final AxisAlignedBB entityBox, final AxisAlignedBB box, final boolean ignoreIntersects) {
+		if (ignoreIntersects || entityBox.intersects(box)) {
 			collidingBoxes.add(box);
 		}
 	}
@@ -390,7 +414,7 @@ public final class CollisionHandler {
 					vec3.z + boxRadius
 			);
 		}
-		final boolean originalBoxMaxYGreaterThanVertex = originalBox == null ? false : originalBox.maxY >= vec3.y;
+		final boolean originalBoxMaxYGreaterThanVertex = originalBox != null && originalBox.maxY >= vec3.y;
 
 		//min
 		final double x1 = vec3.x - boxRadius;
@@ -402,6 +426,17 @@ public final class CollisionHandler {
 		final double z2 = vec3.z + boxRadius;
 
 		return new AxisAlignedBB(x1, y1, z1, x2, y2, z2);
+
+	}
+
+	public static class CollisionsCache {
+
+		public final ArrayList<AxisAlignedBB> boxes;
+		public int timeSinceLastUsed = 0;
+
+		private CollisionsCache(final ArrayList<AxisAlignedBB> boxes) {
+			this.boxes = boxes;
+		}
 
 	}
 

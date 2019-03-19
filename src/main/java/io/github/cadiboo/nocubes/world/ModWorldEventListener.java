@@ -13,6 +13,8 @@ import net.minecraft.world.World;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import static io.github.cadiboo.nocubes.collision.CollisionHandler.CACHE;
+
 /**
  * @author Cadiboo
  */
@@ -26,10 +28,13 @@ public class ModWorldEventListener implements IWorldEventListener {
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
-		int k1 = pos.getX();
-		int l1 = pos.getY();
-		int i2 = pos.getZ();
-		NoCubes.PROXY.markBlocksForUpdate(k1 - BLOCK_UPDATE_EXTEND, l1 - BLOCK_UPDATE_EXTEND, i2 - BLOCK_UPDATE_EXTEND, k1 + BLOCK_UPDATE_EXTEND, l1 + BLOCK_UPDATE_EXTEND, i2 + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		CACHE.remove(pos);
+
+		NoCubes.PROXY.markBlocksForUpdate(posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND, posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}
 
 	@Override
