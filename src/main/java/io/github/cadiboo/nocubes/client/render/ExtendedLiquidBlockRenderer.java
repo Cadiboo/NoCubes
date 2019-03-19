@@ -30,7 +30,7 @@ public class ExtendedLiquidBlockRenderer {
 			@Nonnull final BlockPos liquidPos,
 			@Nonnull final IBlockAccess blockAccess,
 			//TODO: eventually do better liquid rendering for 0.3.0
-//			@Nonnull final IBlockState smoothableState,
+			@Nonnull final IBlockState smoothableState,
 			@Nonnull final IBlockState liquidState,
 			@Nonnull final BufferBuilder bufferBuilderIn
 	) {
@@ -195,7 +195,20 @@ public class ExtendedLiquidBlockRenderer {
 						final int skylightX1Y0Z1;
 						final int blocklightX1Y0Z1;
 
-						if (!isLava && isSmoothFluidLightingEnabled()) {
+						if (isLava) {
+							final int packedLight = smoothableState.getPackedLightmapCoords(blockAccess, renderPos);
+							final int skylight = packedLight >> 16 & 65535;
+							final int blocklight = 240;
+
+							skylightX0Z0 = skylight;
+							blocklightX0Z0 = blocklight;
+							skylightX0Y0Z0 = skylight;
+							blocklightX0Y0Z0 = blocklight;
+							skylightX1Z1 = skylight;
+							blocklightX1Z1 = blocklight;
+							skylightX1Y0Z1 = skylight;
+							blocklightX1Y0Z1 = blocklight;
+						} else if (isSmoothFluidLightingEnabled()) {
 							final int packedLightX0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, yAdd0, posZ0 - posZ));
 							final int packedLightX0Y0Z0 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX0 - posX, 0, posZ0 - posZ));
 							final int packedLightX1Z1 = blockStateIn.getPackedLightmapCoords(blockAccess, blockpos.add(posX1 - posX, yAdd0, posZ1 - posZ));
@@ -324,44 +337,49 @@ public class ExtendedLiquidBlockRenderer {
 			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-quarterCosSlopeAngle - quarterSinSlopeAngle) * 16.0F));
 		}
 
-		final int realPackedLightmapCoords = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn);
-		final int renderPackedLightmapCoords = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos);
-		final int skyLightmapCoords = (renderPackedLightmapCoords >> 16 & 65535) == 0 ? realPackedLightmapCoords >> 16 & 65535 : renderPackedLightmapCoords >> 16 & 65535;
-		final int blockLightmapCoords = (renderPackedLightmapCoords & 65535) == 0 ? realPackedLightmapCoords & 65535 : renderPackedLightmapCoords & 65535;
-		final int packedLightmapCoords = (skyLightmapCoords << 16) | blockLightmapCoords;
+		if (isLava) {
+			final int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos) | 240;
+			fluidRenderer.renderTopFlatLighting(packedLight, blockAccess, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
+		} else {
+			final int realPackedLightmapCoords = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn);
+			final int renderPackedLightmapCoords = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos);
+			final int skyLightmapCoords = (renderPackedLightmapCoords >> 16 & 65535) == 0 ? realPackedLightmapCoords >> 16 & 65535 : renderPackedLightmapCoords >> 16 & 65535;
+			final int blockLightmapCoords = (renderPackedLightmapCoords & 65535) == 0 ? realPackedLightmapCoords & 65535 : renderPackedLightmapCoords & 65535;
+			final int packedLightmapCoords = (skyLightmapCoords << 16) | blockLightmapCoords;
 
-		if (!isLava && isSmoothFluidLightingEnabled()) {
-			final int realPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south());
-			final int renderPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south());
-			final int realPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east());
-			final int renderPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south().east());
-			final int realPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.east());
-			final int renderPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.east());
+			if (isSmoothFluidLightingEnabled()) {
+				final int realPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south());
+				final int renderPackedLightmapCoordsSouth = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south());
+				final int realPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.south().east());
+				final int renderPackedLightmapCoordsSouthEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.south().east());
+				final int realPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.east());
+				final int renderPackedLightmapCoordsEast = blockStateIn.getPackedLightmapCoords(blockAccess, renderPos.east());
 
-//			final int packedLightmapCoordsSouth = renderPackedLightmapCoordsSouth;
-//			final int packedLightmapCoordsSouthEast = renderPackedLightmapCoordsSouthEast;
-//			final int packedLightmapCoordsEast = renderPackedLightmapCoordsEast;
+//				final int packedLightmapCoordsSouth = renderPackedLightmapCoordsSouth;
+//				final int packedLightmapCoordsSouthEast = renderPackedLightmapCoordsSouthEast;
+//				final int packedLightmapCoordsEast = renderPackedLightmapCoordsEast;
+//
+//				final int packedLightmapCoordsSouth = (realPackedLightmapCoordsSouth & 65535) > (renderPackedLightmapCoordsSouth & 65535) ? realPackedLightmapCoordsSouth : renderPackedLightmapCoordsSouth;
+//				final int packedLightmapCoordsSouthEast = (realPackedLightmapCoordsSouthEast & 65535) > (renderPackedLightmapCoordsSouthEast & 65535) ? realPackedLightmapCoordsSouthEast : renderPackedLightmapCoordsSouthEast;
+//				final int packedLightmapCoordsEast = (realPackedLightmapCoordsEast & 65535) > (renderPackedLightmapCoordsEast & 65535) ? realPackedLightmapCoordsEast : renderPackedLightmapCoordsEast;
 
-//			final int packedLightmapCoordsSouth = (realPackedLightmapCoordsSouth & 65535) > (renderPackedLightmapCoordsSouth & 65535) ? realPackedLightmapCoordsSouth : renderPackedLightmapCoordsSouth;
-//			final int packedLightmapCoordsSouthEast = (realPackedLightmapCoordsSouthEast & 65535) > (renderPackedLightmapCoordsSouthEast & 65535) ? realPackedLightmapCoordsSouthEast : renderPackedLightmapCoordsSouthEast;
-//			final int packedLightmapCoordsEast = (realPackedLightmapCoordsEast & 65535) > (renderPackedLightmapCoordsEast & 65535) ? realPackedLightmapCoordsEast : renderPackedLightmapCoordsEast;
+				final int skyLightmapCoordsSouth = (renderPackedLightmapCoordsSouth >> 16 & 65535) == 0 ? realPackedLightmapCoordsSouth >> 16 & 65535 : renderPackedLightmapCoordsSouth >> 16 & 65535;
+				final int blockLightmapCoordsSouth = (renderPackedLightmapCoordsSouth & 65535) == 0 ? realPackedLightmapCoordsSouth & 65535 : renderPackedLightmapCoordsSouth & 65535;
+				final int packedLightmapCoordsSouth = (skyLightmapCoordsSouth << 16) | blockLightmapCoordsSouth;
 
-			final int skyLightmapCoordsSouth = (renderPackedLightmapCoordsSouth >> 16 & 65535) == 0 ? realPackedLightmapCoordsSouth >> 16 & 65535 : renderPackedLightmapCoordsSouth >> 16 & 65535;
-			final int blockLightmapCoordsSouth = (renderPackedLightmapCoordsSouth & 65535) == 0 ? realPackedLightmapCoordsSouth & 65535 : renderPackedLightmapCoordsSouth & 65535;
-			final int packedLightmapCoordsSouth = (skyLightmapCoordsSouth << 16) | blockLightmapCoordsSouth;
+				final int skyLightmapCoordsSouthEast = (renderPackedLightmapCoordsSouthEast >> 16 & 65535) == 0 ? realPackedLightmapCoordsSouthEast >> 16 & 65535 : renderPackedLightmapCoordsSouthEast >> 16 & 65535;
+				final int blockLightmapCoordsSouthEast = (renderPackedLightmapCoordsSouthEast & 65535) == 0 ? realPackedLightmapCoordsSouthEast & 65535 : renderPackedLightmapCoordsSouthEast & 65535;
+				final int packedLightmapCoordsSouthEast = (skyLightmapCoordsSouthEast << 16) | blockLightmapCoordsSouthEast;
 
-			final int skyLightmapCoordsSouthEast = (renderPackedLightmapCoordsSouthEast >> 16 & 65535) == 0 ? realPackedLightmapCoordsSouthEast >> 16 & 65535 : renderPackedLightmapCoordsSouthEast >> 16 & 65535;
-			final int blockLightmapCoordsSouthEast = (renderPackedLightmapCoordsSouthEast & 65535) == 0 ? realPackedLightmapCoordsSouthEast & 65535 : renderPackedLightmapCoordsSouthEast & 65535;
-			final int packedLightmapCoordsSouthEast = (skyLightmapCoordsSouthEast << 16) | blockLightmapCoordsSouthEast;
-
-			final int skyLightmapCoordsEast = (renderPackedLightmapCoordsEast >> 16 & 65535) == 0 ? realPackedLightmapCoordsEast >> 16 & 65535 : renderPackedLightmapCoordsEast >> 16 & 65535;
-			final int blockLightmapCoordsEast = (renderPackedLightmapCoordsEast & 65535) == 0 ? realPackedLightmapCoordsEast & 65535 : renderPackedLightmapCoordsEast & 65535;
-			final int packedLightmapCoordsEast = (skyLightmapCoordsEast << 16) | blockLightmapCoordsEast;
+				final int skyLightmapCoordsEast = (renderPackedLightmapCoordsEast >> 16 & 65535) == 0 ? realPackedLightmapCoordsEast >> 16 & 65535 : renderPackedLightmapCoordsEast >> 16 & 65535;
+				final int blockLightmapCoordsEast = (renderPackedLightmapCoordsEast & 65535) == 0 ? realPackedLightmapCoordsEast & 65535 : renderPackedLightmapCoordsEast & 65535;
+				final int packedLightmapCoordsEast = (skyLightmapCoordsEast << 16) | blockLightmapCoordsEast;
 
 //			
-			fluidRenderer.renderTopSmoothLighting(packedLightmapCoords, packedLightmapCoordsSouth, packedLightmapCoordsSouthEast, packedLightmapCoordsEast, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
-		} else {
-			fluidRenderer.renderTopFlatLighting(packedLightmapCoords, blockAccess, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
+				fluidRenderer.renderTopSmoothLighting(packedLightmapCoords, packedLightmapCoordsSouth, packedLightmapCoordsSouthEast, packedLightmapCoordsEast, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
+			} else {
+				fluidRenderer.renderTopFlatLighting(packedLightmapCoords, blockAccess, blockPosIn, bufferBuilderIn, blockliquid, redFloat, greenFloat, blueFloat, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, posX, posY, posZ, u0, u1, u2, u3, v0, v1, v2, v3);
+			}
 		}
 	}
 

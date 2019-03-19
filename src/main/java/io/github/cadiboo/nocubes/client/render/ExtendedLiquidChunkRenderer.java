@@ -100,7 +100,6 @@ public class ExtendedLiquidChunkRenderer {
 											renderChunkPositionZ + z
 									), blockAccess, bufferBuilder);
 
-									//TODO smooth lighting?
 									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
 											renderChunkPositionX + x,
 											renderChunkPositionY + y,
@@ -111,6 +110,7 @@ public class ExtendedLiquidChunkRenderer {
 													renderChunkPositionZ + z + zOffset
 											),
 											blockAccess,
+											stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
 											liquidState,
 											bufferBuilder
 									);

@@ -241,10 +241,15 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	public void renderBottom(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn, final TextureAtlasSprite[] atextureatlassprite, final double posX, final double posY, final double posZ, final boolean isLava) {
-		if (!isLava && isSmoothFluidLightingEnabled()) {
-			renderBottomSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().east()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
+		if (isLava) {
+			final int packedLight = blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()) | 240;
+			renderBottomFlatLighting(packedLight, bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
 		} else {
-			renderBottomFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
+			if (isSmoothFluidLightingEnabled()) {
+				renderBottomSmoothLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().south().east()), blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down().east()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
+			} else {
+				renderBottomFlatLighting(blockStateIn.getPackedLightmapCoords(blockAccess, blockPosIn.down()), bufferBuilderIn, atextureatlassprite[0], posX, posY, posZ);
+			}
 		}
 	}
 
