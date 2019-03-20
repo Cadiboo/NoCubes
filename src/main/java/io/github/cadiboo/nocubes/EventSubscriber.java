@@ -40,7 +40,7 @@ public final class EventSubscriber {
 			synchronized (CollisionHandler.CACHE) {
 				final HashSet<BlockPos> toRemove = new HashSet<>();
 				CollisionHandler.CACHE.forEach((blockPos, collisionsCache) -> {
-					if (collisionsCache.timeSinceLastUsed > 200) {
+					if (collisionsCache.timeSinceLastUsed > 100) {
 						toRemove.add(blockPos);
 						return;
 					}
