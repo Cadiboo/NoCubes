@@ -4,16 +4,16 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
+import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -30,6 +30,7 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.client.model.pipeline.LightUtil;
 
 import javax.annotation.Nonnull;
 import java.util.ConcurrentModificationException;
@@ -111,23 +112,23 @@ public class MeshRenderer {
 					break;
 				case TOGETHER:
 //					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeavesTogether"))
-					{
-						renderMesh(
-								renderChunk,
-								generator,
-								compiledChunk,
-								renderChunkPosition,
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								blockAccess,
-								stateCache,
-								blockRendererDispatcher,
-								pooledPackedLightCache,
-								NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
-								LEAVES_SMOOTHABLE,
-								pooledMutableBlockPos, usedBlockRenderLayers, true
-						);
-					}
-					break;
+				{
+					renderMesh(
+							renderChunk,
+							generator,
+							compiledChunk,
+							renderChunkPosition,
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							blockAccess,
+							stateCache,
+							blockRendererDispatcher,
+							pooledPackedLightCache,
+							NoCubes.MESH_DISPATCHER.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
+							LEAVES_SMOOTHABLE,
+							pooledMutableBlockPos, usedBlockRenderLayers, true
+					);
+				}
+				break;
 				case OFF:
 					break;
 			}
@@ -192,7 +193,7 @@ public class MeshRenderer {
 						NoCubes.getProfiler().end();
 
 						try {
-							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledPackedLightCache, usedBlockRenderLayers, renderOppositeSides, faces, texturePos, textureState);
+							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledPackedLightCache, usedBlockRenderLayers, renderOppositeSides, pos, faces, texturePos, textureState);
 						} catch (Exception e) {
 							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
 
@@ -225,9 +226,10 @@ public class MeshRenderer {
 			@Nonnull final PackedLightCache pooledPackedLightCache,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			final boolean renderOppositeSides,
-			final FaceList faces,
-			final BlockPos texturePos,
-			final IBlockState textureState
+			@Nonnull final Vec3b pos,
+			@Nonnull final FaceList faces,
+			@Nonnull final BlockPos texturePos,
+			@Nonnull final IBlockState textureState
 	) {
 
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces"))
@@ -264,33 +266,33 @@ public class MeshRenderer {
 			NoCubes.getProfiler().end();
 
 			final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
-			final int alpha = 0xFF;
+			final float alpha = 1F;
 
-			final int red0 = (color0 >> 16) & 255;
-			final int green0 = (color0 >> 8) & 255;
-			final int blue0 = color0 & 255;
-			final int red1;
-			final int green1;
-			final int blue1;
-			final int red2;
-			final int green2;
-			final int blue2;
-			final int red3;
-			final int green3;
-			final int blue3;
+			final float red0 = ((color0 >> 16) & 255) / 255F;
+			final float green0 = ((color0 >> 8) & 255) / 255F;
+			final float blue0 = ((color0) & 255) / 255F;
+			final float red1;
+			final float green1;
+			final float blue1;
+			final float red2;
+			final float green2;
+			final float blue2;
+			final float red3;
+			final float green3;
+			final float blue3;
 			if (smoothBiomeColorTransitions) {
 				final int color1 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.east());
-				red1 = color1 >> 16 & 255;
-				green1 = color1 >> 8 & 255;
-				blue1 = (color1 & 255);
+				red1 = ((color1 >> 16) & 255) / 255F;
+				green1 = ((color1 >> 8) & 255) / 255F;
+				blue1 = ((color1) & 255) / 255F;
 				final int color2 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
-				red2 = (color2 >> 16 & 255);
-				green2 = (color2 >> 8 & 255);
-				blue2 = (color2 & 255);
+				red2 = ((color2 >> 16) & 255) / 255F;
+				green2 = ((color2 >> 8) & 255) / 255F;
+				blue2 = ((color2) & 255) / 255F;
 				final int color3 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south());
-				red3 = (color3 >> 16 & 255);
-				green3 = (color3 >> 8 & 255);
-				blue3 = (color3 & 255);
+				red3 = ((color3 >> 16) & 255) / 255F;
+				green3 = ((color3 >> 8) & 255) / 255F;
+				blue3 = ((color3) & 255) / 255F;
 			} else {
 				red1 = red0;
 				green1 = green0;
@@ -317,6 +319,36 @@ public class MeshRenderer {
 					final Vec3 v2 = face.getVertex2();
 					//south west when looking down onto up face
 					final Vec3 v3 = face.getVertex3();
+
+					float diffuse0;
+					float diffuse1;
+					float diffuse2;
+					float diffuse3;
+					if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting()) {
+						diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+					} else {
+						diffuse0 = diffuseLight(LightUtil.toSide(
+								v0.x - renderChunkPositionX - pos.x,
+								v0.y - renderChunkPositionY - pos.y,
+								v0.z - renderChunkPositionZ - pos.z
+						));
+						diffuse1 = diffuseLight(LightUtil.toSide(
+								v1.x - renderChunkPositionX - pos.x,
+								v1.y - renderChunkPositionY - pos.y,
+								v1.z - renderChunkPositionZ - pos.z
+						));
+						diffuse2 = diffuseLight(LightUtil.toSide(
+								v2.x - renderChunkPositionX - pos.x,
+								v2.y - renderChunkPositionY - pos.y,
+								v2.z - renderChunkPositionZ - pos.z
+						));
+						diffuse3 = diffuseLight(LightUtil.toSide(
+								v3.x - renderChunkPositionX - pos.x,
+								v3.y - renderChunkPositionY - pos.y,
+								v3.z - renderChunkPositionZ - pos.z
+						));
+
+					}
 
 					final int lightmapSkyLight0;
 					final int lightmapSkyLight1;
@@ -350,18 +382,18 @@ public class MeshRenderer {
 					try {
 						try (final ModProfiler ignored1 = NoCubes.getProfiler().start("renderSide")) {
 							// TODO use raw puts?
-							bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0, green0, blue0, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-							bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1, green1, blue1, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-							bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2, green2, blue2, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-							bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3, green3, blue3, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+							bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+							bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+							bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+							bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
 						}
 						if (renderOppositeSides) {
 							// TODO use raw puts?
 							try (final ModProfiler ignored1 = NoCubes.getProfiler().start("renderOppositeSide")) {
-								bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3, green3, blue3, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-								bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2, green2, blue2, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-								bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1, green1, blue1, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-								bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0, green0, blue0, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+								bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+								bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+								bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+								bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
 							}
 						}
 					} finally {
@@ -377,6 +409,14 @@ public class MeshRenderer {
 			}
 
 			OptifineCompatibility.popShaderThing(bufferBuilder);
+		}
+	}
+
+	private static float diffuseLight(final EnumFacing side) {
+		if (side == EnumFacing.UP) {
+			return 1f;
+		} else {
+			return .97f;
 		}
 	}
 

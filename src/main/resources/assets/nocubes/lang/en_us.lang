@@ -60,6 +60,9 @@ nocubes.config.smoothBlockHighlighting.tooltip=Shows the faces of the block you'
 nocubes.config.collisionsBlockHighlighting=[DEVELOPMENT] Collisions Block Highlighting
 nocubes.config.collisionsBlockHighlighting.tooltip=Shows the collisions of blocks in blue
 
+nocubes.config.applyDiffuseLighting=[INDEV] Apply Diffuse Lighting
+nocubes.config.applyDiffuseLighting.tooltip=Applies a small amount of diffuse lighting
+
 
 key.categories.nocubes=NoCubes
 
