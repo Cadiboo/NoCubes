@@ -156,6 +156,10 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.collisionsBlockHighlighting")
 	public static boolean collisionsBlockHighlighting = false;
 
+	@Beta
+	@LangKey(MOD_ID + ".config.applyDiffuseLighting")
+	public static boolean applyDiffuseLighting = false;
+
 	static {
 		setupTerrainSmoothableBlockStates();
 		setupLeavesSmoothableBlockStates();
