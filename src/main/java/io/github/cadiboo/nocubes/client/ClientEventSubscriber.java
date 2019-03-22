@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -31,6 +32,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -340,6 +342,52 @@ public final class ClientEventSubscriber {
 		if (needsResave) {
 			gameSettings.saveOptions();
 		}
+	}
+
+	@SubscribeEvent
+	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
+
+		final EntityPlayer player = Minecraft.getMinecraft().player;
+		if (player == null) {
+			return;
+		}
+
+		final float partialTicks = event.getPartialTicks();
+
+		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+		final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+
+		GlStateManager.enableBlend();
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.glLineWidth(2.0F);
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthMask(false);
+		GlStateManager.disableDepth();
+
+		GlStateManager.color(0, 0, 0, 0);
+		GlStateManager.color(1, 1, 1, 1);
+
+		{
+			for (final CollisionHandler.CollisionsCache cache : CollisionHandler.CACHE.values()) {
+				for (final AxisAlignedBB box : cache.boxes) {
+
+					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
+					RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 0.0F, 0.4F);
+
+				}
+			}
+		}
+
+		GlStateManager.color(0, 0, 0, 0);
+		GlStateManager.color(1, 1, 1, 1);
+
+		GlStateManager.enableDepth();
+
+		GlStateManager.depthMask(true);
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
+
 	}
 
 	@SubscribeEvent
