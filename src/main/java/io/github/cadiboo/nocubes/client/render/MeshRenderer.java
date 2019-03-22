@@ -30,7 +30,6 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.client.model.pipeline.LightUtil;
 
 import javax.annotation.Nonnull;
 import java.util.ConcurrentModificationException;
@@ -327,22 +326,22 @@ public class MeshRenderer {
 					if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting()) {
 						diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
 					} else {
-						diffuse0 = diffuseLight(LightUtil.toSide(
+						diffuse0 = diffuseLight(toSide(
 								v0.x - renderChunkPositionX - pos.x,
 								v0.y - renderChunkPositionY - pos.y,
 								v0.z - renderChunkPositionZ - pos.z
 						));
-						diffuse1 = diffuseLight(LightUtil.toSide(
+						diffuse1 = diffuseLight(toSide(
 								v1.x - renderChunkPositionX - pos.x,
 								v1.y - renderChunkPositionY - pos.y,
 								v1.z - renderChunkPositionZ - pos.z
 						));
-						diffuse2 = diffuseLight(LightUtil.toSide(
+						diffuse2 = diffuseLight(toSide(
 								v2.x - renderChunkPositionX - pos.x,
 								v2.y - renderChunkPositionY - pos.y,
 								v2.z - renderChunkPositionZ - pos.z
 						));
-						diffuse3 = diffuseLight(LightUtil.toSide(
+						diffuse3 = diffuseLight(toSide(
 								v3.x - renderChunkPositionX - pos.x,
 								v3.y - renderChunkPositionY - pos.y,
 								v3.z - renderChunkPositionZ - pos.z
@@ -409,6 +408,26 @@ public class MeshRenderer {
 			}
 
 			OptifineCompatibility.popShaderThing(bufferBuilder);
+		}
+	}
+
+	private static EnumFacing toSide(final double x, final double y, final double z) {
+		if (Math.abs(x) > Math.abs(y)) {
+			if (Math.abs(x) > Math.abs(z)) {
+				if (x < 0) return EnumFacing.WEST;
+				return EnumFacing.EAST;
+			} else {
+				if (z < 0) return EnumFacing.NORTH;
+				return EnumFacing.SOUTH;
+			}
+		} else {
+			if (Math.abs(y) > Math.abs(z)) {
+				if (y < 0) return EnumFacing.DOWN;
+				return EnumFacing.UP;
+			} else {
+				if (z < 0) return EnumFacing.NORTH;
+				return EnumFacing.SOUTH;
+			}
 		}
 	}
 
