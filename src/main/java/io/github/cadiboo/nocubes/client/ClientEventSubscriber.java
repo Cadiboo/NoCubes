@@ -455,8 +455,8 @@ public final class ClientEventSubscriber {
 
 				final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, ModUtil.TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator);
 
-				Tessellator tessellator = Tessellator.getInstance();
-				BufferBuilder bufferbuilder = tessellator.getBuffer();
+				final Tessellator tessellator = Tessellator.getInstance();
+				final BufferBuilder bufferbuilder = tessellator.getBuffer();
 
 				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
 
