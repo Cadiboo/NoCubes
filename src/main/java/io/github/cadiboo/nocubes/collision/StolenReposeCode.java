@@ -18,6 +18,8 @@ import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 import static java.lang.Math.max;
 
 /**
+ * This is 95% coppied from Repose
+ *
  * @author Cadiboo
  */
 public final class StolenReposeCode {
