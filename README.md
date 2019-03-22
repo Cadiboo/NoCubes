@@ -1,5 +1,5 @@
 # [NoCubes Mod](https://Cadiboo.github.io/projects/nocubes/)
-A mod for 1.12.2 by [Cadiboo](https://github.com/Cadiboo) that creates a (currently) cosmetic-only curved terrain layout in Minecraft.
+A mod for 1.12.2 by [Cadiboo](https://github.com/Cadiboo) that creates smooth terrain in Minecraft.
 Original concept & mod for 1.7.2 by Click_Me, Reverse Engineered under his permission (and modified with removed Mojang code where possible) and updated to 1.7.10 by CosmicDan
 
 ## [Download (click)](https://github.com/Cadiboo/NoCubes/releases)
