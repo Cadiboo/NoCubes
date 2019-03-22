@@ -22,14 +22,8 @@ import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
 /**
- * This is 95% coppied from Repose
- *
  * @author Cadiboo
  */
-@SuppressWarnings({
-		"unused", // Hooks get invoked by ASM redirects
-		"weakerAccess" // Hooks need to be public to be invoked
-})
 public final class CollisionHandler {
 
 	public static final ConcurrentHashMap<BlockPos, CollisionsCache> CACHE = new ConcurrentHashMap<>();
