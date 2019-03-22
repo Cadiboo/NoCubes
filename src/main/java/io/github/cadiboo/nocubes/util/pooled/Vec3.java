@@ -14,22 +14,22 @@ public class Vec3 implements AutoCloseable {
 
 //	private static int instances = 0;
 
-	public float x;
-	public float y;
-	public float z;
+	public double x;
+	public double y;
+	public double z;
 
 //	private boolean released;
 
 	private static final ArrayList<Vec3> POOL = new ArrayList<>();
 
-	private Vec3(final float x, final float y, final float z) {
+	private Vec3(final double x, final double y, final double z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
 //		++instances;
 	}
 
-	public Vec3 addOffset(final float x, final float y, final float z) {
+	public Vec3 addOffset(final double x, final double y, final double z) {
 		this.x += x;
 		this.y += y;
 		this.z += z;
@@ -37,7 +37,7 @@ public class Vec3 implements AutoCloseable {
 	}
 
 	@Nonnull
-	public static Vec3 retain(final float x, final float y, final float z) {
+	public static Vec3 retain(final double x, final double y, final double z) {
 		synchronized (POOL) {
 			if (!POOL.isEmpty()) {
 				Vec3 pooled = POOL.remove(POOL.size() - 1);
@@ -51,6 +51,15 @@ public class Vec3 implements AutoCloseable {
 			}
 		}
 		return new Vec3(x, y, z);
+	}
+
+	@Nonnull
+	public static Vec3 retain(final double[] vertexAsArray) {
+		return retain(
+				vertexAsArray[0],
+				vertexAsArray[1],
+				vertexAsArray[2]
+		);
 	}
 
 	@Nonnull
