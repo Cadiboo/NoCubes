@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 public class Vec3 implements AutoCloseable {
 
-	private static int instances = 0;
+//	private static int instances = 0;
 
 	public float x;
 	public float y;
@@ -26,7 +26,7 @@ public class Vec3 implements AutoCloseable {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		++instances;
+//		++instances;
 	}
 
 	public Vec3 addOffset(final float x, final float y, final float z) {
@@ -83,18 +83,18 @@ public class Vec3 implements AutoCloseable {
 		}
 	}
 
-	public static int getInstances() {
-		return instances;
-	}
-
-	public static int getPoolSize() {
-		return POOL.size();
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		--instances;
-	}
+//	public static int getInstances() {
+//		return instances;
+//	}
+//
+//	public static int getPoolSize() {
+//		return POOL.size();
+//	}
+//
+//	@Override
+//	protected void finalize() throws Throwable {
+//		super.finalize();
+//		--instances;
+//	}
 
 }

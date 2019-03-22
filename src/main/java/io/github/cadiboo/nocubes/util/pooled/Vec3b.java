@@ -12,7 +12,7 @@ import java.util.ArrayList;
  */
 public class Vec3b implements Cloneable, AutoCloseable {
 
-	private static int instances = 0;
+//	private static int instances = 0;
 
 	public byte x;
 	public byte y;
@@ -26,7 +26,7 @@ public class Vec3b implements Cloneable, AutoCloseable {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		++instances;
+//		++instances;
 	}
 
 	@Nonnull
@@ -46,8 +46,7 @@ public class Vec3b implements Cloneable, AutoCloseable {
 		return new Vec3b(x, y, z);
 	}
 
-	@Override
-	public Vec3b clone() {
+	public Vec3b copy() {
 		return new Vec3b(
 				this.x,
 				this.y,
@@ -68,18 +67,18 @@ public class Vec3b implements Cloneable, AutoCloseable {
 		}
 	}
 
-	public static int getInstances() {
-		return instances;
-	}
-
-	public static int getPoolSize() {
-		return POOL.size();
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		--instances;
-	}
+//	public static int getInstances() {
+//		return instances;
+//	}
+//
+//	public static int getPoolSize() {
+//		return POOL.size();
+//	}
+//
+//	@Override
+//	protected void finalize() throws Throwable {
+//		super.finalize();
+//		--instances;
+//	}
 
 }

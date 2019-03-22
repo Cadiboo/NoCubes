@@ -1,13 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -34,18 +27,21 @@ public class ObjectPoolingProfiler {
 			return;
 		}
 		counter = 20;
-		if (FaceList.getInstances() == 0) {
-			return;
-		}
-		lightmapInfo += "\t" + LightmapInfo.getInstances();
-		packedLightCache += "\t" + PackedLightCache.getInstances();
-		densityCache += "\t" + DensityCache.getInstances();
-		face += "\t" + Face.getInstances();
-		faceList += "\t" + FaceList.getInstances();
-		smoothableCache += "\t" + SmoothableCache.getInstances();
-		stateCache += "\t" + StateCache.getInstances();
-		vec3 += "\t" + Vec3.getInstances();
-		vec3b += "\t" + Vec3b.getInstances();
+
+		if (true) throw new UnsupportedOperationException();
+
+//		if (FaceList.getInstances() == 0) {
+//			return;
+//		}
+//		lightmapInfo += "\t" + LightmapInfo.getInstances();
+//		packedLightCache += "\t" + PackedLightCache.getInstances();
+//		densityCache += "\t" + DensityCache.getInstances();
+//		face += "\t" + Face.getInstances();
+//		faceList += "\t" + FaceList.getInstances();
+//		smoothableCache += "\t" + SmoothableCache.getInstances();
+//		stateCache += "\t" + StateCache.getInstances();
+//		vec3 += "\t" + Vec3.getInstances();
+//		vec3b += "\t" + Vec3b.getInstances();
 
 		Logger logger = LogManager.getLogger("debug pools");
 		logger.info("EnablePools: " + ModConfig.enablePools);

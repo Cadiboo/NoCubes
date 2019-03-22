@@ -10,7 +10,7 @@ import java.util.ArrayList;
  */
 public class Face implements AutoCloseable {
 
-	private static int instances = 0;
+//	private static int instances = 0;
 
 	@Nonnull
 	private Vec3 vertex0;
@@ -30,7 +30,7 @@ public class Face implements AutoCloseable {
 		this.vertex1 = vertex1;
 		this.vertex2 = vertex2;
 		this.vertex3 = vertex3;
-		++instances;
+//		++instances;
 	}
 
 	@Nonnull
@@ -89,18 +89,18 @@ public class Face implements AutoCloseable {
 		}
 	}
 
-	public static int getInstances() {
-		return instances;
-	}
-
-	public static int getPoolSize() {
-		return POOL.size();
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		--instances;
-	}
+//	public static int getInstances() {
+//		return instances;
+//	}
+//
+//	public static int getPoolSize() {
+//		return POOL.size();
+//	}
+//
+//	@Override
+//	protected void finalize() throws Throwable {
+//		super.finalize();
+//		--instances;
+//	}
 
 }
