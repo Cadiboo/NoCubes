@@ -15,14 +15,12 @@ import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -34,7 +32,6 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
@@ -49,7 +46,6 @@ import java.util.List;
 
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
@@ -175,22 +171,6 @@ public final class ClientEventSubscriber {
 			ModConfig.leavesSmoothableBlockStates = cache.stream()
 					.map(IBlockState::toString)
 					.toArray(String[]::new);
-		}
-	}
-
-	//	@SubscribeEvent
-//	public static void onForgeRenderChunkChunkCacheThingFor1_13(final EventThatDoesntExistIn1_12_2 event) {
-//		if (!NoCubes.isEnabled()) {
-//			return;
-//		}
-//	}
-
-	@SubscribeEvent
-	public static void onEntityJoinWorldEvent(final EntityJoinWorldEvent event) {
-		final Entity entity = event.getEntity();
-		if (entity instanceof EntityPlayerSP) {
-			final EntityPlayerSP player = (EntityPlayerSP) entity;
-			player.sendMessage(net.minecraftforge.common.ForgeHooks.newChatWithLinks(MOD_NAME + " " + VERSION + ": The code for Collisions is 90% copied/ported/stolen from the Repose Mod's code. More accurate collisions with less exactly similar code are being worked on. Until then, enjoy and go give Repose some love at https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/2076319-repose-walkable-soil-slopes-give-your-spacebar-a/"));
 		}
 	}
 
