@@ -125,6 +125,18 @@ public final class NoCubes {
 	public void onPreInit(final FMLPreInitializationEvent event) {
 		pastPreInit = true;
 
+		testHooks();
+
+		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
+		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
+	}
+
+	@Mod.EventHandler
+	public void onPostInit(final FMLPostInitializationEvent event) {
+		PROXY.replaceFluidRendererCauseImBored();
+	}
+
+	public void testHooks() {
 		{
 			try {
 				IsOpaqueCubeHook.isOpaqueCube(null, null);
@@ -161,14 +173,6 @@ public final class NoCubes {
 			} catch (NullPointerException e) {
 			}
 		}
-
-		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
-		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
-	}
-
-	@Mod.EventHandler
-	public void onPostInit(final FMLPostInitializationEvent event) {
-		PROXY.replaceFluidRendererCauseImBored();
 	}
 
 }
