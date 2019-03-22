@@ -44,7 +44,6 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 		acceptedMinecraftVersions = ACCEPTED_MINECRAFT_VERSIONS,
 		updateJSON = UPDATE_JSON,
 		dependencies = DEPENDENCIES,
-		clientSideOnly = true,
 		acceptableRemoteVersions = VERSION,
 		certificateFingerprint = CERTIFICATE_FINGERPRINT
 )
