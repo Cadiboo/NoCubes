@@ -136,14 +136,15 @@ public final class ClientEventSubscriber {
 			return false;
 		}
 
-		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
+		BlockPos blockPos = objectMouseOver.getBlockPos();
+		final IBlockState state = minecraft.world.getBlockState(blockPos);
 
 		final BlockStateToast toast;
 		if (!cache.remove(state)) {
 			cache.add(state);
-			toast = new BlockStateToast.Add(state);
+			toast = new BlockStateToast.Add(state, blockPos);
 		} else {
-			toast = new BlockStateToast.Remove(state);
+			toast = new BlockStateToast.Remove(state, blockPos);
 		}
 		minecraft.getToastGui().add(toast);
 
