@@ -80,7 +80,7 @@ public final class CollisionHandler {
 			CollisionsCache cached = CACHE.get(pos);
 			if (cached != null) {
 				for (final AxisAlignedBB box : cached.boxes) {
-					addCollisionBoxToList(collidingBoxes, entityBox, box, false);
+					addCollisionBoxToList(collidingBoxes, entityBox, box, ignoreIntersects);
 				}
 				return;
 			}
@@ -370,7 +370,7 @@ public final class CollisionHandler {
 				CACHE.put(pos.toImmutable(), new CollisionsCache(boxes));
 
 				for (final AxisAlignedBB box : boxes) {
-					addCollisionBoxToList(collidingBoxes, entityBox, box, false);
+					addCollisionBoxToList(collidingBoxes, entityBox, box, ignoreIntersects);
 				}
 			}
 		} finally {
