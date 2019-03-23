@@ -233,7 +233,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 					for (byte i = 0; i < 8; ++i) {
 						grid[i] = data[n + cube_vertices[i][0] + dims[0] * (cube_vertices[i][1] + dims[1] * cube_vertices[i][2])];
 					}
-					for (byte[] T : TETRA_LIST) {
+					for (byte[] T : tetra_list) {
 						byte triindex = 0;
 						if (grid[T[0]] < 0) triindex |= 1;
 						if (grid[T[1]] < 0) triindex |= 2;
