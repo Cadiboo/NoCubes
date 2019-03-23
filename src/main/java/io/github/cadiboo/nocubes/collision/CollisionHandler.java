@@ -69,7 +69,7 @@ public final class CollisionHandler {
 			if (cached != null) {
 				for (final Face face : cached.faces) {
 					final ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
-					addFaceBoxesToList(boxes, face, worldIn, entityIn, originalBoxOffset, boxRadius);
+					addFaceBoxesToList(boxes, face, worldIn, originalBoxOffset, boxRadius);
 					for (final AxisAlignedBB box : boxes) {
 						addCollisionBoxToList(collidingBoxes, entityBox, box, ignoreIntersects);
 					}
@@ -77,10 +77,10 @@ public final class CollisionHandler {
 				return;
 			}
 
-			if (entityIn == null) {
-				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
-				return;
-			}
+//			if (entityIn == null) {
+//				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+//				return;
+//			}
 
 			try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(pos, worldIn, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator)) {
 
@@ -89,7 +89,7 @@ public final class CollisionHandler {
 				for (Face face : faces) {
 					// Ew, Yay, Java 8 variable try-with-resources support
 //					try {
-					addFaceBoxesToList(boxes, face, worldIn, entityIn, originalBoxOffset, boxRadius);
+					addFaceBoxesToList(boxes, face, worldIn, originalBoxOffset, boxRadius);
 //					} finally {
 //						face.close();
 //					}
@@ -109,7 +109,7 @@ public final class CollisionHandler {
 
 	}
 
-	private static void addFaceBoxesToList(final List<AxisAlignedBB> outBoxes, final Face face, final World worldIn, final Entity entityIn, final AxisAlignedBB originalBoxOffset, final float boxRadius) {
+	private static void addFaceBoxesToList(final List<AxisAlignedBB> outBoxes, final Face face, final World worldIn, final AxisAlignedBB originalBoxOffset, final float boxRadius) {
 
 		worldIn.profiler.startSection("interpolate");
 		//0___3
@@ -182,62 +182,62 @@ public final class CollisionHandler {
 			//_____
 			//_____
 			//1___2
-			final AxisAlignedBB v0box = createAxisAlignedBBForVertex(v0, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1box = createAxisAlignedBBForVertex(v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2box = createAxisAlignedBBForVertex(v2, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3box = createAxisAlignedBBForVertex(v3, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0box = createAxisAlignedBBForVertex(v0, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1box = createAxisAlignedBBForVertex(v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2box = createAxisAlignedBBForVertex(v2, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3box = createAxisAlignedBBForVertex(v3, boxRadius, originalBoxOffset);
 
 			//0_*_3
 			//_____
 			//*___*
 			//_____
 			//1_*_2
-			final AxisAlignedBB v0v1box = createAxisAlignedBBForVertex(v0v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2box = createAxisAlignedBBForVertex(v1v2, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2v3box = createAxisAlignedBBForVertex(v2v3, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3v0box = createAxisAlignedBBForVertex(v3v0, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1box = createAxisAlignedBBForVertex(v0v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2box = createAxisAlignedBBForVertex(v1v2, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2v3box = createAxisAlignedBBForVertex(v2v3, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3v0box = createAxisAlignedBBForVertex(v3v0, boxRadius, originalBoxOffset);
 
 			//0x*x3
 			//x___x
 			//*___*
 			//x___x
 			//1x*x2
-			final AxisAlignedBB v0v1v0box = createAxisAlignedBBForVertex(v0v1v0, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v0v1v1box = createAxisAlignedBBForVertex(v0v1v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2v1box = createAxisAlignedBBForVertex(v1v2v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2v2box = createAxisAlignedBBForVertex(v1v2v2, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2v3v2box = createAxisAlignedBBForVertex(v2v3v2, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2v3v3box = createAxisAlignedBBForVertex(v2v3v3, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3v0v3box = createAxisAlignedBBForVertex(v3v0v3, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3v0v0box = createAxisAlignedBBForVertex(v3v0v0, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1v0box = createAxisAlignedBBForVertex(v0v1v0, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1v1box = createAxisAlignedBBForVertex(v0v1v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2v1box = createAxisAlignedBBForVertex(v1v2v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2v2box = createAxisAlignedBBForVertex(v1v2v2, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2v3v2box = createAxisAlignedBBForVertex(v2v3v2, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2v3v3box = createAxisAlignedBBForVertex(v2v3v3, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3v0v3box = createAxisAlignedBBForVertex(v3v0v3, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3v0v0box = createAxisAlignedBBForVertex(v3v0v0, boxRadius, originalBoxOffset);
 
 			//0x*x3
 			//xa_ax
 			//*___*
 			//xa_ax
 			//1x*x2
-			final AxisAlignedBB v0v1v1v2box = createAxisAlignedBBForVertex(v0v1v1v2, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2v2v3box = createAxisAlignedBBForVertex(v1v2v2v3, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2v3v3v0box = createAxisAlignedBBForVertex(v2v3v3v0, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3v0v0v1box = createAxisAlignedBBForVertex(v3v0v0v1, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1v1v2box = createAxisAlignedBBForVertex(v0v1v1v2, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2v2v3box = createAxisAlignedBBForVertex(v1v2v2v3, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2v3v3v0box = createAxisAlignedBBForVertex(v2v3v3v0, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3v0v0v1box = createAxisAlignedBBForVertex(v3v0v0v1, boxRadius, originalBoxOffset);
 
 			//0x*x3
 			//xabax
 			//*b_b*
 			//xabax
 			//1x*x2
-			final AxisAlignedBB v0v1v1v2v1v2v2v3box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2v2v3v2v3v3v0box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v2v3v3v0v3v0v0v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v3v0v0v1v0v1v1v2, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1v1v2v1v2v2v3box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2v2v3v2v3v3v0box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
 
 			//0x*x3
 			//xabax
 			//*bcb*
 			//xabax
 			//1x*x2
-			final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, entityIn, boxRadius, originalBoxOffset);
-			final AxisAlignedBB v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, entityIn, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
+			final AxisAlignedBB v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
 			worldIn.profiler.endSection();
 
 			worldIn.profiler.startSection("addBoxes");
@@ -390,17 +390,17 @@ public final class CollisionHandler {
 
 	}
 
-	private static AxisAlignedBB createAxisAlignedBBForVertex(final Vec3 vec3, @Nullable final Entity entity, final float boxRadius, @Nullable final AxisAlignedBB originalBox) {
-		if (entity == null) {
-			return new AxisAlignedBB(
-					vec3.x - boxRadius,
-					vec3.y - boxRadius,
-					vec3.z - boxRadius,
-					vec3.x + boxRadius,
-					vec3.y + boxRadius,
-					vec3.z + boxRadius
-			);
-		}
+	private static AxisAlignedBB createAxisAlignedBBForVertex(final Vec3 vec3, final float boxRadius, @Nullable final AxisAlignedBB originalBox) {
+//		if (entity == null) {
+//			return new AxisAlignedBB(
+//					vec3.x - boxRadius,
+//					vec3.y - boxRadius,
+//					vec3.z - boxRadius,
+//					vec3.x + boxRadius,
+//					vec3.y + boxRadius,
+//					vec3.z + boxRadius
+//			);
+//		}
 		final boolean originalBoxMaxYGreaterThanVertex = originalBox != null && originalBox.maxY >= vec3.y;
 
 		//min
