@@ -29,9 +29,8 @@ public final class CacheUtil {
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x) {
+					for (int x = 0; x < cacheSizeX; ++x,++index) {
 						stateCacheArray[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
-						index++;
 					}
 				}
 			}
@@ -85,14 +84,13 @@ public final class CacheUtil {
 			int index = 0;
 			for (int z = 0; z < densityCacheSizeZ; ++z) {
 				for (int y = 0; y < densityCacheSizeY; ++y) {
-					for (int x = 0; x < densityCacheSizeX; ++x) {
+					for (int x = 0; x < densityCacheSizeX; ++x,++index) {
 						densityCacheArray[index] = getBlockDensity(
 								startPosX, startPosY, startPosZ,
 								x, y, z,
 								stateCache, smoothableCache,
 								blockAccess, pooledMutableBlockPos
 						);
-						index++;
 					}
 				}
 			}
