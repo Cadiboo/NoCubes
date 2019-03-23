@@ -184,8 +184,8 @@ public class MeshDispatcher {
 		final ModProfiler ignored = NoCubes.getProfiler();
 		{
 
-			if(true)
-				return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
+//			if(true)
+//				return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
 
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
@@ -199,20 +199,57 @@ public class MeshDispatcher {
 				final int relativePosY = posY & 15;
 				final int relativePosZ = posZ & 15;
 
-				final byte meshSizeX = (byte) (3 + meshGenerator.getSizeXExtension());
-				final byte meshSizeY = (byte) (3 + meshGenerator.getSizeYExtension());
-				final byte meshSizeZ = (byte) (3 + meshGenerator.getSizeZExtension());
+				final byte addX;
+				final byte addY;
+				final byte addZ;
+				final byte subX;
+				final byte subY;
+				final byte subZ;
+				//FFS
+				if (meshGenerator == MeshGenerator.MarchingCubes) {
+					addX = 1;
+					addY = 1;
+					addZ = 1;
+					subX = 0;
+					subY = 0;
+					subZ = 0;
+				} else if (meshGenerator == MeshGenerator.MarchingTetrahedra) {
+					addX = 1;
+					addY = 1;
+					addZ = 1;
+					subX = 0;
+					subY = 0;
+					subZ = 0;
+				} else if (meshGenerator == MeshGenerator.SurfaceNets) {
+					addX = 0;
+					addY = 0;
+					addZ = 0;
+					subX = 1;
+					subY = 1;
+					subZ = 1;
+				} else {
+					addX = 0;
+					addY = 0;
+					addZ = 0;
+					subX = 0;
+					subY = 0;
+					subZ = 0;
+				}
+
+				final byte meshSizeX = (byte) (2 + addX + subX + meshGenerator.getSizeXExtension());
+				final byte meshSizeY = (byte) (2 + addY + subY + meshGenerator.getSizeYExtension());
+				final byte meshSizeZ = (byte) (2 + addZ + subZ + meshGenerator.getSizeZExtension());
 
 				final float[] densityData = new float[meshSizeX * meshSizeY * meshSizeZ];
 
-				final int startPosX = posX - 1;
-				final int startPosY = posY - 1;
-				final int startPosZ = posZ - 1;
+				final int startPosX = posX - subX;
+				final int startPosY = posY - subY;
+				final int startPosZ = posZ - subZ;
 
 				int index = 0;
 				for (int z = 0; z < meshSizeX; ++z) {
 					for (int y = 0; y < meshSizeY; ++y) {
-						for (int x = 0; x < meshSizeZ; ++x, index++) {
+						for (int x = 0; x < meshSizeZ; ++x, ++index) {
 
 							float density = 0;
 							for (int zOffset = 0; zOffset < 2; ++zOffset) {
@@ -248,10 +285,10 @@ public class MeshDispatcher {
 					vertex2.addOffset(relativePosX, relativePosY, relativePosZ);
 					vertex3.addOffset(relativePosX, relativePosY, relativePosZ);
 
-					vertex0.addOffset(-1, -1, -1);
-					vertex1.addOffset(-1, -1, -1);
-					vertex2.addOffset(-1, -1, -1);
-					vertex3.addOffset(-1, -1, -1);
+					vertex0.addOffset(-subX, -subY, -subZ);
+					vertex1.addOffset(-subX, -subY, -subZ);
+					vertex2.addOffset(-subX, -subY, -subZ);
+					vertex3.addOffset(-subX, -subY, -subZ);
 
 				}
 

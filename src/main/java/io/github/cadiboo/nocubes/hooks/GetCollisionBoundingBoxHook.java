@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.hooks;
 
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockStateContainer.StateImplementation;
@@ -24,8 +25,7 @@ public final class GetCollisionBoundingBoxHook {
 		if (!ModConfig.enableCollisions) {
 			return getCollisionBoundingBoxDefault(state, worldIn, pos);
 		} else {
-			final AxisAlignedBB box = getCollisionBoundingBoxDefault(state, worldIn, pos);
-			return box == null || box.maxY == 0 ? null : box;
+			return CollisionHandler.getCollisionBoundingBox(block, state, worldIn, pos);
 		}
 	}
 

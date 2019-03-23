@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
+import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -11,6 +12,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
@@ -32,6 +34,17 @@ public final class CollisionHandler {
 		return false;
 	}
 
+	public static AxisAlignedBB getCollisionBoundingBox(final Block block, final IBlockState state, final IBlockAccess worldIn, final BlockPos pos) {
+		final AxisAlignedBB box = GetCollisionBoundingBoxHook.getCollisionBoundingBoxDefault(state, worldIn, pos);
+//		if (block == Blocks.SNOW_LAYER) {
+//			return new AxisAlignedBB(0, 0, 0, 0, 0.2, 0);
+//		} else if (box == null) {
+//			return null;
+//		} else {
+		return box;
+//		}
+	}
+
 	public static void addCollisionBoxToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 
 		if (!TERRAIN_SMOOTHABLE.isSmoothable(state)) {
@@ -48,14 +61,20 @@ public final class CollisionHandler {
 			return;
 		}
 
+		if (entityIn == null && !ModConfig.collisionsForNullEntities) {
+			AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+			return;
+		}
+
 //		StolenReposeCode.addCollisionBoxToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 
 		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+
 	}
 
 	private static void addMeshCollisionBoxesToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 
-		final float boxRadius = 0.03125F;
+		final float boxRadius = 0.03125F * 2F;
 
 		final boolean ignoreIntersects = false;
 
@@ -65,16 +84,18 @@ public final class CollisionHandler {
 			final AxisAlignedBB originalBox = state.getCollisionBoundingBox(worldIn, pos);
 			final AxisAlignedBB originalBoxOffset = originalBox == null ? null : originalBox.offset(pos);
 
-			CollisionsCache cached = CACHE.get(pos);
-			if (cached != null) {
-				for (final Face face : cached.faces) {
+			synchronized (CACHE) {
+				CollisionsCache cached = CACHE.get(pos);
+				if (cached != null) {
 					final ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
-					addFaceBoxesToList(boxes, face, worldIn, originalBoxOffset, boxRadius);
+					for (final Face face : cached.faces) {
+						addFaceBoxesToList(boxes, face, worldIn, originalBoxOffset, boxRadius);
+					}
 					for (final AxisAlignedBB box : boxes) {
 						addCollisionBoxToList(collidingBoxes, entityBox, box, ignoreIntersects);
 					}
+					return;
 				}
-				return;
 			}
 
 //			if (entityIn == null) {
@@ -82,7 +103,8 @@ public final class CollisionHandler {
 //				return;
 //			}
 
-			try (final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(pos, worldIn, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator)) {
+			final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(pos, worldIn, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator);
+			try {
 
 				final ArrayList<AxisAlignedBB> boxes = new ArrayList<>();
 
@@ -94,11 +116,15 @@ public final class CollisionHandler {
 //						face.close();
 //					}
 				}
-				CACHE.put(pos.toImmutable(), new CollisionsCache(faces));
+				synchronized (CACHE) {
+					CACHE.put(pos.toImmutable(), new CollisionsCache(faces));
+				}
 
 				for (final AxisAlignedBB box : boxes) {
 					addCollisionBoxToList(collidingBoxes, entityBox, box, ignoreIntersects);
 				}
+			} finally {
+//				faces.close();
 			}
 		} finally {
 			worldIn.profiler.endSection();

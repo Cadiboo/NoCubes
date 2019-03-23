@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.collision.CollisionHandler.CACHE;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
@@ -333,6 +334,11 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+//		if (ModConfig.collisionsBlockHighlighting) {
+		if (ModConfig.drawCollisionsCache) {
+			return;
+		}
+
 		final float partialTicks = event.getPartialTicks();
 
 		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
@@ -350,56 +356,60 @@ public final class ClientEventSubscriber {
 		GlStateManager.color(1, 1, 1, 1);
 
 		{
-			for (final CollisionHandler.CollisionsCache cache : CollisionHandler.CACHE.values()) {
-				final Tessellator tessellator = Tessellator.getInstance();
-				final BufferBuilder bufferbuilder = tessellator.getBuffer();
+			final Tessellator tessellator = Tessellator.getInstance();
+			final BufferBuilder bufferbuilder = tessellator.getBuffer();
 
-				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+			bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
 
-				GlStateManager.enableBlend();
-				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-				GlStateManager.glLineWidth(3.0F);
-				GlStateManager.disableTexture2D();
-				GlStateManager.depthMask(false);
+			GlStateManager.enableBlend();
+			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			GlStateManager.glLineWidth(3.0F);
+			GlStateManager.disableTexture2D();
+			GlStateManager.depthMask(false);
 
-				GlStateManager.color(0, 0, 0, 0);
-				GlStateManager.color(1, 1, 1, 1);
+			GlStateManager.color(0, 0, 0, 0);
+			GlStateManager.color(1, 1, 1, 1);
 
-				for (final Face face : cache.faces) {
-					try {
+//			if(false)
+			synchronized (CACHE) {
+				for (final CollisionHandler.CollisionsCache cache : CACHE.values()) {
 
-						final Vec3 v0 = face.getVertex0();
-						final Vec3 v1 = face.getVertex1();
-						final Vec3 v2 = face.getVertex2();
-						final Vec3 v3 = face.getVertex3();
+					for (final Face face : cache.faces) {
 						try {
-							bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
-							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
-							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
-							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
-							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+							final Vec3 v0 = face.getVertex0();
+							final Vec3 v1 = face.getVertex1();
+							final Vec3 v2 = face.getVertex2();
+							final Vec3 v3 = face.getVertex3();
+							try {
+								bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-							tessellator.draw();
-						} finally {
+								bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+								bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
+								bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
+								bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
+								bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+
+								tessellator.draw();
+							} finally {
 //							v0.close();
 //							v1.close();
 //							v2.close();
 //							v3.close();
-						}
-					} finally {
+							}
+						} finally {
 //						face.close();
+						}
+
 					}
 
 				}
-
-				GlStateManager.depthMask(true);
-				GlStateManager.enableTexture2D();
-				GlStateManager.disableBlend();
-
-				bufferbuilder.setTranslation(0, 0, 0);
 			}
+			GlStateManager.depthMask(true);
+			GlStateManager.enableTexture2D();
+			GlStateManager.disableBlend();
+
+			bufferbuilder.setTranslation(0, 0, 0);
 		}
 
 		GlStateManager.color(0, 0, 0, 0);

@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.world;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
+import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import net.minecraft.block.state.IBlockState;
@@ -10,6 +11,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
 
@@ -35,18 +37,34 @@ public class ModWorldEventListener implements IWorldEventListener {
 		final int posY = pos.getY();
 		final int posZ = pos.getZ();
 
-		final CollisionsCache collisionsCache = CACHE.get(pos);
-		if (collisionsCache != null) {
-			final FaceList faces = collisionsCache.faces;
-			for (final Face face : faces) {
-				face.getVertex0().close();
-				face.getVertex1().close();
-				face.getVertex2().close();
-				face.getVertex3().close();
-				face.close();
+		if (ModConfig.enableCollisions) {
+			final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+			try {
+				synchronized (CACHE) {
+					for (int z = -1; z < 2; ++z) {
+						for (int y = -1; y < 2; ++y) {
+							for (int x = -1; x < 2; ++x) {
+								pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
+								final CollisionsCache collisionsCache = CACHE.get(pooledMutableBlockPos);
+								if (collisionsCache != null) {
+									final FaceList faces = collisionsCache.faces;
+									for (final Face face : faces) {
+										face.getVertex0().close();
+										face.getVertex1().close();
+										face.getVertex2().close();
+										face.getVertex3().close();
+										face.close();
+									}
+									faces.close();
+									CACHE.remove(pooledMutableBlockPos);
+								}
+							}
+						}
+					}
+				}
+			} finally {
+				pooledMutableBlockPos.release();
 			}
-			faces.close();
-			CACHE.remove(pos);
 		}
 
 		NoCubes.PROXY.markBlocksForUpdate(posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND, posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
