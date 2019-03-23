@@ -54,14 +54,20 @@ nocubes.config.enablePools.tooltip=If Object Pools should be used. Object Pools 
 nocubes.config.overrideIsOpaqueCube=Override isOpaqueCube
 nocubes.config.overrideIsOpaqueCube.tooltip=Fixes issues with sides of blocks not being rendered, however makes everything render a tiny bit slower.
 
-nocubes.config.smoothBlockHighlighting=[DEVELOPMENT] Smooth Block Highlighting
+nocubes.config.smoothBlockHighlighting=[INDEV] Block Highlighting
 nocubes.config.smoothBlockHighlighting.tooltip=Shows the faces of the block you're looking at in white
 
-nocubes.config.collisionsBlockHighlighting=[DEVELOPMENT] Collisions Block Highlighting
+nocubes.config.collisionsBlockHighlighting=[DEVELOPMENT] Collisions Highlighting
 nocubes.config.collisionsBlockHighlighting.tooltip=Shows the collisions of blocks in blue
 
 nocubes.config.applyDiffuseLighting=[INDEV] Apply Diffuse Lighting
-nocubes.config.applyDiffuseLighting.tooltip=Applies a small amount of diffuse lighting
+nocubes.config.applyDiffuseLighting.tooltip=Applies a small amount of diffuse lighting (makes edges more visible)
+
+nocubes.config.collisionsForNullEntities=Collisions For Null Entities
+nocubes.config.collisionsForNullEntities.tooltip=If collisions for null entities (usually particles) should be applied
+
+nocubes.config.drawCollisionsCache=[DEVELOPMENT] Collisions Cache Highlighting
+nocubes.config.drawCollisionsCache.tooltip=Shows the cached collisions of blocks in white
 
 
 key.categories.nocubes=NoCubes

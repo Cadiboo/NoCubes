@@ -335,7 +335,7 @@ public final class ClientEventSubscriber {
 		}
 
 //		if (ModConfig.collisionsBlockHighlighting) {
-		if (ModConfig.drawCollisionsCache) {
+		if (!ModConfig.drawCollisionsCache) {
 			return;
 		}
 

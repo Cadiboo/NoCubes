@@ -1,33 +1,21 @@
 package io.github.cadiboo.nocubes.client.gui.toast;
 
-import io.github.cadiboo.nocubes.client.ClientProxy;
-import io.github.cadiboo.nocubes.client.ModelHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.toasts.GuiToast;
 import net.minecraft.client.gui.toasts.IToast;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.client.model.pipeline.LightUtil;
 
 import javax.annotation.Nonnull;
-import java.util.List;
 
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
 
 /**
  * @author Cadiboo
@@ -61,6 +49,9 @@ public abstract class BlockStateToast implements IToast {
 
 		GlStateManager.pushMatrix();
 		{
+			IBakedModel bakedmodel = minecraft.getBlockRendererDispatcher().getModelForState(state);
+
+			GlStateManager.pushMatrix();
 			minecraft.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 			minecraft.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
 			GlStateManager.enableRescaleNormal();
@@ -69,85 +60,50 @@ public abstract class BlockStateToast implements IToast {
 			GlStateManager.enableBlend();
 			GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 			GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-
+//			minecraft.getRenderItem().setupGuiTransform(x, y, bakedmodel.isGui3d());
 			{
+				GlStateManager.translate(2.75F, 2.75F, 100.0F + minecraft.getRenderItem().zLevel);
+				GlStateManager.translate(8.0F, 8.0F, 0.0F);
+				GlStateManager.scale(1.0F, -1.0F, 1.0F);
+				GlStateManager.scale(16.0F, 16.0F, 16.0F);
 
-				Tessellator tessellator = Tessellator.getInstance();
-				BufferBuilder bufferBuilder = tessellator.getBuffer();
-				bufferBuilder.begin(GL_QUADS, DefaultVertexFormats.BLOCK);
-
-				switch (state.getRenderType()) {
-					case MODEL:
-						final IBakedModel model = minecraft.getBlockRendererDispatcher().getModelForState(state);
-
-						for (EnumFacing enumfacing : ModelHelper.ENUMFACING_QUADS_ORDERED) {
-							List<BakedQuad> list = model.getQuads(state, enumfacing, MathHelper.getPositionRandom(pos));
-
-							if (!list.isEmpty()) {
-
-								Vec3d vec3d = state.getOffset(minecraft.world, pos);
-								double d0 = (double) pos.getX() + vec3d.x;
-								double d1 = (double) pos.getY() + vec3d.y;
-								double d2 = (double) pos.getZ() + vec3d.z;
-								int i = 0;
-
-								for (int j = list.size(); i < j; ++i) {
-									BakedQuad bakedquad = list.get(i);
-
-									bufferBuilder.addVertexData(bakedquad.getVertexData());
-									bufferBuilder.putBrightness4(0xF000F0, 0xF000F0, 0xF000F0, 0xF000F0);
-
-									if (bakedquad.hasTintIndex()) {
-										int k = minecraft.getBlockColors().colorMultiplier(state, minecraft.world, pos, bakedquad.getTintIndex());
-
-										if (EntityRenderer.anaglyphEnable) {
-											k = TextureUtil.anaglyphColor(k);
-										}
-
-										float f = (float) (k >> 16 & 255) / 255.0F;
-										float f1 = (float) (k >> 8 & 255) / 255.0F;
-										float f2 = (float) (k & 255) / 255.0F;
-										if (bakedquad.shouldApplyDiffuseLighting()) {
-											float diffuse = LightUtil.diffuseLight(bakedquad.getFace());
-											f *= diffuse;
-											f1 *= diffuse;
-											f2 *= diffuse;
-										}
-										bufferBuilder.putColorMultiplier(f, f1, f2, 4);
-										bufferBuilder.putColorMultiplier(f, f1, f2, 3);
-										bufferBuilder.putColorMultiplier(f, f1, f2, 2);
-										bufferBuilder.putColorMultiplier(f, f1, f2, 1);
-									} else if (bakedquad.shouldApplyDiffuseLighting()) {
-										float diffuse = LightUtil.diffuseLight(bakedquad.getFace());
-										bufferBuilder.putColorMultiplier(diffuse, diffuse, diffuse, 4);
-										bufferBuilder.putColorMultiplier(diffuse, diffuse, diffuse, 3);
-										bufferBuilder.putColorMultiplier(diffuse, diffuse, diffuse, 2);
-										bufferBuilder.putColorMultiplier(diffuse, diffuse, diffuse, 1);
-									}
-
-									bufferBuilder.putPosition(d0, d1, d2);
-								}
-
-							}
-						}
-
-						break;
-					default:
-					case ENTITYBLOCK_ANIMATED:
-						break;
-					case LIQUID:
-						ClientProxy.fluidRenderer.renderFluid(minecraft.world, state, pos, bufferBuilder);
-						break;
+				if (bakedmodel.isGui3d()) {
+					GlStateManager.enableLighting();
+				} else {
+					GlStateManager.disableLighting();
 				}
+			}
+			bakedmodel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(bakedmodel, ItemCameraTransforms.TransformType.GUI, false);
+			GlStateManager.scale(1.45, 1.45, 0);
+			final ItemStack stack = new ItemStack(state.getBlock());
+			minecraft.getRenderItem().renderItem(stack, bakedmodel);
+			GlStateManager.pushMatrix();
+			GlStateManager.translate(-0.5F, -0.5F, -0.5F);
 
-				tessellator.draw();
+			if (bakedmodel.isBuiltInRenderer())
+			{
+				GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+				GlStateManager.enableRescaleNormal();
+				stack.getItem().getTileEntityItemStackRenderer().renderByItem();
+			}
+			else
+			{
+				this.renderModel(model, stack);
+
+				if (stack.hasEffect())
+				{
+					this.renderEffect(model);
+				}
 			}
 
+			GlStateManager.popMatrix();
 			GlStateManager.disableAlpha();
 			GlStateManager.disableRescaleNormal();
 			GlStateManager.disableLighting();
+			GlStateManager.popMatrix();
 			minecraft.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
 			minecraft.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+
 		}
 		GlStateManager.popMatrix();
 
