@@ -48,22 +48,6 @@ public final class CollisionHandler {
 			return;
 		}
 
-		//NOOOOOO
-//		final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlock(pos, worldIn, TERRAIN_SMOOTHABLE);
-//		if (faces != null) {
-//			if (faces.isEmpty()) {
-//				return;
-//			}
-//			faces.forEach(face -> {
-//				face.getVertex0().close();
-//				face.getVertex1().close();
-//				face.getVertex2().close();
-//				face.getVertex3().close();
-//				face.close();
-//			});
-//			faces.close();
-//		}
-
 //		StolenReposeCode.addCollisionBoxToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
 
 		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
@@ -105,7 +89,7 @@ public final class CollisionHandler {
 				for (Face face : faces) {
 					// Ew, Yay, Java 8 variable try-with-resources support
 //					try {
-						addFaceBoxesToList(boxes, face, worldIn, entityIn, originalBoxOffset, boxRadius);
+					addFaceBoxesToList(boxes, face, worldIn, entityIn, originalBoxOffset, boxRadius);
 //					} finally {
 //						face.close();
 //					}
