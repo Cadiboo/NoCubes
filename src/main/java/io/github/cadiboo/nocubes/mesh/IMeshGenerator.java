@@ -19,7 +19,7 @@ public interface IMeshGenerator {
 	 * @return the chunk vertices
 	 */
 	@Nonnull
-	HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions);
+	HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
 
 	/**
 	 * @param position             the byte[] position relative to the chunk pos
@@ -27,7 +27,7 @@ public interface IMeshGenerator {
 	 * @return the block vertices
 	 */
 	@Nonnull
-	FaceList generateBlock(final float[] scalarFieldData, final byte[] dimensions);
+	FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
 
 	default byte getSizeXExtension() {
 		return 0;

@@ -85,7 +85,7 @@ public class SurfaceNets implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
 		final int[] edge_table = EDGE_TABLE;
 		final int[] cube_edges = CUBE_EDGES;
@@ -233,9 +233,9 @@ public class SurfaceNets implements IMeshGenerator {
 
 	}
 
-	@Nonnull
 	@Override
-	public FaceList generateBlock(final float[] data, final byte[] dims) {
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
 		final int[] edge_table = EDGE_TABLE;
 		final int[] cube_edges = CUBE_EDGES;

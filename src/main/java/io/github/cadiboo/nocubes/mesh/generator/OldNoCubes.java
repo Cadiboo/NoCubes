@@ -36,15 +36,15 @@ public class OldNoCubes implements IMeshGenerator {
 	public static final int X1Y1Z1 = 6;
 	public static final int X0Y1Z1 = 7;
 
-	@Nonnull
 	@Override
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] scalarFieldData, final byte[] dimensions) {
+	@Nonnull
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
 		throw new UnsupportedOperationException();
 	}
 
-	@Nonnull
 	@Override
-	public FaceList generateBlock(final float[] scalarFieldData, final byte[] dimensions) {
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
 		throw new UnsupportedOperationException();
 	}
 

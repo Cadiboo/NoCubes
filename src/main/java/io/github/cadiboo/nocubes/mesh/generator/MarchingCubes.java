@@ -335,7 +335,7 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
 		final byte[][] cubeVerts = CUBE_VERTS;
 		final short[] edgeTable = EDGE_TABLE;
@@ -378,7 +378,8 @@ public class MarchingCubes implements IMeshGenerator {
 						final byte[] p0 = cubeVerts[e[0]];
 						final byte[] p1 = cubeVerts[e[1]];
 						final float a = grid[e[0]];
-						final float b = grid[e[1]], d = a - b;
+						final float b = grid[e[1]];
+						final float d = a - b;
 						float t = 0;
 						if (Math.abs(d) > 1e-6) {
 							t = a / d;
@@ -406,9 +407,9 @@ public class MarchingCubes implements IMeshGenerator {
 		return posToFaces;
 	}
 
-	@Nonnull
 	@Override
-	public FaceList generateBlock(final float[] data, final byte[] dims) {
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 		final byte[][] cubeVerts = CUBE_VERTS;
 		final short[] edgeTable = EDGE_TABLE;
 		final byte[][] edgeIndex = EDGE_INDEX;

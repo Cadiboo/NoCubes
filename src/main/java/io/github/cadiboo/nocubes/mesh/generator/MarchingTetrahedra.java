@@ -36,7 +36,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Override
 	@Nonnull
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte[] dims) {
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
 		final byte[][] cube_vertices = CUBE_VERTICES;
 		final byte[][] tetra_list = TETRA_LIST;
@@ -209,9 +209,9 @@ public class MarchingTetrahedra implements IMeshGenerator {
 		return posToFaces;
 	}
 
-	@Nonnull
 	@Override
-	public FaceList generateBlock(final float[] data, final byte[] dims) {
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 		final FaceList faces = FaceList.retain();
 
 		final byte[][] cube_vertices = CUBE_VERTICES;
