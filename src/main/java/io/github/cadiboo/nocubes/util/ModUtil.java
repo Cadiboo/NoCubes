@@ -6,10 +6,10 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.reflect.ReflectionUtil;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockSnow;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.ReportedException;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.ForgeVersion;
@@ -33,7 +33,6 @@ import static io.github.cadiboo.nocubes.NoCubes.NO_CUBES_LOG;
 import static io.github.cadiboo.nocubes.util.ModReference.CONFIG_VERSION;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static net.minecraft.block.material.Material.VINE;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 
@@ -78,46 +77,20 @@ public final class ModUtil {
 	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
-
-		if (true)
-			if (shouldSmooth && state.getBlock() != SNOW_LAYER) {
-				return state.getBlock() == BEDROCK ? -1.0005F : -1;
-			} else if (state.isNormalCube() || state.isBlockNormalCube()) {
-				return 0;
-			} else {
-				return 1;
+		if (state.getBlock() == SNOW_LAYER && shouldSmooth) {
+			final int value = state.getValue(BlockSnow.LAYERS);
+			if (value == 1) { // zero-height snow layer
+				return -1;
+			} else { // snow height between 0-8 to between -0.25F and -1
+				return -((value - 1) * 0.125F);
 			}
-
-		float density = 0;
-
-		if (shouldSmooth) {
-			final AxisAlignedBB box = state.getBoundingBox(cache, pos);
-			final double boxHeight = box.maxY - box.minY;
-			if (boxHeight >= 1) {
-				density += boxHeight;
-			} else {
-				density -= 1 - boxHeight;
-			}
-
-			if (state.getBlock() == BEDROCK) {
-				density += 0.0005F;
-			}
-
-		} else if (/*ModConfig.debug.connectToNormal && */(state.isNormalCube() || state.isBlockNormalCube())) {
-			// OK OK OK OK OK LordPhrozen, I've done it (kinda)
-			density += (float) ModConfig.smoothOtherBlocksAmount;
-		} else if (state.getMaterial() == VINE) {
-			density -= 0.75;
+		} else if (shouldSmooth) {
+			return state.getBlock() == BEDROCK ? -1.0005F : -1;
+		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
+			return (float) ModConfig.smoothOtherBlocksAmount;
 		} else {
-			// Thanks VoidWalker. I'm pretty embarrassed.
-			// Uncommenting 2 lines of code fixed the entire algorithm. (else density-=1)
-			// I had been planning to uncomment and redo them after I fixed the algorithm.
-			// If you hadn't taken the time to debug this, I might never have found the bug
-			density -= 1;
+			return 1;
 		}
-
-//		return density;
-		return -density;
 	}
 
 	/**
