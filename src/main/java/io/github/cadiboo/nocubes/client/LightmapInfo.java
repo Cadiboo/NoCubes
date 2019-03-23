@@ -115,15 +115,14 @@ public class LightmapInfo implements AutoCloseable {
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 					try {
+						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 						packedLight0[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
 						packedLight1[index] = packedLightCacheArray[(v1XOffset + xOffset) + cachesSizeX * ((v1YOffset + yOffset) + cachesSizeY * (v1ZOffset + zOffset))];
 						packedLight2[index] = packedLightCacheArray[(v2XOffset + xOffset) + cachesSizeX * ((v2YOffset + yOffset) + cachesSizeY * (v2ZOffset + zOffset))];
 						packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
 					} catch (ArrayIndexOutOfBoundsException e) {
-						e.fillInStackTrace();//eh?
-						NoCubes.NO_CUBES_LOG.warn("ArrayIndexOutOfBoundsException at " + e.getStackTrace()[0] + ". Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
+						NoCubes.NO_CUBES_LOG.warn("ArrayIndexOutOfBoundsException at generateLightmapInfoSmooth! Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
 					}
 				}
 			}
@@ -167,8 +166,12 @@ public class LightmapInfo implements AutoCloseable {
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
+					try {
+						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
+						packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
+					} catch (ArrayIndexOutOfBoundsException e) {
+						NoCubes.NO_CUBES_LOG.warn("ArrayIndexOutOfBoundsException at generateLightmapInfoFlat! Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
+					}
 				}
 			}
 		}
