@@ -14,6 +14,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -183,6 +184,9 @@ public class MeshDispatcher {
 		final ModProfiler ignored = NoCubes.getProfiler();
 		{
 
+			if(true)
+				return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
+
 			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 			try {
 				final int posX = pos.getX();
@@ -199,34 +203,62 @@ public class MeshDispatcher {
 				final byte meshSizeY = (byte) (3 + meshGenerator.getSizeYExtension());
 				final byte meshSizeZ = (byte) (3 + meshGenerator.getSizeZExtension());
 
-				ignored.start("generateMeshBlockStateCache");
-				try (final StateCache stateCache = generateMeshStateCache(posX - 1, posY - 1, posZ - 1, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
-					ignored.end();
-					ignored.start("generateMeshBlockSmoothableCache");
-					try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
-						ignored.end();
-						ignored.start("generateMeshBlockDensityCache");
-						try (final DensityCache densityCache = CacheUtil.generateDensityCache(posX - 1, posY - 1, posZ - 1, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
-							ignored.end();
-							FaceList faces = meshGenerator.generateBlock(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
+				final float[] densityData = new float[meshSizeX * meshSizeY * meshSizeZ];
 
-							for (Face face : faces) {
-								final Vec3 vertex0 = face.getVertex0();
-								final Vec3 vertex1 = face.getVertex1();
-								final Vec3 vertex2 = face.getVertex2();
-								final Vec3 vertex3 = face.getVertex3();
+				final int startPosX = posX - 1;
+				final int startPosY = posY - 1;
+				final int startPosZ = posZ - 1;
 
-								vertex0.addOffset(relativePosX - 1, relativePosY - 1, relativePosZ - 1);
-								vertex1.addOffset(relativePosX - 1, relativePosY - 1, relativePosZ - 1);
-								vertex2.addOffset(relativePosX - 1, relativePosY - 1, relativePosZ - 1);
-								vertex3.addOffset(relativePosX - 1, relativePosY - 1, relativePosZ - 1);
+				int index = 0;
+				for (int z = 0; z < meshSizeX; ++z) {
+					for (int y = 0; y < meshSizeY; ++y) {
+						for (int x = 0; x < meshSizeZ; ++x, index++) {
 
+							float density = 0;
+							for (int zOffset = 0; zOffset < 2; ++zOffset) {
+								for (int yOffset = 0; yOffset < 2; ++yOffset) {
+									for (int xOffset = 0; xOffset < 2; ++xOffset) {
+
+										pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
+										final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+										density += ModUtil.getIndividualBlockDensity(isSmoothable.isSmoothable(state), state, blockAccess, pooledMutableBlockPos);
+									}
+								}
 							}
+							densityData[index] = density;
 
-							return faces;
 						}
 					}
 				}
+
+				FaceList finalFaces = FaceList.retain();
+				for (final FaceList generatedFaceList : meshGenerator.generateChunk(densityData, meshSizeX, meshSizeY, meshSizeZ).values()) {
+					finalFaces.addAll(generatedFaceList);
+					generatedFaceList.close();
+				}
+
+				for (Face face : finalFaces) {
+					final Vec3 vertex0 = face.getVertex0();
+					final Vec3 vertex1 = face.getVertex1();
+					final Vec3 vertex2 = face.getVertex2();
+					final Vec3 vertex3 = face.getVertex3();
+
+					vertex0.addOffset(relativePosX, relativePosY, relativePosZ);
+					vertex1.addOffset(relativePosX, relativePosY, relativePosZ);
+					vertex2.addOffset(relativePosX, relativePosY, relativePosZ);
+					vertex3.addOffset(relativePosX, relativePosY, relativePosZ);
+
+					vertex0.addOffset(-1, -1, -1);
+					vertex1.addOffset(-1, -1, -1);
+					vertex2.addOffset(-1, -1, -1);
+					vertex3.addOffset(-1, -1, -1);
+
+				}
+
+				return finalFaces;
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw e;
 			} finally {
 				pooledMutableBlockPos.release();
 			}

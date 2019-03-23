@@ -1,6 +1,9 @@
 package io.github.cadiboo.nocubes.world;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,7 +35,19 @@ public class ModWorldEventListener implements IWorldEventListener {
 		final int posY = pos.getY();
 		final int posZ = pos.getZ();
 
-		CACHE.remove(pos);
+		final CollisionsCache collisionsCache = CACHE.get(pos);
+		if (collisionsCache != null) {
+			final FaceList faces = collisionsCache.faces;
+			for (final Face face : faces) {
+				face.getVertex0().close();
+				face.getVertex1().close();
+				face.getVertex2().close();
+				face.getVertex3().close();
+				face.close();
+			}
+			faces.close();
+			CACHE.remove(pos);
+		}
 
 		NoCubes.PROXY.markBlocksForUpdate(posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND, posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
 	}

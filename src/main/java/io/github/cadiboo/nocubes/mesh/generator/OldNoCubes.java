@@ -48,6 +48,12 @@ public class OldNoCubes implements IMeshGenerator {
 		throw new UnsupportedOperationException();
 	}
 
+	@Nonnull
+	@Override
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		throw new UnsupportedOperationException();
+	}
+
 	/**
 	 * @param chunkPos              the position of the chunk
 	 * @param blockAccess           the IBlockAccess

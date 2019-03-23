@@ -5,10 +5,14 @@ import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
+import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 
 /**
@@ -28,15 +32,17 @@ public enum MeshGenerator {
 		this.meshGenerator = meshGenerator;
 	}
 
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] data, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
+	@Nonnull
+	public HashMap<Vec3b, FaceList> generateChunk(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMesh" + this.name())) {
-			return meshGenerator.generateChunk(data, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+			return meshGenerator.generateChunk(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 		}
 	}
 
-	public FaceList generateBlock(final float[] data, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
+	@Nonnull
+	public FaceList generateBlock(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlockMesh" + this.name())) {
-			return meshGenerator.generateBlock(data, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+			return meshGenerator.generateBlock(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 		}
 	}
 
@@ -50,6 +56,11 @@ public enum MeshGenerator {
 
 	public byte getSizeZExtension() {
 		return meshGenerator.getSizeZExtension();
+	}
+
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
 	}
 
 }

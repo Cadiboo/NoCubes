@@ -351,12 +351,54 @@ public final class ClientEventSubscriber {
 
 		{
 			for (final CollisionHandler.CollisionsCache cache : CollisionHandler.CACHE.values()) {
-				for (final AxisAlignedBB box : cache.boxes) {
+				final Tessellator tessellator = Tessellator.getInstance();
+				final BufferBuilder bufferbuilder = tessellator.getBuffer();
 
-					final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
-					RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 0.0F, 0.4F);
+				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+				GlStateManager.enableBlend();
+				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+				GlStateManager.glLineWidth(3.0F);
+				GlStateManager.disableTexture2D();
+				GlStateManager.depthMask(false);
+
+				GlStateManager.color(0, 0, 0, 0);
+				GlStateManager.color(1, 1, 1, 1);
+
+				for (final Face face : cache.faces) {
+					try {
+
+						final Vec3 v0 = face.getVertex0();
+						final Vec3 v1 = face.getVertex1();
+						final Vec3 v2 = face.getVertex2();
+						final Vec3 v3 = face.getVertex3();
+						try {
+							bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+
+							tessellator.draw();
+						} finally {
+//							v0.close();
+//							v1.close();
+//							v2.close();
+//							v3.close();
+						}
+					} finally {
+//						face.close();
+					}
 
 				}
+
+				GlStateManager.depthMask(true);
+				GlStateManager.enableTexture2D();
+				GlStateManager.disableBlend();
+
+				bufferbuilder.setTranslation(0, 0, 0);
 			}
 		}
 
@@ -497,6 +539,8 @@ public final class ClientEventSubscriber {
 					}
 
 				}
+
+				faces.close();
 
 				GlStateManager.depthMask(true);
 				GlStateManager.enableTexture2D();

@@ -1,10 +1,14 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
+import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -377,6 +381,195 @@ public class MarchingTetrahedra implements IMeshGenerator {
 					}
 				}
 		return faces;
+	}
+
+	@Nonnull
+	@Override
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+		try {
+			final FaceList faces = FaceList.retain();
+
+			final int posX = pos.getX();
+			final int posY = pos.getY();
+			final int posZ = pos.getZ();
+
+			// Convert block pos to relative block pos
+			// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
+			final byte relativePosX = (byte) (posX & 15);
+			final byte relativePosY = (byte) (posY & 15);
+			final byte relativePosZ = (byte) (posZ & 15);
+
+			final float[] data = generateScalarFieldData(posX, posY, posZ, posX + 2, posY + 2, posZ + 2, blockAccess, isSmoothable, pooledMutableBlockPos);
+
+			{
+
+				final byte[][] cube_vertices = CUBE_VERTICES;
+				final byte[][] tetra_list = TETRA_LIST;
+
+				final byte[] x = {relativePosX, relativePosY, relativePosZ};
+				short n = 0;
+				final float[] grid = new float[8];
+
+				//Read in cube
+				for (byte i = 0; i < 8; ++i) {
+					grid[i] = data[n + cube_vertices[i][0] + 2 * (cube_vertices[i][1] + 2 * cube_vertices[i][2])];
+				}
+
+				for (byte i = 0; i < tetra_list.length; ++i) {
+					byte[] T = tetra_list[i];
+					byte triindex = 0;
+					if (grid[T[0]] < 0) triindex |= 1;
+					if (grid[T[1]] < 0) triindex |= 2;
+					if (grid[T[2]] < 0) triindex |= 4;
+					if (grid[T[3]] < 0) triindex |= 8;
+
+					//Handle each case
+					switch (triindex) {
+						case 0x00:
+						case 0x0F:
+							break;
+						case 0x0E:
+							faces.add(
+									Face.retain(
+											interp(T[0], T[1], grid, x),
+											interp(T[0], T[3], grid, x),
+											interp(T[0], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x01:
+							faces.add(
+									Face.retain(
+											interp(T[0], T[1], grid, x),
+											interp(T[0], T[2], grid, x),
+											interp(T[0], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x0D:
+							faces.add(
+									Face.retain(
+											interp(T[1], T[0], grid, x),
+											interp(T[1], T[2], grid, x),
+											interp(T[1], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x02:
+							faces.add(
+									Face.retain(
+											interp(T[1], T[0], grid, x),
+											interp(T[1], T[3], grid, x),
+											interp(T[1], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x0C:
+							faces.add(
+									Face.retain(
+											interp(T[1], T[2], grid, x),
+											interp(T[1], T[3], grid, x),
+											interp(T[0], T[3], grid, x),
+											interp(T[0], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x03:
+							faces.add(
+									Face.retain(
+											interp(T[1], T[2], grid, x),
+											interp(T[0], T[2], grid, x),
+											interp(T[0], T[3], grid, x),
+											interp(T[1], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x04:
+							faces.add(
+									Face.retain(
+											interp(T[2], T[0], grid, x),
+											interp(T[2], T[1], grid, x),
+											interp(T[2], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x0B:
+							faces.add(
+									Face.retain(
+											interp(T[2], T[0], grid, x),
+											interp(T[2], T[3], grid, x),
+											interp(T[2], T[1], grid, x)
+									)
+							);
+							break;
+						case 0x05:
+							faces.add(
+									Face.retain(
+											interp(T[0], T[1], grid, x),
+											interp(T[1], T[2], grid, x),
+											interp(T[2], T[3], grid, x),
+											interp(T[0], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x0A:
+							faces.add(
+									Face.retain(
+											interp(T[0], T[1], grid, x),
+											interp(T[0], T[3], grid, x),
+											interp(T[2], T[3], grid, x),
+											interp(T[1], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x06:
+							faces.add(
+									Face.retain(
+											interp(T[2], T[3], grid, x),
+											interp(T[0], T[2], grid, x),
+											interp(T[0], T[1], grid, x),
+											interp(T[1], T[3], grid, x)
+									)
+							);
+							break;
+						case 0x09:
+							faces.add(
+									Face.retain(
+											interp(T[2], T[3], grid, x),
+											interp(T[1], T[3], grid, x),
+											interp(T[0], T[1], grid, x),
+											interp(T[0], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x07:
+							faces.add(
+									Face.retain(
+											interp(T[3], T[0], grid, x),
+											interp(T[3], T[1], grid, x),
+											interp(T[3], T[2], grid, x)
+									)
+							);
+							break;
+						case 0x08:
+							faces.add(
+									Face.retain(
+											interp(T[3], T[0], grid, x),
+											interp(T[3], T[2], grid, x),
+											interp(T[3], T[1], grid, x)
+									)
+							);
+							break;
+					}
+				}
+
+			}
+
+			return faces;
+		} finally {
+			pooledMutableBlockPos.release();
+		}
 	}
 
 	private Vec3 interp(final byte i0, final byte i1, float[] grid, byte[] x) {
