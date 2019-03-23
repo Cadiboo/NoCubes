@@ -16,9 +16,9 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.areNaturalFluidTexturesEnabled;
-import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.areSmoothFluidBiomeColorTransitionsEnabled;
-import static io.github.cadiboo.nocubes.config.ModConfig.FluidConfig.isSmoothFluidLightingEnabled;
+import static io.github.cadiboo.nocubes.config.FluidConfig.areNaturalFluidTexturesEnabled;
+import static io.github.cadiboo.nocubes.config.FluidConfig.areSmoothFluidBiomeColorTransitionsEnabled;
+import static io.github.cadiboo.nocubes.config.FluidConfig.isSmoothFluidLightingEnabled;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
 /**

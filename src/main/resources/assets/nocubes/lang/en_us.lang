@@ -31,16 +31,16 @@ nocubes.config.extendLiquids.tooltip=If liquids (water and lava) should be rende
 nocubes.config.smoothBiomeColorTransitions=Smooth Biome Color Transitions
 nocubes.config.smoothBiomeColorTransitions.tooltip=If Biome color transitions (e.g. Swamp -> Plains) should be smoothed when
 
-# nocubes.config.fluids=Fluids
+nocubes.config.fluids=Fluid Rendering Tweaks
 
-# nocubes.config.fluids.smoothFluidBiomeColorTransitions=Smooth Fluid Biome Color Transitions
-# nocubes.config.fluids.smoothFluidBiomeColorTransitions.tooltip=If Biome color transitions (Swamp -> Plains) should be smoothed when rendering fluids
+nocubes.config.fluids.smoothFluidBiomeColorTransitions=Smooth Fluid Biome Color Transitions
+nocubes.config.fluids.smoothFluidBiomeColorTransitions.tooltip=If Biome color transitions (Swamp -> Plains) should be smoothed when rendering fluids
 
-# nocubes.config.fluids.smoothFluidLighting=Smooth Fluid Lighting
-# nocubes.config.fluids.smoothFluidLighting.tooltip=If Smooth Lighting should be applied when rendering fluids
+nocubes.config.fluids.smoothFluidLighting=Smooth Fluid Lighting
+nocubes.config.fluids.smoothFluidLighting.tooltip=If Smooth Lighting should be applied when rendering fluids
 
-# nocubes.config.fluids.naturalFluidTextures=Natural Fluid Textures
-# nocubes.config.fluids.naturalFluidTextures.tooltip=If fluid textures should be randomly flipped and/or rotated to remove the gridlike pattern created by repeating blocks of the same type. (Doesn't look nice with shaders that add waves)
+nocubes.config.fluids.naturalFluidTextures=Natural Fluid Textures
+nocubes.config.fluids.naturalFluidTextures.tooltip=If fluid textures should be randomly flipped and/or rotated to remove the gridlike pattern created by repeating blocks of the same type. (Doesn't look nice with shaders that add waves)
 
 nocubes.config.offsetVertices=[UNSTABLE] Offset Vertices
 nocubes.config.offsetVertices.tooltip=If (pseudo) randomness should be applied to the mesh

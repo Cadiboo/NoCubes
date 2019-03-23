@@ -144,6 +144,7 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.overrideIsOpaqueCube")
 	public static boolean overrideIsOpaqueCube = true;
 
+	//TODO: remove
 	@VisibleForTesting
 	@LangKey(MOD_ID + ".config.smoothOtherBlocksAmount")
 	public static double smoothOtherBlocksAmount = 0;
@@ -159,6 +160,14 @@ public final class ModConfig {
 	@Beta
 	@LangKey(MOD_ID + ".config.applyDiffuseLighting")
 	public static boolean applyDiffuseLighting = false;
+
+	@Beta
+	@LangKey(MOD_ID + ".config.collisionsForNullEntities")
+	public static boolean collisionsForNullEntities = false;
+
+	@Beta
+	@LangKey(MOD_ID + ".config.drawCollisionsCache")
+	public static boolean drawCollisionsCache = false;
 
 	static {
 		setupTerrainSmoothableBlockStates();
@@ -366,32 +375,6 @@ public final class ModConfig {
 		}
 
 		leavesSmoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
-	}
-
-	//	@LangKey(MOD_ID + ".config.fluid")  // Doesn't work for some reason
-	public static class FluidConfig {
-
-		//		@LangKey(MOD_ID + ".config.fluid.smoothFluidBiomeColorTransitions") // Doesn't work for some reason
-		public boolean smoothFluidBiomeColorTransitions = true;
-
-		//		@LangKey(MOD_ID + ".config.fluid.smoothFluidLighting") // Doesn't work for some reason
-		public boolean smoothFluidLighting = true;
-
-		//		@LangKey(MOD_ID + ".config.fluid.naturalFluidTextures") // Doesn't work for some reason
-		public boolean naturalFluidTextures = false;
-
-		public static boolean areSmoothFluidBiomeColorTransitionsEnabled() {
-			return fluidConfig.smoothFluidBiomeColorTransitions;
-		}
-
-		public static boolean isSmoothFluidLightingEnabled() {
-			return fluidConfig.smoothFluidLighting;
-		}
-
-		public static boolean areNaturalFluidTexturesEnabled() {
-			return fluidConfig.naturalFluidTextures;
-		}
-
 	}
 
 }
