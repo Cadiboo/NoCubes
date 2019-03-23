@@ -32,6 +32,7 @@ public class FaceList extends ArrayList<Face> implements AutoCloseable {
 	}
 
 	@Override
+	//Does _NOT_ close all faces in this list
 	public void close() {
 		this.clear();
 		if (!ModConfig.enablePools) {
