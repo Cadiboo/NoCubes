@@ -19,10 +19,10 @@ import java.nio.file.Path;
 @Deprecated
 public final class BadAutoUpdater {
 
-	public static void update(final ModContainer modContainer, final String updateVersion, final String githubUsername) throws IOException, URISyntaxException {
+	public static boolean update(final ModContainer modContainer, final String updateVersion, final String githubUsername) throws IOException, URISyntaxException {
 		final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 		if (developerEnvironment) {
-			return;
+			return false;
 		}
 
 		final String modName = modContainer.getName();
@@ -37,12 +37,12 @@ public final class BadAutoUpdater {
 		try (BufferedInputStream inputStream = new BufferedInputStream(updateUri.toURL().openStream())) {
 			if (Files.copy(inputStream, updateJarPath) <= 0) {
 				//file copy failed, abort
-				return;
+				return false;
 			}
 		}
 
 		Files.delete(currentJar.toPath());
-
+		return true;
 	}
 
 }
