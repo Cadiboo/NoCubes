@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
 import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -11,6 +12,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -36,14 +38,12 @@ public final class CollisionHandler {
 	}
 
 	public static AxisAlignedBB getCollisionBoundingBox(final Block block, final IBlockState state, final IBlockAccess worldIn, final BlockPos pos) {
-		final AxisAlignedBB box = GetCollisionBoundingBoxHook.getCollisionBoundingBoxDefault(state, worldIn, pos);
-//		if (block == Blocks.SNOW_LAYER) {
-//			return new AxisAlignedBB(0, 0, 0, 0, 0.2, 0);
-//		} else if (box == null) {
-//			return null;
-//		} else {
-		return box;
-//		}
+		if (ModConfig.terrainMeshGenerator == MeshGenerator.OldNoCubes) {
+			if (block == Blocks.SNOW_LAYER) {
+				return new AxisAlignedBB(0, 0, 0, 0, 0.2, 0);
+			}
+		}
+		return GetCollisionBoundingBoxHook.getCollisionBoundingBoxDefault(state, worldIn, pos);
 	}
 
 	public static void addCollisionBoxToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
