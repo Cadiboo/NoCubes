@@ -5,7 +5,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
@@ -304,7 +304,7 @@ public class MeshRenderer {
 				blue3 = blue0;
 			}
 
-			OptifineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
+			OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
 
 			for (final Face face : faces) {
 				try {
@@ -407,7 +407,7 @@ public class MeshRenderer {
 
 			}
 
-			OptifineCompatibility.popShaderThing(bufferBuilder);
+			OptiFineCompatibility.popShaderThing(bufferBuilder);
 		}
 	}
 

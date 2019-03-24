@@ -22,9 +22,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.BlockModelCustomizer;
-import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.BufferBuilderOF;
-import static io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.OPTIFINE_INSTALLED;
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.OPTIFINE_INSTALLED;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;

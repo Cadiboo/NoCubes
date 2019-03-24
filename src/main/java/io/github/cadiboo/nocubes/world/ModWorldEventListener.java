@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.world;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import net.minecraft.block.state.IBlockState;
@@ -37,37 +38,83 @@ public class ModWorldEventListener implements IWorldEventListener {
 		final int posY = pos.getY();
 		final int posZ = pos.getZ();
 
-		if (ModConfig.enableCollisions) {
-			final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-			try {
-				synchronized (CACHE) {
-					for (int z = -1; z < 2; ++z) {
-						for (int y = -1; y < 2; ++y) {
-							for (int x = -1; x < 2; ++x) {
-								pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
-								final CollisionsCache collisionsCache = CACHE.get(pooledMutableBlockPos);
-								if (collisionsCache != null) {
-									final FaceList faces = collisionsCache.faces;
-									for (final Face face : faces) {
+		final int blockUpdateExtend = BLOCK_UPDATE_EXTEND;
+
+		NoCubes.PROXY.markBlocksForUpdate(posX - blockUpdateExtend, posY - blockUpdateExtend, posZ - blockUpdateExtend, posX + blockUpdateExtend, posY + blockUpdateExtend, posZ + blockUpdateExtend, (flags & 8) != 0);
+
+		if (!ModConfig.enableCollisions) {
+			return;
+		}
+
+		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+		try (final ModProfiler ignored = NoCubes.getProfiler().start("ServerTickEvent")) {
+			synchronized (CACHE) {
+
+				for (int z = -blockUpdateExtend; z < blockUpdateExtend; ++z) {
+					for (int y = -blockUpdateExtend; y < blockUpdateExtend; ++y) {
+						for (int x = -blockUpdateExtend; x < blockUpdateExtend; ++x) {
+
+							pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
+
+							final CollisionsCache collisionsCache = CACHE.remove(pooledMutableBlockPos);
+
+							if (collisionsCache == null) {
+								continue;
+							}
+
+							synchronized (collisionsCache.faces) {
+								final FaceList faces = collisionsCache.faces;
+								for (final Face face : faces) {
+									{
 										face.getVertex0().close();
 										face.getVertex1().close();
 										face.getVertex2().close();
 										face.getVertex3().close();
-										face.close();
 									}
-									faces.close();
-									CACHE.remove(pooledMutableBlockPos);
+									face.close();
 								}
+								faces.close();
 							}
+
 						}
+
 					}
 				}
-			} finally {
-				pooledMutableBlockPos.release();
 			}
+		} finally {
+			pooledMutableBlockPos.release();
 		}
 
-		NoCubes.PROXY.markBlocksForUpdate(posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND, posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND, (flags & 8) != 0);
+//		if (ModConfig.enableCollisions) {
+//			final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+//			try {
+//				synchronized (CACHE) {
+//					for (int z = -1; z < 2; ++z) {
+//						for (int y = -1; y < 2; ++y) {
+//							for (int x = -1; x < 2; ++x) {
+//								pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
+//								final CollisionsCache collisionsCache = CACHE.get(pooledMutableBlockPos);
+//								if (collisionsCache != null) {
+//									final FaceList faces = collisionsCache.faces;
+//									for (final Face face : faces) {
+//										face.getVertex0().close();
+//										face.getVertex1().close();
+//										face.getVertex2().close();
+//										face.getVertex3().close();
+//										face.close();
+//									}
+//									faces.close();
+//									CACHE.remove(pooledMutableBlockPos);
+//								}
+//							}
+//						}
+//					}
+//				}
+//			} finally {
+//				pooledMutableBlockPos.release();
+//			}
+//		}
+
 	}
 
 	@Override
@@ -76,12 +123,15 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void markBlockRangeForRenderUpdate(final int x1, final int y1, final int z1, final int x2, final int y2, final int z2) {
+	public void markBlockRangeForRenderUpdate(final int x1, final int y1, final int z1, final int x2,
+	                                          final int y2, final int z2) {
 
 	}
 
 	@Override
-	public void playSoundToAllNearExcept(@Nullable final EntityPlayer player, @Nonnull final SoundEvent soundIn, @Nonnull final SoundCategory category, final double x, final double y, final double z, final float volume, final float pitch) {
+	public void playSoundToAllNearExcept(@Nullable final EntityPlayer player,
+	                                     @Nonnull final SoundEvent soundIn, @Nonnull final SoundCategory category, final double x, final double y,
+	                                     final double z, final float volume, final float pitch) {
 
 	}
 
@@ -91,12 +141,16 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord, final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
+	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord,
+	                          final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed,
+	                          @Nonnull final int... parameters) {
 
 	}
 
 	@Override
-	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel, final double x, final double y, final double z, final double xSpeed, final double ySpeed, final double zSpeed, @Nonnull final int... parameters) {
+	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel,
+	                          final double x, final double y, final double z, final double xSpeed, final double ySpeed,
+	                          final double zSpeed, @Nonnull final int... parameters) {
 
 	}
 
@@ -116,7 +170,8 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void playEvent(@Nonnull final EntityPlayer player, final int type, @Nonnull final BlockPos blockPosIn, final int data) {
+	public void playEvent(@Nonnull final EntityPlayer player, final int type,
+	                      @Nonnull final BlockPos blockPosIn, final int data) {
 
 	}
 

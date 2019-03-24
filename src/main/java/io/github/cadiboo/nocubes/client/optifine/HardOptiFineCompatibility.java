@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility.Config;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Cadiboo
  */
-final class HardOptifineCompatibility {
+final class HardOptiFineCompatibility {
 
 	static final class SVertexBuilderOF {
 

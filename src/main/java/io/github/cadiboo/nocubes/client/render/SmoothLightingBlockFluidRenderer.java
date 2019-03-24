@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.UVHelper;
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -38,7 +38,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	public boolean renderFluid(@Nonnull final IBlockAccess blockAccess, final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final BufferBuilder bufferBuilderIn) {
 //		if (true) return super.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
 
-		OptifineCompatibility.pushShaderThing(blockStateIn, blockPosIn, blockAccess, bufferBuilderIn);
+		OptiFineCompatibility.pushShaderThing(blockStateIn, blockPosIn, blockAccess, bufferBuilderIn);
 		try {
 			BlockLiquid blockliquid = (BlockLiquid) blockStateIn.getBlock();
 			boolean isLava = blockStateIn.getMaterial() == Material.LAVA;
@@ -236,7 +236,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				return wasAnythingRendered;
 			}
 		} finally {
-			OptifineCompatibility.popShaderThing(bufferBuilderIn);
+			OptiFineCompatibility.popShaderThing(bufferBuilderIn);
 		}
 	}
 

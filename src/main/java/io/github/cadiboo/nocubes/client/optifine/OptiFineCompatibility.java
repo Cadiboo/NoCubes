@@ -27,20 +27,20 @@ import static io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelper
 /**
  * @author Cadiboo
  */
-public final class OptifineCompatibility {
+public final class OptiFineCompatibility {
 
 	public static final boolean OPTIFINE_INSTALLED;
 	static {
-		boolean optifineInstalled;
+		boolean optiFineInstalled;
 		try {
 			ObfuscationReflectionHelperCopy.getClass(Loader.instance().getModClassLoader(), "Config");
-			optifineInstalled = true;
+			optiFineInstalled = true;
 		} catch (UnableToFindClassException e) {
 			// Its ok, This just means that OptiFine isn't installed
-			optifineInstalled = false;
-			NoCubes.NO_CUBES_LOG.info("OptifineCompatibility: OptiFine not detected.");
+			optiFineInstalled = false;
+			NoCubes.NO_CUBES_LOG.info("OptiFineCompatibility: OptiFine not detected.");
 		}
-		OPTIFINE_INSTALLED = optifineInstalled;
+		OPTIFINE_INSTALLED = optiFineInstalled;
 	}
 
 	public static final class Config {
@@ -99,14 +99,14 @@ public final class OptifineCompatibility {
 			if (!OPTIFINE_INSTALLED) {
 				return;
 			}
-			HardOptifineCompatibility.SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+			HardOptiFineCompatibility.SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
 		}
 
 		public static void popEntity(@Nonnull final BufferBuilder worldRendererIn) {
 			if (!OPTIFINE_INSTALLED) {
 				return;
 			}
-			HardOptifineCompatibility.SVertexBuilderOF.popEntity(worldRendererIn);
+			HardOptiFineCompatibility.SVertexBuilderOF.popEntity(worldRendererIn);
 		}
 
 	}
@@ -119,7 +119,7 @@ public final class OptifineCompatibility {
 				return null;
 			}
 
-			return HardOptifineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
+			return HardOptiFineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
 		}
 
 	}
@@ -132,7 +132,7 @@ public final class OptifineCompatibility {
 				return null;
 			}
 
-			return HardOptifineCompatibility.BlockModelCustomizerOF.getRenderModel(model, state, renderEnv);
+			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderModel(model, state, renderEnv);
 		}
 
 		@Nullable
@@ -141,7 +141,7 @@ public final class OptifineCompatibility {
 				return null;
 			}
 
-			return HardOptifineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, renderEnv);
+			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, renderEnv);
 		}
 
 	}
@@ -150,14 +150,14 @@ public final class OptifineCompatibility {
 		if (!OPTIFINE_INSTALLED) {
 			return;
 		}
-		HardOptifineCompatibility.SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+		SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
 	}
 
 	public static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
 		if (!OPTIFINE_INSTALLED) {
 			return;
 		}
-		HardOptifineCompatibility.SVertexBuilderOF.popEntity(worldRendererIn);
+		SVertexBuilderOF.popEntity(worldRendererIn);
 	}
 
 }

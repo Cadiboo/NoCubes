@@ -269,9 +269,13 @@ public class MeshDispatcher {
 				}
 
 				FaceList finalFaces = FaceList.retain();
-				for (final FaceList generatedFaceList : meshGenerator.generateChunk(densityData, meshSizeX, meshSizeY, meshSizeZ).values()) {
+				final HashMap<Vec3b, FaceList> vec3bFaceListHashMap = meshGenerator.generateChunk(densityData, meshSizeX, meshSizeY, meshSizeZ);
+				for (final FaceList generatedFaceList : vec3bFaceListHashMap.values()) {
 					finalFaces.addAll(generatedFaceList);
 					generatedFaceList.close();
+				}
+				for (final Vec3b vec3b : vec3bFaceListHashMap.keySet()) {
+					vec3b.close();
 				}
 
 				for (Face face : finalFaces) {

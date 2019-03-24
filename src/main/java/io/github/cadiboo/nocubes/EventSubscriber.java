@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -15,7 +16,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
 import java.util.Iterator;
 
 import static io.github.cadiboo.nocubes.collision.CollisionHandler.CACHE;
-import static io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
 
 /**
  * Subscribe to events that should be handled on both PHYSICAL sides in this class
@@ -39,24 +39,28 @@ public final class EventSubscriber {
 			return;
 		}
 
+		final long currentTimeMillis = System.currentTimeMillis();
+
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("ServerTickEvent")) {
 			synchronized (CACHE) {
 				for (Iterator<CollisionsCache> iterator = CACHE.values().iterator(); iterator.hasNext(); ) {
 					final CollisionsCache collisionsCache = iterator.next();
-					if (collisionsCache.timeSinceLastUsed > 100) {
-						final FaceList faces = collisionsCache.faces;
-						for (final Face face : faces) {
-							face.getVertex0().close();
-							face.getVertex1().close();
-							face.getVertex2().close();
-							face.getVertex3().close();
-							face.close();
+					if (currentTimeMillis - collisionsCache.timeLastUsed > 5000) {
+						synchronized (collisionsCache.faces) {
+							final FaceList faces = collisionsCache.faces;
+							for (final Face face : faces) {
+								{
+									face.getVertex0().close();
+									face.getVertex1().close();
+									face.getVertex2().close();
+									face.getVertex3().close();
+								}
+								face.close();
+							}
+							faces.close();
 						}
-						faces.close();
 						iterator.remove();
-						continue;
 					}
-					++collisionsCache.timeSinceLastUsed;
 				}
 			}
 		}

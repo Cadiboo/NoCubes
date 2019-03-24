@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.optifine.OptifineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -94,7 +94,7 @@ public class ExtendedLiquidChunkRenderer {
 									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 									final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-									OptifineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
+									OptiFineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
 											renderChunkPositionX + x,
 											renderChunkPositionY + y,
 											renderChunkPositionZ + z
@@ -114,7 +114,7 @@ public class ExtendedLiquidChunkRenderer {
 											liquidState,
 											bufferBuilder
 									);
-									OptifineCompatibility.popShaderThing(bufferBuilder);
+									OptiFineCompatibility.popShaderThing(bufferBuilder);
 
 									break OFFSET;
 								}

@@ -80,7 +80,7 @@ public final class ModUtil {
 		if (state.getBlock() == SNOW_LAYER && shouldSmooth) {
 			final int value = state.getValue(BlockSnow.LAYERS);
 			if (value == 1) { // zero-height snow layer
-				return -1;
+				return 1;
 			} else { // snow height between 0-8 to between -0.25F and -1
 				return -((value - 1) * 0.125F);
 			}

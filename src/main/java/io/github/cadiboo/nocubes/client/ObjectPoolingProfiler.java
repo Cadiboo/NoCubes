@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -22,13 +21,14 @@ public class ObjectPoolingProfiler {
 	private static String vec3b = "";
 
 	public static void onTick() {
+		if (true) return;
 		--counter;
 		if (counter >= 0) {
 			return;
 		}
 		counter = 20;
 
-		if (true) throw new UnsupportedOperationException();
+//		if (true) throw new UnsupportedOperationException();
 
 //		if (FaceList.getInstances() == 0) {
 //			return;
@@ -44,7 +44,7 @@ public class ObjectPoolingProfiler {
 //		vec3b += "\t" + Vec3b.getInstances();
 
 		Logger logger = LogManager.getLogger("debug pools");
-		logger.info("EnablePools: " + ModConfig.enablePools);
+//		logger.info("EnablePools: " + ModConfig.enablePools);
 
 //			logger.info("LightmapInfo " + LightmapInfo.getInstances());
 //			logger.info("PackedLightCache " + PackedLightCache.getInstances());
@@ -57,16 +57,16 @@ public class ObjectPoolingProfiler {
 //			logger.info("Vec3 " + Vec3.getInstances() + " " + Vec3.getPoolSize());
 //			logger.info("Vec3b " + Vec3b.getInstances() + " " + Vec3b.getPoolSize());
 
-		logger.info("LightmapInfo " + lightmapInfo);
-		logger.info("PackedLightCache " + packedLightCache);
-
-		logger.info("DensityCache " + densityCache);
-		logger.info("Face " + face);
-		logger.info("FaceList " + faceList);
-		logger.info("SmoothableCache " + smoothableCache);
-		logger.info("StateCache " + stateCache);
+//		logger.info("LightmapInfo " + lightmapInfo);
+//		logger.info("PackedLightCache " + packedLightCache);
+//
+//		logger.info("DensityCache " + densityCache);
+//		logger.info("Face " + face);
+//		logger.info("FaceList " + faceList);
+//		logger.info("SmoothableCache " + smoothableCache);
+//		logger.info("StateCache " + stateCache);
 		logger.info("Vec3 " + vec3);
-		logger.info("Vec3b " + vec3b);
+//		logger.info("Vec3b " + vec3b);
 
 	}
 

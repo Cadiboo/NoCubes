@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
-import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -45,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.collision.CollisionHandler.CACHE;
+import static io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
@@ -80,9 +80,8 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
 
-		if (false) {
-			ObjectPoolingProfiler.onTick();
-		}
+//		if (false)
+		ObjectPoolingProfiler.onTick();
 
 		final boolean toggleEnabledPressed = ClientProxy.toggleEnabled.isPressed();
 		final boolean toggleTerrainSmoothableBlockStatePressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
@@ -143,9 +142,9 @@ public final class ClientEventSubscriber {
 		final BlockStateToast toast;
 		if (!cache.remove(state)) {
 			cache.add(state);
-			toast = new BlockStateToast.Add(state, blockPos);
+			toast = new BlockStateToast.Add(state, blockPos, objectMouseOver);
 		} else {
-			toast = new BlockStateToast.Remove(state, blockPos);
+			toast = new BlockStateToast.Remove(state, blockPos, objectMouseOver);
 		}
 		minecraft.getToastGui().add(toast);
 
@@ -355,7 +354,7 @@ public final class ClientEventSubscriber {
 		GlStateManager.color(0, 0, 0, 0);
 		GlStateManager.color(1, 1, 1, 1);
 
-		{
+		if (ModConfig.drawCollisionsCache) {
 			final Tessellator tessellator = Tessellator.getInstance();
 			final BufferBuilder bufferbuilder = tessellator.getBuffer();
 
@@ -370,41 +369,44 @@ public final class ClientEventSubscriber {
 			GlStateManager.color(0, 0, 0, 0);
 			GlStateManager.color(1, 1, 1, 1);
 
-//			if(false)
 			synchronized (CACHE) {
-				for (final CollisionHandler.CollisionsCache cache : CACHE.values()) {
+				for (final CollisionsCache cache : CACHE.values()) {
 
-					for (final Face face : cache.faces) {
-						try {
-
-							final Vec3 v0 = face.getVertex0();
-							final Vec3 v1 = face.getVertex1();
-							final Vec3 v2 = face.getVertex2();
-							final Vec3 v3 = face.getVertex3();
+					synchronized (cache.faces) {
+						for (final Face face : cache.faces) {
 							try {
-								bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-								bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
-								bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
-								bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
-								bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
-								bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+								final Vec3 v0 = face.getVertex0();
+								final Vec3 v1 = face.getVertex1();
+								final Vec3 v2 = face.getVertex2();
+								final Vec3 v3 = face.getVertex3();
+								try {
+									bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-								tessellator.draw();
-							} finally {
+									bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+									bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
+									bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
+									bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
+									bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
+
+									tessellator.draw();
+								} finally {
 //							v0.close();
 //							v1.close();
 //							v2.close();
 //							v3.close();
-							}
-						} finally {
+								}
+							} finally {
 //						face.close();
-						}
+							}
 
+						}
 					}
 
 				}
 			}
+			GlStateManager.enableDepth();
+
 			GlStateManager.depthMask(true);
 			GlStateManager.enableTexture2D();
 			GlStateManager.disableBlend();
@@ -414,12 +416,6 @@ public final class ClientEventSubscriber {
 
 		GlStateManager.color(0, 0, 0, 0);
 		GlStateManager.color(1, 1, 1, 1);
-
-		GlStateManager.enableDepth();
-
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
 
 	}
 
