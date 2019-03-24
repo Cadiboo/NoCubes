@@ -85,7 +85,8 @@ public class Vec3 implements AutoCloseable {
 			return;
 		}
 		synchronized (POOL) {
-			if (POOL.size() < 60000) {
+//			if (POOL.size() < (ModConfig.enableCollisions ? 2_000_000 : 60_000)) {
+			{
 				POOL.add(this);
 			}
 //			this.released = true;
