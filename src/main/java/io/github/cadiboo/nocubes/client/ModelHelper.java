@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.tempcompatibility.DynamicTreesCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -162,6 +163,9 @@ public class ModelHelper {
 				return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
 			}
 			if (unextendedState == Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true)) {
+				return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
+			}
+			if (unextendedState == Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.PODZOL).withProperty(BlockDirt.SNOWY, true)) {
 				return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
 			}
 			return blockRendererDispatcher.getModelForState(state);
