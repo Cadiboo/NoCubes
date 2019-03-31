@@ -50,9 +50,9 @@ public class ModWorldEventListener implements IWorldEventListener {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("ServerTickEvent")) {
 			synchronized (CACHE) {
 
-				for (int z = -blockUpdateExtend; z < blockUpdateExtend; ++z) {
-					for (int y = -blockUpdateExtend; y < blockUpdateExtend; ++y) {
-						for (int x = -blockUpdateExtend; x < blockUpdateExtend; ++x) {
+				for (int z = -blockUpdateExtend; z <= blockUpdateExtend; ++z) {
+					for (int y = -blockUpdateExtend; y <= blockUpdateExtend; ++y) {
+						for (int x = -blockUpdateExtend; x <= blockUpdateExtend; ++x) {
 
 							pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
 
