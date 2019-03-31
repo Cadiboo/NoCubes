@@ -71,7 +71,6 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 						AddCollisionBoxToListTransformer::hook_addCollisionBoxToList
 				);
 			case "net.minecraft.entity.Entity":
-			case "net.minecraft.entity.player.EntityPlayer":
 				return transformClass(basicClass, transformedName,
 						IsEntityInsideOpaqueBlockTransformer::hook_isEntityInsideOpaqueBlock
 				);
