@@ -169,6 +169,10 @@ public final class ModConfig {
 	@LangKey(MOD_ID + ".config.drawCollisionsCache")
 	public static boolean drawCollisionsCache = false;
 
+	@Beta
+	@LangKey(MOD_ID + ".config.shortGrassEnabled")
+	public static boolean shortGrassEnabled = false;
+
 	static {
 		setupTerrainSmoothableBlockStates();
 		setupLeavesSmoothableBlockStates();
@@ -181,82 +185,6 @@ public final class ModConfig {
 	//FIXME TODO predicates that ignore check_decay and decayable
 	public static HashSet<IBlockState> getLeavesSmoothableBlockStatesCache() {
 		return LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE;
-	}
-
-	@Mod.EventBusSubscriber(modid = MOD_ID)
-	private static class ConfigEventSubscriber {
-
-		/**
-		 * Inject the new values and save to the config file when the config has been changed from the GUI.
-		 *
-		 * @param event The event
-		 */
-		@SubscribeEvent
-		public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
-
-			if (event.getModID().equals(MOD_ID)) {
-				final boolean wasEnabled = NoCubes.isEnabled();
-				ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
-
-				if ((wasEnabled || NoCubes.isEnabled()) && reloadChunksOnConfigChange) {
-					ClientUtil.tryReloadRenderers();
-				}
-
-				rebuildTerrainSmoothableBlockStatesCache();
-				rebuildLeavesSmoothableBlockStatesCache();
-
-			}
-
-		}
-
-		private static void rebuildTerrainSmoothableBlockStatesCache() {
-			parseBlockStatesToCache(TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE, terrainSmoothableBlockStates);
-		}
-
-		private static void rebuildLeavesSmoothableBlockStatesCache() {
-			parseBlockStatesToCache(LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE, leavesSmoothableBlockStates);
-		}
-
-		private static void parseBlockStatesToCache(@Nonnull final HashSet<IBlockState> cache, @Nonnull final String[] blockStateStrings) {
-
-			final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
-
-			cache.clear();
-
-			for (String blockStateString : blockStateStrings) {
-
-				try {
-					final String[] splitBlockStateString = StringUtils.split(blockStateString, "[");
-					final String blockString = splitBlockStateString[0];
-					final String stateString;
-					if (splitBlockStateString.length == 1) {
-						stateString = "default";
-					} else if (splitBlockStateString.length == 2) {
-						stateString = StringUtils.reverse(StringUtils.reverse(StringUtils.split(blockStateString, "[")[1]).replaceFirst("]", ""));
-					} else {
-						NoCubes.NO_CUBES_LOG.error("Block/BlockState Parsing error for \"" + blockStateString + "\"");
-						continue;
-					}
-
-					final Block block = BLOCKS.getValue(new ResourceLocation(blockString));
-					if (block == null) {
-						NoCubes.NO_CUBES_LOG.error("Block Parsing error for \"" + blockString + "\". Block does not exist!");
-						continue;
-					}
-					try {
-						cache.add(CommandBase.convertArgToBlockState(block, stateString));
-					} catch (NumberInvalidException e) {
-						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
-					} catch (InvalidBlockStateException e) {
-						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid BlockState!");
-					}
-				} catch (Exception e) {
-					NoCubes.NO_CUBES_LOG.error("Smoothable BlockState Parsing error " + e + " for \"" + blockStateString + "\"");
-				}
-
-			}
-		}
-
 	}
 
 	private static void setupTerrainSmoothableBlockStates() {
@@ -375,6 +303,82 @@ public final class ModConfig {
 		}
 
 		leavesSmoothableBlockStates = tempSmoothableBlockStates.toArray(new String[0]);
+	}
+
+	@Mod.EventBusSubscriber(modid = MOD_ID)
+	private static class ConfigEventSubscriber {
+
+		/**
+		 * Inject the new values and save to the config file when the config has been changed from the GUI.
+		 *
+		 * @param event The event
+		 */
+		@SubscribeEvent
+		public static void onConfigChanged(final ConfigChangedEvent.OnConfigChangedEvent event) {
+
+			if (event.getModID().equals(MOD_ID)) {
+				final boolean wasEnabled = NoCubes.isEnabled();
+				ConfigManager.sync(MOD_ID, Config.Type.INSTANCE);
+
+				if ((wasEnabled || NoCubes.isEnabled()) && reloadChunksOnConfigChange) {
+					ClientUtil.tryReloadRenderers();
+				}
+
+				rebuildTerrainSmoothableBlockStatesCache();
+				rebuildLeavesSmoothableBlockStatesCache();
+
+			}
+
+		}
+
+		private static void rebuildTerrainSmoothableBlockStatesCache() {
+			parseBlockStatesToCache(TERRAIN_SMOOTHABLE_BLOCK_STATES_CACHE, terrainSmoothableBlockStates);
+		}
+
+		private static void rebuildLeavesSmoothableBlockStatesCache() {
+			parseBlockStatesToCache(LEAVES_SMOOTHABLE_BLOCK_STATES_CACHE, leavesSmoothableBlockStates);
+		}
+
+		private static void parseBlockStatesToCache(@Nonnull final HashSet<IBlockState> cache, @Nonnull final String[] blockStateStrings) {
+
+			final IForgeRegistry<Block> BLOCKS = ForgeRegistries.BLOCKS;
+
+			cache.clear();
+
+			for (String blockStateString : blockStateStrings) {
+
+				try {
+					final String[] splitBlockStateString = StringUtils.split(blockStateString, "[");
+					final String blockString = splitBlockStateString[0];
+					final String stateString;
+					if (splitBlockStateString.length == 1) {
+						stateString = "default";
+					} else if (splitBlockStateString.length == 2) {
+						stateString = StringUtils.reverse(StringUtils.reverse(StringUtils.split(blockStateString, "[")[1]).replaceFirst("]", ""));
+					} else {
+						NoCubes.NO_CUBES_LOG.error("Block/BlockState Parsing error for \"" + blockStateString + "\"");
+						continue;
+					}
+
+					final Block block = BLOCKS.getValue(new ResourceLocation(blockString));
+					if (block == null) {
+						NoCubes.NO_CUBES_LOG.error("Block Parsing error for \"" + blockString + "\". Block does not exist!");
+						continue;
+					}
+					try {
+						cache.add(CommandBase.convertArgToBlockState(block, stateString));
+					} catch (NumberInvalidException e) {
+						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid Number!");
+					} catch (InvalidBlockStateException e) {
+						NoCubes.NO_CUBES_LOG.error("BlockState Parsing error " + e + " for \"" + stateString + "\". Invalid BlockState!");
+					}
+				} catch (Exception e) {
+					NoCubes.NO_CUBES_LOG.error("Smoothable BlockState Parsing error " + e + " for \"" + blockStateString + "\"");
+				}
+
+			}
+		}
+
 	}
 
 }
