@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.tempcore;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.Map;
 
 import static net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.MCVersion;
@@ -16,6 +17,9 @@ import static net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.TransformerExc
 @MCVersion("1.12.2")
 @SortingIndex(Integer.MAX_VALUE - 100)
 public final class LoadingPlugin implements IFMLLoadingPlugin {
+
+	static String DUMP_BYTECODE_DIR = null;
+	static File MOD_LOCATION = null;
 
 	@Override
 	public String[] getASMTransformerClass() {
@@ -35,6 +39,9 @@ public final class LoadingPlugin implements IFMLLoadingPlugin {
 
 	@Override
 	public void injectData(final Map<String, Object> data) {
+
+		MOD_LOCATION = (File) data.get("coremodLocation");
+		DUMP_BYTECODE_DIR = data.get("mcLocation") + "/" + "nocubes" + "/dumps/";
 
 	}
 

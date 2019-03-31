@@ -20,7 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
-import static io.github.cadiboo.renderchunkrebuildchunkhooks.core.classtransformer.RenderChunkRebuildChunkHooksRenderChunkClassTransformer.DEBUG_DUMP_BYTECODE_DIR;
+import static io.github.cadiboo.nocubes.tempcore.LoadingPlugin.DUMP_BYTECODE_DIR;
+import static io.github.cadiboo.nocubes.tempcore.LoadingPlugin.MOD_LOCATION;
 import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 /**
@@ -30,6 +31,32 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 
 	static final Logger LOGGER = LogManager.getLogger();
 	private static boolean DUMP_BYTECODE = true;
+	static {
+		DUMP_BYTECODE &= (MOD_LOCATION == null || !MOD_LOCATION.isFile() || !MOD_LOCATION.getName().endsWith(".jar"));
+	}
+
+	static MethodNode getMethod(ClassNode classNode, String srgName, String methodDescription) {
+		final String methodName = ObfuscationHelper.remapMethodName(classNode.name, srgName, methodDescription);
+		for (final MethodNode method : classNode.methods) {
+			if (method.name.equals(methodName)) {
+				return method;
+			}
+		}
+		StringBuilder names = new StringBuilder();
+		for (MethodNode methodNode : classNode.methods) {
+			names.append(methodNode.name).append(" | ").append(methodNode.desc).append("\n");
+		}
+		throw new UnableToFindMethodException(new Exception(srgName + " does not exist!", new Exception(names.toString())));
+	}
+
+	static AbstractInsnNode BlockStateContainer$StateImplementation_block() {
+		return new FieldInsnNode(
+				GETFIELD,
+				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
+				ObfuscationHelper.remapFieldName("net/minecraft/block/state/BlockStateContainer$StateImplementation", "field_177239_a"),
+				"Lnet/minecraft/block/Block;"
+		);
+	}
 
 	@Override
 	public byte[] transform(final String name, final String transformedName, @Nullable final byte[] basicClass) {
@@ -44,6 +71,7 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 						AddCollisionBoxToListTransformer::hook_addCollisionBoxToList
 				);
 			case "net.minecraft.entity.Entity":
+			case "net.minecraft.entity.player.EntityPlayer":
 				return transformClass(basicClass, transformedName,
 						IsEntityInsideOpaqueBlockTransformer::hook_isEntityInsideOpaqueBlock
 				);
@@ -79,13 +107,13 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 		ClassReader cr = new ClassReader(basicClass);
 		LOGGER.info("Starting transforming " + transformedName);
 		if (DUMP_BYTECODE) try {
-			Path pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_before_hooks.txt");
+			Path pathToFile = Paths.get(DUMP_BYTECODE_DIR + transformedName + "_before_hooks.txt");
 			pathToFile.toFile().getParentFile().mkdirs();
 			PrintWriter filePrinter = new PrintWriter(pathToFile.toFile());
 			ClassReader reader = new ClassReader(basicClass);
 			TraceClassVisitor tracingVisitor = new TraceClassVisitor(filePrinter);
 			reader.accept(tracingVisitor, 0);
-			pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_before_hooks.class");
+			pathToFile = Paths.get(DUMP_BYTECODE_DIR + transformedName + "_before_hooks.class");
 			pathToFile.toFile().getParentFile().mkdirs();
 			FileOutputStream fileOutputStream = new FileOutputStream(pathToFile.toFile());
 			fileOutputStream.write(basicClass);
@@ -103,13 +131,13 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 		if (DUMP_BYTECODE) {
 			try {
 				byte[] bytes = out.toByteArray();
-				Path pathToFile = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_after_hooks.txt");
+				Path pathToFile = Paths.get(DUMP_BYTECODE_DIR + transformedName + "_after_hooks.txt");
 				pathToFile.toFile().getParentFile().mkdirs();
 				PrintWriter filePrinter = new PrintWriter(pathToFile.toFile());
 				ClassReader reader = new ClassReader(bytes);
 				TraceClassVisitor tracingVisitor = new TraceClassVisitor(filePrinter);
 				reader.accept(tracingVisitor, 0);
-				Path pathToClass = Paths.get(DEBUG_DUMP_BYTECODE_DIR + transformedName + "_after_hooks.class");
+				Path pathToClass = Paths.get(DUMP_BYTECODE_DIR + transformedName + "_after_hooks.class");
 				pathToClass.toFile().getParentFile().mkdirs();
 				FileOutputStream fileOutputStream = new FileOutputStream(pathToClass.toFile());
 				fileOutputStream.write(bytes);
@@ -119,29 +147,6 @@ public final class TransformerDispatcher implements IClassTransformer, Opcodes {
 			}
 		}
 		return out.toByteArray();
-	}
-
-	static MethodNode getMethod(ClassNode classNode, String srgName, String methodDescription) {
-		final String methodName = ObfuscationHelper.remapMethodName(classNode.name, srgName, methodDescription);
-		for (final MethodNode method : classNode.methods) {
-			if (method.name.equals(methodName)) {
-				return method;
-			}
-		}
-		StringBuilder names = new StringBuilder();
-		for (MethodNode methodNode : classNode.methods) {
-			names.append(methodNode.name).append(" | ").append(methodNode.desc).append("\n");
-		}
-		throw new UnableToFindMethodException(new Exception(srgName + " does not exist!", new Exception(names.toString())));
-	}
-
-	static AbstractInsnNode BlockStateContainer$StateImplementation_block() {
-		return new FieldInsnNode(
-				GETFIELD,
-				"net/minecraft/block/state/BlockStateContainer$StateImplementation",
-				ObfuscationHelper.remapFieldName("net/minecraft/block/state/BlockStateContainer$StateImplementation", "field_177239_a"),
-				"Lnet/minecraft/block/Block;"
-		);
 	}
 
 	// Copied from  ObfuscationReflectionHelper
