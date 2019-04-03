@@ -68,7 +68,12 @@ import static net.minecraft.init.Blocks.YELLOW_TERRACOTTA;
 @SuppressWarnings("WeakerAccess")
 //@Config(modid = MOD_ID)
 //@LangKey(MOD_ID + ".config.title")
-public final class ModConfig {
+public final class NoCubesConfigeg {
+
+
+//	public static final ForgeConfigSpec SERVER_CONFIG = buildConfig(new Dist[]{Dist.DEDICATED_SERVER}, )
+//	public static final ForgeConfigSpec CLIENT_CONFIG;
+
 
 	//	@Config.Ignore
 	private static final transient HashSet<IBlockState> SMOOTHABLE_BLOCK_STATES_CACHE = new HashSet<>();

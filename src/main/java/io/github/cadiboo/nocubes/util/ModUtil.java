@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
@@ -46,7 +46,7 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmooth(final IBlockState state) {
-		return ModConfig.getSmoothableBlockStatesCache().contains(state);
+		return NoCubesConfig.getSmoothableBlockStatesCache().contains(state);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public final class ModUtil {
 	 * @return If the state should be smoothed
 	 */
 	public static boolean shouldSmoothLeaves(final IBlockState state) {
-		return ModConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
+		return NoCubesConfig.smoothLeavesSeparate && state.getBlock() instanceof BlockLeaves;
 	}
 
 	/**
@@ -80,7 +80,7 @@ public final class ModUtil {
 
 		} else if (/*ModConfig.debug.connectToNormal && */(state.isNormalCube() || state.isBlockNormalCube())) {
 			// OK OK OK OK OK LordPhrozen, I've done it (kinda)
-			density += (float) ModConfig.smoothOtherBlocksAmount;
+			density += (float) NoCubesConfig.smoothOtherBlocksAmount;
 		} else if (state.getMaterial() == VINE) {
 			density -= 0.75;
 		} else {
@@ -103,7 +103,7 @@ public final class ModUtil {
 	public static void offsetVertex(Vec3 point) {
 		long rand = (long) (point.x * 3129871.0D) ^ (long) point.y * 116129781L ^ (long) point.z;
 		rand = rand * rand * 42317861L + rand * 11L;
-		final float offsetAmount = ModConfig.getoffsetAmount();
+		final float offsetAmount = NoCubesConfig.getoffsetAmount();
 		point.x += (((rand >> 16 & 15L) / 15.0F - 0.5F) * offsetAmount);
 		point.y += (((rand >> 20 & 15L) / 15.0F - 0.5F) * offsetAmount);
 		point.z += (((rand >> 24 & 15L) / 15.0F - 0.5F) * offsetAmount);

@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ReflectionHelper;
 import net.minecraft.block.state.IBlockState;
@@ -418,7 +418,7 @@ public final class ClientUtil {
 	}
 
 	public static int getExtendLiquidsRange() {
-		switch (ModConfig.extendLiquids) {
+		switch (NoCubesConfig.extendLiquids) {
 			default:
 			case Off:
 				return 0;

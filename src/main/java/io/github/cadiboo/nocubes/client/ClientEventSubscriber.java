@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreRenderEvent;
 import net.minecraft.block.state.IBlockState;
@@ -67,7 +67,7 @@ public final class ClientEventSubscriber {
 		}
 		final IBlockState state = minecraft.world.getBlockState(objectMouseOver.getBlockPos());
 
-		final HashSet<IBlockState> smoothableBlockStatesCache = ModConfig.getSmoothableBlockStatesCache();
+		final HashSet<IBlockState> smoothableBlockStatesCache = NoCubesConfig.getSmoothableBlockStatesCache();
 		if (smoothableBlockStatesCache.contains(state)) {
 			smoothableBlockStatesCache.remove(state);
 		} else {

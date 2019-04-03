@@ -5,7 +5,7 @@ import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.SmoothableCache;
@@ -27,7 +27,7 @@ import net.minecraft.world.IWorldReader;
 
 import java.util.Arrays;
 
-import static io.github.cadiboo.nocubes.config.ModConfig.approximateLighting;
+import static io.github.cadiboo.nocubes.config.NoCubesConfig.approximateLighting;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
@@ -52,7 +52,7 @@ public class RenderDispatcher {
 		final byte meshSizeX;
 		final byte meshSizeY;
 		final byte meshSizeZ;
-		if (ModConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
+		if (NoCubesConfig.getMeshGenerator() == MeshGenerator.SurfaceNets) {
 			//yay, surface nets is special and needs an extra +1. why? no-one knows
 			meshSizeX = 18;
 			meshSizeY = 18;
@@ -146,7 +146,7 @@ public class RenderDispatcher {
 			NoCubes.getProfiler().end();
 		}
 
-		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
+		if (NoCubesConfig.extendLiquids != ExtendLiquidRange.Off) {
 			NoCubes.getProfiler().start("generate extend liquid caches");
 
 			//TODO get this from world & chunk & layer

@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.FaceList;
 import io.github.cadiboo.nocubes.util.ModReference;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -64,7 +64,7 @@ public final class EventSubscriber {
 		}
 
 		try (
-				final FaceList faces = ModConfig.getMeshGenerator().generateBlock(new byte[]{
+				final FaceList faces = NoCubesConfig.getMeshGenerator().generateBlock(new byte[]{
 						(byte) ((entityX - (entityX >> 4)) << 4),
 						(byte) ((entityY - (entityY >> 4)) << 4),
 						(byte) ((entityZ - (entityZ >> 4)) << 4)

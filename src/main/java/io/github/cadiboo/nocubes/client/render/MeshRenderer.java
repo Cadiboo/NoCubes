@@ -5,7 +5,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.OptifineCompatibility;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.DensityCache;
 import io.github.cadiboo.nocubes.util.Face;
@@ -70,7 +70,7 @@ public class MeshRenderer {
 
 			try {
 				if (faces.isEmpty()) {
-					if (ModConfig.renderEmptyBlocksOrWhatever) {
+					if (NoCubesConfig.renderEmptyBlocksOrWhatever) {
 						pooledMutableBlockPos.setPos(
 								renderChunkPositionX + pos.x,
 								renderChunkPositionY + pos.y,
@@ -151,7 +151,7 @@ public class MeshRenderer {
 							final int lightmapBlockLight2;
 							final int lightmapBlockLight3;
 
-							if (ModConfig.approximateLighting) {
+							if (NoCubesConfig.approximateLighting) {
 
 								//TODO: do this better
 								try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pos, blockAccess, pooledMutableBlockPos)) {
@@ -252,13 +252,13 @@ public class MeshRenderer {
 					blockAccess,
 					blockRendererDispatcher,
 					pooledPackedLightCache,
-					ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ}),
+					NoCubesConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ}),
 					TERRAIN_SMOOTHABLE,
 					pooledMutableBlockPos, usedBlockRenderLayers, false
 			);
 			NoCubes.getProfiler().end();
 		}
-		if (ModConfig.smoothLeavesSeparate) {
+		if (NoCubesConfig.smoothLeavesSeparate) {
 
 			NoCubes.getProfiler().start("renderLeaves");
 
@@ -279,7 +279,7 @@ public class MeshRenderer {
 					blockAccess,
 					blockRendererDispatcher,
 					pooledPackedLightCache,
-					ModConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ}),
+					NoCubesConfig.getMeshGenerator().generateChunk(data.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ}),
 					LEAVES_SMOOTHABLE,
 					pooledMutableBlockPos, usedBlockRenderLayers, true
 			);

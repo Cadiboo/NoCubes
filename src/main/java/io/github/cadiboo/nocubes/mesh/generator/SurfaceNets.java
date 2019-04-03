@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.FaceList;
@@ -98,7 +98,7 @@ public class SurfaceNets implements IMeshGenerator {
 		final int[] buffer = new int[R[2] * 2];
 
 		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
-		final float isosurfaceLevel = ModConfig.getIsosurfaceLevel();
+		final float isosurfaceLevel = NoCubesConfig.getIsosurfaceLevel();
 
 		//March over the voxel grid
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
