@@ -11,11 +11,14 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 
@@ -26,11 +29,11 @@ public class ExtendedLiquidChunkRenderer {
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
@@ -39,13 +42,15 @@ public class ExtendedLiquidChunkRenderer {
 
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("render extended fluid chunk")) {
 			try {
-				final IBlockState[] stateCacheArray = stateCache.getStateCache();
+				final IBlockState[] blockCacheArray = stateCache.getBlockStateCache();
+				final IFluidState[] fluidCacheArray = stateCache.getFluidStateCache();
 
-				final int stateCacheLength = stateCacheArray.length;
+				final int blockCacheLength = blockCacheArray.length;
+				final int fluidCacheLength = fluidCacheArray.length;
 
-				final boolean[] isLiquid = new boolean[stateCacheLength];
-				for (int i = 0; i < stateCacheLength; i++) {
-					isLiquid[i] = ModUtil.isLiquidSource(stateCacheArray[i]);
+				final boolean[] isLiquid = new boolean[fluidCacheLength];
+				for (int i = 0; i < fluidCacheLength; i++) {
+					isLiquid[i] = ModUtil.isLiquidSource(fluidCacheArray[i]);
 				}
 
 				final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
@@ -84,17 +89,17 @@ public class ExtendedLiquidChunkRenderer {
 									}
 
 									// only render if block up is air/not a normal cube
-									if (stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
+									if (blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
 										continue;
 									}
 
-									final IBlockState liquidState = stateCacheArray[liquidStateIndex];
+									final IFluidState fluidState = fluidCacheArray[liquidStateIndex];
 
-									final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(liquidState);
+									final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(fluidState);
 									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 									final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-									OptiFineCompatibility.pushShaderThing(liquidState, pooledMutableBlockPos.setPos(
+									OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
 											renderChunkPositionX + x,
 											renderChunkPositionY + y,
 											renderChunkPositionZ + z
@@ -111,7 +116,7 @@ public class ExtendedLiquidChunkRenderer {
 											),
 											blockAccess,
 											stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
-											liquidState,
+											fluidState,
 											bufferBuilder
 									);
 									OptiFineCompatibility.popShaderThing(bufferBuilder);

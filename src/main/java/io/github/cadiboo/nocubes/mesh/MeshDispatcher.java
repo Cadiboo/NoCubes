@@ -17,7 +17,9 @@ import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -30,7 +32,7 @@ public class MeshDispatcher {
 	@Nonnull
 	public HashMap<Vec3b, FaceList> generateChunkMeshOffset(
 			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull final MeshGenerator meshGenerator
 	) {
@@ -51,15 +53,14 @@ public class MeshDispatcher {
 	@Nonnull
 	public HashMap<Vec3b, FaceList> generateChunkMeshUnOffset(
 			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull MeshGenerator meshGenerator
 	) {
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMeshUnOffset"))
 		{
 
-			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-			try {
+			try (final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 				final byte meshSizeX;
 				final byte meshSizeY;
 				final byte meshSizeZ;
@@ -80,8 +81,6 @@ public class MeshDispatcher {
 				}
 
 				return generateCachesAndChunkData(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos, meshSizeX, meshSizeY, meshSizeZ, meshGenerator);
-			} finally {
-				pooledMutableBlockPos.release();
 			}
 		}
 	}
@@ -89,7 +88,7 @@ public class MeshDispatcher {
 	@Nonnull
 	protected HashMap<Vec3b, FaceList> generateCachesAndChunkData(
 			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
@@ -113,12 +112,9 @@ public class MeshDispatcher {
 	}
 
 	@Nonnull
-	protected HashMap<Vec3b, FaceList> generateChunkMeshOffsetOldNoCubes(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
+	protected HashMap<Vec3b, FaceList> generateChunkMeshOffsetOldNoCubes(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			return OldNoCubes.generateChunk(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos);
-		} finally {
-			pooledMutableBlockPos.release();
 		}
 	}
 
@@ -126,7 +122,7 @@ public class MeshDispatcher {
 	protected StateCache generateMeshStateCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateMeshStateCache")) {
@@ -156,7 +152,7 @@ public class MeshDispatcher {
 	 * @return the offset vertices for the block
 	 */
 	@Nonnull
-	public FaceList generateBlockMeshOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
+	public FaceList generateBlockMeshOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
 
 		if (meshGenerator == MeshGenerator.OldNoCubes) {
 			return generateOffsetBlockOldNoCubes(pos, blockAccess, isSmoothable);
@@ -179,7 +175,7 @@ public class MeshDispatcher {
 	 * @return the un offset vertices for the block
 	 */
 	@Nonnull
-	public FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
+	public FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock"))
 		final ModProfiler ignored = NoCubes.getProfiler();
 		{
@@ -187,8 +183,7 @@ public class MeshDispatcher {
 //			if(true)
 //				return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
 
-			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-			try {
+			try (final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 				final int posX = pos.getX();
 				final int posY = pos.getY();
 				final int posZ = pos.getZ();
@@ -300,8 +295,6 @@ public class MeshDispatcher {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw e;
-			} finally {
-				pooledMutableBlockPos.release();
 			}
 		}
 	}
@@ -326,12 +319,9 @@ public class MeshDispatcher {
 	}
 
 	@Nonnull
-	protected FaceList generateOffsetBlockOldNoCubes(@Nonnull final BlockPos blockPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
+	protected FaceList generateOffsetBlockOldNoCubes(@Nonnull final BlockPos blockPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			return OldNoCubes.generateBlock(blockPos, blockAccess, isSmoothable, pooledMutableBlockPos);
-		} finally {
-			pooledMutableBlockPos.release();
 		}
 	}
 

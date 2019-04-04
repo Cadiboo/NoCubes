@@ -14,38 +14,37 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.BlockTallGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 import javax.vecmath.Vector3d;
 import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.getCorrectRenderLayer;
 import static io.github.cadiboo.nocubes.config.ModConfig.smoothBiomeColorTransitions;
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
-import static net.minecraft.util.math.MathHelper.getPositionRandom;
 
 /**
  * @author Cadiboo
@@ -54,11 +53,11 @@ public class MeshRenderer {
 
 	public static void renderChunkMeshes(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReaderBase blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -144,11 +143,11 @@ public class MeshRenderer {
 
 	private static void renderMesh(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReaderBase blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
@@ -191,17 +190,17 @@ public class MeshRenderer {
 						final byte relativePosZ = ClientUtil.getRelativePos(renderChunkPositionZ, initialPosZ);
 
 //					    final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
-						final IBlockState realState = stateCache.getStateCache()[stateCache.getIndex(relativePosX + 1, relativePosY + 1, relativePosZ + 1)];
+						final IBlockState realState = stateCache.getBlockStateCache()[stateCache.getIndex(relativePosX + 1, relativePosY + 1, relativePosZ + 1)];
 
 //					    final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, blockAccess, pooledMutableBlockPos, realState, isStateSmoothable, (byte) (relativePosX+ 1), (byte) (relativePosY+ 1), (byte) (relativePosZ+ 1));
 						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, pooledMutableBlockPos, realState, isStateSmoothable, relativePosX, relativePosY, relativePosZ);
-						final BlockPos texturePos = texturePosAndState.getFirst();
-						final IBlockState textureState = texturePosAndState.getSecond();
+						final BlockPos texturePos = texturePosAndState.getA();
+						final IBlockState textureState = texturePosAndState.getB();
 
 						NoCubes.getProfiler().end();
 
 						try {
-							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledPackedLightCache, usedBlockRenderLayers, renderOppositeSides, pos, faces, texturePos, textureState);
+							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, pooledPackedLightCache, usedBlockRenderLayers, renderOppositeSides, pos, faces, texturePos, textureState, new Random());
 						} catch (Exception e) {
 							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
 
@@ -225,11 +224,11 @@ public class MeshRenderer {
 
 	public static void renderFaces(
 			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkCompileTaskGenerator generator,
+			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IWorldReaderBase blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -237,7 +236,8 @@ public class MeshRenderer {
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
 			@Nonnull final BlockPos texturePos,
-			@Nonnull final IBlockState textureState
+			@Nonnull final IBlockState textureState,
+			@Nonnull final Random rand
 	) {
 
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces"))
@@ -254,7 +254,7 @@ public class MeshRenderer {
 			BakedQuad quad = ModelHelper.getQuad(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
 			if (quad == null) {
 				NoCubes.NO_CUBES_LOG.warn("Got null quad for " + textureState.getBlock() + " at " + texturePos);
-				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, 0L).get(0);
+				quad = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, rand).get(0);
 			}
 //			NoCubes.getProfiler().end();
 
@@ -314,19 +314,19 @@ public class MeshRenderer {
 			}
 
 			GRASS:
-			if (ModConfig.shortGrassEnabled)
-			{
+			if (ModConfig.shortGrassEnabled) {
 
 				if (textureState != Blocks.GRASS.getDefaultState()) {
 					break GRASS;
 				}
 
-				final IBlockState state = Blocks.TALLGRASS.getDefaultState().withProperty(BlockTallGrass.TYPE, BlockTallGrass.EnumType.GRASS);
-				final IBlockState blockStateUp = blockAccess.getBlockState(texturePos.up());
+				final IBlockState state = Blocks.GRASS.getDefaultState();
+				final BlockPos texturePosUp = texturePos.up();
+				final IBlockState blockStateUp = blockAccess.getBlockState(texturePosUp);
 				if (blockStateUp == state) {
 					break GRASS;
 				}
-				if (blockStateUp.isOpaqueCube()) {
+				if (blockStateUp.isOpaqueCube(blockAccess, texturePos)) {
 					break GRASS;
 				}
 
@@ -353,7 +353,7 @@ public class MeshRenderer {
 
 				if ((v0Normal.x < 0.1 && v0Normal.x > -0.1) && (v0Normal.z < 0.1 && v0Normal.z > -0.1)) {
 
-					final BlockPos pos1 = texturePos.up();
+					final BlockPos pos1 = texturePosUp;
 
 					final int lightmapSkyLight0;
 					final int lightmapSkyLight1;
@@ -393,10 +393,8 @@ public class MeshRenderer {
 						@Nonnull
 						IBakedModel model = ModelHelper.getModel(state, blockRendererDispatcher);
 
-						final long posRand = getPositionRandom(pos1);
-
 						for (EnumFacing facing : ModelHelper.ENUMFACING_QUADS_ORDERED) {
-							List<BakedQuad> quads = model.getQuads(state, facing, posRand);
+							List<BakedQuad> quads = model.getQuads(state, facing, rand);
 							if (quads.isEmpty()) {
 								continue;
 							}

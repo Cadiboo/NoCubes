@@ -18,14 +18,18 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReader;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
@@ -40,10 +44,10 @@ public class RenderDispatcher {
 
 	public static void renderChunk(final RebuildChunkPreEvent event) {
 		final RenderChunk renderChunk = event.getRenderChunk();
-		final ChunkCompileTaskGenerator generator = event.getGenerator();
+		final ChunkRenderTask generator = event.getGenerator();
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
 		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final IBlockAccess blockAccess = event.getIBlockAccess();
+		final IWorldReader blockAccess = event.getWorldReader();
 
 		final byte meshSizeX;
 		final byte meshSizeY;
@@ -63,8 +67,7 @@ public class RenderDispatcher {
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
-		final BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain();
-		try {
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			renderChunk(
 					renderChunk,
 					generator,
@@ -75,24 +78,22 @@ public class RenderDispatcher {
 					pooledMutableBlockPos,
 					meshSizeX, meshSizeY, meshSizeZ
 			);
-		} finally {
-			pooledMutableBlockPos.release();
 		}
 	}
 
 	private static void renderChunk(
 			final RenderChunk renderChunk,
-			final ChunkCompileTaskGenerator generator,
+			final ChunkRenderTask generator,
 			final CompiledChunk compiledChunk,
 			final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IBlockAccess blockAccess,
-			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
+			final IWorldReader blockAccess,
+			final PooledMutableBlockPos pooledMutableBlockPos,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
 	) {
 		final boolean[] usedBlockRenderLayers = USED_RENDER_LAYERS.get();
 		USED_RENDER_LAYERS_SET.set(false);
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
 		// Terrain & leaves rendering
 		{
@@ -158,8 +159,8 @@ public class RenderDispatcher {
 	private static StateCache generateLightAndTexturesStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
 			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final IBlockAccess blockAccess,
-			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
+			final IBlockReader blockAccess,
+			final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// Light uses +1 block on every axis so we need to start at -1 block
 		// Textures use +1 block on every axis so we need to start at -1 block
@@ -185,8 +186,8 @@ public class RenderDispatcher {
 
 	private static StateCache generateExtendedWaterStateCache(
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IBlockAccess blockAccess,
-			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
+			final IBlockReader blockAccess,
+			final PooledMutableBlockPos pooledMutableBlockPos,
 			final int extendLiquidsRange
 	) {
 		// ExtendedWater takes +1 or +2 blocks on every horizontal axis into account so we need to start at -1 or -2 blocks

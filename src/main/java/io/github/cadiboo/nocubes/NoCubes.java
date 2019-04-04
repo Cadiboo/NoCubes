@@ -1,11 +1,13 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
 import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
 import io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook;
 import io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
+import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -13,6 +15,7 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ReportedException;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -37,16 +40,7 @@ import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 /**
  * @author Cadiboo
  */
-@Mod(
-		modid = MOD_ID,
-		name = MOD_NAME,
-		version = VERSION,
-		acceptedMinecraftVersions = ACCEPTED_MINECRAFT_VERSIONS,
-		updateJSON = UPDATE_JSON,
-		dependencies = DEPENDENCIES,
-		acceptableRemoteVersions = VERSION,
-		certificateFingerprint = CERTIFICATE_FINGERPRINT
-)
+@Mod(MOD_ID)
 public final class NoCubes {
 
 	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
@@ -65,7 +59,7 @@ public final class NoCubes {
 				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to enable null profiler!");
 				continue;
 			}
-			profiler.profilingEnabled = true;
+			profiler.startProfiling(0);
 		}
 	}
 
@@ -76,7 +70,7 @@ public final class NoCubes {
 				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to disable null profiler!");
 				continue;
 			}
-			profiler.profilingEnabled = false;
+			profiler.stopProfiling();
 		}
 	}
 
@@ -88,21 +82,9 @@ public final class NoCubes {
 
 	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
 
-	@Mod.Instance(MOD_ID)
-	public static NoCubes INSTANCE;
-
-	@SidedProxy(serverSide = SERVER_PROXY_CLASS, clientSide = CLIENT_PROXY_CLASS)
-	public static IProxy PROXY;
+	public static final IProxy PROXY = DistExecutor.runForDist(()->()->new ClientProxy(), ()->()->new ServerProxy());
 
 	public NoCubes() {
-		try {
-			//ew hacks
-			ModUtil.fixConfig(new File(Loader.instance().getConfigDir(), MOD_ID + ".cfg"));
-		} catch (Exception e) {
-			final CrashReport crashReport = new CrashReport("Something went terribly wrong trying to hack our config", e);
-			crashReport.makeCategory("Initialising NoCubes");
-			throw new ReportedException(crashReport);
-		}
 	}
 
 	@SuppressWarnings("unused")
@@ -121,17 +103,14 @@ public final class NoCubes {
 		return PROFILER.get();
 	}
 
-	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
 		pastPreInit = true;
 
 		testHooks();
 
-		ModUtil.fixConfig(event.getSuggestedConfigurationFile());
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
 
-	@Mod.EventHandler
 	public void onPostInit(final FMLPostInitializationEvent event) {
 		PROXY.replaceFluidRendererCauseImBored();
 	}
@@ -157,15 +136,15 @@ public final class NoCubes {
 		}
 		{
 			try {
-				Blocks.BED.getDefaultState().isOpaqueCube();
+				Blocks.DIRT.getDefaultState().isOpaqueCube(null, null);
 			} catch (NullPointerException e) {
 			}
 			try {
-				Blocks.BED.getDefaultState().getCollisionBoundingBox(null, null);
+				Blocks.DIRT.getDefaultState().getCollisionBoundingBox(null, null);
 			} catch (NullPointerException e) {
 			}
 			try {
-				Blocks.BED.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
+				Blocks.DIRT.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
 			} catch (NullPointerException e) {
 			}
 			try {

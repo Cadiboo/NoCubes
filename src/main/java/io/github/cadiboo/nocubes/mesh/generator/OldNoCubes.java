@@ -14,7 +14,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,34 +36,16 @@ public class OldNoCubes implements IMeshGenerator {
 	public static final int X1Y1Z1 = 6;
 	public static final int X0Y1Z1 = 7;
 
-	@Override
-	@Nonnull
-	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	@Nonnull
-	public FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Nonnull
-	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		throw new UnsupportedOperationException();
-	}
-
 	/**
 	 * @param chunkPos              the position of the chunk
-	 * @param blockAccess           the IBlockAccess
+	 * @param blockAccess           the IBlockReader
 	 * @param isSmoothable          the smoothable function
 	 * @param pooledMutableBlockPos
 	 * @return the chunk data
 	 */
 	// TODO: state caches etc.
 	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		final HashMap<Vec3b, FaceList> map = new HashMap<>();
 		for (final MutableBlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
 
@@ -79,7 +61,7 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	@Nonnull
-	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int posX = pos.getX();
 		final int posY = pos.getY();
@@ -96,7 +78,7 @@ public class OldNoCubes implements IMeshGenerator {
 		final FaceList faces = FaceList.retain();
 
 		if (points != null) {
-			for (final EnumFacing facing : EnumFacing.VALUES) {
+			for (final EnumFacing facing : EnumFacing.values()) {
 				if (isSmoothable.isSmoothable(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
 					continue;
 				}
@@ -167,7 +149,7 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	@Nullable
-	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		if (!isSmoothable.isSmoothable(state)) {
 			return null;
@@ -246,7 +228,7 @@ public class OldNoCubes implements IMeshGenerator {
 	 * @param pooledMutableBlockPos the pooled mutable pos to use
 	 * @return if the block's top side intersects with air.
 	 */
-	public static boolean doesPointTopIntersectWithAir(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static boolean doesPointTopIntersectWithAir(@Nonnull final IBlockReader world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		boolean intersects = false;
 		for (int i = 0; i < 4; i++) {
 			int x1 = (int) (point.x - (i & 0x1));
@@ -269,7 +251,7 @@ public class OldNoCubes implements IMeshGenerator {
 	 * @param pooledMutableBlockPos the pooled mutable pos to use
 	 * @return if the block's bottom side intersects with air.
 	 */
-	public static boolean doesPointBottomIntersectWithAir(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static boolean doesPointBottomIntersectWithAir(@Nonnull final IBlockReader world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		boolean intersects = false;
 		boolean notOnly = false;
 		for (int i = 0; i < 4; i++) {
@@ -288,7 +270,7 @@ public class OldNoCubes implements IMeshGenerator {
 		return (intersects) && (notOnly);
 	}
 
-	public static boolean doesPointIntersectWithManufactured(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static boolean doesPointIntersectWithManufactured(@Nonnull final IBlockReader world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		for (int i = 0; i < 4; i++) {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
@@ -302,6 +284,24 @@ public class OldNoCubes implements IMeshGenerator {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	@Nonnull
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Nonnull
+	@Override
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		throw new UnsupportedOperationException();
 	}
 
 }

@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -483,7 +483,7 @@ public class MarchingCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
 		return FaceList.retain();
 	}
 

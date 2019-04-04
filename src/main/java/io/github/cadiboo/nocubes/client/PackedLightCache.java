@@ -1,21 +1,16 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-@SideOnly(Side.CLIENT)
 public class PackedLightCache extends XYZCache implements AutoCloseable {
 
-	private static int instances = 0;
-
 	private static final ThreadLocal<PackedLightCache> POOL = ThreadLocal.withInitial(() -> new PackedLightCache(0, 0, 0));
-
+	private static int instances = 0;
 	@Nonnull
 	private int[] cache;
 
@@ -23,11 +18,6 @@ public class PackedLightCache extends XYZCache implements AutoCloseable {
 		super(sizeX, sizeY, sizeZ);
 		cache = new int[sizeX * sizeY * sizeZ];
 		++instances;
-	}
-
-	@Nonnull
-	public int[] getPackedLightCache() {
-		return cache;
 	}
 
 	@Nonnull
@@ -52,12 +42,17 @@ public class PackedLightCache extends XYZCache implements AutoCloseable {
 		return pooled;
 	}
 
-	@Override
-	public void close() {
-	}
-
 	public static int getInstances() {
 		return instances;
+	}
+
+	@Nonnull
+	public int[] getPackedLightCache() {
+		return cache;
+	}
+
+	@Override
+	public void close() {
 	}
 
 	@Override

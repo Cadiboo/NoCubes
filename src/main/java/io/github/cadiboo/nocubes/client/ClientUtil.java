@@ -8,18 +8,17 @@ import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 
@@ -37,8 +36,43 @@ import static net.minecraft.util.math.MathHelper.clamp;
  * @author Cadiboo
  */
 @SuppressWarnings("WeakerAccess")
-@SideOnly(Side.CLIENT)
 public final class ClientUtil {
+
+	//TODO
+	private static final int[][] OFFSETS_ORDERED = {
+			// check 6 immediate neighbours
+			{+0, -1, +0},
+			{+0, +1, +0},
+			{+1, +0, +0},
+			{-1, +0, +0},
+			{+0, +0, +1},
+			{+0, +0, -1},
+			// check 8 corner neighbours
+			{+1, +1, +1},
+			{+1, +1, -1},
+			{-1, +1, +1},
+			{-1, +1, -1},
+			{+1, -1, +1},
+			{+1, -1, -1},
+			{-1, -1, +1},
+			{-1, -1, -1},
+//			// check 6 immediate neighbours
+//			{0, -1, 0},
+//			{0, +1, 0},
+//			{-1, 0, 0},
+//			{+1, 0, 0},
+//			{0, 0, -1},
+//			{0, 0, +1},
+//			// check 8 corner neighbours
+//			{-1, -1, -1},
+//			{-1, -1, +1},
+//			{+1, -1, -1},
+//			{+1, -1, +1},
+//			{-1, +1, -1},
+//			{-1, +1, +1},
+//			{+1, +1, -1},
+//			{+1, +1, +1},
+	};
 
 	/**
 	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
@@ -97,13 +131,14 @@ public final class ClientUtil {
 	 * @param pos   the pos
 	 * @return the color
 	 */
-	public static int getColor(final BakedQuad quad, final IBlockState state, final IBlockAccess cache, final BlockPos pos) {
+	public static int getColor(final BakedQuad quad, final IBlockState state, final IWorldReaderBase cache, final BlockPos pos) {
 		final int red;
 		final int green;
 		final int blue;
 
 		if (quad.hasTintIndex()) {
-			final int colorMultiplier = Minecraft.getMinecraft().getBlockColors().colorMultiplier(state, cache, pos, 0);
+			//TODO FIXME PASS IN BLOCK COLORS
+			final int colorMultiplier = Minecraft.getInstance().getBlockColors().getColor(state, cache, pos, 0);
 			red = (colorMultiplier >> 16) & 255;
 			green = (colorMultiplier >> 8) & 255;
 			blue = colorMultiplier & 255;
@@ -114,42 +149,6 @@ public final class ClientUtil {
 		}
 		return color(red, green, blue);
 	}
-
-	//TODO
-	private static final int[][] OFFSETS_ORDERED = {
-			// check 6 immediate neighbours
-			{+0, -1, +0},
-			{+0, +1, +0},
-			{+1, +0, +0},
-			{-1, +0, +0},
-			{+0, +0, +1},
-			{+0, +0, -1},
-			// check 8 corner neighbours
-			{+1, +1, +1},
-			{+1, +1, -1},
-			{-1, +1, +1},
-			{-1, +1, -1},
-			{+1, -1, +1},
-			{+1, -1, -1},
-			{-1, -1, +1},
-			{-1, -1, -1},
-//			// check 6 immediate neighbours
-//			{0, -1, 0},
-//			{0, +1, 0},
-//			{-1, 0, 0},
-//			{+1, 0, 0},
-//			{0, 0, -1},
-//			{0, 0, +1},
-//			// check 8 corner neighbours
-//			{-1, -1, -1},
-//			{-1, -1, +1},
-//			{+1, -1, -1},
-//			{+1, -1, +1},
-//			{-1, +1, -1},
-//			{-1, +1, +1},
-//			{+1, +1, -1},
-//			{+1, +1, +1},
-	};
 
 	/**
 	 * @param stateCache
@@ -180,7 +179,7 @@ public final class ClientUtil {
 			final int posY = texturePooledMutablePos.getY();
 			final int posZ = texturePooledMutablePos.getZ();
 
-			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+			final IBlockState[] blockCacheArray = stateCache.getBlockStateCache();
 
 //			if (ModConfig.beautifyTexturesLevel == FANCY) {
 //
@@ -206,7 +205,7 @@ public final class ClientUtil {
 			IBlockState textureState = state;
 
 			for (int[] offset : OFFSETS_ORDERED) {
-				final IBlockState tempState = stateCacheArray[stateCache.getIndex(
+				final IBlockState tempState = blockCacheArray[stateCache.getIndex(
 						relativePosX + offset[0] + 1,
 						relativePosY + offset[1] + 1,
 						relativePosZ + offset[2] + 1
@@ -225,22 +224,31 @@ public final class ClientUtil {
 		}
 	}
 
-	public static BlockRenderLayer getCorrectRenderLayer(IBlockState state) {
-		final BlockRenderLayer blockRenderLayer = state.getBlock().getRenderLayer();
+	@Nonnull
+	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IBlockState state) {
+		return getCorrectRenderLayer(state.getBlock().getRenderLayer());
+	}
+	@Nonnull
+	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IFluidState state) {
+		return getCorrectRenderLayer(state.getRenderLayer());
+	}
+
+	@Nonnull
+	private static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockRenderLayer blockRenderLayer) {
 		switch (blockRenderLayer) {
 			default:
 			case SOLID:
 			case TRANSLUCENT:
 				return blockRenderLayer;
 			case CUTOUT_MIPPED:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
+				return Minecraft.getInstance().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
 			case CUTOUT:
-				return Minecraft.getMinecraft().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+				return Minecraft.getInstance().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
-		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
+		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			renderChunk_preRenderBlocks(renderChunk, bufferBuilder, renderChunkPosition);
@@ -261,7 +269,7 @@ public final class ClientUtil {
 	}
 
 	public static void tryReloadRenderers() {
-		final RenderGlobal renderGlobal = Minecraft.getMinecraft().renderGlobal;
+		final WorldRenderer renderGlobal = Minecraft.getInstance().worldRenderer;
 		if (renderGlobal != null) {
 			renderGlobal.loadRenderers();
 		}

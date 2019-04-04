@@ -3,29 +3,32 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.tempcompatibility.DynamicTreesCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import net.minecraft.block.BlockDirt;
-import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
 import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
 import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.OPTIFINE_INSTALLED;
+import static net.minecraft.block.BlockDirtSnowy.SNOWY;
+import static net.minecraft.init.Blocks.GRASS_BLOCK;
+import static net.minecraft.init.Blocks.PODZOL;
+import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -55,11 +58,10 @@ public class ModelHelper {
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuadFromFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher) {
+	public static BakedQuad getQuadFromFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingsOrdered")) {
-			final long posRand = getPositionRandom(pos);
 			final IBakedModel model = getModel(state, blockRendererDispatcher);
-			return getModelQuadsFromFacings(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+			return getModelQuadsFromFacings(state, random, model, ENUMFACING_QUADS_ORDERED);
 		}
 	}
 
@@ -73,21 +75,20 @@ public class ModelHelper {
 	 * @return The first quad or null if the model has no quads
 	 */
 	@Nullable
-	public static BakedQuad getQuadFromFacingOrFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, EnumFacing facing) {
+	public static BakedQuad getQuadFromFacingOrFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final EnumFacing facing, final Random rand) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingOrFacingsOrdered")) {
-			final long posRand = getPositionRandom(pos);
 			final IBakedModel model = getModel(state, blockRendererDispatcher);
-			final BakedQuad quad = getModelQuadsFromFacings(state, posRand, model, facing);
+			final BakedQuad quad = getModelQuadsFromFacings(state, rand, model, facing);
 			if (quad != null) {
 				return quad;
 			} else {
-				return getModelQuadsFromFacings(state, posRand, model, ENUMFACING_QUADS_ORDERED);
+				return getModelQuadsFromFacings(state, rand, model, ENUMFACING_QUADS_ORDERED);
 			}
 		}
 	}
 
 	@Nullable
-	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final long posRand, final IBakedModel model, final EnumFacing... facings) {
+	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final Random posRand, final IBakedModel model, final EnumFacing... facings) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModelQuadsFromFacings")) {
 			for (EnumFacing facing : facings) {
 				final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
@@ -103,14 +104,14 @@ public class ModelHelper {
 	//get override with pos
 
 	@Nullable
-	public static BakedQuad getQuad(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockAccess blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final BlockRenderLayer blockRenderLayer) {
+	public static BakedQuad getQuad(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final BlockRenderLayer blockRenderLayer) {
 
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getActualState")) {
-			try {
-				state = state.getActualState(blockAccess, pos);
-			} catch (Exception ignored1) {
-			}
-		}
+//		try (final ModProfiler ignored = NoCubes.getProfiler().start("getActualState")) {
+//			try {
+//				state = state.getActualState(blockAccess, pos);
+//			} catch (Exception ignored1) {
+//			}
+//		}
 
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
@@ -126,7 +127,7 @@ public class ModelHelper {
 			state = state.getBlock().getExtendedState(state, blockAccess, pos);
 		}
 
-		final long posRand = getPositionRandom(pos);
+		final Random posRand = new Random(getPositionRandom(pos));
 
 		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand);
@@ -162,11 +163,11 @@ public class ModelHelper {
 			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
 				return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
 			}
-			if (unextendedState == Blocks.GRASS.getDefaultState().withProperty(BlockGrass.SNOWY, true)) {
-				return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
+			if (unextendedState == GRASS_BLOCK.getDefaultState().with(SNOWY, true)) {
+				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
 			}
-			if (unextendedState == Blocks.DIRT.getDefaultState().withProperty(BlockDirt.VARIANT, BlockDirt.DirtType.PODZOL).withProperty(BlockDirt.SNOWY, true)) {
-				return blockRendererDispatcher.getModelForState(Blocks.SNOW_LAYER.getDefaultState());
+			if (unextendedState == PODZOL.getDefaultState().with(SNOWY, true)) {
+				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
 			}
 			return blockRendererDispatcher.getModelForState(state);
 		}

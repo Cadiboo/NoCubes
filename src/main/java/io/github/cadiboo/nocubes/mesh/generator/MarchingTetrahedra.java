@@ -8,7 +8,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -385,9 +385,8 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+		try (final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			final FaceList faces = FaceList.retain();
 
 			final int posX = pos.getX();
@@ -567,8 +566,6 @@ public class MarchingTetrahedra implements IMeshGenerator {
 			}
 
 			return faces;
-		} finally {
-			pooledMutableBlockPos.release();
 		}
 	}
 

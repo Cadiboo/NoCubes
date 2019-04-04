@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util.pooled.cache;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.fluid.IFluidState;
 
 import javax.annotation.Nonnull;
 
@@ -9,22 +10,21 @@ import javax.annotation.Nonnull;
  */
 public class StateCache extends XYZCache implements AutoCloseable {
 
+	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
+
 	private static int instances = 0;
 
 	@Nonnull
-	private IBlockState[] cache;
+	private IBlockState[] blockCache;
 
-	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
+	@Nonnull
+	private IFluidState[] fluidCache;
 
 	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		cache = new IBlockState[sizeX * sizeY * sizeZ];
+		blockCache = new IBlockState[sizeX * sizeY * sizeZ];
+		fluidCache = new IFluidState[sizeX * sizeY * sizeZ];
 		++instances;
-	}
-
-	@Nonnull
-	public IBlockState[] getStateCache() {
-		return cache;
 	}
 
 	@Nonnull
@@ -42,19 +42,34 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 		final int size = sizeX * sizeY * sizeZ;
 
-		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-			pooled.cache = new IBlockState[size];
+		final int blockCacheLength = pooled.blockCache.length;
+		if (blockCacheLength < size || blockCacheLength > size * 1.25F) {
+			pooled.blockCache = new IBlockState[size];
+		}
+		final int fluidCacheLength = pooled.fluidCache.length;
+		if (fluidCacheLength < size || fluidCacheLength > size * 1.25F) {
+			pooled.fluidCache = new IFluidState[size];
 		}
 
 		return pooled;
 	}
 
-	@Override
-	public void close() {
-	}
-
 	public static int getInstances() {
 		return instances;
+	}
+
+	@Nonnull
+	public IBlockState[] getBlockStateCache() {
+		return blockCache;
+	}
+
+	@Nonnull
+	public IFluidState[] getFluidStateCache() {
+		return fluidCache;
+	}
+
+	@Override
+	public void close() {
 	}
 
 	@Override

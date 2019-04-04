@@ -1,7 +1,8 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.launchwrapper.Launch;
-import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -20,13 +21,13 @@ import java.nio.file.Path;
 public final class BadAutoUpdater {
 
 	public static boolean update(final ModContainer modContainer, final String updateVersion, final String githubUsername) throws IOException, URISyntaxException {
-		final boolean developerEnvironment = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
-		if (developerEnvironment) {
+		if (ModUtil.isDeveloperWorkspace()) {
 			return false;
 		}
 
-		final String modName = modContainer.getName();
-		final File currentJar = modContainer.getSource();
+		final IModInfo modInfo = modContainer.getModInfo();
+		final String modName = modInfo.getDisplayName();
+		final File currentJar = ((ModFileInfo) modInfo.getOwningFile()).getFile().getFilePath().toFile();
 
 		final String updateJarName = modName + "-" + updateVersion + ".jar";
 

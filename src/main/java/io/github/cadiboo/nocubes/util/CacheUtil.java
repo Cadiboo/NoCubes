@@ -5,8 +5,9 @@ import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 
@@ -19,18 +20,21 @@ public final class CacheUtil {
 	public static StateCache generateStateCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final IBlockReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		try (ModProfiler ignored = NoCubes.getProfiler().start("generate stateCache")) {
 			final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
-			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+			final IBlockState[] blockCacheArray = stateCache.getBlockStateCache();
+			final IFluidState[] fluidCacheArray = stateCache.getFluidStateCache();
 
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x,++index) {
-						stateCacheArray[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
+					for (int x = 0; x < cacheSizeX; ++x, ++index) {
+						pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z);
+						blockCacheArray[index] = cache.getBlockState(pooledMutableBlockPos);
+						fluidCacheArray[index] = cache.getFluidState(pooledMutableBlockPos);
 					}
 				}
 			}
@@ -51,7 +55,7 @@ public final class CacheUtil {
 			final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
-			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+			final IBlockState[] stateCacheArray = stateCache.getBlockStateCache();
 
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
@@ -70,7 +74,7 @@ public final class CacheUtil {
 			final int startPosX, final int startPosY, final int startPosZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		try (ModProfiler ignored = NoCubes.getProfiler().start("generate densityCache")) {
@@ -84,7 +88,7 @@ public final class CacheUtil {
 			int index = 0;
 			for (int z = 0; z < densityCacheSizeZ; ++z) {
 				for (int y = 0; y < densityCacheSizeY; ++y) {
-					for (int x = 0; x < densityCacheSizeX; ++x,++index) {
+					for (int x = 0; x < densityCacheSizeX; ++x, ++index) {
 						densityCacheArray[index] = getBlockDensity(
 								startPosX, startPosY, startPosZ,
 								x, y, z,
@@ -103,13 +107,13 @@ public final class CacheUtil {
 			final int posX, final int posY, final int posZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final IBlockReader cache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		final int cacheSizeX = smoothableCache.sizeX;
 		final int cacheSizeY = smoothableCache.sizeY;
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
-		final IBlockState[] stateCacheArray = stateCache.getStateCache();
+		final IBlockState[] stateCacheArray = stateCache.getBlockStateCache();
 
 		float density = 0;
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {

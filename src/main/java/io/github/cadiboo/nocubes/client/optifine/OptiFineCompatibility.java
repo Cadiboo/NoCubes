@@ -4,15 +4,18 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper.UnableToFindMethodException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
 import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
@@ -21,6 +24,7 @@ import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
+import java.util.Random;
 
 import static io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy.findMethod;
 
@@ -43,9 +47,24 @@ public final class OptiFineCompatibility {
 		OPTIFINE_INSTALLED = optiFineInstalled;
 	}
 
+	public static void pushShaderThing(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockReader blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+		if (!OPTIFINE_INSTALLED) {
+			return;
+		}
+		SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+	}
+
+	public static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
+		if (!OPTIFINE_INSTALLED) {
+			return;
+		}
+		SVertexBuilderOF.popEntity(worldRendererIn);
+	}
+
 	public static final class Config {
 
 		private static final Class<?> clazz;
+		private static final MethodHandle CONFIG_IS_SHADERS;
 		static {
 			if (!OPTIFINE_INSTALLED) {
 				clazz = null;
@@ -60,8 +79,6 @@ public final class OptiFineCompatibility {
 				}
 			}
 		}
-
-		private static final MethodHandle CONFIG_IS_SHADERS;
 		static {
 			if (!OPTIFINE_INSTALLED) {
 				CONFIG_IS_SHADERS = null;
@@ -95,7 +112,7 @@ public final class OptiFineCompatibility {
 
 	public static final class SVertexBuilderOF {
 
-		public static void pushEntity(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+		public static void pushEntity(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockReader blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
 			if (!OPTIFINE_INSTALLED) {
 				return;
 			}
@@ -114,7 +131,7 @@ public final class OptiFineCompatibility {
 	public static final class BufferBuilderOF {
 
 		@Nullable
-		public static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+		public static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockReader blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			if (!OPTIFINE_INSTALLED) {
 				return null;
 			}
@@ -136,7 +153,7 @@ public final class OptiFineCompatibility {
 		}
 
 		@Nullable
-		public static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final EnumFacing facing, @Nonnull final BlockRenderLayer blockRenderLayer, @Nonnull final long rand, @Nonnull final Object renderEnv) {
+		public static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IBlockReader blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final EnumFacing facing, @Nonnull final BlockRenderLayer blockRenderLayer, @Nonnull final Random rand, @Nonnull final Object renderEnv) {
 			if (!OPTIFINE_INSTALLED) {
 				return null;
 			}
@@ -144,20 +161,6 @@ public final class OptiFineCompatibility {
 			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, renderEnv);
 		}
 
-	}
-
-	public static void pushShaderThing(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
-		if (!OPTIFINE_INSTALLED) {
-			return;
-		}
-		SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
-	}
-
-	public static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
-		if (!OPTIFINE_INSTALLED) {
-			return;
-		}
-		SVertexBuilderOF.popEntity(worldRendererIn);
 	}
 
 }

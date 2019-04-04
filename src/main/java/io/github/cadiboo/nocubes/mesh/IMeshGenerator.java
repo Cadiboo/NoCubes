@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -48,47 +48,47 @@ public interface IMeshGenerator {
 	}
 
 	@Nonnull
-	FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable);
+	FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable);
 
-@Nonnull
-default float[] generateScalarFieldData(
-		final int startX, final int startY, final int startZ,
-		final int endX, final int endY, final int endZ,
-		@Nonnull final IBlockAccess blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos
-) {
+	@Nonnull
+	default float[] generateScalarFieldData(
+			final int startX, final int startY, final int startZ,
+			final int endX, final int endY, final int endZ,
+			@Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
 
-	final int maxX = endX - startX;
-	final int maxY = endY - startY;
-	final int maxZ = endZ - startZ;
+		final int maxX = endX - startX;
+		final int maxY = endY - startY;
+		final int maxZ = endZ - startZ;
 
-	final float[] scalarFieldData = new float[maxX * maxY * maxZ];
+		final float[] scalarFieldData = new float[maxX * maxY * maxZ];
 
-	int index = 0;
-	float density;
-	for (int z = 0; z < maxZ; ++z) {
-		for (int y = 0; y < maxY; ++y) {
-			for (int x = 0; x < maxX; ++x, ++index) {
-				density = 0;
-				for (int zOffset = 0; zOffset < 2; ++zOffset) {
-					for (int yOffset = 0; yOffset < 2; ++yOffset) {
-						for (int xOffset = 0; xOffset < 2; ++xOffset) {
+		int index = 0;
+		float density;
+		for (int z = 0; z < maxZ; ++z) {
+			for (int y = 0; y < maxY; ++y) {
+				for (int x = 0; x < maxX; ++x, ++index) {
+					density = 0;
+					for (int zOffset = 0; zOffset < 2; ++zOffset) {
+						for (int yOffset = 0; yOffset < 2; ++yOffset) {
+							for (int xOffset = 0; xOffset < 2; ++xOffset) {
 
-							pooledMutableBlockPos.setPos(
-									startX + x - xOffset,
-									startY + y - yOffset,
-									startZ + z - zOffset
-							);
+								pooledMutableBlockPos.setPos(
+										startX + x - xOffset,
+										startY + y - yOffset,
+										startZ + z - zOffset
+								);
 
-							final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
-							density += ModUtil.getIndividualBlockDensity(isSmoothable.isSmoothable(state), state, blockAccess, pooledMutableBlockPos);
+								final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+								density += ModUtil.getIndividualBlockDensity(isSmoothable.isSmoothable(state), state, blockAccess, pooledMutableBlockPos);
+							}
 						}
 					}
+					scalarFieldData[index] = density;
 				}
-				scalarFieldData[index] = density;
 			}
 		}
+		return scalarFieldData;
 	}
-	return scalarFieldData;
-}
 
 }
