@@ -27,7 +27,7 @@ public final class ClientCacheUtil {
 		try (ModProfiler ignored = NoCubes.getProfiler().start("generate packedLightCache")) {
 			final PackedLightCache packedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final int[] packedLightCacheArray = packedLightCache.getPackedLightCache();
-			final IBlockState[] stateCacheArray = stateCache.getStateCache();
+			final IBlockState[] stateCacheArray = stateCache.getBlockStateCache();
 
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {

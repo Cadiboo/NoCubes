@@ -141,6 +141,7 @@ public final class ModUtil {
 
 	}
 
+	//TODO optimise
 	public static int max(int... ints) {
 		int max = 0;
 		for (final int anInt : ints) {

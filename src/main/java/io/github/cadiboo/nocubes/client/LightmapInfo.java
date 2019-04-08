@@ -16,8 +16,8 @@ import static net.minecraft.util.math.MathHelper.floor;
  */
 public class LightmapInfo implements AutoCloseable {
 
-	private static int instances = 0;
-
+	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
+//	private static int instances = 0;
 	public int skylight0;
 	public int skylight1;
 	public int skylight2;
@@ -26,8 +26,6 @@ public class LightmapInfo implements AutoCloseable {
 	public int blocklight1;
 	public int blocklight2;
 	public int blocklight3;
-
-	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
 
 	private LightmapInfo(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
 		this.skylight0 = skylight0;
@@ -38,7 +36,7 @@ public class LightmapInfo implements AutoCloseable {
 		this.blocklight1 = blocklight1;
 		this.blocklight2 = blocklight2;
 		this.blocklight3 = blocklight3;
-		++instances;
+//		++instances;
 	}
 
 	public static LightmapInfo generateLightmapInfo(
@@ -52,7 +50,7 @@ public class LightmapInfo implements AutoCloseable {
 			final int renderChunkPositionZ
 	) {
 		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateLightmapInfo")) {
-			switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
+			switch (Minecraft.getInstance().gameSettings.ambientOcclusion) {
 				case 0:
 					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
 				default:
@@ -268,18 +266,18 @@ public class LightmapInfo implements AutoCloseable {
 		return pooled;
 	}
 
+//	public static int getInstances() {
+//		return instances;
+//	}
+
 	@Override
 	public void close() {
 	}
 
-	public static int getInstances() {
-		return instances;
-	}
-
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		--instances;
-	}
+//	@Override
+//	protected void finalize() throws Throwable {
+//		super.finalize();
+//		--instances;
+//	}
 
 }

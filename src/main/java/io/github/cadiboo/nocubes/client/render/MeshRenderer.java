@@ -316,7 +316,7 @@ public class MeshRenderer {
 			GRASS:
 			if (ModConfig.shortGrassEnabled) {
 
-				if (textureState != Blocks.GRASS.getDefaultState()) {
+				if (textureState != Blocks.GRASS_BLOCK.getDefaultState()) {
 					break GRASS;
 				}
 
