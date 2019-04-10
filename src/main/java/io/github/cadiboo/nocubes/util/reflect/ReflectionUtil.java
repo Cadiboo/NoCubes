@@ -2,8 +2,7 @@ package io.github.cadiboo.nocubes.util.reflect;
 
 import com.google.common.base.Preconditions;
 import net.minecraft.crash.CrashReport;
-import net.minecraft.util.ReportedException;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraft.crash.ReportedException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -11,7 +10,7 @@ import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
 /**
- * Similar to the old {@link ReflectionHelper}
+ * Similar to the old ReflectionHelper from < 1.12.2
  *
  * @author Cadiboo
  */

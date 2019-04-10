@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import cpw.mods.modlauncher.Launcher;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.model.BakedQuad;
@@ -10,14 +10,9 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper.UnableToFindMethodException;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindMethodException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,9 +32,9 @@ public final class OptiFineCompatibility {
 	static {
 		boolean optiFineInstalled;
 		try {
-			ObfuscationReflectionHelperCopy.getClass(Loader.instance().getModClassLoader(), "Config");
+			Class.forName("Config", false, OptiFineCompatibility.class.getClassLoader());
 			optiFineInstalled = true;
-		} catch (UnableToFindClassException e) {
+		} catch (ClassNotFoundException e) {
 			// Its ok, This just means that OptiFine isn't installed
 			optiFineInstalled = false;
 			NoCubes.NO_CUBES_LOG.info("OptiFineCompatibility: OptiFine not detected.");
@@ -71,14 +66,15 @@ public final class OptiFineCompatibility {
 			} else {
 				final String className = "Config";
 				try {
-					clazz = ObfuscationReflectionHelperCopy.getClass(Loader.instance().getModClassLoader(), className);
-				} catch (UnableToFindClassException e) {
+					clazz = Class.forName(className, false, OptiFineCompatibility.class.getClassLoader());
+				} catch (ClassNotFoundException e) {
 					final CrashReport crashReport = new CrashReport("Unable to find class \"" + className + "\". Class does not exist!", e);
 					crashReport.makeCategory("Finding Class");
 					throw new ReportedException(crashReport);
 				}
 			}
 		}
+
 		static {
 			if (!OPTIFINE_INSTALLED) {
 				CONFIG_IS_SHADERS = null;
