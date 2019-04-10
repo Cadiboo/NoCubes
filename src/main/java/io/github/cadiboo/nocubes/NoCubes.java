@@ -11,31 +11,23 @@ import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.ReportedException;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.File;
 import java.util.ArrayList;
 
-import static io.github.cadiboo.nocubes.util.ModReference.ACCEPTED_MINECRAFT_VERSIONS;
-import static io.github.cadiboo.nocubes.util.ModReference.CERTIFICATE_FINGERPRINT;
-import static io.github.cadiboo.nocubes.util.ModReference.CLIENT_PROXY_CLASS;
-import static io.github.cadiboo.nocubes.util.ModReference.DEPENDENCIES;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
-import static io.github.cadiboo.nocubes.util.ModReference.SERVER_PROXY_CLASS;
-import static io.github.cadiboo.nocubes.util.ModReference.UPDATE_JSON;
-import static io.github.cadiboo.nocubes.util.ModReference.VERSION;
 
 /**
  * @author Cadiboo
@@ -45,18 +37,30 @@ public final class NoCubes {
 
 	public static final Logger NO_CUBES_LOG = LogManager.getLogger(MOD_ID);
 
-	private static final Logger LOGGER = LogManager.getLogger();
-
 	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
 
+	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
+
+	public static final IProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
+
+	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
+		final ModProfiler profiler = new ModProfiler();
+		PROFILERS.add(profiler);
+		return profiler;
+	});
+
 	public static boolean profilingEnabled = false;
-	private static boolean pastPreInit = false;
+
+	private static boolean pastSetup = false;
+
+	public NoCubes() {
+	}
 
 	public static void enableProfiling() {
 		profilingEnabled = true;
 		for (final ModProfiler profiler : PROFILERS) {
 			if (profiler == null) { //hmmm....
-				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to enable null profiler!");
+				LogManager.getLogger("NoCubes Profiling").warn("Tried to enable null profiler!");
 				continue;
 			}
 			profiler.startProfiling(0);
@@ -67,29 +71,16 @@ public final class NoCubes {
 		profilingEnabled = false;
 		for (final ModProfiler profiler : PROFILERS) {
 			if (profiler == null) { //hmmm....
-				LogManager.getLogger(MOD_NAME + " Profiling").warn("Tried to disable null profiler!");
+				LogManager.getLogger("NoCubes Profiling").warn("Tried to disable null profiler!");
 				continue;
 			}
 			profiler.stopProfiling();
 		}
 	}
 
-	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
-		final ModProfiler profiler = new ModProfiler();
-		PROFILERS.add(profiler);
-		return profiler;
-	});
-
-	public static final MeshDispatcher MESH_DISPATCHER = new MeshDispatcher();
-
-	public static final IProxy PROXY = DistExecutor.runForDist(()->()->new ClientProxy(), ()->()->new ServerProxy());
-
-	public NoCubes() {
-	}
-
 	@SuppressWarnings("unused")
 	public static boolean areHooksEnabled() {
-		if (!pastPreInit) {
+		if (!pastSetup) {
 			return false;
 		}
 		return isEnabled();
@@ -103,15 +94,17 @@ public final class NoCubes {
 		return PROFILER.get();
 	}
 
-	public void onPreInit(final FMLPreInitializationEvent event) {
-		pastPreInit = true;
+	@SubscribeEvent
+	public void setup(final FMLCommonSetupEvent event) {
+		pastSetup = true;
 
 		testHooks();
 
 		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
 	}
 
-	public void onPostInit(final FMLPostInitializationEvent event) {
+	@SubscribeEvent
+	public void onLoadComplete(final FMLLoadCompleteEvent event) {
 		PROXY.replaceFluidRendererCauseImBored();
 	}
 
@@ -140,6 +133,7 @@ public final class NoCubes {
 			} catch (NullPointerException e) {
 			}
 			try {
+				VoxelShapes.col
 				Blocks.DIRT.getDefaultState().getCollisionBoundingBox(null, null);
 			} catch (NullPointerException e) {
 			}

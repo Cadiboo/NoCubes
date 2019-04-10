@@ -31,12 +31,8 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
@@ -47,13 +43,10 @@ import java.util.List;
 import static io.github.cadiboo.nocubes.collision.CollisionHandler.CACHE;
 import static io.github.cadiboo.nocubes.collision.CollisionHandler.CollisionsCache;
 import static io.github.cadiboo.nocubes.util.ModReference.MOD_ID;
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.api.distmarker.Dist.CLIENT;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
-import static net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent;
-import static net.minecraftforge.fml.relauncher.Side.CLIENT;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -62,6 +55,11 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
  */
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
+
+	static {
+		HooksConfig.enable();
+		HooksConfig.enable();
+	}
 
 	@SubscribeEvent
 	public static void onRebuildChunkPreEvent(final RebuildChunkPreEvent event) {
