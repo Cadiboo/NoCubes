@@ -1,24 +1,17 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.UVHelper;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
-import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
-import net.minecraft.init.Blocks;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.biome.BiomeColors;
@@ -30,41 +23,12 @@ import javax.annotation.Nonnull;
  */
 public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
-	protected final TextureAtlasSprite[] atlasSpritesLava = new TextureAtlasSprite[2];
-	protected final TextureAtlasSprite[] atlasSpritesWater = new TextureAtlasSprite[2];
 	@Nonnull
 	private final BlockFluidRenderer fluidRenderer;
-	protected TextureAtlasSprite atlasSpriteWaterOverlay;
 
 	public SmoothLightingBlockFluidRenderer(@Nonnull final BlockFluidRenderer fluidRenderer) {
 		super();
 		this.fluidRenderer = fluidRenderer;
-		final Minecraft minecraft = Minecraft.getInstance();
-		final TextureMap texturemap = minecraft.getTextureMap();
-		final BlockModelShapes blockModelShapes = minecraft.getModelManager().getBlockModelShapes();
-		this.atlasSpritesLava[0] = blockModelShapes.getModel(Blocks.LAVA.getDefaultState()).getParticleTexture();
-		this.atlasSpritesLava[1] = texturemap.getSprite(ModelBakery.LOCATION_LAVA_FLOW);
-		this.atlasSpritesWater[0] = blockModelShapes.getModel(Blocks.WATER.getDefaultState()).getParticleTexture();
-		this.atlasSpritesWater[1] = texturemap.getSprite(ModelBakery.LOCATION_WATER_FLOW);
-		this.atlasSpriteWaterOverlay = texturemap.getSprite(ModelBakery.LOCATION_WATER_OVERLAY);
-	}
-
-	private static boolean isAdjacentFluidSameAs(IBlockReader worldIn, BlockPos pos, EnumFacing side, IFluidState state) {
-		BlockPos blockpos = pos.offset(side);
-		IFluidState ifluidstate = worldIn.getFluidState(blockpos);
-		return ifluidstate.getFluid().isEquivalentTo(state.getFluid());
-	}
-
-	private static boolean func_209556_a(IBlockReader reader, BlockPos pos, EnumFacing face, float heightIn) {
-		BlockPos blockpos = pos.offset(face);
-		IBlockState iblockstate = reader.getBlockState(blockpos);
-		if (iblockstate.isSolid()) {
-			VoxelShape voxelshape = VoxelShapes.create(0.0D, 0.0D, 0.0D, 1.0D, (double) heightIn, 1.0D);
-			VoxelShape voxelshape1 = iblockstate.getRenderShape(reader, blockpos);
-			return VoxelShapes.isCubeSideCovered(voxelshape, voxelshape1, face);
-		} else {
-			return false;
-		}
 	}
 
 	@Override
@@ -184,7 +148,46 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderSide(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
+	@Override
+	public int getCombinedLightUpMax(IWorldReader reader, BlockPos pos) {
+		int i = reader.getCombinedLight(pos, 0);
+		int j = reader.getCombinedLight(pos.up(), 0);
+		int k = i & 255;
+		int l = j & 255;
+		int i1 = i >> 16 & 255;
+		int j1 = j >> 16 & 255;
+		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
+	}
+
+	@Override
+	public float getFluidHeight(IWorldReaderBase reader, BlockPos pos, Fluid fluidIn) {
+		int i = 0;
+		float f = 0.0F;
+
+		for (int j = 0; j < 4; ++j) {
+			BlockPos blockpos = pos.add(-(j & 1), 0, -(j >> 1 & 1));
+			if (reader.getFluidState(blockpos.up()).getFluid().isEquivalentTo(fluidIn)) {
+				return 1.0F;
+			}
+
+			IFluidState ifluidstate = reader.getFluidState(blockpos);
+			if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
+				if (ifluidstate.getHeight() >= 0.8F) {
+					f += ifluidstate.getHeight() * 10.0F;
+					i += 10;
+				} else {
+					f += ifluidstate.getHeight();
+					++i;
+				}
+			} else if (!reader.getBlockState(blockpos).getMaterial().isSolid()) {
+				++i;
+			}
+		}
+
+		return f / (float) i;
+	}
+
+	public void renderSide(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
 		if (smoothLighting()) {
 			renderSideSmooth(worldIn, buffer, red, green, blue, y, facingIndex, yAdd_0, yadd_1, d3, z0, d5, z1, blockpos, textureatlassprite2, pos, isLava);
 		} else {
@@ -192,7 +195,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderDown(final BufferBuilder buffer, final TextureAtlasSprite textureatlassprite0, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
+	public void renderDown(final BufferBuilder buffer, final TextureAtlasSprite textureatlassprite0, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
 		if (smoothLighting()) {
 			renderDownSmooth(buffer, textureatlassprite0, red, green, blue, x, y, z, worldIn, pos, isLava);
 		} else {
@@ -200,7 +203,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderUp(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
+	public void renderUp(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
 		if (smoothLighting()) {
 			renderUpSmooth(worldIn, pos, buffer, state, atextureatlassprite, red, green, blue, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, x, y, z, flow, isLava);
 		} else {
@@ -208,7 +211,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderSideFlat(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
+	public void renderSideFlat(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
 		float minU = textureatlassprite2.getInterpolatedU(0.0D);
 		float halfU = textureatlassprite2.getInterpolatedU(8.0D);
 		float v0 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yAdd_0) * 16.0F * 0.5F));
@@ -262,7 +265,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderSideSmooth(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
+	public void renderSideSmooth(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
 		float minU = textureatlassprite2.getInterpolatedU(0.0D);
 		float halfU = textureatlassprite2.getInterpolatedU(8.0D);
 		float v0 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yAdd_0) * 16.0F * 0.5F));
@@ -328,7 +331,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderUpFlat(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
+	public void renderUpFlat(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
 		float u0;
 		float u1;
 		float u2;
@@ -451,7 +454,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderUpSmooth(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
+	public void renderUpSmooth(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
 		float u0;
 		float u1;
 		float u2;
@@ -592,7 +595,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderDownFlat(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
+	public void renderDownFlat(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
 		float minU = UVHelper.getMinU(sprite);
 		float maxU = UVHelper.getMaxU(sprite);
 		float minV = UVHelper.getMinV(sprite);
@@ -671,7 +674,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private void renderDownSmooth(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
+	public void renderDownSmooth(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
 		float minU = UVHelper.getMinU(sprite);
 		float maxU = UVHelper.getMaxU(sprite);
 		float minV = UVHelper.getMinV(sprite);
@@ -762,17 +765,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		}
 	}
 
-	private int getCombinedLightUpMax(IWorldReader reader, BlockPos pos) {
-		int i = reader.getCombinedLight(pos, 0);
-		int j = reader.getCombinedLight(pos.up(), 0);
-		int k = i & 255;
-		int l = j & 255;
-		int i1 = i >> 16 & 255;
-		int j1 = j >> 16 & 255;
-		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
-	}
-
-	private int getCombinedLightDownMax(IWorldReader reader, BlockPos pos) {
+	public int getCombinedLightDownMax(IWorldReader reader, BlockPos pos) {
 		int i = reader.getCombinedLight(pos, 0);
 		int j = reader.getCombinedLight(pos.down(), 0);
 		int k = i & 255;
@@ -782,47 +775,20 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
 	}
 
-	private float getFluidHeight(IWorldReaderBase reader, BlockPos pos, Fluid fluidIn) {
-		int i = 0;
-		float f = 0.0F;
-
-		for (int j = 0; j < 4; ++j) {
-			BlockPos blockpos = pos.add(-(j & 1), 0, -(j >> 1 & 1));
-			if (reader.getFluidState(blockpos.up()).getFluid().isEquivalentTo(fluidIn)) {
-				return 1.0F;
-			}
-
-			IFluidState ifluidstate = reader.getFluidState(blockpos);
-			if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
-				if (ifluidstate.getHeight() >= 0.8F) {
-					f += ifluidstate.getHeight() * 10.0F;
-					i += 10;
-				} else {
-					f += ifluidstate.getHeight();
-					++i;
-				}
-			} else if (!reader.getBlockState(blockpos).getMaterial().isSolid()) {
-				++i;
-			}
-		}
-
-		return f / (float) i;
-	}
-
 	@Nonnull
 	public BlockFluidRenderer getOldFluidRenderer() {
 		return fluidRenderer;
 	}
 
-	private boolean smoothLighting() {
+	public boolean smoothLighting() {
 		return true;
 	}
 
-	private boolean colors() {
+	public boolean colors() {
 		return true;
 	}
 
-	private boolean textures() {
+	public boolean textures() {
 		return true;
 	}
 

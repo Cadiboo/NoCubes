@@ -2,24 +2,15 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.config.ModConfig;
-import io.github.cadiboo.nocubes.hooks.AddCollisionBoxToListHook;
-import io.github.cadiboo.nocubes.hooks.GetCollisionBoundingBoxHook;
-import io.github.cadiboo.nocubes.hooks.IsEntityInsideOpaqueBlockHook;
-import io.github.cadiboo.nocubes.hooks.IsOpaqueCubeHook;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.entity.passive.EntityRabbit;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import org.apache.logging.log4j.LogManager;
@@ -100,7 +91,7 @@ public final class NoCubes {
 
 		testHooks();
 
-		ModUtil.launchUpdateDaemon(Loader.instance().activeModContainer());
+		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
 	}
 
 	@SubscribeEvent
@@ -109,43 +100,43 @@ public final class NoCubes {
 	}
 
 	public void testHooks() {
-		{
-			try {
-				IsOpaqueCubeHook.isOpaqueCube(null, null);
-			} catch (NullPointerException e) {
-			}
-			try {
-				GetCollisionBoundingBoxHook.getCollisionBoundingBox(null, null, null, null);
-			} catch (NullPointerException e) {
-			}
-			try {
-				AddCollisionBoxToListHook.addCollisionBoxToList(null, null, null, null, null, null, null, false);
-			} catch (NullPointerException e) {
-			}
-			try {
-				IsEntityInsideOpaqueBlockHook.isEntityInsideOpaqueBlock(null);
-			} catch (NullPointerException e) {
-			}
-		}
-		{
-			try {
-				Blocks.DIRT.getDefaultState().isOpaqueCube(null, null);
-			} catch (NullPointerException e) {
-			}
-			try {
-				VoxelShapes.col
-				Blocks.DIRT.getDefaultState().getCollisionBoundingBox(null, null);
-			} catch (NullPointerException e) {
-			}
-			try {
-				Blocks.DIRT.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
-			} catch (NullPointerException e) {
-			}
-			try {
-				new EntityRabbit(null).isEntityInsideOpaqueBlock();
-			} catch (NullPointerException e) {
-			}
-		}
+//		{
+//			try {
+//				IsOpaqueCubeHook.isOpaqueCube(null, null);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				GetCollisionBoundingBoxHook.getCollisionBoundingBox(null, null, null, null);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				AddCollisionBoxToListHook.addCollisionBoxToList(null, null, null, null, null, null, null, false);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				IsEntityInsideOpaqueBlockHook.isEntityInsideOpaqueBlock(null);
+//			} catch (NullPointerException e) {
+//			}
+//		}
+//		{
+//			try {
+//				Blocks.DIRT.getDefaultState().isOpaqueCube(null, null);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				VoxelShapes.col
+//				Blocks.DIRT.getDefaultState().getCollisionBoundingBox(null, null);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				Blocks.DIRT.getDefaultState().addCollisionBoxToList(null, null, null, null, null, false);
+//			} catch (NullPointerException e) {
+//			}
+//			try {
+//				new EntityRabbit(null).isEntityInsideOpaqueBlock();
+//			} catch (NullPointerException e) {
+//			}
+//		}
 	}
 
 }

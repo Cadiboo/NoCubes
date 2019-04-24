@@ -10,11 +10,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
+import net.minecraftforge.fml.VersionChecker.CheckResult;
 
-import static io.github.cadiboo.nocubes.util.ModReference.MOD_NAME;
+import javax.annotation.Nonnull;
+
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW;
-import static net.minecraftforge.fml.VersionChecker.getResult;
 
 /**
  * Util that is used on BOTH physical sides
@@ -103,41 +104,37 @@ public final class ModUtil {
 	 *
 	 * @param modContainer the {@link ModContainer} for {@link NoCubes}
 	 */
-	public static void launchUpdateDaemon(ModContainer modContainer) {
+	public static void launchUpdateDaemon(@Nonnull final ModContainer modContainer) {
 
 		new Thread(() -> {
-			WHILE:
 			while (true) {
 
-				final VersionChecker.CheckResult checkResult = getResult(modContainer.getModInfo());
-
+				final CheckResult checkResult = VersionChecker.getResult(modContainer.getModInfo());
 				switch (checkResult.status) {
 					default:
 					case PENDING:
+						try {
+							Thread.sleep(500L);
+						} catch (InterruptedException var4) {
+							Thread.currentThread().interrupt();
+						}
 						break;
 					case OUTDATED:
 						try {
 							BadAutoUpdater.update(modContainer, checkResult.target.toString(), "Cadiboo");
-						} catch (Exception e) {
-							throw new RuntimeException("Unable to update Mod", e);
+						} catch (Exception var3) {
+							throw new RuntimeException(var3);
 						}
-						break WHILE;
 					case FAILED:
 					case UP_TO_DATE:
 					case AHEAD:
 					case BETA:
 					case BETA_OUTDATED:
-						break WHILE;
-				}
-
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
+						return;
 				}
 			}
 
-		}, MOD_NAME + " Update Daemon").start();
+		}, modContainer.getModInfo().getDisplayName() + " Update Daemon").start();
 
 	}
 

@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.util.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.ExtendLiquidRange;
@@ -10,14 +9,15 @@ import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.SmoothLeavesLevel;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkBlockEvent;
-import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkCanBlockRenderTypeBeRenderedEvent;
+import io.github.cadiboo.renderchunkrebuildchunkhooks.event.RebuildChunkPreIterationEvent;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -25,7 +25,6 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
@@ -42,12 +41,12 @@ public class RenderDispatcher {
 	private static final ThreadLocal<boolean[]> USED_RENDER_LAYERS = ThreadLocal.withInitial(() -> new boolean[BlockRenderLayer.values().length]);
 	private static final ThreadLocal<Boolean> USED_RENDER_LAYERS_SET = ThreadLocal.withInitial(() -> false);
 
-	public static void renderChunk(final RebuildChunkPreEvent event) {
+	public static void renderChunk(final RebuildChunkPreIterationEvent event) {
 		final RenderChunk renderChunk = event.getRenderChunk();
 		final ChunkRenderTask generator = event.getGenerator();
 		final CompiledChunk compiledChunk = event.getCompiledChunk();
-		final BlockPos renderChunkPosition = event.getRenderChunkPosition();
-		final IWorldReader blockAccess = event.getWorldReader();
+		final BlockPos renderChunkPosition = event.getStartPosition();
+		final IWorldReader blockAccess = event.getIWorldReader();
 
 		final byte meshSizeX;
 		final byte meshSizeY;
@@ -211,7 +210,7 @@ public class RenderDispatcher {
 		);
 	}
 
-	public static void renderBlock(final RebuildChunkBlockEvent event) {
+	public static void renderBlock(final RebuildChunkCanBlockRenderTypeBeRenderedEvent event) {
 		try {
 			if (!USED_RENDER_LAYERS_SET.get()) {
 				for (int ordinal = 0; ordinal < BlockRenderLayer.values().length; ++ordinal) {

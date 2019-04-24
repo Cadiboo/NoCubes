@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -10,15 +9,13 @@ import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
 
@@ -33,7 +30,7 @@ public class ExtendedLiquidChunkRenderer {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IBlockReader blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
@@ -99,11 +96,11 @@ public class ExtendedLiquidChunkRenderer {
 									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 									final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-									OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
-											renderChunkPositionX + x,
-											renderChunkPositionY + y,
-											renderChunkPositionZ + z
-									), blockAccess, bufferBuilder);
+//									OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
+//											renderChunkPositionX + x,
+//											renderChunkPositionY + y,
+//											renderChunkPositionZ + z
+//									), blockAccess, bufferBuilder);
 
 									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
 											renderChunkPositionX + x,
@@ -115,11 +112,11 @@ public class ExtendedLiquidChunkRenderer {
 													renderChunkPositionZ + z + zOffset
 											),
 											blockAccess,
-											stateCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
+											blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
 											fluidState,
 											bufferBuilder
 									);
-									OptiFineCompatibility.popShaderThing(bufferBuilder);
+//									OptiFineCompatibility.popShaderThing(bufferBuilder);
 
 									break OFFSET;
 								}

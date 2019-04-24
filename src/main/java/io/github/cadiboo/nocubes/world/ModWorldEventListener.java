@@ -9,12 +9,13 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.particles.IParticleData;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldEventListener;
-import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,7 +31,8 @@ public class ModWorldEventListener implements IWorldEventListener {
 	private static final int BLOCK_UPDATE_EXTEND = 2;
 
 	@Override
-	public void notifyBlockUpdate(@Nonnull World worldIn, @Nonnull BlockPos pos, @Nonnull IBlockState oldState, @Nonnull IBlockState newState, int flags) {
+	public void notifyBlockUpdate(final IBlockReader iBlockReader, final BlockPos pos, final IBlockState iBlockState, final IBlockState iBlockState1, final int flags) {
+
 		if (!NoCubes.isEnabled()) {
 			return;
 		}
@@ -46,8 +48,10 @@ public class ModWorldEventListener implements IWorldEventListener {
 			return;
 		}
 
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("ServerTickEvent")) {
+		try (
+				final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+				final ModProfiler ignored = NoCubes.getProfiler().start("ServerTickEvent")
+		) {
 			synchronized (CACHE) {
 
 				for (int z = -blockUpdateExtend; z <= blockUpdateExtend; ++z) {
@@ -81,39 +85,7 @@ public class ModWorldEventListener implements IWorldEventListener {
 					}
 				}
 			}
-		} finally {
-			pooledMutableBlockPos.release();
 		}
-
-//		if (ModConfig.enableCollisions) {
-//			final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-//			try {
-//				synchronized (CACHE) {
-//					for (int z = -1; z < 2; ++z) {
-//						for (int y = -1; y < 2; ++y) {
-//							for (int x = -1; x < 2; ++x) {
-//								pooledMutableBlockPos.setPos(posX + x, posY + y, posZ + z);
-//								final CollisionsCache collisionsCache = CACHE.get(pooledMutableBlockPos);
-//								if (collisionsCache != null) {
-//									final FaceList faces = collisionsCache.faces;
-//									for (final Face face : faces) {
-//										face.getVertex0().close();
-//										face.getVertex1().close();
-//										face.getVertex2().close();
-//										face.getVertex3().close();
-//										face.close();
-//									}
-//									faces.close();
-//									CACHE.remove(pooledMutableBlockPos);
-//								}
-//							}
-//						}
-//					}
-//				}
-//			} finally {
-//				pooledMutableBlockPos.release();
-//			}
-//		}
 
 	}
 
@@ -141,16 +113,12 @@ public class ModWorldEventListener implements IWorldEventListener {
 	}
 
 	@Override
-	public void spawnParticle(final int particleID, final boolean ignoreRange, final double xCoord,
-	                          final double yCoord, final double zCoord, final double xSpeed, final double ySpeed, final double zSpeed,
-	                          @Nonnull final int... parameters) {
+	public void addParticle(final IParticleData iParticleData, final boolean b, final double v, final double v1, final double v2, final double v3, final double v4, final double v5) {
 
 	}
 
 	@Override
-	public void spawnParticle(final int id, final boolean ignoreRange, final boolean minimiseParticleLevel,
-	                          final double x, final double y, final double z, final double xSpeed, final double ySpeed,
-	                          final double zSpeed, @Nonnull final int... parameters) {
+	public void addParticle(final IParticleData iParticleData, final boolean b, final boolean b1, final double v, final double v1, final double v2, final double v3, final double v4, final double v5) {
 
 	}
 

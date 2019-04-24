@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import cpw.mods.modlauncher.Launcher;
 import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -12,6 +11,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper.UnableToFindMethodException;
 
 import javax.annotation.Nonnull;
@@ -20,8 +20,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Random;
-
-import static io.github.cadiboo.nocubes.util.reflect.ObfuscationReflectionHelperCopy.findMethod;
 
 /**
  * @author Cadiboo
@@ -81,7 +79,7 @@ public final class OptiFineCompatibility {
 			} else {
 				final String methodName = "isShaders";
 				try {
-					CONFIG_IS_SHADERS = MethodHandles.publicLookup().unreflect(findMethod(Config.clazz, methodName, boolean.class));
+					CONFIG_IS_SHADERS = MethodHandles.publicLookup().unreflect(ObfuscationReflectionHelper.findMethod(Config.clazz, methodName, boolean.class));
 				} catch (UnableToFindMethodException | IllegalAccessException e) {
 					final CrashReport crashReport = new CrashReport("Unable to find method \"" + methodName + "\" for class \"" + Config.clazz + "\".", e);
 					crashReport.makeCategory("Finding Method");
