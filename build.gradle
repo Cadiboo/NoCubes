@@ -124,6 +124,9 @@ dependencies {
 // Jar Manifest
 jar {
 
+	// Don't put the modified minecraft files in final jar (but compile them and everything)
+	exclude '**/net/minecraft/**'
+
 	manifest {
 		attributes([
 				"Specification-Title"     : modId,
@@ -196,7 +199,7 @@ processResources {
 		include 'META-INF/mods.toml'
 
 		// Replace version
-		expand 'version':project.version
+		expand 'version': project.version
 	}
 
 	// Copy everything else except the mods.toml
