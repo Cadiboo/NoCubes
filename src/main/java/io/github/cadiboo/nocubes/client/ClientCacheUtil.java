@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
@@ -24,7 +23,7 @@ public final class ClientCacheUtil {
 		final int cacheSizeY = stateCache.sizeY;
 		final int cacheSizeZ = stateCache.sizeZ;
 
-		try (ModProfiler ignored = NoCubes.getProfiler().start("generate packedLightCache")) {
+		try (ModProfiler ignored = ModProfiler.get().start("generate packedLightCache")) {
 			final PackedLightCache packedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final int[] packedLightCacheArray = packedLightCache.getPackedLightCache();
 			final IBlockState[] stateCacheArray = stateCache.getBlockStates();

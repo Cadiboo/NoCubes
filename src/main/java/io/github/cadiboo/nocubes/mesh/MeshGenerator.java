@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
 import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
@@ -34,14 +33,14 @@ public enum MeshGenerator {
 
 	@Nonnull
 	public HashMap<Vec3b, FaceList> generateChunk(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateChunkMesh" + this.name())) {
+		try (final ModProfiler ignored = ModProfiler.get().start("generateChunkMesh" + this.name())) {
 			return meshGenerator.generateChunk(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 		}
 	}
 
 	@Nonnull
 	public FaceList generateBlock(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlockMesh" + this.name())) {
+		try (final ModProfiler ignored = ModProfiler.get().start("generateBlockMesh" + this.name())) {
 			return meshGenerator.generateBlock(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 		}
 	}

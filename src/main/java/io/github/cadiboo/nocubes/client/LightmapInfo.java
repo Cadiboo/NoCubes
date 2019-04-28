@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.client.Minecraft;
@@ -52,7 +51,7 @@ public class LightmapInfo implements AutoCloseable {
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ
 	) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateLightmapInfo")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getInstance().gameSettings.ambientOcclusion) {
 				case 0:
 					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());

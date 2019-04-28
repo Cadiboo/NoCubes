@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
@@ -114,7 +113,7 @@ public final class MeshDispatcher {
 	@Nonnull
 	public static FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateBlock"))
-		final ModProfiler ignored = NoCubes.getProfiler();
+		final ModProfiler ignored = ModProfiler.get();
 		{
 
 //			if(true)
@@ -238,7 +237,7 @@ public final class MeshDispatcher {
 
 	@Nonnull
 	public static float[] generateNeighbourDensityGrid(@Nonnull final DensityCache densityCache) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateNeighbourDensityGrid")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("generateNeighbourDensityGrid")) {
 			final float[] neighbourDensityGrid = new float[8];
 
 			final float[] densityCacheArray = densityCache.getDensityCache();
@@ -308,12 +307,12 @@ public final class MeshDispatcher {
 		final int chunkPosZ = chunkPos.getZ();
 
 		try (final StateCache stateCache = generateMeshStateCache(chunkPosX, chunkPosY, chunkPosZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
-			NoCubes.getProfiler().start("generateMeshChunkSmoothableCache");
+			ModProfiler.get().start("generateMeshChunkSmoothableCache");
 			try (final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)) {
-				NoCubes.getProfiler().end();
-				NoCubes.getProfiler().start("generateMeshChunkDensityCache");
+				ModProfiler.get().end();
+				ModProfiler.get().start("generateMeshChunkDensityCache");
 				try (final DensityCache densityCache = CacheUtil.generateDensityCache(chunkPosX, chunkPosY, chunkPosZ, stateCache, smoothableCache, blockAccess, pooledMutableBlockPos)) {
-					NoCubes.getProfiler().end();
+					ModProfiler.get().end();
 					return meshGenerator.generateChunk(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
 				}
 			}
@@ -334,7 +333,7 @@ public final class MeshDispatcher {
 			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("generateMeshStateCache")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("generateMeshStateCache")) {
 			// Density takes +1 block on every negative axis into account so we need to start at -1 block
 			final int cacheStartPosX = startPosX - 1;
 			final int cacheStartPosY = startPosY - 1;

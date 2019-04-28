@@ -1,12 +1,11 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
+import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -40,13 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.util.ModUtil.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
  */
-public class MeshRenderer {
+public final class MeshRenderer {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
@@ -65,8 +63,7 @@ public class MeshRenderer {
 	) {
 //		try (ModProfiler ignored = NoCubes.getProfiler().start("renderChunkMeshes"))
 		{
-			//normal terrain
-			{
+			if (Config.renderSmoothTerrain) {
 //				try (ModProfiler ignored1 = NoCubes.getProfiler().start("renderNormalTerrain"))
 				{
 					renderMesh(
@@ -79,15 +76,14 @@ public class MeshRenderer {
 							stateCache,
 							blockRendererDispatcher,
 							pooledPackedLightCache,
-//							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator),
-							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE, MeshGenerator.SurfaceNets),
+							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
 							TERRAIN_SMOOTHABLE,
 							pooledMutableBlockPos, usedBlockRenderLayers, false
 					);
 				}
 			}
 
-//			switch (ModConfig.smoothLeavesLevel) {
+//			switch (Config.CLIENT.smoothLeavesLevel) {
 //				case SEPARATE:
 //					try {
 //						for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
@@ -117,27 +113,27 @@ public class MeshRenderer {
 //					break;
 //				case TOGETHER:
 ////					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeavesTogether"))
-			{
-				renderMesh(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						stateCache,
-						blockRendererDispatcher,
-						pooledPackedLightCache,
-//							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
-						MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, MeshGenerator.SurfaceNets),
-						LEAVES_SMOOTHABLE,
-						pooledMutableBlockPos, usedBlockRenderLayers, true
-				);
+//			{
+//				renderMesh(
+//						renderChunk,
+//						generator,
+//						compiledChunk,
+//						renderChunkPosition,
+//						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+//						blockAccess,
+//						stateCache,
+//						blockRendererDispatcher,
+//						pooledPackedLightCache,
+////							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
+//						MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, MeshGenerator.SurfaceNets),
+//						LEAVES_SMOOTHABLE,
+//						pooledMutableBlockPos, usedBlockRenderLayers, true
+//				);
 //				}
 //				break;
 //				case OFF:
 //					break;
-			}
+//			}
 		}
 
 	}
@@ -172,7 +168,7 @@ public class MeshRenderer {
 							continue;
 						}
 
-						NoCubes.getProfiler().start("prepareRenderFaces");
+						ModProfiler.get().start("prepareRenderFaces");
 
 						final int initialPosX = renderChunkPositionX + pos.x;
 						final int initialPosY = renderChunkPositionY + pos.y;
@@ -191,13 +187,16 @@ public class MeshRenderer {
 
 //					    final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
 						final IBlockState realState = stateCache.getBlockStates()[stateCache.getIndex(relativePosX + 1, relativePosY + 1, relativePosZ + 1)];
+						if (blockAccess.getBlockState(pooledMutableBlockPos) != realState) {
+							realState.getBlock();
+						}
 
 //					    final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, blockAccess, pooledMutableBlockPos, realState, isStateSmoothable, (byte) (relativePosX+ 1), (byte) (relativePosY+ 1), (byte) (relativePosZ+ 1));
 						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, pooledMutableBlockPos, realState, isStateSmoothable, relativePosX, relativePosY, relativePosZ);
 						final BlockPos texturePos = texturePosAndState.getA();
 						final IBlockState textureState = texturePosAndState.getB();
 
-						NoCubes.getProfiler().end();
+						ModProfiler.get().end();
 
 						try {
 							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, usedBlockRenderLayers, pooledPackedLightCache, renderOppositeSides, pos, faces, texturePos, textureState, new Random());
@@ -239,200 +238,202 @@ public class MeshRenderer {
 			@Nonnull final IBlockState textureState,
 			@Nonnull final Random rand
 	) {
-		try (ModProfiler ignored15 = NoCubes.getProfiler().start("renderFaces")) {
-		for (final Face face : faces) {
-			try {
-				//0 3
-				//1 2
-				try (
-						//south east when looking down onto up face
-						final Vec3 v0 = face.getVertex0();
-						//north east when looking down onto up face
-						final Vec3 v1 = face.getVertex1();
-						//north west when looking down onto up face
-						final Vec3 v2 = face.getVertex2();
-						//south west when looking down onto up face
-						final Vec3 v3 = face.getVertex3()
-				) {
+		try (ModProfiler ignored15 = ModProfiler.get().start("renderFaces")) {
+			for (final Face face : faces) {
+				try {
+					//0 3
+					//1 2
+					try (
+							//south east when looking down onto up face
+							final Vec3 v0 = face.getVertex0();
+							//north east when looking down onto up face
+							final Vec3 v1 = face.getVertex1();
+							//north west when looking down onto up face
+							final Vec3 v2 = face.getVertex2();
+							//south west when looking down onto up face
+							final Vec3 v3 = face.getVertex3()
+					) {
 
-					for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
-						blockRenderLayer = ClientUtil.getCorrectRenderLayer(blockRenderLayer);
-						if (!textureState.canRenderInLayer(blockRenderLayer)) {
-							continue;
-						}
-						ForgeHooksClient.setRenderLayer(blockRenderLayer);
-
-						final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-						final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-
-						List<BakedQuad> quads;
-						try (ModProfiler ignored = NoCubes.getProfiler().start("getQuads")) {
-							quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
-							if (quads == null) {
-								LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
-								quads = new ArrayList<>();
-								quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, rand).get(0));
+						for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
+							blockRenderLayer = ClientUtil.getCorrectRenderLayer(blockRenderLayer);
+							if (!textureState.canRenderInLayer(blockRenderLayer)) {
+								continue;
 							}
-						}
+							ForgeHooksClient.setRenderLayer(blockRenderLayer);
 
-						boolean wasAnythingRendered = false;
+							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
+							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
 
-//	                	try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces"))
-						{
-
-//		        	    OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
-
-							float diffuse0;
-							float diffuse1;
-							float diffuse2;
-							float diffuse3;
-//						    if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting()) {
-//						    	diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
-//					    	} else
-							{
-								diffuse0 = diffuseLight(toSide(
-										v0.x - renderChunkPositionX - pos.x,
-										v0.y - renderChunkPositionY - pos.y,
-										v0.z - renderChunkPositionZ - pos.z
-								));
-								diffuse1 = diffuseLight(toSide(
-										v1.x - renderChunkPositionX - pos.x,
-										v1.y - renderChunkPositionY - pos.y,
-										v1.z - renderChunkPositionZ - pos.z
-								));
-								diffuse2 = diffuseLight(toSide(
-										v2.x - renderChunkPositionX - pos.x,
-										v2.y - renderChunkPositionY - pos.y,
-										v2.z - renderChunkPositionZ - pos.z
-								));
-								diffuse3 = diffuseLight(toSide(
-										v3.x - renderChunkPositionX - pos.x,
-										v3.y - renderChunkPositionY - pos.y,
-										v3.z - renderChunkPositionZ - pos.z
-								));
-
+							List<BakedQuad> quads;
+							try (ModProfiler ignored = ModProfiler.get().start("getQuads")) {
+								quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
+								if (quads == null) {
+									LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
+									quads = new ArrayList<>();
+									quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, rand).get(0));
+								}
 							}
 
-							final int lightmapSkyLight0;
-							final int lightmapSkyLight1;
-							final int lightmapSkyLight2;
-							final int lightmapSkyLight3;
+							boolean wasAnythingRendered = false;
 
-							final int lightmapBlockLight0;
-							final int lightmapBlockLight1;
-							final int lightmapBlockLight2;
-							final int lightmapBlockLight3;
-
-//						    if (ModConfig.approximateLighting)
+//	                	    try (final ModProfiler ignored = NoCubes.getProfiler().start("renderFaces"))
 							{
-								try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
 
-									lightmapSkyLight0 = lightmapInfo.skylight0;
-									lightmapSkyLight1 = lightmapInfo.skylight1;
-									lightmapSkyLight2 = lightmapInfo.skylight2;
-									lightmapSkyLight3 = lightmapInfo.skylight3;
+//		        	            OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
 
-									lightmapBlockLight0 = lightmapInfo.blocklight0;
-									lightmapBlockLight1 = lightmapInfo.blocklight1;
-									lightmapBlockLight2 = lightmapInfo.blocklight2;
-									lightmapBlockLight3 = lightmapInfo.blocklight3;
+								float diffuse0;
+								float diffuse1;
+								float diffuse2;
+								float diffuse3;
+//							    if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting()) {
+//							        diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+//						        } else
+								{
+									diffuse0 = diffuseLight(toSide(
+											v0.x - renderChunkPositionX - pos.x,
+											v0.y - renderChunkPositionY - pos.y,
+											v0.z - renderChunkPositionZ - pos.z
+									));
+									diffuse1 = diffuseLight(toSide(
+											v1.x - renderChunkPositionX - pos.x,
+											v1.y - renderChunkPositionY - pos.y,
+											v1.z - renderChunkPositionZ - pos.z
+									));
+									diffuse2 = diffuseLight(toSide(
+											v2.x - renderChunkPositionX - pos.x,
+											v2.y - renderChunkPositionY - pos.y,
+											v2.z - renderChunkPositionZ - pos.z
+									));
+									diffuse3 = diffuseLight(toSide(
+											v3.x - renderChunkPositionX - pos.x,
+											v3.y - renderChunkPositionY - pos.y,
+											v3.z - renderChunkPositionZ - pos.z
+									));
 
 								}
+
+								final int lightmapSkyLight0;
+								final int lightmapSkyLight1;
+								final int lightmapSkyLight2;
+								final int lightmapSkyLight3;
+
+								final int lightmapBlockLight0;
+								final int lightmapBlockLight1;
+								final int lightmapBlockLight2;
+								final int lightmapBlockLight3;
+
+//						    if (ModConfig.approximateLighting)
+								{
+									try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+
+										lightmapSkyLight0 = lightmapInfo.skylight0;
+										lightmapSkyLight1 = lightmapInfo.skylight1;
+										lightmapSkyLight2 = lightmapInfo.skylight2;
+										lightmapSkyLight3 = lightmapInfo.skylight3;
+
+										lightmapBlockLight0 = lightmapInfo.blocklight0;
+										lightmapBlockLight1 = lightmapInfo.blocklight1;
+										lightmapBlockLight2 = lightmapInfo.blocklight2;
+										lightmapBlockLight3 = lightmapInfo.blocklight3;
+
+									}
 //						    } else {
 //						    	lightmapSkyLight0 = lightmapSkyLight1 = lightmapSkyLight2 = lightmapSkyLight3 = 240;
 //						    	lightmapBlockLight0 = lightmapBlockLight1 = lightmapBlockLight2 = lightmapBlockLight3 = 0;
-							}
-
-							for (final BakedQuad quad : quads) {
-
-								wasAnythingRendered = true;
-
-								// Quads are packed xyz|argb|u|v|ts
-								NoCubes.getProfiler().start("getUVs");
-
-								final int formatSize = quad.getFormat().getIntegerSize();
-
-								final int[] vertexData = quad.getVertexData();
-								final float v0u = Float.intBitsToFloat(vertexData[4]);
-								final float v0v = Float.intBitsToFloat(vertexData[5]);
-								final float v1u = Float.intBitsToFloat(vertexData[formatSize + 4]);
-								final float v1v = Float.intBitsToFloat(vertexData[formatSize + 5]);
-								final float v2u = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
-								final float v2v = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
-								final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
-								final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
-								NoCubes.getProfiler().end();
-
-								final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
-								final float alpha = 1F;
-
-								final float red0 = ((color0 >> 16) & 255) / 255F;
-								final float green0 = ((color0 >> 8) & 255) / 255F;
-								final float blue0 = ((color0) & 255) / 255F;
-								final float red1;
-								final float green1;
-								final float blue1;
-								final float red2;
-								final float green2;
-								final float blue2;
-								final float red3;
-								final float green3;
-								final float blue3;
-//								if (smoothBiomeColorTransitions) {
-//									final int color1 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.east());
-//									red1 = ((color1 >> 16) & 255) / 255F;
-//									green1 = ((color1 >> 8) & 255) / 255F;
-//									blue1 = ((color1) & 255) / 255F;
-//									final int color2 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
-//									red2 = ((color2 >> 16) & 255) / 255F;
-//									green2 = ((color2 >> 8) & 255) / 255F;
-//									blue2 = ((color2) & 255) / 255F;
-//									final int color3 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south());
-//									red3 = ((color3 >> 16) & 255) / 255F;
-//									green3 = ((color3 >> 8) & 255) / 255F;
-//									blue3 = ((color3) & 255) / 255F;
-//								} else
-								{
-									red1 = red0;
-									green1 = green0;
-									blue1 = blue0;
-									red2 = red0;
-									green2 = green0;
-									blue2 = blue0;
-									red3 = red0;
-									green3 = green0;
-									blue3 = blue0;
 								}
 
-								try (final ModProfiler ignored1 = NoCubes.getProfiler().start("renderSide")) {
-									// TODO use raw puts?
-									bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-									bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-									bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-									bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-								}
-								if (renderOppositeSides) {
-									// TODO use raw puts?
-									try (final ModProfiler ignored1 = NoCubes.getProfiler().start("renderOppositeSide")) {
-										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+								for (final BakedQuad quad : quads) {
+
+									wasAnythingRendered = true;
+
+									// Quads are packed xyz|argb|u|v|ts
+									ModProfiler.get().start("getUVs");
+
+									final int formatSize = quad.getFormat().getIntegerSize();
+
+									final int[] vertexData = quad.getVertexData();
+									final float v0u = Float.intBitsToFloat(vertexData[4]);
+									final float v0v = Float.intBitsToFloat(vertexData[5]);
+									final float v1u = Float.intBitsToFloat(vertexData[formatSize + 4]);
+									final float v1v = Float.intBitsToFloat(vertexData[formatSize + 5]);
+									final float v2u = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
+									final float v2v = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
+									final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
+									final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
+									ModProfiler.get().end();
+
+									final int color0 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south().east());
+									final float alpha = 1F;
+
+									final float red0 = ((color0 >> 16) & 255) / 255F;
+									final float green0 = ((color0 >> 8) & 255) / 255F;
+									final float blue0 = ((color0) & 255) / 255F;
+									final float red1;
+									final float green1;
+									final float blue1;
+									final float red2;
+									final float green2;
+									final float blue2;
+									final float red3;
+									final float green3;
+									final float blue3;
+									//TODO: optimise
+//									if (smoothBiomeColorTransitions)
+									{
+										final int color1 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.east());
+										red1 = ((color1 >> 16) & 255) / 255F;
+										green1 = ((color1 >> 8) & 255) / 255F;
+										blue1 = ((color1) & 255) / 255F;
+										final int color2 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos);
+										red2 = ((color2 >> 16) & 255) / 255F;
+										green2 = ((color2 >> 8) & 255) / 255F;
+										blue2 = ((color2) & 255) / 255F;
+										final int color3 = ClientUtil.getColor(quad, textureState, blockAccess, texturePos.south());
+										red3 = ((color3 >> 16) & 255) / 255F;
+										green3 = ((color3 >> 8) & 255) / 255F;
+										blue3 = ((color3) & 255) / 255F;
+//									} else {
+//										red1 = red0;
+//										green1 = green0;
+//										blue1 = blue0;
+//										red2 = red0;
+//										green2 = green0;
+//										blue2 = blue0;
+//										red3 = red0;
+//										green3 = green0;
+//										blue3 = blue0;
+									}
+
+									try (final ModProfiler ignored1 = ModProfiler.get().start("renderSide")) {
+										// TODO use raw puts?
+										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+									}
+									if (renderOppositeSides) {
+										// TODO use raw puts?
+										try (final ModProfiler ignored1 = ModProfiler.get().start("renderOppositeSide")) {
+											bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, alpha).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+											bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, alpha).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
+											bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, alpha).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
+											bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, alpha).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										}
 									}
 								}
 							}
+							usedBlockRenderLayers[blockRenderLayerOrdinal] |= wasAnythingRendered;
 						}
-						usedBlockRenderLayers[blockRenderLayerOrdinal] |= wasAnythingRendered;
 					}
+					ForgeHooksClient.setRenderLayer(null);
+				} finally {
+					face.close();
 				}
-				ForgeHooksClient.setRenderLayer(null);
-			} finally {
-				face.close();
-			}
 
 //			OptiFineCompatibility.popShaderThing(bufferBuilder);
+			}
 		}
-	}}
+	}
 
 	private static EnumFacing toSide(final double x, final double y, final double z) {
 		if (Math.abs(x) > Math.abs(y)) {

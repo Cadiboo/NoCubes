@@ -2,7 +2,13 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
+import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -14,6 +20,7 @@ import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -24,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import java.text.DecimalFormat;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.api.distmarker.Dist.CLIENT;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
@@ -92,11 +100,11 @@ public final class ClientEventSubscriber {
 //				}
 			}
 			if (toggleProfilersPressed) {
-				synchronized (NoCubes.PROFILERS) {
-					if (NoCubes.profilingEnabled) {
-						NoCubes.disableProfiling();
+				synchronized (ModProfiler.PROFILERS) {
+					if (ModProfiler.profilersEnabled) {
+						ModProfiler.disableProfiling();
 					} else {
-						NoCubes.enableProfiling();
+						ModProfiler.enableProfiling();
 					}
 				}
 			}
@@ -105,7 +113,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
-		if (!NoCubes.profilingEnabled) {
+		if (!ModProfiler.profilersEnabled) {
 			return;
 		}
 
@@ -128,8 +136,8 @@ public final class ClientEventSubscriber {
 	protected static void renderProfilers() {
 		final Minecraft mc = Minecraft.getInstance();
 
-		for (int profilerIndex = 0; profilerIndex < NoCubes.PROFILERS.size(); profilerIndex++) {
-			final ModProfiler profiler = NoCubes.PROFILERS.get(profilerIndex);
+		for (int profilerIndex = 0; profilerIndex < ModProfiler.PROFILERS.size(); profilerIndex++) {
+			final ModProfiler profiler = ModProfiler.PROFILERS.get(profilerIndex);
 			List<Profiler.Result> list = profiler.getProfilingData("");
 			Profiler.Result profiler$result = list.remove(0);
 			GlStateManager.clear(256);
@@ -330,6 +338,88 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
+
+		if (!NoCubes.isEnabled() || !Config.renderSmoothTerrain) {
+			return;
+		}
+
+		final EntityPlayer player = event.getPlayer();
+		if (player == null) {
+			return;
+		}
+
+		final RayTraceResult rayTraceResult = event.getTarget();
+		if ((rayTraceResult == null) || (rayTraceResult.type != RayTraceResult.Type.BLOCK)) {
+			return;
+		}
+
+		final World world = player.world;
+		if (world == null) {
+			return;
+		}
+
+		final float partialTicks = event.getPartialTicks();
+		final BlockPos pos = rayTraceResult.getBlockPos();
+		final IBlockState blockState = world.getBlockState(pos);
+		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
+			return;
+		}
+
+		if (blockState.nocubes_isTerrainSmoothable()) {
+			event.setCanceled(true);
+		} else {
+			return;
+		}
+
+		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator)) {
+			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+
+			final Tessellator tessellator = Tessellator.getInstance();
+			final BufferBuilder bufferbuilder = tessellator.getBuffer();
+
+			bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+			GlStateManager.enableBlend();
+			GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			GlStateManager.lineWidth(3.0F);
+			GlStateManager.disableTexture2D();
+			GlStateManager.depthMask(false);
+
+			GlStateManager.color4f(0, 0, 0, 1);
+			GlStateManager.color4f(1, 1, 1, 1);
+
+			for (final Face face : faces) {
+				try {
+					try (
+							Vec3 v0 = face.getVertex0();
+							Vec3 v1 = face.getVertex1();
+							Vec3 v2 = face.getVertex2();
+							Vec3 v3 = face.getVertex3()
+					) {
+						bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
+						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
+						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
+						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
+						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
+						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
+
+						tessellator.draw();
+					}
+				} finally {
+					face.close();
+				}
+			}
+
+			GlStateManager.depthMask(true);
+			GlStateManager.enableTexture2D();
+			GlStateManager.disableBlend();
+
+			bufferbuilder.setTranslation(0, 0, 0);
+
+		}
 
 //		if (ModConfig.smoothBlockHighlighting || ModConfig.collisionsBlockHighlighting) {
 //			final EntityPlayer player = event.getPlayer();

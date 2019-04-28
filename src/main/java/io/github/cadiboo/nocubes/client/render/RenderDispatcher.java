@@ -1,30 +1,44 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
+import io.github.cadiboo.nocubes.client.UVHelper;
+import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 
+import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
+
 /**
  * @author Cadiboo
  */
-public class RenderDispatcher {
+public final class RenderDispatcher {
 
 	public static void renderChunk(final RenderChunk renderChunk, final BlockPos renderChunkPosition, final ChunkRenderTask generator, final CompiledChunk compiledChunk, final IWorldReader blockAccess, final boolean[] usedBlockRenderLayers) {
 
@@ -77,7 +91,7 @@ public class RenderDispatcher {
 		{
 			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
 //				try (final PackedLightCache packedLightCache = ModConfig.approximateLighting ? ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos) : PackedLightCache.retain(0, 0, 0)) {
-				try (final PackedLightCache packedLightCache =  ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
+				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
 //					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
 					try {
 						MeshRenderer.renderChunkMeshes(
@@ -106,32 +120,32 @@ public class RenderDispatcher {
 		}
 
 //		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
-			try (final ModProfiler ignored = NoCubes.getProfiler().start("extendLiquids")) {
-				try (final StateCache stateCache = generateExtendedWaterStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, pooledMutableBlockPos, ClientUtil.getExtendLiquidsRange())) {
-					try (final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)) {
-						try {
-							ExtendedLiquidChunkRenderer.renderChunk(
-									renderChunk,
-									generator,
-									compiledChunk,
-									renderChunkPosition,
-									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-									blockAccess,
-									pooledMutableBlockPos,
-									usedBlockRenderLayers,
-									blockRendererDispatcher,
-									stateCache, terrainSmoothableCache
-							);
-						} catch (ReportedException e) {
-							throw e;
-						} catch (Exception e) {
-							CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-							crashReport.makeCategory("Extending liquids");
-							throw new ReportedException(crashReport);
-						}
+		try (final ModProfiler ignored = ModProfiler.get().start("extendLiquids")) {
+			try (final StateCache stateCache = generateExtendedWaterStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, pooledMutableBlockPos, ClientUtil.getExtendLiquidsRange())) {
+				try (final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)) {
+					try {
+						ExtendedLiquidChunkRenderer.renderChunk(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								pooledMutableBlockPos,
+								usedBlockRenderLayers,
+								blockRendererDispatcher,
+								stateCache, terrainSmoothableCache
+						);
+					} catch (ReportedException e) {
+						throw e;
+					} catch (Exception e) {
+						CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
+						crashReport.makeCategory("Extending liquids");
+						throw new ReportedException(crashReport);
 					}
 				}
 			}
+		}
 //		}
 	}
 
@@ -188,6 +202,50 @@ public class RenderDispatcher {
 				blockAccess,
 				pooledMutableBlockPos
 		);
+	}
+
+	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite) {
+		if (iblockstate.getRenderType() == EnumBlockRenderType.MODEL) {
+			tessellatorIn.draw();
+			bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
+			try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(blockpos, world, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator)) {
+				float minU = UVHelper.getMinU(textureatlassprite);
+				float maxU = UVHelper.getMaxU(textureatlassprite);
+				float minV = UVHelper.getMinV(textureatlassprite);
+				float maxV = UVHelper.getMaxV(textureatlassprite);
+//				int color = Minecraft.getInstance().getBlockColors().getColor(iblockstate, world, blockpos, -1);
+//				float red = (float) (color >> 16 & 255) / 255.0F;
+//				float green = (float) (color >> 8 & 255) / 255.0F;
+//				float blue = (float) (color & 255) / 255.0F;
+				float red = 1.0F;
+				float green = 1.0F;
+				float blue = 1.0F;
+				float alpha = 1.0F;
+				final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
+				int lightmapSkyLight = (packed >> 16) & 0xFFFF;
+				int lightmapBlockLight = packed & 0xFFFF;
+				for (final Face face : faces) {
+					try {
+						try (
+								Vec3 v0 = face.getVertex0();
+								Vec3 v1 = face.getVertex1();
+								Vec3 v2 = face.getVertex2();
+								Vec3 v3 = face.getVertex3()
+						) {
+							bufferBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+							bufferBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						}
+					} finally {
+						face.close();
+					}
+				}
+			}
+			tessellatorIn.draw();
+			bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
+			bufferBuilderIn.noColor();
+		}
 	}
 
 }

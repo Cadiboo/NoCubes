@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
+import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModProfiler;
@@ -13,7 +14,9 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -33,15 +36,7 @@ public final class NoCubes {
 	public static final String MOD_ID = "nocubes";
 	//TODO: Do I still need this?
 	public static final IProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
-	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
 	private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
-		final ModProfiler profiler = new ModProfiler();
-		PROFILERS.add(profiler);
-		return profiler;
-	});
-
-	public static boolean profilingEnabled = false;
 	private static boolean isEnabled = true;
 
 	public NoCubes() {
@@ -57,32 +52,11 @@ public final class NoCubes {
 		modEventBus.addListener(this::setup);
 		modEventBus.addListener(this::onLoadComplete);
 
-	}
+		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::serverConfig);
 
-	public static void enableProfiling() {
-		profilingEnabled = true;
-		for (final ModProfiler profiler : PROFILERS) {
-			if (profiler == null) { //hmmm....
-				LogManager.getLogger("NoCubes Profiling").warn("Tried to enable null profiler!");
-				continue;
-			}
-			profiler.startProfiling(0);
-		}
-	}
+		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ConfigHolder.CLIENT_SPEC);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ConfigHolder.SERVER_SPEC);
 
-	public static void disableProfiling() {
-		profilingEnabled = false;
-		for (final ModProfiler profiler : PROFILERS) {
-			if (profiler == null) { //hmmm....
-				LogManager.getLogger("NoCubes Profiling").warn("Tried to disable null profiler!");
-				continue;
-			}
-			profiler.stopProfiling();
-		}
-	}
-
-	public static ModProfiler getProfiler() {
-		return PROFILER.get();
 	}
 
 	public static boolean isEnabled() {
@@ -95,8 +69,15 @@ public final class NoCubes {
 
 	@SubscribeEvent
 	public void setup(final FMLCommonSetupEvent event) {
-
 		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
+	}
+
+	public void serverConfig(ModConfig.ModConfigEvent event) {
+		if (event.getConfig().getSpec() == Config.ConfigHolder.CLIENT_SPEC) {
+			Config.bakeClient();
+		} else if (event.getConfig().getSpec() == Config.ConfigHolder.SERVER_SPEC) {
+			Config.bakeServer();
+		}
 	}
 
 	@SubscribeEvent
@@ -109,12 +90,12 @@ public final class NoCubes {
 			final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
 			boolean needsResave = false;
 			if (gameSettings.ambientOcclusion < 1) {
-//			LOGGER.info("Smooth lighting was off. EW! Just set it to MINIMAL");
+				LOGGER.info("Smooth lighting was off. EW! Just set it to MINIMAL");
 				gameSettings.ambientOcclusion = 1;
 				needsResave = true;
 			}
 			if (!gameSettings.fancyGraphics) {
-//			LOGGER.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
+				LOGGER.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
 				gameSettings.fancyGraphics = true;
 				needsResave = true;
 			}

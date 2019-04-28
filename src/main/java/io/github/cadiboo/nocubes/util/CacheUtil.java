@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -23,7 +22,7 @@ public final class CacheUtil {
 			@Nonnull final IBlockReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		try (ModProfiler ignored = NoCubes.getProfiler().start("generate stateCache")) {
+		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
 			final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final IBlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
@@ -46,7 +45,7 @@ public final class CacheUtil {
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IIsSmoothable isStateSmoothable
 	) {
-		try (ModProfiler ignored = NoCubes.getProfiler().start("generate smoothableCache")) {
+		try (ModProfiler ignored = ModProfiler.get().start("generate smoothableCache")) {
 			final int cacheSizeX = stateCache.sizeX;
 			final int cacheSizeY = stateCache.sizeY;
 			final int cacheSizeZ = stateCache.sizeZ;
@@ -76,7 +75,7 @@ public final class CacheUtil {
 			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		try (ModProfiler ignored = NoCubes.getProfiler().start("generate densityCache")) {
+		try (ModProfiler ignored = ModProfiler.get().start("generate densityCache")) {
 			final int densityCacheSizeX = stateCache.sizeX - 1;
 			final int densityCacheSizeY = stateCache.sizeY - 1;
 			final int densityCacheSizeZ = stateCache.sizeZ - 1;

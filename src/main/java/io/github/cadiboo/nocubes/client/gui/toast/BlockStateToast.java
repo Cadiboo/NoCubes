@@ -6,9 +6,15 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.toasts.GuiToast;
 import net.minecraft.client.gui.toasts.IToast;
+import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -16,10 +22,12 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.common.model.TRSRTransformation;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
@@ -32,6 +40,7 @@ import java.util.Random;
  * @author Cadiboo
  */
 //TODO: cleanup
+//TODO: FIXME!! FIX ALL THIS SHIT GGRRRR
 public abstract class BlockStateToast implements IToast {
 
 	// These buffers are large enough for an entire chunk, consider using smaller buffers
@@ -55,35 +64,7 @@ public abstract class BlockStateToast implements IToast {
 		final BlockRendererDispatcher blockRendererDispatcher = minecraft.getBlockRendererDispatcher();
 		final Random random = new Random();
 
-		final IBlockState stateDown = blockAccess.getBlockState(pos.down());
-		final IBlockState stateUp = blockAccess.getBlockState(pos.up());
-		final IBlockState stateNorth = blockAccess.getBlockState(pos.north());
-		final IBlockState stateSouth = blockAccess.getBlockState(pos.south());
-		final IBlockState stateWest = blockAccess.getBlockState(pos.west());
-		final IBlockState stateEast = blockAccess.getBlockState(pos.east());
-
-		final boolean stateDownWasSmoothable = stateDown.nocubes_isTerrainSmoothable();
-		final boolean stateUpWasSmoothable = stateUp.nocubes_isTerrainSmoothable();
-		final boolean stateNorthWasSmoothable = stateNorth.nocubes_isTerrainSmoothable();
-		final boolean stateSouthWasSmoothable = stateSouth.nocubes_isTerrainSmoothable();
-		final boolean stateWestWasSmoothable = stateWest.nocubes_isTerrainSmoothable();
-		final boolean stateEastWasSmoothable = stateEast.nocubes_isTerrainSmoothable();
-
-		stateDown.nocubes_setTerrainSmoothable(true);
-		stateUp.nocubes_setTerrainSmoothable(true);
-		stateNorth.nocubes_setTerrainSmoothable(true);
-		stateSouth.nocubes_setTerrainSmoothable(true);
-		stateWest.nocubes_setTerrainSmoothable(true);
-		stateEast.nocubes_setTerrainSmoothable(true);
-
 		this.build(state, pos, startedBufferBuilders, blockAccess, blockRendererDispatcher, random);
-
-		stateDown.nocubes_setTerrainSmoothable(stateDownWasSmoothable);
-		stateUp.nocubes_setTerrainSmoothable(stateUpWasSmoothable);
-		stateNorth.nocubes_setTerrainSmoothable(stateNorthWasSmoothable);
-		stateSouth.nocubes_setTerrainSmoothable(stateSouthWasSmoothable);
-		stateWest.nocubes_setTerrainSmoothable(stateWestWasSmoothable);
-		stateEast.nocubes_setTerrainSmoothable(stateEastWasSmoothable);
 
 	}
 
@@ -124,6 +105,11 @@ public abstract class BlockStateToast implements IToast {
 	}
 
 	private void build(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, final boolean[] startedBufferBuilders, final IWorldReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
+
+		if(state.getRenderType()!= EnumBlockRenderType.MODEL){
+			return;
+		}
+		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
 		{
 			for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
 				if (!state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
@@ -142,7 +128,8 @@ public abstract class BlockStateToast implements IToast {
 				}
 				// OptiFine Shaders compatibility
 //				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
-				usedBlockRenderLayers[blockRenderLayerId] |= blockRendererDispatcher.renderBlock(state, pos, blockAccess, bufferBuilder, random);
+//				usedBlockRenderLayers[blockRenderLayerId] |= blockRendererDispatcher.renderBlock(state, pos, blockAccess, bufferBuilder, random);
+				usedBlockRenderLayers[blockRenderLayerId] |=  blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
 			ForgeHooksClient.setRenderLayer(null);
@@ -195,16 +182,16 @@ public abstract class BlockStateToast implements IToast {
 					GlStateManager.scalef(20, 20, 20);
 				}
 				{
-					GlStateManager.disableLighting();
-//					OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240, 240);
-					GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+					RenderHelper.enableGUIStandardItemLighting();
 				}
 				{
-//					ForgeHooksClient.multiplyCurrentGlMatrix(
-//							new TRSRTransformation(
-//									new Vector3f(-30, 225, 0), new Quat4f(), new Vector3f(0.625F, 0.625F, 0.625F), new Quat4f()
-//							).getMatrix()
-//					);
+					ForgeHooksClient.multiplyCurrentGlMatrix(
+							TRSRTransformation.from(
+									new ItemTransformVec3f(
+											new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
+									)
+							).getMatrixVec()
+					);
 				}
 			}
 			for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {
@@ -214,6 +201,7 @@ public abstract class BlockStateToast implements IToast {
 				drawBuffer(bufferCache.get(blockRenderLayerId));
 			}
 			{
+				RenderHelper.disableStandardItemLighting();
 				GlStateManager.disableAlphaTest();
 				GlStateManager.disableRescaleNormal();
 				GlStateManager.popMatrix();

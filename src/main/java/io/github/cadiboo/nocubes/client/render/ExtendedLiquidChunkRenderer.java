@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -22,7 +21,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class ExtendedLiquidChunkRenderer {
+public final class ExtendedLiquidChunkRenderer {
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
@@ -37,7 +36,7 @@ public class ExtendedLiquidChunkRenderer {
 			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache
 	) {
 
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("render extended fluid chunk")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
 			try {
 				final IBlockState[] blockCacheArray = stateCache.getBlockStates();
 				final IFluidState[] fluidCacheArray = stateCache.getFluidStates();

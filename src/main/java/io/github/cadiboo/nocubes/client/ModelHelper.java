@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -54,7 +53,7 @@ public class ModelHelper {
 	 */
 	@Nullable
 	public static BakedQuad getQuadFromFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingsOrdered")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getQuadFromFacingsOrdered")) {
 			final IBakedModel model = getModel(state, blockRendererDispatcher);
 			return getModelQuadsFromFacings(state, random, model, ENUMFACING_QUADS_ORDERED);
 		}
@@ -71,7 +70,7 @@ public class ModelHelper {
 	 */
 	@Nullable
 	public static BakedQuad getQuadFromFacingOrFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final EnumFacing facing, final Random rand) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getQuadFromFacingOrFacingsOrdered")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getQuadFromFacingOrFacingsOrdered")) {
 			final IBakedModel model = getModel(state, blockRendererDispatcher);
 			final BakedQuad quad = getModelQuadsFromFacings(state, rand, model, facing);
 			if (quad != null) {
@@ -84,7 +83,7 @@ public class ModelHelper {
 
 	@Nullable
 	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final Random posRand, final IBakedModel model, final EnumFacing... facings) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModelQuadsFromFacings")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getModelQuadsFromFacings")) {
 			for (EnumFacing facing : facings) {
 				final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
 				if (!quads.isEmpty()) {
@@ -118,7 +117,7 @@ public class ModelHelper {
 //
 //			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 //		}
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getExtendedState")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
 			state = state.getBlock().getExtendedState(state, blockAccess, pos);
 		}
 
@@ -150,7 +149,7 @@ public class ModelHelper {
 	 */
 	@Nonnull
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getModel")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
 			IBlockState unextendedState = state;
 			if (state instanceof IExtendedBlockState) {
 				unextendedState = ((IExtendedBlockState) state).getClean();

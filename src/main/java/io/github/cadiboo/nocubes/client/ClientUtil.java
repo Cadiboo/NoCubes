@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -163,7 +162,7 @@ public final class ClientUtil {
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			final byte relativePosX, final byte relativePosY, final byte relativePosZ
 	) {
-		try (final ModProfiler ignored = NoCubes.getProfiler().start("getTexturePosAndState")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState")) {
 
 			//check initial first
 			if (isStateSmoothable.isSmoothable(state)) {

@@ -16,9 +16,9 @@ function initializeCoreMod() {
 					var methodName = method.name;
 
 					var deobfNameEquals = "isSolid".equals(methodName);
-					var mcpNameEquals = "func_200132_m".equals(methodName);
+					var srgNameEquals = "func_200132_m".equals(methodName);
 
-					if (!deobfNameEquals && !mcpNameEquals) {
+					if (!deobfNameEquals && !srgNameEquals) {
 						log("Did not match method " + methodName);
 						continue;
 					}
@@ -265,6 +265,8 @@ var/*Class*/ AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNo
 var/*Class*/ JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode');
 var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
+var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
+var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
 //var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');

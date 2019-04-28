@@ -20,7 +20,7 @@ import static net.minecraft.client.renderer.BlockFluidRenderer.isAdjacentFluidSa
 /**
  * @author Cadiboo
  */
-public class ExtendedLiquidBlockRenderer {
+public final class ExtendedLiquidBlockRenderer {
 
 	public static boolean renderExtendedLiquid(
 			final double x, final double y, final double z,
