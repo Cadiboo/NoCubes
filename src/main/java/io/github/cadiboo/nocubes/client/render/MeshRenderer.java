@@ -255,10 +255,10 @@ public final class MeshRenderer {
 					) {
 
 						for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
-							blockRenderLayer = ClientUtil.getCorrectRenderLayer(blockRenderLayer);
 							if (!textureState.canRenderInLayer(blockRenderLayer)) {
 								continue;
 							}
+							blockRenderLayer = ClientUtil.getCorrectRenderLayer(blockRenderLayer);
 							ForgeHooksClient.setRenderLayer(blockRenderLayer);
 
 							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
