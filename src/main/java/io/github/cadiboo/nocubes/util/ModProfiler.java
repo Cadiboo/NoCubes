@@ -56,7 +56,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	}
 
 	public ModProfiler start(final String name) {
-		if (!this.isProfiling()) {
+		if (!profilersEnabled) {
 			return this;
 		}
 		++sections;
@@ -66,7 +66,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	}
 
 	public void end() {
-		if (!this.isProfiling()) {
+		if (!profilersEnabled) {
 			return;
 		}
 		--sections;

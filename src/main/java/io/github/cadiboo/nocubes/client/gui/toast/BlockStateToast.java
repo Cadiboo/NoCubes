@@ -10,10 +10,8 @@ import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Vector3f;
-import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -106,7 +104,7 @@ public abstract class BlockStateToast implements IToast {
 
 	private void build(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, final boolean[] startedBufferBuilders, final IWorldReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
 
-		if(state.getRenderType()!= EnumBlockRenderType.MODEL){
+		if (state.getRenderType() != EnumBlockRenderType.MODEL) {
 			return;
 		}
 		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
@@ -129,7 +127,7 @@ public abstract class BlockStateToast implements IToast {
 				// OptiFine Shaders compatibility
 //				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
 //				usedBlockRenderLayers[blockRenderLayerId] |= blockRendererDispatcher.renderBlock(state, pos, blockAccess, bufferBuilder, random);
-				usedBlockRenderLayers[blockRenderLayerId] |=  blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
+				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
 			ForgeHooksClient.setRenderLayer(null);

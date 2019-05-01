@@ -10,6 +10,7 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -26,6 +27,7 @@ import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
@@ -45,8 +47,12 @@ import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
+	private static boolean hasSetSmoothLightingAndFancyGraphics = false;
+
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
+
+		if (event.phase != TickEvent.Phase.END) return;
 
 //		if (false)
 //		ObjectPoolingProfiler.onTick();
@@ -113,6 +119,31 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
+
+		//This is here because the RenderTickEvent is pretty much the first event to fire as soon as gameSettings saving is re-enabled
+		if (!hasSetSmoothLightingAndFancyGraphics) {
+			hasSetSmoothLightingAndFancyGraphics = true;
+			try {
+				final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+				boolean needsResave = false;
+				if (gameSettings.ambientOcclusion < 1) {
+					NoCubes.LOGGER.info("Smooth lighting was off. EW! Just set it to MINIMAL");
+					gameSettings.ambientOcclusion = 1;
+					needsResave = true;
+				}
+				if (!gameSettings.fancyGraphics) {
+					NoCubes.LOGGER.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
+					gameSettings.fancyGraphics = true;
+					needsResave = true;
+				}
+				if (needsResave) {
+					gameSettings.saveOptions();
+				}
+			} catch (Exception e) {
+				//go away idc about u
+			}
+		}
+
 		if (!ModProfiler.profilersEnabled) {
 			return;
 		}

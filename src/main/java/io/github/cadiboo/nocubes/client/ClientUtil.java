@@ -203,9 +203,9 @@ public final class ClientUtil {
 
 			for (int[] offset : OFFSETS_ORDERED) {
 				final IBlockState tempState = blockCacheArray[stateCache.getIndex(
-						relativePosX + offset[0] + 1,
-						relativePosY + offset[1] + 1,
-						relativePosZ + offset[2] + 1
+						relativePosX + offset[0] + 2,
+						relativePosY + offset[1] + 2,
+						relativePosZ + offset[2] + 2
 				)];
 				if (isStateSmoothable.isSmoothable(tempState)) {
 					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
@@ -252,18 +252,6 @@ public final class ClientUtil {
 			renderChunk.preRenderBlocks(bufferBuilder, renderChunkPosition);
 		}
 		return bufferBuilder;
-	}
-
-	public static int getExtendLiquidsRange() {
-//		switch (ModConfig.extendLiquids) {
-//			default:
-//			case Off:
-//				return 0;
-//			case OneBlock:
-		return 1;
-//			case TwoBlocks:
-//				return 2;
-//		}
 	}
 
 	public static void tryReloadRenderers() {

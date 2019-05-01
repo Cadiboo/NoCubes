@@ -14,37 +14,49 @@ import javax.annotation.Nonnull;
 public final class ClientCacheUtil {
 
 	public static PackedLightCache generatePackedLightCache(
-			final int startPosX, final int startPosY, final int startPosZ,
+			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IWorldReader cache,
 			@Nonnull BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		final int cacheSizeX = stateCache.sizeX;
-		final int cacheSizeY = stateCache.sizeY;
-		final int cacheSizeZ = stateCache.sizeZ;
-
 		try (ModProfiler ignored = ModProfiler.get().start("generate packedLightCache")) {
-			final PackedLightCache packedLightCache = PackedLightCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
+			final PackedLightCache packedLightCache = PackedLightCache.retain(
+					//From -2 to +2
+					20, 20, 20
+			);
 			final int[] packedLightCacheArray = packedLightCache.getPackedLightCache();
 			final IBlockState[] stateCacheArray = stateCache.getBlockStates();
 
 			int index = 0;
-			for (int z = 0; z < cacheSizeZ; ++z) {
-				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						packedLightCacheArray[index] = stateCacheArray[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(cache, pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
-//						try {
-//							pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z);
-//							packedLightCacheArray[index] = cache.getCombinedLight(pooledMutableBlockPos, stateCacheArray[stateCache.getIndex(x, y, z)].getBlock().getLightValue(null));
-//							packedLightCacheArray[index] = DynamicLights.getCombinedLight(pooledMutableBlockPos, 0);
-//						} catch (Exception e) {
-//							e.printStackTrace();
-//						}
+			for (int z = 0; z < 20; ++z) {
+				for (int y = 0; y < 20; ++y) {
+					for (int x = 0; x < 20; ++x, ++index) {
+						packedLightCacheArray[index] = stateCacheArray[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(
+								cache,
+								pooledMutableBlockPos.setPos(
+										// -2 because offset
+										renderChunkPosX + x - 2,
+										renderChunkPosY + y - 2,
+										renderChunkPosZ + z - 2
+								)
+						);
 					}
 				}
 			}
 			return packedLightCache;
 		}
+	}
+
+	public static BiomeGrassColorCache generateBiomeGrassColorCacheCache(
+			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
+			@Nonnull final IWorldReader cache
+	) {
+		return BiomeGrassColorCache.retain(
+				//From -2 to +2
+				20, 20, 20,
+				cache,
+				renderChunkPosX, renderChunkPosY, renderChunkPosZ
+		);
 	}
 
 }

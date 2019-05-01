@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnowLayer;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.fluid.IFluidState;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
 
@@ -135,20 +134,6 @@ public final class ModUtil {
 
 		}, modContainer.getModInfo().getDisplayName() + " Update Daemon").start();
 
-	}
-
-	//TODO optimise
-	public static int max(int... ints) {
-		int max = 0;
-		for (final int anInt : ints) {
-			if (max < anInt) max = anInt;
-		}
-		return max;
-	}
-
-	//TODO: inline
-	public static boolean isLiquidSource(final IFluidState state) {
-		return state.isSource();
 	}
 
 	public static boolean isDeveloperWorkspace() {

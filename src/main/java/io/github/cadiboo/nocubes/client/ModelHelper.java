@@ -9,8 +9,6 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
@@ -34,7 +32,7 @@ import static net.minecraft.util.math.MathHelper.getPositionRandom;
 /**
  * @author Cadiboo
  */
-public class ModelHelper {
+public final class ModelHelper {
 
 	/**
 	 * The order of {@link EnumFacing} and null used in getQuads
@@ -42,60 +40,6 @@ public class ModelHelper {
 	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
-
-	/**
-	 * Gets The first quad of a model for a pos & state or null if the model has no quads
-	 *
-	 * @param state                   the state
-	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
-	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
-	 * @return The first quad or null if the model has no quads
-	 */
-	@Nullable
-	public static BakedQuad getQuadFromFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
-		try (final ModProfiler ignored = ModProfiler.get().start("getQuadFromFacingsOrdered")) {
-			final IBakedModel model = getModel(state, blockRendererDispatcher);
-			return getModelQuadsFromFacings(state, random, model, ENUMFACING_QUADS_ORDERED);
-		}
-	}
-
-	/**
-	 * Gets The first quad of a model for a pos & state or null if the model has no quads
-	 *
-	 * @param state                   the state
-	 * @param pos                     the position used in {@link MathHelper#getPositionRandom(Vec3i)}
-	 * @param blockRendererDispatcher the {@link BlockRendererDispatcher} to get the model from
-	 * @param facing                  the {@link EnumFacing to check first}
-	 * @return The first quad or null if the model has no quads
-	 */
-	@Nullable
-	public static BakedQuad getQuadFromFacingOrFacingsOrdered(final IBlockState state, final BlockPos pos, final BlockRendererDispatcher blockRendererDispatcher, final EnumFacing facing, final Random rand) {
-		try (final ModProfiler ignored = ModProfiler.get().start("getQuadFromFacingOrFacingsOrdered")) {
-			final IBakedModel model = getModel(state, blockRendererDispatcher);
-			final BakedQuad quad = getModelQuadsFromFacings(state, rand, model, facing);
-			if (quad != null) {
-				return quad;
-			} else {
-				return getModelQuadsFromFacings(state, rand, model, ENUMFACING_QUADS_ORDERED);
-			}
-		}
-	}
-
-	@Nullable
-	public static BakedQuad getModelQuadsFromFacings(final IBlockState state, final Random posRand, final IBakedModel model, final EnumFacing... facings) {
-		try (final ModProfiler ignored = ModProfiler.get().start("getModelQuadsFromFacings")) {
-			for (EnumFacing facing : facings) {
-				final List<BakedQuad> quads = model.getQuads(state, facing, posRand);
-				if (!quads.isEmpty()) {
-					return quads.get(0);
-				}
-			}
-			return null;
-		}
-	}
-
-	//get model with pos
-	//get override with pos
 
 	@Nullable
 	public static List<BakedQuad> getQuads(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final BlockRenderLayer blockRenderLayer) {
@@ -109,7 +53,7 @@ public class ModelHelper {
 
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
-		Object renderEnv = null;
+//		Object renderEnv = null;
 
 //		if (OPTIFINE_INSTALLED) {
 ////		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(blockAccess, state, pos);

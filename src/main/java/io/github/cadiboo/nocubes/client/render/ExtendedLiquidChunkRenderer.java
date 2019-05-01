@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
@@ -33,7 +33,8 @@ public final class ExtendedLiquidChunkRenderer {
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			@Nonnull final StateCache stateCache, @Nonnull final SmoothableCache smoothableCache
+			@Nonnull final StateCache stateCache,
+			@Nonnull final SmoothableCache smoothableCache
 	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
@@ -46,16 +47,16 @@ public final class ExtendedLiquidChunkRenderer {
 
 				final boolean[] isLiquid = new boolean[fluidCacheLength];
 				for (int i = 0; i < fluidCacheLength; i++) {
-					isLiquid[i] = ModUtil.isLiquidSource(fluidCacheArray[i]);
+					isLiquid[i] = fluidCacheArray[i].isSource();
 				}
 
 				final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
 
-				final int extendRange = ClientUtil.getExtendLiquidsRange();
+				final int extendRange = Config.extendFluidsRange.getRange();
 
-				final int cacheAddX = extendRange;
-				final int cacheAddY = 0;
-				final int cacheAddZ = extendRange;
+				final int cacheAddX = 2;
+				final int cacheAddY = 2;
+				final int cacheAddZ = 2;
 
 				// For offset = -1 or -2 to offset = 1 or 2;
 				final int maxXOffset = extendRange;
@@ -84,8 +85,8 @@ public final class ExtendedLiquidChunkRenderer {
 										continue;
 									}
 
-									// only render if block up is air/not a normal cube
-									if (blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isNormalCube()) {
+									// only render if block up is not solid
+									if (blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isSolid()) {
 										continue;
 									}
 

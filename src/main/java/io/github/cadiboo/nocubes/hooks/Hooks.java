@@ -27,7 +27,7 @@ public final class Hooks {
 
 	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final RenderChunkCache lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubes.isEnabled()) {
-			RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, aboolean);
+			RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, aboolean, random, blockrendererdispatcher);
 		}
 	}
 

@@ -1,12 +1,14 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.BiomeGrassColorCache;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
+import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -15,7 +17,6 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -33,6 +34,9 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 
+import javax.annotation.Nonnull;
+import java.util.Random;
+
 import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
@@ -40,28 +44,73 @@ import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
  */
 public final class RenderDispatcher {
 
-	public static void renderChunk(final RenderChunk renderChunk, final BlockPos renderChunkPosition, final ChunkRenderTask generator, final CompiledChunk compiledChunk, final IWorldReader blockAccess, final boolean[] usedBlockRenderLayers) {
+	public static void renderChunk(
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final Random random,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
+	) {
 
 		final byte meshSizeX;
 		final byte meshSizeY;
 		final byte meshSizeZ;
-//		if (ModConfig.terrainMeshGenerator == MeshGenerator.SurfaceNets)
-		{
+		if (Config.terrainMeshGenerator == MeshGenerator.SurfaceNets) {
+			//TODO I think I should be doing a max of {@link MeshGenerator#getSizeXExtension}
 			//yay, surface nets is special and needs an extra +1. why? no-one knows
 			meshSizeX = 18;
 			meshSizeY = 18;
 			meshSizeZ = 18;
-//		} else {
-//			meshSizeX = 17;
-//			meshSizeY = 17;
-//			meshSizeZ = 17;
+		} else {
+			meshSizeX = 17;
+			meshSizeY = 17;
+			meshSizeZ = 17;
 		}
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
-		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+//		* Density Cache    | -1, n + 1 | n + 2
+//		* Vertices         | -1, 16    | 18
+//		* Texture Cache    | -2, 17    | 20
+//		* Light Cache      | -2, 17    | 20
+//		* Color Cache      | -2, 17    | 20
+//		* Fluids Cache     | 0,15x0,16y| 16, 17
+
+		final int cacheSizeX = Math.max(
+				// -2 for Textures + 15 for 0-15 chunk +1 because there are 16 blocks in 0-15 + 2 for Textures
+				2 + 15 + 1 + 2,
+				// -1 for Density + meshSizeX +1 because there are n+1 blocks in 0-n + 1 for calculating density
+				1 + meshSizeX + 1 + 1
+		);
+		final int cacheSizeY = Math.max(
+				// -2 for Textures + 15 for 0-15 chunk +1 because there are 16 blocks in 0-15 + 2 for Textures
+				2 + 15 + 1 + 2,
+				// -1 for Density + meshSizeX +1 because there are n+1 blocks in 0-n + 1 for calculating density
+				1 + meshSizeY + 1 + 1
+		);
+		final int cacheSizeZ = Math.max(
+				// -2 for Textures + 15 for 0-15 chunk +1 because there are 16 blocks in 0-15 + 2 for Textures
+				2 + 15 + 1 + 2,
+				// -1 for Density + meshSizeX +1 because there are n+1 blocks in 0-n + 1 for calculating density
+				1 + meshSizeZ + 1 + 1
+		);
+
+		try (
+				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+				StateCache stateCache = CacheUtil.generateStateCache(
+						// -2 for Textures
+						renderChunkPositionX - 2,
+						renderChunkPositionY - 2,
+						renderChunkPositionZ - 2,
+						cacheSizeX, cacheSizeY, cacheSizeZ,
+						blockAccess, pooledMutableBlockPos
+				)
+		) {
 			renderChunk(
 					renderChunk,
 					generator,
@@ -70,83 +119,86 @@ public final class RenderDispatcher {
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 					blockAccess,
 					pooledMutableBlockPos,
-					meshSizeX, meshSizeY, meshSizeZ,
-					usedBlockRenderLayers);
+					usedBlockRenderLayers,
+					random,
+					blockRendererDispatcher,
+					stateCache
+			);
 		}
 	}
 
 	private static void renderChunk(
-			final RenderChunk renderChunk,
-			final ChunkRenderTask generator,
-			final CompiledChunk compiledChunk,
-			final BlockPos renderChunkPosition,
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IWorldReader blockAccess,
-			final PooledMutableBlockPos pooledMutableBlockPos,
-			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
-			final boolean[] usedBlockRenderLayers) {
-		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
+			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final Random random,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final StateCache stateCache
+	) {
+		try (
+				PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess, pooledMutableBlockPos);
+				final SmoothableCache terrainSmoothableCache =
+						Config.renderSmoothTerrain ?
+								CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)
+								: null
+		) {
+			try (final BiomeGrassColorCache blockColorsCache = ClientCacheUtil.generateBiomeGrassColorCacheCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess)) {
+				MeshRenderer.renderChunkMeshes(
+						renderChunk,
+						generator,
+						compiledChunk,
+						renderChunkPosition,
+						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+						blockAccess,
+						stateCache,
+						pooledMutableBlockPos,
+						usedBlockRenderLayers,
+						blockRendererDispatcher,
+						random,
+						packedLightCache,
+						terrainSmoothableCache,
+						blockColorsCache
+				);
+			} catch (ReportedException e) {
+				throw e;
+			} catch (Exception e) {
+				CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
+				crashReport.makeCategory("Rendering mesh");
+				throw new ReportedException(crashReport);
+			}
 
-		// Terrain & leaves rendering
-		{
-			try (final StateCache lightAndTexturesStateCache = generateLightAndTexturesStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, meshSizeX, meshSizeY, meshSizeZ, blockAccess, pooledMutableBlockPos)) {
-//				try (final PackedLightCache packedLightCache = ModConfig.approximateLighting ? ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos) : PackedLightCache.retain(0, 0, 0)) {
-				try (final PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX - 1, renderChunkPositionY - 1, renderChunkPositionZ - 1, lightAndTexturesStateCache, blockAccess, pooledMutableBlockPos)) {
-//					try (final ModProfiler ignored = NoCubes.getProfiler().start("renderMesh")) {
-					try {
-						MeshRenderer.renderChunkMeshes(
-								renderChunk,
-								generator,
-								compiledChunk,
-								renderChunkPosition,
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								blockAccess,
-								lightAndTexturesStateCache,
-								pooledMutableBlockPos,
-								usedBlockRenderLayers,
-								blockRendererDispatcher,
-								packedLightCache
-						);
-					} catch (ReportedException e) {
-						throw e;
-					} catch (Exception e) {
-						CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
-						crashReport.makeCategory("Rendering mesh");
-						throw new ReportedException(crashReport);
-					}
-//					}
+			if (Config.extendFluidsRange == ExtendFluidsRange.Off) {
+				return;
+			}
+
+			try (final ModProfiler ignored = ModProfiler.get().start("extendFluids")) {
+				try {
+					ExtendedLiquidChunkRenderer.renderChunk(
+							renderChunk,
+							generator,
+							compiledChunk,
+							renderChunkPosition,
+							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+							blockAccess,
+							pooledMutableBlockPos,
+							usedBlockRenderLayers,
+							blockRendererDispatcher,
+							stateCache, terrainSmoothableCache
+					);
+				} catch (ReportedException e) {
+					throw e;
+				} catch (Exception e) {
+					CrashReport crashReport = new CrashReport("Error rendering extended fluids!", e);
+					crashReport.makeCategory("Rendering extended fluids");
+					throw new ReportedException(crashReport);
 				}
 			}
 		}
-
-//		if (ModConfig.extendLiquids != ExtendLiquidRange.Off) {
-		try (final ModProfiler ignored = ModProfiler.get().start("extendLiquids")) {
-			try (final StateCache stateCache = generateExtendedWaterStateCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, pooledMutableBlockPos, ClientUtil.getExtendLiquidsRange())) {
-				try (final SmoothableCache terrainSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)) {
-					try {
-						ExtendedLiquidChunkRenderer.renderChunk(
-								renderChunk,
-								generator,
-								compiledChunk,
-								renderChunkPosition,
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								blockAccess,
-								pooledMutableBlockPos,
-								usedBlockRenderLayers,
-								blockRendererDispatcher,
-								stateCache, terrainSmoothableCache
-						);
-					} catch (ReportedException e) {
-						throw e;
-					} catch (Exception e) {
-						CrashReport crashReport = new CrashReport("Error extending liquids in Pre event!", e);
-						crashReport.makeCategory("Extending liquids");
-						throw new ReportedException(crashReport);
-					}
-				}
-			}
-		}
-//		}
 	}
 
 	private static StateCache generateLightAndTexturesStateCache(

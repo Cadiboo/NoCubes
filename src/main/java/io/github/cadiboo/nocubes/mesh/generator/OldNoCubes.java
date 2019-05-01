@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

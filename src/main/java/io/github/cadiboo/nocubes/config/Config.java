@@ -23,7 +23,7 @@ public final class Config {
 
 	public static Set<String> terrainSmoothable = Sets.newHashSet();
 	//	public static Set<String> leavesSmoothable = Sets.newHashSet();
-	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.Off;
+	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.OneBlock;
 	public static MeshGenerator terrainMeshGenerator = MeshGenerator.SurfaceNets;
 
 	public static void bakeClient() {
