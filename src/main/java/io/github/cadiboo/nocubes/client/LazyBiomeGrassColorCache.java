@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.LazyXYZCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
@@ -11,8 +11,9 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class LazyBiomeGrassColorCache extends LazyXYZCache implements AutoCloseable {
+public class LazyBiomeGrassColorCache extends XYZCache implements AutoCloseable {
 
+	protected static final int[] EMPTY = new int[22 * 22 * 22];
 	private static final ThreadLocal<LazyBiomeGrassColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBiomeGrassColorCache(0, 0, 0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
 
@@ -60,11 +61,6 @@ public class LazyBiomeGrassColorCache extends LazyXYZCache implements AutoClosea
 
 			return pooled;
 		}
-	}
-
-	@Nonnull
-	public int[] getBiomeGrassColorCache() {
-		return cache;
 	}
 
 	@Override

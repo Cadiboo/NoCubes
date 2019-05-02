@@ -3,9 +3,9 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.BiomeGrassColorInfo;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
+import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
-import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
@@ -63,7 +63,7 @@ public final class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
-			@Nonnull final PackedLightCache pooledPackedLightCache,
+			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final SmoothableCache terrainSmoothableCache,
 			@Nonnull final LazyBiomeGrassColorCache blockColorsCache
 	) {
@@ -150,7 +150,7 @@ public final class MeshRenderer {
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
-			@Nonnull final PackedLightCache pooledPackedLightCache,
+			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final IIsSmoothable isStateSmoothable,
@@ -236,7 +236,7 @@ public final class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final PackedLightCache pooledPackedLightCache,
+			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
 			final boolean renderOppositeSides,
 			@Nonnull final Vec3b pos,

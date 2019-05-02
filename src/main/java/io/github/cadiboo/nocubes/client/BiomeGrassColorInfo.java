@@ -56,9 +56,9 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
 			@Nonnull final Vec3 v3,
-			@Nonnull final int renderChunkPositionX,
-			@Nonnull final int renderChunkPositionY,
-			@Nonnull final int renderChunkPositionZ
+			final int renderChunkPositionX,
+			final int renderChunkPositionY,
+			final int renderChunkPositionZ
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateBiomeGrassColorInfo")) {
 			return generateBiomeGrassColorInfo(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, biomeGrassColorCache);

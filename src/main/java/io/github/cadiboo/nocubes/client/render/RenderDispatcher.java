@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
-import io.github.cadiboo.nocubes.client.PackedLightCache;
+import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
+import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
@@ -141,7 +141,7 @@ public final class RenderDispatcher {
 			@Nonnull final StateCache stateCache
 	) {
 		try (
-				PackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess, pooledMutableBlockPos);
+				LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess);
 				final SmoothableCache terrainSmoothableCache =
 						Config.renderSmoothTerrain ?
 								CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)

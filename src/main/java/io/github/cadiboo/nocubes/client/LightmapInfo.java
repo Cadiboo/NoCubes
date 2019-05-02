@@ -41,10 +41,10 @@ public class LightmapInfo implements AutoCloseable {
 	}
 
 	public static LightmapInfo generateLightmapInfo(
-			final PackedLightCache packedLightCache,
-			final Vec3 v0,
-			final Vec3 v1,
-			final Vec3 v2,
+			@Nonnull final LazyPackedLightCache packedLightCache,
+			@Nonnull final Vec3 v0,
+			@Nonnull final Vec3 v1,
+			@Nonnull final Vec3 v2,
 			final Vec3 v3,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
@@ -53,12 +53,12 @@ public class LightmapInfo implements AutoCloseable {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getInstance().gameSettings.ambientOcclusion) {
 				case 0:
-					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 				default:
 				case 1:
-					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 				case 2:
-					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache.sizeX, packedLightCache.sizeY, packedLightCache.sizeZ, packedLightCache.getPackedLightCache());
+					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 			}
 		}
 	}
@@ -68,12 +68,9 @@ public class LightmapInfo implements AutoCloseable {
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			final int cachesSizeX,
-			final int cachesSizeY,
-			final int cachesSizeZ,
-			@Nonnull final int[] packedLightCacheArray
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
-		return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, cachesSizeX, cachesSizeY, cachesSizeZ, packedLightCacheArray);
+		return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 	}
 
 	private static LightmapInfo generateLightmapInfoSmooth(
@@ -81,10 +78,7 @@ public class LightmapInfo implements AutoCloseable {
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			final int cachesSizeX,
-			final int cachesSizeY,
-			final int cachesSizeZ,
-			@Nonnull final int[] packedLightCacheArray
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
@@ -114,15 +108,10 @@ public class LightmapInfo implements AutoCloseable {
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					try {
-						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-						packedLight0[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
-						packedLight1[index] = packedLightCacheArray[(v1XOffset + xOffset) + cachesSizeX * ((v1YOffset + yOffset) + cachesSizeY * (v1ZOffset + zOffset))];
-						packedLight2[index] = packedLightCacheArray[(v2XOffset + xOffset) + cachesSizeX * ((v2YOffset + yOffset) + cachesSizeY * (v2ZOffset + zOffset))];
-						packedLight3[index] = packedLightCacheArray[(v3XOffset + xOffset) + cachesSizeX * ((v3YOffset + yOffset) + cachesSizeY * (v3ZOffset + zOffset))];
-					} catch (ArrayIndexOutOfBoundsException e) {
-						LOGGER.warn("ArrayIndexOutOfBoundsException at generateLightmapInfoSmooth! Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
-					}
+					packedLight0[index] = packedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
+					packedLight1[index] = packedLightCache.get((v1XOffset + xOffset), (v1YOffset + yOffset), (v1ZOffset + zOffset));
+					packedLight2[index] = packedLightCache.get((v2XOffset + xOffset), (v2YOffset + yOffset), (v2ZOffset + zOffset));
+					packedLight3[index] = packedLightCache.get((v3XOffset + xOffset), (v3YOffset + yOffset), (v3ZOffset + zOffset));
 				}
 			}
 		}
@@ -144,44 +133,36 @@ public class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoFlat(
-			final Vec3 v0,
+			@Nonnull final Vec3 v0,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			final int cachesSizeX,
-			final int cachesSizeY,
-			final int cachesSizeZ,
-			final int[] packedLightCacheArray
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
 
 		final int v0XOffset = 1 + clamp(floor(v0.x) - renderChunkPositionX, -1, 16);
 		final int v0YOffset = 1 + clamp(floor(v0.y) - renderChunkPositionY, -1, 16);
 		final int v0ZOffset = 1 + clamp(floor(v0.z) - renderChunkPositionZ, -1, 16);
 
-		final int[] packedLight3 = new int[27];
+		final int[] packedLight0 = new int[27];
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					try {
-						// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-						packedLight3[index] = packedLightCacheArray[(v0XOffset + xOffset) + cachesSizeX * ((v0YOffset + yOffset) + cachesSizeY * (v0ZOffset + zOffset))];
-					} catch (ArrayIndexOutOfBoundsException e) {
-						LOGGER.warn("ArrayIndexOutOfBoundsException at generateLightmapInfoFlat! Array Size: " + packedLightCacheArray.length + ", sizeX: " + cachesSizeX + ", sizeY: " + cachesSizeY + ", sizeZ: " + cachesSizeZ);
-					}
+					packedLight0[index] = packedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
 				}
 			}
 		}
 
-		final int skylight3 = getSkylight(packedLight3);
+		final int skylight0 = getSkylight(packedLight0);
 
-		final int blocklight3 = getBlocklight(packedLight3);
+		final int blocklight0 = getBlocklight(packedLight0);
 
 		return retain(
-				skylight3, skylight3, skylight3, skylight3,
-				blocklight3, blocklight3, blocklight3, blocklight3
+				skylight0, skylight0, skylight0, skylight0,
+				blocklight0, blocklight0, blocklight0, blocklight0
 		);
 	}
 
@@ -278,9 +259,10 @@ public class LightmapInfo implements AutoCloseable {
 		return (i0 >= i26) ? i0 : i26;
 	}
 
-	public static LightmapInfo retain(final int skylight0, final int skylight1, final int skylight2,
-	                                  final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2,
-	                                  final int blocklight3) {
+	public static LightmapInfo retain(
+			final int skylight0, final int skylight1, final int skylight2, final int skylight3,
+			final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3
+	) {
 
 		LightmapInfo pooled = POOL.get();
 
