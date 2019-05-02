@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.BiomeGrassColorCache;
+import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
@@ -147,7 +147,7 @@ public final class RenderDispatcher {
 								CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)
 								: null
 		) {
-			try (final BiomeGrassColorCache blockColorsCache = ClientCacheUtil.generateBiomeGrassColorCacheCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess)) {
+			try (final LazyBiomeGrassColorCache blockColorsCache = ClientCacheUtil.generateBiomeGrassColorCacheCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess)) {
 				MeshRenderer.renderChunkMeshes(
 						renderChunk,
 						generator,

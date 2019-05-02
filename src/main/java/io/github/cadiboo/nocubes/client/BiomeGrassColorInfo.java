@@ -2,8 +2,6 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 
@@ -15,9 +13,8 @@ import static net.minecraft.util.math.MathHelper.floor;
  */
 public class BiomeGrassColorInfo implements AutoCloseable {
 
-	private static final Logger LOGGER = LogManager.getLogger();
-
 	private static final ThreadLocal<BiomeGrassColorInfo> POOL = ThreadLocal.withInitial(() -> new BiomeGrassColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
+
 	public float red0;
 	public float green0;
 	public float blue0;
@@ -30,6 +27,7 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 	public float red3;
 	public float green3;
 	public float blue3;
+
 	private boolean isReleased = true;
 
 	private BiomeGrassColorInfo(
@@ -53,7 +51,7 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 	}
 
 	public static BiomeGrassColorInfo generateBiomeGrassColorInfo(
-			@Nonnull final BiomeGrassColorCache biomeGrassColorCache,
+			@Nonnull final LazyBiomeGrassColorCache biomeGrassColorCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
@@ -72,7 +70,7 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			@Nonnull final BiomeGrassColorCache biomeGrassColorCache
+			@Nonnull final LazyBiomeGrassColorCache biomeGrassColorCache
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache

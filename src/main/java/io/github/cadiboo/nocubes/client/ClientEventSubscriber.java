@@ -178,6 +178,7 @@ public final class ClientEventSubscriber {
 			GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
 			GlStateManager.matrixMode(5888);
 			GlStateManager.loadIdentity();
+			GlStateManager.scalef(2.5F, 2.5F, 1);
 			GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
 			GlStateManager.lineWidth(1.0F);
 			GlStateManager.disableTexture2D();

@@ -47,11 +47,11 @@ public final class ClientCacheUtil {
 		}
 	}
 
-	public static BiomeGrassColorCache generateBiomeGrassColorCacheCache(
+	public static LazyBiomeGrassColorCache generateBiomeGrassColorCacheCache(
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
 			@Nonnull final IWorldReader cache
 	) {
-		return BiomeGrassColorCache.retain(
+		return LazyBiomeGrassColorCache.retain(
 				//From -2 to +2
 				20, 20, 20,
 				cache,

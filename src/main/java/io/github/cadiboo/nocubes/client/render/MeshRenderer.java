@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.BiomeGrassColorCache;
 import io.github.cadiboo.nocubes.client.BiomeGrassColorInfo;
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.PackedLightCache;
@@ -65,7 +65,7 @@ public final class MeshRenderer {
 			@Nonnull final Random random,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
 			@Nonnull final SmoothableCache terrainSmoothableCache,
-			@Nonnull final BiomeGrassColorCache blockColorsCache
+			@Nonnull final LazyBiomeGrassColorCache blockColorsCache
 	) {
 		if (Config.renderSmoothTerrain) {
 			renderMesh(
@@ -151,7 +151,7 @@ public final class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
-			@Nonnull final BiomeGrassColorCache blockColorsCache,
+			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -237,14 +237,15 @@ public final class MeshRenderer {
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final PackedLightCache pooledPackedLightCache,
-			@Nonnull final BiomeGrassColorCache blockColorsCache,
+			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
 			final boolean renderOppositeSides,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
 			@Nonnull final BlockPos texturePos,
 			@Nonnull final IBlockState textureState
 	) {
-		try (ModProfiler ignored = ModProfiler.get().start("renderFaces")) {
+//		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
+		{
 			for (final Face face : faces) {
 				try {
 					//0 3
@@ -288,31 +289,30 @@ public final class MeshRenderer {
 							float diffuse1;
 							float diffuse2;
 							float diffuse3;
-//							if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting()) {
-//								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
-//							} else
+//							if (!ModConfig.applyDiffuseLighting || !quad.shouldApplyDiffuseLighting())
 							{
-								diffuse0 = diffuseLight(toSide(
-										v0.x - renderChunkPositionX - pos.x,
-										v0.y - renderChunkPositionY - pos.y,
-										v0.z - renderChunkPositionZ - pos.z
-								));
-								diffuse1 = diffuseLight(toSide(
-										v1.x - renderChunkPositionX - pos.x,
-										v1.y - renderChunkPositionY - pos.y,
-										v1.z - renderChunkPositionZ - pos.z
-								));
-								diffuse2 = diffuseLight(toSide(
-										v2.x - renderChunkPositionX - pos.x,
-										v2.y - renderChunkPositionY - pos.y,
-										v2.z - renderChunkPositionZ - pos.z
-								));
-								diffuse3 = diffuseLight(toSide(
-										v3.x - renderChunkPositionX - pos.x,
-										v3.y - renderChunkPositionY - pos.y,
-										v3.z - renderChunkPositionZ - pos.z
-								));
-
+								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+//							} else {
+//								diffuse0 = diffuseLight(toSide(
+//										v0.x - renderChunkPositionX - pos.x,
+//										v0.y - renderChunkPositionY - pos.y,
+//										v0.z - renderChunkPositionZ - pos.z
+//								));
+//								diffuse1 = diffuseLight(toSide(
+//										v1.x - renderChunkPositionX - pos.x,
+//										v1.y - renderChunkPositionY - pos.y,
+//										v1.z - renderChunkPositionZ - pos.z
+//								));
+//								diffuse2 = diffuseLight(toSide(
+//										v2.x - renderChunkPositionX - pos.x,
+//										v2.y - renderChunkPositionY - pos.y,
+//										v2.z - renderChunkPositionZ - pos.z
+//								));
+//								diffuse3 = diffuseLight(toSide(
+//										v3.x - renderChunkPositionX - pos.x,
+//										v3.y - renderChunkPositionY - pos.y,
+//										v3.z - renderChunkPositionZ - pos.z
+//								));
 							}
 
 							final int lightmapSkyLight0;
@@ -325,6 +325,7 @@ public final class MeshRenderer {
 							final int lightmapBlockLight2;
 							final int lightmapBlockLight3;
 
+							ModProfiler.get().end(); //TODO FIXME REMOVE
 							try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
 
 								lightmapSkyLight0 = lightmapInfo.skylight0;
@@ -338,6 +339,7 @@ public final class MeshRenderer {
 								lightmapBlockLight3 = lightmapInfo.blocklight3;
 
 							}
+							ModProfiler.get().start("renderMesh"); //TODO FIXME REMOVE
 
 							final float colorRed0;
 							final float colorGreen0;
@@ -352,21 +354,41 @@ public final class MeshRenderer {
 							final float colorGreen3;
 							final float colorBlue3;
 
-							try (final BiomeGrassColorInfo biomeGrassColorInfo = BiomeGrassColorInfo.generateBiomeGrassColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+							boolean anyHasTintIndex = false;
+							for (final BakedQuad quad : quads) {
+								anyHasTintIndex |= quad.hasTintIndex();
+							}
 
-								colorRed0 = biomeGrassColorInfo.red0;
-								colorGreen0 = biomeGrassColorInfo.green0;
-								colorBlue0 = biomeGrassColorInfo.blue0;
-								colorRed1 = biomeGrassColorInfo.red1;
-								colorGreen1 = biomeGrassColorInfo.green1;
-								colorBlue1 = biomeGrassColorInfo.blue1;
-								colorRed2 = biomeGrassColorInfo.red2;
-								colorGreen2 = biomeGrassColorInfo.green2;
-								colorBlue2 = biomeGrassColorInfo.blue2;
-								colorRed3 = biomeGrassColorInfo.red3;
-								colorGreen3 = biomeGrassColorInfo.green3;
-								colorBlue3 = biomeGrassColorInfo.blue3;
-
+							if (anyHasTintIndex) {
+								ModProfiler.get().end(); //TODO FIXME REMOVE
+								try (final BiomeGrassColorInfo biomeGrassColorInfo = BiomeGrassColorInfo.generateBiomeGrassColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+									colorRed0 = biomeGrassColorInfo.red0;
+									colorGreen0 = biomeGrassColorInfo.green0;
+									colorBlue0 = biomeGrassColorInfo.blue0;
+									colorRed1 = biomeGrassColorInfo.red1;
+									colorGreen1 = biomeGrassColorInfo.green1;
+									colorBlue1 = biomeGrassColorInfo.blue1;
+									colorRed2 = biomeGrassColorInfo.red2;
+									colorGreen2 = biomeGrassColorInfo.green2;
+									colorBlue2 = biomeGrassColorInfo.blue2;
+									colorRed3 = biomeGrassColorInfo.red3;
+									colorGreen3 = biomeGrassColorInfo.green3;
+									colorBlue3 = biomeGrassColorInfo.blue3;
+								}
+								ModProfiler.get().start("renderMesh"); //TODO FIXME REMOVE
+							} else {
+								colorRed0 = 1;
+								colorGreen0 = 1;
+								colorBlue0 = 1;
+								colorRed1 = 1;
+								colorGreen1 = 1;
+								colorBlue1 = 1;
+								colorRed2 = 1;
+								colorGreen2 = 1;
+								colorBlue2 = 1;
+								colorRed3 = 1;
+								colorGreen3 = 1;
+								colorBlue3 = 1;
 							}
 
 							for (final BakedQuad quad : quads) {
@@ -396,6 +418,20 @@ public final class MeshRenderer {
 									v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
 									v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
 								}
+
+								final int quadPackedLight0 = vertexData[6];
+								final int quadPackedLight1 = vertexData[formatSize + 6];
+								final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
+								final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
+
+								final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
+								final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
+								final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
+								final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
+								final int quadBlockLight0 = quadPackedLight0 & 0xFF;
+								final int quadBlockLight1 = quadPackedLight1 & 0xFF;
+								final int quadBlockLight2 = quadPackedLight2 & 0xFF;
+								final int quadBlockLight3 = quadPackedLight3 & 0xFF;
 
 								final float red0;
 								final float green0;
@@ -440,18 +476,18 @@ public final class MeshRenderer {
 
 								try (final ModProfiler ignored1 = ModProfiler.get().start("renderSide")) {
 									// TODO use raw puts?
-									bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, 1F).tex(v0u, v0v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
-									bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, 1F).tex(v1u, v1v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-									bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, 1F).tex(v2u, v2v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-									bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, 1F).tex(v3u, v3v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
+									bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, 1F).tex(v0u, v0v).lightmap((quadSkyLight0 >= lightmapSkyLight0) ? quadSkyLight0 : lightmapSkyLight0, (quadBlockLight0 >= lightmapBlockLight0) ? quadBlockLight0 : lightmapBlockLight0).endVertex();
+									bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, 1F).tex(v1u, v1v).lightmap((quadSkyLight1 >= lightmapSkyLight1) ? quadSkyLight1 : lightmapSkyLight1, (quadBlockLight1 >= lightmapBlockLight1) ? quadBlockLight1 : lightmapBlockLight1).endVertex();
+									bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, 1F).tex(v2u, v2v).lightmap((quadSkyLight2 >= lightmapSkyLight2) ? quadSkyLight2 : lightmapSkyLight2, (quadBlockLight2 >= lightmapBlockLight2) ? quadBlockLight2 : lightmapBlockLight2).endVertex();
+									bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, 1F).tex(v3u, v3v).lightmap((quadSkyLight3 >= lightmapSkyLight3) ? quadSkyLight3 : lightmapSkyLight3, (quadBlockLight3 >= lightmapBlockLight3) ? quadBlockLight3 : lightmapBlockLight3).endVertex();
 								}
 								if (renderOppositeSides) {
 									// TODO use raw puts?
 									try (final ModProfiler ignored1 = ModProfiler.get().start("renderOppositeSide")) {
-										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, 1F).tex(v0u, v0v).lightmap(lightmapSkyLight3, lightmapBlockLight3).endVertex();
-										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, 1F).tex(v1u, v1v).lightmap(lightmapSkyLight2, lightmapBlockLight2).endVertex();
-										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, 1F).tex(v2u, v2v).lightmap(lightmapSkyLight1, lightmapBlockLight1).endVertex();
-										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, 1F).tex(v3u, v3v).lightmap(lightmapSkyLight0, lightmapBlockLight0).endVertex();
+										bufferBuilder.pos(v3.x, v3.y, v3.z).color(red3 * diffuse3, green3 * diffuse3, blue3 * diffuse3, 1F).tex(v0u, v0v).lightmap((quadSkyLight3 >= lightmapSkyLight3) ? quadSkyLight3 : lightmapSkyLight3, (quadBlockLight3 >= lightmapBlockLight3) ? quadBlockLight3 : lightmapBlockLight3).endVertex();
+										bufferBuilder.pos(v2.x, v2.y, v2.z).color(red2 * diffuse2, green2 * diffuse2, blue2 * diffuse2, 1F).tex(v1u, v1v).lightmap((quadSkyLight2 >= lightmapSkyLight2) ? quadSkyLight2 : lightmapSkyLight2, (quadBlockLight2 >= lightmapBlockLight2) ? quadBlockLight2 : lightmapBlockLight2).endVertex();
+										bufferBuilder.pos(v1.x, v1.y, v1.z).color(red1 * diffuse1, green1 * diffuse1, blue1 * diffuse1, 1F).tex(v2u, v2v).lightmap((quadSkyLight1 >= lightmapSkyLight1) ? quadSkyLight1 : lightmapSkyLight1, (quadBlockLight1 >= lightmapBlockLight1) ? quadBlockLight1 : lightmapBlockLight1).endVertex();
+										bufferBuilder.pos(v0.x, v0.y, v0.z).color(red0 * diffuse0, green0 * diffuse0, blue0 * diffuse0, 1F).tex(v3u, v3v).lightmap((quadSkyLight0 >= lightmapSkyLight0) ? quadSkyLight0 : lightmapSkyLight0, (quadBlockLight0 >= lightmapBlockLight0) ? quadBlockLight0 : lightmapBlockLight0).endVertex();
 									}
 								}
 							}
