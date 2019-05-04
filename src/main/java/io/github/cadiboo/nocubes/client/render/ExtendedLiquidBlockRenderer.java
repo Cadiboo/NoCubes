@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -9,6 +10,7 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 
@@ -35,111 +37,424 @@ public final class ExtendedLiquidBlockRenderer {
 		final SmoothLightingBlockFluidRenderer fluidRenderer = ClientProxy.fluidRenderer;
 
 		try (PooledMutableBlockPos renderPos = PooledMutableBlockPos.retain(x, y, z)) {
-			try {
-				boolean isLava = state.isTagged(FluidTags.LAVA);
+//		    OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+			try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+				final boolean isLava = state.isTagged(FluidTags.LAVA);
+				final TextureAtlasSprite[] atextureatlassprite = isLava ? fluidRenderer.atlasSpritesLava : fluidRenderer.atlasSpritesWater;
 
-				TextureAtlasSprite[] atextureatlassprite = isLava ? fluidRenderer.atlasSpritesLava : fluidRenderer.atlasSpritesWater;
+				final float red;
+				final float green;
+				final float blue;
+				if (isLava) {
+					red = 1.0F;
+					green = 1.0F;
+					blue = 1.0F;
+				} else {
+					final int waterColor = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, renderPos);
+					red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
+					green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
+					blue = (float) (waterColor & 0xFF) / 255.0F;
+				}
 
-				int waterColor = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, fluidPos);
-				float red = ((waterColor >> 16) & 255) / 255.0F;
-				float green = ((waterColor >> 8) & 255) / 255.0F;
-				float blue = (waterColor & 255) / 255.0F;
+				final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.UP, state);
+				final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, fluidPos, EnumFacing.DOWN, 0.8888889F);
+				final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.NORTH, state);
+				final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.SOUTH, state);
+				final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.WEST, state);
+				final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.EAST, state);
 
-				boolean renderUp = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.UP, state);
-				boolean renderDown = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, fluidPos, EnumFacing.DOWN, 0.8888889F);
-				boolean renderNorth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.NORTH, state);
-				boolean renderSouth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.SOUTH, state);
-				boolean renderWest = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.WEST, state);
-				boolean renderEast = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.EAST, state);
-
-				if (!renderUp && !renderDown && !renderEast && !renderWest && !renderNorth && !renderSouth) {
+				if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 					return false;
 				}
 
 				boolean wasAnythingRendered = false;
-
 				float fluidHeight = fluidRenderer.getFluidHeight(worldIn, fluidPos, state.getFluid());
-				float fluidHeightS = fluidRenderer.getFluidHeight(worldIn, fluidPos.south(), state.getFluid());
-				float fluidHeightES = fluidRenderer.getFluidHeight(worldIn, fluidPos.east().south(), state.getFluid());
-				float fluidHeightE = fluidRenderer.getFluidHeight(worldIn, fluidPos.east(), state.getFluid());
+				float fluidHeightSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.south(), state.getFluid());
+				float fluidHeightEastSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.east().south(), state.getFluid());
+				float fluidHeightEast = fluidRenderer.getFluidHeight(worldIn, fluidPos.east(), state.getFluid());
 
-//				double x = pos.getX();
-//				double y = pos.getY();
-//				double z = pos.getZ();
+//				final double x = (double) pos.getX();
+//				final double y = (double) pos.getY();
+//				final double z = (double) pos.getZ();
 
-				if (renderUp && !func_209556_a(worldIn, fluidPos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightS), Math.min(fluidHeightES, fluidHeightE)))) {
-					wasAnythingRendered = true;
+				if (shouldRenderUp && !func_209556_a(worldIn, renderPos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
 					fluidHeight -= 0.001F;
-					fluidHeightS -= 0.001F;
-					fluidHeightES -= 0.001F;
-					fluidHeightE -= 0.001F;
-					fluidRenderer.renderUp(worldIn, renderPos, buffer, state, atextureatlassprite, red, green, blue, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, x, y, z, state.getFlow(worldIn, fluidPos), isLava);
+					fluidHeightSouth -= 0.001F;
+					fluidHeightEastSouth -= 0.001F;
+					fluidHeightEast -= 0.001F;
+
+					if (!fluidRenderer.colors()) {
+						if (!fluidRenderer.smoothLighting()) {
+							final int combinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, renderPos);
+							wasAnythingRendered |= fluidRenderer.renderUp(
+									buffer, atextureatlassprite,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+									x, y, z,
+									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+									state.shouldRenderSides(worldIn, renderPos.up()), state.getFlow(worldIn, fluidPos), MathHelper.getPositionRandom(renderPos)
+							);
+						} else {
+							wasAnythingRendered |= fluidRenderer.renderUp(
+									buffer, atextureatlassprite,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+									x, y, z,
+									fluidRenderer.getCombinedLightUpMax(worldIn, renderPos), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.south()), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.east().south()), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.east()),
+									state.shouldRenderSides(worldIn, renderPos.up()), state.getFlow(worldIn, fluidPos), MathHelper.getPositionRandom(renderPos)
+							);
+						}
+					} else {
+						final float red0;
+						final float green0;
+						final float blue0;
+						final float red1;
+						final float green1;
+						final float blue1;
+						final float red2;
+						final float green2;
+						final float blue2;
+						final float red3;
+						final float green3;
+						final float blue3;
+						if (isLava) {
+							red0 = 1.0F;
+							green0 = 1.0F;
+							blue0 = 1.0F;
+							red1 = 1.0F;
+							green1 = 1.0F;
+							blue1 = 1.0F;
+							red2 = 1.0F;
+							green2 = 1.0F;
+							blue2 = 1.0F;
+							red3 = 1.0F;
+							green3 = 1.0F;
+							blue3 = 1.0F;
+						} else {
+//							final int waterColor0 = BiomeColors.getWaterColor(worldIn, renderPos);
+//							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+//							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+//							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+							red0 = red;
+							green0 = green;
+							blue0 = blue;
+							final int waterColor1 = BiomeColors.getWaterColor(worldIn, renderPos.south());
+							red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+							green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+							blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+							final int waterColor2 = BiomeColors.getWaterColor(worldIn, renderPos.east().south());
+							red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+							green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+							blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+							final int waterColor3 = BiomeColors.getWaterColor(worldIn, renderPos.east());
+							red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+							green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+						}
+
+						if (!fluidRenderer.smoothLighting()) {
+							final int combinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, renderPos);
+							wasAnythingRendered |= fluidRenderer.renderUp(
+									buffer, atextureatlassprite,
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+									x, y, z,
+									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+									state.shouldRenderSides(worldIn, renderPos.up()), state.getFlow(worldIn, fluidPos), MathHelper.getPositionRandom(renderPos)
+							);
+						} else {
+							wasAnythingRendered |= fluidRenderer.renderUp(
+									buffer, atextureatlassprite,
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+									x, y, z,
+									fluidRenderer.getCombinedLightUpMax(worldIn, renderPos), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.south()), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.east().south()), fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.east()),
+									state.shouldRenderSides(worldIn, renderPos.up()), state.getFlow(worldIn, fluidPos), MathHelper.getPositionRandom(renderPos)
+							);
+						}
+					}
 				}
 
-				if (renderDown) {
-					fluidRenderer.renderDown(buffer, atextureatlassprite[0], red, green, blue, x, y, z, worldIn, renderPos, isLava);
-					wasAnythingRendered = true;
+				if (shouldRenderDown) {
+					if (!fluidRenderer.colors()) {
+						if (!fluidRenderer.smoothLighting()) {
+							final int downCombinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, renderPos.down());
+							wasAnythingRendered |= fluidRenderer.renderDown(
+									downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
+									buffer, atextureatlassprite[0],
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									x, y, z
+							);
+						} else {
+							final BlockPos down = renderPos.down();
+							wasAnythingRendered |= fluidRenderer.renderDown(
+									fluidRenderer.getCombinedLightUpMax(worldIn, down), fluidRenderer.getCombinedLightUpMax(worldIn, down.south()), fluidRenderer.getCombinedLightUpMax(worldIn, down.east().south()), fluidRenderer.getCombinedLightUpMax(worldIn, down.east()),
+									buffer, atextureatlassprite[0],
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									x, y, z
+							);
+						}
+					} else {
+
+						final BlockPos down = renderPos.down();
+
+						final float red0;
+						final float green0;
+						final float blue0;
+						final float red1;
+						final float green1;
+						final float blue1;
+						final float red2;
+						final float green2;
+						final float blue2;
+						final float red3;
+						final float green3;
+						final float blue3;
+						if (isLava) {
+							red0 = 1.0F;
+							green0 = 1.0F;
+							blue0 = 1.0F;
+							red1 = 1.0F;
+							green1 = 1.0F;
+							blue1 = 1.0F;
+							red2 = 1.0F;
+							green2 = 1.0F;
+							blue2 = 1.0F;
+							red3 = 1.0F;
+							green3 = 1.0F;
+							blue3 = 1.0F;
+						} else {
+							final int waterColor0 = BiomeColors.getWaterColor(worldIn, down);
+							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+							final int waterColor1 = BiomeColors.getWaterColor(worldIn, down.south());
+							red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+							green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+							blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+							final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east().south());
+							red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+							green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+							blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+							final int waterColor3 = BiomeColors.getWaterColor(worldIn, down.east());
+							red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+							green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+						}
+
+						if (!fluidRenderer.smoothLighting()) {
+							final int downCombinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, down);
+							wasAnythingRendered |= fluidRenderer.renderDown(
+									downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
+									buffer, atextureatlassprite[0],
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									x, y, z
+							);
+						} else {
+							wasAnythingRendered |= fluidRenderer.renderDown(
+									fluidRenderer.getCombinedLightUpMax(worldIn, down), fluidRenderer.getCombinedLightUpMax(worldIn, down.south()), fluidRenderer.getCombinedLightUpMax(worldIn, down.east().south()), fluidRenderer.getCombinedLightUpMax(worldIn, down.east()),
+									buffer, atextureatlassprite[0],
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									x, y, z
+							);
+						}
+					}
 				}
 
 				for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
-					float yAdd0;
-					float yadd1;
-					double d3;
-					double z0;
-					double d5;
-					double z1;
-					EnumFacing enumfacing;
-					boolean renderSide;
+					final float y0;
+					final float y1;
+					final double x0;
+					final double z0;
+					final double x1;
+					final double z1;
+					final EnumFacing enumfacing;
+					final boolean shouldRenderSide;
 					if (facingIndex == 0) {
-						yAdd0 = fluidHeight;
-						yadd1 = fluidHeightE;
-						d3 = x;
-						d5 = x + 1.0D;
+						y0 = fluidHeight;
+						y1 = fluidHeightEast;
+						x0 = x;
+						x1 = x + 1.0D;
 						z0 = z + (double) 0.001F;
 						z1 = z + (double) 0.001F;
 						enumfacing = EnumFacing.NORTH;
-						renderSide = renderNorth;
+						shouldRenderSide = shouldRenderNorth;
 					} else if (facingIndex == 1) {
-						yAdd0 = fluidHeightES;
-						yadd1 = fluidHeightS;
-						d3 = x + 1.0D;
-						d5 = x;
+						y0 = fluidHeightEastSouth;
+						y1 = fluidHeightSouth;
+						x0 = x + 1.0D;
+						x1 = x;
 						z0 = z + 1.0D - (double) 0.001F;
 						z1 = z + 1.0D - (double) 0.001F;
 						enumfacing = EnumFacing.SOUTH;
-						renderSide = renderSouth;
+						shouldRenderSide = shouldRenderSouth;
 					} else if (facingIndex == 2) {
-						yAdd0 = fluidHeightS;
-						yadd1 = fluidHeight;
-						d3 = x + (double) 0.001F;
-						d5 = x + (double) 0.001F;
+						y0 = fluidHeightSouth;
+						y1 = fluidHeight;
+						x0 = x + (double) 0.001F;
+						x1 = x + (double) 0.001F;
 						z0 = z + 1.0D;
 						z1 = z;
 						enumfacing = EnumFacing.WEST;
-						renderSide = renderWest;
+						shouldRenderSide = shouldRenderWest;
 					} else {
-						yAdd0 = fluidHeightE;
-						yadd1 = fluidHeightES;
-						d3 = x + 1.0D - (double) 0.001F;
-						d5 = x + 1.0D - (double) 0.001F;
+						y0 = fluidHeightEast;
+						y1 = fluidHeightEastSouth;
+						x0 = x + 1.0D - (double) 0.001F;
+						x1 = x + 1.0D - (double) 0.001F;
 						z0 = z;
 						z1 = z + 1.0D;
 						enumfacing = EnumFacing.EAST;
-						renderSide = renderEast;
+						shouldRenderSide = shouldRenderEast;
 					}
 
-					if (renderSide && !func_209556_a(worldIn, fluidPos, enumfacing, Math.max(yAdd0, yadd1))) {
-						wasAnythingRendered = true;
-						BlockPos blockpos = fluidPos.offset(enumfacing);
+					if (shouldRenderSide && !func_209556_a(worldIn, renderPos, enumfacing, Math.max(y0, y1))) {
+						final BlockPos offset = renderPos.offset(enumfacing);
 						TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 						if (!isLava) {
-							IBlockState blockstate = worldIn.getBlockState(blockpos);
-							if (blockstate.getBlockFaceShape(worldIn, blockpos, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
+							IBlockState blockstate = worldIn.getBlockState(offset);
+							if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == BlockFaceShape.SOLID) {
 								textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
 							}
 						}
 
-						fluidRenderer.renderSide(worldIn, buffer, red, green, blue, y, facingIndex, yAdd0, yadd1, d3, z0, d5, z1, blockpos, textureatlassprite2, renderPos, isLava);
+						if (!fluidRenderer.colors()) {
+							if (!fluidRenderer.smoothLighting()) {
+								final int combinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, offset);
+								wasAnythingRendered = fluidRenderer.renderSide(
+										buffer, textureatlassprite2,
+										red, green, blue,
+										red, green, blue,
+										red, green, blue,
+										red, green, blue,
+										facingIndex,
+										y, y0, y1,
+										x0, x1,
+										z0, z1,
+										combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+										textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+								);
+							} else {
+								wasAnythingRendered = fluidRenderer.renderSide(
+										buffer, textureatlassprite2,
+										red, green, blue,
+										red, green, blue,
+										red, green, blue,
+										red, green, blue,
+										facingIndex,
+										y, y0, y1,
+										x0, x1,
+										z0, z1,
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
+										textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+								);
+							}
+						} else {
+							final float red0;
+							final float green0;
+							final float blue0;
+							final float red1;
+							final float green1;
+							final float blue1;
+							final float red2;
+							final float green2;
+							final float blue2;
+							final float red3;
+							final float green3;
+							final float blue3;
+							if (isLava) {
+								red0 = 1.0F;
+								green0 = 1.0F;
+								blue0 = 1.0F;
+								red1 = 1.0F;
+								green1 = 1.0F;
+								blue1 = 1.0F;
+								red2 = 1.0F;
+								green2 = 1.0F;
+								blue2 = 1.0F;
+								red3 = 1.0F;
+								green3 = 1.0F;
+								blue3 = 1.0F;
+							} else {
+								final int waterColor0 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+								red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+								green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+								blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+								final int waterColor1 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+								red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+								green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+								blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+								final int waterColor2 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+								red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+								green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+								blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+								final int waterColor3 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
+								red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+								green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+								blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+							}
+
+							if (!fluidRenderer.smoothLighting()) {
+								final int combinedLightUpMax = fluidRenderer.getCombinedLightUpMax(worldIn, offset);
+								wasAnythingRendered = fluidRenderer.renderSide(
+										buffer, textureatlassprite2,
+										red0, green0, blue0,
+										red1, green1, blue1,
+										red2, green2, blue2,
+										red3, green3, blue3,
+										facingIndex,
+										y, y0, y1,
+										x0, x1,
+										z0, z1,
+										combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+										textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+								);
+							} else {
+								wasAnythingRendered = fluidRenderer.renderSide(
+										buffer, textureatlassprite2,
+										red0, green0, blue0,
+										red1, green1, blue1,
+										red2, green2, blue2,
+										red3, green3, blue3,
+										facingIndex,
+										y, y0, y1,
+										x0, x1,
+										z0, z1,
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
+										fluidRenderer.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
+										textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+								);
+							}
+						}
 					}
 				}
 

@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.UVHelper;
+import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -10,6 +11,7 @@ import net.minecraft.fluid.IFluidState;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IWorldReader;
@@ -34,114 +36,426 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	@Override
 	public boolean render(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
 
-		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
+//		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
 
-		//		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
-		try {
-			boolean isLava = state.isTagged(FluidTags.LAVA);
+//		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+			final boolean isLava = state.isTagged(FluidTags.LAVA);
+			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
 
-			TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
+			final float red;
+			final float green;
+			final float blue;
+			if (isLava) {
+				red = 1.0F;
+				green = 1.0F;
+				blue = 1.0F;
+			} else {
+				final int waterColor = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos);
+				red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
+				green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
+				blue = (float) (waterColor & 0xFF) / 255.0F;
+			}
 
-			boolean renderUp = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.UP, state);
-			boolean renderDown = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, pos, EnumFacing.DOWN, 0.8888889F);
-			boolean renderNorth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.NORTH, state);
-			boolean renderSouth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.SOUTH, state);
-			boolean renderWest = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.WEST, state);
-			boolean renderEast = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.EAST, state);
+			final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.UP, state);
+			final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, pos, EnumFacing.DOWN, 0.8888889F);
+			final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.NORTH, state);
+			final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.SOUTH, state);
+			final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.WEST, state);
+			final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.EAST, state);
 
-			if (!renderUp && !renderDown && !renderEast && !renderWest && !renderNorth && !renderSouth) {
+			if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 				return false;
 			}
 
 			boolean wasAnythingRendered = false;
 
 			float fluidHeight = this.getFluidHeight(worldIn, pos, state.getFluid());
-			float fluidHeightS = this.getFluidHeight(worldIn, pos.south(), state.getFluid());
-			float fluidHeightES = this.getFluidHeight(worldIn, pos.east().south(), state.getFluid());
-			float fluidHeightE = this.getFluidHeight(worldIn, pos.east(), state.getFluid());
+			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), state.getFluid());
+			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), state.getFluid());
+			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), state.getFluid());
 
-			double x = pos.getX();
-			double y = pos.getY();
-			double z = pos.getZ();
+			final double x = (double) pos.getX();
+			final double y = (double) pos.getY();
+			final double z = (double) pos.getZ();
 
-			int waterColor = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos);
-			float red = ((waterColor >> 16) & 255) / 255.0F;
-			float green = ((waterColor >> 8) & 255) / 255.0F;
-			float blue = (waterColor & 255) / 255.0F;
-
-			if (renderUp && !func_209556_a(worldIn, pos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightS), Math.min(fluidHeightES, fluidHeightE)))) {
-				wasAnythingRendered = true;
+			if (shouldRenderUp && !func_209556_a(worldIn, pos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
 				fluidHeight -= 0.001F;
-				fluidHeightS -= 0.001F;
-				fluidHeightES -= 0.001F;
-				fluidHeightE -= 0.001F;
-				renderUp(worldIn, pos, buffer, state, atextureatlassprite, red, green, blue, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, x, y, z, state.getFlow(worldIn, pos), isLava);
+				fluidHeightSouth -= 0.001F;
+				fluidHeightEastSouth -= 0.001F;
+				fluidHeightEast -= 0.001F;
+
+				if (!this.colors()) {
+					if (!this.smoothLighting()) {
+						final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
+						wasAnythingRendered |= this.renderUp(
+								buffer, atextureatlassprite,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+								x, y, z,
+								combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+								state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						);
+					} else {
+						wasAnythingRendered |= this.renderUp(
+								buffer, atextureatlassprite,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+								x, y, z,
+								this.getCombinedLightUpMax(worldIn, pos), this.getCombinedLightUpMax(worldIn, pos.south()), this.getCombinedLightUpMax(worldIn, pos.east().south()), this.getCombinedLightUpMax(worldIn, pos.east()),
+								state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						);
+					}
+				} else {
+					final float red0;
+					final float green0;
+					final float blue0;
+					final float red1;
+					final float green1;
+					final float blue1;
+					final float red2;
+					final float green2;
+					final float blue2;
+					final float red3;
+					final float green3;
+					final float blue3;
+					if (isLava) {
+						red0 = 1.0F;
+						green0 = 1.0F;
+						blue0 = 1.0F;
+						red1 = 1.0F;
+						green1 = 1.0F;
+						blue1 = 1.0F;
+						red2 = 1.0F;
+						green2 = 1.0F;
+						blue2 = 1.0F;
+						red3 = 1.0F;
+						green3 = 1.0F;
+						blue3 = 1.0F;
+					} else {
+//						final int waterColor0 = BiomeColors.getWaterColor(worldIn, pos);
+//						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+//						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+//						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+						red0 = red;
+						green0 = green;
+						blue0 = blue;
+						final int waterColor1 = BiomeColors.getWaterColor(worldIn, pos.south());
+						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+						final int waterColor2 = BiomeColors.getWaterColor(worldIn, pos.east().south());
+						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+						final int waterColor3 = BiomeColors.getWaterColor(worldIn, pos.east());
+						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+					}
+					if (!this.smoothLighting()) {
+						final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
+						wasAnythingRendered |= this.renderUp(
+								buffer, atextureatlassprite,
+								red0, green0, blue0,
+								red1, green1, blue1,
+								red2, green2, blue2,
+								red3, green3, blue3,
+								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+								x, y, z,
+								combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+								state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						);
+					} else {
+						wasAnythingRendered |= this.renderUp(
+								buffer, atextureatlassprite,
+								red0, green0, blue0,
+								red1, green1, blue1,
+								red2, green2, blue2,
+								red3, green3, blue3,
+								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+								x, y, z,
+								this.getCombinedLightUpMax(worldIn, pos), this.getCombinedLightUpMax(worldIn, pos.south()), this.getCombinedLightUpMax(worldIn, pos.east().south()), this.getCombinedLightUpMax(worldIn, pos.east()),
+								state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						);
+					}
+				}
 			}
 
-			if (renderDown) {
-				renderDown(buffer, atextureatlassprite[0], red, green, blue, x, y, z, worldIn, pos, isLava);
-				wasAnythingRendered = true;
+			if (shouldRenderDown) {
+				if (!this.colors()) {
+					if (!this.smoothLighting()) {
+						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos.down());
+						wasAnythingRendered |= this.renderDown(
+								downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
+								buffer, atextureatlassprite[0],
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								x, y, z
+						);
+					} else {
+						final BlockPos down = pos.down();
+						wasAnythingRendered |= this.renderDown(
+								this.getCombinedLightUpMax(worldIn, down), this.getCombinedLightUpMax(worldIn, down.south()), this.getCombinedLightUpMax(worldIn, down.east().south()), this.getCombinedLightUpMax(worldIn, down.east()),
+								buffer, atextureatlassprite[0],
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								red, green, blue,
+								x, y, z
+						);
+					}
+				} else {
+
+					final BlockPos down = pos.down();
+
+					final float red0;
+					final float green0;
+					final float blue0;
+					final float red1;
+					final float green1;
+					final float blue1;
+					final float red2;
+					final float green2;
+					final float blue2;
+					final float red3;
+					final float green3;
+					final float blue3;
+					if (isLava) {
+						red0 = 1.0F;
+						green0 = 1.0F;
+						blue0 = 1.0F;
+						red1 = 1.0F;
+						green1 = 1.0F;
+						blue1 = 1.0F;
+						red2 = 1.0F;
+						green2 = 1.0F;
+						blue2 = 1.0F;
+						red3 = 1.0F;
+						green3 = 1.0F;
+						blue3 = 1.0F;
+					} else {
+						final int waterColor0 = BiomeColors.getWaterColor(worldIn, down);
+						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+						final int waterColor1 = BiomeColors.getWaterColor(worldIn, down.south());
+						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+						final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east().south());
+						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+						final int waterColor3 = BiomeColors.getWaterColor(worldIn, down.east());
+						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+					}
+
+					if (!this.smoothLighting()) {
+						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, down);
+						wasAnythingRendered |= this.renderDown(
+								downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
+								buffer, atextureatlassprite[0],
+								red0, green0, blue0,
+								red1, green1, blue1,
+								red2, green2, blue2,
+								red3, green3, blue3,
+								x, y, z
+						);
+					} else {
+						wasAnythingRendered |= this.renderDown(
+								this.getCombinedLightUpMax(worldIn, down), this.getCombinedLightUpMax(worldIn, down.south()), this.getCombinedLightUpMax(worldIn, down.east().south()), this.getCombinedLightUpMax(worldIn, down.east()),
+								buffer, atextureatlassprite[0],
+								red0, green0, blue0,
+								red1, green1, blue1,
+								red2, green2, blue2,
+								red3, green3, blue3,
+								x, y, z
+						);
+					}
+				}
 			}
 
 			for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
-				float yAdd0;
-				float yadd1;
-				double d3;
-				double z0;
-				double d5;
-				double z1;
-				EnumFacing enumfacing;
-				boolean renderSide;
+				final float y0;
+				final float y1;
+				final double x0;
+				final double z0;
+				final double x1;
+				final double z1;
+				final EnumFacing enumfacing;
+				final boolean shouldRenderSide;
 				if (facingIndex == 0) {
-					yAdd0 = fluidHeight;
-					yadd1 = fluidHeightE;
-					d3 = x;
-					d5 = x + 1.0D;
+					y0 = fluidHeight;
+					y1 = fluidHeightEast;
+					x0 = x;
+					x1 = x + 1.0D;
 					z0 = z + (double) 0.001F;
 					z1 = z + (double) 0.001F;
 					enumfacing = EnumFacing.NORTH;
-					renderSide = renderNorth;
+					shouldRenderSide = shouldRenderNorth;
 				} else if (facingIndex == 1) {
-					yAdd0 = fluidHeightES;
-					yadd1 = fluidHeightS;
-					d3 = x + 1.0D;
-					d5 = x;
+					y0 = fluidHeightEastSouth;
+					y1 = fluidHeightSouth;
+					x0 = x + 1.0D;
+					x1 = x;
 					z0 = z + 1.0D - (double) 0.001F;
 					z1 = z + 1.0D - (double) 0.001F;
 					enumfacing = EnumFacing.SOUTH;
-					renderSide = renderSouth;
+					shouldRenderSide = shouldRenderSouth;
 				} else if (facingIndex == 2) {
-					yAdd0 = fluidHeightS;
-					yadd1 = fluidHeight;
-					d3 = x + (double) 0.001F;
-					d5 = x + (double) 0.001F;
+					y0 = fluidHeightSouth;
+					y1 = fluidHeight;
+					x0 = x + (double) 0.001F;
+					x1 = x + (double) 0.001F;
 					z0 = z + 1.0D;
 					z1 = z;
 					enumfacing = EnumFacing.WEST;
-					renderSide = renderWest;
+					shouldRenderSide = shouldRenderWest;
 				} else {
-					yAdd0 = fluidHeightE;
-					yadd1 = fluidHeightES;
-					d3 = x + 1.0D - (double) 0.001F;
-					d5 = x + 1.0D - (double) 0.001F;
+					y0 = fluidHeightEast;
+					y1 = fluidHeightEastSouth;
+					x0 = x + 1.0D - (double) 0.001F;
+					x1 = x + 1.0D - (double) 0.001F;
 					z0 = z;
 					z1 = z + 1.0D;
 					enumfacing = EnumFacing.EAST;
-					renderSide = renderEast;
+					shouldRenderSide = shouldRenderEast;
 				}
 
-				if (renderSide && !func_209556_a(worldIn, pos, enumfacing, Math.max(yAdd0, yadd1))) {
-					wasAnythingRendered = true;
-					BlockPos blockpos = pos.offset(enumfacing);
+				if (shouldRenderSide && !func_209556_a(worldIn, pos, enumfacing, Math.max(y0, y1))) {
+					final BlockPos offset = pos.offset(enumfacing);
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
-						IBlockState blockstate = worldIn.getBlockState(blockpos);
-						if (blockstate.getBlockFaceShape(worldIn, blockpos, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
+						IBlockState blockstate = worldIn.getBlockState(offset);
+						if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
 							textureatlassprite2 = this.atlasSpriteWaterOverlay;
 						}
 					}
 
-					renderSide(worldIn, buffer, red, green, blue, y, facingIndex, yAdd0, yadd1, d3, z0, d5, z1, blockpos, textureatlassprite2, pos, isLava);
+					if (!this.colors()) {
+						if (!this.smoothLighting()) {
+							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, offset);
+							wasAnythingRendered = this.renderSide(
+									buffer, textureatlassprite2,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									facingIndex,
+									y, y0, y1,
+									x0, x1,
+									z0, z1,
+									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+									textureatlassprite2 != this.atlasSpriteWaterOverlay
+							);
+						} else {
+							wasAnythingRendered = this.renderSide(
+									buffer, textureatlassprite2,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									red, green, blue,
+									facingIndex,
+									y, y0, y1,
+									x0, x1,
+									z0, z1,
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
+									textureatlassprite2 != this.atlasSpriteWaterOverlay
+							);
+						}
+					} else {
+						final float red0;
+						final float green0;
+						final float blue0;
+						final float red1;
+						final float green1;
+						final float blue1;
+						final float red2;
+						final float green2;
+						final float blue2;
+						final float red3;
+						final float green3;
+						final float blue3;
+						if (isLava) {
+							red0 = 1.0F;
+							green0 = 1.0F;
+							blue0 = 1.0F;
+							red1 = 1.0F;
+							green1 = 1.0F;
+							blue1 = 1.0F;
+							red2 = 1.0F;
+							green2 = 1.0F;
+							blue2 = 1.0F;
+							red3 = 1.0F;
+							green3 = 1.0F;
+							blue3 = 1.0F;
+						} else {
+							final int waterColor0 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+							final int waterColor1 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+							red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
+							green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
+							blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
+							final int waterColor2 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+							red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
+							green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
+							blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
+							final int waterColor3 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
+							red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
+							green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
+							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
+						}
+
+						if (!this.smoothLighting()) {
+							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, offset);
+							wasAnythingRendered = renderSide(
+									buffer, textureatlassprite2,
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									facingIndex,
+									y, y0, y1,
+									x0, x1,
+									z0, z1,
+									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
+									textureatlassprite2 != this.atlasSpriteWaterOverlay
+							);
+						} else {
+							wasAnythingRendered = this.renderSide(
+									buffer, textureatlassprite2,
+									red0, green0, blue0,
+									red1, green1, blue1,
+									red2, green2, blue2,
+									red3, green3, blue3,
+									facingIndex,
+									y, y0, y1,
+									x0, x1,
+									z0, z1,
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
+									this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
+									textureatlassprite2 != this.atlasSpriteWaterOverlay
+							);
+						}
+					}
 				}
 			}
 
@@ -153,22 +467,22 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 	@Override
 	public int getCombinedLightUpMax(IWorldReader reader, BlockPos pos) {
-		int i = reader.getCombinedLight(pos, 0);
-		int j = reader.getCombinedLight(pos.up(), 0);
-		int k = i & 255;
-		int l = j & 255;
-		int i1 = i >> 16 & 255;
-		int j1 = j >> 16 & 255;
-		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
+		int combinedLight = reader.getCombinedLight(pos, 0);
+		int combineLightUp = reader.getCombinedLight(pos.up(), 0);
+		int skyLight = combinedLight & 0xFF;
+		int skyLightUp = combineLightUp & 0xFF;
+		int blockLight = combinedLight >> 16 & 0xFF;
+		int blockLightUp = combineLightUp >> 16 & 0xFF;
+		return (skyLight > skyLightUp ? skyLight : skyLightUp) | (blockLight > blockLightUp ? blockLight : blockLightUp) << 16;
 	}
 
 	@Override
 	public float getFluidHeight(IWorldReaderBase reader, BlockPos pos, Fluid fluidIn) {
-		int i = 0;
-		float f = 0.0F;
+		int divisor = 0;
+		float height = 0.0F;
 
-		for (int j = 0; j < 4; ++j) {
-			BlockPos blockpos = pos.add(-(j & 1), 0, -(j >> 1 & 1));
+		for (int horizontalFacingIndex = 0; horizontalFacingIndex < 4; ++horizontalFacingIndex) {
+			BlockPos blockpos = pos.add(-(horizontalFacingIndex & 1), 0, -(horizontalFacingIndex >> 1 & 1));
 			if (reader.getFluidState(blockpos.up()).getFluid().isEquivalentTo(fluidIn)) {
 				return 1.0F;
 			}
@@ -176,165 +490,31 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			IFluidState ifluidstate = reader.getFluidState(blockpos);
 			if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
 				if (ifluidstate.getHeight() >= 0.8F) {
-					f += ifluidstate.getHeight() * 10.0F;
-					i += 10;
+					height += ifluidstate.getHeight() * 10.0F;
+					divisor += 10;
 				} else {
-					f += ifluidstate.getHeight();
-					++i;
+					height += ifluidstate.getHeight();
+					++divisor;
 				}
 			} else if (!reader.getBlockState(blockpos).getMaterial().isSolid()) {
-				++i;
+				++divisor;
 			}
 		}
 
-		return f / (float) i;
+		return height / (float) divisor;
 	}
 
-	public void renderSide(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
-		if (smoothLighting()) {
-			renderSideSmooth(worldIn, buffer, red, green, blue, y, facingIndex, yAdd_0, yadd_1, d3, z0, d5, z1, blockpos, textureatlassprite2, pos, isLava);
-		} else {
-			renderSideFlat(worldIn, buffer, red, green, blue, y, facingIndex, yAdd_0, yadd_1, d3, z0, d5, z1, blockpos, textureatlassprite2, pos, isLava);
-		}
-	}
-
-	public void renderDown(final BufferBuilder buffer, final TextureAtlasSprite textureatlassprite0, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
-		if (smoothLighting()) {
-			renderDownSmooth(buffer, textureatlassprite0, red, green, blue, x, y, z, worldIn, pos, isLava);
-		} else {
-			renderDownFlat(buffer, textureatlassprite0, red, green, blue, x, y, z, worldIn, pos, isLava);
-		}
-	}
-
-	public void renderUp(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
-		if (smoothLighting()) {
-			renderUpSmooth(worldIn, pos, buffer, state, atextureatlassprite, red, green, blue, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, x, y, z, flow, isLava);
-		} else {
-			renderUpFlat(worldIn, pos, buffer, state, atextureatlassprite, red, green, blue, fluidHeight, fluidHeightS, fluidHeightES, fluidHeightE, x, y, z, flow, isLava);
-		}
-	}
-
-	public void renderSideFlat(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
-		float minU = textureatlassprite2.getInterpolatedU(0.0D);
-		float halfU = textureatlassprite2.getInterpolatedU(8.0D);
-		float v0 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yAdd_0) * 16.0F * 0.5F));
-		float v1 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yadd_1) * 16.0F * 0.5F));
-		float halfV = textureatlassprite2.getInterpolatedV(8.0D);
-		int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, blockpos);
-		int skyLight = combinedLightUpMax >> 16 & '\uffff';
-		int blockLight = combinedLightUpMax & '\uffff';
-		float diffuse = facingIndex < 2 ? 0.8F : 0.6F;
-		if (!colors()) {
-			float r = 1.0F * diffuse * red;
-			float g = 1.0F * diffuse * green;
-			float b = 1.0F * diffuse * blue;
-			buffer.pos(d3, y + (double) yAdd_0, z0).color(r, g, b, 1.0F).tex((double) minU, (double) v0).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d5, y + (double) yadd_1, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d5, y + 0.0D, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d3, y + 0.0D, z0).color(r, g, b, 1.0F).tex((double) minU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-			if (textureatlassprite2 != this.atlasSpriteWaterOverlay) {
-				buffer.pos(d3, y + 0.0D, z0).color(r, g, b, 1.0F).tex((double) minU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d5, y + 0.0D, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d5, y + (double) yadd_1, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) v1).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d3, y + (double) yAdd_0, z0).color(r, g, b, 1.0F).tex((double) minU, (double) v0).lightmap(skyLight, blockLight).endVertex();
-
-			}
-		} else {
-			float r0 = diffuse * red;
-			float g0 = diffuse * green;
-			float b0 = diffuse * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = diffuse * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = diffuse * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = diffuse * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = diffuse * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = diffuse * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = diffuse * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = diffuse * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = diffuse * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = diffuse * ((colorE) & 255) / 255.0F;
-			buffer.pos(d3, y + (double) yAdd_0, z0).color(r0, g0, b0, 1.0F).tex((double) minU, (double) v0).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d5, y + (double) yadd_1, z1).color(r1, g1, b2, 1.0F).tex((double) halfU, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d5, y + 0.0D, z1).color(r2, g2, b2, 1.0F).tex((double) halfU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-			buffer.pos(d3, y + 0.0D, z0).color(r3, g3, b3, 1.0F).tex((double) minU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-			if (textureatlassprite2 != this.atlasSpriteWaterOverlay) {
-				buffer.pos(d3, y + 0.0D, z0).color(r3, g3, b3, 1.0F).tex((double) minU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d5, y + 0.0D, z1).color(r2, g2, b2, 1.0F).tex((double) halfU, (double) halfV).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d5, y + (double) yadd_1, z1).color(r1, g1, b1, 1.0F).tex((double) halfU, (double) v1).lightmap(skyLight, blockLight).endVertex();
-				buffer.pos(d3, y + (double) yAdd_0, z0).color(r0, g0, b0, 1.0F).tex((double) minU, (double) v0).lightmap(skyLight, blockLight).endVertex();
-			}
-		}
-	}
-
-	public void renderSideSmooth(final IWorldReader worldIn, final BufferBuilder buffer, final float red, final float green, final float blue, final double y, final int facingIndex, final float yAdd_0, final float yadd_1, final double d3, final double z0, final double d5, final double z1, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite2, final BlockPos pos, final boolean isLava) {
-		float minU = textureatlassprite2.getInterpolatedU(0.0D);
-		float halfU = textureatlassprite2.getInterpolatedU(8.0D);
-		float v0 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yAdd_0) * 16.0F * 0.5F));
-		float v1 = textureatlassprite2.getInterpolatedV((double) ((1.0F - yadd_1) * 16.0F * 0.5F));
-		float halfV = textureatlassprite2.getInterpolatedV(8.0D);
-
-		final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
-		final int combinedLightUpMaxSouth = this.getCombinedLightUpMax(worldIn, pos.south());
-		final int combinedLightUpMaxSouthEast = this.getCombinedLightUpMax(worldIn, pos.south().east());
-		final int combinedLightUpMaxEast = this.getCombinedLightUpMax(worldIn, pos);
-
-		int skylightUp = combinedLightUpMax >> 16 & '\uffff';
-		int blocklightUp = combinedLightUpMax & '\uffff';
-		int skylightUpSouth = combinedLightUpMaxSouth >> 16 & '\uffff';
-		int blocklightUpSouth = combinedLightUpMaxSouth & '\uffff';
-		int skylightUpSouthEast = combinedLightUpMaxSouthEast >> 16 & '\uffff';
-		int blocklightUpSouthEast = combinedLightUpMaxSouthEast & '\uffff';
-		int skylightUpEast = combinedLightUpMaxEast >> 16 & '\uffff';
-		int blocklightUpEast = combinedLightUpMaxEast & '\uffff';
-
-		float diffuse = facingIndex < 2 ? 0.8F : 0.6F;
-		if (!colors()) {
-			float r = 1.0F * diffuse * red;
-			float g = 1.0F * diffuse * green;
-			float b = 1.0F * diffuse * blue;
-			buffer.pos(d3, y + (double) yAdd_0, z0).color(r, g, b, 1.0F).tex((double) minU, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-			buffer.pos(d5, y + (double) yadd_1, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			buffer.pos(d5, y + 0.0D, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) halfV).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-			buffer.pos(d3, y + 0.0D, z0).color(r, g, b, 1.0F).tex((double) minU, (double) halfV).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-			if (textureatlassprite2 != this.atlasSpriteWaterOverlay) {
-				buffer.pos(d3, y + 0.0D, z0).color(r, g, b, 1.0F).tex((double) minU, (double) halfV).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-				buffer.pos(d5, y + 0.0D, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) halfV).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-				buffer.pos(d5, y + (double) yadd_1, z1).color(r, g, b, 1.0F).tex((double) halfU, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-				buffer.pos(d3, y + (double) yAdd_0, z0).color(r, g, b, 1.0F).tex((double) minU, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-
-			}
-		} else {
-			float r0 = diffuse * red;
-			float g0 = diffuse * green;
-			float b0 = diffuse * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = diffuse * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = diffuse * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = diffuse * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = diffuse * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = diffuse * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = diffuse * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = diffuse * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = diffuse * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = diffuse * ((colorE) & 255) / 255.0F;
-			buffer.pos(d3, y + (double) yAdd_0, z0).color(r0, g0, b0, 1.0F).tex((double) minU, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-			buffer.pos(d5, y + (double) yadd_1, z1).color(r1, g1, b2, 1.0F).tex((double) halfU, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			buffer.pos(d5, y + 0.0D, z1).color(r2, g2, b2, 1.0F).tex((double) halfU, (double) halfV).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-			buffer.pos(d3, y + 0.0D, z0).color(r3, g3, b3, 1.0F).tex((double) minU, (double) halfV).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-			if (textureatlassprite2 != this.atlasSpriteWaterOverlay) {
-				buffer.pos(d3, y + 0.0D, z0).color(r3, g3, b3, 1.0F).tex((double) minU, (double) halfV).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-				buffer.pos(d5, y + 0.0D, z1).color(r2, g2, b2, 1.0F).tex((double) halfU, (double) halfV).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-				buffer.pos(d5, y + (double) yadd_1, z1).color(r1, g1, b1, 1.0F).tex((double) halfU, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-				buffer.pos(d3, y + (double) yAdd_0, z0).color(r0, g0, b0, 1.0F).tex((double) minU, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-			}
-		}
-	}
-
-	public void renderUpFlat(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
+	public boolean renderUp(
+			final BufferBuilder buffer, final TextureAtlasSprite[] atextureatlassprite,
+			final float red0, final float green0, final float blue0,
+			final float red1, final float green1, final float blue1,
+			final float red2, final float green2, final float blue2,
+			final float red3, final float green3, final float blue3,
+			final double fluidHeight, final double fluidHeightSouth, final double fluidHeightEastSouth, final double fluidHeightEast,
+			final double x, final double y, final double z,
+			final int combinedLightUpMax0, final int combinedLightUpMax1, final int combinedLightUpMax2, final int combinedLightUpMax3,
+			final boolean shouldRenderUpUndersideFace, final Vec3d flowVec, final long positionRandom
+	) {
 		float u0;
 		float u1;
 		float u2;
@@ -343,10 +523,10 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		float v1;
 		float v2;
 		float v3;
-		if (flow.x == 0.0D && flow.z == 0.0D) {
+		if (flowVec.x == 0.0D && flowVec.z == 0.0D) {
 			TextureAtlasSprite textureatlassprite1 = atextureatlassprite[0];
 			if (textures()) {
-				final int rand = (int) (MathHelper.getPositionRandom(pos) % 7);
+				final int rand = (int) (positionRandom % 7);
 				switch (rand) {
 					default:
 					case 0:
@@ -382,13 +562,9 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				u3 = u2;
 				v3 = v0;
 			} else {
-//				u0 = textureatlassprite1.getInterpolatedU(0.0D);
-//				v0 = textureatlassprite1.getInterpolatedV(0.0D);
 				u0 = UVHelper.getMinU(textureatlassprite1);
 				v0 = UVHelper.getMinV(textureatlassprite1);
 				u1 = u0;
-//			    v1 = textureatlassprite1.getInterpolatedV(16.0D);
-//			    u2 = textureatlassprite1.getInterpolatedU(16.0D);
 				v1 = UVHelper.getMaxV(textureatlassprite1);
 				u2 = UVHelper.getMaxU(textureatlassprite1);
 				v2 = v1;
@@ -397,385 +573,110 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			}
 		} else {
 			TextureAtlasSprite textureatlassprite = atextureatlassprite[1];
-			float f20 = (float) MathHelper.atan2(flow.z, flow.x) - ((float) Math.PI / 2F);
-			float f21 = MathHelper.sin(f20) * 0.25F;
-			float f22 = MathHelper.cos(f20) * 0.25F;
-//		    float f23 = 8.0F;
-			u0 = textureatlassprite.getInterpolatedU((double) (8.0F + (-f22 - f21) * 16.0F));
-			v0 = textureatlassprite.getInterpolatedV((double) (8.0F + (-f22 + f21) * 16.0F));
-			u1 = textureatlassprite.getInterpolatedU((double) (8.0F + (-f22 + f21) * 16.0F));
-			v1 = textureatlassprite.getInterpolatedV((double) (8.0F + (f22 + f21) * 16.0F));
-			u2 = textureatlassprite.getInterpolatedU((double) (8.0F + (f22 + f21) * 16.0F));
-			v2 = textureatlassprite.getInterpolatedV((double) (8.0F + (f22 - f21) * 16.0F));
-			u3 = textureatlassprite.getInterpolatedU((double) (8.0F + (f22 - f21) * 16.0F));
-			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-f22 - f21) * 16.0F));
+			float magicAtan2Flow = (float) MathHelper.atan2(flowVec.z, flowVec.x) - ((float) Math.PI / 2F);
+			float sinMagicAtan2Flow = MathHelper.sin(magicAtan2Flow) * 0.25F;
+			float cosMagicAtan2Flow = MathHelper.cos(magicAtan2Flow) * 0.25F;
+			u0 = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
+			v0 = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
+			u1 = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
+			v1 = textureatlassprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
+			u2 = textureatlassprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
+			v2 = textureatlassprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
+			u3 = textureatlassprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
+			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
 		}
 
-		int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
-		int skyLight = combinedLightUpMax >> 16 & '\uffff';
-		int blockLight = combinedLightUpMax & '\uffff';
-		if (!colors()) {
-			float r = 1.0F * red;
-			float g = 1.0F * green;
-			float b = 1.0F * blue;
-			bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r, g, b, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 0.0D, y + fluidHeightS, z + 1.0D).color(r, g, b, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r, g, b, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightE, z + 0.0D).color(r, g, b, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight, blockLight).endVertex();
-			if (state.shouldRenderSides(worldIn, pos.up())) {
-				bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r, g, b, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightS, z + 0.0D).color(r, g, b, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r, g, b, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 0.0D, y + fluidHeightE, z + 1.0D).color(r, g, b, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			}
-		} else {
-			float r0 = 1.0F * red;
-			float g0 = 1.0F * green;
-			float b0 = 1.0F * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = 1.0F * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = 1.0F * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = 1.0F * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = 1.0F * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = 1.0F * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = 1.0F * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = 1.0F * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = 1.0F * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = 1.0F * ((colorE) & 255) / 255.0F;
-			bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r0, g0, b0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 0.0D, y + fluidHeightS, z + 1.0D).color(r1, g1, b1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r2, g2, b2, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight, blockLight).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightE, z + 0.0D).color(r3, g3, b3, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight, blockLight).endVertex();
-			if (state.shouldRenderSides(worldIn, pos.up())) {
-				bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r0, g0, b0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightS, z + 0.0D).color(r3, g3, b3, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r2, g2, b2, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight, blockLight).endVertex();
-				bufferBuilder.pos(x + 0.0D, y + fluidHeightE, z + 1.0D).color(r1, g1, b1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight, blockLight).endVertex();
-			}
+		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
+		final int blockLight0 = combinedLightUpMax0 & '\uffff';
+		final int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
+		final int blockLight1 = combinedLightUpMax1 & '\uffff';
+		final int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
+		final int blockLight2 = combinedLightUpMax2 & '\uffff';
+		final int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
+		final int blockLight3 = combinedLightUpMax3 & '\uffff';
+
+		buffer.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(red0, green0, blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
+		buffer.pos(x + 0.0D, y + fluidHeightSouth, z + 1.0D).color(red1, green1, blue1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight1, blockLight1).endVertex();
+		buffer.pos(x + 1.0D, y + fluidHeightEastSouth, z + 1.0D).color(red2, green2, blue2, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight2, blockLight2).endVertex();
+		buffer.pos(x + 1.0D, y + fluidHeightEast, z + 0.0D).color(red3, green3, blue3, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight3, blockLight3).endVertex();
+		if (shouldRenderUpUndersideFace) {
+			buffer.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(red0, green0, blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
+			buffer.pos(x + 1.0D, y + fluidHeightEast, z + 0.0D).color(red3, green3, blue3, 1.0F).tex((double) u3, (double) v3).lightmap(skyLight3, blockLight3).endVertex();
+			buffer.pos(x + 1.0D, y + fluidHeightEastSouth, z + 1.0D).color(red2, green2, blue2, 1.0F).tex((double) u2, (double) v2).lightmap(skyLight2, blockLight2).endVertex();
+			buffer.pos(x + 0.0D, y + fluidHeightSouth, z + 1.0D).color(red1, green1, blue1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight1, blockLight1).endVertex();
 		}
+		return true;
 	}
 
-	public void renderUpSmooth(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder bufferBuilder, final IFluidState state, final TextureAtlasSprite[] atextureatlassprite, final float red, final float green, final float blue, final double fluidHeight, final double fluidHeightS, final double fluidHeightES, final double fluidHeightE, final double x, final double y, final double z, final Vec3d flow, final boolean isLava) {
-		float u0;
-		float u1;
-		float u2;
-		float u3;
-		float v0;
-		float v1;
-		float v2;
-		float v3;
-		if (flow.x == 0.0D && flow.z == 0.0D) {
-			TextureAtlasSprite textureatlassprite1 = atextureatlassprite[0];
-			if (textures()) {
-				final int rand = (int) (MathHelper.getPositionRandom(pos) % 7);
-				switch (rand) {
-					default:
-					case 0:
-						u0 = UVHelper.getMinU(textureatlassprite1);
-						v0 = UVHelper.getMinV(textureatlassprite1);
-						v1 = UVHelper.getMaxV(textureatlassprite1);
-						u2 = UVHelper.getMaxU(textureatlassprite1);
-						break;
-					case 1:
-					case 2:
-						u0 = UVHelper.getMaxU(textureatlassprite1);
-						v0 = UVHelper.getMaxV(textureatlassprite1);
-						v1 = UVHelper.getMinV(textureatlassprite1);
-						u2 = UVHelper.getMinU(textureatlassprite1);
-						break;
-					case 3:
-					case 4:
-						u0 = UVHelper.getMinU(textureatlassprite1);
-						v0 = UVHelper.getMinV(textureatlassprite1);
-						v1 = UVHelper.getMaxV(textureatlassprite1);
-						u2 = UVHelper.getMaxU(textureatlassprite1);
-						break;
-					case 5:
-					case 6:
-						u0 = UVHelper.getMaxU(textureatlassprite1);
-						v0 = UVHelper.getMaxV(textureatlassprite1);
-						v1 = UVHelper.getMinV(textureatlassprite1);
-						u2 = UVHelper.getMinU(textureatlassprite1);
-						break;
-				}
-				u1 = u0;
-				v2 = v1;
-				u3 = u2;
-				v3 = v0;
-			} else {
-//				u0 = textureatlassprite1.getInterpolatedU(0.0D);
-//				v0 = textureatlassprite1.getInterpolatedV(0.0D);
-				u0 = UVHelper.getMinU(textureatlassprite1);
-				v0 = UVHelper.getMinV(textureatlassprite1);
-				u1 = u0;
-//			    v1 = textureatlassprite1.getInterpolatedV(16.0D);
-//			    u2 = textureatlassprite1.getInterpolatedU(16.0D);
-				v1 = UVHelper.getMaxV(textureatlassprite1);
-				u2 = UVHelper.getMaxU(textureatlassprite1);
-				v2 = v1;
-				u3 = u2;
-				v3 = v0;
-			}
-		} else {
-			TextureAtlasSprite textureatlassprite = atextureatlassprite[1];
-			float f20 = (float) MathHelper.atan2(flow.z, flow.x) - ((float) Math.PI / 2F);
-			float f21 = MathHelper.sin(f20) * 0.25F;
-			float f22 = MathHelper.cos(f20) * 0.25F;
-//		    float f23 = 8.0F;
-			u0 = textureatlassprite.getInterpolatedU((double) (8.0F + (-f22 - f21) * 16.0F));
-			v0 = textureatlassprite.getInterpolatedV((double) (8.0F + (-f22 + f21) * 16.0F));
-			u1 = textureatlassprite.getInterpolatedU((double) (8.0F + (-f22 + f21) * 16.0F));
-			v1 = textureatlassprite.getInterpolatedV((double) (8.0F + (f22 + f21) * 16.0F));
-			u2 = textureatlassprite.getInterpolatedU((double) (8.0F + (f22 + f21) * 16.0F));
-			v2 = textureatlassprite.getInterpolatedV((double) (8.0F + (f22 - f21) * 16.0F));
-			u3 = textureatlassprite.getInterpolatedU((double) (8.0F + (f22 - f21) * 16.0F));
-			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-f22 - f21) * 16.0F));
+	public boolean renderSide(
+			final BufferBuilder buffer, TextureAtlasSprite textureatlassprite,
+			final float red0, final float green0, final float blue0,
+			final float red1, final float green1, final float blue1,
+			final float red2, final float green2, final float blue2,
+			final float red3, final float green3, final float blue3,
+			final int facingIndex,
+			final double y, final float y0, final float y1,
+			final double x0, final double x1,
+			final double z0, final double z1,
+			final int combinedLightUpMax0, final int combinedLightUpMax1, final int combinedLightUpMax2, final int combinedLightUpMax3, final boolean shouldRenderOppositeFace
+	) {
+		final float u0 = UVHelper.getMinU(textureatlassprite);
+		final float u1 = textureatlassprite.getInterpolatedU(8.0D);
+		final float v0 = textureatlassprite.getInterpolatedV((double) ((1.0F - y0) * 16.0F * 0.5F));
+		final float v1 = textureatlassprite.getInterpolatedV((double) ((1.0F - y1) * 16.0F * 0.5F));
+		final float v2 = textureatlassprite.getInterpolatedV(8.0D);
+
+		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
+		final int blockLight0 = combinedLightUpMax0 & '\uffff';
+		final int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
+		final int blockLight1 = combinedLightUpMax1 & '\uffff';
+		final int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
+		final int blockLight2 = combinedLightUpMax2 & '\uffff';
+		final int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
+		final int blockLight3 = combinedLightUpMax3 & '\uffff';
+
+		final float diffuse = facingIndex < 2 ? 0.8F : 0.6F;
+		buffer.pos(x0, y + (double) y0, z0).color(diffuse * red0, diffuse * green0, diffuse * blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
+		buffer.pos(x1, y + (double) y1, z1).color(diffuse * red1, diffuse * green1, diffuse * blue1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight1, blockLight1).endVertex();
+		buffer.pos(x1, y + 0.0D, z1).color(diffuse * red2, diffuse * green2, diffuse * blue2, 1.0F).tex((double) u1, (double) v2).lightmap(skyLight2, blockLight2).endVertex();
+		buffer.pos(x0, y + 0.0D, z0).color(diffuse * red3, diffuse * green3, diffuse * blue3, 1.0F).tex((double) u0, (double) v2).lightmap(skyLight3, blockLight3).endVertex();
+		if (shouldRenderOppositeFace) {
+			buffer.pos(x0, y + 0.0D, z0).color(diffuse * red3, diffuse * green3, diffuse * blue3, 1.0F).tex((double) u0, (double) v2).lightmap(skyLight3, blockLight3).endVertex();
+			buffer.pos(x1, y + 0.0D, z1).color(diffuse * red2, diffuse * green2, diffuse * blue2, 1.0F).tex((double) u1, (double) v2).lightmap(skyLight2, blockLight2).endVertex();
+			buffer.pos(x1, y + (double) y1, z1).color(diffuse * red1, diffuse * green1, diffuse * blue1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight1, blockLight1).endVertex();
+			buffer.pos(x0, y + (double) y0, z0).color(diffuse * red0, diffuse * green0, diffuse * blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
 		}
-
-		final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
-		final int combinedLightUpMaxSouth = this.getCombinedLightUpMax(worldIn, pos.south());
-		final int combinedLightUpMaxSouthEast = this.getCombinedLightUpMax(worldIn, pos.south().east());
-		final int combinedLightUpMaxEast = this.getCombinedLightUpMax(worldIn, pos.east());
-
-		int skylightUp = combinedLightUpMax >> 16 & '\uffff';
-		int blocklightUp = combinedLightUpMax & '\uffff';
-		int skylightUpSouth = combinedLightUpMaxSouth >> 16 & '\uffff';
-		int blocklightUpSouth = combinedLightUpMaxSouth & '\uffff';
-		int skylightUpSouthEast = combinedLightUpMaxSouthEast >> 16 & '\uffff';
-		int blocklightUpSouthEast = combinedLightUpMaxSouthEast & '\uffff';
-		int skylightUpEast = combinedLightUpMaxEast >> 16 & '\uffff';
-		int blocklightUpEast = combinedLightUpMaxEast & '\uffff';
-
-		if (skylightUpSouth == 0) skylightUpSouth = skylightUp;
-		if (blocklightUpSouth == 0) blocklightUpSouth = blocklightUp;
-		if (skylightUpSouthEast == 0) skylightUpSouthEast = skylightUp;
-		if (blocklightUpSouthEast == 0) blocklightUpSouthEast = blocklightUp;
-		if (skylightUpEast == 0) skylightUpEast = skylightUp;
-		if (blocklightUpEast == 0) blocklightUpEast = blocklightUp;
-
-		if (!colors()) {
-			float r = 1.0F * red;
-			float g = 1.0F * green;
-			float b = 1.0F * blue;
-			bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r, g, b, 1.0F).tex((double) u0, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-			bufferBuilder.pos(x + 0.0D, y + fluidHeightS, z + 1.0D).color(r, g, b, 1.0F).tex((double) u1, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r, g, b, 1.0F).tex((double) u2, (double) v2).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightE, z + 0.0D).color(r, g, b, 1.0F).tex((double) u3, (double) v3).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-			if (state.shouldRenderSides(worldIn, pos.up())) {
-				bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r, g, b, 1.0F).tex((double) u0, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightS, z + 0.0D).color(r, g, b, 1.0F).tex((double) u3, (double) v3).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r, g, b, 1.0F).tex((double) u2, (double) v2).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-				bufferBuilder.pos(x + 0.0D, y + fluidHeightE, z + 1.0D).color(r, g, b, 1.0F).tex((double) u1, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			}
-		} else {
-			float r0 = 1.0F * red;
-			float g0 = 1.0F * green;
-			float b0 = 1.0F * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = 1.0F * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = 1.0F * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = 1.0F * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = 1.0F * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = 1.0F * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = 1.0F * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = 1.0F * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = 1.0F * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = 1.0F * ((colorE) & 255) / 255.0F;
-			bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r0, g0, b0, 1.0F).tex((double) u0, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-			bufferBuilder.pos(x + 0.0D, y + fluidHeightS, z + 1.0D).color(r1, g1, b1, 1.0F).tex((double) u1, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r2, g2, b2, 1.0F).tex((double) u2, (double) v2).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-			bufferBuilder.pos(x + 1.0D, y + fluidHeightE, z + 0.0D).color(r3, g3, b3, 1.0F).tex((double) u3, (double) v3).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-			if (state.shouldRenderSides(worldIn, pos.up())) {
-				bufferBuilder.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(r0, g0, b0, 1.0F).tex((double) u0, (double) v0).lightmap(skylightUp, blocklightUp).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightS, z + 0.0D).color(r3, g3, b3, 1.0F).tex((double) u3, (double) v3).lightmap(skylightUpEast, blocklightUpEast).endVertex();
-				bufferBuilder.pos(x + 1.0D, y + fluidHeightES, z + 1.0D).color(r2, g2, b2, 1.0F).tex((double) u2, (double) v2).lightmap(skylightUpSouthEast, blocklightUpSouthEast).endVertex();
-				bufferBuilder.pos(x + 0.0D, y + fluidHeightE, z + 1.0D).color(r1, g1, b1, 1.0F).tex((double) u1, (double) v1).lightmap(skylightUpSouth, blocklightUpSouth).endVertex();
-			}
-		}
+		return true;
 	}
 
-	public void renderDownFlat(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
-		float minU = UVHelper.getMinU(sprite);
-		float maxU = UVHelper.getMaxU(sprite);
-		float minV = UVHelper.getMinV(sprite);
-		float maxV = UVHelper.getMaxV(sprite);
-		final int combinedLightDownMax = this.getCombinedLightDownMax(worldIn, pos);
-		int skyLight = combinedLightDownMax >> 16 & '\uffff';
-		int blockLight = combinedLightDownMax & '\uffff';
-		if (!colors()) {
-			float r = 0.5F * red;
-			float g = 0.5F * green;
-			float b = 0.5F * blue;
-			bufferBuilder
-					.pos(x, y, z + 1.0D)
-					.color(r, g, b, 1.0F)
-					.tex((double) minU, (double) maxV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x, y, z)
-					.color(r, g, b, 1.0F)
-					.tex((double) minU, (double) minV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z)
-					.color(r, g, b, 1.0F)
-					.tex((double) maxU, (double) minV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z + 1.0D)
-					.color(r, g, b, 1.0F)
-					.tex((double) maxU, (double) maxV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-		} else {
-			float r0 = 0.5F * red;
-			float g0 = 0.5F * green;
-			float b0 = 0.5F * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = 0.5F * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = 0.5F * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = 0.5F * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = 0.5F * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = 0.5F * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = 0.5F * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = 0.5F * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = 0.5F * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = 0.5F * ((colorE) & 255) / 255.0F;
-			bufferBuilder
-					.pos(x, y, z + 1.0D)
-					.color(r0, g0, b0, 1.0F)
-					.tex((double) minU, (double) maxV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x, y, z)
-					.color(r1, g1, b1, 1.0F)
-					.tex((double) minU, (double) minV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z)
-					.color(r2, g2, b2, 1.0F)
-					.tex((double) maxU, (double) minV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z + 1.0D)
-					.color(r3, g3, b3, 1.0F)
-					.tex((double) maxU, (double) maxV)
-					.lightmap(skyLight, blockLight)
-					.endVertex();
-		}
-	}
+	public boolean renderDown(
+			final int downCombinedLightUpMax0, final int downCombinedLightUpMax1, final int downCombinedLightUpMax2, final int downCombinedLightUpMax3,
+			final BufferBuilder buffer, final TextureAtlasSprite textureAtlasSprite,
+			final float red0, final float green0, final float blue0,
+			final float red1, final float green1, final float blue1,
+			final float red2, final float green2, final float blue2,
+			final float red3, final float green3, final float blue3,
+			final double x, final double y, final double z
+	) {
+		final float minU = UVHelper.getMinU(textureAtlasSprite);
+		final float maxU = UVHelper.getMaxU(textureAtlasSprite);
+		final float minV = UVHelper.getMinV(textureAtlasSprite);
+		final float maxV = UVHelper.getMaxV(textureAtlasSprite);
+		final int skyLight0 = downCombinedLightUpMax0 >> 16 & '\uffff';
+		final int blockLight0 = downCombinedLightUpMax0 & '\uffff';
 
-	public void renderDownSmooth(final BufferBuilder bufferBuilder, final TextureAtlasSprite sprite, final float red, final float green, final float blue, final double x, final double y, final double z, final IWorldReader worldIn, final BlockPos pos, final boolean isLava) {
-		float minU = UVHelper.getMinU(sprite);
-		float maxU = UVHelper.getMaxU(sprite);
-		float minV = UVHelper.getMinV(sprite);
-		float maxV = UVHelper.getMaxV(sprite);
+		final int skyLight1 = downCombinedLightUpMax1 >> 16 & '\uffff';
+		final int blockLight1 = downCombinedLightUpMax1 & '\uffff';
+		final int skyLight2 = downCombinedLightUpMax2 >> 16 & '\uffff';
+		final int blockLight2 = downCombinedLightUpMax2 & '\uffff';
+		final int skyLight3 = downCombinedLightUpMax3 >> 16 & '\uffff';
+		final int blockLight3 = downCombinedLightUpMax3 & '\uffff';
 
-		final int combinedLightDownMax = this.getCombinedLightDownMax(worldIn, pos);
-		final int combinedLightDownMaxSouth = this.getCombinedLightDownMax(worldIn, pos.south());
-		final int combinedLightDownMaxSouthEast = this.getCombinedLightDownMax(worldIn, pos.south().east());
-		final int combinedLightDownMaxEast = this.getCombinedLightDownMax(worldIn, pos);
-
-		int skylightDown = combinedLightDownMax >> 16 & '\uffff';
-		int blocklightDown = combinedLightDownMax & '\uffff';
-		int skylightDownSouth = combinedLightDownMaxSouth >> 16 & '\uffff';
-		int blocklightDownSouth = combinedLightDownMaxSouth & '\uffff';
-		int skylightDownSouthEast = combinedLightDownMaxSouthEast >> 16 & '\uffff';
-		int blocklightDownSouthEast = combinedLightDownMaxSouthEast & '\uffff';
-		int skylightDownEast = combinedLightDownMaxEast >> 16 & '\uffff';
-		int blocklightDownEast = combinedLightDownMaxEast & '\uffff';
-
-		if (!colors()) {
-			float r = 0.5F * red;
-			float g = 0.5F * green;
-			float b = 0.5F * blue;
-			bufferBuilder
-					.pos(x, y, z + 1.0D)
-					.color(r, g, b, 1.0F)
-					.tex((double) minU, (double) maxV)
-					.lightmap(skylightDown, blocklightDown)
-					.endVertex();
-			bufferBuilder
-					.pos(x, y, z)
-					.color(r, g, b, 1.0F)
-					.tex((double) minU, (double) minV)
-					.lightmap(skylightDownSouth, blocklightDownSouth)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z)
-					.color(r, g, b, 1.0F)
-					.tex((double) maxU, (double) minV)
-					.lightmap(skylightDownSouthEast, blocklightDownSouthEast)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z + 1.0D)
-					.color(r, g, b, 1.0F)
-					.tex((double) maxU, (double) maxV)
-					.lightmap(skylightDownEast, blocklightDownEast)
-					.endVertex();
-		} else {
-			float r0 = 0.5F * red;
-			float g0 = 0.5F * green;
-			float b0 = 0.5F * blue;
-			final int colorS = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south());
-			float r1 = 0.5F * ((colorS >> 16) & 255) / 255.0F;
-			float g1 = 0.5F * ((colorS >> 8) & 255) / 255.0F;
-			float b1 = 0.5F * ((colorS) & 255) / 255.0F;
-			final int colorSE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.south().east());
-			float r2 = 0.5F * ((colorSE >> 16) & 255) / 255.0F;
-			float g2 = 0.5F * ((colorSE >> 8) & 255) / 255.0F;
-			float b2 = 0.5F * ((colorSE) & 255) / 255.0F;
-			final int colorE = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, pos.east());
-			float r3 = 0.5F * ((colorE >> 16) & 255) / 255.0F;
-			float g3 = 0.5F * ((colorE >> 8) & 255) / 255.0F;
-			float b3 = 0.5F * ((colorE) & 255) / 255.0F;
-			bufferBuilder
-					.pos(x, y, z + 1.0D)
-					.color(r0, g0, b0, 1.0F)
-					.tex((double) minU, (double) maxV)
-					.lightmap(skylightDown, blocklightDown)
-					.endVertex();
-			bufferBuilder
-					.pos(x, y, z)
-					.color(r1, g1, b1, 1.0F)
-					.tex((double) minU, (double) minV)
-					.lightmap(skylightDownSouth, blocklightDownSouth)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z)
-					.color(r2, g2, b2, 1.0F)
-					.tex((double) maxU, (double) minV)
-					.lightmap(skylightDownSouthEast, blocklightDownSouthEast)
-					.endVertex();
-			bufferBuilder
-					.pos(x + 1.0D, y, z + 1.0D)
-					.color(r3, g3, b3, 1.0F)
-					.tex((double) maxU, (double) maxV)
-					.lightmap(skylightDownEast, blocklightDownEast)
-					.endVertex();
-		}
-	}
-
-	public int getCombinedLightDownMax(IWorldReader reader, BlockPos pos) {
-		int i = reader.getCombinedLight(pos, 0);
-		int j = reader.getCombinedLight(pos.down(), 0);
-		int k = i & 255;
-		int l = j & 255;
-		int i1 = i >> 16 & 255;
-		int j1 = j >> 16 & 255;
-		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
+		buffer.pos(x, y, z + 1.0D).color(0.5F * red0, 0.5F * green0, 0.5F * blue0, 1.0F).tex((double) minU, (double) maxV).lightmap(skyLight0, blockLight0).endVertex();
+		buffer.pos(x, y, z).color(0.5F * red1, 0.5F * green1, 0.5F * blue1, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight1, blockLight1).endVertex();
+		buffer.pos(x + 1.0D, y, z).color(0.5F * red2, 0.5F * green2, 0.5F * blue2, 1.0F).tex((double) maxU, (double) minV).lightmap(skyLight2, blockLight2).endVertex();
+		buffer.pos(x + 1.0D, y, z + 1.0D).color(0.5F * red3, 0.5F * green3, 0.5F * blue3, 1.0F).tex((double) maxU, (double) maxV).lightmap(skyLight3, blockLight3).endVertex();
+		return true;
 	}
 
 	@Nonnull
@@ -784,15 +685,15 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	public boolean smoothLighting() {
-		return true;
+		return Config.smoothFluidLighting;
 	}
 
 	public boolean colors() {
-		return true;
+		return Config.smoothFluidColors;
 	}
 
 	public boolean textures() {
-		return true;
+		return Config.naturalFluidTextures;
 	}
 
 }

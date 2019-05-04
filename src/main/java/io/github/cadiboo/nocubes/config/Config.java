@@ -20,9 +20,12 @@ public final class Config {
 
 	public static boolean renderSmoothTerrain = true;
 //	public static boolean renderSmoothLeaves = true;
+	public static boolean smoothFluidLighting = true;
+	public static boolean smoothFluidColors = true;
+	public static boolean naturalFluidTextures = true;
 
 	public static Set<String> terrainSmoothable = Sets.newHashSet();
-	//	public static Set<String> leavesSmoothable = Sets.newHashSet();
+//	public static Set<String> leavesSmoothable = Sets.newHashSet();
 	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.OneBlock;
 	public static MeshGenerator terrainMeshGenerator = MeshGenerator.SurfaceNets;
 	public static boolean terrainCollisions = false;
@@ -30,6 +33,9 @@ public final class Config {
 	public static void bakeClient() {
 		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
 //		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
+		smoothFluidLighting = ConfigHolder.CLIENT.smoothFluidLighting.get();
+		smoothFluidColors = ConfigHolder.CLIENT.smoothFluidColors.get();
+		naturalFluidTextures = ConfigHolder.CLIENT.naturalFluidTextures.get();
 	}
 
 	public static void bakeServer() {
@@ -64,6 +70,9 @@ public final class Config {
 
 		public ForgeConfigSpec.BooleanValue renderSmoothTerrain;
 //		public ForgeConfigSpec.BooleanValue renderSmoothLeaves;
+		public ForgeConfigSpec.BooleanValue smoothFluidLighting;
+		public ForgeConfigSpec.BooleanValue smoothFluidColors;
+		public ForgeConfigSpec.BooleanValue naturalFluidTextures;
 
 		ClientConfig(final ForgeConfigSpec.Builder builder) {
 			builder.push("general");
@@ -75,6 +84,18 @@ public final class Config {
 //					.comment("renderSmoothLeaves")
 //					.translation(MOD_ID + ".config.renderSmoothLeaves")
 //					.define("renderSmoothLeaves", true);
+			smoothFluidLighting = builder
+					.comment("smoothFluidLighting")
+					.translation(MOD_ID + ".config.smoothFluidLighting")
+					.define("smoothFluidLighting", true);
+			smoothFluidColors = builder
+					.comment("smoothFluidColors")
+					.translation(MOD_ID + ".config.smoothFluidColors")
+					.define("smoothFluidColors", true);
+			naturalFluidTextures = builder
+					.comment("naturalFluidTextures")
+					.translation(MOD_ID + ".config.naturalFluidTextures")
+					.define("naturalFluidTextures", true);
 			builder.pop();
 		}
 
@@ -83,7 +104,7 @@ public final class Config {
 	public static class ServerConfig {
 
 		public ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
-		//		public ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
+//		public ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
 		public ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
 		public ForgeConfigSpec.ConfigValue<MeshGenerator> terrainMeshGenerator;
 		public ForgeConfigSpec.BooleanValue terrainCollisions;
@@ -101,7 +122,7 @@ public final class Config {
 			extendFluidsRange = builder
 					.comment("extendFluidsRange")
 					.translation(MOD_ID + ".config.extendFluidsRange")
-					.defineEnum("extendFluidsRange", ExtendFluidsRange.Off);
+					.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 			terrainMeshGenerator = builder
 					.comment("terrainMeshGenerator")
 					.translation(MOD_ID + ".config.terrainMeshGenerator")
