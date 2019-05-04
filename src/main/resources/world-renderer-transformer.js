@@ -34,15 +34,19 @@ function initializeCoreMod() {
 					var instructions = method.instructions;
 
 					log("Injecting hooks...");
+					var hasFinished = false;
 					try {
 						start("injectRenderBlockDamageHook");
 						injectRenderBlockDamageHook(instructions);
 						finish();
-					} catch (exception) {
-						var name = currentlyRunning;
-						finish();
-						log("Caught exception from " + name);
-						throw exception;
+						hasFinished = true;
+					} finally {
+						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+						if(!hasFinished) {
+							var name = currentlyRunning;
+							finish();
+							log("Caught exception from " + name);
+						}
 					}
 					log("Successfully injected hooks!");
 					break;

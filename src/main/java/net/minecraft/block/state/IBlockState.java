@@ -384,4 +384,15 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
 		return;
 	}
 
+   /**
+	 * does NOT take into account whether NoCubes is enabled or not
+	 */
+	default boolean nocubes_isLeavesSmoothable() {
+		return false;
+	}
+
+	default void nocubes_setLeavesSmoothable(final boolean isLeavesSmoothable) {
+		return;
+	}
+
 }

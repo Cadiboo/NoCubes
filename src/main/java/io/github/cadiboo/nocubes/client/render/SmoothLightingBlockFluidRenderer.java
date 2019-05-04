@@ -33,7 +33,10 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 	@Override
 	public boolean render(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
-//		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+
+		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
+
+		//		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		try {
 			boolean isLava = state.isTagged(FluidTags.LAVA);
 

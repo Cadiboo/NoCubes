@@ -16,6 +16,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_C;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_K;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_N;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_O;
@@ -32,6 +33,8 @@ public final class ClientProxy implements IProxy {
 	public static final KeyBinding toggleEnabled = new KeyBinding(MOD_ID + ".key.toggleEnabled", GLFW_KEY_O, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", GLFW_KEY_P, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
+
+	public static final KeyBinding tempToggleCollisions = new KeyBinding(MOD_ID + ".key.tempToggleCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
 
 	private static final MethodHandle WorldRenderer_markBlocksForUpdate;
 

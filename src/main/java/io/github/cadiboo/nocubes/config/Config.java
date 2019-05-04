@@ -25,6 +25,7 @@ public final class Config {
 	//	public static Set<String> leavesSmoothable = Sets.newHashSet();
 	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.OneBlock;
 	public static MeshGenerator terrainMeshGenerator = MeshGenerator.SurfaceNets;
+	public static boolean terrainCollisions = false;
 
 	public static void bakeClient() {
 		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
@@ -36,6 +37,7 @@ public final class Config {
 //		leavesSmoothable = Sets.newHashSet(ConfigHolder.SERVER.leavesSmoothable.get());
 		extendFluidsRange = ConfigHolder.SERVER.extendFluidsRange.get();
 		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
+		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
 	}
 
 	public static class ConfigHolder {
@@ -84,6 +86,7 @@ public final class Config {
 		//		public ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
 		public ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
 		public ForgeConfigSpec.ConfigValue<MeshGenerator> terrainMeshGenerator;
+		public ForgeConfigSpec.BooleanValue terrainCollisions;
 
 		ServerConfig(ForgeConfigSpec.Builder builder) {
 			builder.push("general");
@@ -103,6 +106,10 @@ public final class Config {
 					.comment("terrainMeshGenerator")
 					.translation(MOD_ID + ".config.terrainMeshGenerator")
 					.defineEnum("terrainMeshGenerator", MeshGenerator.SurfaceNets);
+			terrainCollisions = builder
+					.comment("terrainCollisions")
+					.translation(MOD_ID + ".config.terrainCollisions")
+					.define("terrainCollisions", false);
 			builder.pop();
 		}
 

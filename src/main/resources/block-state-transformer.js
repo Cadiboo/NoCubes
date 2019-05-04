@@ -24,11 +24,39 @@ function initializeCoreMod() {
 				));
 				log("Finished adding Field nocubes_isTerrainSmoothable");
 
+				log("Adding Field nocubes_isLeavesSmoothable");
+				classNode.fields.add(new FieldNode(
+//					final int access,
+					ACC_PUBLIC,
+//					final String name,
+					"nocubes_isLeavesSmoothable",
+//					final String descriptor,
+					"Z",
+//					final String signature,
+					null,
+//					final Object value
+					false
+				));
+				log("Finished adding Field nocubes_isTerrainSmoothable");
+
 				var methods = classNode.methods;
 
 				log("Adding methods...");
-				methods.add(make_nocubes_isTerrainSmoothable());
-				methods.add(make_nocubes_setTerrainSmoothable());
+				{
+					start("Adding make_nocubes_isTerrainSmoothable");
+					methods.add(make_nocubes_isTerrainSmoothable());
+					finish();
+					start("Adding make_nocubes_setTerrainSmoothable");
+					methods.add(make_nocubes_setTerrainSmoothable());
+					finish();
+
+					start("Adding make_nocubes_isLeavesSmoothable");
+					methods.add(make_nocubes_isLeavesSmoothable());
+					finish();
+					start("Adding make_nocubes_setLeavesSmoothable");
+					methods.add(make_nocubes_setLeavesSmoothable());
+					finish();
+				}
 				log("Finished adding methods");
 
 				return classNode;
@@ -47,6 +75,7 @@ function initializeCoreMod() {
 
 //// access flags 0x2
 //  private Z nocubes_isTerrainSmoothable
+//  private Z nocubes_isLeavesSmoothable
 //
 //  // access flags 0x1
 //  public nocubes_isTerrainSmoothable()Z
@@ -67,6 +96,34 @@ function initializeCoreMod() {
 //    ALOAD 0
 //    ILOAD 1
 //    PUTFIELD net/minecraft/block/state/BlockState.nocubes_isTerrainSmoothable : Z
+//   L1
+//    LINENUMBER 33 L1
+//    RETURN
+//   L2
+//    LOCALVARIABLE this Lnet/minecraft/block/state/BlockState; L0 L2 0
+//    LOCALVARIABLE isTerrainSmoothable Z L0 L2 1
+//    MAXSTACK = 2
+//    MAXLOCALS = 2
+//
+//  // access flags 0x1
+//  public nocubes_isLeavesSmoothable()Z
+//   L0make_nocubes_setLeavesSmoothable
+//    LINENUMBER 27 L0
+//    ALOAD 0
+//    GETFIELD net/minecraft/block/state/BlockState.nocubes_isLeavesSmoothable : Z
+//    IRETURN
+//   L1
+//    LOCALVARIABLE this Lnet/minecraft/block/state/BlockState; L0 L1 0
+//    MAXSTACK = 1
+//    MAXLOCALS = 1
+//
+//  // access flags 0x1
+//  public nocubes_setLeavesSmoothable(Z)V
+//   L0
+//    LINENUMBER 32 L0
+//    ALOAD 0
+//    ILOAD 1
+//    PUTFIELD net/minecraft/block/state/BlockState.nocubes_isLeavesSmoothable : Z
 //   L1
 //    LINENUMBER 33 L1
 //    RETURN
@@ -122,6 +179,51 @@ function make_nocubes_setTerrainSmoothable() {
 	method.instructions.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	method.instructions.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_newIsTerrainSmoothable));
 	method.instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockState", "nocubes_isTerrainSmoothable", "Z"));
+	method.instructions.add(new InsnNode(RETURN));
+
+	return method;
+
+}
+
+function make_nocubes_isLeavesSmoothable() {
+
+	var method = new MethodNode(
+//		final int access,
+		ACC_PUBLIC,
+//		final String name,
+		"nocubes_isLeavesSmoothable",
+//		final String descriptor,
+		"()Z",
+//		final String signature,
+		null,
+//		final String[] exceptions
+		null
+	);
+	method.instructions.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	method.instructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/state/BlockState", "nocubes_isLeavesSmoothable", "Z"));
+	method.instructions.add(new InsnNode(IRETURN));
+
+	return method;
+
+}
+
+function make_nocubes_setLeavesSmoothable() {
+
+	var method = new MethodNode(
+//		final int access,
+		ACC_PUBLIC,
+//		final String name,
+		"nocubes_setLeavesSmoothable",
+//		final String descriptor,
+		"(Z)V",
+//		final String signature,
+		null,
+//		final String[] exceptions
+		null
+	);
+	method.instructions.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	method.instructions.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_newIsLeavesSmoothable));
+	method.instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/state/BlockState", "nocubes_isLeavesSmoothable", "Z"));
 	method.instructions.add(new InsnNode(RETURN));
 
 	return method;
@@ -449,4 +551,5 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 // Local variable indexes
 var ALOCALVARIABLE_this = 0;
 var ILOCALVARIABLE_newIsTerrainSmoothable = 1;
+var ILOCALVARIABLE_newIsLeavesSmoothable = 1;
 

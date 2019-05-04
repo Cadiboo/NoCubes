@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.block.BlockDirtSnowy;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.init.Blocks;
@@ -92,6 +93,7 @@ public final class NoCubes {
 	public void onLoadComplete(final FMLLoadCompleteEvent event) {
 		{
 			Blocks.GRASS_BLOCK.getDefaultState().nocubes_setTerrainSmoothable(true);
+			Blocks.GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true).nocubes_setTerrainSmoothable(true);
 			Blocks.DIRT.getDefaultState().nocubes_setTerrainSmoothable(true);
 			Blocks.SAND.getDefaultState().nocubes_setTerrainSmoothable(true);
 			Blocks.GRAVEL.getDefaultState().nocubes_setTerrainSmoothable(true);
@@ -102,6 +104,7 @@ public final class NoCubes {
 			Blocks.ANDESITE.getDefaultState().nocubes_setTerrainSmoothable(true);
 			Blocks.COAL_ORE.getDefaultState().nocubes_setTerrainSmoothable(true);
 			Blocks.IRON_ORE.getDefaultState().nocubes_setTerrainSmoothable(true);
+			Blocks.SNOW.getDefaultState().nocubes_setTerrainSmoothable(true);
 		}
 		PROXY.replaceFluidRendererCauseImBored();
 	}

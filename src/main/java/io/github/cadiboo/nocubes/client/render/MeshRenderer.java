@@ -1,8 +1,9 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.BiomeGrassColorInfo;
+import io.github.cadiboo.nocubes.client.BlockColorInfo;
+import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
+import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
@@ -32,6 +33,7 @@ import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReaderBase;
+import net.minecraft.world.biome.BiomeColors;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -64,27 +66,31 @@ public final class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final SmoothableCache terrainSmoothableCache,
-			@Nonnull final LazyBiomeGrassColorCache blockColorsCache
+			@Nonnull final SmoothableCache terrainSmoothableCache
 	) {
 		if (Config.renderSmoothTerrain) {
-			renderMesh(
-					renderChunk,
-					generator,
-					compiledChunk,
-					renderChunkPosition,
-					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					blockAccess,
-					stateCache,
-					blockRendererDispatcher,
-					random,
-					pooledPackedLightCache,
-					blockColorsCache,
-					MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, terrainSmoothableCache, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
-					TERRAIN_SMOOTHABLE,
-					pooledMutableBlockPos, usedBlockRenderLayers, false
-			);
+			try (final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR)) {
+				renderMesh(
+						renderChunk,
+						generator,
+						compiledChunk,
+						renderChunkPosition,
+						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+						blockAccess,
+						stateCache,
+						blockRendererDispatcher,
+						random,
+						pooledPackedLightCache,
+						blockColorsCache,
+						MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, terrainSmoothableCache, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
+						IIsSmoothable.TERRAIN_SMOOTHABLE, //TODO: remove?
+						terrainSmoothableCache,
+						pooledMutableBlockPos, usedBlockRenderLayers, false
+				);
+			}
 		}
+
+//		try (final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR)) {
 
 //			switch (Config.CLIENT.smoothLeavesLevel) {
 //				case SEPARATE:
@@ -151,9 +157,10 @@ public final class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
+			@Nonnull final LazyBlockColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
-			@Nonnull final IIsSmoothable isStateSmoothable,
+			@Nonnull final IIsSmoothable isSmoothable,
+			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			final boolean renderOppositeSides
@@ -169,6 +176,7 @@ public final class MeshRenderer {
 							continue;
 						}
 
+						ModProfiler.get().end();
 						ModProfiler.get().start("prepareRenderFaces");
 
 						final int initialPosX = renderChunkPositionX + pos.x;
@@ -181,12 +189,11 @@ public final class MeshRenderer {
 								initialPosZ
 						);
 
-						//TODO use pos?
+						//TODO use pos? (I've forgotten what this is even about)
 						final byte relativePosX = ClientUtil.getRelativePos(renderChunkPositionX, initialPosX);
 						final byte relativePosY = ClientUtil.getRelativePos(renderChunkPositionY, initialPosY);
 						final byte relativePosZ = ClientUtil.getRelativePos(renderChunkPositionZ, initialPosZ);
 
-//						final IBlockState realState = blockAccess.getBlockState(pooledMutableBlockPos);
 						final IBlockState realState = stateCache.getBlockStates()[stateCache.getIndex(
 								relativePosX + 2,
 								relativePosY + 2,
@@ -196,12 +203,12 @@ public final class MeshRenderer {
 //							LogManager.getLogger("Cache Error").error("world blockstate != cache blockstate! (" + initialPosX + ", " + initialPosY + ", " + initialPosZ + "), (" + renderChunkPositionX + relativePosX + ", " + renderChunkPositionY + relativePosY + ", " + renderChunkPositionZ + relativePosZ + ")");
 //						}
 
-//						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, blockAccess, pooledMutableBlockPos, realState, isStateSmoothable, (byte) (relativePosX+ 1), (byte) (relativePosY+ 1), (byte) (relativePosZ+ 1));
-						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, pooledMutableBlockPos, realState, isStateSmoothable, relativePosX, relativePosY, relativePosZ);
+						ModProfiler.get().end();
+						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, pooledMutableBlockPos, realState, isSmoothable, smoothableCache, relativePosX, relativePosY, relativePosZ);
 						final BlockPos texturePos = texturePosAndState.getA();
 						final IBlockState textureState = texturePosAndState.getB();
 
-						ModProfiler.get().end();
+						ModProfiler.get().start("renderMesh");
 
 						try {
 							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, random, usedBlockRenderLayers, pooledPackedLightCache, blockColorsCache, renderOppositeSides, pos, faces, texturePos, textureState);
@@ -237,7 +244,7 @@ public final class MeshRenderer {
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final LazyBiomeGrassColorCache blockColorsCache,
+			@Nonnull final LazyBlockColorCache blockColorsCache,
 			final boolean renderOppositeSides,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
@@ -361,7 +368,7 @@ public final class MeshRenderer {
 
 							if (anyHasTintIndex) {
 								ModProfiler.get().end(); //TODO FIXME REMOVE
-								try (final BiomeGrassColorInfo biomeGrassColorInfo = BiomeGrassColorInfo.generateBiomeGrassColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+								try (final BlockColorInfo biomeGrassColorInfo = BlockColorInfo.generateBiomeGrassColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
 									colorRed0 = biomeGrassColorInfo.red0;
 									colorGreen0 = biomeGrassColorInfo.green0;
 									colorBlue0 = biomeGrassColorInfo.blue0;

@@ -17,7 +17,8 @@ public class BlockState extends AbstractStateHolder<Block, IBlockState> implemen
 
 	// ******** NoCubes Start ******** //
 
-	private boolean nocubes_isTerrainSmoothable = false;
+	public boolean nocubes_isTerrainSmoothable = false;
+	public boolean nocubes_isLeavesSmoothable = false;
 
 	/**
 	 * does NOT take into account whether NoCubes is enabled or not
@@ -30,6 +31,19 @@ public class BlockState extends AbstractStateHolder<Block, IBlockState> implemen
 	@Override
 	public void nocubes_setTerrainSmoothable(final boolean newIsTerrainSmoothable) {
 		this.nocubes_isTerrainSmoothable = newIsTerrainSmoothable;
+	}
+
+	/**
+	 * does NOT take into account whether NoCubes is enabled or not
+	 */
+	@Override
+	public boolean nocubes_isLeavesSmoothable() {
+		return this.nocubes_isLeavesSmoothable;
+	}
+
+	@Override
+	public void nocubes_setLeavesSmoothable(final boolean newIsLeavesSmoothable) {
+		this.nocubes_isLeavesSmoothable = newIsLeavesSmoothable;
 	}
 
 }

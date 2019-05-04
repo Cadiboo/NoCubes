@@ -1,7 +1,8 @@
 {
-	"RenderChunk#rebuildChunk Transformer": "render-chunk-transformer.js",
+	"RenderChunk Transformer": "render-chunk-transformer.js",
 	"IBlockState Transformer": "i-block-state-transformer.js",
 	"BlockState Transformer": "block-state-transformer.js",
 	"BlockFluidRenderer Transformer": "block-fluid-renderer-transformer.js",
-	"WorldRenderer Transformer": "world-renderer-transformer.js"
+	"WorldRenderer Transformer": "world-renderer-transformer.js",
+	"IWorldReaderBase Transformer": "i-world-reader-base-transformer.js"
 }

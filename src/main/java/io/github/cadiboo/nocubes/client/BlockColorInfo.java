@@ -11,9 +11,9 @@ import static net.minecraft.util.math.MathHelper.floor;
 /**
  * @author Cadiboo
  */
-public class BiomeGrassColorInfo implements AutoCloseable {
+public class BlockColorInfo implements AutoCloseable {
 
-	private static final ThreadLocal<BiomeGrassColorInfo> POOL = ThreadLocal.withInitial(() -> new BiomeGrassColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
+	private static final ThreadLocal<BlockColorInfo> POOL = ThreadLocal.withInitial(() -> new BlockColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
 
 	public float red0;
 	public float green0;
@@ -30,7 +30,7 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 
 	private boolean isReleased = true;
 
-	private BiomeGrassColorInfo(
+	private BlockColorInfo(
 			final float red0, final float green0, final float blue0,
 			final float red1, final float green1, final float blue1,
 			final float red2, final float green2, final float blue2,
@@ -50,8 +50,8 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 		this.blue3 = blue3;
 	}
 
-	public static BiomeGrassColorInfo generateBiomeGrassColorInfo(
-			@Nonnull final LazyBiomeGrassColorCache biomeGrassColorCache,
+	public static BlockColorInfo generateBiomeGrassColorInfo(
+			@Nonnull final LazyBlockColorCache biomeGrassColorCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
@@ -65,12 +65,12 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 		}
 	}
 
-	private static BiomeGrassColorInfo generateBiomeGrassColorInfo(
+	private static BlockColorInfo generateBiomeGrassColorInfo(
 			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
 			final int renderChunkPositionX,
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ,
-			@Nonnull final LazyBiomeGrassColorCache biomeGrassColorCache
+			@Nonnull final LazyBlockColorCache biomeGrassColorCache
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
@@ -196,14 +196,14 @@ public class BiomeGrassColorInfo implements AutoCloseable {
 		return (i0 >= i26) ? i0 : i26;
 	}
 
-	public static BiomeGrassColorInfo retain(
+	public static BlockColorInfo retain(
 			final float red0, final float green0, final float blue0,
 			final float red1, final float green1, final float blue1,
 			final float red2, final float green2, final float blue2,
 			final float red3, final float green3, final float blue3
 	) {
 
-		BiomeGrassColorInfo pooled = POOL.get();
+		BlockColorInfo pooled = POOL.get();
 
 		if (!pooled.isReleased) {
 			throw new IllegalStateException();

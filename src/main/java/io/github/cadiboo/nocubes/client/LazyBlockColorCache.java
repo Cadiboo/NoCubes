@@ -1,9 +1,12 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IWorldReader;
+import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.biome.BiomeColors;
+import net.minecraft.world.biome.BiomeColors.ColorResolver;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
@@ -11,35 +14,38 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class LazyBiomeGrassColorCache extends XYZCache implements AutoCloseable {
+public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
-	protected static final int[] EMPTY = new int[22 * 22 * 22];
-	private static final ThreadLocal<LazyBiomeGrassColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBiomeGrassColorCache(0, 0, 0));
+	private static final int[] EMPTY = new int[22 * 22 * 22];
+	private static final ThreadLocal<LazyBlockColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBlockColorCache(0, 0, 0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
 
 	private int renderChunkPosX;
 	private int renderChunkPosY;
 	private int renderChunkPosZ;
 	@Nonnull
-	private IWorldReader reader;
+	private IWorldReaderBase reader;
 	@Nonnull
 	private int[] cache;
+	@Nonnull
+	private ColorResolver colorResolver;
 
-	private LazyBiomeGrassColorCache(final int sizeX, final int sizeY, final int sizeZ) {
+	private LazyBlockColorCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new int[sizeX * sizeY * sizeZ];
 	}
 
 	@Nonnull
-	public static LazyBiomeGrassColorCache retain(
+	public static LazyBlockColorCache retain(
 			final int sizeX, final int sizeY, final int sizeZ,
-			@Nonnull final IWorldReader reader,
+			@Nonnull final IWorldReaderBase reader, @Nonnull final ColorResolver colorResolver,
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ
 	) {
 
-		final LazyBiomeGrassColorCache pooled = POOL.get();
+		final LazyBlockColorCache pooled = POOL.get();
 
 		pooled.reader = reader;
+		pooled.colorResolver = colorResolver;
 
 		pooled.renderChunkPosX = renderChunkPosX;
 		pooled.renderChunkPosY = renderChunkPosY;
@@ -63,6 +69,31 @@ public class LazyBiomeGrassColorCache extends XYZCache implements AutoCloseable 
 		}
 	}
 
+	private static int getColor(IWorldReaderBase worldIn, MutableBlockPos pos, ColorResolver resolver) {
+		int red = 0;
+		int green = 0;
+		int blue = 0;
+		int radius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
+		int area = (radius * 2 + 1) * (radius * 2 + 1);
+
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		int max = radius + 1;
+
+		for (int z = -radius; z < max; ++z) {
+			for (int x = -radius; x < max; ++x) {
+				pos.setPos(posX + x, posY, posZ + z);
+				int color = resolver.getColor(worldIn.getBiome(pos), pos);
+				red += (color & 0xFF0000) >> 16;
+				green += (color & '\uff00') >> 8;
+				blue += color & 0xFF;
+			}
+		}
+		return (red / area & 255) << 16 | (green / area & 255) << 8 | blue / area & 255;
+	}
+
 	@Override
 	public void close() {
 	}
@@ -70,14 +101,15 @@ public class LazyBiomeGrassColorCache extends XYZCache implements AutoCloseable 
 	public int get(final int x, final int y, final int z) {
 		int color = this.cache[getIndex(x, y, z)];
 		if (color == 0) {
-			color = BiomeColors.getGrassColor(
-					reader,
+			color = getColor(
+					this.reader,
 					MUTABLE_BLOCK_POS.get().setPos(
 							// -2 because offset
 							renderChunkPosX + x - 2,
 							renderChunkPosY + y - 2,
 							renderChunkPosZ + z - 2
-					)
+					),
+					this.colorResolver
 			);
 			this.cache[getIndex(x, y, z)] = color;
 			if (color == 0) LogManager.getLogger().error("BARRRF");

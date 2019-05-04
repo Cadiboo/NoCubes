@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientCacheUtil;
-import io.github.cadiboo.nocubes.client.LazyBiomeGrassColorCache;
+import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.Config;
@@ -33,6 +33,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
+import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
@@ -147,7 +148,7 @@ public final class RenderDispatcher {
 								CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)
 								: null
 		) {
-			try (final LazyBiomeGrassColorCache blockColorsCache = ClientCacheUtil.generateBiomeGrassColorCacheCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess)) {
+			try {
 				MeshRenderer.renderChunkMeshes(
 						renderChunk,
 						generator,
@@ -161,8 +162,7 @@ public final class RenderDispatcher {
 						blockRendererDispatcher,
 						random,
 						packedLightCache,
-						terrainSmoothableCache,
-						blockColorsCache
+						terrainSmoothableCache
 				);
 			} catch (ReportedException e) {
 				throw e;

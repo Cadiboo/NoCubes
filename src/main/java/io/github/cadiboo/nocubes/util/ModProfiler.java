@@ -31,23 +31,19 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 
 	public static void enableProfiling() {
 		profilersEnabled = true;
-		for (final ModProfiler profiler : PROFILERS) {
-			if (profiler == null) { //hmmm....
-				LogManager.getLogger("NoCubes Profiling").warn("Tried to enable null profiler!");
-				continue;
+		synchronized (PROFILERS) {
+			for (final ModProfiler profiler : PROFILERS) {
+				profiler.startProfiling(0);
 			}
-			profiler.startProfiling(0);
 		}
 	}
 
 	public static void disableProfiling() {
 		profilersEnabled = false;
-		for (final ModProfiler profiler : PROFILERS) {
-			if (profiler == null) { //hmmm....
-				LogManager.getLogger("NoCubes Profiling").warn("Tried to disable null profiler!");
-				continue;
+		synchronized (PROFILERS) {
+			for (final ModProfiler profiler : PROFILERS) {
+				profiler.stopProfiling();
 			}
-			profiler.stopProfiling();
 		}
 	}
 
@@ -69,13 +65,20 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 		if (!profilersEnabled) {
 			return;
 		}
+		if (shouldEndSection()) {
+			endSection();
+		}
+	}
+
+	//Stop crashes when profilers are enabled and disabled quickly
+	private boolean shouldEndSection() {
 		--sections;
 		if (sections < 0) {
 			sections = 0;
 			this.stopProfiling();
-			return;
+			return false;
 		}
-		endSection();
+		return true;
 	}
 
 	@Override

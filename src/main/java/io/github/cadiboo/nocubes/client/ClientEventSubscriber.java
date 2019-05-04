@@ -21,6 +21,7 @@ import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
@@ -61,6 +62,16 @@ public final class ClientEventSubscriber {
 		final boolean toggleTerrainSmoothableBlockStatePressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
 		final boolean toggleLeavesSmoothableBlockStatePressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
 		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
+
+		if (ClientProxy.tempToggleCollisions.isPressed()) {
+			if (!Config.terrainCollisions) {
+				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsEnabledWarning"));
+				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleCollisions.getKey().getTranslationKey())));
+			} else {
+				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisabled"));
+			}
+			Config.terrainCollisions = !Config.terrainCollisions;
+		}
 
 		if (toggleEnabledPressed || toggleTerrainSmoothableBlockStatePressed || toggleLeavesSmoothableBlockStatePressed || toggleProfilersPressed) {
 			if (toggleEnabledPressed) {
@@ -167,109 +178,112 @@ public final class ClientEventSubscriber {
 	protected static void renderProfilers() {
 		final Minecraft mc = Minecraft.getInstance();
 
-		for (int profilerIndex = 0; profilerIndex < ModProfiler.PROFILERS.size(); profilerIndex++) {
-			final ModProfiler profiler = ModProfiler.PROFILERS.get(profilerIndex);
-			List<Profiler.Result> list = profiler.getProfilingData("");
-			Profiler.Result profiler$result = list.remove(0);
-			GlStateManager.clear(256);
-			GlStateManager.matrixMode(5889);
-			GlStateManager.enableColorMaterial();
-			GlStateManager.loadIdentity();
-			GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
-			GlStateManager.matrixMode(5888);
-			GlStateManager.loadIdentity();
-			GlStateManager.scalef(2.5F, 2.5F, 1);
-			GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
-			GlStateManager.lineWidth(1.0F);
-			GlStateManager.disableTexture2D();
-			Tessellator tessellator = Tessellator.getInstance();
-			BufferBuilder bufferbuilder = tessellator.getBuffer();
-//			int i = 160;
-//			int j = this.displayWidth - 160 - 10;
-//			int k = this.displayHeight - 320;
-//			int j = mc.displayWidth - (profilerIndex % 2) * 160;
-//			int k = mc.displayHeight - (profilerIndex & 2) * 320;
-//			final int cx = 176 + (profilerIndex) * 50;
-//			final int cy = 80 + (profilerIndex & 2) * 320;
-			final int cx = 160 + 320 * (profilerIndex % 3);
-			final int cy = 80 + 320 * (profilerIndex / 3);
-			GlStateManager.enableBlend();
-			bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-			bufferbuilder.pos((double) ((float) cx - 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
-			bufferbuilder.pos((double) ((float) cx - 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
-			bufferbuilder.pos((double) ((float) cx + 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
-			bufferbuilder.pos((double) ((float) cx + 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
-			tessellator.draw();
-			GlStateManager.disableBlend();
-			double d0 = 0.0D;
+		synchronized (ModProfiler.PROFILERS) {
+			for (int profilerIndex = 0; profilerIndex < ModProfiler.PROFILERS.size(); profilerIndex++) {
+				final ModProfiler profiler = ModProfiler.PROFILERS.get(profilerIndex);
+				List<Profiler.Result> list = profiler.getProfilingData("");
+				Profiler.Result profiler$result = list.remove(0);
+				GlStateManager.clear(256);
+				GlStateManager.matrixMode(5889);
+				GlStateManager.enableColorMaterial();
+				GlStateManager.loadIdentity();
+				GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
+				GlStateManager.matrixMode(5888);
+				GlStateManager.loadIdentity();
+				GlStateManager.scalef(mc.mainWindow.getFramebufferWidth() / 1000F, mc.mainWindow.getFramebufferWidth() / 1000F, 1);
+				GlStateManager.translatef(5F, 5F, 0F);
+				GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
+				GlStateManager.lineWidth(1.0F);
+				GlStateManager.disableTexture2D();
+				Tessellator tessellator = Tessellator.getInstance();
+				BufferBuilder bufferbuilder = tessellator.getBuffer();
+//				int i = 160;
+//				int j = this.displayWidth - 160 - 10;
+//				int k = this.displayHeight - 320;
+//				int j = mc.displayWidth - (profilerIndex % 2) * 160;
+//				int k = mc.displayHeight - (profilerIndex & 2) * 320;
+//				final int cx = 176 + (profilerIndex) * 50;
+//				final int cy = 80 + (profilerIndex & 2) * 320;
+				final int cx = 160 + 320 * (profilerIndex % 3);
+				final int cy = 80 + 320 * (profilerIndex / 3);
+				GlStateManager.enableBlend();
+				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
+				tessellator.draw();
+				GlStateManager.disableBlend();
+				double d0 = 0.0D;
 
-			for (int l = 0; l < list.size(); ++l) {
-				Profiler.Result profiler$result1 = list.get(l);
-				int i11 = MathHelper.floor(profiler$result1.usePercentage / 4.0D) + 1;
-				bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
-				int j1 = profiler$result1.getColor();
-				int k1 = j1 >> 16 & 255;
-				int l1 = j1 >> 8 & 255;
-				int i2 = j1 & 255;
-				bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
+				for (int l = 0; l < list.size(); ++l) {
+					Profiler.Result profiler$result1 = list.get(l);
+					int i11 = MathHelper.floor(profiler$result1.usePercentage / 4.0D) + 1;
+					bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
+					int j1 = profiler$result1.getColor();
+					int k1 = j1 >> 16 & 255;
+					int l1 = j1 >> 8 & 255;
+					int i2 = j1 & 255;
+					bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
 
-				for (int j2 = i11; j2 >= 0; --j2) {
-					float f = (float) ((d0 + profiler$result1.usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
-					float f1 = MathHelper.sin(f) * 160.0F;
-					float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
-					bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
+					for (int j2 = i11; j2 >= 0; --j2) {
+						float f = (float) ((d0 + profiler$result1.usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
+						float f1 = MathHelper.sin(f) * 160.0F;
+						float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
+						bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
+					}
+
+					tessellator.draw();
+					bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
+
+					for (int i3 = i11; i3 >= 0; --i3) {
+						float f3 = (float) ((d0 + profiler$result1.usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
+						float f4 = MathHelper.sin(f3) * 160.0F;
+						float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
+						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
+						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5 + 10.0F), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
+					}
+
+					tessellator.draw();
+					d0 += profiler$result1.usePercentage;
 				}
 
-				tessellator.draw();
-				bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
+				DecimalFormat decimalformat = new DecimalFormat("##0.00");
+				GlStateManager.enableTexture2D();
+				String s11 = "";
 
-				for (int i3 = i11; i3 >= 0; --i3) {
-					float f3 = (float) ((d0 + profiler$result1.usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
-					float f4 = MathHelper.sin(f3) * 160.0F;
-					float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
-					bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
-					bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5 + 10.0F), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
+				if (!"unspecified".equals(profiler$result.profilerName)) {
+					s11 = s11 + "[0] ";
 				}
 
-				tessellator.draw();
-				d0 += profiler$result1.usePercentage;
-			}
-
-			DecimalFormat decimalformat = new DecimalFormat("##0.00");
-			GlStateManager.enableTexture2D();
-			String s11 = "";
-
-			if (!"unspecified".equals(profiler$result.profilerName)) {
-				s11 = s11 + "[0] ";
-			}
-
-			if (profiler$result.profilerName.isEmpty()) {
-				s11 = s11 + "ROOT ";
-			} else {
-				s11 = s11 + profiler$result.profilerName + ' ';
-			}
+				if (profiler$result.profilerName.isEmpty()) {
+					s11 = s11 + "ROOT ";
+				} else {
+					s11 = s11 + profiler$result.profilerName + ' ';
+				}
 
 //			int l2 = 16777215;
-			mc.fontRenderer.drawStringWithShadow(s11, (float) (cx - 160), (float) (cy - 80 - 16), 16777215);
-			s11 = decimalformat.format(profiler$result.totalUsePercentage) + "%";
-			mc.fontRenderer.drawStringWithShadow(s11, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s11)), (float) (cy - 80 - 16), 16777215);
+				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx - 160), (float) (cy - 80 - 16), 16777215);
+				s11 = decimalformat.format(profiler$result.totalUsePercentage) + "%";
+				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s11)), (float) (cy - 80 - 16), 16777215);
 
-			for (int k2 = 0; k2 < list.size(); ++k2) {
-				Profiler.Result profiler$result2 = list.get(k2);
-				StringBuilder stringbuilder = new StringBuilder();
+				for (int k2 = 0; k2 < list.size(); ++k2) {
+					Profiler.Result profiler$result2 = list.get(k2);
+					StringBuilder stringbuilder = new StringBuilder();
 
-				if ("unspecified".equals(profiler$result2.profilerName)) {
-					stringbuilder.append("[?] ");
-				} else {
-					stringbuilder.append("[").append(k2 + 1).append("] ");
+					if ("unspecified".equals(profiler$result2.profilerName)) {
+						stringbuilder.append("[?] ");
+					} else {
+						stringbuilder.append("[").append(k2 + 1).append("] ");
+					}
+
+					String s1 = stringbuilder.append(profiler$result2.profilerName).toString();
+					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
+					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
+					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
 				}
-
-				String s1 = stringbuilder.append(profiler$result2.profilerName).toString();
-				mc.fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
-				s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
-				mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
-				s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
-				mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
 			}
 		}
 	}
@@ -592,13 +606,9 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
-
-//		if (ModConfig.enableCollisions) {
-//
-//			event.setCanceled(true);
-//
-//		}
-
+		if (Config.terrainCollisions) {
+			event.setCanceled(true);
+		}
 	}
 
 }

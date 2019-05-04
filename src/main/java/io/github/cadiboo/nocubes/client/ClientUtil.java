@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -40,10 +41,24 @@ public final class ClientUtil {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
 			{+0, +1, +0},
-			{+1, +0, +0},
 			{-1, +0, +0},
-			{+0, +0, +1},
+			{+1, +0, +0},
 			{+0, +0, -1},
+			{+0, +0, +1},
+			// check 12 non-immediate, non-corner neighbours
+			{-1, -1, +0},
+			{-1, +0, -1},
+			{-1, +0, +1},
+			{-1, +1, +0},
+			{+0, -1, -1},
+			{+0, -1, +1},
+			// {+0, +0, +0},
+			{+0, +1, -1},
+			{+0, +1, +1},
+			{+1, -1, +0},
+			{+1, +0, -1},
+			{+1, +0, +1},
+			{+1, +1, +0},
 			// check 8 corner neighbours
 			{+1, +1, +1},
 			{+1, +1, -1},
@@ -53,22 +68,6 @@ public final class ClientUtil {
 			{+1, -1, -1},
 			{-1, -1, +1},
 			{-1, -1, -1},
-//			// check 6 immediate neighbours
-//			{0, -1, 0},
-//			{0, +1, 0},
-//			{-1, 0, 0},
-//			{+1, 0, 0},
-//			{0, 0, -1},
-//			{0, 0, +1},
-//			// check 8 corner neighbours
-//			{-1, -1, -1},
-//			{-1, -1, +1},
-//			{+1, -1, -1},
-//			{+1, -1, +1},
-//			{-1, +1, -1},
-//			{-1, +1, +1},
-//			{+1, +1, -1},
-//			{+1, +1, +1},
 	};
 
 	/**
@@ -160,6 +159,7 @@ public final class ClientUtil {
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
 			@Nonnull final IIsSmoothable isStateSmoothable,
+			@Nonnull final SmoothableCache smoothableCache,
 			final byte relativePosX, final byte relativePosY, final byte relativePosZ
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState")) {
@@ -178,29 +178,9 @@ public final class ClientUtil {
 
 			final IBlockState[] blockCacheArray = stateCache.getBlockStates();
 
-//			if (ModConfig.beautifyTexturesLevel == FANCY) {
-//
-//				for (int[] withOffset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
-//					if (tempState.getBlock() == Blocks.SNOW_LAYER) {
-//						textureState = tempState;
-//						texturePos = pooledMutableBlockPos.toImmutable();
-//						break;
-//					}
-//				}
-//
-//				for (int[] withOffset : OFFSETS_ORDERED) {
-//					final IBlockState tempState = cache.getBlockState(pooledMutableBlockPos.setPos(x + withOffset[0], y + withOffset[1], z + withOffset[2]));
-//					if (tempState.getBlock() == Blocks.GRASS) {
-//						textureState = tempState;
-//						texturePos = pooledMutableBlockPos.toImmutable();
-//						break;
-//					}
-//				}
-//			}
-
 			IBlockState textureState = state;
 
+//			int[][] offsets = OFFSETS_ORDERED;
 			for (int[] offset : OFFSETS_ORDERED) {
 				final IBlockState tempState = blockCacheArray[stateCache.getIndex(
 						relativePosX + offset[0] + 2,
