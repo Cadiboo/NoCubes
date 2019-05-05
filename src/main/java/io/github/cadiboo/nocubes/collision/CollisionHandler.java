@@ -12,6 +12,8 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -62,15 +64,25 @@ public final class CollisionHandler {
 			return;
 		}
 
-		if (entityIn == null && !ModConfig.collisionsForNullEntities) {
-			AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+		if (entityIn == null) {
+			if (ModConfig.collisionsForNullEntities) {
+				addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+			} else {
+				AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+			}
 			return;
 		}
 
-//		StolenReposeCode.addCollisionBoxToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+		if (shouldApplyCollisons(entityIn)) {
+//		    StolenReposeCode.addCollisionBoxToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+			addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+		} else {
+			AddCollisionBoxToListHook.addCollisionBoxToListDefault(state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
+		}
+	}
 
-		addMeshCollisionBoxesToList(block, state, worldIn, pos, entityBox, collidingBoxes, entityIn, isActualState);
-
+	private static boolean shouldApplyCollisons(final Entity entity) {
+		return entity instanceof EntityPlayer || entity instanceof EntityItem;
 	}
 
 	private static void addMeshCollisionBoxesToList(Block block, IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {

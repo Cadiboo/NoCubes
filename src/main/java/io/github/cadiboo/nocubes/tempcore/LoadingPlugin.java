@@ -15,7 +15,7 @@ import static net.minecraftforge.fml.relauncher.IFMLLoadingPlugin.TransformerExc
  */
 @TransformerExclusions("io.github.cadiboo.nocubes.tempcore")
 @MCVersion("1.12.2")
-@SortingIndex(Integer.MAX_VALUE - 100)
+@SortingIndex(0x7fffffff - 100)
 public final class LoadingPlugin implements IFMLLoadingPlugin {
 
 	static String DUMP_BYTECODE_DIR = null;
