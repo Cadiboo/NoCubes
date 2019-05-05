@@ -1,16 +1,21 @@
 package io.github.cadiboo.nocubes.config;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
-import net.minecraftforge.common.ForgeConfigSpec;
-import org.apache.commons.lang3.tuple.Pair;
+import io.github.cadiboo.nocubes.util.SmoothLeavesType;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.arguments.BlockStateArgument;
+import net.minecraftforge.fml.config.ModConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
-
-import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
  * @author Cadiboo
@@ -18,122 +23,144 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 @SuppressWarnings("WeakerAccess")
 public final class Config {
 
-	public static boolean renderSmoothTerrain = true;
-//	public static boolean renderSmoothLeaves = true;
-	public static boolean smoothFluidLighting = true;
-	public static boolean smoothFluidColors = true;
-	public static boolean naturalFluidTextures = true;
+	static final Logger LOGGER = LogManager.getLogger();
+	private static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>();
+	// Client
+	public static boolean renderSmoothTerrain;
+	public static boolean renderSmoothLeaves;
+	public static MeshGenerator leavesMeshGenerator;
+	public static Set<String> leavesSmoothable;
+	public static SmoothLeavesType smoothLeavesType;
+	public static boolean renderExtendedFluids;
+	public static boolean smoothFluidLighting;
+	public static boolean smoothFluidColors;
+	public static boolean naturalFluidTextures;
+	// Server
+	public static ExtendFluidsRange extendFluidsRange;
+	public static MeshGenerator terrainMeshGenerator;
+	public static boolean terrainCollisions;
+	public static Set<String> terrainSmoothable;
+	// Internal Client
+	private static ModConfig clientConfig;
+	// Internal Server
+	private static ModConfig serverConfig;
 
-	public static Set<String> terrainSmoothable = Sets.newHashSet();
-//	public static Set<String> leavesSmoothable = Sets.newHashSet();
-	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.OneBlock;
-	public static MeshGenerator terrainMeshGenerator = MeshGenerator.SurfaceNets;
-	public static boolean terrainCollisions = false;
+	public static HashSet<Block> getLeavesSmoothableBlocks() {
+		return leavesSmoothableBlocks;
+	}
 
-	public static void bakeClient() {
+	public static void bakeClient(final ModConfig config) {
+		clientConfig = config;
+
 		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
-//		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
+
+		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
+		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get();
+		leavesSmoothable = Sets.newHashSet(ConfigHolder.CLIENT.leavesSmoothable.get());
+		initLeavesSmoothable();
+		smoothLeavesType = ConfigHolder.CLIENT.smoothLeavesType.get();
+		renderExtendedFluids = ConfigHolder.CLIENT.renderExtendedFluids.get();
+
 		smoothFluidLighting = ConfigHolder.CLIENT.smoothFluidLighting.get();
 		smoothFluidColors = ConfigHolder.CLIENT.smoothFluidColors.get();
 		naturalFluidTextures = ConfigHolder.CLIENT.naturalFluidTextures.get();
+
 	}
 
-	public static void bakeServer() {
+	public static void bakeServer(final ModConfig config) {
+		serverConfig = config;
+
 		terrainSmoothable = Sets.newHashSet(ConfigHolder.SERVER.terrainSmoothable.get());
-//		leavesSmoothable = Sets.newHashSet(ConfigHolder.SERVER.leavesSmoothable.get());
+		initTerrainSmoothable();
+
 		extendFluidsRange = ConfigHolder.SERVER.extendFluidsRange.get();
+
 		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
 		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
 	}
 
-	public static class ConfigHolder {
-
-		public static final ClientConfig CLIENT;
-		public static final ForgeConfigSpec CLIENT_SPEC;
-		public static final ServerConfig SERVER;
-		public static final ForgeConfigSpec SERVER_SPEC;
-		static {
-			{
-				final Pair<ClientConfig, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ClientConfig::new);
-				CLIENT = specPair.getLeft();
-				CLIENT_SPEC = specPair.getRight();
+	public static void addTerrainSmoothable(final IBlockState... states) {
+		if (states.length > 0) {
+			for (final IBlockState state : states) {
+				state.nocubes_setTerrainSmoothable(true);
+				terrainSmoothable.add(state.toString());
 			}
-			{
-				final Pair<ServerConfig, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ServerConfig::new);
-				SERVER = specPair.getLeft();
-				SERVER_SPEC = specPair.getRight();
+			serverConfig.getConfigData().set("terrainSmoothable", new ArrayList<>(terrainSmoothable));
+			serverConfig.save();
+		}
+	}
+
+	public static void removeTerrainSmoothable(final IBlockState... states) {
+		if (states.length > 0) {
+			for (final IBlockState state : states) {
+				state.nocubes_setTerrainSmoothable(false);
+				terrainSmoothable.remove(state.toString());
+			}
+			serverConfig.getConfigData().set("terrainSmoothable", new ArrayList<>(terrainSmoothable));
+			serverConfig.save();
+		}
+	}
+
+	public static void addLeavesSmoothable(final IBlockState... states) {
+		if (states.length > 0) {
+			synchronized (leavesSmoothableBlocks) {
+				for (final IBlockState originalState : states) {
+					final Block block = originalState.getBlock();
+					for (final IBlockState state : block.getStateContainer().getValidStates()) {
+						state.nocubes_setLeavesSmoothable(true);
+					}
+					leavesSmoothable.add(block.getRegistryName().toString());
+					leavesSmoothableBlocks.add(block);
+				}
+			}
+			clientConfig.getConfigData().set("leavesSmoothable", new ArrayList<>(leavesSmoothable));
+			clientConfig.save();
+		}
+	}
+
+	public static void removeLeavesSmoothable(final IBlockState... states) {
+		if (states.length > 0) {
+			synchronized (leavesSmoothableBlocks) {
+				for (final IBlockState originalState : states) {
+					final Block block = originalState.getBlock();
+					for (final IBlockState state : block.getStateContainer().getValidStates()) {
+						state.nocubes_setLeavesSmoothable(false);
+					}
+					leavesSmoothable.remove(block.getRegistryName().toString());
+					leavesSmoothableBlocks.remove(block);
+				}
+			}
+			clientConfig.getConfigData().set("leavesSmoothable", new ArrayList<>(leavesSmoothable));
+			clientConfig.save();
+		}
+	}
+
+	private static void initTerrainSmoothable() {
+		for (final String stateString : terrainSmoothable) {
+			final IBlockState state = getStateFromString(stateString);
+			if (state != null) {
+				state.nocubes_setTerrainSmoothable(true);
 			}
 		}
 	}
 
-	public static class ClientConfig {
-
-		public ForgeConfigSpec.BooleanValue renderSmoothTerrain;
-//		public ForgeConfigSpec.BooleanValue renderSmoothLeaves;
-		public ForgeConfigSpec.BooleanValue smoothFluidLighting;
-		public ForgeConfigSpec.BooleanValue smoothFluidColors;
-		public ForgeConfigSpec.BooleanValue naturalFluidTextures;
-
-		ClientConfig(final ForgeConfigSpec.Builder builder) {
-			builder.push("general");
-			renderSmoothTerrain = builder
-					.comment("renderSmoothTerrain")
-					.translation(MOD_ID + ".config.renderSmoothTerrain")
-					.define("renderSmoothTerrain", true);
-//			renderSmoothLeaves = builder
-//					.comment("renderSmoothLeaves")
-//					.translation(MOD_ID + ".config.renderSmoothLeaves")
-//					.define("renderSmoothLeaves", true);
-			smoothFluidLighting = builder
-					.comment("smoothFluidLighting")
-					.translation(MOD_ID + ".config.smoothFluidLighting")
-					.define("smoothFluidLighting", true);
-			smoothFluidColors = builder
-					.comment("smoothFluidColors")
-					.translation(MOD_ID + ".config.smoothFluidColors")
-					.define("smoothFluidColors", true);
-			naturalFluidTextures = builder
-					.comment("naturalFluidTextures")
-					.translation(MOD_ID + ".config.naturalFluidTextures")
-					.define("naturalFluidTextures", true);
-			builder.pop();
+	private static void initLeavesSmoothable() {
+		for (final String stateString : leavesSmoothable) {
+			final IBlockState state = getStateFromString(stateString);
+			if (state != null) {
+				state.nocubes_setTerrainSmoothable(true);
+				leavesSmoothableBlocks.add(state.getBlock());
+			}
 		}
-
 	}
 
-	public static class ServerConfig {
-
-		public ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
-//		public ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
-		public ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
-		public ForgeConfigSpec.ConfigValue<MeshGenerator> terrainMeshGenerator;
-		public ForgeConfigSpec.BooleanValue terrainCollisions;
-
-		ServerConfig(ForgeConfigSpec.Builder builder) {
-			builder.push("general");
-			terrainSmoothable = builder
-					.comment("terrainSmoothable")
-					.translation(MOD_ID + ".config.terrainSmoothable")
-					.defineList("terrainSmoothable", Lists.newArrayList(), o -> o instanceof String);
-//			leavesSmoothable = builder
-//					.comment("leavesSmoothable")
-//					.translation(MOD_ID + ".config.leavesSmoothable")
-//					.defineList("leavesSmoothable", Lists.newArrayList(), o -> o instanceof String);
-			extendFluidsRange = builder
-					.comment("extendFluidsRange")
-					.translation(MOD_ID + ".config.extendFluidsRange")
-					.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
-			terrainMeshGenerator = builder
-					.comment("terrainMeshGenerator")
-					.translation(MOD_ID + ".config.terrainMeshGenerator")
-					.defineEnum("terrainMeshGenerator", MeshGenerator.SurfaceNets);
-			terrainCollisions = builder
-					.comment("terrainCollisions")
-					.translation(MOD_ID + ".config.terrainCollisions")
-					.define("terrainCollisions", false);
-			builder.pop();
+	private static IBlockState getStateFromString(final String stateString) {
+		try {
+			return new BlockStateArgument().parse(new StringReader(stateString)).getState();
+		} catch (final CommandSyntaxException e) {
+			LOGGER.error("Failed to parse blockstate \"" + stateString + "\"!", e);
+			return null;
 		}
-
 	}
 
 }

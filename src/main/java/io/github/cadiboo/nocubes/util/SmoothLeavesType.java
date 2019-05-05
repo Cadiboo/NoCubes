@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.util;
 /**
  * @author Cadiboo
  */
-public enum SmoothLeavesLevel {
+public enum SmoothLeavesType {
 	SEPARATE,
 	TOGETHER,
 	OFF,

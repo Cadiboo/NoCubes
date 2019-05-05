@@ -4,7 +4,7 @@ package io.github.cadiboo.nocubes.util;
  * @author Cadiboo
  */
 public enum ExtendFluidsRange {
-	Off(0), OneBlock(1), TwoBlocks(2);
+	OneBlock(1), TwoBlocks(2);
 
 	private final int range;
 

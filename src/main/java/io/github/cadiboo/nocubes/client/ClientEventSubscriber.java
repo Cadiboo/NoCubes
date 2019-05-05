@@ -89,10 +89,10 @@ public final class ClientEventSubscriber {
 
 					final BlockStateToast toast;
 					if (!state.nocubes_isTerrainSmoothable()) {
-						state.nocubes_setTerrainSmoothable(true);
+						Config.addTerrainSmoothable(state);
 						toast = new BlockStateToast.Add(state, blockPos, objectMouseOver);
 					} else {
-						state.nocubes_setTerrainSmoothable(false);
+						Config.removeTerrainSmoothable(state);
 						toast = new BlockStateToast.Remove(state, blockPos, objectMouseOver);
 					}
 					minecraft.getToastGui().add(toast);
@@ -100,21 +100,31 @@ public final class ClientEventSubscriber {
 					if (NoCubes.isEnabled()) {
 						ClientUtil.tryReloadRenderers();
 					}
-//					fireConfigChangedEvent();
 					return;
 				}
-
 			}
 			if (toggleLeavesSmoothableBlockStatePressed) {
-//				synchronized (ModConfig.getLeavesSmoothableBlockStatesCache()) {
-//					if (addBlockStateToSmoothable(ModConfig.getLeavesSmoothableBlockStatesCache(), false)) {
-//						if (NoCubes.isEnabled()) {
-//							ClientUtil.tryReloadRenderers();
-//						}
-//						fireConfigChangedEvent();
-//						return;
-//					}
-//				}
+				final Minecraft minecraft = Minecraft.getInstance();
+				final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
+				if (objectMouseOver.type == BLOCK) {
+					BlockPos blockPos = objectMouseOver.getBlockPos();
+					final IBlockState state = minecraft.world.getBlockState(blockPos);
+
+					final BlockStateToast toast;
+					if (!state.nocubes_isLeavesSmoothable()) {
+						Config.addLeavesSmoothable(state);
+						toast = new BlockStateToast.Add(state, blockPos, objectMouseOver);
+					} else {
+						Config.removeLeavesSmoothable(state);
+						toast = new BlockStateToast.Remove(state, blockPos, objectMouseOver);
+					}
+					minecraft.getToastGui().add(toast);
+
+					if (NoCubes.isEnabled()) {
+						ClientUtil.tryReloadRenderers();
+					}
+					return;
+				}
 			}
 			if (toggleProfilersPressed) {
 				synchronized (ModProfiler.PROFILERS) {

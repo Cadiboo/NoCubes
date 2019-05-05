@@ -176,7 +176,8 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                   aboolean[j] |= blockrendererdispatcher.renderFluid(blockpos$mutableblockpos, lvt_10_1_, bufferbuilder, ifluidstate);
                }
 
-               if ((!iblockstate.nocubes_isTerrainSmoothable() || !NoCubes.isEnabled()) && iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+               if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
+               if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
                   int k = blockrenderlayer1.ordinal();
                   BufferBuilder bufferbuilder1 = generator.getRegionRenderCacheBuilder().getBuilder(k);
                   if (!compiledchunk.isLayerStarted(blockrenderlayer1)) {

@@ -3,9 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.IWorldReaderBase;
-import net.minecraft.world.biome.BiomeColors;
 import net.minecraft.world.biome.BiomeColors.ColorResolver;
 import org.apache.logging.log4j.LogManager;
 

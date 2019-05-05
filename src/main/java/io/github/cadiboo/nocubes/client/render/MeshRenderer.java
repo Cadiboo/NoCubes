@@ -11,12 +11,14 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -44,7 +46,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.util.ModUtil.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IIsSmoothable.LEAVES_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
@@ -53,100 +56,7 @@ public final class MeshRenderer {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 
-	public static void renderChunkMeshes(
-			@Nonnull final RenderChunk renderChunk,
-			@Nonnull final ChunkRenderTask generator,
-			@Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final BlockPos renderChunkPosition,
-			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReaderBase blockAccess,
-			@Nonnull final StateCache stateCache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			@Nonnull final Random random,
-			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final SmoothableCache terrainSmoothableCache
-	) {
-		if (Config.renderSmoothTerrain) {
-			try (final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR)) {
-				renderMesh(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						stateCache,
-						blockRendererDispatcher,
-						random,
-						pooledPackedLightCache,
-						blockColorsCache,
-						MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, terrainSmoothableCache, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
-						IIsSmoothable.TERRAIN_SMOOTHABLE, //TODO: remove?
-						terrainSmoothableCache,
-						pooledMutableBlockPos, usedBlockRenderLayers, false
-				);
-			}
-		}
-
-//		try (final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR)) {
-
-//			switch (Config.CLIENT.smoothLeavesLevel) {
-//				case SEPARATE:
-//					try {
-//						for (final IBlockState smoothableState : ModConfig.getLeavesSmoothableBlockStatesCache()) {
-////							try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeaves" + smoothableState))
-//							{
-//								final IIsSmoothable isSmoothable = (checkState) -> checkState == smoothableState;
-//								renderMesh(
-//										renderChunk,
-//										generator,
-//										compiledChunk,
-//										renderChunkPosition,
-//										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-//										blockAccess,
-//										stateCache,
-//										blockRendererDispatcher,
-//										pooledPackedLightCache,
-//										MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, isSmoothable, ModConfig.leavesMeshGenerator),
-//										isSmoothable,
-//										pooledMutableBlockPos, usedBlockRenderLayers, true
-//								);
-//							}
-//						}
-//					} catch (ConcurrentModificationException e) {
-//						//REEE I don't want to synchronise because performance tho
-//						e.printStackTrace();
-//					}
-//					break;
-//				case TOGETHER:
-////					try (ModProfiler ignored2 = NoCubes.getProfiler().start("renderLeavesTogether"))
-//			{
-//				renderMesh(
-//						renderChunk,
-//						generator,
-//						compiledChunk,
-//						renderChunkPosition,
-//						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-//						blockAccess,
-//						stateCache,
-//						blockRendererDispatcher,
-//						pooledPackedLightCache,
-////							MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, ModConfig.leavesMeshGenerator),
-//						MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, LEAVES_SMOOTHABLE, MeshGenerator.SurfaceNets),
-//						LEAVES_SMOOTHABLE,
-//						pooledMutableBlockPos, usedBlockRenderLayers, true
-//				);
-//				}
-//				break;
-//				case OFF:
-//					break;
-//			}
-
-	}
-
-	private static void renderMesh(
+	public static void renderMesh(
 			@Nonnull final RenderChunk renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,

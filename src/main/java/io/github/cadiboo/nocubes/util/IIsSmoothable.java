@@ -11,6 +11,14 @@ public interface IIsSmoothable {
 
 	IIsSmoothable TERRAIN_SMOOTHABLE = IBlockState::nocubes_isTerrainSmoothable;
 
+	IIsSmoothable LEAVES_SMOOTHABLE = IBlockState::nocubes_isLeavesSmoothable;
+
+	/**
+	 * If the state should be smoothed
+	 *
+	 * @param state the state
+	 * @return If the state should be smoothed
+	 */
 	boolean isSmoothable(final IBlockState state);
 
 }

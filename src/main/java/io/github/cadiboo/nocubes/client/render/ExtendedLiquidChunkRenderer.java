@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -34,7 +35,8 @@ public final class ExtendedLiquidChunkRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache,
-			@Nonnull final SmoothableCache smoothableCache
+			@Nonnull final SmoothableCache smoothableCache,
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
@@ -114,7 +116,8 @@ public final class ExtendedLiquidChunkRenderer {
 											blockAccess,
 											blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
 											fluidState,
-											bufferBuilder
+											bufferBuilder,
+											packedLightCache
 									);
 //									OptiFineCompatibility.popShaderThing(bufferBuilder);
 

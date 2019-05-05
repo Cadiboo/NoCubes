@@ -662,9 +662,9 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		final float maxU = UVHelper.getMaxU(textureAtlasSprite);
 		final float minV = UVHelper.getMinV(textureAtlasSprite);
 		final float maxV = UVHelper.getMaxV(textureAtlasSprite);
+
 		final int skyLight0 = downCombinedLightUpMax0 >> 16 & '\uffff';
 		final int blockLight0 = downCombinedLightUpMax0 & '\uffff';
-
 		final int skyLight1 = downCombinedLightUpMax1 >> 16 & '\uffff';
 		final int blockLight1 = downCombinedLightUpMax1 & '\uffff';
 		final int skyLight2 = downCombinedLightUpMax2 >> 16 & '\uffff';

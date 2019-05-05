@@ -567,7 +567,8 @@ function injectBlockRenderHook(instructions) {
 
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
-//	if (!iblockstate.nocubes_isTerrainSmoothable() && iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+//	if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
+//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
 
 //	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
@@ -592,15 +593,21 @@ function injectBlockRenderHook(instructions) {
 //	FRAME CHOP 2
 //	ALOAD 18
 //	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//	IFEQ L61
-//	INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//	IFNE L62
+//	IFNE L61
+//	ALOAD 18
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//	IFEQ L62
 //	L61
+//	FRAME SAME
+//	INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//	IFNE L63
+//	L62
+//	LINENUMBER 180 L62
 //	FRAME SAME
 //	ALOAD 18
 //	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
 //	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//	IF_ACMPEQ L62
+//	IF_ACMPEQ L63
 //	ALOAD 18
 //	ALOAD 24
 //	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
@@ -662,6 +669,7 @@ function injectBlockRenderHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
+	var nocubesEnabledLabel = new LabelNode();
 
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
@@ -677,7 +685,23 @@ function injectBlockRenderHook(instructions) {
 			//boolean isInterface
 			true
 	));
+	toInject.add(new JumpInsnNode(IFNE, nocubesEnabledLabel));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isLeavesSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(nocubesEnabledLabel);
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,

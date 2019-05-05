@@ -46,7 +46,8 @@ public class BlockFluidRenderer {
       BlockPos blockpos = pos.offset(side);
       // NoCubes Start
       if (NoCubes.isEnabled()) {
-         if (worldIn.getBlockState(blockpos).nocubes_isTerrainSmoothable()) {
+         final IBlockState blockState = worldIn.getBlockState(blockpos);
+         if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
             return !worldIn.getBlockState(blockpos.up()).isSolid();
          }
       }

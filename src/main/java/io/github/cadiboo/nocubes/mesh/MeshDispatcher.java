@@ -33,6 +33,7 @@ public final class MeshDispatcher {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nullable final StateCache stateCache,
 			@Nullable final SmoothableCache smoothableCache,
+			@Nullable final DensityCache densityCache,
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull final MeshGenerator meshGenerator
 	) {
@@ -40,17 +41,11 @@ public final class MeshDispatcher {
 			return generateChunkMeshOffsetOldNoCubes(chunkPos, blockAccess, isSmoothable);
 		}
 
-		final HashMap<Vec3b, FaceList> chunkData = generateChunkMeshUnOffset(chunkPos, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, isSmoothable, meshGenerator);
+		final HashMap<Vec3b, FaceList> chunkData = generateChunkMeshUnOffset(chunkPos, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, densityCache, isSmoothable, meshGenerator);
 		return offsetChunkMesh(chunkPos, chunkData);
 	}
 
 	/**
-	 * @param chunkPos
-	 * @param blockAccess
-	 * @param pooledMutableBlockPos
-	 * @param stateCache
-	 * @param smoothableCache
-	 * @param isSmoothable
 	 * @return the un offset vertices for the chunk
 	 */
 	@Nonnull
@@ -60,6 +55,7 @@ public final class MeshDispatcher {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nullable final StateCache stateCache,
 			@Nullable final SmoothableCache smoothableCache,
+			@Nullable final DensityCache densityCache,
 			@Nonnull final IIsSmoothable isSmoothable,
 			@Nonnull MeshGenerator meshGenerator
 	) {
@@ -83,7 +79,7 @@ public final class MeshDispatcher {
 				case OldNoCubes:
 					throw new UnsupportedOperationException();
 			}
-			return generateCachesAndChunkData(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos, stateCache, smoothableCache, meshSizeX, meshSizeY, meshSizeZ, meshGenerator);
+			return generateCachesAndChunkData(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos, stateCache, smoothableCache, densityCache, meshSizeX, meshSizeY, meshSizeZ, meshGenerator);
 		}
 	}
 
@@ -101,9 +97,6 @@ public final class MeshDispatcher {
 	}
 
 	/**
-	 * @param pos
-	 * @param blockAccess
-	 * @param isSmoothable
 	 * @return the offset vertices for the block
 	 */
 	@Nonnull
@@ -129,11 +122,6 @@ public final class MeshDispatcher {
 	}
 
 	/**
-	 * @param pos
-	 * @param blockAccess
-	 * @param pooledMutableBlockPos
-	 * @param isSmoothable
-	 * @param meshGenerator
 	 * @return the un offset vertices for the block
 	 */
 	@Nonnull
@@ -254,25 +242,6 @@ public final class MeshDispatcher {
 		}
 	}
 
-	@Nonnull
-	public static float[] generateNeighbourDensityGrid(@Nonnull final DensityCache densityCache) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateNeighbourDensityGrid")) {
-			final float[] neighbourDensityGrid = new float[8];
-
-			final float[] densityCacheArray = densityCache.getDensityCache();
-
-			int neighbourDensityGridIndex = 0;
-			for (int zOffset = 0; zOffset < 2; ++zOffset) {
-				for (int yOffset = 0; yOffset < 2; ++yOffset) {
-					for (byte xOffset = 0; xOffset < 2; ++xOffset, ++neighbourDensityGridIndex) {
-						neighbourDensityGrid[neighbourDensityGridIndex] = densityCacheArray[densityCache.getIndex(xOffset, yOffset, zOffset)];
-					}
-				}
-			}
-			return neighbourDensityGrid;
-		}
-	}
-
 	/**
 	 * Modifies the chunk data mesh in! Returns the offset mesh for convenience
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
@@ -320,6 +289,7 @@ public final class MeshDispatcher {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nullable final StateCache stateCacheIn,
 			@Nullable final SmoothableCache smoothableCacheIn,
+			@Nullable final DensityCache densityCacheIn,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 			@Nonnull final MeshGenerator meshGenerator
 	) {
@@ -340,11 +310,13 @@ public final class MeshDispatcher {
 						smoothableCacheIn != null ?
 								smoothableCacheIn :
 								CacheUtil.generateSmoothableCache(stateCache, isSmoothable);
-				final DensityCache densityCache = CacheUtil.generateDensityCache(
-						meshSizeX, meshSizeY, meshSizeZ,
-						stateCache,
-						smoothableCache
-				)
+				final DensityCache densityCache =
+						densityCacheIn != null ?
+								densityCacheIn : CacheUtil.generateDensityCache(
+								meshSizeX, meshSizeY, meshSizeZ,
+								stateCache,
+								smoothableCache
+						)
 		) {
 			return meshGenerator.generateChunk(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
 		}

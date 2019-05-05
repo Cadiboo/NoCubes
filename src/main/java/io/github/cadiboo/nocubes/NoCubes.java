@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -53,8 +54,8 @@ public final class NoCubes {
 		modEventBus.addListener(this::onLoadComplete);
 		modEventBus.addListener(this::onModConfigEvent);
 
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, Config.ConfigHolder.CLIENT_SPEC);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, Config.ConfigHolder.SERVER_SPEC);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
 
 	}
 
@@ -82,10 +83,10 @@ public final class NoCubes {
 	}
 
 	public void onModConfigEvent(ModConfig.ModConfigEvent event) {
-		if (event.getConfig().getSpec() == Config.ConfigHolder.CLIENT_SPEC) {
-			Config.bakeClient();
-		} else if (event.getConfig().getSpec() == Config.ConfigHolder.SERVER_SPEC) {
-			Config.bakeServer();
+		if (event.getConfig().getSpec() == ConfigHolder.CLIENT_SPEC) {
+			Config.bakeClient(event.getConfig());
+		} else if (event.getConfig().getSpec() == ConfigHolder.SERVER_SPEC) {
+			Config.bakeServer(event.getConfig());
 		}
 	}
 

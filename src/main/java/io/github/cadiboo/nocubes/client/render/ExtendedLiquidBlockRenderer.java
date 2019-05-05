@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
+import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -28,10 +29,12 @@ public final class ExtendedLiquidBlockRenderer {
 			final double x, final double y, final double z,
 			@Nonnull final BlockPos fluidPos,
 			@Nonnull final IWorldReader worldIn,
-			//TODO: eventually do better liquid rendering for 0.3.0
+			//TODO: eventually do better fluid rendering for 0.3.0
 			@Nonnull final IBlockState smoothableState,
 			@Nonnull final IFluidState state,
-			@Nonnull final BufferBuilder buffer
+			@Nonnull final BufferBuilder buffer,
+			//TODO: eventually do better lighting for 0.3.0
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
 
 		final SmoothLightingBlockFluidRenderer fluidRenderer = ClientProxy.fluidRenderer;
@@ -56,12 +59,12 @@ public final class ExtendedLiquidBlockRenderer {
 					blue = (float) (waterColor & 0xFF) / 255.0F;
 				}
 
-				final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.UP, state);
-				final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, fluidPos, EnumFacing.DOWN, 0.8888889F);
-				final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.NORTH, state);
-				final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.SOUTH, state);
-				final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.WEST, state);
-				final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, fluidPos, EnumFacing.EAST, state);
+				final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.UP, state);
+				final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, renderPos, EnumFacing.DOWN, 0.8888889F);
+				final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.NORTH, state);
+				final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.SOUTH, state);
+				final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.WEST, state);
+				final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, renderPos, EnumFacing.EAST, state);
 
 				if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 					return false;

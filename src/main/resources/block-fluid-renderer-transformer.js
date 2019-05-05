@@ -77,13 +77,15 @@ function initializeCoreMod() {
 
 						// Labels n stuff
 						var originalInstructionsLabel = new LabelNode();
+						var executeOverrideLabel = new LabelNode();
 
 //						BlockPos blockpos = pos.offset(side);
 //						IFluidState ifluidstate = worldIn.getFluidState(blockpos);
 //
 //						BlockPos blockpos = pos.offset(side);
 //						if (NoCubes.isEnabled()) {
-//							if (worldIn.getBlockState(blockpos).nocubes_isTerrainSmoothable()) {
+//							final IBlockState blockState = worldIn.getBlockState(blockpos);
+//							if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
 //								return !worldIn.getBlockState(blockpos.up()).isSolid();
 //							}
 //						}
@@ -110,35 +112,40 @@ function initializeCoreMod() {
 //    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.offset (Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;
 //    ASTORE 4
 //   L1
-//    LINENUMBER 47 L1
+//    LINENUMBER 48 L1
 //    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
 //    IFEQ L2
 //   L3
-//    LINENUMBER 48 L3
+//    LINENUMBER 49 L3
 //    ALOAD 0
 //    ALOAD 4
 //    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFEQ L2
+//    ASTORE 5
 //   L4
-//    LINENUMBER 49 L4
+//    LINENUMBER 50 L4
+//    ALOAD 5
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFNE L5
+//    ALOAD 5
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    IFEQ L2
+//   L5
+//    LINENUMBER 51 L5
+//   FRAME APPEND [net/minecraft/util/math/BlockPos net/minecraft/block/state/IBlockState]
 //    ALOAD 0
 //    ALOAD 4
 //    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.up ()Lnet/minecraft/util/math/BlockPos;
 //    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockState.isSolid ()Z (itf)
-//    IFNE L5
+//    IFNE L6
 //    ICONST_1
-//    GOTO L6
-//   L5
-//   FRAME APPEND [net/minecraft/util/math/BlockPos]
-//    ICONST_0
+//    GOTO L7
 //   L6
 //   FRAME SAME1 I
 //    IRETURN
 //   L2
-//    LINENUMBER 52 L2
-//   FRAME SAME
+//    LINENUMBER 55 L2
+//   FRAME CHOP 1
 //    ALOAD 0
 //    ALOAD 4
 //    INVOKEINTERFACE net/minecraft/world/IBlockReader.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState; (itf)
@@ -161,7 +168,7 @@ function initializeCoreMod() {
 
 						toInject.add(new LabelNode());
 						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-						toInject.add(new VarInsnNode(ALOAD, FLOCALVARIABLE_blockpos));
+						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
 						toInject.add(new MethodInsnNode(
 								//int opcode
 								INVOKEINTERFACE,
@@ -174,6 +181,10 @@ function initializeCoreMod() {
 								//boolean isInterface
 								true
 						));
+						toInject.add(new VarInsnNode(ASTORE, ALOCALVARIABLE_blockstate));
+
+						toInject.add(new LabelNode());
+						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
 						toInject.add(new MethodInsnNode(
 								//int opcode
 								INVOKEINTERFACE,
@@ -186,11 +197,26 @@ function initializeCoreMod() {
 								//boolean isInterface
 								true
 						));
+						toInject.add(new JumpInsnNode(IFNE, executeOverrideLabel));
+
+						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
+						toInject.add(new MethodInsnNode(
+								//int opcode
+								INVOKEINTERFACE,
+								//String owner
+								"net/minecraft/block/state/IBlockState",
+								//String name
+								"nocubes_isLeavesSmoothable",
+								//String descriptor
+								"()Z",
+								//boolean isInterface
+								true
+						));
 						toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
-						toInject.add(new LabelNode());
+						toInject.add(executeOverrideLabel);
 						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-						toInject.add(new VarInsnNode(ALOAD, FLOCALVARIABLE_blockpos));
+						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
 						toInject.add(new MethodInsnNode(
 								//int opcode
 								INVOKEVIRTUAL,
@@ -575,5 +601,7 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
 // Local variable indexes
 var ALOCALVARIABLE_this = 0;
-var FLOCALVARIABLE_blockpos = 4;
+var ALOCALVARIABLE_blockpos = 4;
+var ALOCALVARIABLE_fluidstate = 5;
+var ALOCALVARIABLE_blockstate = 6;
 

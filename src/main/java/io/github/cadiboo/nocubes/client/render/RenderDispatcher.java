@@ -8,14 +8,15 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -31,13 +32,14 @@ import net.minecraft.crash.ReportedException;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
+import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.util.IIsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
@@ -56,27 +58,18 @@ public final class RenderDispatcher {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
 	) {
 
-		final byte meshSizeX;
-		final byte meshSizeY;
-		final byte meshSizeZ;
-		if (Config.terrainMeshGenerator == MeshGenerator.SurfaceNets) {
-			//TODO I think I should be doing a max of {@link MeshGenerator#getSizeXExtension}
-			//yay, surface nets is special and needs an extra +1. why? no-one knows
-			meshSizeX = 18;
-			meshSizeY = 18;
-			meshSizeZ = 18;
-		} else {
-			meshSizeX = 17;
-			meshSizeY = 17;
-			meshSizeZ = 17;
-		}
+		final MeshGenerator terrainMeshGenerator = Config.terrainMeshGenerator;
+
+		final byte meshSizeX = (byte) (17 + terrainMeshGenerator.getSizeXExtension());
+		final byte meshSizeY = (byte) (17 + terrainMeshGenerator.getSizeYExtension());
+		final byte meshSizeZ = (byte) (17 + terrainMeshGenerator.getSizeZExtension());
 
 		final int renderChunkPositionX = renderChunkPosition.getX();
 		final int renderChunkPositionY = renderChunkPosition.getY();
 		final int renderChunkPositionZ = renderChunkPosition.getZ();
 
-//		* Density Cache    | -1, n + 1 | n + 2
-//		* Vertices         | -1, 16    | 18
+//		* Density Cache    | -1, n     | n + 1
+//		* Vertices         | -1, 16    | 17
 //		* Texture Cache    | -2, 17    | 20
 //		* Light Cache      | -2, 17    | 20
 //		* Color Cache      | -2, 17    | 20
@@ -141,29 +134,17 @@ public final class RenderDispatcher {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache
 	) {
-		try (
-				LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess);
-				final SmoothableCache terrainSmoothableCache =
-						Config.renderSmoothTerrain ?
-								CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE)
-								: null
-		) {
+		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves && !Config.renderExtendedFluids) {
+			return;
+		}
+		try (LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess)) {
 			try {
-				MeshRenderer.renderChunkMeshes(
-						renderChunk,
-						generator,
-						compiledChunk,
-						renderChunkPosition,
-						renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-						blockAccess,
-						stateCache,
-						pooledMutableBlockPos,
-						usedBlockRenderLayers,
-						blockRendererDispatcher,
-						random,
-						packedLightCache,
-						terrainSmoothableCache
-				);
+				if (Config.renderSmoothTerrain) {
+					renderTerrain(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, stateCache, pooledMutableBlockPos, usedBlockRenderLayers, blockRendererDispatcher, random, packedLightCache);
+				}
+				if (Config.renderSmoothLeaves && Config.smoothLeavesType != SmoothLeavesType.OFF) {
+					renderLeaves(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, stateCache, pooledMutableBlockPos, usedBlockRenderLayers, blockRendererDispatcher, random, packedLightCache);
+				}
 			} catch (ReportedException e) {
 				throw e;
 			} catch (Exception e) {
@@ -172,11 +153,17 @@ public final class RenderDispatcher {
 				throw new ReportedException(crashReport);
 			}
 
-			if (Config.extendFluidsRange == ExtendFluidsRange.Off) {
+			if (!Config.renderExtendedFluids) {
 				return;
 			}
-
-			try (final ModProfiler ignored = ModProfiler.get().start("extendFluids")) {
+			try (
+					final ModProfiler ignored = ModProfiler.get().start("extendFluids");
+					SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
+							stateCache,
+							(state) ->
+									TERRAIN_SMOOTHABLE.isSmoothable(state) || LEAVES_SMOOTHABLE.isSmoothable(state)
+					)
+			) {
 				try {
 					ExtendedLiquidChunkRenderer.renderChunk(
 							renderChunk,
@@ -188,7 +175,8 @@ public final class RenderDispatcher {
 							pooledMutableBlockPos,
 							usedBlockRenderLayers,
 							blockRendererDispatcher,
-							stateCache, terrainSmoothableCache
+							stateCache, smoothableCache,
+							packedLightCache
 					);
 				} catch (ReportedException e) {
 					throw e;
@@ -198,62 +186,123 @@ public final class RenderDispatcher {
 					throw new ReportedException(crashReport);
 				}
 			}
+
 		}
 	}
 
-	private static StateCache generateLightAndTexturesStateCache(
+	private static void renderLeaves(
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			final IBlockReader blockAccess,
-			final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final StateCache stateCache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final Random random,
+			@Nonnull final LazyPackedLightCache pooledPackedLightCache
 	) {
-		// Light uses +1 block on every axis so we need to start at -1 block
-		// Textures use +1 block on every axis so we need to start at -1 block
-		// All up this is -1 block
-		final int cacheStartPosX = renderChunkPositionX - 1;
-		final int cacheStartPosY = renderChunkPositionY - 1;
-		final int cacheStartPosZ = renderChunkPositionZ - 1;
-
-		// Light uses +1 block on every axis so we need to add 2 to the size of the cache (it takes +1 on EVERY axis)
-		// Textures uses+1 block on every axis so we need to add 2 to the size of the cache (they take +1 on EVERY axis)
-		// All up this is +2 blocks
-		final int cacheSizeX = meshSizeX + 2;
-		final int cacheSizeY = meshSizeY + 2;
-		final int cacheSizeZ = meshSizeZ + 2;
-
-		return CacheUtil.generateStateCache(
-				cacheStartPosX, cacheStartPosY, cacheStartPosZ,
-				cacheSizeX, cacheSizeY, cacheSizeZ,
-				blockAccess,
-				pooledMutableBlockPos
-		);
+		if (Config.getLeavesSmoothableBlocks().isEmpty()) {
+			return;
+		}
+		try (LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR)) {
+			switch (Config.smoothLeavesType) {
+				case SEPARATE:
+					for (final Block smoothableBlock : Config.getLeavesSmoothableBlocks()) {
+						final IIsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.isSmoothable(checkState) && checkState.getBlock() == smoothableBlock);
+						try (
+								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
+								SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
+						) {
+							MeshRenderer.renderMesh(
+									renderChunk,
+									generator,
+									compiledChunk,
+									renderChunkPosition,
+									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+									blockAccess,
+									stateCache,
+									blockRendererDispatcher,
+									random,
+									pooledPackedLightCache,
+									blockColorsCache,
+									MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, null, null, isSmoothable, Config.leavesMeshGenerator),
+									isSmoothable, //TODO: remove?
+									textureSmoothableCache,
+									pooledMutableBlockPos, usedBlockRenderLayers, true
+							);
+						}
+					}
+					break;
+				case TOGETHER:
+					final IIsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
+					try (
+							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
+							SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
+					) {
+						MeshRenderer.renderMesh(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								stateCache,
+								blockRendererDispatcher,
+								random,
+								pooledPackedLightCache,
+								blockColorsCache,
+								MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, null, null, isSmoothable, Config.leavesMeshGenerator),
+								isSmoothable, //TODO: remove?
+								textureSmoothableCache,
+								pooledMutableBlockPos, usedBlockRenderLayers, true
+						);
+					}
+					break;
+				case OFF:
+					break;
+			}
+		}
 	}
 
-	private static StateCache generateExtendedWaterStateCache(
+	private static void renderTerrain(
+			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			final IBlockReader blockAccess,
-			final PooledMutableBlockPos pooledMutableBlockPos,
-			final int extendLiquidsRange
+			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final StateCache stateCache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final Random random,
+			@Nonnull final LazyPackedLightCache pooledPackedLightCache
 	) {
-		// ExtendedWater takes +1 or +2 blocks on every horizontal axis into account so we need to start at -1 or -2 blocks
-		final int cacheStartPosX = renderChunkPositionX - extendLiquidsRange;
-		final int cacheStartPosY = renderChunkPositionY;
-		final int cacheStartPosZ = renderChunkPositionZ - extendLiquidsRange;
-
-		// ExtendedWater takes +1 or +2 blocks on each side of the chunk (x and z) into account so we need to add 2 or 4 to the size of the cache (it takes +1 or +2 on EVERY HORIZONTAL axis)
-		// ExtendedWater takes +1 block on the Y axis into account so we need to add 1 to the size of the cache (it takes +1 on the POSITIVE Y axis)
-		// All up this is +2 or +4 (2 or 4 for ExtendedWater) for every horizontal axis and +1 for the Y axis
-		// 16 is the size of a chunk (blocks 0 -> 15)
-		final int cacheSizeX = 16 + extendLiquidsRange * 2;
-		final int cacheSizeY = 16 + 1;
-		final int cacheSizeZ = 16 + extendLiquidsRange * 2;
-
-		return CacheUtil.generateStateCache(
-				cacheStartPosX, cacheStartPosY, cacheStartPosZ,
-				cacheSizeX, cacheSizeY, cacheSizeZ,
-				blockAccess,
-				pooledMutableBlockPos
-		);
+		try (
+				final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE);
+				final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR)
+		) {
+			MeshRenderer.renderMesh(
+					renderChunk,
+					generator,
+					compiledChunk,
+					renderChunkPosition,
+					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+					blockAccess,
+					stateCache,
+					blockRendererDispatcher,
+					random,
+					pooledPackedLightCache,
+					blockColorsCache,
+					MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, null, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
+					TERRAIN_SMOOTHABLE, //TODO: remove?
+					smoothableCache,
+					pooledMutableBlockPos, usedBlockRenderLayers, false
+			);
+		}
 	}
 
 	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite) {

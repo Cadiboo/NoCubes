@@ -7,13 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.ReportedException;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_C;
@@ -36,8 +30,6 @@ public final class ClientProxy implements IProxy {
 
 	public static final KeyBinding tempToggleCollisions = new KeyBinding(MOD_ID + ".key.tempToggleCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
 
-	private static final MethodHandle WorldRenderer_markBlocksForUpdate;
-
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
 	static {
@@ -47,37 +39,13 @@ public final class ClientProxy implements IProxy {
 		ClientRegistry.registerKeyBinding(toggleProfilers);
 	}
 
-	static {
-		try {
-			WorldRenderer_markBlocksForUpdate = MethodHandles.publicLookup().unreflect(
-					ObfuscationReflectionHelper.findMethod(WorldRenderer.class, "func_184385_a",
-							int.class, int.class, int.class, int.class, int.class, int.class, boolean.class
-					)
-			);
-		} catch (Exception e) {
-			final CrashReport crashReport = new CrashReport("Unable to find method WorldRenderer.markBlocksForUpdate!", e);
-			crashReport.makeCategory("Finding Method");
-			throw new ReportedException(crashReport);
-		}
-	}
-
 	@Override
 	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
 
 		final WorldRenderer worldRenderer = Minecraft.getInstance().worldRenderer;
 
-		if (worldRenderer.world == null || worldRenderer.viewFrustum == null) {
-			return;
-		}
-
-		try {
-			WorldRenderer_markBlocksForUpdate.invokeExact(worldRenderer, minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
-		} catch (ReportedException e) {
-			throw e;
-		} catch (Throwable throwable) {
-			final CrashReport crashReport = new CrashReport("Exception invoking method WorldRenderer.markBlocksForUpdate", throwable);
-			crashReport.makeCategory("Reflectively Invoking Method");
-			throw new ReportedException(crashReport);
+		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
+			worldRenderer.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
 		}
 	}
 

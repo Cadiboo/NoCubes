@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
 import io.github.cadiboo.nocubes.util.IIsSmoothable;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -274,11 +273,11 @@ public class OldNoCubes implements IMeshGenerator {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			IBlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if ((!isBlockAirOrPlant(state0)) && (!ModUtil.shouldSmoothTerrain(state0))) {
+			if ((!isBlockAirOrPlant(state0)) && (!IIsSmoothable.TERRAIN_SMOOTHABLE.isSmoothable(state0))) {
 				return true;
 			}
 			IBlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if ((!isBlockAirOrPlant(state1)) && (!ModUtil.shouldSmoothTerrain(state1))) {
+			if ((!isBlockAirOrPlant(state1)) && (!IIsSmoothable.TERRAIN_SMOOTHABLE.isSmoothable(state1))) {
 				return true;
 			}
 		}

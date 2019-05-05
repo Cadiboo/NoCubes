@@ -21,31 +21,7 @@ import static net.minecraft.init.Blocks.SNOW;
 @SuppressWarnings("WeakerAccess")
 public final class ModUtil {
 
-	public static final IIsSmoothable TERRAIN_SMOOTHABLE = ModUtil::shouldSmoothTerrain;
-	public static final IIsSmoothable LEAVES_SMOOTHABLE = ModUtil::shouldSmoothLeaves;
 	private static final Random RANDOM = new Random();
-
-	/**
-	 * If the state should be smoothed
-	 *
-	 * @param state the state
-	 * @return If the state should be smoothed
-	 */
-	//TODO: inline
-	public static boolean shouldSmoothTerrain(final IBlockState state) {
-		return IIsSmoothable.TERRAIN_SMOOTHABLE.isSmoothable(state);
-	}
-
-	/**
-	 * If the state should be smoothed
-	 *
-	 * @param state the state
-	 * @return If the state should be smoothed
-	 */
-	public static boolean shouldSmoothLeaves(final IBlockState state) {
-//		return ModConfig.getLeavesSmoothableBlockStatesCache().contains(state);
-		return false;
-	}
 
 	/**
 	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't

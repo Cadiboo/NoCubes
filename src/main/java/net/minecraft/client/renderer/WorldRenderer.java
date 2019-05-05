@@ -1776,7 +1776,7 @@ public class WorldRenderer implements IWorldEventListener, AutoCloseable, IResou
       builder.pos(x2, y2, z2).color(red, green, blue, alpha).endVertex();
    }
 
-   private void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
+   public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
       this.viewFrustum.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
    }
 
