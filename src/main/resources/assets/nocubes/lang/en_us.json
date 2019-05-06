@@ -1,6 +1,8 @@
 {
-	"nocubes.addedSmoothableBlockState": "Added Smoothable",
-	"nocubes.removedSmoothableBlockState": "Removed Smoothable",
+	"nocubes.addedTerrainSmoothableBlockState": "Added Terrain Smoothable",
+	"nocubes.removedTerrainSmoothableBlockState": "Removed Terrain Smoothable",
+	"nocubes.addedLeavesSmoothableBlockState": "Added Leaves Smoothable",
+	"nocubes.removedLeavesSmoothableBlockState": "Removed Leaves Smoothable",
 	"key.categories.nocubes": "NoCubes",
 	"nocubes.key.toggleEnabled": "TEMPORARY Toggle Enabled",
 	"nocubes.key.toggleTerrainSmoothableBlockState": "Toggle Terrain Smoothable BlockState",

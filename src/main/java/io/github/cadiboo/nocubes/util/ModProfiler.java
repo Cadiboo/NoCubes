@@ -70,7 +70,9 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 		}
 	}
 
-	//Stop crashes when profilers are enabled and disabled quickly
+	/**
+	 * Stop crashes when profilers are enabled and disabled quickly (doesn't quite work always)
+	 */
 	private boolean shouldEndSection() {
 		--sections;
 		if (sections < 0) {

@@ -314,6 +314,9 @@ public final class MeshDispatcher {
 						densityCacheIn != null ?
 								densityCacheIn : CacheUtil.generateDensityCache(
 								meshSizeX, meshSizeY, meshSizeZ,
+								//TODO fix?
+								// add 1 because we assume a that the cache starts 1 block before where we want
+								1, 1, 1,
 								stateCache,
 								smoothableCache
 						)

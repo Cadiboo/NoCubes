@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.config;
 
-import com.google.common.collect.Lists;
+import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -24,7 +24,7 @@ final class ServerConfig {
 		terrainSmoothable = builder
 				.comment("terrainSmoothable")
 				.translation(MOD_ID + ".config.terrainSmoothable")
-				.defineList("terrainSmoothable", Lists.newArrayList(), o -> o instanceof String);
+				.defineList("terrainSmoothable", ConfigHelper.getDefaultTerrainSmoothable(), o -> o instanceof String);
 		extendFluidsRange = builder
 				.comment("extendFluidsRange")
 				.translation(MOD_ID + ".config.extendFluidsRange")

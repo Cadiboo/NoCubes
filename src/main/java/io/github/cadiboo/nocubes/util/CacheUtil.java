@@ -13,9 +13,11 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-//TODO: javadocs
 public final class CacheUtil {
 
+	/**
+	 * Generates a {@link StateCache}
+	 */
 	public static StateCache generateStateCache(
 			final int startPosX, final int startPosY, final int startPosZ,
 			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
@@ -41,6 +43,9 @@ public final class CacheUtil {
 		}
 	}
 
+	/**
+	 * Generates a {@link SmoothableCache} from a {@link StateCache}
+	 */
 	public static SmoothableCache generateSmoothableCache(
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IIsSmoothable isStateSmoothable
@@ -68,8 +73,12 @@ public final class CacheUtil {
 		}
 	}
 
+	/**
+	 * Generates a {@link DensityCache} from a {@link StateCache} and a {@link SmoothableCache}
+	 */
 	public static DensityCache generateDensityCache(
 			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
+			final int addX, final int addY, final int addZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache
 	) {
@@ -82,7 +91,7 @@ public final class CacheUtil {
 				for (int y = 0; y < densityCacheSizeY; ++y) {
 					for (int x = 0; x < densityCacheSizeX; ++x, ++index) {
 						densityCacheArray[index] = getBlockDensity(
-								x + 1, y + 1, z + 1,
+								x + addX, y + addY, z + addZ,
 								stateCache, smoothableCache
 						);
 					}
@@ -92,6 +101,9 @@ public final class CacheUtil {
 		}
 	}
 
+	/**
+	 * Gets the density for a block (between -8 and 8) based on the smoothability of itself and its 7 neighbours in negative directions
+	 */
 	private static float getBlockDensity(
 			final int posX, final int posY, final int posZ,
 			@Nonnull final StateCache stateCache,

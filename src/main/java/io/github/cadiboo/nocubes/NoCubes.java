@@ -1,15 +1,13 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
-import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.server.ServerProxy;
 import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.BlockDirtSnowy;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
-import net.minecraft.init.Blocks;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
@@ -32,7 +30,6 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	//TODO: Do I still need this?
 	public static final IProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 	private static boolean isEnabled = true;
@@ -84,29 +81,14 @@ public final class NoCubes {
 
 	public void onModConfigEvent(ModConfig.ModConfigEvent event) {
 		if (event.getConfig().getSpec() == ConfigHolder.CLIENT_SPEC) {
-			Config.bakeClient(event.getConfig());
+			ConfigHelper.bakeClient(event.getConfig());
 		} else if (event.getConfig().getSpec() == ConfigHolder.SERVER_SPEC) {
-			Config.bakeServer(event.getConfig());
+			ConfigHelper.bakeServer(event.getConfig());
 		}
 	}
 
 	@SubscribeEvent
 	public void onLoadComplete(final FMLLoadCompleteEvent event) {
-		{
-			Blocks.GRASS_BLOCK.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true).nocubes_setTerrainSmoothable(true);
-			Blocks.DIRT.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.SAND.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.GRAVEL.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.CLAY.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.STONE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.DIORITE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.GRANITE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.ANDESITE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.COAL_ORE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.IRON_ORE.getDefaultState().nocubes_setTerrainSmoothable(true);
-			Blocks.SNOW.getDefaultState().nocubes_setTerrainSmoothable(true);
-		}
 		PROXY.replaceFluidRendererCauseImBored();
 	}
 

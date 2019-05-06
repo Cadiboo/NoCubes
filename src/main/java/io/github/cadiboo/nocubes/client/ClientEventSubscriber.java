@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -89,11 +90,11 @@ public final class ClientEventSubscriber {
 
 					final BlockStateToast toast;
 					if (!state.nocubes_isTerrainSmoothable()) {
-						Config.addTerrainSmoothable(state);
-						toast = new BlockStateToast.Add(state, blockPos, objectMouseOver);
+						ConfigHelper.addTerrainSmoothable(state);
+						toast = new BlockStateToast.AddTerrain(state, blockPos);
 					} else {
-						Config.removeTerrainSmoothable(state);
-						toast = new BlockStateToast.Remove(state, blockPos, objectMouseOver);
+						ConfigHelper.removeTerrainSmoothable(state);
+						toast = new BlockStateToast.RemoveTerrain(state, blockPos);
 					}
 					minecraft.getToastGui().add(toast);
 
@@ -112,11 +113,11 @@ public final class ClientEventSubscriber {
 
 					final BlockStateToast toast;
 					if (!state.nocubes_isLeavesSmoothable()) {
-						Config.addLeavesSmoothable(state);
-						toast = new BlockStateToast.Add(state, blockPos, objectMouseOver);
+						ConfigHelper.addLeavesSmoothable(state);
+						toast = new BlockStateToast.AddLeaves(state, blockPos);
 					} else {
-						Config.removeLeavesSmoothable(state);
-						toast = new BlockStateToast.Remove(state, blockPos, objectMouseOver);
+						ConfigHelper.removeLeavesSmoothable(state);
+						toast = new BlockStateToast.RemoveLeaves(state, blockPos);
 					}
 					minecraft.getToastGui().add(toast);
 

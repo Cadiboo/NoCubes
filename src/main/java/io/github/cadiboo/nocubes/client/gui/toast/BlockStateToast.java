@@ -22,13 +22,13 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.common.model.TRSRTransformation;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
+import javax.vecmath.Matrix4f;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -37,37 +37,36 @@ import java.util.Random;
 /**
  * @author Cadiboo
  */
-//TODO: cleanup
-//TODO: FIXME!! FIX ALL THIS SHIT GGRRRR
 public abstract class BlockStateToast implements IToast {
 
-	// These buffers are large enough for an entire chunk, consider using smaller buffers
 	@Nonnull
 	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
 	@Nonnull
 	private final boolean[] usedBlockRenderLayers = new boolean[BlockRenderLayer.values().length];
 	@Nonnull
 	private final String name;
+	private final Matrix4f itemCameraTransformMaterix = TRSRTransformation.from(
+			new ItemTransformVec3f(
+					new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
+			)
+	).getMatrixVec();
 
-	BlockStateToast(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final RayTraceResult result) {
+	BlockStateToast(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 		final Minecraft minecraft = Minecraft.getInstance();
 		name = state.getBlock().getNameTextComponent().getFormattedText();
 
 		// Reset values
 		Arrays.fill(usedBlockRenderLayers, false);
 		final boolean[] startedBufferBuilders = new boolean[BlockRenderLayer.values().length];
-		Arrays.fill(startedBufferBuilders, false);
 
-		final IWorldReader blockAccess = minecraft.world;
-		final BlockRendererDispatcher blockRendererDispatcher = minecraft.getBlockRendererDispatcher();
-		final Random random = new Random();
-
-		this.build(state, pos, startedBufferBuilders, blockAccess, blockRendererDispatcher, random);
+		this.build(state, pos, startedBufferBuilders, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
 
 	}
 
-	// Copied from the Tessellator's vboUploader - Draw everything but don't reset the buffer
-	private static void drawBuffer(final BufferBuilder bufferBuilderIn) {
+	/**
+	 * Copied from the Tessellator's vboUploader - Draw everything but don't reset the buffer
+	 */
+	private static void drawBuffer(@Nonnull final BufferBuilder bufferBuilderIn) {
 		if (bufferBuilderIn.getVertexCount() > 0) {
 			VertexFormat vertexformat = bufferBuilderIn.getVertexFormat();
 			int i = vertexformat.getSize();
@@ -98,11 +97,18 @@ public abstract class BlockStateToast implements IToast {
 			}
 		}
 
-		//do not reset buffer
+		// Do not reset buffer
 //		bufferBuilderIn.reset();
 	}
 
-	private void build(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, final boolean[] startedBufferBuilders, final IWorldReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final Random random) {
+	private void build(
+			@Nonnull final IBlockState state,
+			@Nonnull final BlockPos pos,
+			@Nonnull final boolean[] startedBufferBuilders,
+			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final Random random
+	) {
 
 		if (state.getRenderType() != EnumBlockRenderType.MODEL) {
 			return;
@@ -126,7 +132,6 @@ public abstract class BlockStateToast implements IToast {
 				}
 				// OptiFine Shaders compatibility
 //				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
-//				usedBlockRenderLayers[blockRenderLayerId] |= blockRendererDispatcher.renderBlock(state, pos, blockAccess, bufferBuilder, random);
 				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
@@ -183,13 +188,7 @@ public abstract class BlockStateToast implements IToast {
 					RenderHelper.enableGUIStandardItemLighting();
 				}
 				{
-					ForgeHooksClient.multiplyCurrentGlMatrix(
-							TRSRTransformation.from(
-									new ItemTransformVec3f(
-											new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
-									)
-							).getMatrixVec()
-					);
+					ForgeHooksClient.multiplyCurrentGlMatrix(itemCameraTransformMaterix);
 				}
 			}
 			for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {
@@ -212,28 +211,54 @@ public abstract class BlockStateToast implements IToast {
 		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
-	public static class Add extends BlockStateToast {
+	public static class AddTerrain extends BlockStateToast {
 
-		public Add(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, final RayTraceResult result) {
-			super(state, pos, result);
+		public AddTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+			super(state, pos);
 		}
 
 		@Override
 		public String getUpdateType() {
-			return NoCubes.MOD_ID + ".addedSmoothableBlockState";
+			return NoCubes.MOD_ID + ".addedTerrainSmoothableBlockState";
 		}
 
 	}
 
-	public static class Remove extends BlockStateToast {
+	public static class RemoveTerrain extends BlockStateToast {
 
-		public Remove(@Nonnull final IBlockState state, @Nonnull final BlockPos pos, final RayTraceResult result) {
-			super(state, pos, result);
+		public RemoveTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+			super(state, pos);
 		}
 
 		@Override
 		public String getUpdateType() {
-			return NoCubes.MOD_ID + ".removedSmoothableBlockState";
+			return NoCubes.MOD_ID + ".removedTerrainSmoothableBlockState";
+		}
+
+	}
+
+	public static class AddLeaves extends BlockStateToast {
+
+		public AddLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+			super(state, pos);
+		}
+
+		@Override
+		public String getUpdateType() {
+			return NoCubes.MOD_ID + ".addedLeavesSmoothableBlockState";
+		}
+
+	}
+
+	public static class RemoveLeaves extends BlockStateToast {
+
+		public RemoveLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+			super(state, pos);
+		}
+
+		@Override
+		public String getUpdateType() {
+			return NoCubes.MOD_ID + ".removedLeavesSmoothableBlockState";
 		}
 
 	}

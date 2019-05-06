@@ -11,13 +11,11 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IWorldReaderBase;
 
 import javax.annotation.Nonnull;
 
@@ -36,7 +34,6 @@ import static net.minecraft.util.math.MathHelper.clamp;
 @SuppressWarnings("WeakerAccess")
 public final class ClientUtil {
 
-	//TODO
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
@@ -52,7 +49,7 @@ public final class ClientUtil {
 			{-1, +1, +0},
 			{+0, -1, -1},
 			{+0, -1, +1},
-			// {+0, +0, +0},
+			// {+0, +0, +0}, // Don't check self
 			{+0, +1, -1},
 			{+0, +1, +1},
 			{+1, -1, +0},
@@ -76,7 +73,7 @@ public final class ClientUtil {
 	 * @param blue  the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
 	 * @return the color in ARGB format
 	 */
-	public static int color(int red, int green, int blue) {
+	public static int colori(int red, int green, int blue) {
 
 		red = clamp(red, 0x00, 0xFF);
 		green = clamp(green, 0x00, 0xFF);
@@ -107,7 +104,7 @@ public final class ClientUtil {
 		final int redInt = max(0, min(255, round(red * 255)));
 		final int greenInt = max(0, min(255, round(green * 255)));
 		final int blueInt = max(0, min(255, round(blue * 255)));
-		return color(redInt, greenInt, blueInt);
+		return colori(redInt, greenInt, blueInt);
 	}
 
 	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
@@ -119,46 +116,15 @@ public final class ClientUtil {
 	}
 
 	/**
-	 * Gets the color of a quad through a block at a pos
-	 *
-	 * @param quad  the quad
-	 * @param state the state
-	 * @param cache the cache
-	 * @param pos   the pos
-	 * @return the color
-	 */
-	public static int getColor(final BakedQuad quad, final IBlockState state, final IWorldReaderBase cache, final BlockPos pos) {
-		final int red;
-		final int green;
-		final int blue;
-
-		if (quad.hasTintIndex()) {
-			//TODO FIXME PASS IN BLOCK COLORS
-			final int colorMultiplier = Minecraft.getInstance().getBlockColors().getColor(state, cache, pos, 0);
-			red = (colorMultiplier >> 16) & 255;
-			green = (colorMultiplier >> 8) & 255;
-			blue = colorMultiplier & 255;
-		} else {
-			red = 0xFF;
-			green = 0xFF;
-			blue = 0xFF;
-		}
-		return color(red, green, blue);
-	}
-
-	/**
-	 * @param stateCache
-	 * @param texturePooledMutablePos
-	 * @param state
 	 * @return a state and a texture pos which is guaranteed to be immutable
 	 */
-	//TODO: state cache?
+	//TODO: smoothable cache
 	//TODO: texture cache?
 	public static Tuple<BlockPos, IBlockState> getTexturePosAndState(
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
-			@Nonnull final IIsSmoothable isStateSmoothable,
+			@Deprecated @Nonnull final IIsSmoothable isStateSmoothable,
 			@Nonnull final SmoothableCache smoothableCache,
 			final byte relativePosX, final byte relativePosY, final byte relativePosZ
 	) {
@@ -248,8 +214,7 @@ public final class ClientUtil {
 	 */
 	public static byte getRelativePos(final int chunkPos, final int blockPos) {
 		final int blockPosChunkPos = (blockPos >> 4) << 4;
-		final boolean isInChunk = chunkPos == blockPosChunkPos;
-		if (isInChunk) {
+		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
 			return getRelativePos(blockPos);
 		} else {
 			// can be anything. usually between -1 and 16
