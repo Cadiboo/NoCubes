@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraftforge.common.ForgeConfigSpec;
 
@@ -16,25 +16,25 @@ final class ServerConfig {
 
 	ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
 	ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
-	ForgeConfigSpec.ConfigValue<MeshGenerator> terrainMeshGenerator;
+	ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
 	ForgeConfigSpec.BooleanValue terrainCollisions;
 
 	ServerConfig(ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		terrainSmoothable = builder
-				.comment("terrainSmoothable")
+				.comment("terrainSmoothable") // TODO
 				.translation(MOD_ID + ".config.terrainSmoothable")
 				.defineList("terrainSmoothable", ConfigHelper.getDefaultTerrainSmoothable(), o -> o instanceof String);
 		extendFluidsRange = builder
-				.comment("extendFluidsRange")
+				.comment("extendFluidsRange") // TODO
 				.translation(MOD_ID + ".config.extendFluidsRange")
 				.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 		terrainMeshGenerator = builder
-				.comment("terrainMeshGenerator")
+				.comment("terrainMeshGenerator") // TODO
 				.translation(MOD_ID + ".config.terrainMeshGenerator")
-				.defineEnum("terrainMeshGenerator", MeshGenerator.SurfaceNets);
+				.defineEnum("terrainMeshGenerator", MeshGeneratorType.SurfaceNets);
 		terrainCollisions = builder
-				.comment("terrainCollisions")
+				.comment("terrainCollisions") // TODO
 				.translation(MOD_ID + ".config.terrainCollisions")
 				.define("terrainCollisions", false);
 		builder.pop();

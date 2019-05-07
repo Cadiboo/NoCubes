@@ -48,7 +48,7 @@ public final class CacheUtil {
 	 */
 	public static SmoothableCache generateSmoothableCache(
 			@Nonnull final StateCache stateCache,
-			@Nonnull final IIsSmoothable isStateSmoothable
+			@Nonnull final IsSmoothable isStateSmoothable
 	) {
 		try (ModProfiler ignored = ModProfiler.get().start("generate smoothableCache")) {
 			final int cacheSizeX = stateCache.sizeX;
@@ -64,7 +64,7 @@ public final class CacheUtil {
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						smoothableCacheArray[index] = isStateSmoothable.isSmoothable(stateCacheArray[index]);
+						smoothableCacheArray[index] = isStateSmoothable.apply(stateCacheArray[index]);
 					}
 				}
 			}

@@ -8,7 +8,7 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -39,8 +39,8 @@ import net.minecraft.world.biome.BiomeColors;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.util.IIsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
@@ -58,8 +58,14 @@ public final class RenderDispatcher {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
 	) {
 
-		final MeshGenerator terrainMeshGenerator = Config.terrainMeshGenerator;
+		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves && !Config.renderExtendedFluids) {
+			return;
+		}
 
+		final MeshGenerator terrainMeshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
+
+		// A chunk is 0-15 so 16, we add one because idk and then surface nets needs another +1 because reasons
+		//TODO what if leaves mesh generator is SurfaceNets but terrain is not?
 		final byte meshSizeX = (byte) (17 + terrainMeshGenerator.getSizeXExtension());
 		final byte meshSizeY = (byte) (17 + terrainMeshGenerator.getSizeYExtension());
 		final byte meshSizeZ = (byte) (17 + terrainMeshGenerator.getSizeZExtension());
@@ -161,7 +167,7 @@ public final class RenderDispatcher {
 					SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
 							stateCache,
 							(state) ->
-									TERRAIN_SMOOTHABLE.isSmoothable(state) || LEAVES_SMOOTHABLE.isSmoothable(state)
+									TERRAIN_SMOOTHABLE.apply(state) || LEAVES_SMOOTHABLE.apply(state)
 					)
 			) {
 				try {
@@ -211,7 +217,7 @@ public final class RenderDispatcher {
 			switch (Config.smoothLeavesType) {
 				case SEPARATE:
 					for (final Block smoothableBlock : Config.getLeavesSmoothableBlocks()) {
-						final IIsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.isSmoothable(checkState) && checkState.getBlock() == smoothableBlock);
+						final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.apply(checkState) && checkState.getBlock() == smoothableBlock);
 						try (
 								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
 								SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
@@ -228,7 +234,14 @@ public final class RenderDispatcher {
 									random,
 									pooledPackedLightCache,
 									blockColorsCache,
-									MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, null, null, isSmoothable, Config.leavesMeshGenerator),
+									MeshDispatcher.generateChunkMeshOffset(
+											renderChunkPosition, blockAccess, pooledMutableBlockPos,
+											stateCache, null, null,
+											// state cache begins at -2 and density cache expects -1
+											1, 1, 1,
+											isSmoothable,
+											Config.leavesMeshGenerator
+									),
 									isSmoothable, //TODO: remove?
 									textureSmoothableCache,
 									pooledMutableBlockPos, usedBlockRenderLayers, true
@@ -237,7 +250,7 @@ public final class RenderDispatcher {
 					}
 					break;
 				case TOGETHER:
-					final IIsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
+					final IsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
 					try (
 							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
 							SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
@@ -254,7 +267,14 @@ public final class RenderDispatcher {
 								random,
 								pooledPackedLightCache,
 								blockColorsCache,
-								MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, null, null, isSmoothable, Config.leavesMeshGenerator),
+								MeshDispatcher.generateChunkMeshOffset(
+										renderChunkPosition, blockAccess, pooledMutableBlockPos,
+										stateCache, null, null,
+										// state cache begins at -2 and density cache expects -1
+										1, 1, 1,
+										isSmoothable,
+										Config.leavesMeshGenerator
+								),
 								isSmoothable, //TODO: remove?
 								textureSmoothableCache,
 								pooledMutableBlockPos, usedBlockRenderLayers, true
@@ -282,7 +302,7 @@ public final class RenderDispatcher {
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache
 	) {
 		try (
-				final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IIsSmoothable.TERRAIN_SMOOTHABLE);
+				final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IsSmoothable.TERRAIN_SMOOTHABLE);
 				final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR)
 		) {
 			MeshRenderer.renderMesh(
@@ -297,7 +317,13 @@ public final class RenderDispatcher {
 					random,
 					pooledPackedLightCache,
 					blockColorsCache,
-					MeshDispatcher.generateChunkMeshOffset(renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, null, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator),
+					MeshDispatcher.generateChunkMeshOffset(
+							renderChunkPosition, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, null,
+							// state cache begins at -2 and density cache expects -1
+							1, 1, 1,
+							TERRAIN_SMOOTHABLE,
+							Config.terrainMeshGenerator
+					),
 					TERRAIN_SMOOTHABLE, //TODO: remove?
 					smoothableCache,
 					pooledMutableBlockPos, usedBlockRenderLayers, false

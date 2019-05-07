@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -22,7 +22,7 @@ import java.util.HashMap;
  * @author Cadiboo
  * @author Click_Me
  */
-public class OldNoCubes implements IMeshGenerator {
+public class OldNoCubes implements MeshGenerator {
 
 	// Points order
 	public static final int X0Y0Z0 = 0;
@@ -43,7 +43,7 @@ public class OldNoCubes implements IMeshGenerator {
 	 */
 	// TODO: state caches etc.
 	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		final HashMap<Vec3b, FaceList> map = new HashMap<>();
 		for (final MutableBlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
 
@@ -59,7 +59,7 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	@Nonnull
-	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int posX = pos.getX();
 		final int posY = pos.getY();
@@ -77,7 +77,7 @@ public class OldNoCubes implements IMeshGenerator {
 
 		if (points != null) {
 			for (final EnumFacing facing : EnumFacing.values()) {
-				if (isSmoothable.isSmoothable(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
+				if (isSmoothable.apply(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
 					continue;
 				}
 
@@ -147,9 +147,9 @@ public class OldNoCubes implements IMeshGenerator {
 	}
 
 	@Nullable
-	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
-		if (!isSmoothable.isSmoothable(state)) {
+		if (!isSmoothable.apply(state)) {
 			return null;
 		}
 
@@ -273,11 +273,11 @@ public class OldNoCubes implements IMeshGenerator {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			IBlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if ((!isBlockAirOrPlant(state0)) && (!IIsSmoothable.TERRAIN_SMOOTHABLE.isSmoothable(state0))) {
+			if ((!isBlockAirOrPlant(state0)) && (!IsSmoothable.TERRAIN_SMOOTHABLE.apply(state0))) {
 				return true;
 			}
 			IBlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if ((!isBlockAirOrPlant(state1)) && (!IIsSmoothable.TERRAIN_SMOOTHABLE.isSmoothable(state1))) {
+			if ((!isBlockAirOrPlant(state1)) && (!IsSmoothable.TERRAIN_SMOOTHABLE.apply(state1))) {
 				return true;
 			}
 		}
@@ -298,7 +298,7 @@ public class OldNoCubes implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable) {
 		throw new UnsupportedOperationException();
 	}
 

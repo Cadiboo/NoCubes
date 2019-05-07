@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -124,14 +124,14 @@ public final class ClientUtil {
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final IBlockState state,
-			@Deprecated @Nonnull final IIsSmoothable isStateSmoothable,
+			@Deprecated @Nonnull final IsSmoothable isStateSmoothable,
 			@Nonnull final SmoothableCache smoothableCache,
 			final byte relativePosX, final byte relativePosY, final byte relativePosZ
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState")) {
 
 			//check initial first
-			if (isStateSmoothable.isSmoothable(state)) {
+			if (isStateSmoothable.apply(state)) {
 				return new Tuple<>(
 						texturePooledMutablePos.toImmutable(),
 						state
@@ -153,7 +153,7 @@ public final class ClientUtil {
 						relativePosY + offset[1] + 2,
 						relativePosZ + offset[2] + 2
 				)];
-				if (isStateSmoothable.isSmoothable(tempState)) {
+				if (isStateSmoothable.apply(tempState)) {
 					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
 					textureState = tempState;
 					break;

@@ -60,19 +60,6 @@ public final class ModUtil {
 		return vec3;
 	}
 
-	@Deprecated
-	public static double average(double... values) {
-		if (values.length == 0) return 0;
-
-		double total = 0L;
-
-		for (double value : values) {
-			total += value;
-		}
-
-		return total / values.length;
-	}
-
 	/**
 	 * Ew
 	 *

@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 /**
  * @author Cadiboo
  */
-public class ModWorldEventListener implements IWorldEventListener {
+public final class ModWorldEventListener implements IWorldEventListener {
 
 	private static final int BLOCK_UPDATE_EXTEND = 2;
 

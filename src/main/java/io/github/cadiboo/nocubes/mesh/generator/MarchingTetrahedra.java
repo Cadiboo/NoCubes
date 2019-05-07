@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class MarchingTetrahedra implements IMeshGenerator {
+public class MarchingTetrahedra implements MeshGenerator {
 
 	private final byte[][] CUBE_VERTICES = {
 			{0, 0, 0},
@@ -385,7 +385,7 @@ public class MarchingTetrahedra implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable) {
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			final FaceList faces = FaceList.retain();
 

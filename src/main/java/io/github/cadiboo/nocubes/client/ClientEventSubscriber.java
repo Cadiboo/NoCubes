@@ -35,7 +35,7 @@ import org.apache.logging.log4j.LogManager;
 import java.text.DecimalFormat;
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.util.IIsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.api.distmarker.Dist.CLIENT;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;

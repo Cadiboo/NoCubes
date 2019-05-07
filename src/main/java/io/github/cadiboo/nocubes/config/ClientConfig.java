@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.config;
 
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
@@ -17,7 +17,7 @@ final class ClientConfig {
 
 	ForgeConfigSpec.BooleanValue renderSmoothLeaves;
 	ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
-	ForgeConfigSpec.ConfigValue<MeshGenerator> leavesMeshGenerator;
+	ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
 	ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
 
 	ForgeConfigSpec.BooleanValue renderExtendedFluids;
@@ -31,47 +31,47 @@ final class ClientConfig {
 	ClientConfig(final ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		renderSmoothTerrain = builder
-				.comment("renderSmoothTerrain")
+				.comment("renderSmoothTerrain") // TODO
 				.translation(MOD_ID + ".config.renderSmoothTerrain")
 				.define("renderSmoothTerrain", true);
 
 		renderSmoothLeaves = builder
-				.comment("renderSmoothLeaves")
+				.comment("renderSmoothLeaves") // TODO
 				.translation(MOD_ID + ".config.renderSmoothLeaves")
 				.define("renderSmoothLeaves", true);
 		leavesSmoothable = builder
-				.comment("leavesSmoothable")
+				.comment("leavesSmoothable") // TODO
 				.translation(MOD_ID + ".config.leavesSmoothable")
 				.defineList("leavesSmoothable", Config.ConfigHelper.getDefaultLeavesSmoothable(), o -> o instanceof String);
 		leavesMeshGenerator = builder
-				.comment("leavesMeshGenerator")
+				.comment("leavesMeshGenerator") // TODO
 				.translation(MOD_ID + ".config.leavesMeshGenerator")
-				.defineEnum("leavesMeshGenerator", MeshGenerator.SurfaceNets);
+				.defineEnum("leavesMeshGenerator", MeshGeneratorType.SurfaceNets);
 		smoothLeavesType = builder
-				.comment("smoothLeavesType")
+				.comment("smoothLeavesType") // TODO
 				.translation(MOD_ID + ".config.smoothLeavesType")
 				.defineEnum("smoothLeavesType", SmoothLeavesType.OFF);
 
 		renderExtendedFluids = builder
-				.comment("renderExtendedFluids")
+				.comment("renderExtendedFluids") // TODO
 				.translation(MOD_ID + ".config.renderExtendedFluids")
 				.define("renderExtendedFluids", true);
 
 		applyDiffuseLighting = builder
-				.comment("applyDiffuseLighting")
+				.comment("applyDiffuseLighting") // TODO
 				.translation(MOD_ID + ".config.applyDiffuseLighting")
 				.define("applyDiffuseLighting", true);
 
 		smoothFluidLighting = builder
-				.comment("smoothFluidLighting")
+				.comment("smoothFluidLighting") // TODO
 				.translation(MOD_ID + ".config.smoothFluidLighting")
 				.define("smoothFluidLighting", true);
 		smoothFluidColors = builder
-				.comment("smoothFluidColors")
+				.comment("smoothFluidColors") // TODO
 				.translation(MOD_ID + ".config.smoothFluidColors")
 				.define("smoothFluidColors", true);
 		naturalFluidTextures = builder
-				.comment("naturalFluidTextures")
+				.comment("naturalFluidTextures") // TODO
 				.translation(MOD_ID + ".config.naturalFluidTextures")
 				.define("naturalFluidTextures", true);
 

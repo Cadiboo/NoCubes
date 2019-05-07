@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
-import io.github.cadiboo.nocubes.mesh.IMeshGenerator;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class SurfaceNets implements IMeshGenerator {
+public class SurfaceNets implements MeshGenerator {
 
 	private static final int[] CUBE_EDGES = new int[24];
 	private static final int[] EDGE_TABLE = new int[256];
@@ -399,7 +399,7 @@ public class SurfaceNets implements IMeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable) {
 		return FaceList.retain();
 	}
 

@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -61,7 +61,7 @@ public final class MeshRenderer {
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final LazyBlockColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
-			@Deprecated @Nonnull final IIsSmoothable isSmoothable,
+			@Deprecated @Nonnull final IsSmoothable isSmoothable,
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,

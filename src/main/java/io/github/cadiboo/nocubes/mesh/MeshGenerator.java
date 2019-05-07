@@ -1,14 +1,12 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.mesh.generator.MarchingCubes;
-import io.github.cadiboo.nocubes.mesh.generator.MarchingTetrahedra;
-import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
-import io.github.cadiboo.nocubes.mesh.generator.SurfaceNets;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
-import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
@@ -17,49 +15,80 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public enum MeshGenerator {
+public interface MeshGenerator {
 
-	SurfaceNets(new SurfaceNets()),
-	MarchingCubes(new MarchingCubes()),
-	MarchingTetrahedra(new MarchingTetrahedra()),
+	/**
+	 * Generates a chunk WITHOUT OFFSETTING OR TRANSLATING ANY VERTICES
+	 *
+	 * @param scalarFieldData the float[] data
+	 * @param dimensions      the dimensions of the mesh
+	 * @return the chunk vertices
+	 */
+	@Nonnull
+	HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
 
-	OldNoCubes(new OldNoCubes());
+	/**
+	 * @param position             the byte[] position relative to the chunk pos
+	 * @param neighbourDensityGrid the neighbour density grid
+	 * @return the block vertices
+	 */
+	@Nonnull
+	FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
 
-	private final IMeshGenerator meshGenerator;
+	default byte getSizeXExtension() {
+		return 0;
+	}
 
-	MeshGenerator(IMeshGenerator meshGenerator) {
-		this.meshGenerator = meshGenerator;
+	default byte getSizeYExtension() {
+		return 0;
+	}
+
+	default byte getSizeZExtension() {
+		return 0;
 	}
 
 	@Nonnull
-	public HashMap<Vec3b, FaceList> generateChunk(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateChunkMesh" + this.name())) {
-			return meshGenerator.generateChunk(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+	FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader cache, @Nonnull final IsSmoothable isSmoothable);
+
+	@Nonnull
+	default float[] generateScalarFieldData(
+			final int startX, final int startY, final int startZ,
+			final int endX, final int endY, final int endZ,
+			@Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+
+		final int maxX = endX - startX;
+		final int maxY = endY - startY;
+		final int maxZ = endZ - startZ;
+
+		final float[] scalarFieldData = new float[maxX * maxY * maxZ];
+
+		int index = 0;
+		float density;
+		for (int z = 0; z < maxZ; ++z) {
+			for (int y = 0; y < maxY; ++y) {
+				for (int x = 0; x < maxX; ++x, ++index) {
+					density = 0;
+					for (int zOffset = 0; zOffset < 2; ++zOffset) {
+						for (int yOffset = 0; yOffset < 2; ++yOffset) {
+							for (int xOffset = 0; xOffset < 2; ++xOffset) {
+
+								pooledMutableBlockPos.setPos(
+										startX + x - xOffset,
+										startY + y - yOffset,
+										startZ + z - zOffset
+								);
+
+								final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+								density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
+							}
+						}
+					}
+					scalarFieldData[index] = density;
+				}
+			}
 		}
-	}
-
-	@Nonnull
-	public FaceList generateBlock(final float[] densityData, final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateBlockMesh" + this.name())) {
-			return meshGenerator.generateBlock(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
-		}
-	}
-
-	public byte getSizeXExtension() {
-		return meshGenerator.getSizeXExtension();
-	}
-
-	public byte getSizeYExtension() {
-		return meshGenerator.getSizeYExtension();
-	}
-
-	public byte getSizeZExtension() {
-		return meshGenerator.getSizeZExtension();
-	}
-
-	@Nonnull
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
+		return scalarFieldData;
 	}
 
 }

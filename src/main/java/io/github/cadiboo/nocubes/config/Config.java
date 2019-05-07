@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import joptsimple.internal.Strings;
@@ -91,7 +91,7 @@ public final class Config {
 	// Client
 	public static boolean renderSmoothTerrain;
 	public static boolean renderSmoothLeaves;
-	public static MeshGenerator leavesMeshGenerator;
+	public static MeshGeneratorType leavesMeshGenerator;
 	public static Set<String> leavesSmoothable;
 	public static SmoothLeavesType smoothLeavesType;
 
@@ -106,7 +106,7 @@ public final class Config {
 	// Server
 	public static ExtendFluidsRange extendFluidsRange;
 
-	public static MeshGenerator terrainMeshGenerator;
+	public static MeshGeneratorType terrainMeshGenerator;
 	public static boolean terrainCollisions;
 	public static Set<String> terrainSmoothable;
 

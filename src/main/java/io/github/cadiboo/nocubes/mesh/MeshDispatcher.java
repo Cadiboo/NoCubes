@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.IIsSmoothable;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -34,15 +34,48 @@ public final class MeshDispatcher {
 			@Nullable final StateCache stateCache,
 			@Nullable final SmoothableCache smoothableCache,
 			@Nullable final DensityCache densityCache,
-			@Nonnull final IIsSmoothable isSmoothable,
-			@Nonnull final MeshGenerator meshGenerator
+			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
+			@Nonnull final IsSmoothable isSmoothable,
+			@Nonnull final MeshGeneratorType meshGeneratorType
 	) {
-		if (meshGenerator == MeshGenerator.OldNoCubes) {
-			return generateChunkMeshOffsetOldNoCubes(chunkPos, blockAccess, isSmoothable);
+		if (meshGeneratorType == MeshGeneratorType.OldNoCubes) {
+			try (PooledMutableBlockPos pooledMutableBlockPos1 = PooledMutableBlockPos.retain()) {
+				return OldNoCubes.generateChunk(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos1);
+			}
 		}
 
-		final HashMap<Vec3b, FaceList> chunkData = generateChunkMeshUnOffset(chunkPos, blockAccess, pooledMutableBlockPos, stateCache, smoothableCache, densityCache, isSmoothable, meshGenerator);
-		return offsetChunkMesh(chunkPos, chunkData);
+		final MeshGenerator meshGenerator = meshGeneratorType.getMeshGenerator();
+		return generateChunkMeshOffset(
+				chunkPos, blockAccess, pooledMutableBlockPos,
+				stateCache, smoothableCache, densityCache,
+				densityCacheAddX, densityCacheAddY, densityCacheAddZ,
+				isSmoothable,
+				meshGenerator
+		);
+	}
+
+	@Nonnull
+	public static HashMap<Vec3b, FaceList> generateChunkMeshOffset(
+			@Nonnull final BlockPos chunkPos,
+			@Nonnull final IBlockReader blockAccess,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nullable final StateCache stateCache,
+			@Nullable final SmoothableCache smoothableCache,
+			@Nullable final DensityCache densityCache,
+			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
+			@Nonnull final IsSmoothable isSmoothable,
+			@Nonnull final MeshGenerator meshGenerator
+	) {
+		return offsetChunkMesh(
+				chunkPos,
+				generateChunkMeshUnOffset(
+						chunkPos, blockAccess, pooledMutableBlockPos,
+						stateCache, smoothableCache, densityCache,
+						densityCacheAddX, densityCacheAddY, densityCacheAddZ,
+						isSmoothable,
+						meshGenerator
+				)
+		);
 	}
 
 	/**
@@ -56,30 +89,31 @@ public final class MeshDispatcher {
 			@Nullable final StateCache stateCache,
 			@Nullable final SmoothableCache smoothableCache,
 			@Nullable final DensityCache densityCache,
-			@Nonnull final IIsSmoothable isSmoothable,
+			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
+			@Nonnull final IsSmoothable isSmoothable,
 			@Nonnull MeshGenerator meshGenerator
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateChunkMeshUnOffset")) {
-			//TODO: FIX THIS
-			final byte meshSizeX;
-			final byte meshSizeY;
-			final byte meshSizeZ;
-			switch (meshGenerator) {
-				// Yay, Surface Nets is special and needs an extra +1. Why? No-one knows :/
-				case SurfaceNets:
-					meshSizeX = 18;
-					meshSizeY = 18;
-					meshSizeZ = 18;
-					break;
-				default:
-					meshSizeX = 17;
-					meshSizeY = 17;
-					meshSizeZ = 17;
-					break;
-				case OldNoCubes:
-					throw new UnsupportedOperationException();
-			}
-			return generateCachesAndChunkData(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos, stateCache, smoothableCache, densityCache, meshSizeX, meshSizeY, meshSizeZ, meshGenerator);
+			final int chunkPosX = chunkPos.getX();
+			final int chunkPosY = chunkPos.getY();
+			final int chunkPosZ = chunkPos.getZ();
+
+			// A chunk is 0-15 so 16, we add one because idk and then surface nets needs another +1 because reasons
+			final byte meshSizeX = (byte) (17 + meshGenerator.getSizeXExtension());
+			final byte meshSizeY = (byte) (17 + meshGenerator.getSizeYExtension());
+			final byte meshSizeZ = (byte) (17 + meshGenerator.getSizeZExtension());
+
+			return generateMeshUnOffset(
+					blockAccess, pooledMutableBlockPos,
+					isSmoothable,
+					stateCache,
+					chunkPosX, chunkPosY, chunkPosZ,
+					smoothableCache,
+					densityCache,
+					densityCacheAddX, densityCacheAddY, densityCacheAddZ,
+					meshSizeX, meshSizeY, meshSizeZ,
+					meshGenerator
+			);
 		}
 	}
 
@@ -88,8 +122,8 @@ public final class MeshDispatcher {
 	public static FaceList generateBlockMeshOffset(
 			@Nonnull final BlockPos pos,
 			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final IIsSmoothable isSmoothable,
-			@Nonnull final MeshGenerator meshGenerator
+			@Nonnull final IsSmoothable isSmoothable,
+			@Nonnull final MeshGeneratorType meshGenerator
 	) {
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			return generateBlockMeshOffset(pos, blockAccess, pooledMutableBlockPos, isSmoothable, meshGenerator);
@@ -104,32 +138,36 @@ public final class MeshDispatcher {
 			@Nonnull final BlockPos pos,
 			@Nonnull final IBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final IIsSmoothable isSmoothable,
-			@Nonnull final MeshGenerator meshGenerator
+			@Nonnull final IsSmoothable isSmoothable,
+			@Nonnull final MeshGeneratorType meshGenerator
 	) {
 
-		if (meshGenerator == MeshGenerator.OldNoCubes) {
-			return generateOffsetBlockOldNoCubes(pos, blockAccess, pooledMutableBlockPos, isSmoothable);
+		if (meshGenerator == MeshGeneratorType.OldNoCubes) {
+			return OldNoCubes.generateBlock(pos, blockAccess, isSmoothable, pooledMutableBlockPos);
 		}
 
-		final FaceList chunkData = generateBlockMeshUnOffset(pos, blockAccess, pooledMutableBlockPos, isSmoothable, meshGenerator);
+		final FaceList chunkData = generateBlockMeshUnOffset(
+				pos, blockAccess, pooledMutableBlockPos,
+				isSmoothable,
+				meshGenerator
+		);
 
 		final int chunkPosX = (pos.getX() >> 4) << 4;
 		final int chunkPosY = (pos.getY() >> 4) << 4;
 		final int chunkPosZ = (pos.getZ() >> 4) << 4;
 
-		return offsetBlockMesh(chunkPosX, chunkPosY, chunkPosZ, chunkData);
+		return offsetFaceList(chunkPosX, chunkPosY, chunkPosZ, chunkData);
 	}
 
 	/**
 	 * @return the un offset vertices for the block
 	 */
 	@Nonnull
-	public static FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, final PooledMutableBlockPos pooledMutableBlockPos, @Nonnull final IIsSmoothable isSmoothable, @Nonnull final MeshGenerator meshGenerator) {
+	public static FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, final PooledMutableBlockPos pooledMutableBlockPos, @Nonnull final IsSmoothable isSmoothable, @Nonnull final MeshGeneratorType meshGeneratorType) {
 
 		try (ModProfiler ignored = ModProfiler.get().start("generateBlock")) {
 //			if(true)
-//				return meshGenerator.generateBlock(pos, blockAccess, isSmoothable);
+//				return meshGeneratorType.generateBlock(pos, blockAccess, isSmoothable);
 
 			final int posX = pos.getX();
 			final int posY = pos.getY();
@@ -148,21 +186,21 @@ public final class MeshDispatcher {
 			final byte subY;
 			final byte subZ;
 			//FFS
-			if (meshGenerator == MeshGenerator.MarchingCubes) {
+			if (meshGeneratorType == MeshGeneratorType.MarchingCubes) {
 				addX = 1;
 				addY = 1;
 				addZ = 1;
 				subX = 0;
 				subY = 0;
 				subZ = 0;
-			} else if (meshGenerator == MeshGenerator.MarchingTetrahedra) {
+			} else if (meshGeneratorType == MeshGeneratorType.MarchingTetrahedra) {
 				addX = 1;
 				addY = 1;
 				addZ = 1;
 				subX = 0;
 				subY = 0;
 				subZ = 0;
-			} else if (meshGenerator == MeshGenerator.SurfaceNets) {
+			} else if (meshGeneratorType == MeshGeneratorType.SurfaceNets) {
 				addX = 0;
 				addY = 0;
 				addZ = 0;
@@ -177,6 +215,8 @@ public final class MeshDispatcher {
 				subY = 0;
 				subZ = 0;
 			}
+
+			final MeshGenerator meshGenerator = meshGeneratorType.getMeshGenerator();
 
 			final byte meshSizeX = (byte) (2 + addX + subX + meshGenerator.getSizeXExtension());
 			final byte meshSizeY = (byte) (2 + addY + subY + meshGenerator.getSizeYExtension());
@@ -200,7 +240,7 @@ public final class MeshDispatcher {
 
 									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
 									final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
-									density += ModUtil.getIndividualBlockDensity(isSmoothable.isSmoothable(state), state);
+									density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
 								}
 							}
 						}
@@ -211,7 +251,7 @@ public final class MeshDispatcher {
 			}
 
 			FaceList finalFaces = FaceList.retain();
-			final HashMap<Vec3b, FaceList> vec3bFaceListHashMap = meshGenerator.generateChunk(densityData, meshSizeX, meshSizeY, meshSizeZ);
+			final HashMap<Vec3b, FaceList> vec3bFaceListHashMap = meshGenerator.generateChunk(densityData, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 			for (final FaceList generatedFaceList : vec3bFaceListHashMap.values()) {
 				finalFaces.addAll(generatedFaceList);
 				generatedFaceList.close();
@@ -248,10 +288,20 @@ public final class MeshDispatcher {
 	 */
 	@Nonnull
 	public static HashMap<Vec3b, FaceList> offsetChunkMesh(@Nonnull final BlockPos chunkPos, @Nonnull final HashMap<Vec3b, FaceList> chunkData) {
-		for (FaceList faces : chunkData.values()) {
-			offsetBlockMesh(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ(), faces);
-		}
+		offsetMesh(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ(), chunkData);
 		return chunkData;
+	}
+
+	/**
+	 * Modifies the chunk data mesh in! Returns the offset mesh for convenience
+	 * Offsets the data from relative pos to real pos and applies offsetVertices
+	 */
+	@Nonnull
+	public static HashMap<Vec3b, FaceList> offsetMesh(final int offsetX, final int offsetY, final int offsetZ, @Nonnull final HashMap<Vec3b, FaceList> meshData) {
+		for (FaceList faces : meshData.values()) {
+			offsetFaceList(offsetX, offsetY, offsetZ, faces);
+		}
+		return meshData;
 	}
 
 	/**
@@ -259,7 +309,7 @@ public final class MeshDispatcher {
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
 	 */
 	@Nonnull
-	public static FaceList offsetBlockMesh(final int chunkPosX, final int chunkPosY, final int chunkPosZ, @Nonnull final FaceList faces) {
+	public static FaceList offsetFaceList(final int chunkPosX, final int chunkPosY, final int chunkPosZ, @Nonnull final FaceList faces) {
 		for (Face face : faces) {
 			final Vec3 vertex0 = face.getVertex0();
 			final Vec3 vertex1 = face.getVertex1();
@@ -281,22 +331,17 @@ public final class MeshDispatcher {
 		return faces;
 	}
 
-	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateCachesAndChunkData(
-			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final IIsSmoothable isSmoothable,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+	public static HashMap<Vec3b, FaceList> generateMeshUnOffset(
+			@Nonnull final IBlockReader blockAccess, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final IsSmoothable isSmoothable,
 			@Nullable final StateCache stateCacheIn,
+			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
 			@Nullable final SmoothableCache smoothableCacheIn,
 			@Nullable final DensityCache densityCacheIn,
+			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 			@Nonnull final MeshGenerator meshGenerator
 	) {
-		final int chunkPosX = chunkPos.getX();
-		final int chunkPosY = chunkPos.getY();
-		final int chunkPosZ = chunkPos.getZ();
-
 		try (
 				final StateCache stateCache =
 						stateCacheIn != null ?
@@ -314,21 +359,12 @@ public final class MeshDispatcher {
 						densityCacheIn != null ?
 								densityCacheIn : CacheUtil.generateDensityCache(
 								meshSizeX, meshSizeY, meshSizeZ,
-								//TODO fix?
-								// add 1 because we assume a that the cache starts 1 block before where we want
-								1, 1, 1,
+								densityCacheAddX, densityCacheAddY, densityCacheAddZ,
 								stateCache,
 								smoothableCache
 						)
 		) {
-			return meshGenerator.generateChunk(densityCache.getDensityCache(), meshSizeX, meshSizeY, meshSizeZ);
-		}
-	}
-
-	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunkMeshOffsetOldNoCubes(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IIsSmoothable isSmoothable) {
-		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
-			return OldNoCubes.generateChunk(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos);
+			return meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 		}
 	}
 
@@ -357,16 +393,6 @@ public final class MeshDispatcher {
 					pooledMutableBlockPos
 			);
 		}
-	}
-
-	@Nonnull
-	public static FaceList generateOffsetBlockOldNoCubes(
-			@Nonnull final BlockPos blockPos,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final IIsSmoothable isSmoothable
-	) {
-		return OldNoCubes.generateBlock(blockPos, blockAccess, isSmoothable, pooledMutableBlockPos);
 	}
 
 }
