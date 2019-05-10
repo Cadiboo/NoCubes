@@ -1,3 +1,0 @@
-install:
-   - echo "Running build!"
-   - ./gradlew build
