@@ -43,7 +43,7 @@ function initializeCoreMod() {
 						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
 						if(!hasFinished) {
 							var name = currentlyRunning;
-							finish();
+							currentlyRunning = undefined;
 							log("Caught exception from " + name);
 						}
 					}

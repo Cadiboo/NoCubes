@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
+import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -16,12 +16,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
@@ -34,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
@@ -64,14 +68,26 @@ public final class ClientEventSubscriber {
 		final boolean toggleLeavesSmoothableBlockStatePressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
 		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
 
-		if (ClientProxy.tempToggleCollisions.isPressed()) {
+		if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
+			final boolean oldTerrainCollisions = Config.terrainCollisions;
 			if (!Config.terrainCollisions) {
+				ConfigHelper.enableTerrainCollisions();
 				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsEnabledWarning"));
-				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleCollisions.getKey().getTranslationKey())));
+				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
 			} else {
+				ConfigHelper.disableTerrainCollisions();
 				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisabled"));
 			}
-			Config.terrainCollisions = !Config.terrainCollisions;
+			//Config read+write is async so...
+			Config.terrainCollisions = !oldTerrainCollisions;
+		}
+
+		if (ClientProxy.tempToggleLeavesCollisions.isPressed()) {
+			if (!Config.leavesCollisions) {
+				ConfigHelper.enableLeavesCollisions();
+			} else {
+				ConfigHelper.disableLeavesCollisions();
+			}
 		}
 
 		if (toggleEnabledPressed || toggleTerrainSmoothableBlockStatePressed || toggleLeavesSmoothableBlockStatePressed || toggleProfilersPressed) {
@@ -302,6 +318,8 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
 
+//		if(true) return;
+
 		final EntityPlayer player = Minecraft.getInstance().player;
 		if (player == null) {
 			return;
@@ -477,6 +495,28 @@ public final class ClientEventSubscriber {
 			bufferbuilder.setTranslation(0, 0, 0);
 
 		}
+
+		if (true) return;
+
+		GlStateManager.enableBlend();
+		GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.lineWidth(Math.max(2.5F, (float) Minecraft.getInstance().mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthMask(false);
+		GlStateManager.matrixMode(5889);
+		GlStateManager.pushMatrix();
+		GlStateManager.scalef(1.0F, 1.0F, 0.999F);
+		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
+		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
+		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
+		for (final VoxelShape voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()).grow(2)).collect(Collectors.toList())) {
+			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0.0F, 1, 1, 0.4F);
+		}
+		GlStateManager.popMatrix();
+		GlStateManager.matrixMode(5888);
+		GlStateManager.depthMask(true);
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
 
 //		if (ModConfig.smoothBlockHighlighting || ModConfig.collisionsBlockHighlighting) {
 //			final EntityPlayer player = event.getPlayer();

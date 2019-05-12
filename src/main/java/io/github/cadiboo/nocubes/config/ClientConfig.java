@@ -24,6 +24,8 @@ final class ClientConfig {
 
 	ForgeConfigSpec.BooleanValue applyDiffuseLighting;
 
+	ForgeConfigSpec.BooleanValue betterTextures;
+
 	ForgeConfigSpec.BooleanValue smoothFluidLighting;
 	ForgeConfigSpec.BooleanValue smoothFluidColors;
 	ForgeConfigSpec.BooleanValue naturalFluidTextures;
@@ -42,7 +44,7 @@ final class ClientConfig {
 		leavesSmoothable = builder
 				.comment("leavesSmoothable") // TODO
 				.translation(MOD_ID + ".config.leavesSmoothable")
-				.defineList("leavesSmoothable", Config.ConfigHelper.getDefaultLeavesSmoothable(), o -> o instanceof String);
+				.defineList("leavesSmoothable", ConfigHelper.getDefaultLeavesSmoothable(), o -> o instanceof String);
 		leavesMeshGenerator = builder
 				.comment("leavesMeshGenerator") // TODO
 				.translation(MOD_ID + ".config.leavesMeshGenerator")
@@ -61,6 +63,11 @@ final class ClientConfig {
 				.comment("applyDiffuseLighting") // TODO
 				.translation(MOD_ID + ".config.applyDiffuseLighting")
 				.define("applyDiffuseLighting", true);
+
+		betterTextures = builder
+				.comment("betterTextures") // TODO
+				.translation(MOD_ID + ".config.betterTextures")
+				.define("betterTextures", true);
 
 		smoothFluidLighting = builder
 				.comment("smoothFluidLighting") // TODO

@@ -22,7 +22,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public final class ExtendedLiquidChunkRenderer {
+public final class ExtendedFluidChunkRenderer {
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk renderChunk,
@@ -33,7 +33,6 @@ public final class ExtendedLiquidChunkRenderer {
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final LazyPackedLightCache packedLightCache
@@ -44,12 +43,11 @@ public final class ExtendedLiquidChunkRenderer {
 				final IBlockState[] blockCacheArray = stateCache.getBlockStates();
 				final IFluidState[] fluidCacheArray = stateCache.getFluidStates();
 
-				final int blockCacheLength = blockCacheArray.length;
 				final int fluidCacheLength = fluidCacheArray.length;
 
-				final boolean[] isLiquid = new boolean[fluidCacheLength];
+				final boolean[] isFluidSource = new boolean[fluidCacheLength];
 				for (int i = 0; i < fluidCacheLength; i++) {
-					isLiquid[i] = fluidCacheArray[i].isSource();
+					isFluidSource[i] = fluidCacheArray[i].isSource();
 				}
 
 				final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
@@ -71,6 +69,9 @@ public final class ExtendedLiquidChunkRenderer {
 							if (!isSmoothable[smoothableCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)]) {
 								continue;
 							}
+							if (!fluidCacheArray[stateCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)].isEmpty()) {
+								continue;
+							}
 
 							OFFSET:
 							for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
@@ -82,8 +83,8 @@ public final class ExtendedLiquidChunkRenderer {
 									}
 
 									// Add 1 or 2 to account for offset=-1 or -2
-									final int liquidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
-									if (!isLiquid[liquidStateIndex]) {
+									final int fluidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
+									if (!isFluidSource[fluidStateIndex]) {
 										continue;
 									}
 
@@ -92,7 +93,7 @@ public final class ExtendedLiquidChunkRenderer {
 										continue;
 									}
 
-									final IFluidState fluidState = fluidCacheArray[liquidStateIndex];
+									final IFluidState fluidState = fluidCacheArray[fluidStateIndex];
 
 									final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(fluidState);
 									final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
@@ -104,7 +105,7 @@ public final class ExtendedLiquidChunkRenderer {
 //											renderChunkPositionZ + z
 //									), blockAccess, bufferBuilder);
 
-									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedLiquidBlockRenderer.renderExtendedLiquid(
+									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
 											renderChunkPositionX + x,
 											renderChunkPositionY + y,
 											renderChunkPositionZ + z,

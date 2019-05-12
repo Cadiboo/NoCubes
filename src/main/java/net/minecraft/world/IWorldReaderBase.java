@@ -1,5 +1,11 @@
 package net.minecraft.world;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -20,13 +26,6 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
-
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public interface IWorldReaderBase extends IBlockReader {
    /**
@@ -118,23 +117,19 @@ public interface IWorldReaderBase extends IBlockReader {
       return this.checkNoEntityCollision(entityIn, VoxelShapes.create(aabb));
    }
 
-   default Stream<VoxelShape> func_212391_a(VoxelShape p_212391_1_, VoxelShape p_212391_2_, boolean p_212391_3_) {
-      int i = MathHelper.floor(p_212391_1_.getStart(EnumFacing.Axis.X)) - 1;
-      int j = MathHelper.ceil(p_212391_1_.getEnd(EnumFacing.Axis.X)) + 1;
-      int k = MathHelper.floor(p_212391_1_.getStart(EnumFacing.Axis.Y)) - 1;
-      int l = MathHelper.ceil(p_212391_1_.getEnd(EnumFacing.Axis.Y)) + 1;
-      int i1 = MathHelper.floor(p_212391_1_.getStart(EnumFacing.Axis.Z)) - 1;
-      int j1 = MathHelper.ceil(p_212391_1_.getEnd(EnumFacing.Axis.Z)) + 1;
+   default Stream<VoxelShape> getCollisionBoxes(VoxelShape area, VoxelShape entityShape, boolean isEntityInsideWorldBorder) {
+      int i = MathHelper.floor(area.getStart(EnumFacing.Axis.X)) - 1;
+      int j = MathHelper.ceil(area.getEnd(EnumFacing.Axis.X)) + 1;
+      int k = MathHelper.floor(area.getStart(EnumFacing.Axis.Y)) - 1;
+      int l = MathHelper.ceil(area.getEnd(EnumFacing.Axis.Y)) + 1;
+      int i1 = MathHelper.floor(area.getStart(EnumFacing.Axis.Z)) - 1;
+      int j1 = MathHelper.ceil(area.getEnd(EnumFacing.Axis.Z)) + 1;
       WorldBorder worldborder = this.getWorldBorder();
       boolean flag = worldborder.minX() < (double)i && (double)j < worldborder.maxX() && worldborder.minZ() < (double)i1 && (double)j1 < worldborder.maxZ();
       VoxelShapePart voxelshapepart = new VoxelShapePartBitSet(j - i, l - k, j1 - i1);
       Predicate<VoxelShape> predicate = (p_212393_1_) -> {
-         return !p_212393_1_.isEmpty() && VoxelShapes.compare(p_212391_1_, p_212393_1_, IBooleanFunction.AND);
+         return !p_212393_1_.isEmpty() && VoxelShapes.compare(area, p_212393_1_, IBooleanFunction.AND);
       };
-      // NoCubes Start
-      if(io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled())
-         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionBoxes(this, p_212391_1_, p_212391_2_, p_212391_3_, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
-      // NoCubes End
       Stream<VoxelShape> stream = StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((p_212390_12_) -> {
          int k1 = p_212390_12_.getX();
          int l1 = p_212390_12_.getY();
@@ -144,13 +139,13 @@ public interface IWorldReaderBase extends IBlockReader {
          boolean flag3 = i2 == i1 || i2 == j1 - 1;
          if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && this.isBlockLoaded(p_212390_12_)) {
             VoxelShape voxelshape;
-            if (p_212391_3_ && !flag && !worldborder.contains(p_212390_12_)) {
+            if (isEntityInsideWorldBorder && !flag && !worldborder.contains(p_212390_12_)) {
                voxelshape = VoxelShapes.fullCube();
             } else {
                voxelshape = this.getBlockState(p_212390_12_).getCollisionShape(this, p_212390_12_);
             }
 
-            VoxelShape voxelshape1 = p_212391_2_.withOffset((double)(-k1), (double)(-l1), (double)(-i2));
+            VoxelShape voxelshape1 = entityShape.withOffset((double)(-k1), (double)(-l1), (double)(-i2));
             if (VoxelShapes.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
                return VoxelShapes.empty();
             } else if (voxelshape == VoxelShapes.fullCube()) {
@@ -168,16 +163,16 @@ public interface IWorldReaderBase extends IBlockReader {
       }).limit(1L).filter(predicate));
    }
 
-   default Stream<VoxelShape> getCollisionBoxes(@Nullable Entity p_199406_1_, AxisAlignedBB entityBB, double x, double y, double z) {
-      return this.func_212389_a(p_199406_1_, entityBB, Collections.emptySet(), x, y, z);
+   default Stream<VoxelShape> getCollisionBoxes(@Nullable Entity entityIn, AxisAlignedBB entityBB, double x, double y, double z) {
+      return this.getCollisionBoxes(entityIn, entityBB, Collections.emptySet(), x, y, z);
    }
 
-   default Stream<VoxelShape> func_212389_a(@Nullable Entity p_212389_1_, AxisAlignedBB p_212389_2_, Set<Entity> entitiesToIgnore, double dx, double dy, double dz) {
+   default Stream<VoxelShape> getCollisionBoxes(@Nullable Entity entityIn, AxisAlignedBB entityBB, Set<Entity> entitiesToIgnore, double dx, double dy, double dz) {
       double d0 = 1.0E-7D;
-      VoxelShape voxelshape = VoxelShapes.create(p_212389_2_);
-      VoxelShape voxelshape1 = VoxelShapes.create(p_212389_2_.offset(dx > 0.0D ? -1.0E-7D : 1.0E-7D, dy > 0.0D ? -1.0E-7D : 1.0E-7D, dz > 0.0D ? -1.0E-7D : 1.0E-7D));
-      VoxelShape voxelshape2 = VoxelShapes.combine(VoxelShapes.create(p_212389_2_.expand(dx, dy, dz).grow(1.0E-7D)), voxelshape1, IBooleanFunction.ONLY_FIRST);
-      return this.getCollisionBoxes(p_212389_1_, voxelshape2, voxelshape, entitiesToIgnore);
+      VoxelShape voxelshape = VoxelShapes.create(entityBB);
+      VoxelShape voxelshape1 = VoxelShapes.create(entityBB.offset(dx > 0.0D ? -1.0E-7D : 1.0E-7D, dy > 0.0D ? -1.0E-7D : 1.0E-7D, dz > 0.0D ? -1.0E-7D : 1.0E-7D));
+      VoxelShape voxelshape2 = VoxelShapes.combine(VoxelShapes.create(entityBB.expand(dx, dy, dz).grow(1.0E-7D)), voxelshape1, IBooleanFunction.ONLY_FIRST);
+      return this.getCollisionBoxes(entityIn, voxelshape2, voxelshape, entitiesToIgnore);
    }
 
    /**
@@ -196,8 +191,13 @@ public interface IWorldReaderBase extends IBlockReader {
       if (movingEntity != null && flag == flag1) {
          movingEntity.setOutsideBorder(!flag1);
       }
+      // NoCubes Start
+      if(io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
+         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
+      }
+      // NoCubes End
 
-      return this.func_212391_a(area, p_212392_3_, flag1);
+      return this.getCollisionBoxes(area, p_212392_3_, flag1);
    }
 
    default boolean isInsideWorldBorder(Entity entityToCheck) {

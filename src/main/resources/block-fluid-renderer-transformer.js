@@ -31,246 +31,21 @@ function initializeCoreMod() {
 
 					isSRG = srgNameEquals;
 
-					var instructions = method.instructions;
-
 					log("Modifying logic...");
-					start("modify isAdjacentFluidSameAs")
-					{
-						var first_INVOKEVIRTUAL_offset;
-						var arrayLength = instructions.size();
-						for (var i = 0; i < arrayLength; ++i) {
-							var instruction = instructions.get(i);
-							if (instruction.getOpcode() == INVOKEVIRTUAL) {
-								if (instruction.owner == "net/minecraft/util/math/BlockPos") {
-									//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-									if (instruction.name == "func_177972_a" || instruction.name == "offset") {
-										if (instruction.desc == "(Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;") {
-											if (instruction.itf == false) {
-												first_INVOKEVIRTUAL_offset = instruction;
-												log("Found injection point " + instruction);
-												break;
-											}
-										}
-									}
-								}
-							}
+					var hasFinished = false;
+					try {
+						start("modify_isAdjacentFluidSameAs")
+						modify_isAdjacentFluidSameAs(method.instructions);
+						finish();
+						hasFinished = true;
+					} finally {
+						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+						if(!hasFinished) {
+							var name = currentlyRunning;
+							currentlyRunning = undefined;
+							log("Caught exception from " + name);
 						}
-						if (!first_INVOKEVIRTUAL_offset) {
-							throw "Error: Couldn't find injection point!";
-						}
-						
-						var firstLabelAfter_first_INVOKEVIRTUAL_offset;
-						for (i = instructions.indexOf(first_INVOKEVIRTUAL_offset); i < arrayLength; ++i) {
-							var instruction = instructions.get(i);
-							if (instruction.getType() == AbstractInsnNode.LABEL) {
-								firstLabelAfter_first_INVOKEVIRTUAL_offset = instruction;
-								log("Found label " + instruction);
-								break;
-							}
-						}
-						if (!firstLabelAfter_first_INVOKEVIRTUAL_offset) {
-							throw "Error: Couldn't find label!";
-						}
-
-						//FFS why
-						var toInject = ASMAPI.getMethodNode().instructions;
-
-						// Labels n stuff
-						var originalInstructionsLabel = new LabelNode();
-						var executeOverrideLabel = new LabelNode();
-
-//						BlockPos blockpos = pos.offset(side);
-//						IFluidState ifluidstate = worldIn.getFluidState(blockpos);
-//
-//						BlockPos blockpos = pos.offset(side);
-//						if (NoCubes.isEnabled()) {
-//							final IBlockState blockState = worldIn.getBlockState(blockpos);
-//							if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
-//								return !worldIn.getBlockState(blockpos.up()).isSolid();
-//							}
-//						}
-//						IFluidState ifluidstate = worldIn.getFluidState(blockpos);
-
-
-//   L0
-//    LINENUMBER 47 L0
-//    ALOAD 1
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.offset (Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;
-//    ASTORE 4
-//   L1
-//    LINENUMBER 48 L1
-//    ALOAD 0
-//    ALOAD 4
-//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState; (itf)
-//    ASTORE 5
-
-//   L0
-//    LINENUMBER 46 L0
-//    ALOAD 1
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.offset (Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;
-//    ASTORE 4
-//   L1
-//    LINENUMBER 48 L1
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L2
-//   L3
-//    LINENUMBER 49 L3
-//    ALOAD 0
-//    ALOAD 4
-//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
-//    ASTORE 5
-//   L4
-//    LINENUMBER 50 L4
-//    ALOAD 5
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L5
-//    ALOAD 5
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
-//    IFEQ L2
-//   L5
-//    LINENUMBER 51 L5
-//   FRAME APPEND [net/minecraft/util/math/BlockPos net/minecraft/block/state/IBlockState]
-//    ALOAD 0
-//    ALOAD 4
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.up ()Lnet/minecraft/util/math/BlockPos;
-//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.isSolid ()Z (itf)
-//    IFNE L6
-//    ICONST_1
-//    GOTO L7
-//   L6
-//   FRAME SAME1 I
-//    IRETURN
-//   L2
-//    LINENUMBER 55 L2
-//   FRAME CHOP 1
-//    ALOAD 0
-//    ALOAD 4
-//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState; (itf)
-//    ASTORE 5
-
-						// Make list of instructions to inject
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKESTATIC,
-								//String owner
-								"io/github/cadiboo/nocubes/NoCubes",
-								//String name
-								"isEnabled",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								false
-						));
-						toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-						toInject.add(new LabelNode());
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/world/IBlockReader",
-								//String name
-								isSRG ? "func_180495_p" : "getBlockState",
-								//String descriptor
-								"(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;",
-								//boolean isInterface
-								true
-						));
-						toInject.add(new VarInsnNode(ASTORE, ALOCALVARIABLE_blockstate));
-
-						toInject.add(new LabelNode());
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/block/state/IBlockState",
-								//String name
-								"nocubes_isTerrainSmoothable",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								true
-						));
-						toInject.add(new JumpInsnNode(IFNE, executeOverrideLabel));
-
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/block/state/IBlockState",
-								//String name
-								"nocubes_isLeavesSmoothable",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								true
-						));
-						toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-						toInject.add(executeOverrideLabel);
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEVIRTUAL,
-								//String owner
-								"net/minecraft/util/math/BlockPos",
-								//String name
-								isSRG ? "func_177984_a" : "up",
-								//String descriptor
-								"()Lnet/minecraft/util/math/BlockPos;",
-								//boolean isInterface
-								false
-						));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/world/IBlockReader",
-								//String name
-								isSRG ? "func_180495_p" : "getBlockState",
-								//String descriptor
-								"(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;",
-								//boolean isInterface
-								true
-						));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/block/state/IBlockState",
-								//String name
-								isSRG ? "func_200132_m" : "isSolid",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								true
-						));
-						var returnTrueLabel = new LabelNode();
-						toInject.add(new JumpInsnNode(IFEQ, returnTrueLabel));
-
-						toInject.add(new LabelNode());
-						toInject.add(new InsnNode(ICONST_0));
-                        toInject.add(new InsnNode(IRETURN));
-
-                        toInject.add(returnTrueLabel);
-						toInject.add(new InsnNode(ICONST_1));
-                        toInject.add(new InsnNode(IRETURN));
-
-						toInject.add(originalInstructionsLabel);
-
-						// Inject instructions
-						instructions.insertBefore(firstLabelAfter_first_INVOKEVIRTUAL_offset, toInject);
-
 					}
-					finish();
 					log("Successfully modified logic!");
 					break;
 
@@ -605,3 +380,248 @@ var ALOCALVARIABLE_blockpos = 4;
 var ALOCALVARIABLE_fluidstate = 5;
 var ALOCALVARIABLE_blockstate = 6;
 
+
+
+
+
+
+
+
+
+
+function modify_isAdjacentFluidSameAs(instructions) {
+
+	var first_INVOKEVIRTUAL_offset;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == INVOKEVIRTUAL) {
+			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
+				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
+				if (instruction.name == "func_177972_a" || instruction.name == "offset") {
+					if (instruction.desc == "(Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;") {
+						if (instruction.itf == false) {
+							first_INVOKEVIRTUAL_offset = instruction;
+							log("Found injection point " + instruction);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (!first_INVOKEVIRTUAL_offset) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var firstLabelAfter_first_INVOKEVIRTUAL_offset;
+	for (i = instructions.indexOf(first_INVOKEVIRTUAL_offset); i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelAfter_first_INVOKEVIRTUAL_offset = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelAfter_first_INVOKEVIRTUAL_offset) {
+		throw "Error: Couldn't find label!";
+	}
+
+	//FFS why
+	var toInject = ASMAPI.getMethodNode().instructions;
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+	var executeOverrideLabel = new LabelNode();
+
+//	BlockPos blockpos = pos.offset(side);
+//	IFluidState ifluidstate = worldIn.getFluidState(blockpos);
+//
+//	BlockPos blockpos = pos.offset(side);
+//	if (NoCubes.isEnabled()) {
+//		final IBlockState blockState = worldIn.getBlockState(blockpos);
+//		if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
+//			return !worldIn.getBlockState(blockpos.up()).isSolid();
+//		}
+//	}
+//	IFluidState ifluidstate = worldIn.getFluidState(blockpos);
+
+
+//   L0
+//    LINENUMBER 47 L0
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.offset (Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;
+//    ASTORE 4
+//   L1
+//    LINENUMBER 48 L1
+//    ALOAD 0
+//    ALOAD 4
+//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState; (itf)
+//    ASTORE 5
+
+//   L0
+//    LINENUMBER 46 L0
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.offset (Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;
+//    ASTORE 4
+//   L1
+//    LINENUMBER 48 L1
+//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//    IFEQ L2
+//   L3
+//    LINENUMBER 49 L3
+//    ALOAD 0
+//    ALOAD 4
+//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
+//    ASTORE 5
+//   L4
+//    LINENUMBER 50 L4
+//    ALOAD 5
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFNE L5
+//    ALOAD 5
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    IFEQ L2
+//   L5
+//    LINENUMBER 51 L5
+//   FRAME APPEND [net/minecraft/util/math/BlockPos net/minecraft/block/state/IBlockState]
+//    ALOAD 0
+//    ALOAD 4
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.up ()Lnet/minecraft/util/math/BlockPos;
+//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getBlockState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState; (itf)
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.isSolid ()Z (itf)
+//    IFNE L6
+//    ICONST_1
+//    GOTO L7
+//   L6
+//   FRAME SAME1 I
+//    IRETURN
+//   L2
+//    LINENUMBER 55 L2
+//   FRAME CHOP 1
+//    ALOAD 0
+//    ALOAD 4
+//    INVOKEINTERFACE net/minecraft/world/IBlockReader.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState; (itf)
+//    ASTORE 5
+
+	// Make list of instructions to inject
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/world/IBlockReader",
+			//String name
+			isSRG ? "func_180495_p" : "getBlockState",
+			//String descriptor
+			"(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new VarInsnNode(ASTORE, ALOCALVARIABLE_blockstate));
+
+	toInject.add(new LabelNode());
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFNE, executeOverrideLabel));
+
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isLeavesSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(executeOverrideLabel);
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEVIRTUAL,
+			//String owner
+			"net/minecraft/util/math/BlockPos",
+			//String name
+			isSRG ? "func_177984_a" : "up",
+			//String descriptor
+			"()Lnet/minecraft/util/math/BlockPos;",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/world/IBlockReader",
+			//String name
+			isSRG ? "func_180495_p" : "getBlockState",
+			//String descriptor
+			"(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			isSRG ? "func_200132_m" : "isSolid",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	var returnTrueLabel = new LabelNode();
+	toInject.add(new JumpInsnNode(IFEQ, returnTrueLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(returnTrueLabel);
+	toInject.add(new InsnNode(ICONST_1));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insertBefore(firstLabelAfter_first_INVOKEVIRTUAL_offset, toInject);
+
+}

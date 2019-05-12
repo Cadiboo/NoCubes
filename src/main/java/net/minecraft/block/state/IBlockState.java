@@ -327,7 +327,7 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
    }
 
    default boolean causesSuffocation() {
-      return this.getBlock().causesSuffocation(this);
+      return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
    }
 
    default BlockFaceShape getBlockFaceShape(IBlockReader worldIn, BlockPos pos, EnumFacing facing) {

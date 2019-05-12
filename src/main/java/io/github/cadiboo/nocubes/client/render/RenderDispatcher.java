@@ -144,6 +144,39 @@ public final class RenderDispatcher {
 			return;
 		}
 		try (LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess)) {
+
+			if (Config.renderExtendedFluids) {
+				try (
+						final ModProfiler ignored = ModProfiler.get().start("extendFluids");
+						SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
+								stateCache,
+								(state) ->
+										TERRAIN_SMOOTHABLE.apply(state) || LEAVES_SMOOTHABLE.apply(state)
+						)
+				) {
+					try {
+						ExtendedFluidChunkRenderer.renderChunk(
+								renderChunk,
+								generator,
+								compiledChunk,
+								renderChunkPosition,
+								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+								blockAccess,
+								pooledMutableBlockPos,
+								usedBlockRenderLayers,
+								stateCache, smoothableCache,
+								packedLightCache
+						);
+					} catch (ReportedException e) {
+						throw e;
+					} catch (Exception e) {
+						CrashReport crashReport = new CrashReport("Error rendering extended fluids!", e);
+						crashReport.makeCategory("Rendering extended fluids");
+						throw new ReportedException(crashReport);
+					}
+				}
+			}
+
 			try {
 				if (Config.renderSmoothTerrain) {
 					renderTerrain(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, stateCache, pooledMutableBlockPos, usedBlockRenderLayers, blockRendererDispatcher, random, packedLightCache);
@@ -157,40 +190,6 @@ public final class RenderDispatcher {
 				CrashReport crashReport = new CrashReport("Error rendering mesh!", e);
 				crashReport.makeCategory("Rendering mesh");
 				throw new ReportedException(crashReport);
-			}
-
-			if (!Config.renderExtendedFluids) {
-				return;
-			}
-			try (
-					final ModProfiler ignored = ModProfiler.get().start("extendFluids");
-					SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
-							stateCache,
-							(state) ->
-									TERRAIN_SMOOTHABLE.apply(state) || LEAVES_SMOOTHABLE.apply(state)
-					)
-			) {
-				try {
-					ExtendedLiquidChunkRenderer.renderChunk(
-							renderChunk,
-							generator,
-							compiledChunk,
-							renderChunkPosition,
-							renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-							blockAccess,
-							pooledMutableBlockPos,
-							usedBlockRenderLayers,
-							blockRendererDispatcher,
-							stateCache, smoothableCache,
-							packedLightCache
-					);
-				} catch (ReportedException e) {
-					throw e;
-				} catch (Exception e) {
-					CrashReport crashReport = new CrashReport("Error rendering extended fluids!", e);
-					crashReport.makeCategory("Rendering extended fluids");
-					throw new ReportedException(crashReport);
-				}
 			}
 
 		}
@@ -213,7 +212,10 @@ public final class RenderDispatcher {
 		if (Config.getLeavesSmoothableBlocks().isEmpty()) {
 			return;
 		}
-		try (LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR)) {
+		try (
+				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR);
+				PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain()
+		) {
 			switch (Config.smoothLeavesType) {
 				case SEPARATE:
 					for (final Block smoothableBlock : Config.getLeavesSmoothableBlocks()) {
@@ -242,9 +244,11 @@ public final class RenderDispatcher {
 											isSmoothable,
 											Config.leavesMeshGenerator
 									),
-									isSmoothable, //TODO: remove?
 									textureSmoothableCache,
-									pooledMutableBlockPos, usedBlockRenderLayers, true
+									// state cache begins at -2 and density cache expects 0
+									2, 2, 2,
+									pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
+									true, true, false
 							);
 						}
 					}
@@ -275,9 +279,11 @@ public final class RenderDispatcher {
 										isSmoothable,
 										Config.leavesMeshGenerator
 								),
-								isSmoothable, //TODO: remove?
 								textureSmoothableCache,
-								pooledMutableBlockPos, usedBlockRenderLayers, true
+								// state cache begins at -2 and density cache expects 0
+								2, 2, 2,
+								pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
+								true, true, false
 						);
 					}
 					break;
@@ -302,8 +308,9 @@ public final class RenderDispatcher {
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache
 	) {
 		try (
-				final SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IsSmoothable.TERRAIN_SMOOTHABLE);
-				final LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR)
+				SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IsSmoothable.TERRAIN_SMOOTHABLE);
+				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR);
+				PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain()
 		) {
 			MeshRenderer.renderMesh(
 					renderChunk,
@@ -324,9 +331,11 @@ public final class RenderDispatcher {
 							TERRAIN_SMOOTHABLE,
 							Config.terrainMeshGenerator
 					),
-					TERRAIN_SMOOTHABLE, //TODO: remove?
 					smoothableCache,
-					pooledMutableBlockPos, usedBlockRenderLayers, false
+					// state cache begins at -2 and density cache expects 0
+					2, 2, 2,
+					pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
+					false, true, true
 			);
 		}
 	}

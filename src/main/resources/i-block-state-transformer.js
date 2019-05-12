@@ -11,6 +11,7 @@ function initializeCoreMod() {
 				
 				var methods = classNode.methods;
 
+				start("find isSolid");
 				for (var i in methods) {
 					var method = methods[i];
 					var methodName = method.name;
@@ -27,97 +28,59 @@ function initializeCoreMod() {
 
 					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
 
-					var instructions = method.instructions;
-
-					log("Injecting hook...");
-					start("isSolidHook")
-					{
-
-						var firstLabel;
-						var arrayLength = instructions.size();
-						for (var i = 0; i < arrayLength; ++i) {
-							var instruction = instructions.get(i);
-							if (instruction.getType() == AbstractInsnNode.LABEL) {
-								firstLabel = instruction;
-								log("Found injection point " + instruction);
-								break;
-							}
-						}
-						if (!firstLabel) {
-							throw "Error: Couldn't find injection point!";
-						}
-
-						//FFS why
-						var toInject = ASMAPI.getMethodNode().instructions;
-
-						// Labels n stuff
-						var originalInstructionsLabel = new LabelNode();
-
-//						return this.getBlock().isSolid(this);
-//
-//						if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
-//						return this.getBlock().isSolid(this);
-
-//  public default isSolid()Z
-//   L0
-//    LINENUMBER 220 L0
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFEQ L1
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L1
-//    ICONST_0
-//    IRETURN
-//   L1
-//    LINENUMBER 221 L1
-//   FRAME SAME
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
-//    IRETURN
-
-						// Make list of instructions to inject
-						toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKEINTERFACE,
-								//String owner
-								"net/minecraft/block/state/IBlockState",
-								//String name
-								"nocubes_isTerrainSmoothable",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								true
-						));
-						toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-						toInject.add(new MethodInsnNode(
-								//int opcode
-								INVOKESTATIC,
-								//String owner
-								"io/github/cadiboo/nocubes/NoCubes",
-								//String name
-								"isEnabled",
-								//String descriptor
-								"()Z",
-								//boolean isInterface
-								false
-						));
-						toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-						toInject.add(new LabelNode());
-						toInject.add(new InsnNode(ICONST_0));
-                        toInject.add(new InsnNode(IRETURN));
-
-						toInject.add(originalInstructionsLabel);
-
-						// Inject instructions
-						instructions.insert(firstLabel, toInject);
-
-					}
 					finish();
-					log("Successfully injected hook!");
+
+					var hasFinished = false;
+					try {
+						start("injectIsSolidHook")
+						injectIsSolidHook(method.instructions);
+						finish();
+						hasFinished = true;
+					} finally {
+						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+						if(!hasFinished) {
+							var name = currentlyRunning;
+							currentlyRunning = undefined;
+							log("Caught exception from " + name);
+						}
+					}
+					break;
+
+				}
+
+				start("find causesSuffocation");
+				for (var i in methods) {
+					var method = methods[i];
+					var methodName = method.name;
+
+					var deobfNameEquals = "causesSuffocation".equals(methodName);
+					var srgNameEquals = "func_191058_s".equals(methodName);
+
+					if (!deobfNameEquals && !srgNameEquals) {
+						log("Did not match method " + methodName);
+						continue;
+					}
+
+					log("Matched method " + methodName);
+
+					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
+
+					finish();
+
+					var hasFinished = false;
+					try {
+						start("injectCausesSuffocationHook")
+						injectCausesSuffocationHook(method.instructions);
+						finish();
+						hasFinished = true;
+					} finally {
+						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+						if(!hasFinished) {
+							var name = currentlyRunning;
+                            currentlyRunning = undefined;
+							log("Caught exception from " + name);
+						}
+					}
 					break;
 
 				}
@@ -608,3 +571,192 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 // Local variable indexes
 var ALOCALVARIABLE_this = 0;
 
+
+
+
+
+
+
+
+function injectIsSolidHook(instructions) {
+
+	var firstLabel;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
+			log("Found injection point " + instruction);
+			break;
+		}
+	}
+	if (!firstLabel) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	//FFS why
+	var toInject = ASMAPI.getMethodNode().instructions;
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+//	return this.getBlock().isSolid(this);
+//
+//	if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
+//	return this.getBlock().isSolid(this);
+
+//  public default isSolid()Z
+//   L0
+//    LINENUMBER 220 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFEQ L1
+//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//    IFEQ L1
+//    ICONST_0
+//    IRETURN
+//   L1
+//    LINENUMBER 221 L1
+//   FRAME SAME
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabel, toInject);
+
+}
+
+function injectCausesSuffocationHook(instructions) {
+
+	var firstLabel;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
+			log("Found injection point " + instruction);
+			break;
+		}
+	}
+	if (!firstLabel) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	//FFS why
+	var toInject = ASMAPI.getMethodNode().instructions;
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+//	return this.getBlock().causesSuffocation(this);
+
+//	return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
+
+
+//  public default causesSuffocation()Z
+//   L0
+//    LINENUMBER 321 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
+//  public default causesSuffocation()Z
+//   L0
+//    LINENUMBER 330 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFNE L1
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
+//    IFEQ L1
+//    ICONST_1
+//    GOTO L2
+//   L1
+//   FRAME SAME
+//    ICONST_0
+//   L2
+//   FRAME SAME1 I
+//    IRETURN
+
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabel, toInject);
+
+}

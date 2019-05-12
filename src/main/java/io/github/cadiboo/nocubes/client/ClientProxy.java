@@ -15,6 +15,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_K;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_N;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_O;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_V;
 
 /**
  * The version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT
@@ -28,7 +29,8 @@ public final class ClientProxy implements IProxy {
 	public static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", GLFW_KEY_P, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
 
-	public static final KeyBinding tempToggleCollisions = new KeyBinding(MOD_ID + ".key.tempToggleCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
+	public static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
+	public static final KeyBinding tempToggleLeavesCollisions = new KeyBinding(MOD_ID + ".key.tempToggleLeavesCollisions", GLFW_KEY_V, "key.categories." + MOD_ID);
 
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 

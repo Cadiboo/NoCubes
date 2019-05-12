@@ -23,9 +23,9 @@ import static net.minecraft.client.renderer.BlockFluidRenderer.isAdjacentFluidSa
 /**
  * @author Cadiboo
  */
-public final class ExtendedLiquidBlockRenderer {
+public final class ExtendedFluidBlockRenderer {
 
-	public static boolean renderExtendedLiquid(
+	public static boolean renderExtendedFluid(
 			final double x, final double y, final double z,
 			@Nonnull final BlockPos fluidPos,
 			@Nonnull final IWorldReader worldIn,
@@ -217,7 +217,8 @@ public final class ExtendedLiquidBlockRenderer {
 						}
 					} else {
 
-						final BlockPos down = renderPos.down();
+						// I've fucked up somehow. I shouldn't need to offset this south
+						final BlockPos down = renderPos.down().south();
 
 						final float red0;
 						final float green0;
@@ -249,11 +250,13 @@ public final class ExtendedLiquidBlockRenderer {
 							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-							final int waterColor1 = BiomeColors.getWaterColor(worldIn, down.south());
+							// I've fucked up somehow. I shouldn't need to offset this north, it should be south
+							final int waterColor1 = BiomeColors.getWaterColor(worldIn, down.north());
 							red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 							green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 							blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-							final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east().south());
+							// I've fucked up somehow. I shouldn't need to offset this north, it should be south
+							final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east().north());
 							red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 							green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 							blue2 = (float) (waterColor2 & 0xFF) / 255.0F;

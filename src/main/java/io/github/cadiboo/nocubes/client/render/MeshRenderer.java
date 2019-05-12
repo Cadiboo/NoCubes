@@ -7,7 +7,6 @@ import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -27,7 +26,6 @@ import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReaderBase;
@@ -61,11 +59,12 @@ public final class MeshRenderer {
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final LazyBlockColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
-			@Deprecated @Nonnull final IsSmoothable isSmoothable,
 			@Nonnull final SmoothableCache smoothableCache,
+			final int cacheAddX, final int cacheAddY, final int cacheAddZ,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final PooledMutableBlockPos texturePooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			final boolean renderOppositeSides
+			final boolean renderOppositeSides, final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
 	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
@@ -78,8 +77,8 @@ public final class MeshRenderer {
 							continue;
 						}
 
-						ModProfiler.get().end();
-						ModProfiler.get().start("prepareRenderFaces");
+						ModProfiler.get().end(); // HACKY
+						ModProfiler.get().start("prepareRenderFaces"); // HACKY
 
 						final int initialPosX = renderChunkPositionX + pos.x;
 						final int initialPosY = renderChunkPositionY + pos.y;
@@ -91,38 +90,35 @@ public final class MeshRenderer {
 								initialPosZ
 						);
 
-						//TODO use pos? (I've forgotten what this is even about)
+						//TODO use pos? (I've forgotten what this todo is even about)
 						final byte relativePosX = ClientUtil.getRelativePos(renderChunkPositionX, initialPosX);
 						final byte relativePosY = ClientUtil.getRelativePos(renderChunkPositionY, initialPosY);
 						final byte relativePosZ = ClientUtil.getRelativePos(renderChunkPositionZ, initialPosZ);
 
-						final IBlockState realState = stateCache.getBlockStates()[stateCache.getIndex(
-								relativePosX + 2,
-								relativePosY + 2,
-								relativePosZ + 2
-						)];
-//						if (blockAccess.getBlockState(pooledMutableBlockPos) != realState) {
-//							LogManager.getLogger("Cache Error").error("world blockstate != cache blockstate! (" + initialPosX + ", " + initialPosY + ", " + initialPosZ + "), (" + renderChunkPositionX + relativePosX + ", " + renderChunkPositionY + relativePosY + ", " + renderChunkPositionZ + relativePosZ + ")");
-//						}
+						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
 
-						ModProfiler.get().end();
-						final Tuple<BlockPos, IBlockState> texturePosAndState = ClientUtil.getTexturePosAndState(stateCache, pooledMutableBlockPos, realState, isSmoothable, smoothableCache, relativePosX, relativePosY, relativePosZ);
-						final BlockPos texturePos = texturePosAndState.getA();
-						final IBlockState textureState = texturePosAndState.getB();
+						final IBlockState textureState = ClientUtil.getTexturePosAndState(
+								initialPosX, initialPosY, initialPosZ,
+								texturePooledMutableBlockPos,
+								stateCache, smoothableCache,
+								cacheAddX, cacheAddY, cacheAddZ,
+								relativePosX, relativePosY, relativePosZ,
+								tryForBetterTexturesSnow, tryForBetterTexturesGrass
+						);
 
-						ModProfiler.get().start("renderMesh");
+						ModProfiler.get().start("renderMesh"); // HACKY
 
 						try {
-							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, random, usedBlockRenderLayers, pooledPackedLightCache, blockColorsCache, renderOppositeSides, pos, faces, texturePos, textureState);
+							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, random, usedBlockRenderLayers, pooledPackedLightCache, blockColorsCache, renderOppositeSides, pos, faces, texturePooledMutableBlockPos, textureState);
 						} catch (Exception e) {
 							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
 
 							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
 							final BlockPos blockPos = new BlockPos(renderChunkPositionX + pos.x, renderChunkPositionX + pos.y, renderChunkPositionX + pos.z);
-							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, realState);
+							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, blockAccess.getBlockState(new BlockPos(pooledMutableBlockPos.setPos(initialPosX, initialPosY, initialPosZ))));
 
 							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
-							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePos, textureState);
+							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos, textureState);
 
 							throw new ReportedException(crashReport);
 						}

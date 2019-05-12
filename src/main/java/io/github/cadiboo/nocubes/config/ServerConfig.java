@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.config;
 
-import io.github.cadiboo.nocubes.config.Config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -18,6 +17,7 @@ final class ServerConfig {
 	ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
 	ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
 	ForgeConfigSpec.BooleanValue terrainCollisions;
+	ForgeConfigSpec.BooleanValue leavesCollisions;
 
 	ServerConfig(ForgeConfigSpec.Builder builder) {
 		builder.push("general");
@@ -37,6 +37,10 @@ final class ServerConfig {
 				.comment("terrainCollisions") // TODO
 				.translation(MOD_ID + ".config.terrainCollisions")
 				.define("terrainCollisions", false);
+		leavesCollisions = builder
+				.comment("leavesCollisions") // TODO
+				.translation(MOD_ID + ".config.leavesCollisions")
+				.define("leavesCollisions", false);
 		builder.pop();
 	}
 

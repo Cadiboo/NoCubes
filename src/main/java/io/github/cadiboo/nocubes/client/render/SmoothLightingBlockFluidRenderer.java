@@ -505,7 +505,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	public boolean renderUp(
-			final BufferBuilder buffer, final TextureAtlasSprite[] atextureatlassprite,
+			final BufferBuilder buffer, final TextureAtlasSprite[] sprites,
 			final float red0, final float green0, final float blue0,
 			final float red1, final float green1, final float blue1,
 			final float red2, final float green2, final float blue2,
@@ -524,37 +524,37 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		float v2;
 		float v3;
 		if (flowVec.x == 0.0D && flowVec.z == 0.0D) {
-			TextureAtlasSprite textureatlassprite1 = atextureatlassprite[0];
+			TextureAtlasSprite stillSprite = sprites[0];
 			if (textures()) {
 				final int rand = (int) (positionRandom % 7);
 				switch (rand) {
 					default:
 					case 0:
-						u0 = UVHelper.getMinU(textureatlassprite1);
-						v0 = UVHelper.getMinV(textureatlassprite1);
-						v1 = UVHelper.getMaxV(textureatlassprite1);
-						u2 = UVHelper.getMaxU(textureatlassprite1);
+						u0 = UVHelper.getMinU(stillSprite);
+						v0 = UVHelper.getMinV(stillSprite);
+						v1 = UVHelper.getMaxV(stillSprite);
+						u2 = UVHelper.getMaxU(stillSprite);
 						break;
 					case 1:
 					case 2:
-						u0 = UVHelper.getMaxU(textureatlassprite1);
-						v0 = UVHelper.getMaxV(textureatlassprite1);
-						v1 = UVHelper.getMinV(textureatlassprite1);
-						u2 = UVHelper.getMinU(textureatlassprite1);
+						u0 = UVHelper.getMaxU(stillSprite);
+						v0 = UVHelper.getMaxV(stillSprite);
+						v1 = UVHelper.getMinV(stillSprite);
+						u2 = UVHelper.getMinU(stillSprite);
 						break;
 					case 3:
 					case 4:
-						u0 = UVHelper.getMinU(textureatlassprite1);
-						v0 = UVHelper.getMinV(textureatlassprite1);
-						v1 = UVHelper.getMaxV(textureatlassprite1);
-						u2 = UVHelper.getMaxU(textureatlassprite1);
+						u0 = UVHelper.getMinU(stillSprite);
+						v0 = UVHelper.getMinV(stillSprite);
+						v1 = UVHelper.getMaxV(stillSprite);
+						u2 = UVHelper.getMaxU(stillSprite);
 						break;
 					case 5:
 					case 6:
-						u0 = UVHelper.getMaxU(textureatlassprite1);
-						v0 = UVHelper.getMaxV(textureatlassprite1);
-						v1 = UVHelper.getMinV(textureatlassprite1);
-						u2 = UVHelper.getMinU(textureatlassprite1);
+						u0 = UVHelper.getMaxU(stillSprite);
+						v0 = UVHelper.getMaxV(stillSprite);
+						v1 = UVHelper.getMinV(stillSprite);
+						u2 = UVHelper.getMinU(stillSprite);
 						break;
 				}
 				u1 = u0;
@@ -562,28 +562,28 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				u3 = u2;
 				v3 = v0;
 			} else {
-				u0 = UVHelper.getMinU(textureatlassprite1);
-				v0 = UVHelper.getMinV(textureatlassprite1);
+				u0 = UVHelper.getMinU(stillSprite);
+				v0 = UVHelper.getMinV(stillSprite);
 				u1 = u0;
-				v1 = UVHelper.getMaxV(textureatlassprite1);
-				u2 = UVHelper.getMaxU(textureatlassprite1);
+				v1 = UVHelper.getMaxV(stillSprite);
+				u2 = UVHelper.getMaxU(stillSprite);
 				v2 = v1;
 				u3 = u2;
 				v3 = v0;
 			}
 		} else {
-			TextureAtlasSprite textureatlassprite = atextureatlassprite[1];
+			TextureAtlasSprite flowingSprite = sprites[1];
 			float magicAtan2Flow = (float) MathHelper.atan2(flowVec.z, flowVec.x) - ((float) Math.PI / 2F);
 			float sinMagicAtan2Flow = MathHelper.sin(magicAtan2Flow) * 0.25F;
 			float cosMagicAtan2Flow = MathHelper.cos(magicAtan2Flow) * 0.25F;
-			u0 = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
-			v0 = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
-			u1 = textureatlassprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
-			v1 = textureatlassprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
-			u2 = textureatlassprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F));
-			v2 = textureatlassprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
-			u3 = textureatlassprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
-			v3 = textureatlassprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F));
+			u0 = UVHelper.clampU(flowingSprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			v0 = UVHelper.clampV(flowingSprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			u1 = UVHelper.clampU(flowingSprite.getInterpolatedU((double) (8.0F + (-cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			v1 = UVHelper.clampV(flowingSprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			u2 = UVHelper.clampU(flowingSprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow + sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			v2 = UVHelper.clampV(flowingSprite.getInterpolatedV((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			u3 = UVHelper.clampU(flowingSprite.getInterpolatedU((double) (8.0F + (cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F)), flowingSprite);
+			v3 = UVHelper.clampV(flowingSprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F)), flowingSprite);
 		}
 
 		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
@@ -622,8 +622,8 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	) {
 		final float u0 = UVHelper.getMinU(textureatlassprite);
 		final float u1 = textureatlassprite.getInterpolatedU(8.0D);
-		final float v0 = textureatlassprite.getInterpolatedV((double) ((1.0F - y0) * 16.0F * 0.5F));
-		final float v1 = textureatlassprite.getInterpolatedV((double) ((1.0F - y1) * 16.0F * 0.5F));
+		final float v0 = UVHelper.clampV(textureatlassprite.getInterpolatedV((double) ((1.0F - y0) * 16.0F * 0.5F)), textureatlassprite);
+		final float v1 = UVHelper.clampV(textureatlassprite.getInterpolatedV((double) ((1.0F - y1) * 16.0F * 0.5F)), textureatlassprite);
 		final float v2 = textureatlassprite.getInterpolatedV(8.0D);
 
 		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';

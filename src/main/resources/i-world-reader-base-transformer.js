@@ -16,14 +16,14 @@ function initializeCoreMod() {
 					var methodName = method.name;
 
 					var deobfNameEquals = "getCollisionBoxes".equals(methodName);
-					var srgNameEquals = "func_212391_a".equals(methodName);
+					var srgNameEquals = "func_212392_a".equals(methodName);
 
 					if (!deobfNameEquals && !srgNameEquals) {
 						log("Did not match method " + methodName);
 						continue;
 					}
 
-					if (!method.desc.equals("(Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;")) {
+					if (!method.desc.equals("(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Ljava/util/Set;)Ljava/util/stream/Stream;")) {
 						log("Did not match method description " + method.desc);
 						continue;
 					}
@@ -45,7 +45,7 @@ function initializeCoreMod() {
 						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
 						if(!hasFinished) {
 							var name = currentlyRunning;
-							finish();
+							currentlyRunning = undefined;
 							log("Caught exception from " + name);
 						}
 					}
@@ -380,19 +380,10 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
 // Local variable indexes
 var ALOCALVARIABLE_this = 0;
-var ALOCALVARIABLE_area = 1;
-var ALOCALVARIABLE_entityShape = 2;
-var ILOCALVARIABLE_isEntityInsideWorldBorder = 3;
-var ILOCALVARIABLE_i_minXm1 = 4;
-var ILOCALVARIABLE_j_maxXp1 = 5;
-var ILOCALVARIABLE_k_minYm1 = 6;
-var ILOCALVARIABLE_l_maxYp1 = 7;
-var ILOCALVARIABLE_i1_minZm1 = 8;
-var ILOCALVARIABLE_j1_maxZp1 = 9;
-var ALOCALVARIABLE_worldborder = 10;
-var ILOCALVARIABLE_flag_isAreaInsideWorldBorder = 11;
-var ALOCALVARIABLE_voxelshapepart = 12;
-var ALOCALVARIABLE_predicate = 13;
+var ALOCALVARIABLE_movingEntity = 1;
+var ALOCALVARIABLE_area = 2;
+var ALOCALVARIABLE_entityShape = 3;
+var ILOCALVARIABLE_flag1 = 6;
 
 
 
@@ -403,125 +394,84 @@ var ALOCALVARIABLE_predicate = 13;
 
 
 
-// Finds the first instruction INVOKESTATIC StreamSupport.stream
-// then finds the previous label
-// and inserts after the label and before the label's instructions.
+// Finds the first instruction INVOKEVIRTUAL Entity.setOutsideBorder
+// then finds the next label
+// and inserts after that label and before the label's instructions.
 function injectGetCollisionBoxesHook(instructions) {
 
-//	Predicate<VoxelShape> predicate = (p_212393_1_) -> {
-//		return !p_212393_1_.isEmpty() && VoxelShapes.compare(p_212391_1_, p_212393_1_, IBooleanFunction.AND);
-//	};
-//	Stream<VoxelShape> stream = StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((p_212390_12_) -> {
+//	if (movingEntity != null && flag == flag1) {
+//		movingEntity.setOutsideBorder(!flag1);
+//	}
+//
+//	return this.func_212391_a(area, p_212392_3_, flag1)
 
-//	Predicate<VoxelShape> predicate = (p_212393_1_) -> {
-//		return !p_212393_1_.isEmpty() && VoxelShapes.compare(p_212391_1_, p_212393_1_, IBooleanFunction.AND);
-//	};
+//	if (movingEntity != null && flag == flag1) {
+//		movingEntity.setOutsideBorder(!flag1);
+//	}
 //	// NoCubes Start
-//	if(io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled())
-//		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionBoxes(this, p_212391_1_, p_212391_2_, p_212391_3_, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
+//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
+//		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
+//	}
 //	// NoCubes End
-//	Stream<VoxelShape> stream = StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((p_212390_12_) -> {
+//
+//	return this.func_212391_a(area, p_212392_3_, flag1)
 
 
-//   L11
-//    LINENUMBER 131 L11
-//    ALOAD 1
-//    INVOKEDYNAMIC test(Lnet/minecraft/util/math/shapes/VoxelShape;)Ljava/util/function/Predicate; [
-//      // handle kind 0x6 : INVOKESTATIC
-//      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-//      // arguments:
-//      (Ljava/lang/Object;)Z,
-//      // handle kind 0x6 : INVOKESTATIC
-//      net/minecraft/world/IWorldReaderBase.lambda$func_212391_a$0(Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;)Z itf,
-//      (Lnet/minecraft/util/math/shapes/VoxelShape;)Z
-//    ]
-//    ASTORE 13
-//   L12
-//    LINENUMBER 134 L12
-//    ILOAD 4
+//   L10
+//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+//   L7
+//    LINENUMBER 195 L7
+//   FRAME SAME
+//    ALOAD 0
+//    ALOAD 2
+//    ALOAD 3
 //    ILOAD 6
-//    ILOAD 8
-//    ILOAD 5
-//    ICONST_1
-//    ISUB
-//    ILOAD 7
-//    ICONST_1
-//    ISUB
-//    ILOAD 9
-//    ICONST_1
-//    ISUB
-//    INVOKESTATIC net/minecraft/util/math/BlockPos$MutableBlockPos.getAllInBoxMutable (IIIIII)Ljava/lang/Iterable;
-//    INVOKEINTERFACE java/lang/Iterable.spliterator ()Ljava/util/Spliterator; (itf)
-//    ICONST_0
-//    INVOKESTATIC java/util/stream/StreamSupport.stream (Ljava/util/Spliterator;Z)Ljava/util/stream/Stream;
+//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.getCollisionBoxes (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
+//    ARETURN
 
-//   L11
-//    LINENUMBER 131 L11
-//    ALOAD 1
-//    INVOKEDYNAMIC test(Lnet/minecraft/util/math/shapes/VoxelShape;)Ljava/util/function/Predicate; [
-//      // handle kind 0x6 : INVOKESTATIC
-//      java/lang/invoke/LambdaMetafactory.metafactory(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-//      // arguments:
-//      (Ljava/lang/Object;)Z, 
-//      // handle kind 0x6 : INVOKESTATIC
-//      net/minecraft/world/IWorldReaderBase.lambda$func_212391_a$0(Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;)Z itf, 
-//      (Lnet/minecraft/util/math/shapes/VoxelShape;)Z
-//    ]
-//    ASTORE 13
-//   L12
-//    LINENUMBER 135 L12
+//   L10
+//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+//   L7
+//    LINENUMBER 196 L7
+//   FRAME SAME
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
-//    IFEQ L13
+//    IFEQ L11
 //    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L13
-//   L14
-//    LINENUMBER 136 L14
+//    IFEQ L11
+//   L12
+//    LINENUMBER 197 L12
 //    ALOAD 0
 //    ALOAD 1
 //    ALOAD 2
-//    ILOAD 3
-//    ILOAD 4
-//    ILOAD 5
+//    ALOAD 3
 //    ILOAD 6
-//    ILOAD 7
-//    ILOAD 8
-//    ILOAD 9
-//    ALOAD 10
-//    ILOAD 11
-//    ALOAD 12
-//    ALOAD 13
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionBoxes (Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;ZIIIIIILnet/minecraft/world/border/WorldBorder;ZLnet/minecraft/util/math/shapes/VoxelShapePart;Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionShapes (Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;
 //    ARETURN
-//   L13
-//    LINENUMBER 138 L13
-//   FRAME APPEND [I net/minecraft/util/math/shapes/VoxelShapePart java/util/function/Predicate]
-//    ILOAD 4
+//   L11
+//    LINENUMBER 201 L11
+//   FRAME SAME
+//    ALOAD 0
+//    ALOAD 2
+//    ALOAD 3
 //    ILOAD 6
-//    ILOAD 8
-//    ILOAD 5
-//    ICONST_1
-//    ISUB
-//    ILOAD 7
-//    ICONST_1
-//    ISUB
-//    ILOAD 9
-//    ICONST_1
-//    ISUB
-//    INVOKESTATIC net/minecraft/util/math/BlockPos$MutableBlockPos.getAllInBoxMutable (IIIIII)Ljava/lang/Iterable;
-//    INVOKEINTERFACE java/lang/Iterable.spliterator ()Ljava/util/Spliterator; (itf)
-//    ICONST_0
-//    INVOKESTATIC java/util/stream/StreamSupport.stream (Ljava/util/Spliterator;Z)Ljava/util/stream/Stream;
+//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.func_212391_a (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
+//    ARETURN
 
-	var first_INVOKESTATIC_StreamSupport_stream;
+
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+	var first_INVOKEVIRTUAL_Entity_setOutsideBorder;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKESTATIC) {
-			if (instruction.owner == "java/util/stream/StreamSupport") {
-				if (instruction.name == "stream") {
-					if (instruction.desc == "(Ljava/util/Spliterator;Z)Ljava/util/stream/Stream;") {
+		if (instruction.getOpcode() == INVOKEVIRTUAL) {
+			if (instruction.owner == "net/minecraft/entity/Entity") {
+				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
+				if (instruction.name == "func_174821_h" || instruction.name == "setOutsideBorder") {
+					if (instruction.desc == "(Z)V") {
 						if (instruction.itf == false) {
-							first_INVOKESTATIC_StreamSupport_stream = instruction;
+							first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
 							log("Found injection point " + instruction);
 							break;
 						}
@@ -530,20 +480,23 @@ function injectGetCollisionBoxesHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKESTATIC_StreamSupport_stream) {
+	if (!first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
 		throw "Error: Couldn't find injection point!";
 	}
 
-	var firstLabelBefore_first_INVOKESTATIC_StreamSupport_stream;
-	for (i = instructions.indexOf(first_INVOKESTATIC_StreamSupport_stream); i >=0; --i) {
+	var firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder;
+	var startLook = instructions.indexOf(first_INVOKEVIRTUAL_Entity_setOutsideBorder);
+	var maxLook = startLook + 10;
+
+	for (i = startLook; i < maxLook; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelBefore_first_INVOKESTATIC_StreamSupport_stream = instruction;
+			firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
 			log("Found label " + instruction);
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_INVOKESTATIC_StreamSupport_stream) {
+	if (!firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
 		throw "Error: Couldn't find label!";
 	}
 
@@ -572,28 +525,19 @@ function injectGetCollisionBoxesHook(instructions) {
 
 	toInject.add(new LabelNode());
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_movingEntity));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_area));
     toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_entityShape));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_isEntityInsideWorldBorder));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_i_minXm1));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_j_maxXp1));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_k_minYm1));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_l_maxYp1));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_i1_minZm1));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_j1_maxZp1));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_worldborder));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag_isAreaInsideWorldBorder));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_voxelshapepart));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_predicate));
+    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag1));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
 			//String owner
 			"io/github/cadiboo/nocubes/hooks/Hooks",
 			//String name
-			"getCollisionBoxes",
+			"getCollisionShapes",
 			//String descriptor
-			"(Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;ZIIIIIILnet/minecraft/world/border/WorldBorder;ZLnet/minecraft/util/math/shapes/VoxelShapePart;Ljava/util/function/Predicate;)Ljava/util/stream/Stream;",
+			"(Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;",
 			//boolean isInterface
 			false
 	));
@@ -602,6 +546,6 @@ function injectGetCollisionBoxesHook(instructions) {
 	toInject.add(originalInstructionsLabel);
 
 	// Inject instructions
-	instructions.insert(firstLabelBefore_first_INVOKESTATIC_StreamSupport_stream, toInject);
+	instructions.insert(firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder, toInject);
 
 }
