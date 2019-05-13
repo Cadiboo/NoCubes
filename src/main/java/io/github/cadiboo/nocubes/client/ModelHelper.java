@@ -10,7 +10,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraftforge.common.property.IExtendedBlockState;
+import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -94,17 +94,17 @@ public final class ModelHelper {
 	@Nonnull
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
-			IBlockState unextendedState = state;
-			if (state instanceof IExtendedBlockState) {
-				unextendedState = ((IExtendedBlockState) state).getClean();
-			}
+//			IModelData
+//			if (state instanceof IExtendedBlockState) {
+//				unextendedState = ((IExtendedBlockState) state).getClean();
+//			}
 //			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
 //				return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
 //			}
-			if (unextendedState == GRASS_BLOCK.getDefaultState().with(SNOWY, true)) {
+			if (state == GRASS_BLOCK.getDefaultState().with(SNOWY, true)) {
 				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
 			}
-			if (unextendedState == PODZOL.getDefaultState().with(SNOWY, true)) {
+			if (state == PODZOL.getDefaultState().with(SNOWY, true)) {
 				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
 			}
 			return blockRendererDispatcher.getModelForState(state);

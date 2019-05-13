@@ -1,120 +1,21 @@
 var transformerName = "NoCubes IBlockState Transformer";
-
-function initializeCoreMod() {
-	return {
-		transformerName: {
-			'target': {
-				'type': 'CLASS',
-				'name': 'net.minecraft.block.state.IBlockState'
-			},
-			'transformer': function(classNode) {
-				
-				var methods = classNode.methods;
-
-				start("find isSolid");
-				for (var i in methods) {
-					var method = methods[i];
-					var methodName = method.name;
-
-					var deobfNameEquals = "isSolid".equals(methodName);
-					var srgNameEquals = "func_200132_m".equals(methodName);
-
-					if (!deobfNameEquals && !srgNameEquals) {
-						log("Did not match method " + methodName);
-						continue;
-					}
-
-					log("Matched method " + methodName);
-
-					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
-
-					finish();
-
-					var hasFinished = false;
-					try {
-						start("injectIsSolidHook")
-						injectIsSolidHook(method.instructions);
-						finish();
-						hasFinished = true;
-					} finally {
-						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
-						if(!hasFinished) {
-							var name = currentlyRunning;
-							currentlyRunning = undefined;
-							log("Caught exception from " + name);
-						}
-					}
-					break;
-
-				}
-
-				start("find causesSuffocation");
-				for (var i in methods) {
-					var method = methods[i];
-					var methodName = method.name;
-
-					var deobfNameEquals = "causesSuffocation".equals(methodName);
-					var srgNameEquals = "func_191058_s".equals(methodName);
-
-					if (!deobfNameEquals && !srgNameEquals) {
-						log("Did not match method " + methodName);
-						continue;
-					}
-
-					log("Matched method " + methodName);
-
-					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
-
-					finish();
-
-					var hasFinished = false;
-					try {
-						start("injectCausesSuffocationHook")
-						injectCausesSuffocationHook(method.instructions);
-						finish();
-						hasFinished = true;
-					} finally {
-						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
-						if(!hasFinished) {
-							var name = currentlyRunning;
-                            currentlyRunning = undefined;
-							log("Caught exception from " + name);
-						}
-					}
-					break;
-
-				}
-
-				log("Adding methods...");
-				{
-					start("Adding make_nocubes_isTerrainSmoothable");
-					methods.add(make_nocubes_isTerrainSmoothable());
-					finish();
-					start("Adding make_nocubes_setTerrainSmoothable");
-					methods.add(make_nocubes_setTerrainSmoothable());
-					finish();
-
-					start("Adding make_nocubes_isLeavesSmoothable");
-					methods.add(make_nocubes_isLeavesSmoothable());
-					finish();
-					start("Adding make_nocubes_setLeavesSmoothable");
-					methods.add(make_nocubes_setLeavesSmoothable());
-					finish();
-				}
-				log("Finished adding methods");
-
-				return classNode;
-			}
-		}
-	}
-}
+var targetClass = "net.minecraft.block.state.IBlockState";
+var targetMethods = [
+	new TargetMethod(
+		"func_200132_m", // isSolid
+		"()Z",
+		new MethodTransformer(injectIsSolidHook, "injectIsSolidHook")
+	),
+	new TargetMethod(
+		"func_191058_s", // causesSuffocation
+		"()Z",
+		new MethodTransformer(injectCausesSuffocationHook, "injectCausesSuffocationHook")
+	)
+];
 
 
-
-
-
-
-
+// Local variable indexes
+var ALOCALVARIABLE_this = 0;
 
 
 //// access flags 0x1
@@ -160,12 +61,6 @@ function initializeCoreMod() {
 //    LOCALVARIABLE isLeavesSmoothable Z L0 L1 1
 //    MAXSTACK = 0
 //    MAXLOCALS = 2
-
-
-
-
-
-
 
 
 function make_nocubes_isTerrainSmoothable() {
@@ -256,8 +151,299 @@ function make_nocubes_setLeavesSmoothable() {
 
 
 
+function injectIsSolidHook(instructions) {
+
+	var firstLabel;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
+			log("Found injection point " + instruction);
+			break;
+		}
+	}
+	if (!firstLabel) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+//	return this.getBlock().isSolid(this);
+//
+//	if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
+//	return this.getBlock().isSolid(this);
+
+//  public default isSolid()Z
+//   L0
+//    LINENUMBER 220 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFEQ L1
+//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//    IFEQ L1
+//    ICONST_0
+//    IRETURN
+//   L1
+//    LINENUMBER 221 L1
+//   FRAME SAME
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabel, toInject);
+
+}
+
+function injectCausesSuffocationHook(instructions) {
+
+	var firstLabel;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
+			log("Found injection point " + instruction);
+			break;
+		}
+	}
+	if (!firstLabel) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+//	return this.getBlock().causesSuffocation(this);
+
+//	return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
 
 
+//  public default causesSuffocation()Z
+//   L0
+//    LINENUMBER 321 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
+//  public default causesSuffocation()Z
+//   L0
+//    LINENUMBER 330 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFNE L1
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
+//    IFEQ L1
+//    ICONST_1
+//    GOTO L2
+//   L1
+//   FRAME SAME
+//    ICONST_0
+//   L2
+//   FRAME SAME1 I
+//    IRETURN
+
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabel, toInject);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function initializeCoreMod() {
+	return {
+		transformerName: {
+			'target': {
+				'type': 'CLASS',
+				'name': targetClass
+			},
+			'transformer': function(classNode) {
+
+				var methods = classNode.methods;
+
+				var hasFinished = false;
+				try {
+					for (var i in targetMethods) {
+
+						var targetMethod = targetMethods[i];
+						var targetMethodName = mapMethod(targetMethod.name);
+						var targetMethodDesc = targetMethod.desc;
+						var methodTransformers = targetMethod.transformers;
+
+						start("Find " + targetMethodName);
+						for (var j in methods) {
+							var method = methods[j];
+
+							if (!method.name.equals(targetMethodName)) {
+								log("Did not match method name " + targetMethodName + " - " + method.name);
+								continue;
+							} else if (!method.desc.equals(targetMethodDesc)) {
+								log("Did not match method desc " + targetMethodDesc + " - " + method.desc);
+								continue;
+							}
+							log("Matched method " + method.name + " " + method.desc);
+
+							finish();
+
+							for (var k in methodTransformers) {
+								var methodTransformer = methodTransformers[k];
+								start("Apply " + methodTransformer.name);
+								methodTransformer.func(method.instructions);
+								finish();
+							}
+							break;
+						}
+
+					}
+
+					log("Adding methods...");
+					{
+						start("Adding make_nocubes_isTerrainSmoothable");
+						methods.add(make_nocubes_isTerrainSmoothable());
+						finish();
+						start("Adding make_nocubes_setTerrainSmoothable");
+						methods.add(make_nocubes_setTerrainSmoothable());
+						finish();
+
+						start("Adding make_nocubes_isLeavesSmoothable");
+						methods.add(make_nocubes_isLeavesSmoothable());
+						finish();
+						start("Adding make_nocubes_setLeavesSmoothable");
+						methods.add(make_nocubes_setLeavesSmoothable());
+						finish();
+					}
+					log("Finished adding methods");
+
+					hasFinished = true;
+				} finally {
+					// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+					if(!hasFinished) {
+						var name = currentlyRunning;
+						currentlyRunning = undefined;
+						log("Caught exception from " + name);
+					}
+				}
+
+				return classNode;
+			}
+		}
+	}
+}
+
+function TargetMethod(name, desc, transformer1, transformer2, transformer3) { //Var args seems not to work :/
+	this.name = name;
+	this.desc = desc;
+	this.transformers = [];
+	if (transformer1 != undefined) this.transformers.push(transformer1);
+	if (transformer2 != undefined) this.transformers.push(transformer2);
+	if (transformer3 != undefined) this.transformers.push(transformer3);
+}
+
+function MethodTransformer(func, name) {
+	this.func = func;
+	this.name = name;
+}
 
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
@@ -288,14 +474,13 @@ function log(msg) {
 	}
 }
 
+function mapMethod(srgName) {
+	return ASMAPI.mapMethod(srgName);
+}
 
-
-
-
-
-
-
-
+function mapField(srgName) {
+	return ASMAPI.mapField(srgName);
+}
 
 var/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
 var/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
@@ -308,7 +493,7 @@ var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
 var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-//var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
+var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
@@ -342,17 +527,17 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var ACC_ENUM = Opcodes.ACC_ENUM; // class(?) field inner
 	var ACC_MANDATED = Opcodes.ACC_MANDATED; // parameter, module, module *
 	var ACC_MODULE = Opcodes.ACC_MODULE; // class
-	
+
 // ASM specific access flags.
 // WARNING: the 16 least significant bits must NOT be used, to avoid conflicts with standard
 // access flags, and also to make sure that these flags are automatically filtered out when
 // written in class files (because access flags are stored using 16 bits only).
-	
+
 	var ACC_DEPRECATED = Opcodes.ACC_DEPRECATED; // class, field, method
-	
+
 // Possible values for the type operand of the NEWARRAY instruction.
 // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
-	
+
 	var T_BOOLEAN = Opcodes.T_BOOLEAN;
 	var T_CHAR = Opcodes.T_CHAR;
 	var T_FLOAT = Opcodes.T_FLOAT;
@@ -567,196 +752,3 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var MULTIANEWARRAY = Opcodes.MULTIANEWARRAY; // visitMultiANewArrayInsn
 	var IFNULL = Opcodes.IFNULL; // visitJumpInsn
 	var IFNONNULL = Opcodes.IFNONNULL; // -
-
-// Local variable indexes
-var ALOCALVARIABLE_this = 0;
-
-
-
-
-
-
-
-
-function injectIsSolidHook(instructions) {
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabel = instruction;
-			log("Found injection point " + instruction);
-			break;
-		}
-	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-//	return this.getBlock().isSolid(this);
-//
-//	if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
-//	return this.getBlock().isSolid(this);
-
-//  public default isSolid()Z
-//   L0
-//    LINENUMBER 220 L0
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFEQ L1
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L1
-//    ICONST_0
-//    IRETURN
-//   L1
-//    LINENUMBER 221 L1
-//   FRAME SAME
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
-//    IRETURN
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEINTERFACE,
-			//String owner
-			"net/minecraft/block/state/IBlockState",
-			//String name
-			"nocubes_isTerrainSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			true
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(new LabelNode());
-	toInject.add(new InsnNode(ICONST_0));
-	toInject.add(new InsnNode(IRETURN));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabel, toInject);
-
-}
-
-function injectCausesSuffocationHook(instructions) {
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabel = instruction;
-			log("Found injection point " + instruction);
-			break;
-		}
-	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-//	return this.getBlock().causesSuffocation(this);
-
-//	return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
-
-
-//  public default causesSuffocation()Z
-//   L0
-//    LINENUMBER 321 L0
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
-//    IRETURN
-
-//  public default causesSuffocation()Z
-//   L0
-//    LINENUMBER 330 L0
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L1
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
-//    IFEQ L1
-//    ICONST_1
-//    GOTO L2
-//   L1
-//   FRAME SAME
-//    ICONST_0
-//   L2
-//   FRAME SAME1 I
-//    IRETURN
-
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEINTERFACE,
-			//String owner
-			"net/minecraft/block/state/IBlockState",
-			//String name
-			"nocubes_isTerrainSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			true
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(new LabelNode());
-	toInject.add(new InsnNode(ICONST_0));
-	toInject.add(new InsnNode(IRETURN));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabel, toInject);
-
-}

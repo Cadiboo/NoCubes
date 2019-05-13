@@ -1,62 +1,178 @@
 var transformerName = "NoCubes WorldRenderer Transformer";
+var targetClass = "net.minecraft.client.renderer.WorldRenderer";
+var targetMethods = [
+	new TargetMethod(
+		"func_174981_a", // drawBlockDamageTexture
+		"(Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/entity/Entity;F)V",
+		new MethodTransformer(injectRenderBlockDamageHook, "injectRenderBlockDamageHook")
+	)
+];
 
-var isSRG;
 
-function initializeCoreMod() {
-	return {
-		transformerName: {
-			'target': {
-				'type': 'CLASS',
-				'name': 'net.minecraft.client.renderer.WorldRenderer'
-			},
-			'transformer': function(classNode) {
-				
-				var methods = classNode.methods;
+// Local variable indexes
+var ALOCALVARIABLE_this = 0;
+var ALOCALVARIABLE_tessellator = 1;
+var ALOCALVARIABLE_bufferbuilder = 2;
+var ALOCALVARIABLE_blockpos = 13;
+var ALOCALVARIABLE_iblockstate = 23;
+var ALOCALVARIABLE_textureatlassprite = 25;
+var ALOCALVARIABLE_blockrendererdispatcher = 26;
 
-				for (var i in methods) {
-					var method = methods[i];
-					var methodName = method.name;
 
-					var deobfNameEquals = "drawBlockDamageTexture".equals(methodName);
-					var srgNameEquals = "func_174981_a".equals(methodName);
+// 1) find renderBlockDamage
+// 2) find next label
+// 3) insert right after renderBlockDamage label
+function injectRenderBlockDamageHook(instructions) {
 
-					if (!deobfNameEquals && !srgNameEquals) {
-						log("Did not match method " + methodName);
-						continue;
-					}
+//	BlockRendererDispatcher blockrendererdispatcher = this.mc.getBlockRendererDispatcher();
+//	blockrendererdispatcher.renderBlockDamage(iblockstate, blockpos, textureatlassprite, this.world);
 
-					log("Matched method " + methodName);
+//	BlockRendererDispatcher blockrendererdispatcher = this.mc.getBlockRendererDispatcher();
+//	// NoCubes Start
+//	if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, this.world, textureatlassprite, blockrendererdispatcher))
+//	// NoCubes End
+//	blockrendererdispatcher.renderBlockDamage(iblockstate, blockpos, textureatlassprite, this.world);
 
-					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
 
-					isSRG = srgNameEquals;
+//	L35
+//	LINENUMBER 1626 L35
+//	ALOAD 0
+//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
+//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//	ASTORE 26
+//	L36
+//	LINENUMBER 1627 L36
+//	ALOAD 26
+//	ALOAD 23
+//	ALOAD 13
+//	ALOAD 25
+//	ALOAD 0
+//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
+//	L25
+//	LINENUMBER 1631 L25
 
-					var instructions = method.instructions;
+//	L35
+//	LINENUMBER 1628 L35
+//	ALOAD 0
+//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
+//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//	ASTORE 26
+//	L36
+//	LINENUMBER 1630 L36
+//	ALOAD 1
+//	ALOAD 2
+//	ALOAD 13
+//	ALOAD 23
+//	ALOAD 0
+//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//	ALOAD 25
+//	ALOAD 26
+//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.renderBlockDamage (Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z
+//	IFEQ L25
+//	L37
+//	LINENUMBER 1632 L37
+//	ALOAD 26
+//	ALOAD 23
+//	ALOAD 13
+//	ALOAD 25
+//	ALOAD 0
+//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
+//	L25
+//	LINENUMBER 1636 L25
 
-					log("Injecting hooks...");
-					var hasFinished = false;
-					try {
-						start("injectRenderBlockDamageHook");
-						injectRenderBlockDamageHook(instructions);
-						finish();
-						hasFinished = true;
-					} finally {
-						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
-						if(!hasFinished) {
-							var name = currentlyRunning;
-							currentlyRunning = undefined;
-							log("Caught exception from " + name);
+	
+	var BlockRendererDispatcher_renderBlockDamage_name = mapMethod("func_175020_a"); // renderBlockDamage
+
+
+	var INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == INVOKEVIRTUAL) {
+			if (instruction.owner == "net/minecraft/client/renderer/BlockRendererDispatcher") {
+				if (instruction.name == BlockRendererDispatcher_renderBlockDamage_name) {
+					if (instruction.desc == "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V") {
+						if (instruction.itf == false) {
+							INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage = instruction;
+							log("Found injection point " + instruction);
+							break;
 						}
 					}
-					log("Successfully injected hooks!");
-					break;
-
 				}
-
-				return classNode;
 			}
 		}
 	}
+	if (!INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var firstLabelBefore_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage;
+	for (i = instructions.indexOf(INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage); i >=0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelBefore_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelBefore_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage) {
+		throw "Error: Couldn't find label!";
+	}
+
+	var firstLabelAfter_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage;
+	for (i = instructions.indexOf(INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage); i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelAfter_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelAfter_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage) {
+		throw "Error: Couldn't find label!";
+	}
+
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_tessellator));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_bufferbuilder));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new FieldInsnNode(
+			GETFIELD,
+			"net/minecraft/client/renderer/WorldRenderer",
+			mapField("field_72769_h"), // world
+			"Lnet/minecraft/client/multiplayer/WorldClient;"
+	));
+    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_textureatlassprite));
+    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
+    toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/hooks/Hooks",
+			//String name
+			"renderBlockDamage",
+			//String descriptor
+			"(Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, firstLabelAfter_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabelBefore_INVOKEVIRTUAL_BlockRendererDispatcher_renderBlockDamage, toInject);
+
 }
 
 
@@ -67,6 +183,91 @@ function initializeCoreMod() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+function initializeCoreMod() {
+	return {
+		transformerName: {
+			'target': {
+				'type': 'CLASS',
+				'name': targetClass
+			},
+			'transformer': function(classNode) {
+
+				var methods = classNode.methods;
+
+				var hasFinished = false;
+				try {
+					for (var i in targetMethods) {
+
+						var targetMethod = targetMethods[i];
+						var targetMethodName = mapMethod(targetMethod.name);
+						var targetMethodDesc = targetMethod.desc;
+						var methodTransformers = targetMethod.transformers;
+
+						start("Find " + targetMethodName);
+						for (var j in methods) {
+							var method = methods[j];
+
+							if (!method.name.equals(targetMethodName)) {
+								log("Did not match method name " + targetMethodName + " - " + method.name);
+								continue;
+							} else if (!method.desc.equals(targetMethodDesc)) {
+								log("Did not match method desc " + targetMethodDesc + " - " + method.desc);
+								continue;
+							}
+							log("Matched method " + method.name + " " + method.desc);
+
+							finish();
+
+							for (var k in methodTransformers) {
+								var methodTransformer = methodTransformers[k];
+								start("Apply " + methodTransformer.name);
+								methodTransformer.func(method.instructions);
+								finish();
+							}
+							break;
+						}
+
+					}
+					hasFinished = true;
+				} finally {
+					// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+					if(!hasFinished) {
+						var name = currentlyRunning;
+						currentlyRunning = undefined;
+						log("Caught exception from " + name);
+					}
+				}
+
+				return classNode;
+			}
+		}
+	}
+}
+
+function TargetMethod(name, desc, transformer1, transformer2, transformer3) { //Var args seems not to work :/
+	this.name = name;
+	this.desc = desc;
+	this.transformers = [];
+	if (transformer1 != undefined) this.transformers.push(transformer1);
+	if (transformer2 != undefined) this.transformers.push(transformer2);
+	if (transformer3 != undefined) this.transformers.push(transformer3);
+}
+
+function MethodTransformer(func, name) {
+	this.func = func;
+	this.name = name;
+}
 
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
@@ -97,14 +298,13 @@ function log(msg) {
 	}
 }
 
+function mapMethod(srgName) {
+	return ASMAPI.mapMethod(srgName);
+}
 
-
-
-
-
-
-
-
+function mapField(srgName) {
+	return ASMAPI.mapField(srgName);
+}
 
 var/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
 var/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
@@ -117,7 +317,7 @@ var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
 var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-//var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
+var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
@@ -151,17 +351,17 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var ACC_ENUM = Opcodes.ACC_ENUM; // class(?) field inner
 	var ACC_MANDATED = Opcodes.ACC_MANDATED; // parameter, module, module *
 	var ACC_MODULE = Opcodes.ACC_MODULE; // class
-	
+
 // ASM specific access flags.
 // WARNING: the 16 least significant bits must NOT be used, to avoid conflicts with standard
 // access flags, and also to make sure that these flags are automatically filtered out when
 // written in class files (because access flags are stored using 16 bits only).
-	
+
 	var ACC_DEPRECATED = Opcodes.ACC_DEPRECATED; // class, field, method
-	
+
 // Possible values for the type operand of the NEWARRAY instruction.
 // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
-	
+
 	var T_BOOLEAN = Opcodes.T_BOOLEAN;
 	var T_CHAR = Opcodes.T_CHAR;
 	var T_FLOAT = Opcodes.T_FLOAT;
@@ -376,172 +576,3 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var MULTIANEWARRAY = Opcodes.MULTIANEWARRAY; // visitMultiANewArrayInsn
 	var IFNULL = Opcodes.IFNULL; // visitJumpInsn
 	var IFNONNULL = Opcodes.IFNONNULL; // -
-
-// Local variable indexes
-var ALOCALVARIABLE_this = 0;
-var ALOCALVARIABLE_tessellator = 1;
-var ALOCALVARIABLE_bufferbuilder = 2;
-var ALOCALVARIABLE_blockpos = 13;
-var ALOCALVARIABLE_iblockstate = 23;
-var ALOCALVARIABLE_textureatlassprite = 25;
-var ALOCALVARIABLE_blockrendererdispatcher = 26;
-
-
-
-
-
-
-
-
-
-
-// 1) find renderBlockDamage
-// 2) find next label
-// 3) insert right after renderBlockDamage label
-function injectRenderBlockDamageHook(instructions) {
-
-
-//	BlockRendererDispatcher blockrendererdispatcher = this.mc.getBlockRendererDispatcher();
-//	blockrendererdispatcher.renderBlockDamage(iblockstate, blockpos, textureatlassprite, this.world);
-
-//	BlockRendererDispatcher blockrendererdispatcher = this.mc.getBlockRendererDispatcher();
-//	// NoCubes Start
-//	if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, this.world, textureatlassprite, blockrendererdispatcher))
-//	// NoCubes End
-//	blockrendererdispatcher.renderBlockDamage(iblockstate, blockpos, textureatlassprite, this.world);
-
-
-//	L35
-//	LINENUMBER 1626 L35
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 26
-//	L36
-//	LINENUMBER 1627 L36
-//	ALOAD 26
-//	ALOAD 23
-//	ALOAD 13
-//	ALOAD 25
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
-//	L25
-//	LINENUMBER 1631 L25
-
-//	L35
-//	LINENUMBER 1628 L35
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 26
-//	L36
-//	LINENUMBER 1630 L36
-//	ALOAD 1
-//	ALOAD 2
-//	ALOAD 13
-//	ALOAD 23
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	ALOAD 25
-//	ALOAD 26
-//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.renderBlockDamage (Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z
-//	IFEQ L25
-//	L37
-//	LINENUMBER 1632 L37
-//	ALOAD 26
-//	ALOAD 23
-//	ALOAD 13
-//	ALOAD 25
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
-//	L25
-//	LINENUMBER 1636 L25
-
-	
-	var BlockRendererDispatcher_renderBlockDamage;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/client/renderer/BlockRendererDispatcher") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_175020_a" || instruction.name == "renderBlockDamage") {
-					if (instruction.desc == "(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V") {
-						if (instruction.itf == false) {
-							BlockRendererDispatcher_renderBlockDamage = instruction;
-							log("Found injection point " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!BlockRendererDispatcher_renderBlockDamage) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var firstLabelBefore_BlockRendererDispatcher_renderBlockDamage;
-	for (i = instructions.indexOf(BlockRendererDispatcher_renderBlockDamage); i >=0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelBefore_BlockRendererDispatcher_renderBlockDamage = instruction;
-			log("Found label " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_BlockRendererDispatcher_renderBlockDamage) {
-		throw "Error: Couldn't find label!";
-	}
-
-	var firstLabelAfter_BlockRendererDispatcher_renderBlockDamage;
-	for (i = instructions.indexOf(BlockRendererDispatcher_renderBlockDamage); i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelAfter_BlockRendererDispatcher_renderBlockDamage = instruction;
-			log("Found label " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelAfter_BlockRendererDispatcher_renderBlockDamage) {
-		throw "Error: Couldn't find label!";
-	}
-
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_tessellator));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_bufferbuilder));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/WorldRenderer", isSRG ? "field_72769_h" : "world", "Lnet/minecraft/client/multiplayer/WorldClient;"));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_textureatlassprite));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
-    toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"renderBlockDamage",
-			//String descriptor
-			"(Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, firstLabelAfter_BlockRendererDispatcher_renderBlockDamage));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_BlockRendererDispatcher_renderBlockDamage, toInject);
-
-}

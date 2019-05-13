@@ -1,63 +1,175 @@
 var transformerName = "NoCubes IWorldReaderBase Transformer";
+var targetClass = "net.minecraft.world.IWorldReaderBase";
+var targetMethods = [
+	new TargetMethod(
+		"func_212392_a", // getCollisionBoxes
+		"(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Ljava/util/Set;)Ljava/util/stream/Stream;",
+		new MethodTransformer(injectGetCollisionBoxesHook, "injectGetCollisionBoxesHook")
+	)
+];
 
-function initializeCoreMod() {
-	return {
-		transformerName: {
-			'target': {
-				'type': 'CLASS',
-				'name': 'net.minecraft.world.IWorldReaderBase'
-			},
-			'transformer': function(classNode) {
-				
-				var methods = classNode.methods;
 
-				for (var i in methods) {
-					var method = methods[i];
-					var methodName = method.name;
+// Local variable indexes
+var ALOCALVARIABLE_this = 0;
+var ALOCALVARIABLE_movingEntity = 1;
+var ALOCALVARIABLE_area = 2;
+var ALOCALVARIABLE_entityShape = 3;
+var ILOCALVARIABLE_flag1 = 6;
 
-					var deobfNameEquals = "getCollisionBoxes".equals(methodName);
-					var srgNameEquals = "func_212392_a".equals(methodName);
 
-					if (!deobfNameEquals && !srgNameEquals) {
-						log("Did not match method " + methodName);
-						continue;
-					}
+// Finds the first instruction INVOKEVIRTUAL Entity.setOutsideBorder
+// then finds the next label
+// and inserts after that label and before the label's instructions.
+function injectGetCollisionBoxesHook(instructions) {
 
-					if (!method.desc.equals("(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Ljava/util/Set;)Ljava/util/stream/Stream;")) {
-						log("Did not match method description " + method.desc);
-						continue;
-					}
+//	if (movingEntity != null && flag == flag1) {
+//		movingEntity.setOutsideBorder(!flag1);
+//	}
+//
+//	return this.func_212391_a(area, p_212392_3_, flag1)
 
-					log("Matched method " + methodName);
+//	if (movingEntity != null && flag == flag1) {
+//		movingEntity.setOutsideBorder(!flag1);
+//	}
+//	// NoCubes Start
+//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
+//		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
+//	}
+//	// NoCubes End
+//
+//	return this.func_212391_a(area, p_212392_3_, flag1)
 
-					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
 
-					var instructions = method.instructions;
+//   L10
+//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+//   L7
+//    LINENUMBER 195 L7
+//   FRAME SAME
+//    ALOAD 0
+//    ALOAD 2
+//    ALOAD 3
+//    ILOAD 6
+//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.getCollisionBoxes (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
+//    ARETURN
 
-					log("Injecting hooks...");
-					var hasFinished = false;
-					try {
-						start("injectGetCollisionBoxesHook");
-						injectGetCollisionBoxesHook(instructions);
-						finish();
-						hasFinished = true;
-					} finally {
-						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
-						if(!hasFinished) {
-							var name = currentlyRunning;
-							currentlyRunning = undefined;
-							log("Caught exception from " + name);
+//   L10
+//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+//   L7
+//    LINENUMBER 196 L7
+//   FRAME SAME
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
+//    IFEQ L11
+//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//    IFEQ L11
+//   L12
+//    LINENUMBER 197 L12
+//    ALOAD 0
+//    ALOAD 1
+//    ALOAD 2
+//    ALOAD 3
+//    ILOAD 6
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionShapes (Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;
+//    ARETURN
+//   L11
+//    LINENUMBER 201 L11
+//   FRAME SAME
+//    ALOAD 0
+//    ALOAD 2
+//    ALOAD 3
+//    ILOAD 6
+//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.func_212391_a (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
+//    ARETURN
+
+
+//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+	var first_INVOKEVIRTUAL_Entity_setOutsideBorder;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == INVOKEVIRTUAL) {
+			if (instruction.owner == "net/minecraft/entity/Entity") {
+				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
+				if (instruction.name == "func_174821_h" || instruction.name == "setOutsideBorder") {
+					if (instruction.desc == "(Z)V") {
+						if (instruction.itf == false) {
+							first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
+							log("Found injection point " + instruction);
+							break;
 						}
 					}
-					log("Successfully injected hooks!");
-					break;
-
 				}
-
-				return classNode;
 			}
 		}
 	}
+	if (!first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder;
+	var startLook = instructions.indexOf(first_INVOKEVIRTUAL_Entity_setOutsideBorder);
+	var maxLook = startLook + 10;
+
+	for (i = startLook; i < maxLook; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
+		throw "Error: Couldn't find label!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+	// Make list of instructions to inject
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_movingEntity));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_area));
+    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_entityShape));
+    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag1));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/hooks/Hooks",
+			//String name
+			"getCollisionShapes",
+			//String descriptor
+			"(Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;",
+			//boolean isInterface
+			false
+	));
+    toInject.add(new InsnNode(ARETURN));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder, toInject);
+
 }
 
 
@@ -68,6 +180,91 @@ function initializeCoreMod() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+function initializeCoreMod() {
+	return {
+		transformerName: {
+			'target': {
+				'type': 'CLASS',
+				'name': targetClass
+			},
+			'transformer': function(classNode) {
+
+				var methods = classNode.methods;
+
+				var hasFinished = false;
+				try {
+					for (var i in targetMethods) {
+
+						var targetMethod = targetMethods[i];
+						var targetMethodName = mapMethod(targetMethod.name);
+						var targetMethodDesc = targetMethod.desc;
+						var methodTransformers = targetMethod.transformers;
+
+						start("Find " + targetMethodName);
+						for (var j in methods) {
+							var method = methods[j];
+
+							if (!method.name.equals(targetMethodName)) {
+								log("Did not match method name " + targetMethodName + " - " + method.name);
+								continue;
+							} else if (!method.desc.equals(targetMethodDesc)) {
+								log("Did not match method desc " + targetMethodDesc + " - " + method.desc);
+								continue;
+							}
+							log("Matched method " + method.name + " " + method.desc);
+
+							finish();
+
+							for (var k in methodTransformers) {
+								var methodTransformer = methodTransformers[k];
+								start("Apply " + methodTransformer.name);
+								methodTransformer.func(method.instructions);
+								finish();
+							}
+							break;
+						}
+
+					}
+					hasFinished = true;
+				} finally {
+					// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+					if(!hasFinished) {
+						var name = currentlyRunning;
+						currentlyRunning = undefined;
+						log("Caught exception from " + name);
+					}
+				}
+
+				return classNode;
+			}
+		}
+	}
+}
+
+function TargetMethod(name, desc, transformer1, transformer2, transformer3) { //Var args seems not to work :/
+	this.name = name;
+	this.desc = desc;
+	this.transformers = [];
+	if (transformer1 != undefined) this.transformers.push(transformer1);
+	if (transformer2 != undefined) this.transformers.push(transformer2);
+	if (transformer3 != undefined) this.transformers.push(transformer3);
+}
+
+function MethodTransformer(func, name) {
+	this.func = func;
+	this.name = name;
+}
 
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
@@ -98,14 +295,13 @@ function log(msg) {
 	}
 }
 
+function mapMethod(srgName) {
+	return ASMAPI.mapMethod(srgName);
+}
 
-
-
-
-
-
-
-
+function mapField(srgName) {
+	return ASMAPI.mapField(srgName);
+}
 
 var/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
 var/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
@@ -118,7 +314,7 @@ var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
 var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-//var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
+var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
@@ -152,17 +348,17 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var ACC_ENUM = Opcodes.ACC_ENUM; // class(?) field inner
 	var ACC_MANDATED = Opcodes.ACC_MANDATED; // parameter, module, module *
 	var ACC_MODULE = Opcodes.ACC_MODULE; // class
-	
+
 // ASM specific access flags.
 // WARNING: the 16 least significant bits must NOT be used, to avoid conflicts with standard
 // access flags, and also to make sure that these flags are automatically filtered out when
 // written in class files (because access flags are stored using 16 bits only).
-	
+
 	var ACC_DEPRECATED = Opcodes.ACC_DEPRECATED; // class, field, method
-	
+
 // Possible values for the type operand of the NEWARRAY instruction.
 // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
-	
+
 	var T_BOOLEAN = Opcodes.T_BOOLEAN;
 	var T_CHAR = Opcodes.T_CHAR;
 	var T_FLOAT = Opcodes.T_FLOAT;
@@ -377,175 +573,3 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var MULTIANEWARRAY = Opcodes.MULTIANEWARRAY; // visitMultiANewArrayInsn
 	var IFNULL = Opcodes.IFNULL; // visitJumpInsn
 	var IFNONNULL = Opcodes.IFNONNULL; // -
-
-// Local variable indexes
-var ALOCALVARIABLE_this = 0;
-var ALOCALVARIABLE_movingEntity = 1;
-var ALOCALVARIABLE_area = 2;
-var ALOCALVARIABLE_entityShape = 3;
-var ILOCALVARIABLE_flag1 = 6;
-
-
-
-
-
-
-
-
-
-
-// Finds the first instruction INVOKEVIRTUAL Entity.setOutsideBorder
-// then finds the next label
-// and inserts after that label and before the label's instructions.
-function injectGetCollisionBoxesHook(instructions) {
-
-//	if (movingEntity != null && flag == flag1) {
-//		movingEntity.setOutsideBorder(!flag1);
-//	}
-//
-//	return this.func_212391_a(area, p_212392_3_, flag1)
-
-//	if (movingEntity != null && flag == flag1) {
-//		movingEntity.setOutsideBorder(!flag1);
-//	}
-//	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
-//		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
-//	}
-//	// NoCubes End
-//
-//	return this.func_212391_a(area, p_212392_3_, flag1)
-
-
-//   L10
-//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
-//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
-//   L7
-//    LINENUMBER 195 L7
-//   FRAME SAME
-//    ALOAD 0
-//    ALOAD 2
-//    ALOAD 3
-//    ILOAD 6
-//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.getCollisionBoxes (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
-//    ARETURN
-
-//   L10
-//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
-//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
-//   L7
-//    LINENUMBER 196 L7
-//   FRAME SAME
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
-//    IFEQ L11
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L11
-//   L12
-//    LINENUMBER 197 L12
-//    ALOAD 0
-//    ALOAD 1
-//    ALOAD 2
-//    ALOAD 3
-//    ILOAD 6
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionShapes (Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;
-//    ARETURN
-//   L11
-//    LINENUMBER 201 L11
-//   FRAME SAME
-//    ALOAD 0
-//    ALOAD 2
-//    ALOAD 3
-//    ILOAD 6
-//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.func_212391_a (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
-//    ARETURN
-
-
-//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
-	var first_INVOKEVIRTUAL_Entity_setOutsideBorder;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/entity/Entity") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_174821_h" || instruction.name == "setOutsideBorder") {
-					if (instruction.desc == "(Z)V") {
-						if (instruction.itf == false) {
-							first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
-							log("Found injection point " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder;
-	var startLook = instructions.indexOf(first_INVOKEVIRTUAL_Entity_setOutsideBorder);
-	var maxLook = startLook + 10;
-
-	for (i = startLook; i < maxLook; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
-			log("Found label " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder) {
-		throw "Error: Couldn't find label!";
-	}
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(new LabelNode());
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_movingEntity));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_area));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_entityShape));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag1));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"getCollisionShapes",
-			//String descriptor
-			"(Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;",
-			//boolean isInterface
-			false
-	));
-    toInject.add(new InsnNode(ARETURN));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelAfter_first_INVOKEVIRTUAL_Entity_setOutsideBorder, toInject);
-
-}

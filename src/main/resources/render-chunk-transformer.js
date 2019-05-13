@@ -1,61 +1,350 @@
 var transformerName = "NoCubes RenderChunk Transformer";
+var targetClass = "net.minecraft.client.renderer.chunk.RenderChunk";
+var targetMethods = [
+	new TargetMethod(
+		"func_178581_b", // rebuildChunk
+		"(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;)V",
+		new MethodTransformer(injectPreIterationHook, "injectPreIterationHook"),
+		new MethodTransformer(injectBlockRenderHook, "injectBlockRenderHook")
+	)
+];
 
-function initializeCoreMod() {
-	return {
-		transformerName: {
-			'target': {
-				'type': 'CLASS',
-				'name': 'net.minecraft.client.renderer.chunk.RenderChunk'
-			},
-			'transformer': function(classNode) {
-				
-				var methods = classNode.methods;
 
-				for (var i in methods) {
-					var method = methods[i];
-					var methodName = method.name;
+// Local variable indexes
+var ALOCALVARIABLE_this = 0;
+var FLOCALVARIABLE_x = 1;
+var FLOCALVARIABLE_y = 2;
+var FLOCALVARIABLE_z = 3;
+var ALOCALVARIABLE_generator = 4;
+var ALOCALVARIABLE_compiledchunk = 5;
+var ILOCALVARIABLE_i_unused = 6;
+var ALOCALVARIABLE_blockpos_startPos = 7;
+var ALOCALVARIABLE_blockpos1_endPos = 8;
+var ALOCALVARIABLE_world = 9;
+var ALOCALVARIABLE_lvt_10_1__ChunkCache = 10;
+var ALOCALVARIABLE_lvt_11_1__VisGraph = 11;
+var ALOCALVARIABLE_lvt_12_1__HashSetTileEntities = 12;
+var ALOCALVARIABLE_aboolean_usedBlockRenderLayers = 13;
+var ALOCALVARIABLE_set_TileEntities = 13;
+    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
+    // declaration: set extends java.util.Set<net.minecraft.tileentity.TileEntity>
+var ALOCALVARIABLE_random = 14;
+var ALOCALVARIABLE_set1_TileEntities = 14;
+    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
+    // declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
+var ALOCALVARIABLE_blockrendererdispatcher = 15;
+var ALOCALVARIABLE_blockpos$mutableblockpos = 17;
+var ALOCALVARIABLE_iblockstate = 18;
+var ALOCALVARIABLE_block = 19;
+var ALOCALVARIABLE_blockrenderlayer = 19;
+var ALOCALVARIABLE_tileentity = 20;
+var ALOCALVARIABLE_ifluidstate = 20;
+var ALOCALVARIABLE_tileentityrenderer = 21;
+    // signature Lnet/minecraft/client/renderer/tileentity/TileEntityRenderer<Lnet/minecraft/tileentity/TileEntity;>;
+    // declaration: tileentityrenderer extends net.minecraft.client.renderer.tileentity.TileEntityRenderer<net.minecraft.tileentity.TileEntity>
+var ALOCALVARIABLE_blockrenderlayer1 = 24;
+var ILOCALVARIABLE_j = 25;
+var ILOCALVARIABLE_k = 25;
+var ALOCALVARIABLE_bufferbuilder = 26;
+var ALOCALVARIABLE_bufferbuilder1 = 26;
 
-					var deobfNameEquals = "rebuildChunk".equals(methodName);
-					var srgNameEquals = "func_178581_b".equals(methodName);
 
-					if (!deobfNameEquals && !srgNameEquals) {
-						log("Did not match method " + methodName);
-						continue;
-					}
+// Finds the first instruction INVOKESTATIC BlockPos.getAllInBoxMutable
+// then finds the previous label
+// and inserts after the label and before the label's instructions.
+function injectPreIterationHook(instructions) {
 
-					log("Matched method " + methodName);
+//	BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
+//
+//>	io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+//	for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
 
-					log(deobfNameEquals ? "Matched a deobfuscated name - we are in a DEOBFUSCATED/MCP-NAMED DEVELOPER Environment" : "Matched an SRG name - We are in an SRG-NAMED PRODUCTION Environment")
 
-					var instructions = method.instructions;
+//	L31
+//	LINENUMBER 137 L31
+//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//	ASTORE 15
+//	L32
+//	LINENUMBER 139 L32
+//	ALOAD 7
+//	ALOAD 8
+//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
+//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
+//	ASTORE 16
+//	L33
 
-					log("Injecting hooks...");
-					var hasFinished = false;
-					try {
-						start("injectPreIterationHook");
-						injectPreIterationHook(instructions);
-						finish();
-						start("injectBlockRenderHook");
-						injectBlockRenderHook(instructions);
-						finish();
-						hasFinished = true;
-					} finally {
-						// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
-						if(!hasFinished) {
-							var name = currentlyRunning;
-							currentlyRunning = undefined;
-							log("Caught exception from " + name);
+//	L31
+//	LINENUMBER 137 L31
+//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//	ASTORE 15
+//	L32
+//	LINENUMBER 139 L32
+//	ALOAD 0
+//	FLOAD 1
+//	FLOAD 2
+//	FLOAD 3
+//	ALOAD 4
+//	ALOAD 5
+//	ALOAD 7
+//	ALOAD 8
+//	ALOAD 9
+//	ALOAD 10
+//	ALOAD 11
+//	ALOAD 12
+//	ALOAD 13
+//	ALOAD 14
+//	ALOAD 15
+//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
+//	L33
+//	LINENUMBER 139 L33
+//	ALOAD 7
+//	ALOAD 8
+//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
+//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
+//	ASTORE 16
+//	L34
+
+	var first_INVOKESTATIC_getAllInBoxMutable;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == INVOKESTATIC) {
+			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
+				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
+				if (instruction.name == "func_177975_b" || instruction.name == "getAllInBoxMutable") {
+					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;") {
+						if (instruction.itf == false) {
+							first_INVOKESTATIC_getAllInBoxMutable = instruction;
+							log("Found injection point " + instruction);
+							break;
 						}
 					}
-					log("Successfully injected hooks!");
-					break;
-
 				}
-
-				return classNode;
 			}
 		}
 	}
+	if (!first_INVOKESTATIC_getAllInBoxMutable) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
+	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >=0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable) {
+		throw "Error: Couldn't find label!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_x));
+	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_y));
+	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_z));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_generator));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_compiledchunk));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos_startPos));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos1_endPos));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_world));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_10_1__ChunkCache));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_11_1__VisGraph));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_12_1__HashSetTileEntities));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_aboolean_usedBlockRenderLayers));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_random));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/hooks/Hooks",
+			//String name
+			"preIteration",
+			//String descriptor
+			"(Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
+			//boolean isInterface
+			false
+	));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable, toInject);
+
+}
+
+// 1) find IBlockState.getRenderType
+// 2) find label for IBlockState.getRenderType
+// 3) find label that IBlockState.getRenderType would jump to
+// 4) insert right after IBlockState.getRenderType label
+function injectBlockRenderHook(instructions) {
+
+
+//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+
+//	if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
+//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+
+
+//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//	IOR
+//	BASTORE
+//	L54
+//	LINENUMBER 178 L54
+//	FRAME CHOP 2
+//	ALOAD 18
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
+//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
+//	IF_ACMPEQ L61
+//	ALOAD 18
+//	ALOAD 24
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+
+//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//	IOR
+//	BASTORE
+//	L54
+//	LINENUMBER 178 L54
+//	FRAME CHOP 2
+//	ALOAD 18
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//	IFNE L61
+//	ALOAD 18
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//	IFEQ L62
+//	L61
+//	FRAME SAME
+//	INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
+//	IFNE L63
+//	L62
+//	LINENUMBER 180 L62
+//	FRAME SAME
+//	ALOAD 18
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
+//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
+//	IF_ACMPEQ L63
+//	ALOAD 18
+//	ALOAD 24
+//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+
+	var blockCannotRenderLabel;
+
+	var IBlockState_getRenderType;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == INVOKEINTERFACE) {
+			if (instruction.owner == "net/minecraft/block/state/IBlockState") {
+				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
+				if (instruction.name == "func_185901_i" || instruction.name == "getRenderType") {
+					if (instruction.desc == "()Lnet/minecraft/util/EnumBlockRenderType;") {
+						if (instruction.itf == true) {
+							IBlockState_getRenderType = instruction;
+							log("Found injection point " + instruction);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (!IBlockState_getRenderType) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var firstLabelBefore_IBlockState_getRenderType;
+	for (i = instructions.indexOf(IBlockState_getRenderType); i >=0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabelBefore_IBlockState_getRenderType = instruction;
+			log("Found label " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelBefore_IBlockState_getRenderType) {
+		throw "Error: Couldn't find label!";
+	}
+
+	var lookStart = instructions.indexOf(IBlockState_getRenderType);
+	var lookMax = lookStart + 10;
+	for (var i = lookStart; i < lookMax; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == IFEQ || instruction.getOpcode() == IFNE || instruction.getOpcode() == IF_ACMPEQ) {
+			blockCannotRenderLabel = instruction.label;
+			log("Found blockCannotRenderLabel " + instruction.label);
+			break;
+		}
+	}
+	if (!blockCannotRenderLabel) {
+		throw "Error: Couldn't find blockCannotRenderLabel!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+	var nocubesEnabledLabel = new LabelNode();
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isTerrainSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFNE, nocubesEnabledLabel));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKEINTERFACE,
+			//String owner
+			"net/minecraft/block/state/IBlockState",
+			//String name
+			"nocubes_isLeavesSmoothable",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			true
+	));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+
+	toInject.add(nocubesEnabledLabel);
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/NoCubes",
+			//String name
+			"isEnabled",
+			//String descriptor
+			"()Z",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(firstLabelBefore_IBlockState_getRenderType, toInject);
+
 }
 
 
@@ -66,6 +355,91 @@ function initializeCoreMod() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+function initializeCoreMod() {
+	return {
+		transformerName: {
+			'target': {
+				'type': 'CLASS',
+				'name': targetClass
+			},
+			'transformer': function(classNode) {
+
+				var methods = classNode.methods;
+
+				var hasFinished = false;
+				try {
+					for (var i in targetMethods) {
+
+						var targetMethod = targetMethods[i];
+						var targetMethodName = mapMethod(targetMethod.name);
+						var targetMethodDesc = targetMethod.desc;
+						var methodTransformers = targetMethod.transformers;
+
+						start("Find " + targetMethodName);
+						for (var j in methods) {
+							var method = methods[j];
+
+							if (!method.name.equals(targetMethodName)) {
+								log("Did not match method name " + targetMethodName + " - " + method.name);
+								continue;
+							} else if (!method.desc.equals(targetMethodDesc)) {
+								log("Did not match method desc " + targetMethodDesc + " - " + method.desc);
+								continue;
+							}
+							log("Matched method " + method.name + " " + method.desc);
+
+							finish();
+
+							for (var k in methodTransformers) {
+								var methodTransformer = methodTransformers[k];
+								start("Apply " + methodTransformer.name);
+								methodTransformer.func(method.instructions);
+								finish();
+							}
+							break;
+						}
+
+					}
+					hasFinished = true;
+				} finally {
+					// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
+					if(!hasFinished) {
+						var name = currentlyRunning;
+						currentlyRunning = undefined;
+						log("Caught exception from " + name);
+					}
+				}
+
+				return classNode;
+			}
+		}
+	}
+}
+
+function TargetMethod(name, desc, transformer1, transformer2, transformer3) { //Var args seems not to work :/
+	this.name = name;
+	this.desc = desc;
+	this.transformers = [];
+	if (transformer1 != undefined) this.transformers.push(transformer1);
+	if (transformer2 != undefined) this.transformers.push(transformer2);
+	if (transformer3 != undefined) this.transformers.push(transformer3);
+}
+
+function MethodTransformer(func, name) {
+	this.func = func;
+	this.name = name;
+}
 
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
@@ -96,14 +470,13 @@ function log(msg) {
 	}
 }
 
+function mapMethod(srgName) {
+	return ASMAPI.mapMethod(srgName);
+}
 
-
-
-
-
-
-
-
+function mapField(srgName) {
+	return ASMAPI.mapField(srgName);
+}
 
 var/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
 var/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
@@ -116,7 +489,7 @@ var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
 var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-//var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
+var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
@@ -150,17 +523,17 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var ACC_ENUM = Opcodes.ACC_ENUM; // class(?) field inner
 	var ACC_MANDATED = Opcodes.ACC_MANDATED; // parameter, module, module *
 	var ACC_MODULE = Opcodes.ACC_MODULE; // class
-	
+
 // ASM specific access flags.
 // WARNING: the 16 least significant bits must NOT be used, to avoid conflicts with standard
 // access flags, and also to make sure that these flags are automatically filtered out when
 // written in class files (because access flags are stored using 16 bits only).
-	
+
 	var ACC_DEPRECATED = Opcodes.ACC_DEPRECATED; // class, field, method
-	
+
 // Possible values for the type operand of the NEWARRAY instruction.
 // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
-	
+
 	var T_BOOLEAN = Opcodes.T_BOOLEAN;
 	var T_CHAR = Opcodes.T_CHAR;
 	var T_FLOAT = Opcodes.T_FLOAT;
@@ -375,350 +748,3 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var MULTIANEWARRAY = Opcodes.MULTIANEWARRAY; // visitMultiANewArrayInsn
 	var IFNULL = Opcodes.IFNULL; // visitJumpInsn
 	var IFNONNULL = Opcodes.IFNONNULL; // -
-
-// Local variable indexes
-var ALOCALVARIABLE_this = 0;
-var FLOCALVARIABLE_x = 1;
-var FLOCALVARIABLE_y = 2;
-var FLOCALVARIABLE_z = 3;
-var ALOCALVARIABLE_generator = 4;
-var ALOCALVARIABLE_compiledchunk = 5;
-var ILOCALVARIABLE_i_unused = 6;
-var ALOCALVARIABLE_blockpos_startPos = 7;
-var ALOCALVARIABLE_blockpos1_endPos = 8;
-var ALOCALVARIABLE_world = 9;
-var ALOCALVARIABLE_lvt_10_1__ChunkCache = 10;
-var ALOCALVARIABLE_lvt_11_1__VisGraph = 11;
-var ALOCALVARIABLE_lvt_12_1__HashSetTileEntities = 12;
-var ALOCALVARIABLE_aboolean_usedBlockRenderLayers = 13;
-var ALOCALVARIABLE_set_TileEntities = 13;
-    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: set extends java.util.Set<net.minecraft.tileentity.TileEntity>
-var ALOCALVARIABLE_random = 14;
-var ALOCALVARIABLE_set1_TileEntities = 14;
-    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
-var ALOCALVARIABLE_blockrendererdispatcher = 15;
-var ALOCALVARIABLE_blockpos$mutableblockpos = 17;
-var ALOCALVARIABLE_iblockstate = 18;
-var ALOCALVARIABLE_block = 19;
-var ALOCALVARIABLE_blockrenderlayer = 19;
-var ALOCALVARIABLE_tileentity = 20;
-var ALOCALVARIABLE_ifluidstate = 20;
-var ALOCALVARIABLE_tileentityrenderer = 21;
-    // signature Lnet/minecraft/client/renderer/tileentity/TileEntityRenderer<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: tileentityrenderer extends net.minecraft.client.renderer.tileentity.TileEntityRenderer<net.minecraft.tileentity.TileEntity>
-var ALOCALVARIABLE_blockrenderlayer1 = 24;
-var ILOCALVARIABLE_j = 25;
-var ILOCALVARIABLE_k = 25;
-var ALOCALVARIABLE_bufferbuilder = 26;
-var ALOCALVARIABLE_bufferbuilder1 = 26;
-
-
-
-
-
-
-
-
-
-
-// Finds the first instruction INVOKESTATIC BlockPos.getAllInBoxMutable
-// then finds the previous label
-// and inserts after the label and before the label's instructions.
-function injectPreIterationHook(instructions) {
-
-//	BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-//
-//>	io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
-//	for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
-
-
-//	L31
-//	LINENUMBER 137 L31
-//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 15
-//	L32
-//	LINENUMBER 139 L32
-//	ALOAD 7
-//	ALOAD 8
-//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//	ASTORE 16
-//	L33
-
-//	L31
-//	LINENUMBER 137 L31
-//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 15
-//	L32
-//	LINENUMBER 139 L32
-//	ALOAD 0
-//	FLOAD 1
-//	FLOAD 2
-//	FLOAD 3
-//	ALOAD 4
-//	ALOAD 5
-//	ALOAD 7
-//	ALOAD 8
-//	ALOAD 9
-//	ALOAD 10
-//	ALOAD 11
-//	ALOAD 12
-//	ALOAD 13
-//	ALOAD 14
-//	ALOAD 15
-//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
-//	L33
-//	LINENUMBER 139 L33
-//	ALOAD 7
-//	ALOAD 8
-//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//	ASTORE 16
-//	L34
-
-	var first_INVOKESTATIC_getAllInBoxMutable;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKESTATIC) {
-			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_177975_b" || instruction.name == "getAllInBoxMutable") {
-					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;") {
-						if (instruction.itf == false) {
-							first_INVOKESTATIC_getAllInBoxMutable = instruction;
-							log("Found injection point " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKESTATIC_getAllInBoxMutable) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
-	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >=0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable = instruction;
-			log("Found label " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable) {
-		throw "Error: Couldn't find label!";
-	}
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_x));
-	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_y));
-	toInject.add(new VarInsnNode(FLOAD, FLOCALVARIABLE_z));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_generator));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_compiledchunk));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos_startPos));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos1_endPos));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_world));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_10_1__ChunkCache));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_11_1__VisGraph));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_lvt_12_1__HashSetTileEntities));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_aboolean_usedBlockRenderLayers));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_random));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"preIteration",
-			//String descriptor
-			"(Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
-			//boolean isInterface
-			false
-	));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable, toInject);
-
-}
-
-// 1) find IBlockState.getRenderType
-// 2) find label for IBlockState.getRenderType
-// 3) find label that IBlockState.getRenderType would jump to
-// 4) insert right after IBlockState.getRenderType label
-function injectBlockRenderHook(instructions) {
-
-
-//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
-
-//	if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
-//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
-
-
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
-//	IOR
-//	BASTORE
-//	L54
-//	LINENUMBER 178 L54
-//	FRAME CHOP 2
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//	IF_ACMPEQ L61
-//	ALOAD 18
-//	ALOAD 24
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
-
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
-//	IOR
-//	BASTORE
-//	L54
-//	LINENUMBER 178 L54
-//	FRAME CHOP 2
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//	IFNE L61
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
-//	IFEQ L62
-//	L61
-//	FRAME SAME
-//	INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//	IFNE L63
-//	L62
-//	LINENUMBER 180 L62
-//	FRAME SAME
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//	IF_ACMPEQ L63
-//	ALOAD 18
-//	ALOAD 24
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
-
-	var blockCannotRenderLabel;
-
-	var IBlockState_getRenderType;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEINTERFACE) {
-			if (instruction.owner == "net/minecraft/block/state/IBlockState") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_185901_i" || instruction.name == "getRenderType") {
-					if (instruction.desc == "()Lnet/minecraft/util/EnumBlockRenderType;") {
-						if (instruction.itf == true) {
-							IBlockState_getRenderType = instruction;
-							log("Found injection point " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!IBlockState_getRenderType) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var firstLabelBefore_IBlockState_getRenderType;
-	for (i = instructions.indexOf(IBlockState_getRenderType); i >=0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabelBefore_IBlockState_getRenderType = instruction;
-			log("Found label " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_IBlockState_getRenderType) {
-		throw "Error: Couldn't find label!";
-	}
-
-	var lookStart = instructions.indexOf(IBlockState_getRenderType);
-	var lookMax = lookStart + 10;
-	for (var i = lookStart; i < lookMax; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == IFEQ || instruction.getOpcode() == IFNE || instruction.getOpcode() == IF_ACMPEQ) {
-			blockCannotRenderLabel = instruction.label;
-			log("Found blockCannotRenderLabel " + instruction.label);
-			break;
-		}
-	}
-	if (!blockCannotRenderLabel) {
-		throw "Error: Couldn't find blockCannotRenderLabel!";
-	}
-
-	//FFS why
-	var toInject = ASMAPI.getMethodNode().instructions;
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-	var nocubesEnabledLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEINTERFACE,
-			//String owner
-			"net/minecraft/block/state/IBlockState",
-			//String name
-			"nocubes_isTerrainSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			true
-	));
-	toInject.add(new JumpInsnNode(IFNE, nocubesEnabledLabel));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEINTERFACE,
-			//String owner
-			"net/minecraft/block/state/IBlockState",
-			//String name
-			"nocubes_isLeavesSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			true
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(nocubesEnabledLabel);
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_IBlockState_getRenderType, toInject);
-
-}

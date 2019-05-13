@@ -10,6 +10,7 @@
 	"nocubes.key.toggleProfilers": "Toggle Profilers",
 	"nocubes.key.toggleRenderTerrain": "Toggle Terrain Rendering",
 	"nocubes.key.toggleRenderLeaves": "Toggle Leaves Rendering",
+	"nocubes.collisionsNotOnFlat": "You are not on a flat surface! Please get on a flat surface before enabling collisions!",
 	"nocubes.collisionsEnabledWarning": "NoCubes terrain collisions enabled. These are highly experimental and unoptimsied!",
 	"nocubes.collisionsDisabled": "NoCubes terrain collisions disabled",
 	"nocubes.collisionsDisablePress": "To disable terrain collisions press %s"

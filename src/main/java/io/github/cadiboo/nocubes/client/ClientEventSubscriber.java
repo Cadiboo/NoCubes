@@ -13,6 +13,8 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -22,6 +24,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -68,15 +71,57 @@ public final class ClientEventSubscriber {
 		final boolean toggleLeavesSmoothableBlockStatePressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
 		final boolean toggleProfilersPressed = ClientProxy.toggleProfilers.isPressed();
 
+		final Minecraft minecraft = Minecraft.getInstance();
+		final EntityPlayerSP player = minecraft.player;
+
 		if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
 			final boolean oldTerrainCollisions = Config.terrainCollisions;
 			if (!Config.terrainCollisions) {
+
+				boolean topAllSolid = true;
+				boolean topAllNonSolid = true;
+				boolean bottomAllSolid = true;
+				boolean bottomAllNonSolid = true;
+
+				final BlockPos playerPos = player.getPosition();
+				final int playerPosX = playerPos.getX();
+				final int playerPosY = playerPos.getY();
+				final int playerPosZ = playerPos.getZ();
+				final WorldClient world = minecraft.world;
+				try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+					for (int x = -2; x < 3; ++x) {
+						for (int z = -2; z < 3; ++z) {
+							{
+								pooledMutableBlockPos.setPos(playerPosX + x, playerPosY, playerPosZ + z);
+								final boolean topIsSolid = !world.getBlockState(pooledMutableBlockPos).getCollisionShape(world, pooledMutableBlockPos).isEmpty();
+								topAllSolid &= topIsSolid;
+								topAllNonSolid &= (!topIsSolid);
+							}
+							{
+								pooledMutableBlockPos.setPos(playerPosX + x, playerPosY - 1, playerPosZ + z);
+								final boolean bottomIsSolid = !world.getBlockState(pooledMutableBlockPos).getCollisionShape(world, pooledMutableBlockPos).isEmpty();
+								bottomAllSolid &= bottomIsSolid;
+								bottomAllNonSolid &= (!bottomIsSolid);
+							}
+						}
+					}
+				}
+
+				if (topAllNonSolid && bottomAllSolid) {
+					//fine
+				} else if (topAllNonSolid && bottomAllNonSolid) {
+					//fine
+				} else {
+					player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsNotOnFlat"));
+					return;
+				}
+
 				ConfigHelper.enableTerrainCollisions();
-				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsEnabledWarning"));
-				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
+				player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsEnabledWarning"));
+				player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
 			} else {
 				ConfigHelper.disableTerrainCollisions();
-				Minecraft.getInstance().player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisabled"));
+				player.sendMessage(new TextComponentTranslation(NoCubes.MOD_ID + ".collisionsDisabled"));
 			}
 			//Config read+write is async so...
 			Config.terrainCollisions = !oldTerrainCollisions;
@@ -98,7 +143,6 @@ public final class ClientEventSubscriber {
 				return;
 			}
 			if (toggleTerrainSmoothableBlockStatePressed) {
-				final Minecraft minecraft = Minecraft.getInstance();
 				final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
 				if (objectMouseOver.type == BLOCK) {
 					BlockPos blockPos = objectMouseOver.getBlockPos();
@@ -121,7 +165,6 @@ public final class ClientEventSubscriber {
 				}
 			}
 			if (toggleLeavesSmoothableBlockStatePressed) {
-				final Minecraft minecraft = Minecraft.getInstance();
 				final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
 				if (objectMouseOver.type == BLOCK) {
 					BlockPos blockPos = objectMouseOver.getBlockPos();
@@ -318,13 +361,13 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
 
-//		if(true) return;
+		if (true) return;
 
-		final EntityPlayer player = Minecraft.getInstance().player;
-		if (player == null) {
-			return;
-		}
-
+//		final EntityPlayer player = Minecraft.getInstance().player;
+//		if (player == null) {
+//			return;
+//		}
+//
 ////		if (ModConfig.collisionsBlockHighlighting) {
 //		if (!ModConfig.drawCollisionsCache) {
 //			return;
@@ -518,145 +561,11 @@ public final class ClientEventSubscriber {
 		GlStateManager.enableTexture2D();
 		GlStateManager.disableBlend();
 
-//		if (ModConfig.smoothBlockHighlighting || ModConfig.collisionsBlockHighlighting) {
-//			final EntityPlayer player = event.getPlayer();
-//			if (player == null) {
-//				return;
-//			}
-//
-//			final RayTraceResult rayTraceResult = event.getTarget();
-//			if ((rayTraceResult == null) || (rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK)) {
-//				return;
-//			}
-//
-//			final World world = player.world;
-//			if (world == null) {
-//				return;
-//			}
-//
-//			final float partialTicks = event.getPartialTicks();
-//			final BlockPos pos = rayTraceResult.getBlockPos();
-//			final IBlockState blockState = world.getBlockState(pos);
-//			if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
-//				return;
-//			}
-//
-//			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
-//			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
-//			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
-//
-//			if (ModConfig.collisionsBlockHighlighting) {
-//				GlStateManager.enableBlend();
-//				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-//				GlStateManager.glLineWidth(2.0F);
-//				GlStateManager.disableTexture2D();
-//				GlStateManager.depthMask(false);
-//				GlStateManager.disableDepth();
-//
-//				GlStateManager.color(0, 0, 0, 0);
-//				GlStateManager.color(1, 1, 1, 1);
-//
-//				{
-////			    final AxisAlignedBB oldSelectedBox = blockState.getSelectedBoundingBox(world, pos);
-//
-//					final List<AxisAlignedBB> boxes = new ArrayList<>();
-//
-//					blockState.addCollisionBoxToList(world, pos, new AxisAlignedBB(pos), boxes, player, false);
-//
-////				if (boxes.size() <= 1) {
-////					boxes.clear();
-////					boxes.add(oldSelectedBox);
-////				}
-//
-//					for (AxisAlignedBB box : boxes) {
-//
-//						final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
-//
-//						RenderGlobal.drawSelectionBoundingBox(renderBox, 0.0F, 1.0F, 1.0F, 0.4F);
-//					}
-//
-//				}
-//
-//				{
-//
-//					for (AxisAlignedBB box : world.getCollisionBoxes(player, player.getEntityBoundingBox())) {
-//
-//						final AxisAlignedBB renderBox = box.grow(0.0020000000949949026D).offset(-renderX, -renderY, -renderZ);
-//
-//						RenderGlobal.drawSelectionBoundingBox(renderBox, 1.0F, 0.0F, 0.0F, 0.4F);
-//					}
-//
-//				}
-//
-//				GlStateManager.enableDepth();
-//
-//				GlStateManager.depthMask(true);
-//				GlStateManager.enableTexture2D();
-//				GlStateManager.disableBlend();
-//			}
-//
-//			if (ModConfig.smoothBlockHighlighting) {
-//
-//				final FaceList faces = NoCubes.MESH_DISPATCHER.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, ModUtil.TERRAIN_SMOOTHABLE, ModConfig.terrainMeshGenerator);
-//
-//				final Tessellator tessellator = Tessellator.getInstance();
-//				final BufferBuilder bufferbuilder = tessellator.getBuffer();
-//
-//				bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
-//
-//				GlStateManager.enableBlend();
-//				GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-//				GlStateManager.glLineWidth(3.0F);
-//				GlStateManager.disableTexture2D();
-//				GlStateManager.depthMask(false);
-//
-//				GlStateManager.color(0, 0, 0, 0);
-//				GlStateManager.color(1, 1, 1, 1);
-//
-//				for (final Face face : faces) {
-//					try {
-//
-//						final Vec3 v0 = face.getVertex0();
-//						final Vec3 v1 = face.getVertex1();
-//						final Vec3 v2 = face.getVertex2();
-//						final Vec3 v3 = face.getVertex3();
-//						try {
-//							bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
-//
-//							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
-//							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1, 1, 1, 0.4F).endVertex();
-//							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1, 1, 1, 0.4F).endVertex();
-//							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1, 1, 1, 0.4F).endVertex();
-//							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1, 1, 1, 0.4F).endVertex();
-//
-//							tessellator.draw();
-//						} finally {
-//							v0.close();
-//							v1.close();
-//							v2.close();
-//							v3.close();
-//						}
-//					} finally {
-//						face.close();
-//					}
-//
-//				}
-//
-//				faces.close();
-//
-//				GlStateManager.depthMask(true);
-//				GlStateManager.enableTexture2D();
-//				GlStateManager.disableBlend();
-//
-//				bufferbuilder.setTranslation(0, 0, 0);
-//
-//			}
-//
-//		}
 	}
 
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
+		//TODO: do this better
 		if (Config.terrainCollisions) {
 			event.setCanceled(true);
 		}

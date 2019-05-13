@@ -1,11 +1,12 @@
 var transformerName = "NoCubes BlockState Transformer";
+var targetClass = "net.minecraft.block.state.BlockState";
 
 function initializeCoreMod() {
 	return {
 		transformerName: {
 			'target': {
 				'type': 'CLASS',
-				'name': 'net.minecraft.block.state.BlockState'
+				'name': targetClass
 			},
 			'transformer': function(classNode) {
 
@@ -66,11 +67,10 @@ function initializeCoreMod() {
 }
 
 
-
-
-
-
-
+// Local variable indexes
+var ALOCALVARIABLE_this = 0;
+var ILOCALVARIABLE_newIsTerrainSmoothable = 1;
+var ILOCALVARIABLE_newIsLeavesSmoothable = 1;
 
 
 //// access flags 0x2
@@ -132,12 +132,6 @@ function initializeCoreMod() {
 //    LOCALVARIABLE isTerrainSmoothable Z L0 L2 1
 //    MAXSTACK = 2
 //    MAXLOCALS = 2
-
-
-
-
-
-
 
 
 function make_nocubes_isTerrainSmoothable() {
@@ -239,6 +233,30 @@ function make_nocubes_setLeavesSmoothable() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+function TargetMethod(name, desc, transformer1, transformer2, transformer3) { //Var args seems not to work :/
+	this.name = name;
+	this.desc = desc;
+	this.transformers = [];
+	if (transformer1 != undefined) this.transformers.push(transformer1);
+	if (transformer2 != undefined) this.transformers.push(transformer2);
+	if (transformer3 != undefined) this.transformers.push(transformer3);
+}
+
+function MethodTransformer(func, name) {
+	this.func = func;
+	this.name = name;
+}
+
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
 	var end = instructions.indexOf(endInstruction);
@@ -268,14 +286,13 @@ function log(msg) {
 	}
 }
 
+function mapMethod(srgName) {
+	return ASMAPI.mapMethod(srgName);
+}
 
-
-
-
-
-
-
-
+function mapField(srgName) {
+	return ASMAPI.mapField(srgName);
+}
 
 var/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
 var/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
@@ -288,7 +305,7 @@ var/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
 var/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
 var/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 var/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-//var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
+var/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
 
 var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 
@@ -322,17 +339,17 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var ACC_ENUM = Opcodes.ACC_ENUM; // class(?) field inner
 	var ACC_MANDATED = Opcodes.ACC_MANDATED; // parameter, module, module *
 	var ACC_MODULE = Opcodes.ACC_MODULE; // class
-	
+
 // ASM specific access flags.
 // WARNING: the 16 least significant bits must NOT be used, to avoid conflicts with standard
 // access flags, and also to make sure that these flags are automatically filtered out when
 // written in class files (because access flags are stored using 16 bits only).
-	
+
 	var ACC_DEPRECATED = Opcodes.ACC_DEPRECATED; // class, field, method
-	
+
 // Possible values for the type operand of the NEWARRAY instruction.
 // See https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-6.html#jvms-6.5.newarray.
-	
+
 	var T_BOOLEAN = Opcodes.T_BOOLEAN;
 	var T_CHAR = Opcodes.T_CHAR;
 	var T_FLOAT = Opcodes.T_FLOAT;
@@ -547,9 +564,3 @@ var/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
 	var MULTIANEWARRAY = Opcodes.MULTIANEWARRAY; // visitMultiANewArrayInsn
 	var IFNULL = Opcodes.IFNULL; // visitJumpInsn
 	var IFNONNULL = Opcodes.IFNONNULL; // -
-
-// Local variable indexes
-var ALOCALVARIABLE_this = 0;
-var ILOCALVARIABLE_newIsTerrainSmoothable = 1;
-var ILOCALVARIABLE_newIsLeavesSmoothable = 1;
-
