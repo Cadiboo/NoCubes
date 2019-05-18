@@ -1,13 +1,12 @@
 package net.minecraft.block.state;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import it.unimi.dsi.fastutil.objects.Object2ByteMap;
 import it.unimi.dsi.fastutil.objects.Object2ByteOpenHashMap;
+import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
-import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.fluid.IFluidState;
@@ -30,8 +29,6 @@ import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
-import java.util.Random;
 
 public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    ThreadLocal<Object2ByteMap<IBlockState>> PROPAGATES_SKYLIGHT_DOWN_CACHE = ThreadLocal.withInitial(() -> {
@@ -194,11 +191,6 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
    }
 
    default boolean isOpaqueCube(IBlockReader worldIn, BlockPos pos) {
-      // NoCubes Start
-      if (this.nocubes_isTerrainSmoothable() && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
-         return false;
-      }
-      // NoCubes End
       Block block = this.getBlock();
       Object2ByteMap<IBlockState> object2bytemap = block.isVariableOpacity() ? null : OPAQUE_CUBE_CACHE.get();
       if (object2bytemap != null) {
@@ -217,7 +209,10 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
    }
 
    default boolean isSolid() {
-      if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
+      // NoCubes Start
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
+      // NoCubes End
       return this.getBlock().isSolid(this);
    }
 
@@ -327,7 +322,10 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
    }
 
    default boolean causesSuffocation() {
-      return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
+      // NoCubes Start
+      if (this.nocubes_isTerrainSmoothable() || this.nocubes_isLeavesSmoothable()) return false;
+      // NoCubes End
+      return this.getBlock().causesSuffocation(this);
    }
 
    default BlockFaceShape getBlockFaceShape(IBlockReader worldIn, BlockPos pos, EnumFacing facing) {

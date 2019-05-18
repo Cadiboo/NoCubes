@@ -26,12 +26,12 @@ var ALOCALVARIABLE_lvt_11_1__VisGraph = 11;
 var ALOCALVARIABLE_lvt_12_1__HashSetTileEntities = 12;
 var ALOCALVARIABLE_aboolean_usedBlockRenderLayers = 13;
 var ALOCALVARIABLE_set_TileEntities = 13;
-    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: set extends java.util.Set<net.minecraft.tileentity.TileEntity>
+	// signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
+	// declaration: set extends java.util.Set<net.minecraft.tileentity.TileEntity>
 var ALOCALVARIABLE_random = 14;
 var ALOCALVARIABLE_set1_TileEntities = 14;
-    // signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
+	// signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
+	// declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
 var ALOCALVARIABLE_blockrendererdispatcher = 15;
 var ALOCALVARIABLE_blockpos$mutableblockpos = 17;
 var ALOCALVARIABLE_iblockstate = 18;
@@ -40,8 +40,8 @@ var ALOCALVARIABLE_blockrenderlayer = 19;
 var ALOCALVARIABLE_tileentity = 20;
 var ALOCALVARIABLE_ifluidstate = 20;
 var ALOCALVARIABLE_tileentityrenderer = 21;
-    // signature Lnet/minecraft/client/renderer/tileentity/TileEntityRenderer<Lnet/minecraft/tileentity/TileEntity;>;
-    // declaration: tileentityrenderer extends net.minecraft.client.renderer.tileentity.TileEntityRenderer<net.minecraft.tileentity.TileEntity>
+	// signature Lnet/minecraft/client/renderer/tileentity/TileEntityRenderer<Lnet/minecraft/tileentity/TileEntity;>;
+	// declaration: tileentityrenderer extends net.minecraft.client.renderer.tileentity.TileEntityRenderer<net.minecraft.tileentity.TileEntity>
 var ALOCALVARIABLE_blockrenderlayer1 = 24;
 var ILOCALVARIABLE_j = 25;
 var ILOCALVARIABLE_k = 25;
@@ -55,56 +55,60 @@ var ALOCALVARIABLE_bufferbuilder1 = 26;
 function injectPreIterationHook(instructions) {
 
 //	BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-//
-//>	io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+
+//	// NoCubes Start
+//	io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+//	// NoCubes End
 //	for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
 
 
-//	L31
-//	LINENUMBER 137 L31
-//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 15
-//	L32
-//	LINENUMBER 139 L32
-//	ALOAD 7
-//	ALOAD 8
-//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//	ASTORE 16
-//	L33
+//   L31
+//    LINENUMBER 137 L31
+//    INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//    ASTORE 15
+//   L32
+//    LINENUMBER 139 L32
+//    ALOAD 7
+//    ALOAD 8
+//    INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
+//    INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
+//    ASTORE 16
+//   L33
 
-//	L31
-//	LINENUMBER 137 L31
-//	INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 15
-//	L32
-//	LINENUMBER 139 L32
-//	ALOAD 0
-//	FLOAD 1
-//	FLOAD 2
-//	FLOAD 3
-//	ALOAD 4
-//	ALOAD 5
-//	ALOAD 7
-//	ALOAD 8
-//	ALOAD 9
-//	ALOAD 10
-//	ALOAD 11
-//	ALOAD 12
-//	ALOAD 13
-//	ALOAD 14
-//	ALOAD 15
-//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
-//	L33
-//	LINENUMBER 139 L33
-//	ALOAD 7
-//	ALOAD 8
-//	INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//	INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//	ASTORE 16
-//	L34
+//   L31
+//    LINENUMBER 141 L31
+//    INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
+//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//    ASTORE 15
+//   L32
+//    LINENUMBER 143 L32
+//    ALOAD 0
+//    FLOAD 1
+//    FLOAD 2
+//    FLOAD 3
+//    ALOAD 4
+//    ALOAD 5
+//    ALOAD 7
+//    ALOAD 8
+//    ALOAD 9
+//    ALOAD 10
+//    ALOAD 11
+//    ALOAD 12
+//    ALOAD 13
+//    ALOAD 14
+//    ALOAD 15
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
+//   L33
+//    LINENUMBER 144 L33
+//    ALOAD 7
+//    ALOAD 8
+//    INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
+//    INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
+//    ASTORE 16
+//   L34
+
+	var getAllInBoxMutable_name = mapMethod("func_177975_b"); // getAllInBoxMutable
 
 	var first_INVOKESTATIC_getAllInBoxMutable;
 	var arrayLength = instructions.size();
@@ -112,8 +116,7 @@ function injectPreIterationHook(instructions) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKESTATIC) {
 			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_177975_b" || instruction.name == "getAllInBoxMutable") {
+				if (instruction.name == getAllInBoxMutable_name) {
 					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;") {
 						if (instruction.itf == false) {
 							first_INVOKESTATIC_getAllInBoxMutable = instruction;
@@ -192,52 +195,62 @@ function injectBlockRenderHook(instructions) {
 
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
-//	if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
+//	// NoCubes Start
+//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
+//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+//	// NoCubes End
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
 
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
-//	IOR
-//	BASTORE
-//	L54
-//	LINENUMBER 178 L54
-//	FRAME CHOP 2
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//	IF_ACMPEQ L61
-//	ALOAD 18
-//	ALOAD 24
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//    IOR
+//    BASTORE
+//   L54
+//    LINENUMBER 174 L54
+//   FRAME CHOP 2
+//    ALOAD 18
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
+//    GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
+//    IF_ACMPEQ L61
+//    ALOAD 18
+//    ALOAD 25
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+//    IFEQ L61
 
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
-//	IOR
-//	BASTORE
-//	L54
-//	LINENUMBER 178 L54
-//	FRAME CHOP 2
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//	IFNE L61
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
-//	IFEQ L62
-//	L61
-//	FRAME SAME
-//	INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//	IFNE L63
-//	L62
-//	LINENUMBER 180 L62
-//	FRAME SAME
-//	ALOAD 18
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//	GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//	IF_ACMPEQ L63
-//	ALOAD 18
-//	ALOAD 24
-//	INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//    IOR
+//    BASTORE
+//   L55
+//    LINENUMBER 179 L55
+//   FRAME CHOP 2
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
+//    IFEQ L62
+//    ALOAD 18
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFNE L63
+//   L62
+//    LINENUMBER 180 L62
+//   FRAME SAME
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
+//    IFEQ L64
+//    ALOAD 18
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    IFNE L63
+//   L64
+//    LINENUMBER 181 L64
+//   FRAME SAME
+//    ALOAD 18
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
+//    GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
+//    IF_ACMPEQ L63
+//    ALOAD 18
+//    ALOAD 25
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+//    IFEQ L63
 
 	var blockCannotRenderLabel;
+
+	var getRenderType_name = mapMethod("func_185901_i"); // getRenderType
 
 	var IBlockState_getRenderType;
 	var arrayLength = instructions.size();
@@ -245,8 +258,7 @@ function injectBlockRenderHook(instructions) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKEINTERFACE) {
 			if (instruction.owner == "net/minecraft/block/state/IBlockState") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_185901_i" || instruction.name == "getRenderType") {
+				if (instruction.name == getRenderType_name) {
 					if (instruction.desc == "()Lnet/minecraft/util/EnumBlockRenderType;") {
 						if (instruction.itf == true) {
 							IBlockState_getRenderType = instruction;
@@ -293,9 +305,11 @@ function injectBlockRenderHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-	var nocubesEnabledLabel = new LabelNode();
+	var renderSmoothLeavesChecksLabel = new LabelNode();
 
 	// Make list of instructions to inject
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
+	toInject.add(new JumpInsnNode(IFEQ, renderSmoothLeavesChecksLabel));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
 	toInject.add(new MethodInsnNode(
 			//int opcode
@@ -309,7 +323,11 @@ function injectBlockRenderHook(instructions) {
 			//boolean isInterface
 			true
 	));
-	toInject.add(new JumpInsnNode(IFNE, nocubesEnabledLabel));
+	toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
+
+	toInject.add(renderSmoothLeavesChecksLabel);
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
 	toInject.add(new MethodInsnNode(
 			//int opcode
@@ -322,21 +340,6 @@ function injectBlockRenderHook(instructions) {
 			"()Z",
 			//boolean isInterface
 			true
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(nocubesEnabledLabel);
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
 	));
 	toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
 

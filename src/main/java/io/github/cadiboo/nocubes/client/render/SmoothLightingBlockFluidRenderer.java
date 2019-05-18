@@ -6,7 +6,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
@@ -15,7 +14,6 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IWorldReader;
-import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
@@ -80,10 +78,14 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			final double z = (double) pos.getZ();
 
 			if (shouldRenderUp && !func_209556_a(worldIn, pos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
-				fluidHeight -= 0.001F;
-				fluidHeightSouth -= 0.001F;
-				fluidHeightEastSouth -= 0.001F;
-				fluidHeightEast -= 0.001F;
+
+				// Commented out to fix transparent lines between bottom of sides.
+				// The only reason that I can think of for this code to exist in the first place
+				// is to try and solve z-fighting issues.
+//				fluidHeight -= 0.001F;
+//				fluidHeightSouth -= 0.001F;
+//				fluidHeightEastSouth -= 0.001F;
+//				fluidHeightEast -= 0.001F;
 
 				if (!this.colors()) {
 					if (!this.smoothLighting()) {
@@ -300,8 +302,11 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					y1 = fluidHeightEast;
 					x0 = x;
 					x1 = x + 1.0D;
-					z0 = z + (double) 0.001F;
-					z1 = z + (double) 0.001F;
+					// Commented out to fix transparent lines between bottom of sides.
+					// The only reason that I can think of for this code to exist in the first place
+					// is to try and solve z-fighting issues.
+					z0 = z;// + (double) 0.001F;
+					z1 = z;// + (double) 0.001F;
 					enumfacing = EnumFacing.NORTH;
 					shouldRenderSide = shouldRenderNorth;
 				} else if (facingIndex == 1) {
@@ -309,15 +314,21 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					y1 = fluidHeightSouth;
 					x0 = x + 1.0D;
 					x1 = x;
-					z0 = z + 1.0D - (double) 0.001F;
-					z1 = z + 1.0D - (double) 0.001F;
+					// Commented out to fix transparent lines between bottom of sides.
+					// The only reason that I can think of for this code to exist in the first place
+					// is to try and solve z-fighting issues.
+					z0 = z + 1.0D;// - (double) 0.001F;
+					z1 = z + 1.0D;// - (double) 0.001F;
 					enumfacing = EnumFacing.SOUTH;
 					shouldRenderSide = shouldRenderSouth;
 				} else if (facingIndex == 2) {
 					y0 = fluidHeightSouth;
 					y1 = fluidHeight;
-					x0 = x + (double) 0.001F;
-					x1 = x + (double) 0.001F;
+					// Commented out to fix transparent lines between bottom of sides.
+					// The only reason that I can think of for this code to exist in the first place
+					// is to try and solve z-fighting issues.
+					x0 = x;// + (double) 0.001F;
+					x1 = x;// + (double) 0.001F;
 					z0 = z + 1.0D;
 					z1 = z;
 					enumfacing = EnumFacing.WEST;
@@ -325,8 +336,11 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				} else {
 					y0 = fluidHeightEast;
 					y1 = fluidHeightEastSouth;
-					x0 = x + 1.0D - (double) 0.001F;
-					x1 = x + 1.0D - (double) 0.001F;
+					// Commented out to fix transparent lines between bottom of sides.
+					// The only reason that I can think of for this code to exist in the first place
+					// is to try and solve z-fighting issues.
+					x0 = x + 1.0D;// - (double) 0.001F;
+					x1 = x + 1.0D;// - (double) 0.001F;
 					z0 = z;
 					z1 = z + 1.0D;
 					enumfacing = EnumFacing.EAST;
@@ -463,45 +477,6 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		} finally {
 //			OptiFineCompatibility.popShaderThing(buffer);
 		}
-	}
-
-	@Override
-	public int getCombinedLightUpMax(IWorldReader reader, BlockPos pos) {
-		int combinedLight = reader.getCombinedLight(pos, 0);
-		int combineLightUp = reader.getCombinedLight(pos.up(), 0);
-		int skyLight = combinedLight & 0xFF;
-		int skyLightUp = combineLightUp & 0xFF;
-		int blockLight = combinedLight >> 16 & 0xFF;
-		int blockLightUp = combineLightUp >> 16 & 0xFF;
-		return (skyLight > skyLightUp ? skyLight : skyLightUp) | (blockLight > blockLightUp ? blockLight : blockLightUp) << 16;
-	}
-
-	@Override
-	public float getFluidHeight(IWorldReaderBase reader, BlockPos pos, Fluid fluidIn) {
-		int divisor = 0;
-		float height = 0.0F;
-
-		for (int horizontalFacingIndex = 0; horizontalFacingIndex < 4; ++horizontalFacingIndex) {
-			BlockPos blockpos = pos.add(-(horizontalFacingIndex & 1), 0, -(horizontalFacingIndex >> 1 & 1));
-			if (reader.getFluidState(blockpos.up()).getFluid().isEquivalentTo(fluidIn)) {
-				return 1.0F;
-			}
-
-			IFluidState ifluidstate = reader.getFluidState(blockpos);
-			if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
-				if (ifluidstate.getHeight() >= 0.8F) {
-					height += ifluidstate.getHeight() * 10.0F;
-					divisor += 10;
-				} else {
-					height += ifluidstate.getHeight();
-					++divisor;
-				}
-			} else if (!reader.getBlockState(blockpos).getMaterial().isSolid()) {
-				++divisor;
-			}
-		}
-
-		return height / (float) divisor;
 	}
 
 	public boolean renderUp(

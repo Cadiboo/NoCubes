@@ -4,24 +4,26 @@ import net.minecraft.profiler.Profiler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author Cadiboo
  */
 public class ModProfiler extends Profiler implements AutoCloseable {
 
-	public static final ArrayList<ModProfiler> PROFILERS = new ArrayList<>();
+	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
 		final ModProfiler profiler = new ModProfiler();
-		PROFILERS.add(profiler);
+		PROFILERS.put(Thread.currentThread(), profiler);
 		return profiler;
 	});
 
 	public static boolean profilersEnabled = false;
-	private int sections = 0;
+
+	private int virtualSections = 0;
+	private int startedSections = 0;
 
 	public ModProfiler() {
 		if (profilersEnabled) {
@@ -32,7 +34,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	public static void enableProfiling() {
 		profilersEnabled = true;
 		synchronized (PROFILERS) {
-			for (final ModProfiler profiler : PROFILERS) {
+			for (final ModProfiler profiler : PROFILERS.values()) {
 				profiler.startProfiling(0);
 			}
 		}
@@ -41,7 +43,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	public static void disableProfiling() {
 		profilersEnabled = false;
 		synchronized (PROFILERS) {
-			for (final ModProfiler profiler : PROFILERS) {
+			for (final ModProfiler profiler : PROFILERS.values()) {
 				profiler.stopProfiling();
 			}
 		}
@@ -52,35 +54,18 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	}
 
 	public ModProfiler start(final String name) {
-		if (!profilersEnabled) {
-			return this;
+		if (startedSections == virtualSections++ && profilersEnabled) {
+			++startedSections;
+			startSection(name);
 		}
-		++sections;
-		startSection(name);
-		// return this to allow use in try-with-resources blocks
-		return this;
+		return this; // return this to allow use in try-with-resources blocks
 	}
 
 	public void end() {
-		if (!profilersEnabled) {
-			return;
-		}
-		if (shouldEndSection()) {
+		if (startedSections == virtualSections--) {
+			--startedSections;
 			endSection();
 		}
-	}
-
-	/**
-	 * Stop crashes when profilers are enabled and disabled quickly (doesn't quite work always)
-	 */
-	private boolean shouldEndSection() {
-		--sections;
-		if (sections < 0) {
-			sections = 0;
-			this.stopProfiling();
-			return false;
-		}
-		return true;
 	}
 
 	@Override

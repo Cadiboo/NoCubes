@@ -6,5 +6,4 @@ package io.github.cadiboo.nocubes.util;
 public enum SmoothLeavesType {
 	SEPARATE,
 	TOGETHER,
-	OFF,
 }

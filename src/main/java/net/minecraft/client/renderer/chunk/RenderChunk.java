@@ -1,7 +1,6 @@
 package net.minecraft.client.renderer.chunk;
 
 import com.google.common.collect.Sets;
-import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -141,7 +140,9 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
             Random random = new Random();
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
+            // NoCubes Start
             io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+            // NoCubes End
             for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                IBlockState iblockstate = lvt_10_1_.getBlockState(blockpos$mutableblockpos);
                Block block = iblockstate.getBlock();
@@ -163,6 +164,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                }
 
                IFluidState ifluidstate = lvt_10_1_.getFluidState(blockpos$mutableblockpos);
+               net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos$mutableblockpos);
                for(BlockRenderLayer blockrenderlayer1 : BlockRenderLayer.values()) {
                    net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockrenderlayer1);
                if (!ifluidstate.isEmpty() && ifluidstate.canRenderInLayer(blockrenderlayer1)) {
@@ -176,7 +178,10 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                   aboolean[j] |= blockrendererdispatcher.renderFluid(blockpos$mutableblockpos, lvt_10_1_, bufferbuilder, ifluidstate);
                }
 
-               if ((!iblockstate.nocubes_isTerrainSmoothable() && !iblockstate.nocubes_isLeavesSmoothable()) || !NoCubes.isEnabled())
+               // NoCubes Start
+               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
+               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+               // NoCubes End
                if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
                   int k = blockrenderlayer1.ordinal();
                   BufferBuilder bufferbuilder1 = generator.getRegionRenderCacheBuilder().getBuilder(k);
@@ -185,7 +190,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                      this.preRenderBlocks(bufferbuilder1, blockpos);
                   }
 
-                  aboolean[k] |= blockrendererdispatcher.renderBlock(iblockstate, blockpos$mutableblockpos, lvt_10_1_, bufferbuilder1, random);
+                  aboolean[k] |= blockrendererdispatcher.renderBlock(iblockstate, blockpos$mutableblockpos, lvt_10_1_, bufferbuilder1, random, modelData);
                }
                }
                net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);

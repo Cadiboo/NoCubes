@@ -34,53 +34,51 @@ function injectRenderBlockDamageHook(instructions) {
 //	blockrendererdispatcher.renderBlockDamage(iblockstate, blockpos, textureatlassprite, this.world);
 
 
-//	L35
-//	LINENUMBER 1626 L35
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 26
-//	L36
-//	LINENUMBER 1627 L36
-//	ALOAD 26
-//	ALOAD 23
-//	ALOAD 13
-//	ALOAD 25
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
-//	L25
-//	LINENUMBER 1631 L25
+//   L35
+//    LINENUMBER 1586 L35
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
+//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//    ASTORE 26
+//   L36
+//    LINENUMBER 1587 L36
+//    ALOAD 26
+//    ALOAD 23
+//    ALOAD 13
+//    ALOAD 25
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
+//   L25
 
-//	L35
-//	LINENUMBER 1628 L35
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
-//	INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//	ASTORE 26
-//	L36
-//	LINENUMBER 1630 L36
-//	ALOAD 1
-//	ALOAD 2
-//	ALOAD 13
-//	ALOAD 23
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	ALOAD 25
-//	ALOAD 26
-//	INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.renderBlockDamage (Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z
-//	IFEQ L25
-//	L37
-//	LINENUMBER 1632 L37
-//	ALOAD 26
-//	ALOAD 23
-//	ALOAD 13
-//	ALOAD 25
-//	ALOAD 0
-//	GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
-//	INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
-//	L25
-//	LINENUMBER 1636 L25
+//   L35
+//    LINENUMBER 1626 L35
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/renderer/WorldRenderer.mc : Lnet/minecraft/client/Minecraft;
+//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
+//    ASTORE 26
+//   L36
+//    LINENUMBER 1628 L36
+//    ALOAD 1
+//    ALOAD 2
+//    ALOAD 13
+//    ALOAD 23
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//    ALOAD 25
+//    ALOAD 26
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.renderBlockDamage (Lnet/minecraft/client/renderer/Tessellator;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/client/multiplayer/WorldClient;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)Z
+//    IFEQ L25
+//   L37
+//    LINENUMBER 1630 L37
+//    ALOAD 26
+//    ALOAD 23
+//    ALOAD 13
+//    ALOAD 25
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/renderer/WorldRenderer.world : Lnet/minecraft/client/multiplayer/WorldClient;
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderBlockDamage (Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IWorldReader;)V
+//   L25
 
 	
 	var BlockRendererDispatcher_renderBlockDamage_name = mapMethod("func_175020_a"); // renderBlockDamage
@@ -152,9 +150,9 @@ function injectRenderBlockDamageHook(instructions) {
 			mapField("field_72769_h"), // world
 			"Lnet/minecraft/client/multiplayer/WorldClient;"
 	));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_textureatlassprite));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
-    toInject.add(new MethodInsnNode(
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_textureatlassprite));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockrendererdispatcher));
+	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
 			//String owner

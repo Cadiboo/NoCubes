@@ -235,8 +235,7 @@ public final class ClientUtil {
 	private static boolean isStateSnow(final IBlockState betterTextureState) {
 		if (betterTextureState == SNOW.getDefaultState()) return true;
 		if (betterTextureState == GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true)) return true;
-		if (betterTextureState == PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true)) return true;
-		return false;
+		return betterTextureState == PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
 	}
 
 	private static boolean isStateGrass(final IBlockState betterTextureState) {

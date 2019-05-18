@@ -42,7 +42,7 @@ public final class ModelHelper {
 	};
 
 	@Nullable
-	public static List<BakedQuad> getQuads(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final BlockRenderLayer blockRenderLayer) {
+	public static List<BakedQuad> getQuads(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final IModelData modelData, final Random posRand, final BlockRenderLayer blockRenderLayer) {
 
 //		try (final ModProfiler ignored = NoCubes.getProfiler().start("getActualState")) {
 //			try {
@@ -61,14 +61,11 @@ public final class ModelHelper {
 //
 //			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 //		}
-		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
-			state = state.getBlock().getExtendedState(state, blockAccess, pos);
-		}
 
-		final Random posRand = new Random(getPositionRandom(pos));
+		posRand.setSeed(getPositionRandom(pos));
 
 		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
-			List<BakedQuad> quads = model.getQuads(state, facing, posRand);
+			List<BakedQuad> quads = model.getQuads(state, facing, posRand, modelData);
 			if (quads.isEmpty()) {
 				continue;
 			}

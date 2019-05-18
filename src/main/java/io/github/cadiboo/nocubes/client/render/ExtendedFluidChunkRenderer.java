@@ -7,7 +7,6 @@ import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -89,7 +88,7 @@ public final class ExtendedFluidChunkRenderer {
 									}
 
 									// only render if block up is not solid
-									if (blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY + 1, z + zOffset + cacheAddZ)].isSolid()) {
+									if (blockCacheArray[stateCache.getIndex(x + cacheAddX, y + cacheAddY + 1, z + cacheAddZ)].isSolid()) {
 										continue;
 									}
 

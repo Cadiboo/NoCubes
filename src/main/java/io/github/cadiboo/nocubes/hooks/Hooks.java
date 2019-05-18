@@ -25,6 +25,7 @@ import net.minecraft.util.math.shapes.VoxelShapeInt;
 import net.minecraft.util.math.shapes.VoxelShapePart;
 import net.minecraft.util.math.shapes.VoxelShapePartBitSet;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
@@ -42,15 +43,15 @@ import java.util.stream.StreamSupport;
 public final class Hooks {
 
 	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final RenderChunkCache lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
-		if (NoCubes.isEnabled()) {
-			RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, aboolean, random, blockrendererdispatcher);
-		}
+		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, aboolean, random, blockrendererdispatcher);
 	}
 
 	//return if normal rendering should happen
 	public static boolean renderBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite, final BlockRendererDispatcher blockrendererdispatcher) {
-		if (!NoCubes.isEnabled() || !Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable()) {
-			return true;
+		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable()) {
+			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable()) {
+				return true;
+			}
 		}
 		RenderDispatcher.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
 		return false;
@@ -85,8 +86,6 @@ public final class Hooks {
 			return !p_212393_1_.isEmpty() && VoxelShapes.compare(area, p_212393_1_, IBooleanFunction.AND);
 		};
 		// NoCubes Start
-		// Commented out because its handled by the hook that calls _this
-//		if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled())
 		if (io.github.cadiboo.nocubes.hooks.Hooks.shouldApplyCollisions(movingEntity))
 			return Hooks.getCollisionShapes(_this, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 		// NoCubes End
@@ -125,6 +124,17 @@ public final class Hooks {
 
 	private static boolean shouldApplyCollisions(final Entity movingEntity) {
 		return CollisionHandler.shouldApplyCollisions(movingEntity);
+	}
+
+	//	@OnlyIn(Dist.CLIENT) // Not needed because even though its only called clientside it doesn't reference any client side code
+	// return if the side should not be rendered
+	public static boolean smoothableIsAdjacentFluidSameAs(final IBlockReader worldIn, final EnumFacing side, final BlockPos blockpos) {
+		if (side != EnumFacing.UP) {
+			return !worldIn.getBlockState(blockpos.up(1)).isSolid();
+		} else {
+			final BlockPos posUpUp = blockpos.up(1);
+			return !worldIn.getBlockState(posUpUp).isAir(worldIn, posUpUp);
+		}
 	}
 
 }

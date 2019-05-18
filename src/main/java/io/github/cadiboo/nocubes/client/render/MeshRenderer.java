@@ -30,6 +30,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.model.data.IModelData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -149,6 +150,8 @@ public final class MeshRenderer {
 			@Nonnull final BlockPos texturePos,
 			@Nonnull final IBlockState textureState
 	) {
+		final IModelData modelData = generator.getModelData(texturePos);
+
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
 		{
@@ -184,7 +187,7 @@ public final class MeshRenderer {
 
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
-									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, blockRenderLayer);
+									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, modelData, random, blockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();

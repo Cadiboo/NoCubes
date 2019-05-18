@@ -4,12 +4,9 @@ import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.server.ServerProxy;
-import io.github.cadiboo.nocubes.util.IProxy;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.ReportedException;
+import io.github.cadiboo.nocubes.util.Proxy;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -30,66 +27,33 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	public static final IProxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
+	public static final Proxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-	private static boolean isEnabled = true;
 
 	public NoCubes() {
 
-		//TODO FIXME this will die on the dedicated server
-		try {
-			loadRenderChunk();
-		} catch (ClassNotFoundException e) {
-			LOGGER.fatal("Failed to load RenderChunk. This should not be possible!", e);
-			final CrashReport crashReport = new CrashReport("Failed to load RenderChunk. This should not be possible!", e);
-			crashReport.makeCategory("Loading RenderChunk");
-			throw new ReportedException(crashReport);
-		}
+		PROXY.preloadClasses();
 
 		final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-		modEventBus.addListener(this::onFMLCommonSetupEvent);
-		modEventBus.addListener(this::onLoadComplete);
-		modEventBus.addListener(this::onModConfigEvent);
+		modEventBus.addListener((FMLCommonSetupEvent event1) ->
+				ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get())
+		);
+		modEventBus.addListener((FMLLoadCompleteEvent event) ->
+				PROXY.replaceFluidRendererCauseImBored()
+		);
+		modEventBus.addListener((ModConfig.ModConfigEvent event) -> {
+			final ModConfig config = event.getConfig();
+			if (config.getSpec() == ConfigHolder.CLIENT_SPEC) {
+				ConfigHelper.bakeClient(config);
+			} else if (config.getSpec() == ConfigHolder.SERVER_SPEC) {
+				ConfigHelper.bakeServer(config);
+			}
+		});
 
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
-		ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
+		final ModLoadingContext modLoadingContext = ModLoadingContext.get();
+		modLoadingContext.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
+		modLoadingContext.registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
 
-	}
-
-	public static boolean isEnabled() {
-		return isEnabled;
-	}
-
-	public static void setEnabled(final boolean enabled) {
-		isEnabled = enabled;
-	}
-
-	private void loadRenderChunk() throws ClassNotFoundException {
-		LOGGER.info("Loading RenderChunk...");
-		final long startTime = System.nanoTime();
-		Class.forName("net.minecraft.client.renderer.chunk.RenderChunk", false, this.getClass().getClassLoader());
-		LOGGER.info("Loaded RenderChunk in " + (System.nanoTime() - startTime) + " nano seconds");
-		LOGGER.info("Initialising RenderChunk...");
-		Class.forName("net.minecraft.client.renderer.chunk.RenderChunk", true, this.getClass().getClassLoader());
-		LOGGER.info("Initialised RenderChunk");
-	}
-
-	@SubscribeEvent
-	public void onFMLCommonSetupEvent(final FMLCommonSetupEvent event) {
-		ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get());
-	}
-
-	public void onModConfigEvent(ModConfig.ModConfigEvent event) {
-		if (event.getConfig().getSpec() == ConfigHolder.CLIENT_SPEC) {
-			ConfigHelper.bakeClient(event.getConfig());
-		} else if (event.getConfig().getSpec() == ConfigHolder.SERVER_SPEC) {
-			ConfigHelper.bakeServer(event.getConfig());
-		}
-	}
-
-	@SubscribeEvent
-	public void onLoadComplete(final FMLLoadCompleteEvent event) {
-		PROXY.replaceFluidRendererCauseImBored();
 	}
 
 }

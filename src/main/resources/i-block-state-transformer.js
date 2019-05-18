@@ -150,8 +150,57 @@ function make_nocubes_setLeavesSmoothable() {
 
 
 
-
+// 1) Find first label
+// 2) inject right after first label
 function injectIsSolidHook(instructions) {
+
+//	return this.getBlock().isSolid(this);
+
+//	// NoCubes Start
+//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
+//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
+//	// NoCubes End
+//	return this.getBlock().isSolid(this);
+
+
+//  public default isSolid()Z
+//   L0
+//    LINENUMBER 212 L0
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
+//  public default isSolid()Z
+//   L0
+//    LINENUMBER 213 L0
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
+//    IFEQ L1
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    IFEQ L1
+//    ICONST_0
+//    IRETURN
+//   L1
+//    LINENUMBER 214 L1
+//   FRAME SAME
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
+//    IFEQ L2
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    IFEQ L2
+//    ICONST_0
+//    IRETURN
+//   L2
+//    LINENUMBER 213 L2
+//   FRAME SAME
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
+//    IRETURN
+
 
 	var firstLabel;
 	var arrayLength = instructions.size();
@@ -171,32 +220,11 @@ function injectIsSolidHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-
-//	return this.getBlock().isSolid(this);
-//
-//	if (nocubes_isTerrainSmoothable() && NoCubes.isEnabled()) return false;
-//	return this.getBlock().isSolid(this);
-
-//  public default isSolid()Z
-//   L0
-//    LINENUMBER 220 L0
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFEQ L1
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L1
-//    ICONST_0
-//    IRETURN
-//   L1
-//    LINENUMBER 221 L1
-//   FRAME SAME
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.isSolid (Lnet/minecraft/block/state/IBlockState;)Z
-//    IRETURN
+	var leavesChecksLabel = new LabelNode();
 
 	// Make list of instructions to inject
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
+	toInject.add(new JumpInsnNode(IFEQ, leavesChecksLabel));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new MethodInsnNode(
 			//int opcode
@@ -210,22 +238,26 @@ function injectIsSolidHook(instructions) {
 			//boolean isInterface
 			true
 	));
+	toInject.add(new JumpInsnNode(IFEQ, leavesChecksLabel));
+	toInject.add(new InsnNode(ICONST_0));
+	toInject.add(new InsnNode(IRETURN));
+	toInject.add(leavesChecksLabel);
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new MethodInsnNode(
 			//int opcode
-			INVOKESTATIC,
+			INVOKEINTERFACE,
 			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
+			"net/minecraft/block/state/IBlockState",
 			//String name
-			"isEnabled",
+			"nocubes_isLeavesSmoothable",
 			//String descriptor
 			"()Z",
 			//boolean isInterface
-			false
+			true
 	));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(new LabelNode());
 	toInject.add(new InsnNode(ICONST_0));
 	toInject.add(new InsnNode(IRETURN));
 
@@ -236,30 +268,16 @@ function injectIsSolidHook(instructions) {
 
 }
 
+// 1) Find first label
+// 2) inject right after first label
 function injectCausesSuffocationHook(instructions) {
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == AbstractInsnNode.LABEL) {
-			firstLabel = instruction;
-			log("Found injection point " + instruction);
-			break;
-		}
-	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var toInject = new InsnList()
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
 
 //	return this.getBlock().causesSuffocation(this);
 
-//	return !this.nocubes_isTerrainSmoothable() && this.getBlock().causesSuffocation(this);
+//	// NoCubes Start
+//	if (this.nocubes_isTerrainSmoothable() || this.nocubes_isLeavesSmoothable()) return false;
+//	// NoCubes End
+//	return this.getBlock().causesSuffocation(this);
 
 
 //  public default causesSuffocation()Z
@@ -273,24 +291,46 @@ function injectCausesSuffocationHook(instructions) {
 
 //  public default causesSuffocation()Z
 //   L0
-//    LINENUMBER 330 L0
+//    LINENUMBER 325 L0
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
 //    IFNE L1
 //    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
-//    IFEQ L1
-//    ICONST_1
-//    GOTO L2
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    IFEQ L2
 //   L1
 //   FRAME SAME
 //    ICONST_0
+//    IRETURN
 //   L2
-//   FRAME SAME1 I
+//    LINENUMBER 327 L2
+//   FRAME SAME
+//    ALOAD 0
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
+//    ALOAD 0
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/state/IBlockState;)Z
 //    IRETURN
 
+
+	var firstLabel;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
+			log("Found injection point " + instruction);
+			break;
+		}
+	}
+	if (!firstLabel) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var toInject = new InsnList()
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+	var returnFalseLabel = new LabelNode();
 
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
@@ -306,22 +346,23 @@ function injectCausesSuffocationHook(instructions) {
 			//boolean isInterface
 			true
 	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
+	toInject.add(new JumpInsnNode(IFNE, returnFalseLabel));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new MethodInsnNode(
 			//int opcode
-			INVOKESTATIC,
+			INVOKEINTERFACE,
 			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
+			"net/minecraft/block/state/IBlockState",
 			//String name
-			"isEnabled",
+			"nocubes_isLeavesSmoothable",
 			//String descriptor
 			"()Z",
 			//boolean isInterface
-			false
+			true
 	));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
-	toInject.add(new LabelNode());
+	toInject.add(returnFalseLabel);
 	toInject.add(new InsnNode(ICONST_0));
 	toInject.add(new InsnNode(IRETURN));
 

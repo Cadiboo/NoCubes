@@ -32,7 +32,7 @@ function injectGetCollisionBoxesHook(instructions) {
 //		movingEntity.setOutsideBorder(!flag1);
 //	}
 //	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
+//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions || io.github.cadiboo.nocubes.config.Config.leavesCollisions) {
 //		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
 //	}
 //	// NoCubes End
@@ -40,8 +40,6 @@ function injectGetCollisionBoxesHook(instructions) {
 //	return this.func_212391_a(area, p_212392_3_, flag1)
 
 
-//   L10
-//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
 //    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
 //   L7
 //    LINENUMBER 195 L7
@@ -53,18 +51,17 @@ function injectGetCollisionBoxesHook(instructions) {
 //    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.getCollisionBoxes (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
 //    ARETURN
 
-//   L10
-//   FRAME FULL [net/minecraft/world/IWorldReaderBase net/minecraft/entity/Entity net/minecraft/util/math/shapes/VoxelShape net/minecraft/util/math/shapes/VoxelShape java/util/Set I I] [net/minecraft/entity/Entity I]
 //    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
 //   L7
-//    LINENUMBER 196 L7
+//    LINENUMBER 195 L7
 //   FRAME SAME
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
-//    IFEQ L11
-//    INVOKESTATIC io/github/cadiboo/nocubes/NoCubes.isEnabled ()Z
-//    IFEQ L11
-//   L12
-//    LINENUMBER 197 L12
+//    IFNE L11
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.leavesCollisions : Z
+//    IFEQ L12
+//   L11
+//    LINENUMBER 196 L11
+//   FRAME SAME
 //    ALOAD 0
 //    ALOAD 1
 //    ALOAD 2
@@ -72,26 +69,26 @@ function injectGetCollisionBoxesHook(instructions) {
 //    ILOAD 6
 //    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionShapes (Lnet/minecraft/world/IWorldReaderBase;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream;
 //    ARETURN
-//   L11
-//    LINENUMBER 201 L11
+//   L12
+//    LINENUMBER 200 L12
 //   FRAME SAME
 //    ALOAD 0
 //    ALOAD 2
 //    ALOAD 3
 //    ILOAD 6
-//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.func_212391_a (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
+//    INVOKEINTERFACE net/minecraft/world/IWorldReaderBase.getCollisionBoxes (Lnet/minecraft/util/math/shapes/VoxelShape;Lnet/minecraft/util/math/shapes/VoxelShape;Z)Ljava/util/stream/Stream; (itf)
 //    ARETURN
 
 
-//    INVOKEVIRTUAL net/minecraft/entity/Entity.setOutsideBorder (Z)V
+	var setOutsideBorder_name = mapMethod("func_174821_h"); // setOutsideBorder
+
 	var first_INVOKEVIRTUAL_Entity_setOutsideBorder;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKEVIRTUAL) {
 			if (instruction.owner == "net/minecraft/entity/Entity") {
-				//CPW PLS GIVE ME A WAY TO REMAP SRG TO NAMES FOR DEV
-				if (instruction.name == "func_174821_h" || instruction.name == "setOutsideBorder") {
+				if (instruction.name == setOutsideBorder_name) {
 					if (instruction.desc == "(Z)V") {
 						if (instruction.itf == false) {
 							first_INVOKEVIRTUAL_Entity_setOutsideBorder = instruction;
@@ -127,30 +124,20 @@ function injectGetCollisionBoxesHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
+	var executeHookLabel = new LabelNode();
 
 	// Make list of instructions to inject
 	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/NoCubes",
-			//String name
-			"isEnabled",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
+	toInject.add(new JumpInsnNode(IFNE, executeHookLabel));
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "leavesCollisions", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
-	toInject.add(new LabelNode());
+	toInject.add(executeHookLabel);
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_movingEntity));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_area));
-    toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_entityShape));
-    toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag1));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_entityShape));
+	toInject.add(new VarInsnNode(ILOAD, ILOCALVARIABLE_flag1));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -163,7 +150,7 @@ function injectGetCollisionBoxesHook(instructions) {
 			//boolean isInterface
 			false
 	));
-    toInject.add(new InsnNode(ARETURN));
+	toInject.add(new InsnNode(ARETURN));
 
 	toInject.add(originalInstructionsLabel);
 

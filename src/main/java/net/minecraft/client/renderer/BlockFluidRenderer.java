@@ -1,6 +1,5 @@
 package net.minecraft.client.renderer;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.model.ModelBakery;
@@ -45,10 +44,10 @@ public class BlockFluidRenderer {
    public static boolean isAdjacentFluidSameAs(IBlockReader worldIn, BlockPos pos, EnumFacing side, IFluidState state) {
       BlockPos blockpos = pos.offset(side);
       // NoCubes Start
-      if (NoCubes.isEnabled()) {
+      if (io.github.cadiboo.nocubes.config.Config.renderExtendedFluids) {
          final IBlockState blockState = worldIn.getBlockState(blockpos);
          if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
-            return !worldIn.getBlockState(blockpos.up()).isSolid();
+            return io.github.cadiboo.nocubes.hooks.Hooks.smoothableIsAdjacentFluidSameAs(worldIn, side, blockpos);
          }
       }
       // NoCubes End

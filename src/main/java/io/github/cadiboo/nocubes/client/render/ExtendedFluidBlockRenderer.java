@@ -81,10 +81,14 @@ public final class ExtendedFluidBlockRenderer {
 //				final double z = (double) pos.getZ();
 
 				if (shouldRenderUp && !func_209556_a(worldIn, renderPos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
-					fluidHeight -= 0.001F;
-					fluidHeightSouth -= 0.001F;
-					fluidHeightEastSouth -= 0.001F;
-					fluidHeightEast -= 0.001F;
+
+					// Commented out to fix transparent lines between bottom of sides.
+					// The only reason that I can think of for this code to exist in the first place
+					// is to try and solve z-fighting issues.
+//					fluidHeight -= 0.001F;
+//					fluidHeightSouth -= 0.001F;
+//					fluidHeightEastSouth -= 0.001F;
+//					fluidHeightEast -= 0.001F;
 
 					if (!fluidRenderer.colors()) {
 						if (!fluidRenderer.smoothLighting()) {
@@ -305,8 +309,11 @@ public final class ExtendedFluidBlockRenderer {
 						y1 = fluidHeightEast;
 						x0 = x;
 						x1 = x + 1.0D;
-						z0 = z + (double) 0.001F;
-						z1 = z + (double) 0.001F;
+						// Commented out to fix transparent lines between bottom of sides.
+						// The only reason that I can think of for this code to exist in the first place
+						// is to try and solve z-fighting issues.
+						z0 = z;// + (double) 0.001F;
+						z1 = z;// + (double) 0.001F;
 						enumfacing = EnumFacing.NORTH;
 						shouldRenderSide = shouldRenderNorth;
 					} else if (facingIndex == 1) {
@@ -314,15 +321,21 @@ public final class ExtendedFluidBlockRenderer {
 						y1 = fluidHeightSouth;
 						x0 = x + 1.0D;
 						x1 = x;
-						z0 = z + 1.0D - (double) 0.001F;
-						z1 = z + 1.0D - (double) 0.001F;
+						// Commented out to fix transparent lines between bottom of sides.
+						// The only reason that I can think of for this code to exist in the first place
+						// is to try and solve z-fighting issues.
+						z0 = z + 1.0D;// - (double) 0.001F;
+						z1 = z + 1.0D;// - (double) 0.001F;
 						enumfacing = EnumFacing.SOUTH;
 						shouldRenderSide = shouldRenderSouth;
 					} else if (facingIndex == 2) {
 						y0 = fluidHeightSouth;
 						y1 = fluidHeight;
-						x0 = x + (double) 0.001F;
-						x1 = x + (double) 0.001F;
+						// Commented out to fix transparent lines between bottom of sides.
+						// The only reason that I can think of for this code to exist in the first place
+						// is to try and solve z-fighting issues.
+						x0 = x;// + (double) 0.001F;
+						x1 = x;// + (double) 0.001F;
 						z0 = z + 1.0D;
 						z1 = z;
 						enumfacing = EnumFacing.WEST;
@@ -330,8 +343,11 @@ public final class ExtendedFluidBlockRenderer {
 					} else {
 						y0 = fluidHeightEast;
 						y1 = fluidHeightEastSouth;
-						x0 = x + 1.0D - (double) 0.001F;
-						x1 = x + 1.0D - (double) 0.001F;
+						// Commented out to fix transparent lines between bottom of sides.
+						// The only reason that I can think of for this code to exist in the first place
+						// is to try and solve z-fighting issues.
+						x0 = x + 1.0D;// - (double) 0.001F;
+						x1 = x + 1.0D;// - (double) 0.001F;
 						z0 = z;
 						z1 = z + 1.0D;
 						enumfacing = EnumFacing.EAST;

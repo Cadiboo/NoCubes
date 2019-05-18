@@ -40,7 +40,7 @@ final class ClientConfig {
 		renderSmoothLeaves = builder
 				.comment("renderSmoothLeaves") // TODO
 				.translation(MOD_ID + ".config.renderSmoothLeaves")
-				.define("renderSmoothLeaves", true);
+				.define("renderSmoothLeaves", false);
 		leavesSmoothable = builder
 				.comment("leavesSmoothable") // TODO
 				.translation(MOD_ID + ".config.leavesSmoothable")
@@ -52,7 +52,7 @@ final class ClientConfig {
 		smoothLeavesType = builder
 				.comment("smoothLeavesType") // TODO
 				.translation(MOD_ID + ".config.smoothLeavesType")
-				.defineEnum("smoothLeavesType", SmoothLeavesType.OFF);
+				.defineEnum("smoothLeavesType", SmoothLeavesType.TOGETHER);
 
 		renderExtendedFluids = builder
 				.comment("renderExtendedFluids") // TODO

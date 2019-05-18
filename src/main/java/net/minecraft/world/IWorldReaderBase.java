@@ -192,7 +192,7 @@ public interface IWorldReaderBase extends IBlockReader {
          movingEntity.setOutsideBorder(!flag1);
       }
       // NoCubes Start
-      if(io.github.cadiboo.nocubes.config.Config.terrainCollisions && io.github.cadiboo.nocubes.NoCubes.isEnabled()) {
+      if (io.github.cadiboo.nocubes.config.Config.terrainCollisions || io.github.cadiboo.nocubes.config.Config.leavesCollisions) {
          return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
       }
       // NoCubes End

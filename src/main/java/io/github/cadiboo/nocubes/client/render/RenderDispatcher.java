@@ -7,10 +7,10 @@ import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -181,7 +181,7 @@ public final class RenderDispatcher {
 				if (Config.renderSmoothTerrain) {
 					renderTerrain(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, stateCache, pooledMutableBlockPos, usedBlockRenderLayers, blockRendererDispatcher, random, packedLightCache);
 				}
-				if (Config.renderSmoothLeaves && Config.smoothLeavesType != SmoothLeavesType.OFF) {
+				if (Config.renderSmoothLeaves) {
 					renderLeaves(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, stateCache, pooledMutableBlockPos, usedBlockRenderLayers, blockRendererDispatcher, random, packedLightCache);
 				}
 			} catch (ReportedException e) {
@@ -287,8 +287,6 @@ public final class RenderDispatcher {
 						);
 					}
 					break;
-				case OFF:
-					break;
 			}
 		}
 	}
@@ -344,7 +342,19 @@ public final class RenderDispatcher {
 		if (iblockstate.getRenderType() == EnumBlockRenderType.MODEL) {
 			tessellatorIn.draw();
 			bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
-			try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(blockpos, world, TERRAIN_SMOOTHABLE, Config.terrainMeshGenerator)) {
+			final IsSmoothable isSmoothable;
+			final MeshGeneratorType meshGeneratorType;
+			if (Config.renderSmoothTerrain && iblockstate.nocubes_isTerrainSmoothable()) {
+				isSmoothable = TERRAIN_SMOOTHABLE;
+				meshGeneratorType = Config.terrainMeshGenerator;
+			} else if (Config.renderSmoothLeaves && iblockstate.nocubes_isLeavesSmoothable()) {
+				isSmoothable = LEAVES_SMOOTHABLE;
+				meshGeneratorType = Config.leavesMeshGenerator;
+			} else {
+				return;
+			}
+
+			try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(blockpos, world, isSmoothable, meshGeneratorType)) {
 				float minU = UVHelper.getMinU(textureatlassprite);
 				float maxU = UVHelper.getMaxU(textureatlassprite);
 				float minV = UVHelper.getMinV(textureatlassprite);
