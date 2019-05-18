@@ -91,18 +91,18 @@ public final class ClientEventSubscriber {
 		//Rendering
 		{
 			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
-				final boolean oldRenderSmoothTerrain = Config.renderSmoothTerrain;
-				ConfigHelper.setRenderSmoothTerrain(!oldRenderSmoothTerrain);
+				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
+				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
 				// Config saving is async so set it now
-				Config.renderSmoothTerrain = !oldRenderSmoothTerrain;
+				Config.renderSmoothTerrain = newRenderSmoothTerrain;
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
 			if (ClientProxy.toggleRenderSmoothLeaves.isPressed()) {
-				final boolean oldRenderSmoothLeaves = Config.renderSmoothLeaves;
-				ConfigHelper.setRenderSmoothLeaves(!oldRenderSmoothLeaves);
+				final boolean newRenderSmoothLeaves = Config.renderSmoothLeaves;
+				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
 				// Config saving is async so set it now
-				Config.renderSmoothLeaves = !oldRenderSmoothLeaves;
+				Config.renderSmoothLeaves = newRenderSmoothLeaves;
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
@@ -132,10 +132,10 @@ public final class ClientEventSubscriber {
 			}
 
 			if (ClientProxy.tempToggleLeavesCollisions.isPressed()) {
-				final boolean oldLeavesCollisions = Config.leavesCollisions;
-				ConfigHelper.setTerrainCollisions(!oldLeavesCollisions);
+				final boolean newLeavesCollisions = !Config.leavesCollisions;
+				ConfigHelper.setLeavesCollisions(newLeavesCollisions);
 				// Config saving is async so set it now
-				Config.leavesCollisions = !oldLeavesCollisions;
+				Config.leavesCollisions = newLeavesCollisions;
 			}
 		}
 
