@@ -151,7 +151,7 @@ public final class RenderDispatcher {
 						SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
 								stateCache,
 								(state) ->
-										TERRAIN_SMOOTHABLE.apply(state) || LEAVES_SMOOTHABLE.apply(state)
+										(Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.apply(state)) || (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.apply(state))
 						)
 				) {
 					try {
