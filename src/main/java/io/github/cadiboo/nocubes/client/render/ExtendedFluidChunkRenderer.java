@@ -98,28 +98,30 @@ public final class ExtendedFluidChunkRenderer {
 								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 								final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
-//								OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
-//										renderChunkPositionX + x,
-//										renderChunkPositionY + y,
-//										renderChunkPositionZ + z
-//								), blockAccess, bufferBuilder);
-
-								usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
+								OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
 										renderChunkPositionX + x,
 										renderChunkPositionY + y,
-										renderChunkPositionZ + z,
-										pooledMutableBlockPos.setPos(
-												renderChunkPositionX + x + xOffset,
-												renderChunkPositionY + y,
-												renderChunkPositionZ + z + zOffset
-										),
-										blockAccess,
-										blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
-										fluidState,
-										bufferBuilder,
-										packedLightCache
-								);
-//								OptiFineCompatibility.popShaderThing(bufferBuilder);
+										renderChunkPositionZ + z
+								), blockAccess, bufferBuilder);
+								try {
+									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
+											renderChunkPositionX + x,
+											renderChunkPositionY + y,
+											renderChunkPositionZ + z,
+											pooledMutableBlockPos.setPos(
+													renderChunkPositionX + x + xOffset,
+													renderChunkPositionY + y,
+													renderChunkPositionZ + z + zOffset
+											),
+											blockAccess,
+											blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
+											fluidState,
+											bufferBuilder,
+											packedLightCache
+									);
+								} finally {
+									OptiFineCompatibility.popShaderThing(bufferBuilder);
+								}
 
 								break OFFSET;
 							}

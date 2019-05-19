@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.UVHelper;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
@@ -36,7 +37,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 //		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
 
-//		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			final boolean isLava = state.isTagged(FluidTags.LAVA);
 			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
@@ -475,7 +476,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 			return wasAnythingRendered;
 		} finally {
-//			OptiFineCompatibility.popShaderThing(buffer);
+			OptiFineCompatibility.popShaderThing(buffer);
 		}
 	}
 

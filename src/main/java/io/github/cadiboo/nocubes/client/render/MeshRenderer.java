@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -28,6 +29,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -53,7 +55,7 @@ public final class MeshRenderer {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
@@ -138,7 +140,7 @@ public final class MeshRenderer {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -182,7 +184,7 @@ public final class MeshRenderer {
 
 							boolean wasAnythingRendered = false;
 
-//							OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
+							OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
 							try {
 
 								List<BakedQuad> quads;
@@ -408,7 +410,7 @@ public final class MeshRenderer {
 								}
 
 							} finally {
-//								OptiFineCompatibility.popShaderThing(bufferBuilder);
+								OptiFineCompatibility.popShaderThing(bufferBuilder);
 							}
 							usedBlockRenderLayers[blockRenderLayerOrdinal] |= wasAnythingRendered;
 						}

@@ -33,7 +33,6 @@ import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReader;
-import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
@@ -201,7 +200,7 @@ public final class RenderDispatcher {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -297,7 +296,7 @@ public final class RenderDispatcher {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReaderBase blockAccess,
+			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,

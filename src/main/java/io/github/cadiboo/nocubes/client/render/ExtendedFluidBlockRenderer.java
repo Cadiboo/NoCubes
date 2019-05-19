@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -40,7 +41,7 @@ public final class ExtendedFluidBlockRenderer {
 		final SmoothLightingBlockFluidRenderer fluidRenderer = ClientProxy.fluidRenderer;
 
 		try (PooledMutableBlockPos renderPos = PooledMutableBlockPos.retain(x, y, z)) {
-//		    OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+			OptiFineCompatibility.pushShaderThing(state, renderPos, worldIn, buffer);
 			try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 				final boolean isLava = state.isTagged(FluidTags.LAVA);
 				final TextureAtlasSprite[] atextureatlassprite = isLava ? fluidRenderer.atlasSpritesLava : fluidRenderer.atlasSpritesWater;
@@ -482,7 +483,7 @@ public final class ExtendedFluidBlockRenderer {
 
 				return wasAnythingRendered;
 			} finally {
-//			    OptiFineCompatibility.popShaderThing(buffer);
+				OptiFineCompatibility.popShaderThing(buffer);
 			}
 		}
 	}
