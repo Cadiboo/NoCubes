@@ -17,9 +17,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
-import static net.minecraft.block.BlockDirtSnowy.SNOWY;
-import static net.minecraft.init.Blocks.GRASS_BLOCK;
-import static net.minecraft.init.Blocks.PODZOL;
 import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
@@ -91,18 +88,11 @@ public final class ModelHelper {
 	@Nonnull
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
-//			IModelData
-//			if (state instanceof IExtendedBlockState) {
-//				unextendedState = ((IExtendedBlockState) state).getClean();
-//			}
 //			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
-//				return blockRendererDispatcher.getModelForState(Blocks.GRASS.getDefaultState());
+//				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT);
 //			}
-			if (state == GRASS_BLOCK.getDefaultState().with(SNOWY, true)) {
-				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
-			}
-			if (state == PODZOL.getDefaultState().with(SNOWY, true)) {
-				return blockRendererDispatcher.getModelForState(SNOW.getDefaultState());
+			if (ClientUtil.isStateSnow(state)) {
+				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.SNOW_LAYER_DEFAULT);
 			}
 			return blockRendererDispatcher.getModelForState(state);
 		}

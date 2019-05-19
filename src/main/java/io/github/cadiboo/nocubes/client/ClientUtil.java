@@ -19,6 +19,10 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 
 import javax.annotation.Nonnull;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT;
+import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_SNOWY;
+import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.PODZOL_SNOWY;
+import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.SNOW_LAYER_DEFAULT;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
@@ -232,14 +236,14 @@ public final class ClientUtil {
 		}
 	}
 
-	private static boolean isStateSnow(final IBlockState betterTextureState) {
-		if (betterTextureState == SNOW.getDefaultState()) return true;
-		if (betterTextureState == GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true)) return true;
-		return betterTextureState == PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
+	public static boolean isStateSnow(final IBlockState checkState) {
+		if (checkState == SNOW_LAYER_DEFAULT) return true;
+		if (checkState == GRASS_BLOCK_SNOWY) return true;
+		return checkState == PODZOL_SNOWY;
 	}
 
-	private static boolean isStateGrass(final IBlockState betterTextureState) {
-		return betterTextureState == GRASS_BLOCK.getDefaultState();
+	private static boolean isStateGrass(final IBlockState checkState) {
+		return checkState == GRASS_BLOCK_DEFAULT;
 	}
 
 	@Nonnull
@@ -276,9 +280,9 @@ public final class ClientUtil {
 	}
 
 	public static void tryReloadRenderers() {
-		final WorldRenderer renderGlobal = Minecraft.getInstance().worldRenderer;
-		if (renderGlobal != null) {
-			renderGlobal.loadRenderers();
+		final WorldRenderer worldRenderer = Minecraft.getInstance().worldRenderer;
+		if (worldRenderer != null) {
+			worldRenderer.loadRenderers();
 		}
 	}
 
@@ -303,6 +307,16 @@ public final class ClientUtil {
 	 */
 	public static byte getRelativePos(final int blockPos) {
 		return (byte) (blockPos & 15);
+	}
+
+	public static class StateHolder {
+
+		public static final IBlockState SNOW_LAYER_DEFAULT = SNOW.getDefaultState();
+		public static final IBlockState GRASS_BLOCK_SNOWY = GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
+		public static final IBlockState PODZOL_SNOWY = PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
+
+		public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS_BLOCK.getDefaultState();
+
 	}
 
 }
