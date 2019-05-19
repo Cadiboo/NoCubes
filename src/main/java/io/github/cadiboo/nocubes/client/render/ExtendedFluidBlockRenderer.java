@@ -53,7 +53,7 @@ public final class ExtendedFluidBlockRenderer {
 					green = 1.0F;
 					blue = 1.0F;
 				} else {
-					final int waterColor = isLava ? 0xFFFFFF : BiomeColors.getWaterColor(worldIn, renderPos);
+					final int waterColor = BiomeColors.getWaterColor(worldIn, renderPos);
 					red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
 					green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
 					blue = (float) (waterColor & 0xFF) / 255.0F;
