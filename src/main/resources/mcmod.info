@@ -1,0 +1,15 @@
+[{
+	"modid": "nocubes",
+	"name": "NoCubes",
+	"description": "NoCubes is a mod by Cadiboo for 1.12.2+ that creates smooth terrain in Minecraft. It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.",
+	"version": "${version}",
+	"mcversion": "${mcversion}",
+	"url": "https://Cadiboo.github.io/projects/nocubes/",
+	"updateJSON": "https://Cadiboo.github.io/projects/nocubes/update.json",
+	"authorList": ["Cadiboo"],
+	"credits": "Click_Me for the original mod, ComsicDan for the reverse-engineering and Cadiboo for making & maintaining the mod for 1.12.2+",
+	"logoFile": "/nocubes.png",
+	"screenshots": [],
+	"dependencies": [],
+	"useDependencyInformation": "false"
+}]
