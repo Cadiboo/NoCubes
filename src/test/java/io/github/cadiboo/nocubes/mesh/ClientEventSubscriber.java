@@ -37,6 +37,9 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
+
+		if (true) return;
+
 		if (event.phase != TickEvent.Phase.END) {
 			return;
 		}
@@ -118,6 +121,8 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
+
+		if (true) return;
 
 		// Code to draw the buffer
 		{
