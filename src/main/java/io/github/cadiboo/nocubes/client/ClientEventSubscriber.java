@@ -129,13 +129,6 @@ public final class ClientEventSubscriber {
 				// Config saving is async so set it now
 				Config.terrainCollisions = setTo;
 			}
-
-			if (ClientProxy.tempToggleLeavesCollisions.isPressed()) {
-				final boolean newLeavesCollisions = !Config.leavesCollisions;
-				ConfigHelper.setLeavesCollisions(newLeavesCollisions);
-				// Config saving is async so set it now
-				Config.leavesCollisions = newLeavesCollisions;
-			}
 		}
 
 		//Smoothables

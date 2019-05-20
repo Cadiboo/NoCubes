@@ -32,7 +32,6 @@ import static io.github.cadiboo.nocubes.config.Config.LOGGER;
 import static io.github.cadiboo.nocubes.config.Config.applyDiffuseLighting;
 import static io.github.cadiboo.nocubes.config.Config.betterTextures;
 import static io.github.cadiboo.nocubes.config.Config.extendFluidsRange;
-import static io.github.cadiboo.nocubes.config.Config.leavesCollisions;
 import static io.github.cadiboo.nocubes.config.Config.leavesMeshGenerator;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothable;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
@@ -136,7 +135,6 @@ public final class ConfigHelper {
 
 		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
 		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
-		leavesCollisions = ConfigHolder.SERVER.leavesCollisions.get();
 	}
 
 	public static void discoverDefaultTerrainSmoothable() {

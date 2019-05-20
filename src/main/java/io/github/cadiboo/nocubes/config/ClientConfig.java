@@ -33,52 +33,52 @@ final class ClientConfig {
 	ClientConfig(final ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		renderSmoothTerrain = builder
-				.comment("renderSmoothTerrain") // TODO
+				.comment("If smooth terrain should be rendered")
 				.translation(MOD_ID + ".config.renderSmoothTerrain")
 				.define("renderSmoothTerrain", true);
 
 		renderSmoothLeaves = builder
-				.comment("renderSmoothLeaves") // TODO
+				.comment("If smooth leaves should be rendered")
 				.translation(MOD_ID + ".config.renderSmoothLeaves")
 				.define("renderSmoothLeaves", false);
 		leavesSmoothable = builder
-				.comment("leavesSmoothable") // TODO
+				.comment("The list of leaves smoothable blocks")
 				.translation(MOD_ID + ".config.leavesSmoothable")
 				.defineList("leavesSmoothable", ConfigHelper.getDefaultLeavesSmoothable(), o -> o instanceof String);
 		leavesMeshGenerator = builder
-				.comment("leavesMeshGenerator") // TODO
+				.comment("The mesh generator that generates leaves")
 				.translation(MOD_ID + ".config.leavesMeshGenerator")
 				.defineEnum("leavesMeshGenerator", MeshGeneratorType.SurfaceNets);
 		smoothLeavesType = builder
-				.comment("smoothLeavesType") // TODO
+				.comment("How leaves should be rendered")
 				.translation(MOD_ID + ".config.smoothLeavesType")
 				.defineEnum("smoothLeavesType", SmoothLeavesType.TOGETHER);
 
 		renderExtendedFluids = builder
-				.comment("renderExtendedFluids") // TODO
+				.comment("If fluids should be rendered extended into smoothable blocks")
 				.translation(MOD_ID + ".config.renderExtendedFluids")
 				.define("renderExtendedFluids", true);
 
 		applyDiffuseLighting = builder
-				.comment("applyDiffuseLighting") // TODO
+				.comment("If diffuse lighting should be applied when rendering. Accentuates differences between heights")
 				.translation(MOD_ID + ".config.applyDiffuseLighting")
 				.define("applyDiffuseLighting", true);
 
 		betterTextures = builder
-				.comment("betterTextures") // TODO
+				.comment("If better textures should be searched for when rendering")
 				.translation(MOD_ID + ".config.betterTextures")
 				.define("betterTextures", true);
 
 		smoothFluidLighting = builder
-				.comment("smoothFluidLighting") // TODO
+				.comment("If fluids should be rendered with smooth lighting")
 				.translation(MOD_ID + ".config.smoothFluidLighting")
 				.define("smoothFluidLighting", true);
 		smoothFluidColors = builder
-				.comment("smoothFluidColors") // TODO
+				.comment("If fluids should be rendered with smooth biome blending")
 				.translation(MOD_ID + ".config.smoothFluidColors")
 				.define("smoothFluidColors", true);
 		naturalFluidTextures = builder
-				.comment("naturalFluidTextures") // TODO
+				.comment("If fluids should be rendered with flipped and rotated variants of their textures")
 				.translation(MOD_ID + ".config.naturalFluidTextures")
 				.define("naturalFluidTextures", true);
 

@@ -32,7 +32,7 @@ function injectGetCollisionBoxesHook(instructions) {
 //		movingEntity.setOutsideBorder(!flag1);
 //	}
 //	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions || io.github.cadiboo.nocubes.config.Config.leavesCollisions) {
+//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions) {
 //		return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
 //	}
 //	// NoCubes End
@@ -124,15 +124,12 @@ function injectGetCollisionBoxesHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-	var executeHookLabel = new LabelNode();
 
 	// Make list of instructions to inject
 	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
-	toInject.add(new JumpInsnNode(IFNE, executeHookLabel));
-	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "leavesCollisions", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
-	toInject.add(executeHookLabel);
+	toInject.add(new LabelNode());
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_movingEntity));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_area));

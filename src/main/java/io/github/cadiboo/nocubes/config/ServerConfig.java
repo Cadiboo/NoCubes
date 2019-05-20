@@ -22,25 +22,21 @@ final class ServerConfig {
 	ServerConfig(ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		terrainSmoothable = builder
-				.comment("terrainSmoothable") // TODO
+				.comment("The list of terrain smoothable blockstates")
 				.translation(MOD_ID + ".config.terrainSmoothable")
 				.defineList("terrainSmoothable", ConfigHelper.getDefaultTerrainSmoothable(), o -> o instanceof String);
 		extendFluidsRange = builder
-				.comment("extendFluidsRange") // TODO
+				.comment("The range at which to extend fluids")
 				.translation(MOD_ID + ".config.extendFluidsRange")
 				.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 		terrainMeshGenerator = builder
-				.comment("terrainMeshGenerator") // TODO
+				.comment("The mesh generator that generates the terrain")
 				.translation(MOD_ID + ".config.terrainMeshGenerator")
 				.defineEnum("terrainMeshGenerator", MeshGeneratorType.SurfaceNets);
 		terrainCollisions = builder
-				.comment("terrainCollisions") // TODO
+				.comment("If realistic terrain collisions should be calculated")
 				.translation(MOD_ID + ".config.terrainCollisions")
 				.define("terrainCollisions", false);
-		leavesCollisions = builder
-				.comment("leavesCollisions") // TODO
-				.translation(MOD_ID + ".config.leavesCollisions")
-				.define("leavesCollisions", false);
 		builder.pop();
 	}
 

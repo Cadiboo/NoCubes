@@ -184,7 +184,7 @@ public final class CollisionHandler {
 				} else {
 					//Added stuff here
 					final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
-					if (isSmoothable != null && (isSmoothable.apply(blockState) || (Config.leavesCollisions && blockState.nocubes_isLeavesSmoothable()))) {
+					if (isSmoothable != null && (isSmoothable.apply(blockState))) {
 						voxelshape = VoxelShapes.empty();
 					} else {
 						voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);

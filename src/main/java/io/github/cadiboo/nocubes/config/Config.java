@@ -17,7 +17,7 @@ import java.util.Set;
 public final class Config {
 
 	static final Logger LOGGER = LogManager.getLogger();
-	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>();
+	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
 
 	// Client
 	public static boolean renderSmoothTerrain;
@@ -43,8 +43,7 @@ public final class Config {
 	public static boolean terrainCollisions;
 	public static Set<String> terrainSmoothable;
 
-	public static boolean leavesCollisions;
-
+	// Client
 	public static HashSet<Block> getLeavesSmoothableBlocks() {
 		return leavesSmoothableBlocks;
 	}

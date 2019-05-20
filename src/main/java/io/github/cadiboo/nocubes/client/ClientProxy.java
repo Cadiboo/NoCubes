@@ -35,7 +35,6 @@ public final class ClientProxy implements Proxy {
 	public static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", GLFW_KEY_N, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
 	public static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
-	public static final KeyBinding tempToggleLeavesCollisions = new KeyBinding(MOD_ID + ".key.tempToggleLeavesCollisions", GLFW_KEY_V, "key.categories." + MOD_ID);
 
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
@@ -48,7 +47,6 @@ public final class ClientProxy implements Proxy {
 		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(tempToggleTerrainCollisions);
-		ClientRegistry.registerKeyBinding(tempToggleLeavesCollisions);
 	}
 
 	@Override
