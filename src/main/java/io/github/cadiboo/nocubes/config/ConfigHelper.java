@@ -162,7 +162,7 @@ public final class ConfigHelper {
 		ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.forEach(block -> {
 					final IBlockState defaultState = block.getDefaultState();
-					if (block.getMaterial(defaultState) == Material.LEAVES) {
+					if (defaultState.getMaterial() == Material.LEAVES) {
 						LOGGER.debug("Discovered leaves smoothable \"" + block + "\"");
 						discoveredStates.add(defaultState);
 					}
