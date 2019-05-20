@@ -98,7 +98,7 @@ public final class ClientEventSubscriber {
 				return;
 			}
 			if (ClientProxy.toggleRenderSmoothLeaves.isPressed()) {
-				final boolean newRenderSmoothLeaves = Config.renderSmoothLeaves;
+				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
 				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
 				// Config saving is async so set it now
 				Config.renderSmoothLeaves = newRenderSmoothLeaves;
