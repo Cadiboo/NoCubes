@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
+import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_C;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_I;
@@ -61,10 +62,12 @@ public final class ClientProxy implements Proxy {
 	}
 
 	public void replaceFluidRendererCauseImBored() {
+		LOGGER.debug("Replacing fluid renderer");
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(blockRendererDispatcher.fluidRenderer);
 		blockRendererDispatcher.fluidRenderer = smoothLightingBlockFluidRenderer;
 		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
+		LOGGER.debug("Replaced fluid renderer");
 	}
 
 	@Override
