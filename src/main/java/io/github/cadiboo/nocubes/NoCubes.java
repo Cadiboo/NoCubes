@@ -35,7 +35,7 @@ public final class NoCubes {
 		PROXY.preloadClasses();
 
 		final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-		modEventBus.addListener((FMLCommonSetupEvent event1) ->
+		modEventBus.addListener((FMLCommonSetupEvent event) ->
 				ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get())
 		);
 		modEventBus.addListener((FMLLoadCompleteEvent event) ->
