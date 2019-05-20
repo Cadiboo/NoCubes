@@ -29,7 +29,6 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
@@ -490,25 +489,27 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+		final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+
+		final Tessellator tessellator = Tessellator.getInstance();
+		final BufferBuilder bufferbuilder = tessellator.getBuffer();
+
+		bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+		GlStateManager.enableBlend();
+		GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.lineWidth(3.0F);
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthMask(false);
+
+		GlStateManager.color4f(0, 0, 0, 1);
+		GlStateManager.color4f(1, 1, 1, 1);
+
+		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
 		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, isSmoothable, meshGeneratorType)) {
-			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
-			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
-			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
-
-			final Tessellator tessellator = Tessellator.getInstance();
-			final BufferBuilder bufferbuilder = tessellator.getBuffer();
-
-			bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
-
-			GlStateManager.enableBlend();
-			GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-			GlStateManager.lineWidth(3.0F);
-			GlStateManager.disableTexture2D();
-			GlStateManager.depthMask(false);
-
-			GlStateManager.color4f(0, 0, 0, 1);
-			GlStateManager.color4f(1, 1, 1, 1);
-
 			for (final Face face : faces) {
 				try {
 					try (
@@ -517,28 +518,30 @@ public final class ClientEventSubscriber {
 							Vec3 v2 = face.getVertex2();
 							Vec3 v3 = face.getVertex3()
 					) {
-						bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
-
-						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
+						final double v0x = v0.x;
+						final double v0y = v0.y;
+						final double v0z = v0.z;
+						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
 						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
-
-						tessellator.draw();
+						// End back at v0. Draw with alpha this time
+						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
 					}
 				} finally {
 					face.close();
 				}
 			}
-
-			GlStateManager.depthMask(true);
-			GlStateManager.enableTexture2D();
-			GlStateManager.disableBlend();
-
-			bufferbuilder.setTranslation(0, 0, 0);
-
 		}
+
+		tessellator.draw();
+
+		GlStateManager.depthMask(true);
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
+
+		bufferbuilder.setTranslation(0, 0, 0);
 
 	}
 
