@@ -13,12 +13,10 @@ import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_C;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_I;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_J;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_K;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_N;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_O;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
-import static org.lwjgl.glfw.GLFW.GLFW_KEY_V;
 
 /**
  * The version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT

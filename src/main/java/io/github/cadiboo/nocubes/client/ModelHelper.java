@@ -17,7 +17,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
-import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
