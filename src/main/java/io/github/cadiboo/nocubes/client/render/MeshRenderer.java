@@ -30,7 +30,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReader;
-import net.minecraft.world.IWorldReaderBase;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
 import org.apache.logging.log4j.LogManager;
@@ -172,6 +171,81 @@ public final class MeshRenderer {
 							final Vec3 v3 = face.getVertex3()
 					) {
 
+						float diffuse0;
+						float diffuse1;
+						float diffuse2;
+						float diffuse3;
+						profiler.end(); // HACKY
+						profiler.start("calculateDiffuseLighting");
+						{
+							if (!Config.applyDiffuseLighting) {
+								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+							} else {
+								diffuse0 = diffuseLight(toSide(
+										v0.x - renderChunkPositionX - pos.x,
+										v0.y - renderChunkPositionY - pos.y,
+										v0.z - renderChunkPositionZ - pos.z
+								));
+								diffuse1 = diffuseLight(toSide(
+										v1.x - renderChunkPositionX - pos.x,
+										v1.y - renderChunkPositionY - pos.y,
+										v1.z - renderChunkPositionZ - pos.z
+								));
+								diffuse2 = diffuseLight(toSide(
+										v2.x - renderChunkPositionX - pos.x,
+										v2.y - renderChunkPositionY - pos.y,
+										v2.z - renderChunkPositionZ - pos.z
+								));
+								diffuse3 = diffuseLight(toSide(
+										v3.x - renderChunkPositionX - pos.x,
+										v3.y - renderChunkPositionY - pos.y,
+										v3.z - renderChunkPositionZ - pos.z
+								));
+							}
+						}
+						profiler.end();
+						profiler.start("renderMesh"); // HACKY
+
+						final int lightmapSkyLight0;
+						final int lightmapSkyLight1;
+						final int lightmapSkyLight2;
+						final int lightmapSkyLight3;
+
+						final int lightmapBlockLight0;
+						final int lightmapBlockLight1;
+						final int lightmapBlockLight2;
+						final int lightmapBlockLight3;
+
+						profiler.end(); // HACKY
+						try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+
+							lightmapSkyLight0 = lightmapInfo.skylight0;
+							lightmapSkyLight1 = lightmapInfo.skylight1;
+							lightmapSkyLight2 = lightmapInfo.skylight2;
+							lightmapSkyLight3 = lightmapInfo.skylight3;
+
+							lightmapBlockLight0 = lightmapInfo.blocklight0;
+							lightmapBlockLight1 = lightmapInfo.blocklight1;
+							lightmapBlockLight2 = lightmapInfo.blocklight2;
+							lightmapBlockLight3 = lightmapInfo.blocklight3;
+
+						}
+						profiler.start("renderMesh"); // HACKY
+
+						boolean hasSetColors = false;
+						float colorRed0 = -1;
+						float colorGreen0 = -1;
+						float colorBlue0 = -1;
+						float colorRed1 = -1;
+						float colorGreen1 = -1;
+						float colorBlue1 = -1;
+						float colorRed2 = -1;
+						float colorGreen2 = -1;
+						float colorBlue2 = -1;
+						float colorRed3 = -1;
+						float colorGreen3 = -1;
+						float colorBlue3 = -1;
+
 						for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
 							if (!textureState.canRenderInLayer(blockRenderLayer)) {
 								continue;
@@ -195,117 +269,6 @@ public final class MeshRenderer {
 										quads = new ArrayList<>();
 										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, random).get(0));
 									}
-								}
-
-								float diffuse0;
-								float diffuse1;
-								float diffuse2;
-								float diffuse3;
-								profiler.end(); // HACKY
-								profiler.start("calculateDiffuseLighting");
-								{
-									if (!Config.applyDiffuseLighting) {
-										diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
-									} else {
-										diffuse0 = diffuseLight(toSide(
-												v0.x - renderChunkPositionX - pos.x,
-												v0.y - renderChunkPositionY - pos.y,
-												v0.z - renderChunkPositionZ - pos.z
-										));
-										diffuse1 = diffuseLight(toSide(
-												v1.x - renderChunkPositionX - pos.x,
-												v1.y - renderChunkPositionY - pos.y,
-												v1.z - renderChunkPositionZ - pos.z
-										));
-										diffuse2 = diffuseLight(toSide(
-												v2.x - renderChunkPositionX - pos.x,
-												v2.y - renderChunkPositionY - pos.y,
-												v2.z - renderChunkPositionZ - pos.z
-										));
-										diffuse3 = diffuseLight(toSide(
-												v3.x - renderChunkPositionX - pos.x,
-												v3.y - renderChunkPositionY - pos.y,
-												v3.z - renderChunkPositionZ - pos.z
-										));
-									}
-								}
-								profiler.end();
-								profiler.start("renderMesh"); // HACKY
-
-								final int lightmapSkyLight0;
-								final int lightmapSkyLight1;
-								final int lightmapSkyLight2;
-								final int lightmapSkyLight3;
-
-								final int lightmapBlockLight0;
-								final int lightmapBlockLight1;
-								final int lightmapBlockLight2;
-								final int lightmapBlockLight3;
-
-								profiler.end(); // HACKY
-								try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
-
-									lightmapSkyLight0 = lightmapInfo.skylight0;
-									lightmapSkyLight1 = lightmapInfo.skylight1;
-									lightmapSkyLight2 = lightmapInfo.skylight2;
-									lightmapSkyLight3 = lightmapInfo.skylight3;
-
-									lightmapBlockLight0 = lightmapInfo.blocklight0;
-									lightmapBlockLight1 = lightmapInfo.blocklight1;
-									lightmapBlockLight2 = lightmapInfo.blocklight2;
-									lightmapBlockLight3 = lightmapInfo.blocklight3;
-
-								}
-								profiler.start("renderMesh"); // HACKY
-
-								final float colorRed0;
-								final float colorGreen0;
-								final float colorBlue0;
-								final float colorRed1;
-								final float colorGreen1;
-								final float colorBlue1;
-								final float colorRed2;
-								final float colorGreen2;
-								final float colorBlue2;
-								final float colorRed3;
-								final float colorGreen3;
-								final float colorBlue3;
-
-								boolean anyHasTintIndex = false;
-								for (final BakedQuad quad : quads) {
-									anyHasTintIndex |= quad.hasTintIndex();
-								}
-
-								if (anyHasTintIndex) {
-									profiler.end(); // HACKY
-									try (final BlockColorInfo biomeGrassColorInfo = BlockColorInfo.generateBiomeGrassColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
-										colorRed0 = biomeGrassColorInfo.red0;
-										colorGreen0 = biomeGrassColorInfo.green0;
-										colorBlue0 = biomeGrassColorInfo.blue0;
-										colorRed1 = biomeGrassColorInfo.red1;
-										colorGreen1 = biomeGrassColorInfo.green1;
-										colorBlue1 = biomeGrassColorInfo.blue1;
-										colorRed2 = biomeGrassColorInfo.red2;
-										colorGreen2 = biomeGrassColorInfo.green2;
-										colorBlue2 = biomeGrassColorInfo.blue2;
-										colorRed3 = biomeGrassColorInfo.red3;
-										colorGreen3 = biomeGrassColorInfo.green3;
-										colorBlue3 = biomeGrassColorInfo.blue3;
-									}
-									profiler.start("renderMesh"); // HACKY
-								} else {
-									colorRed0 = 1;
-									colorGreen0 = 1;
-									colorBlue0 = 1;
-									colorRed1 = 1;
-									colorGreen1 = 1;
-									colorBlue1 = 1;
-									colorRed2 = 1;
-									colorGreen2 = 1;
-									colorBlue2 = 1;
-									colorRed3 = 1;
-									colorGreen3 = 1;
-									colorBlue3 = 1;
 								}
 
 								for (final BakedQuad quad : quads) {
@@ -363,7 +326,29 @@ public final class MeshRenderer {
 									final float green3;
 									final float blue3;
 
-									if (quad.hasTintIndex()) {
+									if (quad.hasTintIndex() || BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
+										if (!hasSetColors) {
+											profiler.end(); // HACKY
+											try (
+													final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
+													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)
+											) {
+												colorRed0 = blockColorInfo.red0;
+												colorGreen0 = blockColorInfo.green0;
+												colorBlue0 = blockColorInfo.blue0;
+												colorRed1 = blockColorInfo.red1;
+												colorGreen1 = blockColorInfo.green1;
+												colorBlue1 = blockColorInfo.blue1;
+												colorRed2 = blockColorInfo.red2;
+												colorGreen2 = blockColorInfo.green2;
+												colorBlue2 = blockColorInfo.blue2;
+												colorRed3 = blockColorInfo.red3;
+												colorGreen3 = blockColorInfo.green3;
+												colorBlue3 = blockColorInfo.blue3;
+											}
+											hasSetColors = true;
+											profiler.start("renderMesh"); // HACKY
+										}
 										red0 = colorRed0;
 										green0 = colorGreen0;
 										blue0 = colorBlue0;
