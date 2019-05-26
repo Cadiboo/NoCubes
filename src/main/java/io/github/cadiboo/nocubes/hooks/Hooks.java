@@ -58,9 +58,9 @@ public final class Hooks {
 	}
 
 	//return all the voxel shapes that entityShape intersects inside area
-	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
 		try {
-			return CollisionHandler.getCollisionShapes(iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
+			return CollisionHandler.getCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 		} catch (final Exception e) {
 			NoCubes.LOGGER.error("Error with collisions! Falling back to vanilla.", e);
 			return Stream.concat(
@@ -87,7 +87,7 @@ public final class Hooks {
 		};
 		// NoCubes Start
 		if (io.github.cadiboo.nocubes.hooks.Hooks.shouldApplyCollisions(movingEntity))
-			return Hooks.getCollisionShapes(_this, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
+			return Hooks.getCollisionShapes(_this, movingEntity, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 		// NoCubes End
 		Stream<VoxelShape> stream = StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((p_212390_12_) -> {
 			int k1 = p_212390_12_.getX();
@@ -123,7 +123,7 @@ public final class Hooks {
 	}
 
 	private static boolean shouldApplyCollisions(final Entity movingEntity) {
-		return CollisionHandler.shouldApplyCollisions(movingEntity);
+		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
 	}
 
 

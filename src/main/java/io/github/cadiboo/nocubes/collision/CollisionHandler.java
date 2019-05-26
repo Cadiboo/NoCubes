@@ -17,6 +17,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -46,7 +47,7 @@ import static net.minecraft.util.math.MathHelper.clamp;
 //TODO FIXME use VoxelShapePart instead of tons of VoxelShapes
 public final class CollisionHandler {
 
-	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
 
 		if (!Config.terrainCollisions) {
 			return Stream.concat(
@@ -55,6 +56,19 @@ public final class CollisionHandler {
 							.limit(1L)
 							.filter(predicate)
 			);
+		}
+
+		if (!shouldApplyMeshCollisions(movingEntity)) {
+			if (!shouldApplyReposeCollisions(movingEntity)) {
+				return Stream.concat(
+						getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+						Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
+								.limit(1L)
+								.filter(predicate)
+				);
+			} else {
+				return getReposeCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate);
+			}
 		}
 
 		// Density calculation needs -1 on all axis
@@ -122,8 +136,7 @@ public final class CollisionHandler {
 				vec3b.close();
 			}
 
-			final List<VoxelShape> finalCollidingShapes = new ArrayList<>();
-			final List<VoxelShape> tempCollidingShapes = new ArrayList<>();
+			final List<VoxelShape> collidingShapes = new ArrayList<>();
 
 			for (final Face face : finalFaces) {
 				try (
@@ -147,25 +160,26 @@ public final class CollisionHandler {
 					final VoxelShape originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
 							approximateX, approximateY, approximateZ
 					));
-					addFaceBoxesToList(tempCollidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F);
+					addIntersectingFaceBoxesToList(collidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F, predicate, false);
 				}
 				face.close();
-			}
-
-			for (final VoxelShape box : tempCollidingShapes) {
-				addCollisionBoxToList(finalCollidingShapes, box, predicate, false);
 			}
 
 			return Stream.concat(
 					Stream.concat(
 							getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-							finalCollidingShapes.stream()
+							collidingShapes.stream()
 					), Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
 							.limit(1L)
 							.filter(predicate)
 			);
 
 		}
+	}
+
+	//TODO
+	private static Stream<VoxelShape> getReposeCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+		return Stream.of();
 	}
 
 	private static int roundAvg(double d0, double d1, double d2, double d3) {
@@ -220,7 +234,15 @@ public final class CollisionHandler {
 		}).filter(predicate);
 	}
 
-	private static void addFaceBoxesToList(final List<VoxelShape> outBoxes, final Face face, final ModProfiler profiler, final double maxYLevel, final float boxRadius) {
+	private static void addIntersectingFaceBoxesToList(
+			final List<VoxelShape> outBoxes,
+			final Face face,
+			final ModProfiler profiler,
+			final double maxYLevel,
+			final float boxRadius,
+			final Predicate<VoxelShape> predicate,
+			final boolean ignoreIntersects
+	) {
 
 		//0___3
 		//_____
@@ -395,32 +417,32 @@ public final class CollisionHandler {
 		}
 
 		try (final ModProfiler ignored = profiler.start("addBoxes")) {
-//			outBoxes.add(v0box);
-//			outBoxes.add(v1box);
-//			outBoxes.add(v2box);
-//			outBoxes.add(v3box);
-			outBoxes.add(v0v1box);
-			outBoxes.add(v1v2box);
-			outBoxes.add(v2v3box);
-			outBoxes.add(v3v0box);
-//			outBoxes.add(v0v1v0box);
-//			outBoxes.add(v0v1v1box);
-//			outBoxes.add(v1v2v1box);
-//			outBoxes.add(v1v2v2box);
-//			outBoxes.add(v2v3v2box);
-//			outBoxes.add(v2v3v3box);
-//			outBoxes.add(v3v0v3box);
-//			outBoxes.add(v3v0v0box);
-			outBoxes.add(v0v1v1v2box);
-			outBoxes.add(v1v2v2v3box);
-			outBoxes.add(v2v3v3v0box);
-			outBoxes.add(v3v0v0v1box);
-//			outBoxes.add(v0v1v1v2v1v2v2v3box);
-//			outBoxes.add(v1v2v2v3v2v3v3v0box);
-//			outBoxes.add(v2v3v3v0v3v0v0v1box);
-//			outBoxes.add(v3v0v0v1v0v1v1v2box);
-//			outBoxes.add(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box);
-//			outBoxes.add(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box);
+//			addCollisionBoxToList(outBoxes, v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2v3v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2v3v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3v0v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3v0v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1v1v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1v2v2v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2v3v3v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3v0v0v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
 		}
 
 		//DO NOT CLOSE original face vectors
@@ -472,7 +494,6 @@ public final class CollisionHandler {
 				v0.y + t * (v1.y - v0.y),
 				v0.z + t * (v1.z - v0.z)
 		);
-
 	}
 
 	private static VoxelShape createVoxelShapeForVertex(final Vec3 vec3, final float boxRadius, final double maxY) {
@@ -495,9 +516,13 @@ public final class CollisionHandler {
 
 	}
 
-	public static boolean shouldApplyCollisions(@Nullable final Entity entity) {
+	public static boolean shouldApplyMeshCollisions(@Nullable final Entity entity) {
+		return entity instanceof EntityPlayer;
+	}
+
+	public static boolean shouldApplyReposeCollisions(@Nullable final Entity entity) {
 		if (entity == null) {
-			return true;
+			return false;
 		} else {
 			return entity instanceof EntityItem || entity instanceof EntityLivingBase;
 		}
