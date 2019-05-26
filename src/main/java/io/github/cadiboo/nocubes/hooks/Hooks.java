@@ -176,7 +176,7 @@ public final class Hooks {
 				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
 					currentChunkPosX = x >> 4;
 					currentChunkPosZ = z >> 4;
-					currentChunk = world.getChunk(currentChunkPosZ, currentChunkPosX);
+					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
 				}
 
 				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
