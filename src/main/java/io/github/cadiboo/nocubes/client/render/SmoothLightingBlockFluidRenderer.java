@@ -35,7 +35,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	@Override
 	public boolean render(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
 
-		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
+//		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
 
 		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
