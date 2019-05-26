@@ -32,6 +32,7 @@ import net.minecraft.crash.ReportedException;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 
@@ -51,6 +52,9 @@ public final class RenderDispatcher {
 			@Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
+			// Use World for eagerly generated caches
+			@Nonnull final IWorld world,
+			// Use RenderChunkCache for lazily generated caches
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final Random random,
@@ -107,7 +111,7 @@ public final class RenderDispatcher {
 						renderChunkPositionY - 2,
 						renderChunkPositionZ - 2,
 						cacheSizeX, cacheSizeY, cacheSizeZ,
-						blockAccess, pooledMutableBlockPos
+						world, pooledMutableBlockPos
 				)
 		) {
 			renderChunk(
@@ -116,7 +120,7 @@ public final class RenderDispatcher {
 					compiledChunk,
 					renderChunkPosition,
 					renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-					blockAccess,
+					world, blockAccess,
 					pooledMutableBlockPos,
 					usedBlockRenderLayers,
 					random,
@@ -132,6 +136,9 @@ public final class RenderDispatcher {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
+			// Use World for eagerly generated caches
+			@Nonnull final IWorld world,
+			// Use RenderChunkCache for lazily generated caches
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
