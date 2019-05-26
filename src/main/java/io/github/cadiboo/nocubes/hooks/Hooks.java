@@ -170,8 +170,8 @@ public final class Hooks {
 					continue;
 				}
 
-				int x = posX + xOffset;
-				int z = posZ + zOffset;
+				final int x = posX + xOffset;
+				final int z = posZ + zOffset;
 
 				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
 					currentChunkPosX = x >> 4;
