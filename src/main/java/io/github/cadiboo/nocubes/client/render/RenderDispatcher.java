@@ -262,7 +262,7 @@ public final class RenderDispatcher {
 				case TOGETHER:
 					final IsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
 					try (
-							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
+//							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
 							SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
 					) {
 						MeshRenderer.renderMesh(
