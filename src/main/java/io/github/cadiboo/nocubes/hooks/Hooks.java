@@ -154,7 +154,7 @@ public final class Hooks {
 		final int maxXOffset = extendRange;
 		final int maxZOffset = extendRange;
 
-		// check up
+		// Check up
 		{
 			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
 			if (state1.isSource()) {
@@ -165,7 +165,7 @@ public final class Hooks {
 		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
 			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
 
-				//no point in checking myself
+				// No point in checking myself
 				if (xOffset == 0 && zOffset == 0) {
 					continue;
 				}
