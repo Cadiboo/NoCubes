@@ -25,16 +25,24 @@ public class StateCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	private IFluidState[] fluidStates;
 
+	private boolean inUse;
+
 	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		blockStates = new IBlockState[sizeX * sizeY * sizeZ];
 		fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
+		this.inUse = false;
 	}
 
 	@Nonnull
 	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
 		final StateCache pooled = POOL.get();
+
+		if (pooled.inUse) {
+			throw new IllegalStateException("StateCache is already in use!");
+		}
+		pooled.inUse = true;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -68,6 +76,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 }

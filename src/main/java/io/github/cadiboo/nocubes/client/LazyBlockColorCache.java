@@ -28,9 +28,12 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	private ColorResolver colorResolver;
 
+	private boolean inUse;
+
 	private LazyBlockColorCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new int[sizeX * sizeY * sizeZ];
+		this.inUse = false;
 	}
 
 	@Nonnull
@@ -41,6 +44,11 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	) {
 
 		final LazyBlockColorCache pooled = POOL.get();
+
+		if (pooled.inUse) {
+			throw new IllegalStateException("LazyBlockColorCache is already in use!");
+		}
+		pooled.inUse = true;
 
 		pooled.reader = reader;
 		pooled.colorResolver = colorResolver;
@@ -94,6 +102,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 	public int get(final int x, final int y, final int z) {

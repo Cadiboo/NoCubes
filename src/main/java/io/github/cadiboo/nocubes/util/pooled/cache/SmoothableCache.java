@@ -8,18 +8,27 @@ import javax.annotation.Nonnull;
 public class SmoothableCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<SmoothableCache> POOL = ThreadLocal.withInitial(() -> new SmoothableCache(0, 0, 0));
+
 	@Nonnull
 	private boolean[] cache;
+
+	private boolean inUse;
 
 	private SmoothableCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new boolean[sizeX * sizeY * sizeZ];
+		this.inUse = false;
 	}
 
 	@Nonnull
 	public static SmoothableCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
 		final SmoothableCache pooled = POOL.get();
+
+		if (pooled.inUse) {
+			throw new IllegalStateException("SmoothableCache is already in use!");
+		}
+		pooled.inUse = true;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -45,6 +54,7 @@ public class SmoothableCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 }
