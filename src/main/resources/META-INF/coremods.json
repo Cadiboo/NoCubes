@@ -3,5 +3,6 @@
 	"IBlockState Transformer": "i-block-state-transformer.js",
 	"BlockState Transformer": "block-state-transformer.js",
 	"WorldRenderer Transformer": "world-renderer-transformer.js",
-	"IWorldReaderBase Transformer": "i-world-reader-base-transformer.js"
+	"IWorldReaderBase Transformer": "i-world-reader-base-transformer.js",
+	"World Transformer": "world-transformer.js"
 }

@@ -29,6 +29,7 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
+import net.minecraft.world.chunk.Chunk;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -126,5 +127,68 @@ public final class Hooks {
 		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
 	}
 
+	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		int currentChunkPosX = posX >> 4;
+		int currentChunkPosZ = posZ >> 4;
+		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+
+		final IBlockState state = currentChunk.getBlockState(posX, posY, posZ);
+		// terrain is serverside, leaves is clientside - lets see how this goes...
+		if (!state.nocubes_isTerrainSmoothable() && (!Config.renderSmoothLeaves || !state.nocubes_isLeavesSmoothable())) {
+			return state.getFluidState();
+		}
+
+		final IFluidState fluidState = state.getFluidState();
+		if (!fluidState.isEmpty()) {
+			return fluidState;
+		}
+
+		final int extendRange = Config.extendFluidsRange.getRange();
+
+		// For offset = -1 or -2 to offset = 1 or 2;
+		final int maxXOffset = extendRange;
+		final int maxZOffset = extendRange;
+
+		// check up
+		{
+			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+			if (state1.isSource()) {
+				return state1;
+			}
+		}
+
+		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+
+				//no point in checking myself
+				if (xOffset == 0 && zOffset == 0) {
+					continue;
+				}
+
+				int x = posX + xOffset;
+				int z = posZ + zOffset;
+
+				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
+					currentChunkPosX = x >> 4;
+					currentChunkPosZ = z >> 4;
+					currentChunk = world.getChunk(currentChunkPosZ, currentChunkPosX);
+				}
+
+				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
+				if (state1.isSource()) {
+					return state1;
+				}
+
+			}
+		}
+
+		return fluidState;
+
+	}
 
 }
