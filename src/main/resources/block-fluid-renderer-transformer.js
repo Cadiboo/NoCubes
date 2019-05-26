@@ -10,11 +10,18 @@ var targetMethods = [
 
 
 // Local variable indexes
-var ALOCALVARIABLE_this = 0;
+var ALOCALVARIABLE_worldIn = 0;
+var ALOCALVARIABLE_pos = 1;
 var ALOCALVARIABLE_side = 2;
-var ALOCALVARIABLE_blockpos = 4;
-var ALOCALVARIABLE_fluidstate = 5;
-var ALOCALVARIABLE_blockstate = 6;
+var ALOCALVARIABLE_state_fluidState = 3;
+var ALOCALVARIABLE_blockpos_posOffset = 4;
+var ALOCALVARIABLE_blockState = 5;
+
+//    ALOAD 0
+//    ALOAD 4
+//    ALOAD 2
+//    ALOAD 3
+//    ALOAD 5
 
 // 1) Find first BlockPos.offset
 // 2) Find first label after BlockPos.offset
@@ -27,9 +34,9 @@ function modify_isAdjacentFluidSameAs(instructions) {
 //	BlockPos blockpos = pos.offset(side);
 //	// NoCubes Start
 //	if (io.github.cadiboo.nocubes.config.Config.renderExtendedFluids) {
-//	final IBlockState blockState = worldIn.getBlockState(blockpos);
+//		final IBlockState blockState = worldIn.getBlockState(blockpos);
 //		if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
-//			return io.github.cadiboo.nocubes.hooks.Hooks.smoothableIsAdjacentFluidSameAs(worldIn, side, blockpos);
+//			return io.github.cadiboo.nocubes.hooks.Hooks.smoothableIsAdjacentFluidSameAs(worldIn, pos, side, state, blockpos, blockState);
 //		}
 //	}
 //	// NoCubes End
@@ -78,9 +85,12 @@ function modify_isAdjacentFluidSameAs(instructions) {
 //    LINENUMBER 50 L5
 //   FRAME APPEND [net/minecraft/util/math/BlockPos net/minecraft/block/state/IBlockState]
 //    ALOAD 0
+//    ALOAD 1
 //    ALOAD 2
+//    ALOAD 3
 //    ALOAD 4
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.smoothableIsAdjacentFluidSameAs (Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/EnumFacing;Lnet/minecraft/util/math/BlockPos;)Z
+//    ALOAD 5
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.smoothableIsAdjacentFluidSameAs (Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;Lnet/minecraft/fluid/IFluidState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Z
 //    IRETURN
 //   L2
 //    LINENUMBER 54 L2
@@ -144,8 +154,8 @@ function modify_isAdjacentFluidSameAs(instructions) {
 	toInject.add(new JumpInsnNode(IF_ACMPEQ, originalInstructionsLabel));
 
 	toInject.add(new LabelNode());
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_worldIn));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos_posOffset));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKEINTERFACE,
@@ -158,10 +168,10 @@ function modify_isAdjacentFluidSameAs(instructions) {
 			//boolean isInterface
 			true
 	));
-	toInject.add(new VarInsnNode(ASTORE, ALOCALVARIABLE_blockstate));
+	toInject.add(new VarInsnNode(ASTORE, ALOCALVARIABLE_blockState));
 
 	toInject.add(new LabelNode());
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockState));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKEINTERFACE,
@@ -175,7 +185,7 @@ function modify_isAdjacentFluidSameAs(instructions) {
 			true
 	));
 	toInject.add(new JumpInsnNode(IFNE, executeOverrideLabel));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockstate));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockState));
 	toInject.add(new MethodInsnNode(
     		//int opcode
     		INVOKEINTERFACE,
@@ -191,10 +201,12 @@ function modify_isAdjacentFluidSameAs(instructions) {
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
 	toInject.add(executeOverrideLabel);
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_worldIn));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_pos));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_side));
-
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_state_fluidState));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockpos_posOffset));
+	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_blockState));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -203,7 +215,7 @@ function modify_isAdjacentFluidSameAs(instructions) {
 			//String name
 			"smoothableIsAdjacentFluidSameAs",
 			//String descriptor
-			"(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/EnumFacing;Lnet/minecraft/util/math/BlockPos;)Z",
+			"(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;Lnet/minecraft/fluid/IFluidState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Z",
 			//boolean isInterface
 			false
 	));

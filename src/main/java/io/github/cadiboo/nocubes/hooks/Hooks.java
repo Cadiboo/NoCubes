@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.chunk.RenderChunkCache;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.Entity;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -126,15 +127,20 @@ public final class Hooks {
 		return CollisionHandler.shouldApplyCollisions(movingEntity);
 	}
 
+	/**
+	 * I CANNOT WAIT till I hack FluidStates and just make everything "real" and don't need to deal with this
+	 *
+	 * @param worldIn    the IBlockReader passed in
+	 * @param pos        the position of the block being rendered
+	 * @param side       the side of the block being rendered
+	 * @param state      the fluid state being rendered
+	 * @param blockpos   `pos`.offset(`side`)
+	 * @param blockState the blockState at `blockpos`
+	 * @return if the side should NOT be rendered
+	 */
 	//	@OnlyIn(Dist.CLIENT) // Not needed because even though its only called clientside it doesn't reference any client side code
-	// return if the side should not be rendered
-	public static boolean smoothableIsAdjacentFluidSameAs(final IBlockReader worldIn, final EnumFacing side, final BlockPos blockpos) {
-		if (side != EnumFacing.UP) {
-			return !worldIn.getBlockState(blockpos.up(1)).isSolid();
-		} else {
-			final BlockPos posUpUp = blockpos.up(1);
-			return !worldIn.getBlockState(posUpUp).isAir(worldIn, posUpUp);
-		}
+	public static boolean smoothableIsAdjacentFluidSameAs(final IBlockReader worldIn, final BlockPos pos, final EnumFacing side, final IFluidState state, final BlockPos blockpos, final IBlockState blockState) {
+		return true;
 	}
 
 }

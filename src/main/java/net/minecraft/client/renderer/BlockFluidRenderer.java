@@ -47,7 +47,7 @@ public class BlockFluidRenderer {
       if (io.github.cadiboo.nocubes.config.Config.renderExtendedFluids) {
          final IBlockState blockState = worldIn.getBlockState(blockpos);
          if (blockState.nocubes_isTerrainSmoothable() || blockState.nocubes_isLeavesSmoothable()) {
-            return io.github.cadiboo.nocubes.hooks.Hooks.smoothableIsAdjacentFluidSameAs(worldIn, side, blockpos);
+	         return io.github.cadiboo.nocubes.hooks.Hooks.smoothableIsAdjacentFluidSameAs(worldIn, pos, side, state, blockpos, blockState);
          }
       }
       // NoCubes End
