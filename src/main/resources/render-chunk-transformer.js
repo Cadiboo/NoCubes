@@ -145,7 +145,7 @@ function injectPreIterationHook(instructions) {
 		throw "Error: Couldn't find label!";
 	}
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
@@ -301,7 +301,7 @@ function injectBlockRenderHook(instructions) {
 		throw "Error: Couldn't find blockCannotRenderLabel!";
 	}
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();

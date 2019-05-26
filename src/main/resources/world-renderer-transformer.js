@@ -133,7 +133,7 @@ function injectRenderBlockDamageHook(instructions) {
 	}
 
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();

@@ -120,7 +120,7 @@ function injectGetCollisionBoxesHook(instructions) {
 		throw "Error: Couldn't find label!";
 	}
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();

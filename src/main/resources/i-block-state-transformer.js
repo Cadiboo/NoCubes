@@ -216,7 +216,7 @@ function injectIsSolidHook(instructions) {
 		throw "Error: Couldn't find injection point!";
 	}
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
@@ -326,7 +326,7 @@ function injectCausesSuffocationHook(instructions) {
 		throw "Error: Couldn't find injection point!";
 	}
 
-	var toInject = new InsnList()
+	var toInject = new InsnList();
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
