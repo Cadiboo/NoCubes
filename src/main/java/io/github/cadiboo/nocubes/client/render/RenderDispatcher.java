@@ -61,7 +61,7 @@ public final class RenderDispatcher {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
 	) {
 
-		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves && !Config.renderExtendedFluids) {
+		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves) {
 			return;
 		}
 
@@ -146,7 +146,7 @@ public final class RenderDispatcher {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache
 	) {
-		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves && !Config.renderExtendedFluids) {
+		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves) {
 			return;
 		}
 		try (LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess)) {
