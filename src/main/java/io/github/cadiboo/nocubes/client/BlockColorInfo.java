@@ -28,7 +28,7 @@ public class BlockColorInfo implements AutoCloseable {
 	public float green3;
 	public float blue3;
 
-	private boolean isReleased = true;
+	private boolean inUse;
 
 	private BlockColorInfo(
 			final float red0, final float green0, final float blue0,
@@ -48,6 +48,7 @@ public class BlockColorInfo implements AutoCloseable {
 		this.red3 = red3;
 		this.green3 = green3;
 		this.blue3 = blue3;
+		this.inUse = false;
 	}
 
 	public static BlockColorInfo generateBiomeGrassColorInfo(
@@ -205,11 +206,10 @@ public class BlockColorInfo implements AutoCloseable {
 
 		BlockColorInfo pooled = POOL.get();
 
-		if (!pooled.isReleased) {
-			throw new IllegalStateException();
+		if (pooled.inUse) {
+			throw new IllegalStateException("BlockColorInfo is already in use!");
 		}
-
-		pooled.isReleased = false;
+		pooled.inUse = true;
 
 		pooled.red0 = red0;
 		pooled.green0 = green0;
@@ -229,7 +229,7 @@ public class BlockColorInfo implements AutoCloseable {
 
 	@Override
 	public void close() {
-		this.isReleased = true;
+		this.inUse = false;
 	}
 
 }
