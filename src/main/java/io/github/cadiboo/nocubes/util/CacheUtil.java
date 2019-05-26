@@ -24,8 +24,8 @@ public final class CacheUtil {
 			@Nonnull final IBlockReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
+		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
-			final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final IBlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
@@ -40,6 +40,11 @@ public final class CacheUtil {
 			}
 
 			return stateCache;
+		} catch (final Exception e) {
+			// getBlockState/getFluidState can throw an error if its trying to get a region for a chunk out of bounds
+			// close
+			stateCache.close();
+			throw e;
 		}
 	}
 
