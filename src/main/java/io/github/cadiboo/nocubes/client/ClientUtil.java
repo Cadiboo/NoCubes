@@ -27,6 +27,7 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
 import static net.minecraft.init.Blocks.GRASS_BLOCK;
+import static net.minecraft.init.Blocks.PACKED_ICE;
 import static net.minecraft.init.Blocks.PODZOL;
 import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
@@ -316,6 +317,8 @@ public final class ClientUtil {
 		public static final IBlockState PODZOL_SNOWY = PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
 
 		public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS_BLOCK.getDefaultState();
+
+		public static final IBlockState PACKED_ICE_DEFAULT = PACKED_ICE.getDefaultState();
 
 	}
 
