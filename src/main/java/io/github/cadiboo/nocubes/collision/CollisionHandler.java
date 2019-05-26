@@ -80,6 +80,19 @@ public final class CollisionHandler {
 		final int startPosY = minYm1 - additionalSizeNegY;
 		final int startPosZ = minZm1 - additionalSizeNegZ;
 
+		if (!iWorldReaderBase.isAreaLoaded(
+				startPosX, startPosY, startPosZ,
+				startPosX + sizeX, startPosY + sizeY, startPosZ + sizeZ,
+				true
+		)) {
+			return Stream.concat(
+					getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
+							.limit(1L)
+							.filter(predicate)
+			);
+		}
+
 		try (
 				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 				StateCache stateCache = CacheUtil.generateStateCache(
