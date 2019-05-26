@@ -151,37 +151,37 @@ public final class RenderDispatcher {
 		}
 		try (LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess)) {
 
-			if (Config.renderExtendedFluids) {
-				try (
-						final ModProfiler ignored = ModProfiler.get().start("extendFluids");
-						SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
-								stateCache,
-								(state) ->
-										(Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.apply(state)) || (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.apply(state))
-						)
-				) {
-					try {
-						ExtendedFluidChunkRenderer.renderChunk(
-								renderChunk,
-								generator,
-								compiledChunk,
-								renderChunkPosition,
-								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-								blockAccess,
-								pooledMutableBlockPos,
-								usedBlockRenderLayers,
-								stateCache, smoothableCache,
-								packedLightCache
-						);
-					} catch (ReportedException e) {
-						throw e;
-					} catch (Exception e) {
-						CrashReport crashReport = new CrashReport("Error rendering extended fluids!", e);
-						crashReport.makeCategory("Rendering extended fluids");
-						throw new ReportedException(crashReport);
-					}
-				}
-			}
+//			if (Config.renderExtendedFluids) {
+//				try (
+//						final ModProfiler ignored = ModProfiler.get().start("extendFluids");
+//						SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
+//								stateCache,
+//								(state) ->
+//										(Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.apply(state)) || (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.apply(state))
+//						)
+//				) {
+//					try {
+//						ExtendedFluidChunkRenderer.renderChunk(
+//								renderChunk,
+//								generator,
+//								compiledChunk,
+//								renderChunkPosition,
+//								renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+//								blockAccess,
+//								pooledMutableBlockPos,
+//								usedBlockRenderLayers,
+//								stateCache, smoothableCache,
+//								packedLightCache
+//						);
+//					} catch (ReportedException e) {
+//						throw e;
+//					} catch (Exception e) {
+//						CrashReport crashReport = new CrashReport("Error rendering extended fluids!", e);
+//						crashReport.makeCategory("Rendering extended fluids");
+//						throw new ReportedException(crashReport);
+//					}
+//				}
+//			}
 
 			try {
 				if (Config.renderSmoothTerrain) {

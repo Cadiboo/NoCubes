@@ -26,7 +26,6 @@ import net.minecraft.util.math.shapes.VoxelShapeInt;
 import net.minecraft.util.math.shapes.VoxelShapePart;
 import net.minecraft.util.math.shapes.VoxelShapePartBitSet;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
@@ -127,20 +126,5 @@ public final class Hooks {
 		return CollisionHandler.shouldApplyCollisions(movingEntity);
 	}
 
-	/**
-	 * I CANNOT WAIT till I hack FluidStates and just make everything "real" and don't need to deal with this
-	 *
-	 * @param worldIn    the IBlockReader passed in
-	 * @param pos        the position of the block being rendered
-	 * @param side       the side of the block being rendered
-	 * @param state      the fluid state being rendered
-	 * @param blockpos   `pos`.offset(`side`)
-	 * @param blockState the blockState at `blockpos`
-	 * @return if the side should NOT be rendered
-	 */
-	//	@OnlyIn(Dist.CLIENT) // Not needed because even though its only called clientside it doesn't reference any client side code
-	public static boolean smoothableIsAdjacentFluidSameAs(final IBlockReader worldIn, final BlockPos pos, final EnumFacing side, final IFluidState state, final BlockPos blockpos, final IBlockState blockState) {
-		return true;
-	}
 
 }
