@@ -196,7 +196,7 @@ public interface IWorldReaderBase extends IBlockReader {
 		// NoCubes Start
 		if (io.github.cadiboo.nocubes.config.Config.terrainCollisions) {
 			return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, movingEntity, area, p_212392_3_, flag1);
-		}
+		} else
 		// NoCubes End
 
 		return this.getCollisionBoxes(area, p_212392_3_, flag1);
