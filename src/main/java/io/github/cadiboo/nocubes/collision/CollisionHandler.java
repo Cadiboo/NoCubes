@@ -107,6 +107,7 @@ public final class CollisionHandler {
 			);
 		}
 
+		final ModProfiler profiler = ModProfiler.get();
 		try (
 				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 				StateCache stateCache = CacheUtil.generateStateCache(
@@ -119,68 +120,115 @@ public final class CollisionHandler {
 						sizeX - 1, sizeY - 1, sizeZ - 1,
 						0, 0, 0,
 						stateCache, smoothableCache
-				);
-				ModProfiler profiler = ModProfiler.get().start("Calculate collisions")
+				)
 		) {
 
-			final HashMap<Vec3b, FaceList> meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
-			MeshDispatcher.offsetMesh(minXm1, minYm1, minZm1, meshData);
-
-			final FaceList finalFaces = FaceList.retain();
-
-			for (final FaceList generatedFaceList : meshData.values()) {
-				finalFaces.addAll(generatedFaceList);
-				generatedFaceList.close();
-			}
-			for (final Vec3b vec3b : meshData.keySet()) {
-				vec3b.close();
+			final HashMap<Vec3b, FaceList> meshData;
+			try (final ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
+				meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 			}
 
-			final List<VoxelShape> collidingShapes = new ArrayList<>();
+			try (final ModProfiler ignored = profiler.start("Offset collisions mesh")) {
+				MeshDispatcher.offsetMesh(minXm1, minYm1, minZm1, meshData);
+			}
 
-			for (final Face face : finalFaces) {
-				try (
-						final Vec3 v0 = face.getVertex0();
-						final Vec3 v1 = face.getVertex1();
-						final Vec3 v2 = face.getVertex2();
-						final Vec3 v3 = face.getVertex3()
-				) {
-					// Snap collision VoxelShapes max Y to max Y VoxelShapes of original block at pos if smaller than original
-					// To stop players falling down through the world when they enable collisions
-					// (Only works on flat or near-flat surfaces)
-					//TODO: remove
-					final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
-					final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
-					final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
-					final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
-							approximateX - startPosX,
-							approximateY - startPosY,
-							approximateZ - startPosZ
-					)];
-					final VoxelShape originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
-							approximateX, approximateY, approximateZ
-					));
-					addIntersectingFaceBoxesToList(collidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F, predicate, false);
+			try (FaceList finalFaces = FaceList.retain()) {
+
+				try (final ModProfiler ignored = profiler.start("Combine collisions faces")) {
+					for (final FaceList generatedFaceList : meshData.values()) {
+						finalFaces.addAll(generatedFaceList);
+						generatedFaceList.close();
+					}
+					for (final Vec3b vec3b : meshData.keySet()) {
+						vec3b.close();
+					}
 				}
-				face.close();
+
+				final List<VoxelShape> collidingShapes = new ArrayList<>();
+
+				for (final Face face : finalFaces) {
+					try (
+							final Vec3 v0 = face.getVertex0();
+							final Vec3 v1 = face.getVertex1();
+							final Vec3 v2 = face.getVertex2();
+							final Vec3 v3 = face.getVertex3()
+					) {
+						final int approximateY;
+						final VoxelShape originalBoxShape;
+
+						try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
+							// Snap collision VoxelShapes max Y to max Y VoxelShapes of original block at pos if smaller than original
+							// To stop players falling down through the world when they enable collisions
+							// (Only works on flat or near-flat surfaces)
+							//TODO: remove
+							final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
+							approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
+							final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
+							final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
+									approximateX - startPosX,
+									approximateY - startPosY,
+									approximateZ - startPosZ
+							)];
+							originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
+									approximateX, approximateY, approximateZ
+							));
+						}
+						addIntersectingFaceBoxesToList(collidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F, predicate, false);
+					}
+					face.close();
+				}
+
+				return Stream.concat(
+						Stream.concat(
+								getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+								collidingShapes.stream()
+						), Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
+								.limit(1L)
+								.filter(predicate)
+				);
+
 			}
-
-			return Stream.concat(
-					Stream.concat(
-							getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-							collidingShapes.stream()
-					), Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-							.limit(1L)
-							.filter(predicate)
-			);
-
 		}
 	}
 
 	//TODO
 	private static Stream<VoxelShape> getReposeCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
 		return Stream.concat(
-				getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+				StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(minXm1, minYm1, minZm1, maxXp1 - 1, maxYp1 - 1, maxZp1 - 1).spliterator(), false).map((pos) -> {
+					int k1 = pos.getX();
+					int l1 = pos.getY();
+					int i2 = pos.getZ();
+					boolean flag1 = k1 == minXm1 || k1 == maxXp1 - 1;
+					boolean flag2 = l1 == minYm1 || l1 == maxYp1 - 1;
+					boolean flag3 = i2 == minZm1 || i2 == maxZp1 - 1;
+					if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && iWorldReaderBase.isBlockLoaded(pos)) {
+						final VoxelShape voxelshape;
+						if (isEntityInsideWorldBorder && !isAreaInsideWorldBorder && !worldborder.contains(pos)) {
+							voxelshape = VoxelShapes.fullCube();
+						} else {
+							//Added stuff here
+							final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
+							if (TERRAIN_SMOOTHABLE.apply(blockState)) {
+								voxelshape = StolenReposeCode.getCollisionShape(blockState, iWorldReaderBase, pos);
+							} else {
+								voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);
+							}
+							//End added stuff
+						}
+
+						VoxelShape voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
+						if (VoxelShapes.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
+							return VoxelShapes.empty();
+						} else if (voxelshape == VoxelShapes.fullCube()) {
+							voxelshapepart.setFilled(k1 - minXm1, l1 - minYm1, i2 - minZm1, true, true);
+							return VoxelShapes.empty();
+						} else {
+							return voxelshape.withOffset((double) k1, (double) l1, (double) i2);
+						}
+					} else {
+						return VoxelShapes.empty();
+					}
+				}).filter(predicate),
 				Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
 						.limit(1L)
 						.filter(predicate)
