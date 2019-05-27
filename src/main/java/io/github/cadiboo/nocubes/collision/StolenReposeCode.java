@@ -74,7 +74,7 @@ final class StolenReposeCode {
 		}
 	}
 
-	private static VoxelShape getSlopingCollisionShape(final IBlockState state, IBlockReader world, final BlockPos pos) {
+	private static VoxelShape getSlopingCollisionShape(final IBlockState state, IWorldReaderBase world, final BlockPos pos) {
 		final double height = blockHeight(pos, world, state);
 		VoxelShape shape = VoxelShapes.empty();
 		for (Direction direction : Direction.OrdinalDirections) {
@@ -83,7 +83,7 @@ final class StolenReposeCode {
 		return shape;
 	}
 
-	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IBlockReader world) {
+	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IWorldReaderBase world) {
 		final double stepHeight = blockHeight - 0.5;
 		final double height;
 		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, world) &&
@@ -104,7 +104,10 @@ final class StolenReposeCode {
 		);
 	}
 
-	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IBlockReader world) {
+	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReaderBase world) {
+		if (!world.isBlockLoaded(offsetPos) || !world.getWorldBorder().contains(offsetPos)) {
+			return true;
+		}
 		final IBlockState neighbor = world.getBlockState(offsetPos);
 		return neighbor.isTopSolid() && blockHeight(offsetPos, world, neighbor) >= stepHeight;
 	}
