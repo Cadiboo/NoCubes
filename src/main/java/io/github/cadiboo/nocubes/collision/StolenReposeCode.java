@@ -66,8 +66,9 @@ final class StolenReposeCode {
 		if (density > -1) {
 			return VoxelShapes.empty();
 		} else if (canSlopeAt(stateIn, worldIn, posIn, collisionShape)) {
-			try (ModProfiler ignored = ModProfiler.get().start("Collisions getSlopingCollisionShape")){
-			return getSlopingCollisionShape(stateIn, worldIn, posIn);}
+			try (ModProfiler ignored = ModProfiler.get().start("Collisions getSlopingCollisionShape")) {
+				return getSlopingCollisionShape(stateIn, worldIn, posIn);
+			}
 		} else {
 			return collisionShape;
 		}
