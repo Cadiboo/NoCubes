@@ -24,6 +24,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
+//TODO: clean up this class
 public final class MeshDispatcher {
 
 	@Nonnull
