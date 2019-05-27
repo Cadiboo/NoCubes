@@ -137,7 +137,14 @@ public final class Hooks {
 		int currentChunkPosZ = posZ >> 4;
 		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
 
+		final int extendRange = Config.extendFluidsRange.getRange();
+
+		if (extendRange == 0) {
+			return currentChunk.getFluidState(posX, posY, posZ);
+		}
+
 		final IBlockState state = currentChunk.getBlockState(posX, posY, posZ);
+
 		// terrain is serverside, leaves is clientside - lets see how this goes...
 		if (!state.nocubes_isTerrainSmoothable() && (!Config.renderSmoothLeaves || !state.nocubes_isLeavesSmoothable())) {
 			return state.getFluidState();
@@ -147,8 +154,6 @@ public final class Hooks {
 		if (!fluidState.isEmpty()) {
 			return fluidState;
 		}
-
-		final int extendRange = Config.extendFluidsRange.getRange();
 
 		// For offset = -1 or -2 to offset = 1 or 2;
 		final int maxXOffset = extendRange;
