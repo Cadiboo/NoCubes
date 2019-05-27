@@ -228,7 +228,7 @@ public final class RenderDispatcher {
 						final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.apply(checkState) && checkState.getBlock() == smoothableBlock);
 						try (
 								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
-								SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
+								SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
 						) {
 							MeshRenderer.renderMesh(
 									renderChunk,
@@ -244,13 +244,13 @@ public final class RenderDispatcher {
 									blockColorsCache,
 									MeshDispatcher.generateChunkMeshOffset(
 											renderChunkPosition, blockAccess, pooledMutableBlockPos,
-											stateCache, null, null,
+											stateCache, smoothableCache, null,
 											// state cache begins at -2 and density cache expects -1
 											1, 1, 1,
 											isSmoothable,
 											Config.leavesMeshGenerator
 									),
-									textureSmoothableCache,
+									smoothableCache,
 									// state cache begins at -2 and density cache expects 0
 									2, 2, 2,
 									pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
@@ -263,7 +263,7 @@ public final class RenderDispatcher {
 					final IsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
 					try (
 //							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
-							SmoothableCache textureSmoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
+							SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, isSmoothable)
 					) {
 						MeshRenderer.renderMesh(
 								renderChunk,
@@ -279,13 +279,13 @@ public final class RenderDispatcher {
 								blockColorsCache,
 								MeshDispatcher.generateChunkMeshOffset(
 										renderChunkPosition, blockAccess, pooledMutableBlockPos,
-										stateCache, null, null,
+										stateCache, smoothableCache, null,
 										// state cache begins at -2 and density cache expects -1
 										1, 1, 1,
 										isSmoothable,
 										Config.leavesMeshGenerator
 								),
-								textureSmoothableCache,
+								smoothableCache,
 								// state cache begins at -2 and density cache expects 0
 								2, 2, 2,
 								pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
