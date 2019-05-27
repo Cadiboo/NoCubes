@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,7 +17,9 @@ import java.util.Set;
 @SuppressWarnings("WeakerAccess")
 public final class Config {
 
+	@Nonnull
 	static final Logger LOGGER = LogManager.getLogger();
+	@Nonnull
 	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
 
 	// Client
@@ -25,8 +28,6 @@ public final class Config {
 	public static MeshGeneratorType leavesMeshGenerator;
 	public static Set<String> leavesSmoothable;
 	public static SmoothLeavesType smoothLeavesType;
-
-	public static boolean renderExtendedFluids;
 
 	public static boolean applyDiffuseLighting;
 
@@ -44,6 +45,7 @@ public final class Config {
 	public static Set<String> terrainSmoothable;
 
 	// Client
+	@Nonnull
 	public static HashSet<Block> getLeavesSmoothableBlocks() {
 		return leavesSmoothableBlocks;
 	}

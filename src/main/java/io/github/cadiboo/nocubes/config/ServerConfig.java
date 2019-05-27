@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraftforge.common.ForgeConfigSpec;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -13,20 +14,23 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
  */
 final class ServerConfig {
 
-	ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
-	ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
-	ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
-	ForgeConfigSpec.BooleanValue terrainCollisions;
-	ForgeConfigSpec.BooleanValue leavesCollisions;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue terrainCollisions;
 
-	ServerConfig(ForgeConfigSpec.Builder builder) {
+	ServerConfig(@Nonnull final ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		terrainSmoothable = builder
 				.comment("The list of terrain smoothable blockstates")
 				.translation(MOD_ID + ".config.terrainSmoothable")
 				.defineList("terrainSmoothable", ConfigHelper.getDefaultTerrainSmoothable(), o -> o instanceof String);
 		extendFluidsRange = builder
-				.comment("The range at which to extend fluids")
+				.comment("The range at which to extend fluids into smoothable blocks")
 				.translation(MOD_ID + ".config.extendFluidsRange")
 				.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 		terrainMeshGenerator = builder

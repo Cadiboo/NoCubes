@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import net.minecraftforge.common.ForgeConfigSpec;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -13,24 +14,32 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
  */
 final class ClientConfig {
 
-	ForgeConfigSpec.BooleanValue renderSmoothTerrain;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue renderSmoothTerrain;
 
-	ForgeConfigSpec.BooleanValue renderSmoothLeaves;
-	ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
-	ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
-	ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue renderSmoothLeaves;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
+	@Nonnull
+	final ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
 
-	ForgeConfigSpec.BooleanValue renderExtendedFluids;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue applyDiffuseLighting;
 
-	ForgeConfigSpec.BooleanValue applyDiffuseLighting;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue betterTextures;
 
-	ForgeConfigSpec.BooleanValue betterTextures;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue smoothFluidLighting;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue smoothFluidColors;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue naturalFluidTextures;
 
-	ForgeConfigSpec.BooleanValue smoothFluidLighting;
-	ForgeConfigSpec.BooleanValue smoothFluidColors;
-	ForgeConfigSpec.BooleanValue naturalFluidTextures;
-
-	ClientConfig(final ForgeConfigSpec.Builder builder) {
+	ClientConfig(@Nonnull final ForgeConfigSpec.Builder builder) {
 		builder.push("general");
 		renderSmoothTerrain = builder
 				.comment("If smooth terrain should be rendered")
@@ -53,11 +62,6 @@ final class ClientConfig {
 				.comment("How leaves should be rendered")
 				.translation(MOD_ID + ".config.smoothLeavesType")
 				.defineEnum("smoothLeavesType", SmoothLeavesType.TOGETHER);
-
-		renderExtendedFluids = builder
-				.comment("If fluids should be rendered extended into smoothable blocks")
-				.translation(MOD_ID + ".config.renderExtendedFluids")
-				.define("renderExtendedFluids", true);
 
 		applyDiffuseLighting = builder
 				.comment("If diffuse lighting should be applied when rendering. Accentuates differences between heights")

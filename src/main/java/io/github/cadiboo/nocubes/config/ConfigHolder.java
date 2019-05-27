@@ -3,14 +3,20 @@ package io.github.cadiboo.nocubes.config;
 import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author Cadiboo
  */
 public final class ConfigHolder {
 
+	@Nonnull
 	public static final ForgeConfigSpec CLIENT_SPEC;
+	@Nonnull
 	public static final ForgeConfigSpec SERVER_SPEC;
+	@Nonnull
 	static final ClientConfig CLIENT;
+	@Nonnull
 	static final ServerConfig SERVER;
 	static {
 		{
