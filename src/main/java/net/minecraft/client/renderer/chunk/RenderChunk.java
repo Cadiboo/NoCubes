@@ -149,7 +149,9 @@ public class RenderChunk
             boolean[] aboolean = new boolean[BlockRenderLayer.values().length];
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
-            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, generator,compiledchunk,blockpos, this.world, aboolean, blockrendererdispatcher);
+            // NoCubes Start
+            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, this.world, this.worldView, lvt_9_1_, lvt_10_1_, aboolean, blockrendererdispatcher);
+            // NoCubes End
             for (BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1))
             {
                 IBlockState iblockstate = this.worldView.getBlockState(blockpos$mutableblockpos);
@@ -185,6 +187,10 @@ public class RenderChunk
                      net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockrenderlayer1);
                 int j = blockrenderlayer1.ordinal();
 
+                // NoCubes Start
+                if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
+                if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+                // NoCubes End
                 if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE)
                 {
                     BufferBuilder bufferbuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(j);

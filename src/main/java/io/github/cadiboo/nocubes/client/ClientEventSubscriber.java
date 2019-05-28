@@ -87,15 +87,15 @@ public final class ClientEventSubscriber {
 		{
 			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
 				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
-//				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
+				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
 				// Config saving is async so set it now
 				Config.renderSmoothTerrain = newRenderSmoothTerrain;
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
 			if (ClientProxy.toggleRenderSmoothLeaves.isPressed()) {
-				final boolean newRenderSmoothLeaves = Config.renderSmoothLeaves;
-//				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
+				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
+				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
 				// Config saving is async so set it now
 				Config.renderSmoothLeaves = newRenderSmoothLeaves;
 				ClientUtil.tryReloadRenderers();
@@ -109,7 +109,7 @@ public final class ClientEventSubscriber {
 				final boolean setTo;
 				if (!Config.terrainCollisions) {
 					if (canEnableTerrainCollisions(minecraft, player)) {
-//						ConfigHelper.setTerrainCollisions(true);
+						ConfigHelper.setTerrainCollisions(true);
 						setTo = true;
 						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsEnabledWarning"));
 						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getDisplayName())));
@@ -118,19 +118,12 @@ public final class ClientEventSubscriber {
 						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotOnFlat"));
 					}
 				} else {
-//					ConfigHelper.setTerrainCollisions(false);
+					ConfigHelper.setTerrainCollisions(false);
 					setTo = false;
 					player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisabled"));
 				}
 				// Config saving is async so set it now
 				Config.terrainCollisions = setTo;
-			}
-
-			if (ClientProxy.tempToggleLeavesCollisions.isPressed()) {
-				final boolean newLeavesCollisions = !Config.leavesCollisions;
-//				ConfigHelper.setLeavesCollisions(newLeavesCollisions);
-				// Config saving is async so set it now
-				Config.leavesCollisions = newLeavesCollisions;
 			}
 		}
 
@@ -412,7 +405,37 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		Minecraft.getMinecraft().debugRenderer.collisionBox.render(event.getPartialTicks(), 500_000L);
+//		final EntityPlayer player = Minecraft.getMinecraft().player;
+//		if (player == null) {
+//			return;
+//		}
+//
+//		final World world = player.world;
+//		if (world == null) {
+//			return;
+//		}
+//
+//		final float partialTicks = event.getPartialTicks();
+//
+//		GlStateManager.enableBlend();
+//		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+//		GlStateManager.glLineWidth(Math.max(2.5F, (float) Minecraft.getMinecraft().mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
+//		GlStateManager.disableTexture2D();
+//		GlStateManager.depthMask(false);
+//		GlStateManager.matrixMode(5889);
+//		GlStateManager.pushMatrix();
+//		GlStateManager.scalef(1.0F, 1.0F, 0.999F);
+//		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
+//		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
+//		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
+//		for (final VoxelShape voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()).grow(2)).collect(Collectors.toList())) {
+//			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0.0F, 1, 1, 0.4F);
+//		}
+//		GlStateManager.popMatrix();
+//		GlStateManager.matrixMode(5888);
+//		GlStateManager.depthMask(true);
+//		GlStateManager.enableTexture2D();
+//		GlStateManager.disableBlend();
 
 	}
 
@@ -459,25 +482,27 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
+		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+		final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+
+		final Tessellator tessellator = Tessellator.getInstance();
+		final BufferBuilder bufferbuilder = tessellator.getBuffer();
+
+		bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+
+		GlStateManager.enableBlend();
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.glLineWidth(3.0F);
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthMask(false);
+
+		GlStateManager.color(0, 0, 0, 1);
+		GlStateManager.color(1, 1, 1, 1);
+
+		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+
 		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, isSmoothable, meshGeneratorType)) {
-			final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
-			final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
-			final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
-
-			final Tessellator tessellator = Tessellator.getInstance();
-			final BufferBuilder bufferbuilder = tessellator.getBuffer();
-
-			bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
-
-			GlStateManager.enableBlend();
-			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-			GlStateManager.glLineWidth(3.0F);
-			GlStateManager.disableTexture2D();
-			GlStateManager.depthMask(false);
-
-			GlStateManager.color(0, 0, 0, 1);
-			GlStateManager.color(1, 1, 1, 1);
-
 			for (final Face face : faces) {
 				try {
 					try (
@@ -486,28 +511,30 @@ public final class ClientEventSubscriber {
 							Vec3 v2 = face.getVertex2();
 							Vec3 v3 = face.getVertex3()
 					) {
-						bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
-
-						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
+						final double v0x = v0.x;
+						final double v0y = v0.y;
+						final double v0z = v0.z;
+						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
 						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
-
-						tessellator.draw();
+						// End back at v0. Draw with alpha this time
+						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
 					}
 				} finally {
 					face.close();
 				}
 			}
-
-			GlStateManager.depthMask(true);
-			GlStateManager.enableTexture2D();
-			GlStateManager.disableBlend();
-
-			bufferbuilder.setTranslation(0, 0, 0);
-
 		}
+
+		tessellator.draw();
+
+		GlStateManager.depthMask(true);
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
+
+		bufferbuilder.setTranslation(0, 0, 0);
 
 	}
 

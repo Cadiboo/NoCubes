@@ -8,18 +8,27 @@ import javax.annotation.Nonnull;
 public class DensityCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0));
+
 	@Nonnull
 	private float[] cache;
+
+	private boolean inUse;
 
 	private DensityCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		cache = new float[sizeX * sizeY * sizeZ];
+		this.inUse = false;
 	}
 
 	@Nonnull
 	public static DensityCache retain(final int sizeX, final int sizeY, final int sizeZ) {
 
 		final DensityCache pooled = POOL.get();
+
+		if (pooled.inUse) {
+			throw new IllegalStateException("DensityCache is already in use!");
+		}
+		pooled.inUse = true;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
@@ -45,6 +54,7 @@ public class DensityCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 }

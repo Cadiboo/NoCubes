@@ -12,22 +12,26 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.entity.Entity;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.border.WorldBorder;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 
 /**
  * @author Cadiboo
  */
-//@SuppressWarnings("unused") // Hooks are called with ASM
+@SuppressWarnings("WeakerAccess") // Hooks are called with ASM
 public final class Hooks {
 
-	public static void preIteration(final RenderChunk renderChunk, final ChunkCompileTaskGenerator generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final IBlockAccess world, final boolean[] aboolean, final BlockRendererDispatcher blockrendererdispatcher) {
-		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, aboolean, new Random(), blockrendererdispatcher);
+	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkCompileTaskGenerator generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final IBlockAccess lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final BlockRendererDispatcher blockrendererdispatcher) {
+		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, new Random(), blockrendererdispatcher);
 	}
 
 	//return if normal rendering should happen
@@ -42,13 +46,13 @@ public final class Hooks {
 	}
 
 //	//return all the voxel shapes that entityShape intersects inside area
-//	public static Stream<VoxelShape> getCollisionShapes(final IBlockAccess IBlockAccess, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+//	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
 //		try {
-//			return CollisionHandler.getCollisionShapes(IBlockAccess, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
+//			return CollisionHandler.getCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 //		} catch (final Exception e) {
 //			NoCubes.LOGGER.error("Error with collisions! Falling back to vanilla.", e);
 //			return Stream.concat(
-//					CollisionHandler.getCollisionShapesExcludingSmoothable(null, IBlockAccess, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate),
+//					CollisionHandler.getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate),
 //					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, i, k, i1))
 //							.limit(1L)
 //							.filter(predicate)
@@ -56,7 +60,7 @@ public final class Hooks {
 //		}
 //	}
 //
-//	public static Stream<VoxelShape> getCollisionShapes(final IBlockAccess _this, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, boolean isEntityInsideWorldBorder) {
+//	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase _this, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, boolean isEntityInsideWorldBorder) {
 //		int i = MathHelper.floor(area.getStart(EnumFacing.Axis.X)) - 1;
 //		int j = MathHelper.ceil(area.getEnd(EnumFacing.Axis.X)) + 1;
 //		int k = MathHelper.floor(area.getStart(EnumFacing.Axis.Y)) - 1;
@@ -70,8 +74,8 @@ public final class Hooks {
 //			return !p_212393_1_.isEmpty() && VoxelShapes.compare(area, p_212393_1_, IBooleanFunction.AND);
 //		};
 //		// NoCubes Start
-//		if (Hooks.shouldApplyCollisions(movingEntity))
-//			return Hooks.getCollisionShapes(_this, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
+//		if (io.github.cadiboo.nocubes.hooks.Hooks.shouldApplyCollisions(movingEntity))
+//			return Hooks.getCollisionShapes(_this, movingEntity, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 //		// NoCubes End
 //		Stream<VoxelShape> stream = StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((p_212390_12_) -> {
 //			int k1 = p_212390_12_.getX();
@@ -105,20 +109,129 @@ public final class Hooks {
 //			return new VoxelShapeInt(voxelshapepart, i, k, i1);
 //		}).limit(1L).filter(predicate));
 //	}
-//
+
 //	private static boolean shouldApplyCollisions(final Entity movingEntity) {
-//		return CollisionHandler.shouldApplyCollisions(movingEntity);
+//		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
 //	}
 
-//	//	@OnlyIn(Dist.CLIENT) // Not needed because even though its only called clientside it doesn't reference any client side code
-//	// return if the side should not be rendered
-//	public static boolean smoothableIsAdjacentFluidSameAs(final IBlockAccess worldIn, final EnumFacing side, final BlockPos blockpos) {
-//		if (side != EnumFacing.UP) {
-//			return !worldIn.getBlockState(blockpos.up(1)).isSolid();
-//		} else {
-//			final BlockPos posUpUp = blockpos.up(1);
-//			return !worldIn.getBlockState(posUpUp).isAir(worldIn, posUpUp);
+//	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+//
+//		final int posX = pos.getX();
+//		final int posY = pos.getY();
+//		final int posZ = pos.getZ();
+//
+//		int currentChunkPosX = posX >> 4;
+//		int currentChunkPosZ = posZ >> 4;
+//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//
+//		final int extendRange = Config.extendFluidsRange.getRange();
+//
+//		if (extendRange == 0) {
+//			return currentChunk.getFluidState(posX, posY, posZ);
 //		}
+//
+//		final IBlockState state = currentChunk.getBlockState(posX, posY, posZ);
+//
+//		// terrain is serverside, leaves is clientside - lets see how this goes...
+//		if (!state.nocubes_isTerrainSmoothable()) {
+//			return state.getFluidState();
+//		}
+//
+//		final IFluidState fluidState = state.getFluidState();
+//		if (!fluidState.isEmpty()) {
+//			return fluidState;
+//		}
+//
+//		// For offset = -1 or -2 to offset = 1 or 2;
+//		final int maxXOffset = extendRange;
+//		final int maxZOffset = extendRange;
+//
+//		// Check up
+//		{
+//			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+//			if (state1.isSource()) {
+//				return state1;
+//			}
+//		}
+//
+//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+//
+//				// No point in checking myself
+//				if (xOffset == 0 && zOffset == 0) {
+//					continue;
+//				}
+//
+//				final int x = posX + xOffset;
+//				final int z = posZ + zOffset;
+//
+//				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
+//					currentChunkPosX = x >> 4;
+//					currentChunkPosZ = z >> 4;
+//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//				}
+//
+//				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
+//				if (state1.isSource()) {
+//					return state1;
+//				}
+//
+//			}
+//		}
+//
+//		return fluidState;
+//
 //	}
+
+	public static boolean getCollisionBoxes(final World _this, final Entity entityIn, final AxisAlignedBB aabb, final boolean p_191504_3_, final List<AxisAlignedBB> outList, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final boolean flag1) {
+		IBlockState iblockstate = Blocks.STONE.getDefaultState();
+		BlockPos.PooledMutableBlockPos blockpos$pooledmutableblockpos = BlockPos.PooledMutableBlockPos.retain();
+
+		if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList))
+			return true;
+		try {
+			for (int k1 = i; k1 < j; ++k1) {
+				for (int l1 = i1; l1 < j1; ++l1) {
+					boolean flag2 = k1 == i || k1 == j - 1;
+					boolean flag3 = l1 == i1 || l1 == j1 - 1;
+
+					if ((!flag2 || !flag3) && _this.isBlockLoaded(blockpos$pooledmutableblockpos.setPos(k1, 64, l1))) {
+						for (int i2 = k; i2 < l; ++i2) {
+							if (!flag2 && !flag3 || i2 != l - 1) {
+								if (p_191504_3_) {
+									if (k1 < -30000000 || k1 >= 30000000 || l1 < -30000000 || l1 >= 30000000) {
+										boolean lvt_21_2_ = true;
+										return lvt_21_2_;
+									}
+								} else if (entityIn != null && flag == flag1) {
+									entityIn.setOutsideBorder(!flag1);
+								}
+
+								blockpos$pooledmutableblockpos.setPos(k1, i2, l1);
+								IBlockState iblockstate1;
+
+								if (!p_191504_3_ && !worldborder.contains(blockpos$pooledmutableblockpos) && flag1) {
+									iblockstate1 = iblockstate;
+								} else {
+									iblockstate1 = _this.getBlockState(blockpos$pooledmutableblockpos);
+								}
+
+								iblockstate1.addCollisionBoxToList(_this, blockpos$pooledmutableblockpos, aabb, outList, entityIn, false);
+
+								if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList)) {
+									boolean flag5 = true;
+									return flag5;
+								}
+							}
+						}
+					}
+				}
+			}
+		} finally {
+			blockpos$pooledmutableblockpos.release();
+		}
+
+		return !outList.isEmpty();
+	}
 
 }

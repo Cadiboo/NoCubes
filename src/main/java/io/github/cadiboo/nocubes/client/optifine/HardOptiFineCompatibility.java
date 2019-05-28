@@ -8,8 +8,10 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.optifine.model.BlockModelCustomizer;
+import net.optifine.override.ChunkCacheOF;
 import net.optifine.render.RenderEnv;
 import net.optifine.shaders.SVertexBuilder;
 
@@ -20,6 +22,14 @@ import java.util.List;
  * @author Cadiboo
  */
 final class HardOptiFineCompatibility {
+
+	public static boolean isChunkCacheOF(final Object obj) {
+		return obj instanceof ChunkCacheOF;
+	}
+
+	public static ChunkCache getChunkCache(final IBlockAccess reader) {
+		return ((ChunkCacheOF) reader).chunkCache;
+	}
 
 	static final class SVertexBuilderOF {
 

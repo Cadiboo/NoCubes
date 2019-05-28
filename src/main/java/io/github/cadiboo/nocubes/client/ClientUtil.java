@@ -29,6 +29,7 @@ import static net.minecraft.block.BlockDirt.SNOWY;
 import static net.minecraft.block.BlockDirt.VARIANT;
 import static net.minecraft.init.Blocks.DIRT;
 import static net.minecraft.init.Blocks.GRASS;
+import static net.minecraft.init.Blocks.PACKED_ICE;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
@@ -317,6 +318,8 @@ public final class ClientUtil {
 		public static final IBlockState PODZOL_SNOWY = DIRT.getDefaultState().withProperty(VARIANT, DirtType.PODZOL).withProperty(SNOWY, true);
 
 		public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS.getDefaultState();
+
+		public static final IBlockState PACKED_ICE_DEFAULT = PACKED_ICE.getDefaultState();
 
 	}
 

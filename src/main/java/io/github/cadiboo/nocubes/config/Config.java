@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -16,35 +17,35 @@ import java.util.Set;
 @SuppressWarnings("WeakerAccess")
 public final class Config {
 
+	@Nonnull
 	static final Logger LOGGER = LogManager.getLogger();
-	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>();
+	@Nonnull
+	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
 
 	// Client
-	public static boolean renderSmoothTerrain = true;
-	public static boolean renderSmoothLeaves = false;
-	public static MeshGeneratorType leavesMeshGenerator = MeshGeneratorType.SurfaceNets;
-	public static Set<String> leavesSmoothable = new HashSet<>();
-	public static SmoothLeavesType smoothLeavesType = SmoothLeavesType.TOGETHER;
+	public static boolean renderSmoothTerrain;
+	public static boolean renderSmoothLeaves;
+	public static MeshGeneratorType leavesMeshGenerator;
+	public static Set<String> leavesSmoothable;
+	public static SmoothLeavesType smoothLeavesType;
 
-	public static boolean renderExtendedFluids = true;
+	public static boolean applyDiffuseLighting;
 
-	public static boolean applyDiffuseLighting = true;
+	public static boolean betterTextures;
 
-	public static boolean betterTextures = true;
-
-	public static boolean smoothFluidLighting = true;
-	public static boolean smoothFluidColors = true;
-	public static boolean naturalFluidTextures = false;
+	public static boolean smoothFluidLighting;
+	public static boolean smoothFluidColors;
+	public static boolean naturalFluidTextures;
 
 	// Server
-	public static ExtendFluidsRange extendFluidsRange = ExtendFluidsRange.OneBlock;
+	public static ExtendFluidsRange extendFluidsRange;
 
-	public static MeshGeneratorType terrainMeshGenerator = MeshGeneratorType.SurfaceNets;
-	public static boolean terrainCollisions = false;
-	public static Set<String> terrainSmoothable = new HashSet<>();
+	public static MeshGeneratorType terrainMeshGenerator;
+	public static boolean terrainCollisions;
+	public static Set<String> terrainSmoothable;
 
-	public static boolean leavesCollisions = false;
-
+	// Client
+	@Nonnull
 	public static HashSet<Block> getLeavesSmoothableBlocks() {
 		return leavesSmoothableBlocks;
 	}

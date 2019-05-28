@@ -11,6 +11,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
@@ -54,6 +55,20 @@ public final class OptiFineCompatibility {
 			return;
 		}
 		SVertexBuilderOF.popEntity(worldRendererIn);
+	}
+
+	public static boolean isChunkCacheOF(final Object obj) {
+		if (!OPTIFINE_INSTALLED) {
+			return false;
+		}
+		return HardOptiFineCompatibility.isChunkCacheOF(obj);
+	}
+
+	public static ChunkCache getChunkCache(final IBlockAccess reader) {
+		if (!OPTIFINE_INSTALLED) {
+			return null;
+		}
+		return HardOptiFineCompatibility.getChunkCache(reader);
 	}
 
 	public static final class Config {

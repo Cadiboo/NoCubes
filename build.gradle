@@ -19,6 +19,9 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
 
+	mavenLocal()
+	mavenCentral()
+
 	// Put other remote maven repositories here
 
 	maven {
@@ -94,6 +97,9 @@ dependencies {
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
 	// http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+	compile 'com.electronwill.night-config:core:3.6.0'
+	compile 'com.electronwill.night-config:toml:3.6.0'
 
 }
 

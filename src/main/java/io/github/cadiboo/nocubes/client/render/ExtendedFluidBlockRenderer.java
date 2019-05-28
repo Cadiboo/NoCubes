@@ -6,7 +6,6 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -79,6 +78,7 @@ public final class ExtendedFluidBlockRenderer {
 			}
 
 			boolean wasAnythingRendered = false;
+
 			float fluidHeight = fluidRenderer.getFluidHeight(worldIn, fluidPos, material);
 			float fluidHeightSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.south(), material);
 			float fluidHeightEastSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.east().south(), material);
@@ -91,74 +91,63 @@ public final class ExtendedFluidBlockRenderer {
 			if (shouldRenderUp) {
 
 				// Commented out to fix transparent lines between bottom of sides.
-				// The only reason that I can think of for this code to exist in the first place
+				// The only reason that I can think of for fluidRenderer.code to exist in the first place
 				// is to try and solve z-fighting issues.
 //				fluidHeight -= 0.001F;
 //				fluidHeightSouth -= 0.001F;
 //				fluidHeightEastSouth -= 0.001F;
 //				fluidHeightEast -= 0.001F;
 
-				if (!fluidRenderer.colors()) {
+				final int light0;
+				final int light1;
+				final int light2;
+				final int light3;
+
+				final float red0;
+				final float green0;
+				final float blue0;
+				final float red1;
+				final float green1;
+				final float blue1;
+				final float red2;
+				final float green2;
+				final float blue2;
+				final float red3;
+				final float green3;
+				final float blue3;
+
+				if (isLava) {
+					light0 = light1 = light2 = light3 = 0x00F000F0; // 240, 240
+					red0 = red1 = red2 = red3 = 1.0F;
+					green0 = green1 = green2 = green3 = 1.0F;
+					blue0 = blue1 = blue2 = blue3 = 1.0F;
+				} else {
 					if (!fluidRenderer.smoothLighting()) {
 						final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, renderPos);
-						wasAnythingRendered |= fluidRenderer.renderUp(
-								buffer, atextureatlassprite,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
-								x, y, z,
-								combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
-								blockLiquid.shouldRenderSides(worldIn, renderPos.up()), blockLiquid.getFlow(worldIn, fluidPos, state), MathHelper.getPositionRandom(renderPos)
-						);
+						light0 = combinedLightUpMax;
+						light1 = combinedLightUpMax;
+						light2 = combinedLightUpMax;
+						light3 = combinedLightUpMax;
 					} else {
-						wasAnythingRendered |= fluidRenderer.renderUp(
-								buffer, atextureatlassprite,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
-								x, y, z,
-								state.getPackedLightmapCoords(worldIn, renderPos), state.getPackedLightmapCoords(worldIn, renderPos.south()), state.getPackedLightmapCoords(worldIn, renderPos.east().south()), state.getPackedLightmapCoords(worldIn, renderPos.east()),
-								blockLiquid.shouldRenderSides(worldIn, renderPos.up()), blockLiquid.getFlow(worldIn, fluidPos, state), MathHelper.getPositionRandom(renderPos)
-						);
+						light0 = state.getPackedLightmapCoords(worldIn, renderPos);
+						//TODO: use less new objects
+						light1 = state.getPackedLightmapCoords(worldIn, renderPos.south());
+						light2 = state.getPackedLightmapCoords(worldIn, renderPos.east().south());
+						light3 = state.getPackedLightmapCoords(worldIn, renderPos.east());
 					}
-				} else {
-					final float red0;
-					final float green0;
-					final float blue0;
-					final float red1;
-					final float green1;
-					final float blue1;
-					final float red2;
-					final float green2;
-					final float blue2;
-					final float red3;
-					final float green3;
-					final float blue3;
-					if (isLava) {
-						red0 = 1.0F;
-						green0 = 1.0F;
-						blue0 = 1.0F;
-						red1 = 1.0F;
-						green1 = 1.0F;
-						blue1 = 1.0F;
-						red2 = 1.0F;
-						green2 = 1.0F;
-						blue2 = 1.0F;
-						red3 = 1.0F;
-						green3 = 1.0F;
-						blue3 = 1.0F;
+					if (!fluidRenderer.colors()) {
+						red0 = red1 = red2 = red3 = red;
+						green0 = green1 = green2 = green3 = green;
+						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-//							final int waterColor0 = BiomeColors.getWaterColor(worldIn, renderPos);
-//							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
-//							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
-//							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
+//						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, pos);
+//						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
+//						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
+//						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
 						red0 = red;
 						green0 = green;
 						blue0 = blue;
+						//TODO: use less new objects
 						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, renderPos.south());
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
@@ -172,135 +161,92 @@ public final class ExtendedFluidBlockRenderer {
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
 					}
-
-					if (!fluidRenderer.smoothLighting()) {
-						final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, renderPos);
-						wasAnythingRendered |= fluidRenderer.renderUp(
-								buffer, atextureatlassprite,
-								red0, green0, blue0,
-								red1, green1, blue1,
-								red2, green2, blue2,
-								red3, green3, blue3,
-								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
-								x, y, z,
-								combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
-								blockLiquid.shouldRenderSides(worldIn, renderPos.up()), blockLiquid.getFlow(worldIn, fluidPos, state), MathHelper.getPositionRandom(renderPos)
-						);
-					} else {
-						wasAnythingRendered |= fluidRenderer.renderUp(
-								buffer, atextureatlassprite,
-								red0, green0, blue0,
-								red1, green1, blue1,
-								red2, green2, blue2,
-								red3, green3, blue3,
-								fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
-								x, y, z,
-								state.getPackedLightmapCoords(worldIn, renderPos), state.getPackedLightmapCoords(worldIn, renderPos.south()), state.getPackedLightmapCoords(worldIn, renderPos.east().south()), state.getPackedLightmapCoords(worldIn, renderPos.east()),
-								blockLiquid.shouldRenderSides(worldIn, renderPos.up()), blockLiquid.getFlow(worldIn, fluidPos, state), MathHelper.getPositionRandom(renderPos)
-						);
-					}
 				}
+				wasAnythingRendered |= fluidRenderer.renderUp(
+						buffer, atextureatlassprite,
+						red0, green0, blue0,
+						red1, green1, blue1,
+						red2, green2, blue2,
+						red3, green3, blue3,
+						fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
+						x, y, z,
+						light0, light1, light2, light3,
+						blockLiquid.shouldRenderSides(worldIn, renderPos.up()), blockLiquid.getFlow(worldIn, fluidPos, state), MathHelper.getPositionRandom(renderPos)
+				);
 			}
 
 			if (shouldRenderDown) {
-				if (!fluidRenderer.colors()) {
+				final int light0;
+				final int light1;
+				final int light2;
+				final int light3;
+
+				final float red0;
+				final float green0;
+				final float blue0;
+				final float red1;
+				final float green1;
+				final float blue1;
+				final float red2;
+				final float green2;
+				final float blue2;
+				final float red3;
+				final float green3;
+				final float blue3;
+
+				if (isLava) {
+					light0 = light1 = light2 = light3 = 0x00F000F0; // 240, 240
+					red0 = red1 = red2 = red3 = 1.0F;
+					green0 = green1 = green2 = green3 = 1.0F;
+					blue0 = blue1 = blue2 = blue3 = 1.0F;
+				} else {
 					if (!fluidRenderer.smoothLighting()) {
 						final int downCombinedLightUpMax = state.getPackedLightmapCoords(worldIn, renderPos.down());
-						wasAnythingRendered |= fluidRenderer.renderDown(
-								downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
-								buffer, atextureatlassprite[0],
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								x, y, z
-						);
+						light0 = downCombinedLightUpMax;
+						light1 = downCombinedLightUpMax;
+						light2 = downCombinedLightUpMax;
+						light3 = downCombinedLightUpMax;
 					} else {
 						final BlockPos down = renderPos.down();
-						wasAnythingRendered |= fluidRenderer.renderDown(
-								state.getPackedLightmapCoords(worldIn, down), state.getPackedLightmapCoords(worldIn, down.south()), state.getPackedLightmapCoords(worldIn, down.east().south()), state.getPackedLightmapCoords(worldIn, down.east()),
-								buffer, atextureatlassprite[0],
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								red, green, blue,
-								x, y, z
-						);
+						light0 = state.getPackedLightmapCoords(worldIn, down);
+						light1 = state.getPackedLightmapCoords(worldIn, down.south());
+						light2 = state.getPackedLightmapCoords(worldIn, down.east().south());
+						light3 = state.getPackedLightmapCoords(worldIn, down.east());
 					}
-				} else {
-
-					// I've fucked up somehow. I shouldn't need to offset this south
-					final BlockPos down = renderPos.down().south();
-
-					final float red0;
-					final float green0;
-					final float blue0;
-					final float red1;
-					final float green1;
-					final float blue1;
-					final float red2;
-					final float green2;
-					final float blue2;
-					final float red3;
-					final float green3;
-					final float blue3;
-					if (isLava) {
-						red0 = 1.0F;
-						green0 = 1.0F;
-						blue0 = 1.0F;
-						red1 = 1.0F;
-						green1 = 1.0F;
-						blue1 = 1.0F;
-						red2 = 1.0F;
-						green2 = 1.0F;
-						blue2 = 1.0F;
-						red3 = 1.0F;
-						green3 = 1.0F;
-						blue3 = 1.0F;
+					if (!fluidRenderer.colors()) {
+						red0 = red1 = red2 = red3 = red;
+						green0 = green1 = green2 = green3 = green;
+						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, down);
+						final BlockPos down = renderPos.down();
+						final BlockPos downSouth = down.south();
+						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, downSouth);
 						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-						// I've fucked up somehow. I shouldn't need to offset this north, it should be south
-						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, down.north());
+						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, down);
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						// I've fucked up somehow. I shouldn't need to offset this north, it should be south
-						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, down.east().north());
+						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, down.east());
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, down.east());
+						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, downSouth.east());
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
 					}
-
-					if (!fluidRenderer.smoothLighting()) {
-						final int downCombinedLightUpMax = state.getPackedLightmapCoords(worldIn, down);
-						wasAnythingRendered |= fluidRenderer.renderDown(
-								downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax, downCombinedLightUpMax,
-								buffer, atextureatlassprite[0],
-								red0, green0, blue0,
-								red1, green1, blue1,
-								red2, green2, blue2,
-								red3, green3, blue3,
-								x, y, z
-						);
-					} else {
-						wasAnythingRendered |= fluidRenderer.renderDown(
-								state.getPackedLightmapCoords(worldIn, down), state.getPackedLightmapCoords(worldIn, down.south()), state.getPackedLightmapCoords(worldIn, down.east().south()), state.getPackedLightmapCoords(worldIn, down.east()),
-								buffer, atextureatlassprite[0],
-								red0, green0, blue0,
-								red1, green1, blue1,
-								red2, green2, blue2,
-								red3, green3, blue3,
-								x, y, z
-						);
-					}
 				}
+				wasAnythingRendered |= fluidRenderer.renderDown(
+						light0, light1, light2, light3,
+						buffer, atextureatlassprite[0],
+						red0, green0, blue0,
+						red1, green1, blue1,
+						red2, green2, blue2,
+						red3, green3, blue3,
+						x, y, z
+				);
 			}
 
 			for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
@@ -318,7 +264,7 @@ public final class ExtendedFluidBlockRenderer {
 					x0 = x;
 					x1 = x + 1.0D;
 					// Commented out to fix transparent lines between bottom of sides.
-					// The only reason that I can think of for this code to exist in the first place
+					// The only reason that I can think of for fluidRenderer.code to exist in the first place
 					// is to try and solve z-fighting issues.
 					z0 = z;// + (double) 0.001F;
 					z1 = z;// + (double) 0.001F;
@@ -330,7 +276,7 @@ public final class ExtendedFluidBlockRenderer {
 					x0 = x + 1.0D;
 					x1 = x;
 					// Commented out to fix transparent lines between bottom of sides.
-					// The only reason that I can think of for this code to exist in the first place
+					// The only reason that I can think of for fluidRenderer.code to exist in the first place
 					// is to try and solve z-fighting issues.
 					z0 = z + 1.0D;// - (double) 0.001F;
 					z1 = z + 1.0D;// - (double) 0.001F;
@@ -340,7 +286,7 @@ public final class ExtendedFluidBlockRenderer {
 					y0 = fluidHeightSouth;
 					y1 = fluidHeight;
 					// Commented out to fix transparent lines between bottom of sides.
-					// The only reason that I can think of for this code to exist in the first place
+					// The only reason that I can think of for fluidRenderer.code to exist in the first place
 					// is to try and solve z-fighting issues.
 					x0 = x;// + (double) 0.001F;
 					x1 = x;// + (double) 0.001F;
@@ -352,7 +298,7 @@ public final class ExtendedFluidBlockRenderer {
 					y0 = fluidHeightEast;
 					y1 = fluidHeightEastSouth;
 					// Commented out to fix transparent lines between bottom of sides.
-					// The only reason that I can think of for this code to exist in the first place
+					// The only reason that I can think of for fluidRenderer.code to exist in the first place
 					// is to try and solve z-fighting issues.
 					x0 = x + 1.0D;// - (double) 0.001F;
 					x1 = x + 1.0D;// - (double) 0.001F;
@@ -367,71 +313,51 @@ public final class ExtendedFluidBlockRenderer {
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
 						IBlockState blockstate = worldIn.getBlockState(offset);
-						if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == BlockFaceShape.SOLID) {
+						if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
 							textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
 						}
 					}
 
-					if (!fluidRenderer.colors()) {
+					final int light0;
+					final int light1;
+					final int light2;
+					final int light3;
+
+					final float red0;
+					final float green0;
+					final float blue0;
+					final float red1;
+					final float green1;
+					final float blue1;
+					final float red2;
+					final float green2;
+					final float blue2;
+					final float red3;
+					final float green3;
+					final float blue3;
+
+					if (isLava) {
+						light0 = light1 = light2 = light3 = 0x00F000F0; // 240, 240
+						red0 = red1 = red2 = red3 = 1.0F;
+						green0 = green1 = green2 = green3 = 1.0F;
+						blue0 = blue1 = blue2 = blue3 = 1.0F;
+					} else {
 						if (!fluidRenderer.smoothLighting()) {
 							final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, offset);
-							wasAnythingRendered = fluidRenderer.renderSide(
-									buffer, textureatlassprite2,
-									red, green, blue,
-									red, green, blue,
-									red, green, blue,
-									red, green, blue,
-									facingIndex,
-									y, y0, y1,
-									x0, x1,
-									z0, z1,
-									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
-									textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
-							);
+							light0 = combinedLightUpMax;
+							light1 = combinedLightUpMax;
+							light2 = combinedLightUpMax;
+							light3 = combinedLightUpMax;
 						} else {
-							wasAnythingRendered = fluidRenderer.renderSide(
-									buffer, textureatlassprite2,
-									red, green, blue,
-									red, green, blue,
-									red, green, blue,
-									red, green, blue,
-									facingIndex,
-									y, y0, y1,
-									x0, x1,
-									z0, z1,
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
-									textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
-							);
+							light0 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+							light1 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+							light2 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+							light3 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 						}
-					} else {
-						final float red0;
-						final float green0;
-						final float blue0;
-						final float red1;
-						final float green1;
-						final float blue1;
-						final float red2;
-						final float green2;
-						final float blue2;
-						final float red3;
-						final float green3;
-						final float blue3;
-						if (isLava) {
-							red0 = 1.0F;
-							green0 = 1.0F;
-							blue0 = 1.0F;
-							red1 = 1.0F;
-							green1 = 1.0F;
-							blue1 = 1.0F;
-							red2 = 1.0F;
-							green2 = 1.0F;
-							blue2 = 1.0F;
-							red3 = 1.0F;
-							green3 = 1.0F;
-							blue3 = 1.0F;
+						if (!fluidRenderer.colors()) {
+							red0 = red1 = red2 = red3 = red;
+							green0 = green1 = green2 = green3 = green;
+							blue0 = blue1 = blue2 = blue3 = blue;
 						} else {
 							final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
 							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
@@ -450,41 +376,20 @@ public final class ExtendedFluidBlockRenderer {
 							green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
 						}
-
-						if (!fluidRenderer.smoothLighting()) {
-							final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, offset);
-							wasAnythingRendered = fluidRenderer.renderSide(
-									buffer, textureatlassprite2,
-									red0, green0, blue0,
-									red1, green1, blue1,
-									red2, green2, blue2,
-									red3, green3, blue3,
-									facingIndex,
-									y, y0, y1,
-									x0, x1,
-									z0, z1,
-									combinedLightUpMax, combinedLightUpMax, combinedLightUpMax, combinedLightUpMax,
-									textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
-							);
-						} else {
-							wasAnythingRendered = fluidRenderer.renderSide(
-									buffer, textureatlassprite2,
-									red0, green0, blue0,
-									red1, green1, blue1,
-									red2, green2, blue2,
-									red3, green3, blue3,
-									facingIndex,
-									y, y0, y1,
-									x0, x1,
-									z0, z1,
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y, z1)),
-									state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y, z0)),
-									textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
-							);
-						}
 					}
+					wasAnythingRendered = fluidRenderer.renderSide(
+							buffer, textureatlassprite2,
+							red0, green0, blue0,
+							red1, green1, blue1,
+							red2, green2, blue2,
+							red3, green3, blue3,
+							facingIndex,
+							y, y0, y1,
+							x0, x1,
+							z0, z1,
+							light0, light1, light2, light3,
+							textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+					);
 				}
 			}
 

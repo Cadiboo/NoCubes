@@ -31,10 +31,13 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	private int[] cache;
 
+	private boolean inUse;
+
 	private LazyPackedLightCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
 		this.cache = new int[sizeX * sizeY * sizeZ];
 		System.arraycopy(EMPTY_NEGATIVE_1, 0, this.cache, 0, sizeX * sizeY * sizeZ);
+		this.inUse = false;
 	}
 
 	@Nonnull
@@ -46,6 +49,11 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 	) {
 
 		final LazyPackedLightCache pooled = POOL.get();
+
+		if (pooled.inUse) {
+			throw new IllegalStateException("LazyPackedLightCache is already in use!");
+		}
+		pooled.inUse = true;
 
 		pooled.reader = reader;
 		pooled.stateCache = stateCache;
@@ -94,6 +102,7 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 }

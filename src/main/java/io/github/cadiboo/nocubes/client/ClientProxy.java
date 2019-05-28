@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
+import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static org.lwjgl.input.Keyboard.KEY_C;
 import static org.lwjgl.input.Keyboard.KEY_I;
@@ -33,7 +34,6 @@ public final class ClientProxy implements Proxy {
 	public static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, "key.categories." + MOD_ID);
 	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", KEY_K, "key.categories." + MOD_ID);
 	public static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", KEY_C, "key.categories." + MOD_ID);
-	public static final KeyBinding tempToggleLeavesCollisions = new KeyBinding(MOD_ID + ".key.tempToggleLeavesCollisions", KEY_V, "key.categories." + MOD_ID);
 
 	public static SmoothLightingBlockFluidRenderer fluidRenderer;
 
@@ -46,7 +46,6 @@ public final class ClientProxy implements Proxy {
 		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(tempToggleTerrainCollisions);
-		ClientRegistry.registerKeyBinding(tempToggleLeavesCollisions);
 	}
 
 	@Override
@@ -60,10 +59,12 @@ public final class ClientProxy implements Proxy {
 	}
 
 	public void replaceFluidRendererCauseImBored() {
+		LOGGER.debug("Replacing fluid renderer");
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(blockRendererDispatcher.fluidRenderer);
 		blockRendererDispatcher.fluidRenderer = smoothLightingBlockFluidRenderer;
 		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
+		LOGGER.debug("Replaced fluid renderer");
 	}
 
 	@Override

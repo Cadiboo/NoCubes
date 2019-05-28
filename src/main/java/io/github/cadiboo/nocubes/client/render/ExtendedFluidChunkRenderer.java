@@ -105,23 +105,25 @@ public final class ExtendedFluidChunkRenderer {
 										renderChunkPositionY + y,
 										renderChunkPositionZ + z
 								), blockAccess, bufferBuilder);
-
-								usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
-										renderChunkPositionX + x,
-										renderChunkPositionY + y,
-										renderChunkPositionZ + z,
-										pooledMutableBlockPos.setPos(
-												renderChunkPositionX + x + xOffset,
-												renderChunkPositionY + y,
-												renderChunkPositionZ + z + zOffset
-										),
-										blockAccess,
-										blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
-										fluidState,
-										bufferBuilder,
-										packedLightCache
-								);
-								OptiFineCompatibility.popShaderThing(bufferBuilder);
+								try {
+									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
+											renderChunkPositionX + x,
+											renderChunkPositionY + y,
+											renderChunkPositionZ + z,
+											pooledMutableBlockPos.setPos(
+													renderChunkPositionX + x + xOffset,
+													renderChunkPositionY + y,
+													renderChunkPositionZ + z + zOffset
+											),
+											blockAccess,
+											blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
+											fluidState,
+											bufferBuilder,
+											packedLightCache
+									);
+								} finally {
+									OptiFineCompatibility.popShaderThing(bufferBuilder);
+								}
 
 								break OFFSET;
 							}

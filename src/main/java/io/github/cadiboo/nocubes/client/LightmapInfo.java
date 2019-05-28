@@ -29,6 +29,8 @@ public class LightmapInfo implements AutoCloseable {
 	public int blocklight2;
 	public int blocklight3;
 
+	private boolean inUse;
+
 	private LightmapInfo(final int skylight0, final int skylight1, final int skylight2, final int skylight3, final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3) {
 		this.skylight0 = skylight0;
 		this.skylight1 = skylight1;
@@ -38,6 +40,7 @@ public class LightmapInfo implements AutoCloseable {
 		this.blocklight1 = blocklight1;
 		this.blocklight2 = blocklight2;
 		this.blocklight3 = blocklight3;
+		this.inUse = false;
 	}
 
 	public static LightmapInfo generateLightmapInfo(
@@ -266,6 +269,11 @@ public class LightmapInfo implements AutoCloseable {
 
 		LightmapInfo pooled = POOL.get();
 
+		if (pooled.inUse) {
+			throw new IllegalStateException("LightmapInfo is already in use!");
+		}
+		pooled.inUse = true;
+
 		pooled.skylight0 = skylight0;
 		pooled.skylight1 = skylight1;
 		pooled.skylight2 = skylight2;
@@ -280,6 +288,7 @@ public class LightmapInfo implements AutoCloseable {
 
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
 }

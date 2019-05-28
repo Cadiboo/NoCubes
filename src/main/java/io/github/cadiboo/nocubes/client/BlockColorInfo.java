@@ -1,10 +1,17 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 
 import javax.annotation.Nonnull;
+import java.util.Calendar;
 
+import static java.util.Calendar.AUGUST;
+import static java.util.Calendar.DAY_OF_MONTH;
+import static java.util.Calendar.DAY_OF_WEEK;
+import static java.util.Calendar.DAY_OF_YEAR;
+import static java.util.Calendar.FRIDAY;
+import static java.util.Calendar.MONTH;
+import static java.util.Calendar.OCTOBER;
 import static net.minecraft.util.math.MathHelper.clamp;
 import static net.minecraft.util.math.MathHelper.floor;
 
@@ -12,6 +19,9 @@ import static net.minecraft.util.math.MathHelper.floor;
  * @author Cadiboo
  */
 public class BlockColorInfo implements AutoCloseable {
+
+	public static final boolean RAINBOW = isWearItPurpleDay();
+	public static final boolean BLACK = isHalloween();
 
 	private static final ThreadLocal<BlockColorInfo> POOL = ThreadLocal.withInitial(() -> new BlockColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
 
@@ -28,7 +38,7 @@ public class BlockColorInfo implements AutoCloseable {
 	public float green3;
 	public float blue3;
 
-	private boolean isReleased = true;
+	private boolean inUse;
 
 	private BlockColorInfo(
 			final float red0, final float green0, final float blue0,
@@ -48,10 +58,30 @@ public class BlockColorInfo implements AutoCloseable {
 		this.red3 = red3;
 		this.green3 = green3;
 		this.blue3 = blue3;
+		this.inUse = false;
 	}
 
-	public static BlockColorInfo generateBiomeGrassColorInfo(
-			@Nonnull final LazyBlockColorCache biomeGrassColorCache,
+	private static boolean isWearItPurpleDay() {
+		// "https://praveenlobo.com/blog/get-last-friday-of-the-month-in-java/"
+		Calendar lastFridayOfAugust = Calendar.getInstance();
+		// Wear it purple day is the last friday of august
+		lastFridayOfAugust.set(MONTH, AUGUST);
+		lastFridayOfAugust.add(MONTH, 1); // go to next month
+
+		// calculate the number of days to subtract to get the last desired day of the month
+		int lobosMagicNumber = (13 - FRIDAY) % 7;
+		lastFridayOfAugust.add(DAY_OF_MONTH, -(((lobosMagicNumber + lastFridayOfAugust.get(DAY_OF_WEEK)) % 7) + 1));
+
+		return lastFridayOfAugust.get(DAY_OF_YEAR) == Calendar.getInstance().get(DAY_OF_YEAR);
+	}
+
+	private static boolean isHalloween() {
+		Calendar calendar = Calendar.getInstance();
+		return calendar.get(MONTH) == OCTOBER && calendar.get(DAY_OF_MONTH) == 31;
+	}
+
+	public static BlockColorInfo generateBlockColorInfo(
+			@Nonnull final LazyBlockColorCache blockColorCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
@@ -60,18 +90,16 @@ public class BlockColorInfo implements AutoCloseable {
 			final int renderChunkPositionY,
 			final int renderChunkPositionZ
 	) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateBiomeGrassColorInfo")) {
-			return generateBiomeGrassColorInfo(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, biomeGrassColorCache);
-		}
-	}
 
-	private static BlockColorInfo generateBiomeGrassColorInfo(
-			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
-			final int renderChunkPositionX,
-			final int renderChunkPositionY,
-			final int renderChunkPositionZ,
-			@Nonnull final LazyBlockColorCache biomeGrassColorCache
-	) {
+		if (BLACK) {
+			return retain(
+					0, 0, 0,
+					0, 0, 0,
+					0, 0, 0,
+					0, 0, 0
+			);
+		}
+
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
 		final int[] blockColor0 = new int[27];
@@ -100,100 +128,83 @@ public class BlockColorInfo implements AutoCloseable {
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					blockColor0[index] = biomeGrassColorCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
-					blockColor1[index] = biomeGrassColorCache.get((v1XOffset + xOffset), (v1YOffset + yOffset), (v1ZOffset + zOffset));
-					blockColor2[index] = biomeGrassColorCache.get((v2XOffset + xOffset), (v2YOffset + yOffset), (v2ZOffset + zOffset));
-					blockColor3[index] = biomeGrassColorCache.get((v3XOffset + xOffset), (v3YOffset + yOffset), (v3ZOffset + zOffset));
+					blockColor0[index] = blockColorCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
+					blockColor1[index] = blockColorCache.get((v1XOffset + xOffset), (v1YOffset + yOffset), (v1ZOffset + zOffset));
+					blockColor2[index] = blockColorCache.get((v2XOffset + xOffset), (v2YOffset + yOffset), (v2ZOffset + zOffset));
+					blockColor3[index] = blockColorCache.get((v3XOffset + xOffset), (v3YOffset + yOffset), (v3ZOffset + zOffset));
 				}
 			}
 		}
 
-		//TODO FIXME this is very wrong
-		final int color0 = getColor(blockColor0);
-		final int color1 = getColor(blockColor1);
-		final int color2 = getColor(blockColor2);
-		final int color3 = getColor(blockColor3);
+		int red0 = 0;
+		int green0 = 0;
+		int blue0 = 0;
+		int red1 = 0;
+		int green1 = 0;
+		int blue1 = 0;
+		int red2 = 0;
+		int green2 = 0;
+		int blue2 = 0;
+		int red3 = 0;
+		int green3 = 0;
+		int blue3 = 0;
 
-		final float red0 = ((color0 >> 16) & 255) / 255F;
-		final float green0 = ((color0 >> 8) & 255) / 255F;
-		final float blue0 = ((color0) & 255) / 255F;
-		final float red1 = ((color1 >> 16) & 255) / 255F;
-		final float green1 = ((color1 >> 8) & 255) / 255F;
-		final float blue1 = ((color1) & 255) / 255F;
-		final float red2 = ((color2 >> 16) & 255) / 255F;
-		final float green2 = ((color2 >> 8) & 255) / 255F;
-		final float blue2 = ((color2) & 255) / 255F;
-		final float red3 = ((color3 >> 16) & 255) / 255F;
-		final float green3 = ((color3 >> 8) & 255) / 255F;
-		final float blue3 = ((color3) & 255) / 255F;
+		// All arrays are 3x3x3 so 27
+		for (int colorIndex = 0; colorIndex < 27; colorIndex++) {
+			int color0 = blockColor0[colorIndex];
+			red0 += (color0 & 0xFF0000) >> 16;
+			green0 += (color0 & 0x00FF00) >> 8;
+			blue0 += (color0 & 0x0000FF);
+			int color1 = blockColor1[colorIndex];
+			red1 += (color1 & 0xFF0000) >> 16;
+			green1 += (color1 & 0x00FF00) >> 8;
+			blue1 += (color1 & 0x0000FF);
+			int color2 = blockColor2[colorIndex];
+			red2 += (color2 & 0xFF0000) >> 16;
+			green2 += (color2 & 0x00FF00) >> 8;
+			blue2 += (color2 & 0x0000FF);
+			int color3 = blockColor3[colorIndex];
+			red3 += (color3 & 0xFF0000) >> 16;
+			green3 += (color3 & 0x00FF00) >> 8;
+			blue3 += (color3 & 0x0000FF);
+		}
 
-		return retain(
-				red0, green0, blue0,
-				red1, green1, blue1,
-				red2, green2, blue2,
-				red3, green3, blue3
-		);
-	}
+		if (RAINBOW) {
+			return retain(
+					red0, green0, blue0,
+					red1, green1, blue1,
+					red2, green2, blue2,
+					red3, green3, blue3
+			);
+		} else {
+			// colorPart = colorPart / 27F
+			// Dividing by 0xFF here and not dividing later results in gray with purple edges
+			// Dividing by 27F here and not dividing later results in weird colors that still follows biomes
+			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
+			red0 /= 27F;
+			green0 /= 27F;
+			blue0 /= 27F;
+			red1 /= 27F;
+			green1 /= 27F;
+			blue1 /= 27F;
+			red2 /= 27F;
+			green2 /= 27F;
+			blue2 /= 27F;
+			red3 /= 27F;
+			green3 /= 27F;
+			blue3 /= 27F;
 
-	private static int getColor(final int[] colors) {
-		return max(
-				colors[0],
-				colors[1],
-				colors[2],
-				colors[3],
-				colors[4],
-				colors[5],
-				colors[6],
-				colors[7],
-				colors[8],
-				colors[9],
-				colors[10],
-				colors[11],
-				colors[12],
-				colors[13],
-				colors[14],
-				colors[15],
-				colors[16],
-				colors[17],
-				colors[18],
-				colors[19],
-				colors[20],
-				colors[21],
-				colors[22],
-				colors[23],
-				colors[24],
-				colors[25],
-				colors[26]
-		);
-	}
+			// Dividing by 0xFF before and not dividing here results in gray with purple edges
+			// Dividing by 27F before and not dividing here results in weird colors that still follows biomes
+			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
+			return retain(
+					red0 / 255F, green0 / 255F, blue0 / 255F,
+					red1 / 255F, green1 / 255F, blue1 / 255F,
+					red2 / 255F, green2 / 255F, blue2 / 255F,
+					red3 / 255F, green3 / 255F, blue3 / 255F
+			);
+		}
 
-	private static int max(int i0, final int i1, final int i2, final int i3, final int i4, final int i5, final int i6, final int i7, final int i8, final int i9, final int i10, final int i11, final int i12, final int i13, final int i14, final int i15, final int i16, final int i17, final int i18, final int i19, final int i20, final int i21, final int i22, final int i23, final int i24, final int i25, final int i26) {
-		i0 = (i0 >= i1) ? i0 : i1;
-		i0 = (i0 >= i2) ? i0 : i2;
-		i0 = (i0 >= i3) ? i0 : i3;
-		i0 = (i0 >= i4) ? i0 : i4;
-		i0 = (i0 >= i5) ? i0 : i5;
-		i0 = (i0 >= i6) ? i0 : i6;
-		i0 = (i0 >= i7) ? i0 : i7;
-		i0 = (i0 >= i8) ? i0 : i8;
-		i0 = (i0 >= i9) ? i0 : i9;
-		i0 = (i0 >= i10) ? i0 : i10;
-		i0 = (i0 >= i11) ? i0 : i11;
-		i0 = (i0 >= i12) ? i0 : i12;
-		i0 = (i0 >= i13) ? i0 : i13;
-		i0 = (i0 >= i14) ? i0 : i14;
-		i0 = (i0 >= i15) ? i0 : i15;
-		i0 = (i0 >= i16) ? i0 : i16;
-		i0 = (i0 >= i17) ? i0 : i17;
-		i0 = (i0 >= i18) ? i0 : i18;
-		i0 = (i0 >= i19) ? i0 : i19;
-		i0 = (i0 >= i20) ? i0 : i20;
-		i0 = (i0 >= i21) ? i0 : i21;
-		i0 = (i0 >= i22) ? i0 : i22;
-		i0 = (i0 >= i23) ? i0 : i23;
-		i0 = (i0 >= i24) ? i0 : i24;
-		i0 = (i0 >= i25) ? i0 : i25;
-		return (i0 >= i26) ? i0 : i26;
 	}
 
 	public static BlockColorInfo retain(
@@ -205,11 +216,10 @@ public class BlockColorInfo implements AutoCloseable {
 
 		BlockColorInfo pooled = POOL.get();
 
-		if (!pooled.isReleased) {
-			throw new IllegalStateException();
+		if (pooled.inUse) {
+			throw new IllegalStateException("BlockColorInfo is already in use!");
 		}
-
-		pooled.isReleased = false;
+		pooled.inUse = true;
 
 		pooled.red0 = red0;
 		pooled.green0 = green0;
@@ -229,7 +239,7 @@ public class BlockColorInfo implements AutoCloseable {
 
 	@Override
 	public void close() {
-		this.isReleased = true;
+		this.inUse = false;
 	}
 
 }

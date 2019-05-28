@@ -211,21 +211,64 @@ final class RenderChunkTransformer implements Opcodes {
 		// Labels n stuff
 		LabelNode originalInstructionsLabel = new LabelNode();
 
+//		ALOAD 0
+//		FLOAD 1
+//		FLOAD 2
+//		FLOAD 3
+//		ALOAD 4
+//		ALOAD 5
+//		ALOAD 7
+//		ALOAD 8
+//		ALOAD 0
+//		GETFIELD net/minecraft/client/renderer/chunk/RenderChunk.world : Lnet/minecraft/world/World;
+//		ALOAD 0
+//		GETFIELD net/minecraft/client/renderer/chunk/RenderChunk.worldView : Lnet/minecraft/world/ChunkCache;
+//		ALOAD 9
+//		ALOAD 10
+//		ALOAD 11
+//		ALOAD 12
+//		INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration
+
+		final String worldFieldName = mapField("net/minecraft/client/renderer/chunk/RenderChunk", "field_178588_d");
 		// Make list of instructions to inject
-		toInject.add(new VarInsnNode(ALOAD, 0)); // this
-		toInject.add(new VarInsnNode(ALOAD, 4)); // generator
-		toInject.add(new VarInsnNode(ALOAD, 5)); // compiledchunk
-		toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos | position
-		if (optifine) {
-			toInject.add(new VarInsnNode(ALOAD, 11)); // worldView | blockAccess | chunkCacheOF
-			toInject.add(new VarInsnNode(ALOAD, 12)); // aboolean | usedRenderLayers
-			toInject.add(new VarInsnNode(ALOAD, 13)); // blockrendererdispatcher
-		} else {
-			String worldFieldName = mapField("net/minecraft/client/renderer/chunk/RenderChunk", "field_178588_d");
+		if (!optifine) {
+			final String worldViewFieldName = mapField("net/minecraft/client/renderer/chunk/RenderChunk", "field_189564_r");
+
+			toInject.add(new VarInsnNode(ALOAD, 0)); // this
+			toInject.add(new VarInsnNode(FLOAD, 1)); // x
+			toInject.add(new VarInsnNode(FLOAD, 2)); // y
+			toInject.add(new VarInsnNode(FLOAD, 3)); // z
+			toInject.add(new VarInsnNode(ALOAD, 4)); // generator
+			toInject.add(new VarInsnNode(ALOAD, 5)); // compiledchunk
+			toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos | position
+			toInject.add(new VarInsnNode(ALOAD, 8)); // blockpos1 | endPosition
 			toInject.add(new VarInsnNode(ALOAD, 0));
 			toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/RenderChunk", worldFieldName, "Lnet/minecraft/world/World;"));
+			toInject.add(new VarInsnNode(ALOAD, 0));
+			toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/RenderChunk", worldViewFieldName, "Lnet/minecraft/world/ChunkCache;"));
+			toInject.add(new VarInsnNode(ALOAD, 9)); // VisGraph
+			toInject.add(new VarInsnNode(ALOAD, 10)); // tileEntitiesWithGlobalRenderers
 			toInject.add(new VarInsnNode(ALOAD, 11)); // aboolean | usedRenderLayers
 			toInject.add(new VarInsnNode(ALOAD, 12)); // blockrendererdispatcher
+		} else {
+//			private static final int ALOAD_blockAccess_chunkCacheOF = 11;
+//			private static final int ALOAD_aboolean = 12;
+//			private static final int ALOAD_blockrendererdispatcher = 13;
+			toInject.add(new VarInsnNode(ALOAD, 0)); // this
+			toInject.add(new VarInsnNode(FLOAD, 1)); // x
+			toInject.add(new VarInsnNode(FLOAD, 2)); // y
+			toInject.add(new VarInsnNode(FLOAD, 3)); // z
+			toInject.add(new VarInsnNode(ALOAD, 4)); // generator
+			toInject.add(new VarInsnNode(ALOAD, 5)); // compiledchunk
+			toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos | position
+			toInject.add(new VarInsnNode(ALOAD, 8)); // blockpos1 | endPosition
+			toInject.add(new VarInsnNode(ALOAD, 0));
+			toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/RenderChunk", worldFieldName, "Lnet/minecraft/world/World;"));
+			toInject.add(new VarInsnNode(ALOAD, 11)); // blockAccess | chunkCacheOF
+			toInject.add(new VarInsnNode(ALOAD, 9)); // VisGraph
+			toInject.add(new VarInsnNode(ALOAD, 10)); // tileEntitiesWithGlobalRenderers
+			toInject.add(new VarInsnNode(ALOAD, 12)); // aboolean | usedRenderLayers
+			toInject.add(new VarInsnNode(ALOAD, 13)); // blockrendererdispatcher
 		}
 		toInject.add(new MethodInsnNode(
 				//int opcode
@@ -235,7 +278,7 @@ final class RenderChunkTransformer implements Opcodes {
 				//String name
 				"preIteration",
 				//String descriptor
-				"(Lnet/minecraft/client/renderer/chunk/RenderChunk;Lnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockAccess;[ZLnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
+				"(Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkCompileTaskGenerator;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
 				//boolean isInterface
 				false
 		));

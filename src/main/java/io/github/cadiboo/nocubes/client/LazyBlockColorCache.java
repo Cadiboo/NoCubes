@@ -1,21 +1,29 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
+import net.minecraft.world.chunk.Chunk;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 
 /**
  * @author Cadiboo
  */
 public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
-	private static final int[] EMPTY = new int[22 * 22 * 22];
+	private static final int[] NEGATIVE_1 = new int[22 * 22 * 22];
 	private static final ThreadLocal<LazyBlockColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBlockColorCache(0, 0, 0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
+
+	static {
+		Arrays.fill(NEGATIVE_1, -1);
+	}
 
 	private int renderChunkPosX;
 	private int renderChunkPosY;
@@ -27,9 +35,13 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	private ColorResolver colorResolver;
 
+	private boolean inUse;
+
 	private LazyBlockColorCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		cache = new int[sizeX * sizeY * sizeZ];
+		this.cache = new int[sizeX * sizeY * sizeZ];
+		System.arraycopy(NEGATIVE_1, 0, this.cache, 0, sizeX * sizeY * sizeZ);
+		this.inUse = false;
 	}
 
 	@Nonnull
@@ -41,6 +53,11 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
 		final LazyBlockColorCache pooled = POOL.get();
 
+		if (pooled.inUse) {
+			throw new IllegalStateException("LazyBlockColorCache is already in use!");
+		}
+		pooled.inUse = true;
+
 		pooled.reader = reader;
 		pooled.colorResolver = colorResolver;
 
@@ -49,7 +66,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 		pooled.renderChunkPosZ = renderChunkPosZ;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
-			System.arraycopy(EMPTY, 0, pooled.cache, 0, sizeX * sizeY * sizeZ);
+			System.arraycopy(NEGATIVE_1, 0, pooled.cache, 0, sizeX * sizeY * sizeZ);
 			return pooled;
 		} else {
 			pooled.sizeX = sizeX;
@@ -62,57 +79,89 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 				pooled.cache = new int[size];
 			}
 
+			System.arraycopy(NEGATIVE_1, 0, pooled.cache, 0, size);
 			return pooled;
 		}
 	}
 
-	private static int getColor(IBlockAccess worldIn, MutableBlockPos pos, ColorResolver resolver) {
-		int red = 0;
-		int green = 0;
-		int blue = 0;
-//		int radius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
-		int radius = 1;
-		int area = (radius * 2 + 1) * (radius * 2 + 1);
-
-		final int posX = pos.getX();
-		final int posY = pos.getY();
-		final int posZ = pos.getZ();
-
-		int max = radius + 1;
-
-		for (int z = -radius; z < max; ++z) {
-			for (int x = -radius; x < max; ++x) {
-				pos.setPos(posX + x, posY, posZ + z);
-				int color = resolver.getColorAtPos(worldIn.getBiome(pos), pos);
-				red += (color & 0xFF0000) >> 16;
-				green += (color & '\uff00') >> 8;
-				blue += color & 0xFF;
-			}
-		}
-		return (red / area & 255) << 16 | (green / area & 255) << 8 | blue / area & 255;
-	}
-
 	@Override
 	public void close() {
+		this.inUse = false;
 	}
 
-	public int get(final int x, final int y, final int z) {
-		int color = this.cache[getIndex(x, y, z)];
-		if (color == 0) {
-			color = getColor(
-					this.reader,
-					MUTABLE_BLOCK_POS.get().setPos(
-							// -2 because offset
-							renderChunkPosX + x - 2,
-							renderChunkPosY + y - 2,
-							renderChunkPosZ + z - 2
-					),
-					this.colorResolver
-			);
-			this.cache[getIndex(x, y, z)] = color;
-			if (color == 0) LogManager.getLogger().error("BARRRF");
+	public int get(final int xIn, final int yIn, final int zIn) {
+		int color = this.cache[getIndex(xIn, yIn, zIn)];
+		if (color == -1) {
+
+			{
+				int red = 0;
+				int green = 0;
+				int blue = 0;
+//				int radius = Minecraft.getMinecraft().gameSettings.biomeBlendRadius;
+				final int radius = 1;
+				final int area = (radius * 2 + 1) * (radius * 2 + 1);
+				final int max = radius + 1;
+
+				// -2 because offset
+				final int posX = renderChunkPosX + xIn - 2;
+				final int posY = renderChunkPosY + yIn - 2;
+				final int posZ = renderChunkPosZ + zIn - 2;
+
+				final MutableBlockPos pos = MUTABLE_BLOCK_POS.get();
+				final IBlockAccess reader = this.reader;
+				final ColorResolver colorResolver = this.colorResolver;
+				int currentChunkPosX = posX >> 4;
+				int currentChunkPosZ = posZ >> 4;
+				Chunk currentChunk = getChunk(currentChunkPosX, currentChunkPosZ, reader);
+
+				for (int zOffset = -radius; zOffset < max; ++zOffset) {
+					for (int xOffset = -radius; xOffset < max; ++xOffset) {
+
+						int x = posX + xOffset;
+						int z = posZ + zOffset;
+
+						if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
+							currentChunkPosX = x >> 4;
+							currentChunkPosZ = z >> 4;
+							currentChunk = getChunk(currentChunkPosX, currentChunkPosZ, reader);
+						}
+
+						pos.setPos(x, posY, z);
+
+						final int resolvedColor = colorResolver.getColorAtPos(currentChunk.getBiome(pos, currentChunk.getWorld().getBiomeProvider()), pos);
+
+						red += (resolvedColor & 0xFF0000) >> 16;
+						green += (resolvedColor & '\uff00') >> 8;
+						blue += resolvedColor & 0xFF;
+					}
+				}
+				color = (red / area & 0xFF) << 16 | (green / area & 0xFF) << 8 | blue / area & 0xFF;
+			}
+
+			this.cache[getIndex(xIn, yIn, zIn)] = color;
+			if (color == -1) {
+				LogManager.getLogger().error("Color = -1. wtf");
+			}
 		}
 		return color;
+	}
+
+	private Chunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IBlockAccess reader) {
+//		if (reader instanceof IWorld) { // This should never be the case...
+//			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
+//		} else
+		if (reader instanceof ChunkCache) {
+			ChunkCache renderChunkCache = (ChunkCache) reader;
+			final int x = currentChunkPosX - renderChunkCache.chunkX;
+			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
+			return renderChunkCache.chunkArray[x][z];
+		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
+			ChunkCache region = OptiFineCompatibility.getChunkCache(reader);
+			final int x = currentChunkPosX - region.chunkX;
+			final int z = currentChunkPosZ - region.chunkZ;
+			return region.chunkArray[x][z];
+		}
+		throw new IllegalStateException("Should Not Reach Here!");
 	}
 
 }

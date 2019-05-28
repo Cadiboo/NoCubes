@@ -1,54 +1,70 @@
-package io.github.cadiboo.nocubes.collision;
-
-import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.CacheUtil;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
-import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.border.WorldBorder;
-
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
-import static net.minecraft.util.EnumFacing.Axis;
-import static net.minecraft.util.math.MathHelper.clamp;
-
-/**
- * @author Cadiboo
- */
-//TODO FIXME use VoxelShapePart instead of tons of VoxelShapes
-public final class CollisionHandler {
+//package io.github.cadiboo.nocubes.collision;
 //
-//	public static Stream<VoxelShape> getCollisionShapes(final IBlockAccess iWorldReaderBase, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+//import io.github.cadiboo.nocubes.config.Config;
+//import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
+//import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+//import io.github.cadiboo.nocubes.util.CacheUtil;
+//import io.github.cadiboo.nocubes.util.IsSmoothable;
+//import io.github.cadiboo.nocubes.util.ModProfiler;
+//import io.github.cadiboo.nocubes.util.pooled.Face;
+//import io.github.cadiboo.nocubes.util.pooled.FaceList;
+//import io.github.cadiboo.nocubes.util.pooled.Vec3;
+//import io.github.cadiboo.nocubes.util.pooled.Vec3b;
+//import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+//import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
+//import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+//import net.minecraft.block.state.IBlockState;
+//import net.minecraft.entity.Entity;
+//import net.minecraft.entity.EntityLivingBase;
+//import net.minecraft.entity.item.EntityItem;
+//import net.minecraft.entity.player.EntityPlayer;
+//import net.minecraft.util.math.AxisAlignedBB;
+//import net.minecraft.util.math.BlockPos;
+//import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+//import net.minecraft.util.math.MathHelper;
+//import net.minecraft.world.World;
+//import net.minecraft.world.border.WorldBorder;
 //
-//		if (!Config.terrainCollisions) { // Do leaves regardless
+//import javax.annotation.Nullable;
+//import java.util.ArrayList;
+//import java.util.HashMap;
+//import java.util.List;
+//import java.util.function.Predicate;
+//import java.util.stream.Stream;
+//import java.util.stream.StreamSupport;
+//
+//import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+//import static net.minecraft.util.EnumFacing.Axis;
+//import static net.minecraft.util.math.MathHelper.clamp;
+//
+///**
+// * @author Cadiboo
+// */
+////TODO FIXME use AxisAlignedBBPart instead of tons of AxisAlignedBBs
+//public final class CollisionHandler {
+//
+//	public static Stream<AxisAlignedBB> getCollisionShapes(final World iWorldReaderBase, final Entity movingEntity, final AxisAlignedBB area, final AxisAlignedBB entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final AxisAlignedBBPart voxelshapepart, final Predicate<AxisAlignedBB> predicate) {
+//
+//		if (!Config.terrainCollisions) {
 //			return Stream.concat(
 //					getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
+//					Stream.generate(() -> new AxisAlignedBBInt(voxelshapepart, minXm1, minYm1, minZm1))
 //							.limit(1L)
 //							.filter(predicate)
 //			);
+//		}
+//
+//		if (!shouldApplyMeshCollisions(movingEntity)) {
+//			if (!shouldApplyReposeCollisions(movingEntity)) {
+//				return Stream.concat(
+//						getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+//						Stream.generate(() -> new AxisAlignedBBInt(voxelshapepart, minXm1, minYm1, minZm1))
+//								.limit(1L)
+//								.filter(predicate)
+//				);
+//			} else {
+//				return getReposeCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate);
+//			}
 //		}
 //
 //		// Density calculation needs -1 on all axis
@@ -74,8 +90,22 @@ public final class CollisionHandler {
 //		final int startPosY = minYm1 - additionalSizeNegY;
 //		final int startPosZ = minZm1 - additionalSizeNegZ;
 //
+//		if (!iWorldReaderBase.isAreaLoaded(
+//				startPosX, startPosY, startPosZ,
+//				startPosX + sizeX, startPosY + sizeY, startPosZ + sizeZ,
+//				true
+//		)) {
+//			return Stream.concat(
+//					getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+//					Stream.generate(() -> new AxisAlignedBBInt(voxelshapepart, minXm1, minYm1, minZm1))
+//							.limit(1L)
+//							.filter(predicate)
+//			);
+//		}
+//
+//		final ModProfiler profiler = ModProfiler.get();
+//		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 //		try (
-//				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 //				StateCache stateCache = CacheUtil.generateStateCache(
 //						startPosX, startPosY, startPosZ,
 //						sizeX, sizeY, sizeZ,
@@ -86,67 +116,121 @@ public final class CollisionHandler {
 //						sizeX - 1, sizeY - 1, sizeZ - 1,
 //						0, 0, 0,
 //						stateCache, smoothableCache
-//				);
-//				ModProfiler profiler = ModProfiler.get().start("Calculate collisions")
+//				)
 //		) {
 //
-//			final HashMap<Vec3b, FaceList> meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
-//			MeshDispatcher.offsetMesh(minXm1, minYm1, minZm1, meshData);
-//
-//			final FaceList finalFaces = FaceList.retain();
-//
-//			for (final FaceList generatedFaceList : meshData.values()) {
-//				finalFaces.addAll(generatedFaceList);
-//				generatedFaceList.close();
-//			}
-//			for (final Vec3b vec3b : meshData.keySet()) {
-//				vec3b.close();
+//			final HashMap<Vec3b, FaceList> meshData;
+//			try (final ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
+//				meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 //			}
 //
-//			final List<VoxelShape> finalCollidingShapes = new ArrayList<>();
-//			final List<VoxelShape> tempCollidingShapes = new ArrayList<>();
+//			try (final ModProfiler ignored = profiler.start("Offset collisions mesh")) {
+//				MeshDispatcher.offsetMesh(minXm1, minYm1, minZm1, meshData);
+//			}
 //
-//			for (final Face face : finalFaces) {
-//				try (
-//						final Vec3 v0 = face.getVertex0();
-//						final Vec3 v1 = face.getVertex1();
-//						final Vec3 v2 = face.getVertex2();
-//						final Vec3 v3 = face.getVertex3()
-//				) {
-//					// Snap collision VoxelShapes max Y to max Y VoxelShapes of original block at pos if smaller than original
-//					// To stop players falling down through the world when they enable collisions
-//					// (Only works on flat or near-flat surfaces)
-//					//TODO: remove
-//					final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
-//					final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
-//					final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
-//					final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
-//							approximateX - startPosX,
-//							approximateY - startPosY,
-//							approximateZ - startPosZ
-//					)];
-//					final VoxelShape originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
-//							approximateX, approximateY, approximateZ
-//					));
-//					addFaceBoxesToList(tempCollidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F);
+//			try (FaceList finalFaces = FaceList.retain()) {
+//
+//				try (final ModProfiler ignored = profiler.start("Combine collisions faces")) {
+//					for (final FaceList generatedFaceList : meshData.values()) {
+//						finalFaces.addAll(generatedFaceList);
+//						generatedFaceList.close();
+//					}
+//					for (final Vec3b vec3b : meshData.keySet()) {
+//						vec3b.close();
+//					}
 //				}
-//				face.close();
+//
+//				final List<AxisAlignedBB> collidingShapes = new ArrayList<>();
+//
+//				for (final Face face : finalFaces) {
+//					try (
+//							final Vec3 v0 = face.getVertex0();
+//							final Vec3 v1 = face.getVertex1();
+//							final Vec3 v2 = face.getVertex2();
+//							final Vec3 v3 = face.getVertex3()
+//					) {
+//						final int approximateY;
+//						final AxisAlignedBB originalBoxShape;
+//
+//						try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
+//							// Snap collision AxisAlignedBBs max Y to max Y AxisAlignedBBs of original block at pos if smaller than original
+//							// To stop players falling down through the world when they enable collisions
+//							// (Only works on flat or near-flat surfaces)
+//							//TODO: remove
+//							final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
+//							approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
+//							final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
+//							final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
+//									approximateX - startPosX,
+//									approximateY - startPosY,
+//									approximateZ - startPosZ
+//							)];
+//							originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
+//									approximateX, approximateY, approximateZ
+//							));
+//						}
+//						addIntersectingFaceBoxesToList(collidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F, predicate, false);
+//					}
+//					face.close();
+//				}
+//
+//				return Stream.concat(
+//						Stream.concat(
+//								getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
+//								collidingShapes.stream()
+//						), Stream.generate(() -> new AxisAlignedBBInt(voxelshapepart, minXm1, minYm1, minZm1))
+//								.limit(1L)
+//								.filter(predicate)
+//				);
+//
 //			}
-//
-//			for (final VoxelShape box : tempCollidingShapes) {
-//				addCollisionBoxToList(finalCollidingShapes, box, predicate, false);
-//			}
-//
-//			return Stream.concat(
-//					Stream.concat(
-//							getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//							finalCollidingShapes.stream()
-//					), Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//							.limit(1L)
-//							.filter(predicate)
-//			);
-//
+//		} finally {
+//			pooledMutableBlockPos.release();
 //		}
+//	}
+//
+//	//TODO
+//	private static Stream<AxisAlignedBB> getReposeCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final AxisAlignedBB area, final AxisAlignedBB entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final AxisAlignedBBPart voxelshapepart, final Predicate<AxisAlignedBB> predicate) {
+//		return Stream.concat(
+//				StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(minXm1, minYm1, minZm1, maxXp1 - 1, maxYp1 - 1, maxZp1 - 1).spliterator(), false).map((pos) -> {
+//					int k1 = pos.getX();
+//					int l1 = pos.getY();
+//					int i2 = pos.getZ();
+//					boolean flag1 = k1 == minXm1 || k1 == maxXp1 - 1;
+//					boolean flag2 = l1 == minYm1 || l1 == maxYp1 - 1;
+//					boolean flag3 = i2 == minZm1 || i2 == maxZp1 - 1;
+//					if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && iWorldReaderBase.isBlockLoaded(pos)) {
+//						final AxisAlignedBB voxelshape;
+//						if (isEntityInsideWorldBorder && !isAreaInsideWorldBorder && !worldborder.contains(pos)) {
+//							voxelshape = AxisAlignedBBs.fullCube();
+//						} else {
+//							//Added stuff here
+//							final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
+//							if (TERRAIN_SMOOTHABLE.apply(blockState)) {
+//								voxelshape = StolenReposeCode.getCollisionShape(blockState, iWorldReaderBase, pos);
+//							} else {
+//								voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);
+//							}
+//							//End added stuff
+//						}
+//
+//						AxisAlignedBB voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
+//						if (AxisAlignedBBs.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
+//							return AxisAlignedBBs.empty();
+//						} else if (voxelshape == AxisAlignedBBs.fullCube()) {
+//							voxelshapepart.setFilled(k1 - minXm1, l1 - minYm1, i2 - minZm1, true, true);
+//							return AxisAlignedBBs.empty();
+//						} else {
+//							return voxelshape.withOffset((double) k1, (double) l1, (double) i2);
+//						}
+//					} else {
+//						return AxisAlignedBBs.empty();
+//					}
+//				}).filter(predicate),
+//				Stream.generate(() -> new AxisAlignedBBInt(voxelshapepart, minXm1, minYm1, minZm1))
+//						.limit(1L)
+//						.filter(predicate)
+//		);
 //	}
 //
 //	private static int roundAvg(double d0, double d1, double d2, double d3) {
@@ -163,7 +247,7 @@ public final class CollisionHandler {
 //		return (int) ((d0 + d1 + d2 + d3) / 4);
 //	}
 //
-//	public static Stream<VoxelShape> getCollisionShapesExcludingSmoothable(@Nullable final IsSmoothable isSmoothable, final IBlockAccess iWorldReaderBase, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
+//	public static Stream<AxisAlignedBB> getCollisionShapesExcludingSmoothable(@Nullable final IsSmoothable isSmoothable, final IWorldReaderBase iWorldReaderBase, final AxisAlignedBB area, final AxisAlignedBB entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final AxisAlignedBBPart voxelshapepart, final Predicate<AxisAlignedBB> predicate) {
 //		return StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((pos) -> {
 //			int k1 = pos.getX();
 //			int l1 = pos.getY();
@@ -172,36 +256,44 @@ public final class CollisionHandler {
 //			boolean flag2 = l1 == k || l1 == l - 1;
 //			boolean flag3 = i2 == i1 || i2 == j1 - 1;
 //			if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && iWorldReaderBase.isBlockLoaded(pos)) {
-//				final VoxelShape voxelshape;
+//				final AxisAlignedBB voxelshape;
 //				if (isEntityInsideWorldBorder && !isAreaInsideWorldBorder && !worldborder.contains(pos)) {
-//					voxelshape = VoxelShapes.fullCube();
+//					voxelshape = AxisAlignedBBs.fullCube();
 //				} else {
 //					//Added stuff here
 //					final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
-//					if (isSmoothable != null && (isSmoothable.apply(blockState) || (Config.leavesCollisions && blockState.nocubes_isLeavesSmoothable()))) {
-//						voxelshape = VoxelShapes.empty();
+//					if (isSmoothable != null && (isSmoothable.apply(blockState))) {
+//						voxelshape = AxisAlignedBBs.empty();
 //					} else {
 //						voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);
 //					}
 //					//End added stuff
 //				}
 //
-//				VoxelShape voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
-//				if (VoxelShapes.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
-//					return VoxelShapes.empty();
-//				} else if (voxelshape == VoxelShapes.fullCube()) {
+//				AxisAlignedBB voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
+//				if (AxisAlignedBBs.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
+//					return AxisAlignedBBs.empty();
+//				} else if (voxelshape == AxisAlignedBBs.fullCube()) {
 //					voxelshapepart.setFilled(k1 - i, l1 - k, i2 - i1, true, true);
-//					return VoxelShapes.empty();
+//					return AxisAlignedBBs.empty();
 //				} else {
 //					return voxelshape.withOffset((double) k1, (double) l1, (double) i2);
 //				}
 //			} else {
-//				return VoxelShapes.empty();
+//				return AxisAlignedBBs.empty();
 //			}
 //		}).filter(predicate);
 //	}
 //
-//	private static void addFaceBoxesToList(final List<VoxelShape> outBoxes, final Face face, final ModProfiler profiler, final double maxYLevel, final float boxRadius) {
+//	private static void addIntersectingFaceBoxesToList(
+//			final List<AxisAlignedBB> outBoxes,
+//			final Face face,
+//			final ModProfiler profiler,
+//			final double maxYLevel,
+//			final float boxRadius,
+//			final Predicate<AxisAlignedBB> predicate,
+//			final boolean ignoreIntersects
+//	) {
 //
 //		//0___3
 //		//_____
@@ -294,114 +386,114 @@ public final class CollisionHandler {
 //		//_____
 //		//_____
 //		//1___2
-////		final VoxelShape v0box;
-////		final VoxelShape v1box;
-////		final VoxelShape v2box;
-////		final VoxelShape v3box;
+////		final AxisAlignedBB v0box;
+////		final AxisAlignedBB v1box;
+////		final AxisAlignedBB v2box;
+////		final AxisAlignedBB v3box;
 //		//0_*_3
 //		//_____
 //		//*___*
 //		//_____
 //		//1_*_2
-//		final VoxelShape v0v1box;
-//		final VoxelShape v1v2box;
-//		final VoxelShape v2v3box;
-//		final VoxelShape v3v0box;
+//		final AxisAlignedBB v0v1box;
+//		final AxisAlignedBB v1v2box;
+//		final AxisAlignedBB v2v3box;
+//		final AxisAlignedBB v3v0box;
 ////		//0x*x3
 ////		//x___x
 ////		//*___*
 ////		//x___x
 ////		//1x*x2
-////		final VoxelShape v0v1v0box;
-////		final VoxelShape v0v1v1box;
-////		final VoxelShape v1v2v1box;
-////		final VoxelShape v1v2v2box;
-////		final VoxelShape v2v3v2box;
-////		final VoxelShape v2v3v3box;
-////		final VoxelShape v3v0v3box;
-////		final VoxelShape v3v0v0box;
+////		final AxisAlignedBB v0v1v0box;
+////		final AxisAlignedBB v0v1v1box;
+////		final AxisAlignedBB v1v2v1box;
+////		final AxisAlignedBB v1v2v2box;
+////		final AxisAlignedBB v2v3v2box;
+////		final AxisAlignedBB v2v3v3box;
+////		final AxisAlignedBB v3v0v3box;
+////		final AxisAlignedBB v3v0v0box;
 //		//0x*x3
 //		//xa_ax
 //		//*___*
 //		//xa_ax
 //		//1x*x2
-//		final VoxelShape v0v1v1v2box;
-//		final VoxelShape v1v2v2v3box;
-//		final VoxelShape v2v3v3v0box;
-//		final VoxelShape v3v0v0v1box;
+//		final AxisAlignedBB v0v1v1v2box;
+//		final AxisAlignedBB v1v2v2v3box;
+//		final AxisAlignedBB v2v3v3v0box;
+//		final AxisAlignedBB v3v0v0v1box;
 ////		//0x*x3
 ////		//xabax
 ////		//*b_b*
 ////		//xabax
 ////		//1x*x2
-////		final VoxelShape v0v1v1v2v1v2v2v3box;
-////		final VoxelShape v1v2v2v3v2v3v3v0box;
-////		final VoxelShape v2v3v3v0v3v0v0v1box;
-////		final VoxelShape v3v0v0v1v0v1v1v2box;
+////		final AxisAlignedBB v0v1v1v2v1v2v2v3box;
+////		final AxisAlignedBB v1v2v2v3v2v3v3v0box;
+////		final AxisAlignedBB v2v3v3v0v3v0v0v1box;
+////		final AxisAlignedBB v3v0v0v1v0v1v1v2box;
 ////		//0x*x3
 ////		//xabax
 ////		//*bcb*
 ////		//xabax
 ////		//1x*x2
-////		final VoxelShape v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box;
-////		final VoxelShape v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box;
+////		final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box;
+////		final AxisAlignedBB v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box;
 //
 //		try (final ModProfiler ignored = profiler.start("createBoxes")) {
-////			v0box = createVoxelShapeForVertex(v0, boxRadius, maxYLevel);
-////			v1box = createVoxelShapeForVertex(v1, boxRadius, maxYLevel);
-////			v2box = createVoxelShapeForVertex(v2, boxRadius, maxYLevel);
-////			v3box = createVoxelShapeForVertex(v3, boxRadius, maxYLevel);
-//			v0v1box = createVoxelShapeForVertex(v0v1, boxRadius, maxYLevel);
-//			v1v2box = createVoxelShapeForVertex(v1v2, boxRadius, maxYLevel);
-//			v2v3box = createVoxelShapeForVertex(v2v3, boxRadius, maxYLevel);
-//			v3v0box = createVoxelShapeForVertex(v3v0, boxRadius, maxYLevel);
-////			v0v1v0box = createVoxelShapeForVertex(v0v1v0, boxRadius, originalBoxOffset);
-////			v0v1v1box = createVoxelShapeForVertex(v0v1v1, boxRadius, originalBoxOffset);
-////			v1v2v1box = createVoxelShapeForVertex(v1v2v1, boxRadius, originalBoxOffset);
-////			v1v2v2box = createVoxelShapeForVertex(v1v2v2, boxRadius, originalBoxOffset);
-////			v2v3v2box = createVoxelShapeForVertex(v2v3v2, boxRadius, originalBoxOffset);
-////			v2v3v3box = createVoxelShapeForVertex(v2v3v3, boxRadius, originalBoxOffset);
-////			v3v0v3box = createVoxelShapeForVertex(v3v0v3, boxRadius, originalBoxOffset);
-////			v3v0v0box = createVoxelShapeForVertex(v3v0v0, boxRadius, originalBoxOffset);
-//			v0v1v1v2box = createVoxelShapeForVertex(v0v1v1v2, boxRadius, maxYLevel);
-//			v1v2v2v3box = createVoxelShapeForVertex(v1v2v2v3, boxRadius, maxYLevel);
-//			v2v3v3v0box = createVoxelShapeForVertex(v2v3v3v0, boxRadius, maxYLevel);
-//			v3v0v0v1box = createVoxelShapeForVertex(v3v0v0v1, boxRadius, maxYLevel);
-////			v0v1v1v2v1v2v2v3box = createVoxelShapeForVertex(v0v1v1v2v1v2v2v3, boxRadius, originalBoxOffset);
-////			v1v2v2v3v2v3v3v0box = createVoxelShapeForVertex(v1v2v2v3v2v3v3v0, boxRadius, originalBoxOffset);
-////			v2v3v3v0v3v0v0v1box = createVoxelShapeForVertex(v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
-////			v3v0v0v1v0v1v1v2box = createVoxelShapeForVertex(v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
-////			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createVoxelShapeForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
-////			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createVoxelShapeForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
+////			v0box = createAxisAlignedBBForVertex(v0, boxRadius, maxYLevel);
+////			v1box = createAxisAlignedBBForVertex(v1, boxRadius, maxYLevel);
+////			v2box = createAxisAlignedBBForVertex(v2, boxRadius, maxYLevel);
+////			v3box = createAxisAlignedBBForVertex(v3, boxRadius, maxYLevel);
+//			v0v1box = createAxisAlignedBBForVertex(v0v1, boxRadius, maxYLevel);
+//			v1v2box = createAxisAlignedBBForVertex(v1v2, boxRadius, maxYLevel);
+//			v2v3box = createAxisAlignedBBForVertex(v2v3, boxRadius, maxYLevel);
+//			v3v0box = createAxisAlignedBBForVertex(v3v0, boxRadius, maxYLevel);
+////			v0v1v0box = createAxisAlignedBBForVertex(v0v1v0, boxRadius, originalBoxOffset);
+////			v0v1v1box = createAxisAlignedBBForVertex(v0v1v1, boxRadius, originalBoxOffset);
+////			v1v2v1box = createAxisAlignedBBForVertex(v1v2v1, boxRadius, originalBoxOffset);
+////			v1v2v2box = createAxisAlignedBBForVertex(v1v2v2, boxRadius, originalBoxOffset);
+////			v2v3v2box = createAxisAlignedBBForVertex(v2v3v2, boxRadius, originalBoxOffset);
+////			v2v3v3box = createAxisAlignedBBForVertex(v2v3v3, boxRadius, originalBoxOffset);
+////			v3v0v3box = createAxisAlignedBBForVertex(v3v0v3, boxRadius, originalBoxOffset);
+////			v3v0v0box = createAxisAlignedBBForVertex(v3v0v0, boxRadius, originalBoxOffset);
+//			v0v1v1v2box = createAxisAlignedBBForVertex(v0v1v1v2, boxRadius, maxYLevel);
+//			v1v2v2v3box = createAxisAlignedBBForVertex(v1v2v2v3, boxRadius, maxYLevel);
+//			v2v3v3v0box = createAxisAlignedBBForVertex(v2v3v3v0, boxRadius, maxYLevel);
+//			v3v0v0v1box = createAxisAlignedBBForVertex(v3v0v0v1, boxRadius, maxYLevel);
+////			v0v1v1v2v1v2v2v3box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3, boxRadius, originalBoxOffset);
+////			v1v2v2v3v2v3v3v0box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0, boxRadius, originalBoxOffset);
+////			v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
+////			v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
+////			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
+////			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
 //		}
 //
 //		try (final ModProfiler ignored = profiler.start("addBoxes")) {
-////			outBoxes.add(v0box);
-////			outBoxes.add(v1box);
-////			outBoxes.add(v2box);
-////			outBoxes.add(v3box);
-//			outBoxes.add(v0v1box);
-//			outBoxes.add(v1v2box);
-//			outBoxes.add(v2v3box);
-//			outBoxes.add(v3v0box);
-////			outBoxes.add(v0v1v0box);
-////			outBoxes.add(v0v1v1box);
-////			outBoxes.add(v1v2v1box);
-////			outBoxes.add(v1v2v2box);
-////			outBoxes.add(v2v3v2box);
-////			outBoxes.add(v2v3v3box);
-////			outBoxes.add(v3v0v3box);
-////			outBoxes.add(v3v0v0box);
-//			outBoxes.add(v0v1v1v2box);
-//			outBoxes.add(v1v2v2v3box);
-//			outBoxes.add(v2v3v3v0box);
-//			outBoxes.add(v3v0v0v1box);
-////			outBoxes.add(v0v1v1v2v1v2v2v3box);
-////			outBoxes.add(v1v2v2v3v2v3v3v0box);
-////			outBoxes.add(v2v3v3v0v3v0v0v1box);
-////			outBoxes.add(v3v0v0v1v0v1v1v2box);
-////			outBoxes.add(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box);
-////			outBoxes.add(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box);
+////			addCollisionBoxToList(outBoxes, v0box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v2box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3v0box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v0v1v0box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v0v1v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v1v2v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v1v2v2box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v2v3v2box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v2v3v3box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v3v0v3box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v3v0v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v0v1v1v2box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v1v2v2v3box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v2v3v3v0box, predicate, ignoreIntersects);
+//			addCollisionBoxToList(outBoxes, v3v0v0v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+////			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
 //		}
 //
 //		//DO NOT CLOSE original face vectors
@@ -437,9 +529,9 @@ public final class CollisionHandler {
 //	}
 //
 //	private static void addCollisionBoxToList(
-//			final List<VoxelShape> collidingBoxes,
-//			final VoxelShape box,
-//			final Predicate<VoxelShape> predicate,
+//			final List<AxisAlignedBB> collidingBoxes,
+//			final AxisAlignedBB box,
+//			final Predicate<AxisAlignedBB> predicate,
 //			final boolean ignoreIntersects
 //	) {
 //		if (ignoreIntersects || predicate.test(box)) {
@@ -453,17 +545,16 @@ public final class CollisionHandler {
 //				v0.y + t * (v1.y - v0.y),
 //				v0.z + t * (v1.z - v0.z)
 //		);
-//
 //	}
 //
-//	private static VoxelShape createVoxelShapeForVertex(final Vec3 vec3, final float boxRadius, final double maxY) {
+//	private static AxisAlignedBB createAxisAlignedBBForVertex(final Vec3 vec3, final float boxRadius, final double maxY) {
 //
 //		final double vy = vec3.y;
 //		final double vx = vec3.x;
 //		final double vz = vec3.z;
 //
 //		final boolean isOverMax = vy + boxRadius > maxY;
-//		return VoxelShapes.create(
+//		return new AxisAlignedBB(
 //				//min
 //				vx - boxRadius,
 //				isOverMax ? vy - boxRadius - boxRadius : vy - boxRadius,
@@ -476,12 +567,12 @@ public final class CollisionHandler {
 //
 //	}
 //
-//	public static boolean shouldApplyCollisions(@Nullable final Entity entity) {
-//		if (entity == null) {
-//			return true;
-//		} else {
-//			return entity instanceof EntityItem || entity instanceof EntityLivingBase;
-//		}
+//	public static boolean shouldApplyMeshCollisions(@Nullable final Entity entity) {
+//		return entity instanceof EntityPlayer;
 //	}
-
-}
+//
+//	public static boolean shouldApplyReposeCollisions(@Nullable final Entity entity) {
+//		return entity instanceof EntityItem || entity instanceof EntityLivingBase;
+//	}
+//
+//}

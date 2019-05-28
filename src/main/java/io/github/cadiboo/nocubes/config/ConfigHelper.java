@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.config;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockMycelium;
@@ -26,8 +27,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.config.Config.LOGGER;
+import static io.github.cadiboo.nocubes.config.Config.applyDiffuseLighting;
+import static io.github.cadiboo.nocubes.config.Config.betterTextures;
+import static io.github.cadiboo.nocubes.config.Config.extendFluidsRange;
+import static io.github.cadiboo.nocubes.config.Config.leavesMeshGenerator;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothable;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
+import static io.github.cadiboo.nocubes.config.Config.naturalFluidTextures;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain;
+import static io.github.cadiboo.nocubes.config.Config.smoothFluidColors;
+import static io.github.cadiboo.nocubes.config.Config.smoothFluidLighting;
+import static io.github.cadiboo.nocubes.config.Config.smoothLeavesType;
+import static io.github.cadiboo.nocubes.config.Config.terrainCollisions;
+import static io.github.cadiboo.nocubes.config.Config.terrainMeshGenerator;
 import static io.github.cadiboo.nocubes.config.Config.terrainSmoothable;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
@@ -45,6 +58,7 @@ import static net.minecraft.init.Blocks.HARDENED_CLAY;
 import static net.minecraft.init.Blocks.IRON_ORE;
 import static net.minecraft.init.Blocks.LAPIS_ORE;
 import static net.minecraft.init.Blocks.LEAVES;
+import static net.minecraft.init.Blocks.LEAVES2;
 import static net.minecraft.init.Blocks.LIT_REDSTONE_ORE;
 import static net.minecraft.init.Blocks.MAGMA;
 import static net.minecraft.init.Blocks.MONSTER_EGG;
@@ -73,45 +87,42 @@ import static net.minecraft.item.EnumDyeColor.YELLOW;
  */
 public final class ConfigHelper {
 
-//	private static ModConfig clientConfig;
-//
-//	private static ModConfig serverConfig;
-//
-//	public static void bakeClient(final ModConfig config) {
-//		clientConfig = config;
-//
-//		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
-//
-//		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
-//		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get();
-//		leavesSmoothable = Sets.newHashSet(ConfigHolder.CLIENT.leavesSmoothable.get());
-//		initLeavesSmoothable();
-//		smoothLeavesType = ConfigHolder.CLIENT.smoothLeavesType.get();
-//
-//		renderExtendedFluids = ConfigHolder.CLIENT.renderExtendedFluids.get();
-//
-//		applyDiffuseLighting = ConfigHolder.CLIENT.applyDiffuseLighting.get();
-//
-//		betterTextures = ConfigHolder.CLIENT.betterTextures.get();
-//
-//		smoothFluidLighting = ConfigHolder.CLIENT.smoothFluidLighting.get();
-//		smoothFluidColors = ConfigHolder.CLIENT.smoothFluidColors.get();
-//		naturalFluidTextures = ConfigHolder.CLIENT.naturalFluidTextures.get();
-//
-//	}
-//
-//	public static void bakeServer(final ModConfig config) {
-//		serverConfig = config;
-//
-//		terrainSmoothable = Sets.newHashSet(ConfigHolder.SERVER.terrainSmoothable.get());
-//		initTerrainSmoothable();
-//
-//		extendFluidsRange = ConfigHolder.SERVER.extendFluidsRange.get();
-//
-//		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
-//		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
-//		leavesCollisions = ConfigHolder.SERVER.leavesCollisions.get();
-//	}
+	private static ModConfig clientConfig;
+
+	private static ModConfig serverConfig;
+
+	public static void bakeClient(final ModConfig config) {
+		clientConfig = config;
+
+		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
+
+		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
+		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get();
+		leavesSmoothable = Sets.newHashSet(ConfigHolder.CLIENT.leavesSmoothable.get());
+		initLeavesSmoothable();
+		smoothLeavesType = ConfigHolder.CLIENT.smoothLeavesType.get();
+
+		applyDiffuseLighting = ConfigHolder.CLIENT.applyDiffuseLighting.get();
+
+		betterTextures = ConfigHolder.CLIENT.betterTextures.get();
+
+		smoothFluidLighting = ConfigHolder.CLIENT.smoothFluidLighting.get();
+		smoothFluidColors = ConfigHolder.CLIENT.smoothFluidColors.get();
+		naturalFluidTextures = ConfigHolder.CLIENT.naturalFluidTextures.get();
+
+	}
+
+	public static void bakeServer(final ModConfig config) {
+		serverConfig = config;
+
+		terrainSmoothable = Sets.newHashSet(ConfigHolder.SERVER.terrainSmoothable.get());
+		initTerrainSmoothable();
+
+		extendFluidsRange = ConfigHolder.SERVER.extendFluidsRange.get();
+
+		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
+		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
+	}
 
 	public static void discoverDefaultTerrainSmoothable() {
 		final ArrayList<IBlockState> discoveredStates = new ArrayList<>();
@@ -136,7 +147,7 @@ public final class ConfigHelper {
 		ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.forEach(block -> {
 					final IBlockState defaultState = block.getDefaultState();
-					if (block.getMaterial(defaultState) == Material.LEAVES) {
+					if (defaultState.getMaterial() == Material.LEAVES) {
 						LOGGER.debug("Discovered leaves smoothable \"" + block + "\"");
 						discoveredStates.add(defaultState);
 					}
@@ -151,8 +162,8 @@ public final class ConfigHelper {
 				state.nocubes_setTerrainSmoothable(true);
 				terrainSmoothable.add(getStringFromState(state));
 			}
-//			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
-//			serverConfig.save();
+			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
+			serverConfig.save();
 		}
 	}
 
@@ -163,8 +174,8 @@ public final class ConfigHelper {
 				state.nocubes_setTerrainSmoothable(false);
 				terrainSmoothable.remove(getStringFromState(state));
 			}
-//			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
-//			serverConfig.save();
+			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
+			serverConfig.save();
 		}
 	}
 
@@ -182,8 +193,8 @@ public final class ConfigHelper {
 					leavesSmoothableBlocks.add(block);
 				}
 			}
-//			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
-//			clientConfig.save();
+			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
+			clientConfig.save();
 		}
 	}
 
@@ -201,8 +212,8 @@ public final class ConfigHelper {
 					leavesSmoothableBlocks.remove(block);
 				}
 			}
-//			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
-//			clientConfig.save();
+			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
+			clientConfig.save();
 		}
 	}
 
@@ -377,14 +388,8 @@ public final class ConfigHelper {
 	public static List<String> getDefaultLeavesSmoothable() {
 		final List<String> vanillaStates = Lists.newArrayList(
 
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, OAK),
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, SPRUCE),
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, BIRCH),
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, JUNGLE),
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, ACACIA),
-//				LEAVES.getDefaultState().withProperty(BlockNewLeaf.VARIANT, DARK_OAK)
-
-				LEAVES
+				LEAVES,
+				LEAVES2
 
 		).stream().map(Block::getRegistryName).map(ResourceLocation::toString).collect(Collectors.toList());
 
@@ -398,24 +403,24 @@ public final class ConfigHelper {
 		return finalStates;
 	}
 
-//	public static void setTerrainCollisions(final boolean enabled) {
-//		serverConfig.getConfigData().set("general.terrainCollisions", enabled);
-//		serverConfig.save();
-//	}
-//
-//	public static void setRenderSmoothTerrain(final boolean enabled) {
-//		clientConfig.getConfigData().set("general.renderSmoothTerrain", enabled);
-//		clientConfig.save();
-//	}
-//
-//	public static void setRenderSmoothLeaves(final boolean enabled) {
-//		clientConfig.getConfigData().set("general.renderSmoothLeaves", enabled);
-//		clientConfig.save();
-//	}
-//
-//	public static void setLeavesCollisions(final boolean enabled) {
-//		serverConfig.getConfigData().set("general.leavesCollisions", enabled);
-//		serverConfig.save();
-//	}
+	public static void setTerrainCollisions(final boolean enabled) {
+		serverConfig.getConfigData().set("general.terrainCollisions", enabled);
+		serverConfig.save();
+	}
+
+	public static void setRenderSmoothTerrain(final boolean enabled) {
+		clientConfig.getConfigData().set("general.renderSmoothTerrain", enabled);
+		clientConfig.save();
+	}
+
+	public static void setRenderSmoothLeaves(final boolean enabled) {
+		clientConfig.getConfigData().set("general.renderSmoothLeaves", enabled);
+		clientConfig.save();
+	}
+
+	public static void setLeavesCollisions(final boolean enabled) {
+		serverConfig.getConfigData().set("general.leavesCollisions", enabled);
+		serverConfig.save();
+	}
 
 }
