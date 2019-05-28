@@ -151,7 +151,7 @@ public final class RenderDispatcher {
 		}
 		try (LazyPackedLightCache packedLightCache = ClientCacheUtil.generatePackedLightCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, stateCache, blockAccess)) {
 
-//			if (Config.renderExtendedFluids) {
+//			if (Config.extendFluidsRange.getRange() > 0) {
 //				try (
 //						final ModProfiler ignored = ModProfiler.get().start("extendFluids");
 //						SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
