@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static net.minecraft.util.math.MathHelper.getPositionRandom;
+
 /**
  * @author Cadiboo
  */
@@ -263,6 +265,7 @@ public final class MeshRenderer {
 
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
+									random.setSeed(getPositionRandom(texturePos));
 									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, modelData, random, blockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);

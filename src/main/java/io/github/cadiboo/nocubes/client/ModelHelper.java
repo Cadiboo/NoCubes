@@ -58,8 +58,6 @@ public final class ModelHelper {
 //			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 //		}
 
-		posRand.setSeed(getPositionRandom(pos));
-
 		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand, modelData);
 			if (quads.isEmpty()) {
