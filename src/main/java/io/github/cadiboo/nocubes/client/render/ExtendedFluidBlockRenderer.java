@@ -7,6 +7,7 @@ import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
@@ -72,10 +73,11 @@ public final class ExtendedFluidBlockRenderer {
 				}
 
 				boolean wasAnythingRendered = false;
-				float fluidHeight = fluidRenderer.getFluidHeight(worldIn, fluidPos, state.getFluid());
-				float fluidHeightSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.south(), state.getFluid());
-				float fluidHeightEastSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.east().south(), state.getFluid());
-				float fluidHeightEast = fluidRenderer.getFluidHeight(worldIn, fluidPos.east(), state.getFluid());
+				final Fluid fluid = state.getFluid();
+				float fluidHeight = fluidRenderer.getFluidHeight(worldIn, fluidPos, fluid);
+				float fluidHeightSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.south(), fluid);
+				float fluidHeightEastSouth = fluidRenderer.getFluidHeight(worldIn, fluidPos.east().south(), fluid);
+				float fluidHeightEast = fluidRenderer.getFluidHeight(worldIn, fluidPos.east(), fluid);
 
 //				final double x = (double) pos.getX();
 //				final double y = (double) pos.getY();
