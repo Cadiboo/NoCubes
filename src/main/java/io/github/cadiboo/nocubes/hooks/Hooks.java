@@ -146,7 +146,7 @@ public final class Hooks {
 		final IBlockState state = currentChunk.getBlockState(posX, posY, posZ);
 
 		// terrain is serverside, leaves is clientside - lets see how this goes...
-		if (!state.nocubes_isTerrainSmoothable() && (!Config.renderSmoothLeaves || !state.nocubes_isLeavesSmoothable())) {
+		if (!state.nocubes_isTerrainSmoothable()) {
 			return state.getFluidState();
 		}
 
