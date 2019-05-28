@@ -7,6 +7,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.EnumFacing;
@@ -69,10 +70,11 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			float fluidHeight = this.getFluidHeight(worldIn, pos, state.getFluid());
-			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), state.getFluid());
-			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), state.getFluid());
-			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), state.getFluid());
+			final Fluid fluid = state.getFluid();
+			float fluidHeight = this.getFluidHeight(worldIn, pos, fluid);
+			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), fluid);
+			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), fluid);
+			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), fluid);
 
 			final double x = (double) pos.getX();
 			final double y = (double) pos.getY();
