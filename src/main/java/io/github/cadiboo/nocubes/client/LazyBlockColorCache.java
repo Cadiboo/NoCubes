@@ -99,9 +99,9 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 				int red = 0;
 				int green = 0;
 				int blue = 0;
-				int radius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
-				int area = (radius * 2 + 1) * (radius * 2 + 1);
-				int max = radius + 1;
+				final int radius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
+				final int area = (radius * 2 + 1) * (radius * 2 + 1);
+				final int max = radius + 1;
 
 				// -2 because offset
 				final int posX = renderChunkPosX + xIn - 2;
