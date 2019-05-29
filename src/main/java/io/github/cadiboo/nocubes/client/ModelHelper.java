@@ -23,7 +23,6 @@ import static net.minecraft.util.EnumFacing.NORTH;
 import static net.minecraft.util.EnumFacing.SOUTH;
 import static net.minecraft.util.EnumFacing.UP;
 import static net.minecraft.util.EnumFacing.WEST;
-import static net.minecraft.util.math.MathHelper.getPositionRandom;
 
 /**
  * @author Cadiboo
