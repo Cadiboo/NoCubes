@@ -17,11 +17,13 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -403,37 +405,37 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-//		final EntityPlayer player = Minecraft.getMinecraft().player;
-//		if (player == null) {
-//			return;
-//		}
-//
-//		final World world = player.world;
-//		if (world == null) {
-//			return;
-//		}
-//
-//		final float partialTicks = event.getPartialTicks();
-//
-//		GlStateManager.enableBlend();
-//		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-//		GlStateManager.glLineWidth(Math.max(2.5F, (float) Minecraft.getMinecraft().mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
-//		GlStateManager.disableTexture2D();
-//		GlStateManager.depthMask(false);
-//		GlStateManager.matrixMode(5889);
-//		GlStateManager.pushMatrix();
-//		GlStateManager.scalef(1.0F, 1.0F, 0.999F);
-//		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
-//		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
-//		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
-//		for (final VoxelShape voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()).grow(2)).collect(Collectors.toList())) {
-//			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0.0F, 1, 1, 0.4F);
-//		}
-//		GlStateManager.popMatrix();
-//		GlStateManager.matrixMode(5888);
-//		GlStateManager.depthMask(true);
-//		GlStateManager.enableTexture2D();
-//		GlStateManager.disableBlend();
+		final EntityPlayer player = Minecraft.getMinecraft().player;
+		if (player == null) {
+			return;
+		}
+
+		final World world = player.world;
+		if (world == null) {
+			return;
+		}
+
+		final float partialTicks = event.getPartialTicks();
+
+		GlStateManager.enableBlend();
+		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+		GlStateManager.glLineWidth(Math.max(2.5F, (float) Minecraft.getMinecraft().displayWidth / 1920.0F * 2.5F));
+		GlStateManager.disableTexture2D();
+		GlStateManager.depthMask(false);
+		GlStateManager.matrixMode(5889);
+		GlStateManager.pushMatrix();
+		GlStateManager.scale(1.0F, 1.0F, 0.999F);
+		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
+		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
+		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
+		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, player.getEntityBoundingBox().grow(2))) {
+			RenderGlobal.drawSelectionBoundingBox(voxelShape.grow(0.0020000000949949026D).offset(-d0, -d1, -d2), 0.0F, 1, 1, 0.4F);
+		}
+		GlStateManager.popMatrix();
+		GlStateManager.matrixMode(5888);
+		GlStateManager.depthMask(true);
+		GlStateManager.enableTexture2D();
+		GlStateManager.disableBlend();
 
 	}
 
