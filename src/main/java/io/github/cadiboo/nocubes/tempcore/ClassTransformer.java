@@ -108,6 +108,9 @@ public final class ClassTransformer implements IClassTransformer, Opcodes {
 				case "net.minecraft.client.renderer.chunk.RenderChunk":
 				return transformClass(basicClass, transformedName,
 						RenderChunkTransformer::transform
+				);case "net.minecraft.world.World":
+				return transformClass(basicClass, transformedName,
+						WorldTransformer::transform
 				);
 		}
 		return basicClass;
