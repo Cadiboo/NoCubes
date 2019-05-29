@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -23,6 +24,8 @@ import net.minecraft.world.border.WorldBorder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+
+import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 
 /**
  * @author Cadiboo
@@ -110,9 +113,9 @@ public final class Hooks {
 //		}).limit(1L).filter(predicate));
 //	}
 
-//	private static boolean shouldApplyCollisions(final Entity movingEntity) {
-//		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
-//	}
+	private static boolean shouldApplyCollisions(final Entity movingEntity) {
+		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
+	}
 
 //	public static IFluidState getFluidState(final World world, final BlockPos pos) {
 //
@@ -184,12 +187,25 @@ public final class Hooks {
 //	}
 
 	public static boolean getCollisionBoxes(final World _this, final Entity entityIn, final AxisAlignedBB aabb, final boolean p_191504_3_, final List<AxisAlignedBB> outList, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final boolean flag1) {
+
+		// NoCubes Start
+		if (Config.terrainCollisions && io.github.cadiboo.nocubes.hooks.Hooks.shouldApplyCollisions(entityIn)) {
+			try {
+				return CollisionHandler.getCollisionBoxes(_this, entityIn, aabb, p_191504_3_, outList, i, j, k, l, i1, j1, worldborder, flag, flag1);
+			} catch (Exception e) {
+				LOGGER.error("Collisions error, falling back to vanilla", e);
+				//Fallthrough to vanilla
+			}
+		}
+		// NoCubes End
+
 		IBlockState iblockstate = Blocks.STONE.getDefaultState();
 		BlockPos.PooledMutableBlockPos blockpos$pooledmutableblockpos = BlockPos.PooledMutableBlockPos.retain();
 
-		if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList))
-			return true;
+		// NoCubes: fix forge not closing pooled mutable block pos
 		try {
+			if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList))
+				return true;
 			for (int k1 = i; k1 < j; ++k1) {
 				for (int l1 = i1; l1 < j1; ++l1) {
 					boolean flag2 = k1 == i || k1 == j - 1;
@@ -200,8 +216,7 @@ public final class Hooks {
 							if (!flag2 && !flag3 || i2 != l - 1) {
 								if (p_191504_3_) {
 									if (k1 < -30000000 || k1 >= 30000000 || l1 < -30000000 || l1 >= 30000000) {
-										boolean lvt_21_2_ = true;
-										return lvt_21_2_;
+										return true;
 									}
 								} else if (entityIn != null && flag == flag1) {
 									entityIn.setOutsideBorder(!flag1);
@@ -219,8 +234,7 @@ public final class Hooks {
 								iblockstate1.addCollisionBoxToList(_this, blockpos$pooledmutableblockpos, aabb, outList, entityIn, false);
 
 								if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList)) {
-									boolean flag5 = true;
-									return flag5;
+									return true;
 								}
 							}
 						}

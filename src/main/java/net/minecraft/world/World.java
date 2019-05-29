@@ -1428,6 +1428,7 @@ public abstract class World implements IBlockAccess, net.minecraftforge.common.c
         WorldBorder worldborder = this.getWorldBorder();
         boolean flag = entityIn != null && entityIn.isOutsideBorder();
         boolean flag1 = entityIn != null && this.isInsideWorldBorder(entityIn);
+
         // NoCubes Start
         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionBoxes(this, entityIn, aabb, p_191504_3_, outList, i, j, k, l, i1, j1, worldborder, flag, flag1);
         // NoCubes End
