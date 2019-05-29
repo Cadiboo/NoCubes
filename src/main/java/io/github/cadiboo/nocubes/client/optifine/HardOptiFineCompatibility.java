@@ -31,6 +31,18 @@ final class HardOptiFineCompatibility {
 		return ((ChunkCacheOF) reader).chunkCache;
 	}
 
+	static void pushShaderThing(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+		if (Config.isShaders()) {
+			SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+		}
+	}
+
+	static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
+		if (Config.isShaders()) {
+			SVertexBuilderOF.popEntity(worldRendererIn);
+		}
+	}
+
 	static final class SVertexBuilderOF {
 
 		static void pushEntity(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
@@ -62,18 +74,6 @@ final class HardOptiFineCompatibility {
 			return BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, (RenderEnv) renderEnv);
 		}
 
-	}
-
-	static void pushShaderThing(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
-		if (Config.isShaders()) {
-			SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
-		}
-	}
-
-	static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
-		if (Config.isShaders()) {
-			SVertexBuilderOF.popEntity(worldRendererIn);
-		}
 	}
 
 }

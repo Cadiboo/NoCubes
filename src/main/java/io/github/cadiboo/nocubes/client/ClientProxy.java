@@ -17,7 +17,6 @@ import static org.lwjgl.input.Keyboard.KEY_K;
 import static org.lwjgl.input.Keyboard.KEY_N;
 import static org.lwjgl.input.Keyboard.KEY_O;
 import static org.lwjgl.input.Keyboard.KEY_P;
-import static org.lwjgl.input.Keyboard.KEY_V;
 
 /**
  * The version of IProxy that gets injected into {@link NoCubes#PROXY} on a PHYSICAL CLIENT

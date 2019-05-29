@@ -318,7 +318,7 @@ public final class RenderDispatcher {
 		PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try (
 				SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IsSmoothable.TERRAIN_SMOOTHABLE);
-				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColorHelper.GRASS_COLOR);
+				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColorHelper.GRASS_COLOR)
 		) {
 			MeshRenderer.renderMesh(
 					renderChunk,

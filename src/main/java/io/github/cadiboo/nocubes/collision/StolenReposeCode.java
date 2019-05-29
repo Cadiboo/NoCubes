@@ -31,7 +31,7 @@ final class StolenReposeCode {
 		float density = 0;
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try (
-				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
+				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density")
 		) {
 
 			final WorldBorder worldBorder = worldIn.getWorldBorder();
@@ -72,7 +72,7 @@ final class StolenReposeCode {
 		if (collisionBoundingBox != null) { // optimization
 			if (canSlopeAt(stateIn, worldIn, posIn, collisionBoundingBox)) {
 				collidingBoxes.addAll(slopingCollisionBoxes(stateIn, worldIn, posIn).stream().filter(entityBox::intersects).collect(Collectors.toList()));
-			}else {
+			} else {
 				stateIn.addCollisionBoxToList(worldIn, posIn, entityBox, collidingBoxes, entityIn, isActualState);
 			}
 		}

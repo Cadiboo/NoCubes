@@ -89,6 +89,7 @@ public final class NoCubes {
 	public void onPostInit(final FMLPostInitializationEvent event) {
 		PROXY.replaceFluidRendererCauseImBored();
 	}
+
 	@Mod.EventHandler
 	public void onServerAboutToStart(final FMLServerAboutToStartEvent event) {
 		final MinecraftServer server = event.getServer();

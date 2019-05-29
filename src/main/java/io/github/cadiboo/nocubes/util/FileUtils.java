@@ -22,11 +22,11 @@ public class FileUtils {
 	}
 
 	public static Path getOrCreateDirectory(Path dirPath, String dirLabel) {
-		if (!Files.isDirectory(dirPath.getParent(), new LinkOption[0])) {
+		if (!Files.isDirectory(dirPath.getParent())) {
 			getOrCreateDirectory(dirPath.getParent(), "parent of " + dirLabel);
 		}
 
-		if (!Files.isDirectory(dirPath, new LinkOption[0])) {
+		if (!Files.isDirectory(dirPath)) {
 			LOGGER.debug("Making {} directory : {}", dirLabel, dirPath);
 
 			try {

@@ -89,6 +89,7 @@ public final class OptiFineCompatibility {
 				}
 			}
 		}
+
 		static {
 			if (!OPTIFINE_INSTALLED) {
 				CONFIG_IS_SHADERS = null;

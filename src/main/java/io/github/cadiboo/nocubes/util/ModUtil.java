@@ -11,7 +11,6 @@ import javax.annotation.Nonnull;
 import java.util.Random;
 
 import static net.minecraft.init.Blocks.BEDROCK;
-import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 
 /**
