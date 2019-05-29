@@ -12,7 +12,6 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -44,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
@@ -60,8 +58,6 @@ import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
  */
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
-
-	private static boolean hasSetSmoothLightingAndFancyGraphics = false;
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
@@ -225,30 +221,6 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
-
-		//This is here because the RenderTickEvent is pretty much the first event to fire as soon as gameSettings saving is re-enabled
-		if (!hasSetSmoothLightingAndFancyGraphics) {
-			hasSetSmoothLightingAndFancyGraphics = true;
-			try {
-				final GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-				boolean needsResave = false;
-				if (gameSettings.ambientOcclusion < 1) {
-					LOGGER.info("Smooth lighting was off. EW! Just set it to MINIMAL");
-					gameSettings.ambientOcclusion = 1;
-					needsResave = true;
-				}
-				if (!gameSettings.fancyGraphics) {
-					LOGGER.info("Fancy graphics were off. Ew, who plays with black leaves??? Just turned it on");
-					gameSettings.fancyGraphics = true;
-					needsResave = true;
-				}
-				if (needsResave) {
-					gameSettings.saveOptions();
-				}
-			} catch (Exception e) {
-				//go away idc about u
-			}
-		}
 
 		if (!ModProfiler.profilersEnabled) {
 			return;
