@@ -297,7 +297,7 @@ public final class RenderDispatcher {
 					break;
 			}
 		} finally {
-			pooledMutableBlockPos.release();
+			texturePooledMutableBlockPos.release();
 		}
 	}
 
@@ -346,7 +346,7 @@ public final class RenderDispatcher {
 					false, true, true
 			);
 		} finally {
-			pooledMutableBlockPos.release();
+			texturePooledMutableBlockPos.release();
 		}
 	}
 
