@@ -201,15 +201,13 @@ public final class ClientEventSubscriber {
 				for (int z = -2; z < 3; ++z) {
 					{
 						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY, playerPosZ + z);
-						final IBlockState blockState = world.getBlockState(pooledMutableBlockPos);
-						final boolean topIsSolid = !(blockState.getMaterial().blocksMovement() && blockState.isFullCube());
+						final boolean topIsSolid = world.getBlockState(pooledMutableBlockPos).getCollisionBoundingBox(world, pooledMutableBlockPos) != null;
 						topAllSolid &= topIsSolid;
 						topAllNonSolid &= (!topIsSolid);
 					}
 					{
 						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY - 1, playerPosZ + z);
-						final IBlockState blockState = world.getBlockState(pooledMutableBlockPos);
-						final boolean bottomIsSolid = !(blockState.getMaterial().blocksMovement() && blockState.isFullCube());
+						final boolean bottomIsSolid = world.getBlockState(pooledMutableBlockPos).getCollisionBoundingBox(world, pooledMutableBlockPos) != null;
 						bottomAllSolid &= bottomIsSolid;
 						bottomAllNonSolid &= (!bottomIsSolid);
 					}
