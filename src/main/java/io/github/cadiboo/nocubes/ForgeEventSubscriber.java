@@ -21,7 +21,7 @@ public final class ForgeEventSubscriber {
 	public static void onWorldLoadEvent(final WorldEvent.Load event) {
 		final World world = event.getWorld();
 		if (world instanceof World) {
-			((World) world).addEventListener(new ModWorldEventListener());
+			world.addEventListener(new ModWorldEventListener());
 		} else {
 			LOGGER.error("Failed to attach event listener to world. world is not a World!");
 		}

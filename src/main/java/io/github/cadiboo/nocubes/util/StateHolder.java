@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.BlockDirt;
-import net.minecraft.block.BlockGrass;
 import net.minecraft.block.BlockTallGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Bootstrap;
