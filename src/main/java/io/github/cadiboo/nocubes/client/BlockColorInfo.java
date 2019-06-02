@@ -20,7 +20,7 @@ import static net.minecraft.util.math.MathHelper.floor;
  */
 public class BlockColorInfo implements AutoCloseable {
 
-	public static final boolean RAINBOW = true; //isWearItPurpleDay();
+	public static final boolean RAINBOW = isWearItPurpleDay();
 	public static final boolean BLACK = isHalloween();
 
 	private static final ThreadLocal<BlockColorInfo> POOL = ThreadLocal.withInitial(() -> new BlockColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
