@@ -33,6 +33,8 @@ public final class Config {
 
 	public static boolean betterTextures;
 
+	public static boolean shortGrass;
+
 	public static boolean smoothFluidLighting;
 	public static boolean smoothFluidColors;
 	public static boolean naturalFluidTextures;

@@ -36,6 +36,7 @@ import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
 import static io.github.cadiboo.nocubes.config.Config.naturalFluidTextures;
 import static io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves;
 import static io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain;
+import static io.github.cadiboo.nocubes.config.Config.shortGrass;
 import static io.github.cadiboo.nocubes.config.Config.smoothFluidColors;
 import static io.github.cadiboo.nocubes.config.Config.smoothFluidLighting;
 import static io.github.cadiboo.nocubes.config.Config.smoothLeavesType;
@@ -106,6 +107,8 @@ public final class ConfigHelper {
 
 		betterTextures = ConfigHolder.CLIENT.betterTextures.get();
 
+		shortGrass = ConfigHolder.CLIENT.shortGrass.get();
+
 		smoothFluidLighting = ConfigHolder.CLIENT.smoothFluidLighting.get();
 		smoothFluidColors = ConfigHolder.CLIENT.smoothFluidColors.get();
 		naturalFluidTextures = ConfigHolder.CLIENT.naturalFluidTextures.get();
@@ -162,8 +165,7 @@ public final class ConfigHelper {
 				state.nocubes_setTerrainSmoothable(true);
 				terrainSmoothable.add(getStringFromState(state));
 			}
-			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
-			serverConfig.save();
+			setValueAndSave(serverConfig, "general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
 		}
 	}
 
@@ -174,8 +176,7 @@ public final class ConfigHelper {
 				state.nocubes_setTerrainSmoothable(false);
 				terrainSmoothable.remove(getStringFromState(state));
 			}
-			serverConfig.getConfigData().set("general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
-			serverConfig.save();
+			setValueAndSave(serverConfig, "general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
 		}
 	}
 
@@ -193,8 +194,7 @@ public final class ConfigHelper {
 					leavesSmoothableBlocks.add(block);
 				}
 			}
-			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
-			clientConfig.save();
+			setValueAndSave(clientConfig, "general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
 		}
 	}
 
@@ -212,8 +212,7 @@ public final class ConfigHelper {
 					leavesSmoothableBlocks.remove(block);
 				}
 			}
-			clientConfig.getConfigData().set("general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
-			clientConfig.save();
+			setValueAndSave(clientConfig, "general.leavesSmoothable", new ArrayList<>(leavesSmoothable));
 		}
 	}
 
@@ -404,23 +403,20 @@ public final class ConfigHelper {
 	}
 
 	public static void setTerrainCollisions(final boolean enabled) {
-		serverConfig.getConfigData().set("general.terrainCollisions", enabled);
-		serverConfig.save();
+		setValueAndSave(serverConfig, "general.terrainCollisions", enabled);
 	}
 
 	public static void setRenderSmoothTerrain(final boolean enabled) {
-		clientConfig.getConfigData().set("general.renderSmoothTerrain", enabled);
-		clientConfig.save();
+		setValueAndSave(clientConfig, "general.renderSmoothTerrain", enabled);
 	}
 
 	public static void setRenderSmoothLeaves(final boolean enabled) {
-		clientConfig.getConfigData().set("general.renderSmoothLeaves", enabled);
-		clientConfig.save();
+		setValueAndSave(clientConfig, "general.renderSmoothLeaves", enabled);
 	}
 
-	public static void setLeavesCollisions(final boolean enabled) {
-		serverConfig.getConfigData().set("general.leavesCollisions", enabled);
-		serverConfig.save();
+	private static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
+		modConfig.getConfigData().set(path, newValue);
+		modConfig.save();
 	}
 
 }

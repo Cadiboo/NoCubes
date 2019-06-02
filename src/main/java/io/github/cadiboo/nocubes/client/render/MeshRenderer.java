@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.StateHolder;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -19,6 +20,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -30,7 +32,9 @@ import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraftforge.client.ForgeHooksClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,11 +43,15 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
+
+import static io.github.cadiboo.nocubes.client.ModelHelper.ENUMFACING_QUADS_ORDERED;
 
 /**
  * @author Cadiboo
  */
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public final class MeshRenderer {
 
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -66,12 +74,13 @@ public final class MeshRenderer {
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final PooledMutableBlockPos texturePooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			final boolean renderOppositeSides, final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
+			final boolean renderOppositeSides,
+			final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
 	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
 
-			for (Map.Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
+			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
 				try (final Vec3b pos = entry.getKey()) {
 					try (final FaceList faces = entry.getValue()) {
 
@@ -85,12 +94,6 @@ public final class MeshRenderer {
 						final int initialPosX = renderChunkPositionX + pos.x;
 						final int initialPosY = renderChunkPositionY + pos.y;
 						final int initialPosZ = renderChunkPositionZ + pos.z;
-
-						pooledMutableBlockPos.setPos(
-								initialPosX,
-								initialPosY,
-								initialPosZ
-						);
 
 						//TODO use pos? (I've forgotten what this todo is even about)
 						final byte relativePosX = ClientUtil.getRelativePos(renderChunkPositionX, initialPosX);
@@ -111,13 +114,23 @@ public final class MeshRenderer {
 						ModProfiler.get().start("renderMesh"); // HACKY
 
 						try {
-							renderFaces(renderChunk, generator, compiledChunk, renderChunkPosition, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, blockRendererDispatcher, random, usedBlockRenderLayers, pooledPackedLightCache, blockColorsCache, renderOppositeSides, pos, faces, texturePooledMutableBlockPos, textureState);
+							renderFaces(
+									renderChunk, generator, compiledChunk, renderChunkPosition,
+									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
+									blockAccess, blockRendererDispatcher, random,
+									usedBlockRenderLayers,
+									pooledPackedLightCache, blockColorsCache,
+									pos, faces,
+									pooledMutableBlockPos,
+									texturePooledMutableBlockPos, textureState,
+									renderOppositeSides
+							);
 						} catch (Exception e) {
 							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
 
 							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
 							final BlockPos blockPos = new BlockPos(renderChunkPositionX + pos.x, renderChunkPositionX + pos.y, renderChunkPositionX + pos.z);
-							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, blockAccess.getBlockState(new BlockPos(pooledMutableBlockPos.setPos(initialPosX, initialPosY, initialPosZ))));
+							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, blockAccess.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
 
 							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
 							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos, textureState);
@@ -145,18 +158,20 @@ public final class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
 			@Nonnull final LazyBlockColorCache blockColorsCache,
-			final boolean renderOppositeSides,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final BlockPos texturePos,
-			@Nonnull final IBlockState textureState
+			@Nonnull final IBlockState textureState,
+			final boolean renderOppositeSides
 	) {
 //		final IModelData modelData = generator.getModelData(texturePos);
 
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
 		{
-			for (final Face face : faces) {
+			for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {
+				final Face face = faces.get(faceIndex);
 				try {
 					//0 3
 					//1 2
@@ -246,15 +261,27 @@ public final class MeshRenderer {
 						float colorGreen3 = -1;
 						float colorBlue3 = -1;
 
-						for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
-							if (!textureState.getBlock().canRenderInLayer(textureState, blockRenderLayer)) {
+						if (Config.shortGrass) {
+							profiler.end(); // HACKY
+							profiler.start("shortGrass");
+							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
+								renderShortGrass(renderChunk, generator, compiledChunk, renderChunkPosition, blockAccess, blockRendererDispatcher, usedBlockRenderLayers, pooledMutableBlockPos, texturePos, v0, v1, v2, v3, lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3, lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3);
+							}
+							profiler.end();
+							profiler.start("renderMesh"); // HACKY
+						}
+
+						final BlockRenderLayer[] values = BlockRenderLayer.values();
+						for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
+							final BlockRenderLayer initialBlockRenderLayer = values[i];
+							if (!textureState.getBlock().canRenderInLayer(textureState, initialBlockRenderLayer)) {
 								continue;
 							}
-							blockRenderLayer = ClientUtil.getCorrectRenderLayer(blockRenderLayer);
-							ForgeHooksClient.setRenderLayer(blockRenderLayer);
+							final BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
+							final int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
+							ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
 
-							final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, renderChunk, renderChunkPosition);
 
 							boolean wasAnythingRendered = false;
 
@@ -264,7 +291,7 @@ public final class MeshRenderer {
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
 									final long posRand = MathHelper.getPositionRandom(texturePos);
-									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, /*modelData,*/ posRand, blockRenderLayer);
+									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, /*modelData,*/ posRand, correctedBlockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();
@@ -272,7 +299,8 @@ public final class MeshRenderer {
 									}
 								}
 
-								for (final BakedQuad quad : quads) {
+								for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
+									final BakedQuad quad = quads.get(quadIndex);
 
 									wasAnythingRendered = true;
 
@@ -394,11 +422,10 @@ public final class MeshRenderer {
 										}
 									}
 								}
-
 							} finally {
 								OptiFineCompatibility.popShaderThing(bufferBuilder);
 							}
-							usedBlockRenderLayers[blockRenderLayerOrdinal] |= wasAnythingRendered;
+							usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= wasAnythingRendered;
 						}
 					}
 					ForgeHooksClient.setRenderLayer(null);
@@ -407,6 +434,205 @@ public final class MeshRenderer {
 				}
 
 			}
+		}
+	}
+
+	private static void renderShortGrass(
+			@Nonnull final RenderChunk renderChunk, @Nonnull final ChunkCompileTaskGenerator generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final BlockPos texturePos,
+			final Vec3 v0, final Vec3 v1, final Vec3 v2, final Vec3 v3,
+			final int lightmapSkyLight0, final int lightmapSkyLight1, final int lightmapSkyLight2, final int lightmapSkyLight3,
+			final int lightmapBlockLight0, final int lightmapBlockLight1, final int lightmapBlockLight2, final int lightmapBlockLight3
+	) {
+
+		final IBlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
+
+		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP));
+		if (blockStateUp == grassPlantState) {
+			return;
+		}
+		if (blockStateUp.isOpaqueCube()) {
+			return;
+		}
+		if (blockStateUp.getMaterial().isLiquid()) {
+			return;
+		}
+
+		final double v0x = v0.x;
+		final double v2x = v2.x;
+		final double shortGrassHeight = 0.25D;
+		final double v0yAdjusted = v0.y + shortGrassHeight;
+		final double v0y = v2.y;
+		final double v0z = v0.z;
+		final double v2z = v2.z;
+
+		final Vec3d offset = grassPlantState.getOffset(blockAccess, texturePos);
+		final double offX = offset.x;
+		final double offY = 0;
+		final double offZ = offset.z;
+
+		final IBakedModel model = blockRendererDispatcher.getModelForState(grassPlantState);
+		final long posRand = MathHelper.getPositionRandom(texturePos);
+
+		final int color = BiomeColorHelper.GRASS_COLOR.getColorAtPos(blockAccess.getBiome(texturePos), texturePos);
+
+		final int red = (color & 0xFF0000) >> 16;
+		final int green = (color & 0x00FF00) >> 8;
+		final int blue = (color & 0x0000FF);
+
+		final BlockRenderLayer[] values = BlockRenderLayer.values();
+		for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
+			final BlockRenderLayer initialBlockRenderLayer = values[i];
+			if (!grassPlantState.getBlock().canRenderInLayer(grassPlantState, initialBlockRenderLayer)) {
+				continue;
+			}
+			final BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
+			final int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
+			ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
+
+			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, renderChunk, renderChunkPosition);
+
+			boolean wasAnythingRendered = false;
+
+			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, blockAccess, bufferBuilder);
+			try {
+
+				for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
+					final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
+					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, posRand);
+					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
+						final BakedQuad quad = quads.get(quadIndex);
+						wasAnythingRendered = true;
+
+						final int formatSize = quad.getFormat().getIntegerSize();
+						final int[] vertexData = quad.getVertexData();
+
+						final float qv0x = Float.intBitsToFloat(vertexData[0]);
+						final float qv0y = Float.intBitsToFloat(vertexData[1]);
+						final float qv0z = Float.intBitsToFloat(vertexData[2]);
+						final float qv1x = Float.intBitsToFloat(vertexData[formatSize]);
+						final float qv1y = Float.intBitsToFloat(vertexData[formatSize + 1]);
+						final float qv1z = Float.intBitsToFloat(vertexData[formatSize + 2]);
+						final float qv2x = Float.intBitsToFloat(vertexData[formatSize * 2]);
+						final float qv2y = Float.intBitsToFloat(vertexData[formatSize * 2 + 1]);
+						final float qv2z = Float.intBitsToFloat(vertexData[formatSize * 2 + 2]);
+						final float qv3x = Float.intBitsToFloat(vertexData[formatSize * 3]);
+						final float qv3y = Float.intBitsToFloat(vertexData[formatSize * 3 + 1]);
+						final float qv3z = Float.intBitsToFloat(vertexData[formatSize * 3 + 2]);
+
+						final boolean qr0x = qv0x > 0.5F;
+						final boolean qr0y = qv0y > 0.5F;
+						final boolean qr0z = qv0z > 0.5F;
+						final boolean qr1x = qv1x > 0.5F;
+						final boolean qr1y = qv1y > 0.5F;
+						final boolean qr1z = qv1z > 0.5F;
+						final boolean qr2x = qv2x > 0.5F;
+						final boolean qr2y = qv2y > 0.5F;
+						final boolean qr2z = qv2z > 0.5F;
+						final boolean qr3x = qv3x > 0.5F;
+						final boolean qr3y = qv3y > 0.5F;
+						final boolean qr3z = qv3z > 0.5F;
+
+						// 0 3
+						// 1 2
+						final double r0x = qr0x ? v0x : v2x;
+						final double r1x = qr1x ? v0x : v2x;
+						final double r2x = qr2x ? v0x : v2x;
+						final double r3x = qr3x ? v0x : v2x;
+
+						// 0 3
+						// 1 2
+						final double r0y = qr0y ? v0yAdjusted : v0y;
+						final double r1y = qr1y ? v0yAdjusted : v0y;
+						final double r2y = qr2y ? v0yAdjusted : v0y;
+						final double r3y = qr3y ? v0yAdjusted : v0y;
+
+						// 0 3
+						// 1 2
+						final double r0z = qr0z ? v0z : v2z;
+						final double r1z = qr1z ? v0z : v2z;
+						final double r2z = qr2z ? v0z : v2z;
+						final double r3z = qr3z ? v0z : v2z;
+
+						// Quads are packed xyz|argb|u|v|ts
+						final float v0u = Float.intBitsToFloat(vertexData[4]);
+						final float v0v = Float.intBitsToFloat(vertexData[5]);
+						final float v1u = Float.intBitsToFloat(vertexData[formatSize + 4]);
+						final float v1v = Float.intBitsToFloat(vertexData[formatSize + 5]);
+						final float v2u = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
+						final float v2v = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
+						final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
+						final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
+
+						final int quadPackedLight0 = vertexData[6];
+						final int quadPackedLight1 = vertexData[formatSize + 6];
+						final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
+						final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
+
+						final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
+						final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
+						final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
+						final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
+						final int quadBlockLight0 = quadPackedLight0 & 0xFF;
+						final int quadBlockLight1 = quadPackedLight1 & 0xFF;
+						final int quadBlockLight2 = quadPackedLight2 & 0xFF;
+						final int quadBlockLight3 = quadPackedLight3 & 0xFF;
+
+						bufferBuilder.pos(offX + r0x, offY + r0y, offZ + r0z).color(red, green, blue, 255).tex(v0u, v0v).lightmap((quadSkyLight0 >= lightmapSkyLight0) ? quadSkyLight0 : lightmapSkyLight0, (quadBlockLight0 >= lightmapBlockLight0) ? quadBlockLight0 : lightmapBlockLight0).endVertex();
+						bufferBuilder.pos(offX + r1x, offY + r1y, offZ + r1z).color(red, green, blue, 255).tex(v1u, v1v).lightmap((quadSkyLight1 >= lightmapSkyLight1) ? quadSkyLight1 : lightmapSkyLight1, (quadBlockLight1 >= lightmapBlockLight1) ? quadBlockLight1 : lightmapBlockLight1).endVertex();
+						bufferBuilder.pos(offX + r2x, offY + r2y, offZ + r2z).color(red, green, blue, 255).tex(v2u, v2v).lightmap((quadSkyLight2 >= lightmapSkyLight2) ? quadSkyLight2 : lightmapSkyLight2, (quadBlockLight2 >= lightmapBlockLight2) ? quadBlockLight2 : lightmapBlockLight2).endVertex();
+						bufferBuilder.pos(offX + r3x, offY + r3y, offZ + r3z).color(red, green, blue, 255).tex(v3u, v3v).lightmap((quadSkyLight3 >= lightmapSkyLight3) ? quadSkyLight3 : lightmapSkyLight3, (quadBlockLight3 >= lightmapBlockLight3) ? quadBlockLight3 : lightmapBlockLight3).endVertex();
+
+					}
+				}
+
+			} finally {
+				OptiFineCompatibility.popShaderThing(bufferBuilder);
+			}
+			usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= wasAnythingRendered;
+		}
+		ForgeHooksClient.setRenderLayer(null);
+	}
+
+	private static boolean areVerticesCloseToFlat(final Vec3 v0, final Vec3 v1, final Vec3 v2, final Vec3 v3) {
+		final double v0y = v0.y;
+		final double v1y = v1.y;
+		final double v2y = v2.y;
+		final double v3y = v3.y;
+
+		return max(v0y, v1y, v2y, v3y) - min(v0y, v1y, v2y, v3y) <= 0.25D;
+
+	}
+
+	private static double max(double d0, final double d1, final double d2, final double d3) {
+		if (d0 < d1) {
+			d0 = d1;
+		}
+		if (d0 < d2) {
+			d0 = d2;
+		}
+		if (d0 < d3) {
+			return d3;
+		} else {
+			return d0;
+		}
+	}
+
+	private static double min(double d0, final double d1, final double d2, final double d3) {
+		if (d0 > d1) {
+			d0 = d1;
+		}
+		if (d0 > d2) {
+			d0 = d2;
+		}
+		if (d0 > d3) {
+			return d3;
+		} else {
+			return d0;
 		}
 	}
 

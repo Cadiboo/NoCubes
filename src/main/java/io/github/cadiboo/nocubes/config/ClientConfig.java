@@ -34,6 +34,9 @@ final class ClientConfig {
 	final ForgeConfigSpec.BooleanValue betterTextures;
 
 	@Nonnull
+	final ForgeConfigSpec.BooleanValue shortGrass;
+
+	@Nonnull
 	final ForgeConfigSpec.BooleanValue smoothFluidLighting;
 	@Nonnull
 	final ForgeConfigSpec.BooleanValue smoothFluidColors;
@@ -73,6 +76,11 @@ final class ClientConfig {
 				.comment("If better textures should be searched for when rendering")
 				.translation(MOD_ID + ".config.betterTextures")
 				.define("betterTextures", true);
+
+		shortGrass = builder
+				.comment("If short grass should be rendered")
+				.translation(MOD_ID + ".config.shortGrass")
+				.define("shortGrass", true);
 
 		smoothFluidLighting = builder
 				.comment("If fluids should be rendered with smooth lighting")

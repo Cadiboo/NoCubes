@@ -256,7 +256,8 @@ public final class RenderDispatcher {
 									// state cache begins at -2 and density cache expects 0
 									2, 2, 2,
 									pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-									true, true, false
+									true,
+									true, false
 							);
 						}
 					}
@@ -291,7 +292,8 @@ public final class RenderDispatcher {
 								// state cache begins at -2 and density cache expects 0
 								2, 2, 2,
 								pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-								true, true, false
+								true,
+								true, false
 						);
 					}
 					break;
@@ -343,7 +345,8 @@ public final class RenderDispatcher {
 					// state cache begins at -2 and density cache expects 0
 					2, 2, 2,
 					pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-					false, true, true
+					false,
+					true, true
 			);
 		} finally {
 			texturePooledMutableBlockPos.release();

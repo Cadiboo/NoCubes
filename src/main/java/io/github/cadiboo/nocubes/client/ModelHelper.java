@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -62,20 +63,21 @@ public final class ModelHelper {
 			state = state.getBlock().getExtendedState(state, blockAccess, pos);
 		}
 
-		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
+		for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
+			final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand/*, modelData*/);
 			if (quads.isEmpty()) {
 				continue;
 			}
 
-//			if (OPTIFINE_INSTALLED) {
-//				try (final ModProfiler ignored = NoCubes.getProfiler().start("getRenderQuads")) {
-//					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
-//					if (quads.isEmpty()) {
-//						continue;
-//					}
-//				}
-//			}
+			if (OPTIFINE_INSTALLED) {
+				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
+					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
+					if (quads.isEmpty()) {
+						continue;
+					}
+				}
+			}
 
 			return quads;
 		}
@@ -93,7 +95,7 @@ public final class ModelHelper {
 //				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT);
 //			}
 			if (ClientUtil.isStateSnow(state)) {
-				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.SNOW_LAYER_DEFAULT);
+				return blockRendererDispatcher.getModelForState(StateHolder.SNOW_LAYER_DEFAULT);
 			}
 			return blockRendererDispatcher.getModelForState(state);
 		}
