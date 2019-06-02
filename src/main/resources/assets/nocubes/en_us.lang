@@ -1,17 +1,19 @@
+
 nocubes.addedTerrainSmoothableBlockState=Added Terrain Smoothable
 nocubes.removedTerrainSmoothableBlockState=Removed Terrain Smoothable
 nocubes.addedLeavesSmoothableBlockState=Added Leaves Smoothable
 nocubes.removedLeavesSmoothableBlockState=Removed Leaves Smoothable
 
 key.categories.nocubes=NoCubes
-nocubes.key.toggleEnabled=TEMPORARY Toggle Enabled
+nocubes.key.toggleRenderSmoothTerrain=Toggle Smooth Terrain Rendering
+nocubes.key.toggleRenderSmoothLeaves=Toggle Smooth Leaves Rendering
+nocubes.key.toggleProfilers=Toggle Profilers
 nocubes.key.toggleTerrainSmoothableBlockState=Toggle Terrain Smoothable BlockState
 nocubes.key.toggleLeavesSmoothableBlockState=Toggle Leaves Smoothable BlockState
-nocubes.key.toggleProfilers=Toggle Profilers
-nocubes.key.toggleRenderTerrain=Toggle Terrain Rendering
-nocubes.key.toggleRenderLeaves=Toggle Leaves Rendering
+nocubes.key.tempToggleTerrainCollisions=[Temp] Toggle Terrain Collisions
 
 nocubes.collisionsNotOnFlat=You are not on a flat surface! Please get on a flat surface before enabling collisions!
 nocubes.collisionsEnabledWarning=NoCubes terrain collisions enabled. These are highly experimental and unoptimsied!
 nocubes.collisionsDisabled=NoCubes terrain collisions disabled
 nocubes.collisionsDisablePress=To disable terrain collisions press %s
+
