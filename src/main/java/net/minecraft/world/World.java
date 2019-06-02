@@ -1429,6 +1429,10 @@ public abstract class World implements IBlockAccess, net.minecraftforge.common.c
         boolean flag = entityIn != null && entityIn.isOutsideBorder();
         boolean flag1 = entityIn != null && this.isInsideWorldBorder(entityIn);
 
+        // This isn't actually here in the ASM, but somehow this class gets loaded instead of the vanilla one in dev
+        // so its here to allow the transformer to inject properly. The transformer needs to find Blocks.STONE to work
+        IBlockState iblockstate = Blocks.STONE.getDefaultState();
+
         // NoCubes Start
         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionBoxes(this, entityIn, aabb, p_191504_3_, outList, i, j, k, l, i1, j1, worldborder, flag, flag1);
         // NoCubes End
