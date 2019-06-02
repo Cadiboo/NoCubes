@@ -93,7 +93,7 @@ final class ClientConfig {
 		naturalFluidTextures = builder
 				.comment("If fluids should be rendered with flipped and rotated variants of their textures")
 				.translation(MOD_ID + ".config.naturalFluidTextures")
-				.define("naturalFluidTextures", true);
+				.define("naturalFluidTextures", false);
 
 		builder.pop();
 	}
