@@ -17,20 +17,13 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 
 import javax.annotation.Nonnull;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_SNOWY;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.PODZOL_SNOWY;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.SNOW_LAYER_DEFAULT;
+import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
+import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
+import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
+import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
-import static net.minecraft.block.BlockDirt.DirtType;
-import static net.minecraft.block.BlockDirt.SNOWY;
-import static net.minecraft.block.BlockDirt.VARIANT;
-import static net.minecraft.init.Blocks.DIRT;
-import static net.minecraft.init.Blocks.GRASS;
-import static net.minecraft.init.Blocks.PACKED_ICE;
-import static net.minecraft.init.Blocks.SNOW_LAYER;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 import static net.minecraft.util.math.MathHelper.clamp;
@@ -309,18 +302,6 @@ public final class ClientUtil {
 	 */
 	public static byte getRelativePos(final int blockPos) {
 		return (byte) (blockPos & 15);
-	}
-
-	public static class StateHolder {
-
-		public static final IBlockState SNOW_LAYER_DEFAULT = SNOW_LAYER.getDefaultState();
-		public static final IBlockState GRASS_BLOCK_SNOWY = GRASS.getDefaultState().withProperty(SNOWY, true);
-		public static final IBlockState PODZOL_SNOWY = DIRT.getDefaultState().withProperty(VARIANT, DirtType.PODZOL).withProperty(SNOWY, true);
-
-		public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS.getDefaultState();
-
-		public static final IBlockState PACKED_ICE_DEFAULT = PACKED_ICE.getDefaultState();
-
 	}
 
 }
