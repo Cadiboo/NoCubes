@@ -13,11 +13,11 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.finish;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.log;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.mapField;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.mapMethod;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.start;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.finish;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.log;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.mapField;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.mapMethod;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.start;
 
 /**
  * @author Cadiboo
@@ -48,7 +48,7 @@ final class RenderChunkTransformer implements Opcodes {
 	// declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
 	private static final int ALOCALVARIABLE_blockrendererdispatcher = 15;
 	private static final int ALOCALVARIABLE_blockpos$mutableblockpos = 17;
-	private static final int ALOCALVARIABLE_iblockstate = 18;
+	//	private static final int ALOCALVARIABLE_iblockstate = 18;
 	private static final int ALOCALVARIABLE_block = 19;
 	private static final int ALOCALVARIABLE_blockrenderlayer = 19;
 	private static final int ALOCALVARIABLE_tileentity = 20;
@@ -70,6 +70,7 @@ final class RenderChunkTransformer implements Opcodes {
 	private static final int ALOAD_block = 19;
 	private static final int ALOAD_blockrenderlayer1 = 22;
 	private static final int ALOAD_bufferbuilder = 24;
+	private static boolean optifine;
 
 	static void transform(final ClassNode classNode) {
 
@@ -167,7 +168,7 @@ final class RenderChunkTransformer implements Opcodes {
 
 		String getAllInBoxMutable_name = mapMethod("net/minecraft/util/math/BlockPos", "func_177975_b", "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;"); // getAllInBoxMutable
 
-		boolean optifine = false;
+		optifine = false;
 
 		AbstractInsnNode first_INVOKESTATIC_getAllInBoxMutable = null;
 		int arrayLength = instructions.size();
@@ -181,7 +182,7 @@ final class RenderChunkTransformer implements Opcodes {
 							if (instruction.itf == false) {
 								optifine = instruction.owner.equals("net/optifine/BlockPosM");
 								first_INVOKESTATIC_getAllInBoxMutable = instruction;
-								log("Found injection point " + instruction);
+								log("Found OptiFine");
 								break;
 							}
 						}
@@ -414,7 +415,7 @@ final class RenderChunkTransformer implements Opcodes {
 		// Make list of instructions to inject
 		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
 		toInject.add(new JumpInsnNode(IFEQ, renderSmoothLeavesChecksLabel));
-		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+		toInject.add(new VarInsnNode(ALOAD, optifine ? 18 : 15)); // iblockstate
 		toInject.add(new MethodInsnNode(
 				//int opcode
 				INVOKEINTERFACE,
@@ -432,7 +433,7 @@ final class RenderChunkTransformer implements Opcodes {
 		toInject.add(renderSmoothLeavesChecksLabel);
 		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
 		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_iblockstate));
+		toInject.add(new VarInsnNode(ALOAD, optifine ? 18 : 15)); // iblockstate
 		toInject.add(new MethodInsnNode(
 				//int opcode
 				INVOKEINTERFACE,

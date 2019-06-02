@@ -15,10 +15,10 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.finish;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.log;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.mapMethod;
-import static io.github.cadiboo.nocubes.tempcore.ClassTransformer.start;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.finish;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.log;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.mapMethod;
+import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.start;
 
 /**
  * @author Cadiboo

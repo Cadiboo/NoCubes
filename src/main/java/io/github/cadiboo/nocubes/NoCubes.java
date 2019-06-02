@@ -5,11 +5,16 @@ import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.config.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.github.cadiboo.nocubes.util.FileUtils;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Proxy;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -31,7 +36,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-@Mod(modid = MOD_ID)
+@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory")
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
@@ -74,6 +79,41 @@ public final class NoCubes {
 
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
+
+		if (NoCubesLoadingPlugin.RCRCH_INSTALLED) {
+			DistExecutor.runWhenOn(Side.SERVER, () -> () -> {
+				FMLCommonHandler.instance().raiseException(new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game."), "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", true);
+			});
+			DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
+				throw new CustomModLoadingErrorDisplayException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.")) {
+
+					private final String[] lines = new String[]{
+							"NoCubes Dependency Error!",
+							"",
+							"RenderChunk rebuildChunk Hooks CANNOT be installed!",
+							"",
+							"Remove RenderChunk rebuildChunk Hooks from",
+							"the mods folder and then restart the game."
+					};
+
+					@Override
+					public void initGui(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer) {
+					}
+
+					@Override
+					public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
+
+						final int x = errorScreen.width / 2;
+						final int y = errorScreen.height / 2 / 2;
+						final String[] lines = this.lines;
+						for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+							errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
+
+						}
+					}
+				};
+			});
+		}
 
 		this.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
 		this.registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
