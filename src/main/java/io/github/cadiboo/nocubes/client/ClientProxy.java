@@ -4,9 +4,12 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingBlockFluidRenderer;
 import io.github.cadiboo.nocubes.util.Proxy;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
@@ -71,6 +74,37 @@ public final class ClientProxy implements Proxy {
 		Proxy.super.preloadClasses();
 		preloadClass("net.minecraft.client.renderer.chunk.RenderChunk", "RenderChunk");
 		preloadClass("net.minecraft.client.renderer.BlockFluidRenderer", "BlockFluidRenderer");
+	}
+
+	@Override
+	public void crashIfRCRCHInstalled() {
+		throw new CustomModLoadingErrorDisplayException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.")) {
+
+			private final String[] lines = new String[]{
+					"NoCubes Dependency Error!",
+					"",
+					"RenderChunk rebuildChunk Hooks CANNOT be installed!",
+					"",
+					"Remove RenderChunk rebuildChunk Hooks from",
+					"the mods folder and then restart the game."
+			};
+
+			@Override
+			public void initGui(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer) {
+			}
+
+			@Override
+			public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
+
+				final int x = errorScreen.width / 2;
+				final int y = errorScreen.height / 2 / 2;
+				final String[] lines = this.lines;
+				for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+					errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
+
+				}
+			}
+		};
 	}
 
 }

@@ -40,4 +40,6 @@ public interface Proxy {
 		}
 	}
 
+	void crashIfRCRCHInstalled();
+
 }
