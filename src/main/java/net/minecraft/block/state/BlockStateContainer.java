@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+
+import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.EnumPushReaction;
 import net.minecraft.block.material.MapColor;
@@ -449,6 +451,10 @@ public class BlockStateContainer
 
 		public boolean isOpaqueCube()
 		{
+			// NoCubes Start
+			if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
+			if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
+			// NoCubes End
 			return this.block.isOpaqueCube(this);
 		}
 
@@ -513,6 +519,9 @@ public class BlockStateContainer
 
 		public boolean causesSuffocation()
 		{
+			// NoCubes Start
+			if (Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
+			// NoCubes End
 			return this.block.causesSuffocation(this);
 		}
 

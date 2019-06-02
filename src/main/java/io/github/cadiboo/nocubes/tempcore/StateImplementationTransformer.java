@@ -110,7 +110,7 @@ final class StateImplementationTransformer implements Opcodes {
 
 				finish();
 
-				start("Apply " + "causesSuffocation hook");
+				start("Apply " + "isOpaqueCube hook");
 				injectIsOpaqueCubeHook(method.instructions);
 				finish();
 				break;
@@ -411,7 +411,7 @@ final class StateImplementationTransformer implements Opcodes {
 //	return this.getBlock().causesSuffocation(this);
 
 //	// NoCubes Start
-//	if (this.nocubes_isTerrainSmoothable() || this.nocubes_isLeavesSmoothable()) return false;
+//	if (Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
 //	// NoCubes End
 //	return this.getBlock().causesSuffocation(this);
 
@@ -427,18 +427,15 @@ final class StateImplementationTransformer implements Opcodes {
 //  public default causesSuffocation()Z
 //   L0
 //    LINENUMBER 325 L0
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
+//    IFEQ L1
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L1
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isLeavesSmoothable ()Z (itf)
-//    IFEQ L2
-//   L1
-//   FRAME SAME
+//    IFEQ L1
 //    ICONST_0
 //    IRETURN
-//   L2
-//    LINENUMBER 327 L2
+//   L1
+//    LINENUMBER 327 L1
 //   FRAME SAME
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.getBlock ()Lnet/minecraft/block/Block; (itf)
@@ -464,9 +461,10 @@ final class StateImplementationTransformer implements Opcodes {
 
 		// Labels n stuff
 		LabelNode originalInstructionsLabel = new LabelNode();
-		LabelNode returnFalseLabel = new LabelNode();
 
 		// Make list of instructions to inject
+		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
+		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 		toInject.add(new MethodInsnNode(
 				//int opcode
@@ -480,23 +478,9 @@ final class StateImplementationTransformer implements Opcodes {
 				//boolean isInterface
 				true
 		));
-		toInject.add(new JumpInsnNode(IFNE, returnFalseLabel));
-		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-		toInject.add(new MethodInsnNode(
-				//int opcode
-				INVOKEINTERFACE,
-				//String owner
-				"net/minecraft/block/state/IBlockProperties",
-				//String name
-				"nocubes_isLeavesSmoothable",
-				//String descriptor
-				"()Z",
-				//boolean isInterface
-				true
-		));
 		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 
-		toInject.add(returnFalseLabel);
+		toInject.add(new LabelNode());
 		toInject.add(new InsnNode(ICONST_0));
 		toInject.add(new InsnNode(IRETURN));
 
