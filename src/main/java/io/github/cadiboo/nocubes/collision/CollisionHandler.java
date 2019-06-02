@@ -618,8 +618,11 @@ public final class CollisionHandler {
 									state = _this.getBlockState(pooledMutableBlockPos);
 								}
 
-								StolenReposeCode.addCollisionBoxToList(state, _this, pooledMutableBlockPos, aabb, outList, entityIn, false);
-//								state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
+								if (TERRAIN_SMOOTHABLE.apply(state)) {
+									StolenReposeCode.addCollisionBoxToList(state, _this, pooledMutableBlockPos, aabb, outList, entityIn, false);
+								} else {
+									state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
+								}
 
 								if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList)) {
 									return true;
