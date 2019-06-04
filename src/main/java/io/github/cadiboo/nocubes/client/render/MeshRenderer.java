@@ -133,7 +133,7 @@ public final class MeshRenderer {
 							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, blockAccess.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
 
 							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
-							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos, textureState);
+							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos.toImmutable(), textureState);
 
 							throw new ReportedException(crashReport);
 						}
@@ -166,13 +166,13 @@ public final class MeshRenderer {
 			final boolean renderOppositeSides
 	) {
 //		final IModelData modelData = generator.getModelData(texturePos);
+		final long posRand = MathHelper.getPositionRandom(texturePos);
 
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
 		{
 			for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {
-				final Face face = faces.get(faceIndex);
-				try {
+				try (Face face = faces.get(faceIndex)) {
 					//0 3
 					//1 2
 					try (
@@ -265,7 +265,18 @@ public final class MeshRenderer {
 							profiler.end(); // HACKY
 							profiler.start("shortGrass");
 							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
-								renderShortGrass(renderChunk, generator, compiledChunk, renderChunkPosition, blockAccess, blockRendererDispatcher, usedBlockRenderLayers, pooledMutableBlockPos, texturePos, v0, v1, v2, v3, lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3, lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3);
+								renderShortGrass(
+										renderChunk, generator, compiledChunk, renderChunkPosition,
+										blockAccess,
+										blockRendererDispatcher,
+										random,
+										usedBlockRenderLayers,
+										pooledMutableBlockPos,
+										texturePos,
+										v0, v1, v2, v3,
+										lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3,
+										lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3
+								);
 							}
 							profiler.end();
 							profiler.start("renderMesh"); // HACKY
@@ -290,7 +301,7 @@ public final class MeshRenderer {
 
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
-									final long posRand = MathHelper.getPositionRandom(texturePos);
+//									random.setSeed(posRand);
 									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, /*modelData,*/ posRand, correctedBlockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
@@ -429,8 +440,6 @@ public final class MeshRenderer {
 						}
 					}
 					ForgeHooksClient.setRenderLayer(null);
-				} finally {
-					face.close();
 				}
 
 			}
@@ -441,6 +450,7 @@ public final class MeshRenderer {
 			@Nonnull final RenderChunk renderChunk, @Nonnull final ChunkCompileTaskGenerator generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final IBlockAccess blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
+			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final BlockPos texturePos,
@@ -451,7 +461,8 @@ public final class MeshRenderer {
 
 		final IBlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
-		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP));
+		pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP);
+		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
 		if (blockStateUp == grassPlantState) {
 			return;
 		}
@@ -503,6 +514,7 @@ public final class MeshRenderer {
 
 				for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
 					final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
+//					random.setSeed(posRand);
 					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, posRand);
 					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
 						final BakedQuad quad = quads.get(quadIndex);

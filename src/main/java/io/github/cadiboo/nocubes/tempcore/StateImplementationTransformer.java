@@ -479,8 +479,6 @@ final class StateImplementationTransformer implements Opcodes {
 				true
 		));
 		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-		toInject.add(new LabelNode());
 		toInject.add(new InsnNode(ICONST_0));
 		toInject.add(new InsnNode(IRETURN));
 

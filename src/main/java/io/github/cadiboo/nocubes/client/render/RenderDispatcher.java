@@ -385,8 +385,8 @@ public final class RenderDispatcher {
 				final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
 				int lightmapSkyLight = (packed >> 16) & 0xFFFF;
 				int lightmapBlockLight = packed & 0xFFFF;
-				for (final Face face : faces) {
-					try {
+				for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {
+					try (Face face = faces.get(faceIndex)) {
 						try (
 								Vec3 v0 = face.getVertex0();
 								Vec3 v1 = face.getVertex1();
@@ -398,8 +398,6 @@ public final class RenderDispatcher {
 							bufferBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 							bufferBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 						}
-					} finally {
-						face.close();
 					}
 				}
 			}
