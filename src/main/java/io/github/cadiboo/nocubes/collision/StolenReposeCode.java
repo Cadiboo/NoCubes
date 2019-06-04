@@ -29,7 +29,7 @@ final class StolenReposeCode {
 
 	static VoxelShape getCollisionShape(IBlockState stateIn, IWorldReaderBase worldIn, BlockPos posIn) {
 
-		final VoxelShape collisionShape = getCollisionShape(stateIn, worldIn, posIn);
+		final VoxelShape collisionShape = getStateCollisionShape(stateIn, worldIn, posIn);
 
 		if (collisionShape.isEmpty()) {  // optimization
 			return collisionShape;
@@ -120,18 +120,18 @@ final class StolenReposeCode {
 	}
 
 	private static double blockHeight(final BlockPos pos, IBlockReader world, final IBlockState blockState) {
-		VoxelShape box = getCollisionShape(blockState, world, pos);
+		VoxelShape box = getStateCollisionShape(blockState, world, pos);
 		return box.getEnd(EnumFacing.Axis.Y);
 	}
 
 	private static boolean canSlopeAt(final IBlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox) {
 		boolean flag = collisionBoundingBox != null && collisionBoundingBox.getEnd(EnumFacing.Axis.Y) > 0.5;
 		final BlockPos posUp = pos.up();
-		return TERRAIN_SMOOTHABLE.apply(state) && flag && getCollisionShape(worldIn.getBlockState(posUp), worldIn, posUp).isEmpty();
+		return TERRAIN_SMOOTHABLE.apply(state) && flag && getStateCollisionShape(worldIn.getBlockState(posUp), worldIn, posUp).isEmpty();
 	}
 
 	@Nonnull
-	private static VoxelShape getCollisionShape(final IBlockState state, final IBlockReader world, final BlockPos pos) {
+	private static VoxelShape getStateCollisionShape(final IBlockState state, final IBlockReader world, final BlockPos pos) {
 		if (state == StateHolder.SNOW_LAYER_DEFAULT) {
 			return VoxelShapes.empty(); // Stop snow having a collisions AABB with no height that still blocks movement
 		} else {

@@ -463,6 +463,9 @@ public final class MeshRenderer {
 		final IBlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
 		pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP);
+		if (!blockAccess.isBlockLoaded(pooledMutableBlockPos)) {
+			return;
+		}
 		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
 		if (blockStateUp == grassPlantState) {
 			return;
