@@ -29,7 +29,7 @@ final class StolenReposeCode {
 
 	static void addCollisionBoxToList(IBlockState stateIn, World worldIn, BlockPos posIn, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entityIn, boolean isActualState) {
 
-		final AxisAlignedBB collisionBoundingBox = getCollisionBoundingBox(stateIn, worldIn, posIn);
+		final AxisAlignedBB collisionBoundingBox = getStateCollisionBoundingBox(stateIn, worldIn, posIn);
 		if (collisionBoundingBox == null) {  // optimization
 			return;
 		}
@@ -86,9 +86,9 @@ final class StolenReposeCode {
 	}
 
 	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos, final AxisAlignedBB collisionBoundingBox) {
-		final AxisAlignedBB box = getCollisionBoundingBox(state, worldIn, pos);
+		final AxisAlignedBB box = getStateCollisionBoundingBox(state, worldIn, pos);
 		final BlockPos posUp = pos.up();
-		return canSlope(state) && (box == null || (box.maxY > 0.5 && getCollisionBoundingBox(worldIn.getBlockState(posUp), worldIn, posUp) == null));
+		return canSlope(state) && (box == null || (box.maxY > 0.5 && getStateCollisionBoundingBox(worldIn.getBlockState(posUp), worldIn, posUp) == null));
 	}
 
 	private static void addSlopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos, final List<AxisAlignedBB> collidingBoxes, final Predicate<AxisAlignedBB> predicate) {
@@ -139,12 +139,12 @@ final class StolenReposeCode {
 	}
 
 	private static double blockHeight(final BlockPos pos, World world, final IBlockState blockState) {
-		final AxisAlignedBB box = getCollisionBoundingBox(blockState, world, pos);
+		final AxisAlignedBB box = getStateCollisionBoundingBox(blockState, world, pos);
 		return box == null ? 0 : box.maxY;
 	}
 
 	@Nullable
-	private static AxisAlignedBB getCollisionBoundingBox(final IBlockState state, final IBlockAccess world, final BlockPos pos) {
+	private static AxisAlignedBB getStateCollisionBoundingBox(final IBlockState state, final IBlockAccess world, final BlockPos pos) {
 		if (state == StateHolder.SNOW_LAYER_DEFAULT) {
 			return null; // Stop snow having a collisions AABB with no height that still blocks movement
 		} else {
