@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -39,7 +40,7 @@ public final class ModelHelper {
 	@Nullable
 	public static List<BakedQuad> getQuads(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final IModelData modelData, final Random posRand, final BlockRenderLayer blockRenderLayer) {
 
-//		try (final ModProfiler ignored = NoCubes.getProfiler().start("getActualState")) {
+//		try (final ModProfiler ignored = ModProfiler.get().start("getActualState")) {
 //			try {
 //				state = state.getActualState(blockAccess, pos);
 //			} catch (Exception ignored1) {
@@ -57,14 +58,19 @@ public final class ModelHelper {
 //			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 //		}
 
-		for (EnumFacing facing : ENUMFACING_QUADS_ORDERED) {
+//		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
+//			state = state.getBlock().getExtendedState(state, blockAccess, pos);
+//		}
+
+		for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; facingIndex++) {
+			final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand, modelData);
 			if (quads.isEmpty()) {
 				continue;
 			}
 
 //			if (OPTIFINE_INSTALLED) {
-//				try (final ModProfiler ignored = NoCubes.getProfiler().start("getRenderQuads")) {
+//				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
 //					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
 //					if (quads.isEmpty()) {
 //						continue;
@@ -85,10 +91,10 @@ public final class ModelHelper {
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
 //			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
-//				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT);
+//				return blockRendererDispatcher.getModelForState(StateHolder.GRASS_BLOCK_DEFAULT);
 //			}
 			if (ClientUtil.isStateSnow(state)) {
-				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.SNOW_LAYER_DEFAULT);
+				return blockRendererDispatcher.getModelForState(StateHolder.SNOW_LAYER_DEFAULT);
 			}
 			return blockRendererDispatcher.getModelForState(state);
 		}

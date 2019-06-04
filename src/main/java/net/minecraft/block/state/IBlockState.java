@@ -323,7 +323,7 @@ public interface IBlockState extends IStateHolder<IBlockState>, net.minecraftfor
 
    default boolean causesSuffocation() {
       // NoCubes Start
-      if (this.nocubes_isTerrainSmoothable() || this.nocubes_isLeavesSmoothable()) return false;
+      if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
       // NoCubes End
       return this.getBlock().causesSuffocation(this);
    }

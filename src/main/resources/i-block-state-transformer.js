@@ -275,7 +275,7 @@ function injectCausesSuffocationHook(instructions) {
 //	return this.getBlock().causesSuffocation(this);
 
 //	// NoCubes Start
-//	if (this.nocubes_isTerrainSmoothable() || this.nocubes_isLeavesSmoothable()) return false;
+//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
 //	// NoCubes End
 //	return this.getBlock().causesSuffocation(this);
 
@@ -292,18 +292,15 @@ function injectCausesSuffocationHook(instructions) {
 //  public default causesSuffocation()Z
 //   L0
 //    LINENUMBER 325 L0
+//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
+//    IFEQ L1
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L1
-//    ALOAD 0
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
-//    IFEQ L2
-//   L1
-//   FRAME SAME
+//    IFEQ L1
 //    ICONST_0
 //    IRETURN
-//   L2
-//    LINENUMBER 327 L2
+//   L1
+//    LINENUMBER 327 L1
 //   FRAME SAME
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getBlock ()Lnet/minecraft/block/Block; (itf)
@@ -330,9 +327,10 @@ function injectCausesSuffocationHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-	var returnFalseLabel = new LabelNode();
 
 	// Make list of instructions to inject
+	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
+	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 	toInject.add(new MethodInsnNode(
 			//int opcode
@@ -346,23 +344,7 @@ function injectCausesSuffocationHook(instructions) {
 			//boolean isInterface
 			true
 	));
-	toInject.add(new JumpInsnNode(IFNE, returnFalseLabel));
-	toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEINTERFACE,
-			//String owner
-			"net/minecraft/block/state/IBlockState",
-			//String name
-			"nocubes_isLeavesSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			true
-	));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-
-	toInject.add(returnFalseLabel);
 	toInject.add(new InsnNode(ICONST_0));
 	toInject.add(new InsnNode(IRETURN));
 

@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.BlockDirtSnowy;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -19,17 +18,13 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 
 import javax.annotation.Nonnull;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.GRASS_BLOCK_SNOWY;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.PODZOL_SNOWY;
-import static io.github.cadiboo.nocubes.client.ClientUtil.StateHolder.SNOW_LAYER_DEFAULT;
+import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
+import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
+import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
+import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.round;
-import static net.minecraft.init.Blocks.GRASS_BLOCK;
-import static net.minecraft.init.Blocks.PACKED_ICE;
-import static net.minecraft.init.Blocks.PODZOL;
-import static net.minecraft.init.Blocks.SNOW;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 import static net.minecraft.util.math.MathHelper.clamp;
@@ -308,18 +303,6 @@ public final class ClientUtil {
 	 */
 	public static byte getRelativePos(final int blockPos) {
 		return (byte) (blockPos & 15);
-	}
-
-	public static class StateHolder {
-
-		public static final IBlockState SNOW_LAYER_DEFAULT = SNOW.getDefaultState();
-		public static final IBlockState GRASS_BLOCK_SNOWY = GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
-		public static final IBlockState PODZOL_SNOWY = PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true);
-
-		public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS_BLOCK.getDefaultState();
-
-		public static final IBlockState PACKED_ICE_DEFAULT = PACKED_ICE.getDefaultState();
-
 	}
 
 }
