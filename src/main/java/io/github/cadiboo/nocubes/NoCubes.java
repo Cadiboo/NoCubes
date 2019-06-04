@@ -32,7 +32,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory")
+@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory", updateJSON = "https://Cadiboo.github.io/projects/nocubes/update.json")
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";

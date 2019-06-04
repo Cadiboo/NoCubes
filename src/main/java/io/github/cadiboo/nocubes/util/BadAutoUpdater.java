@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraftforge.fml.common.ModContainer;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,8 +24,8 @@ public final class BadAutoUpdater {
 			return false;
 		}
 
-		final String modName = modContainer.getName();
 		final File currentJar = modContainer.getSource();
+		final String modName = StringUtils.splitByWholeSeparator(currentJar.getName(), "-" + modContainer.getVersion())[0];
 
 		final String updateJarName = modName + "-" + updateVersion + ".jar";
 
