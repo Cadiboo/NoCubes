@@ -193,7 +193,7 @@ public final class Hooks {
 			try {
 				return CollisionHandler.getCollisionBoxes(_this, entityIn, aabb, p_191504_3_, outList, i, j, k, l, i1, j1, worldborder, flag, flag1);
 			} catch (Exception e) {
-				LOGGER.error("Collisions error, falling back to vanilla", e);
+//				LOGGER.error("Collisions error, falling back to vanilla", e);
 				//Fallthrough to vanilla
 			}
 		}
