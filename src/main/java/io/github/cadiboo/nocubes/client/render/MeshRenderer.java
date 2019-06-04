@@ -462,7 +462,8 @@ public final class MeshRenderer {
 		final IBlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
 		pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP);
-//		if (!blockAccess.isBlockLoaded(pooledMutableBlockPos)) {
+//		// isBlockLoaded only checks x and z
+//		if (pooledMutableBlockPos.getY() > renderChunkPosition.getY() + 16 || !blockAccess.isBlockLoaded(pooledMutableBlockPos)) {
 //			return;
 //		}
 		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
@@ -476,18 +477,25 @@ public final class MeshRenderer {
 			return;
 		}
 
-		final double v0x = v0.x;
-		final double v2x = v2.x;
 		final double shortGrassHeight = 0.25D;
-		final double v0yAdjusted = v0.y + shortGrassHeight;
-		final double v0y = v2.y;
-		final double v0z = v0.z;
-		final double v2z = v2.z;
 
 		final Vec3d offset = grassPlantState.getOffset(blockAccess, texturePos);
 		final double offX = offset.x;
 		final double offY = 0;
 		final double offZ = offset.z;
+
+		final double v0x = v0.x;
+		final double v0y = v0.y;
+		final double v0z = v0.z;
+		final double v1x = v1.x;
+		final double v1y = v1.y;
+		final double v1z = v1.z;
+		final double v2x = v2.x;
+		final double v2y = v2.y;
+		final double v2z = v2.z;
+		final double v3x = v3.x;
+		final double v3y = v3.y;
+		final double v3z = v3.z;
 
 		final IBakedModel model = blockRendererDispatcher.getModelForState(grassPlantState);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
@@ -554,24 +562,195 @@ public final class MeshRenderer {
 
 						// 0 3
 						// 1 2
-						final double r0x = qr0x ? v0x : v2x;
-						final double r1x = qr1x ? v0x : v2x;
-						final double r2x = qr2x ? v0x : v2x;
-						final double r3x = qr3x ? v0x : v2x;
+						final double r0x;
+						final double r1x;
+						final double r2x;
+						final double r3x;
 
 						// 0 3
 						// 1 2
-						final double r0y = qr0y ? v0yAdjusted : v0y;
-						final double r1y = qr1y ? v0yAdjusted : v0y;
-						final double r2y = qr2y ? v0yAdjusted : v0y;
-						final double r3y = qr3y ? v0yAdjusted : v0y;
+						final double r0y;
+						final double r1y;
+						final double r2y;
+						final double r3y;
 
 						// 0 3
 						// 1 2
-						final double r0z = qr0z ? v0z : v2z;
-						final double r1z = qr1z ? v0z : v2z;
-						final double r2z = qr2z ? v0z : v2z;
-						final double r3z = qr3z ? v0z : v2z;
+						final double r0z;
+						final double r1z;
+						final double r2z;
+						final double r3z;
+
+						// Find the Vec3 vertex for each quad vertex
+
+						// 0 3
+						// 1 2
+						// 10 00
+						// 11 01
+						if (qr0x && qr0y && qr0z) {
+							// (1, 1, 1)
+							r0x = v1x;
+							r0y = v1y + shortGrassHeight;
+							r0z = v1z;
+						} else if (qr0x && qr0y && !qr0z) {
+							// (1, 1, 0)
+							r0x = v0x;
+							r0y = v0y + shortGrassHeight;
+							r0z = v0z;
+						} else if (qr0x && !qr0y && qr0z) {
+							// (1, 0, 1)
+							r0x = v1x;
+							r0y = v1y;
+							r0z = v1z;
+						} else if (qr0x && !qr0y && !qr0z) {
+							// (1, 0, 0)
+							r0x = v0x;
+							r0y = v0y;
+							r0z = v0z;
+						} else if (!qr0x && qr0y && qr0z) {
+							// (0, 1, 1)
+							r0x = v2x;
+							r0y = v2y + shortGrassHeight;
+							r0z = v2z;
+						} else if (!qr0x && qr0y && !qr0z) {
+							// (0, 1, 0)
+							r0x = v3x;
+							r0y = v3y + shortGrassHeight;
+							r0z = v3z;
+						} else if (!qr0x && !qr0y && qr0z) {
+							// (0, 0, 1)
+							r0x = v2x;
+							r0y = v2y;
+							r0z = v2z;
+						} else /*if (!qr0x && !qr0y && !qr0z)*/ {
+							// (0, 0, 0)
+							r0x = v3x;
+							r0y = v3y;
+							r0z = v3z;
+						}
+						if (qr1x && qr1y && qr1z) {
+							// (1, 1, 1)
+							r1x = v1x;
+							r1y = v1y + shortGrassHeight;
+							r1z = v1z;
+						} else if (qr1x && qr1y && !qr1z) {
+							// (1, 1, 0)
+							r1x = v0x;
+							r1y = v0y + shortGrassHeight;
+							r1z = v0z;
+						} else if (qr1x && !qr1y && qr1z) {
+							// (1, 0, 1)
+							r1x = v1x;
+							r1y = v1y;
+							r1z = v1z;
+						} else if (qr1x && !qr1y && !qr1z) {
+							// (1, 0, 0)
+							r1x = v0x;
+							r1y = v0y;
+							r1z = v0z;
+						} else if (!qr1x && qr1y && qr1z) {
+							// (0, 1, 1)
+							r1x = v2x;
+							r1y = v2y + shortGrassHeight;
+							r1z = v2z;
+						} else if (!qr1x && qr1y && !qr1z) {
+							// (0, 1, 0)
+							r1x = v3x;
+							r1y = v3y + shortGrassHeight;
+							r1z = v3z;
+						} else if (!qr1x && !qr1y && qr1z) {
+							// (0, 0, 1)
+							r1x = v2x;
+							r1y = v2y;
+							r1z = v2z;
+						} else /*if (!qr1x && !qr1y && !qr1z)*/ {
+							// (0, 0, 0)
+							r1x = v3x;
+							r1y = v3y;
+							r1z = v3z;
+						}
+						if (qr2x && qr2y && qr2z) {
+							// (1, 1, 1)
+							r2x = v1x;
+							r2y = v1y + shortGrassHeight;
+							r2z = v1z;
+						} else if (qr2x && qr2y && !qr2z) {
+							// (1, 1, 0)
+							r2x = v0x;
+							r2y = v0y + shortGrassHeight;
+							r2z = v0z;
+						} else if (qr2x && !qr2y && qr2z) {
+							// (1, 0, 1)
+							r2x = v1x;
+							r2y = v1y;
+							r2z = v1z;
+						} else if (qr2x && !qr2y && !qr2z) {
+							// (1, 0, 0)
+							r2x = v0x;
+							r2y = v0y;
+							r2z = v0z;
+						} else if (!qr2x && qr2y && qr2z) {
+							// (0, 1, 1)
+							r2x = v2x;
+							r2y = v2y + shortGrassHeight;
+							r2z = v2z;
+						} else if (!qr2x && qr2y && !qr2z) {
+							// (0, 1, 0)
+							r2x = v3x;
+							r2y = v3y + shortGrassHeight;
+							r2z = v3z;
+						} else if (!qr2x && !qr2y && qr2z) {
+							// (0, 0, 1)
+							r2x = v2x;
+							r2y = v2y;
+							r2z = v2z;
+						} else /*if (!qr2x && !qr2y && !qr2z)*/ {
+							// (0, 0, 0)
+							r2x = v3x;
+							r2y = v3y;
+							r2z = v3z;
+						}
+						if (qr3x && qr3y && qr3z) {
+							// (1, 1, 1)
+							r3x = v1x;
+							r3y = v1y + shortGrassHeight;
+							r3z = v1z;
+						} else if (qr3x && qr3y && !qr3z) {
+							// (1, 1, 0)
+							r3x = v0x;
+							r3y = v0y + shortGrassHeight;
+							r3z = v0z;
+						} else if (qr3x && !qr3y && qr3z) {
+							// (1, 0, 1)
+							r3x = v1x;
+							r3y = v1y;
+							r3z = v1z;
+						} else if (qr3x && !qr3y && !qr3z) {
+							// (1, 0, 0)
+							r3x = v0x;
+							r3y = v0y;
+							r3z = v0z;
+						} else if (!qr3x && qr3y && qr3z) {
+							// (0, 1, 1)
+							r3x = v2x;
+							r3y = v2y + shortGrassHeight;
+							r3z = v2z;
+						} else if (!qr3x && qr3y && !qr3z) {
+							// (0, 1, 0)
+							r3x = v3x;
+							r3y = v3y + shortGrassHeight;
+							r3z = v3z;
+						} else if (!qr3x && !qr3y && qr3z) {
+							// (0, 0, 1)
+							r3x = v2x;
+							r3y = v2y;
+							r3z = v2z;
+						} else /*if (!qr3x && !qr3y && !qr3z)*/ {
+							// (0, 0, 0)
+							r3x = v3x;
+							r3y = v3y;
+							r3z = v3z;
+						}
 
 						// Quads are packed xyz|argb|u|v|ts
 						final float v0u = Float.intBitsToFloat(vertexData[4]);
