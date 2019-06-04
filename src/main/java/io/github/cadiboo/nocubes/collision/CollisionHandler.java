@@ -575,7 +575,7 @@ public final class CollisionHandler {
 	public static boolean getCollisionBoxes(final World world, final Entity entityIn, final AxisAlignedBB aabb, final boolean p_191504_3_, final List<AxisAlignedBB> outList, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean flag, final boolean flag1) {
 
 		if (!Config.terrainCollisions) {
-			throw new IllegalStateException("Terrain collisions diabled");
+			throw new IllegalStateException("Terrain collisions disabled");
 		}
 
 		if (shouldApplyMeshCollisions(entityIn)) {
