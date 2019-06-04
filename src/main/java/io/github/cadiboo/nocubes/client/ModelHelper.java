@@ -92,7 +92,7 @@ public final class ModelHelper {
 	public static IBakedModel getModel(final IBlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
 //			if (DynamicTreesCompatibility.isRootyBlock(unextendedState)) {
-//				return blockRendererDispatcher.getModelForState(ClientUtil.StateHolder.GRASS_BLOCK_DEFAULT);
+//				return blockRendererDispatcher.getModelForState(StateHolder.GRASS_BLOCK_DEFAULT);
 //			}
 			if (ClientUtil.isStateSnow(state)) {
 				return blockRendererDispatcher.getModelForState(StateHolder.SNOW_LAYER_DEFAULT);
