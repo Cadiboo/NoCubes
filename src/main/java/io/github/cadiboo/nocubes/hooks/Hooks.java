@@ -63,7 +63,7 @@ public final class Hooks {
 		try {
 			return CollisionHandler.getCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate);
 		} catch (final Exception e) {
-			NoCubes.LOGGER.error("Error with collisions! Falling back to vanilla.", e);
+//			NoCubes.LOGGER.error("Error with collisions! Falling back to vanilla.", e);
 			return Stream.concat(
 					CollisionHandler.getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, i, j, k, l, i1, j1, worldborder, flag, voxelshapepart, predicate),
 					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, i, k, i1))
