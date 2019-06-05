@@ -6,6 +6,7 @@ import net.minecraft.block.BlockSnow;
 import net.minecraft.block.state.IBlockState;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
@@ -100,11 +101,7 @@ public final class ModUtil {
 	}
 
 	public static boolean isDeveloperWorkspace() {
-		final String target = System.getenv().get("target");
-		if (target == null) {
-			return false;
-		}
-		return target.contains("userdev");
+		return FMLLaunchHandler.isDeobfuscatedEnvironment();
 	}
 
 }

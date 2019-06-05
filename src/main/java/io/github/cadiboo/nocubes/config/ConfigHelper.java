@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.config;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockMycelium;
@@ -16,6 +17,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.InvalidBlockStateException;
 import net.minecraft.command.NumberInvalidException;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import org.apache.commons.lang3.StringUtils;
@@ -222,7 +224,7 @@ public final class ConfigHelper {
 			LOGGER.debug("Preparing to add \"" + stateString + "\" to terrain smoothable");
 			final IBlockState state = getStateFromString(stateString);
 			if (state != null) {
-				LOGGER.debug("Added \"" + state + "\" to terrain smoothable");
+				LOGGER.debug("Adding \"" + state + "\" to terrain smoothable");
 				state.nocubes_setTerrainSmoothable(true);
 			} else {
 				LOGGER.debug("Cannot add invalid state \"" + stateString + "\" to terrain smoothable");
@@ -236,9 +238,10 @@ public final class ConfigHelper {
 			LOGGER.debug("Preparing to add block \"" + blockString + "\" to leaves smoothable");
 			final IBlockState defaultState = getStateFromString(blockString);
 			if (defaultState != null) {
+				LOGGER.debug("Adding block \"" + defaultState + "\" to leaves smoothable");
 				final Block block = defaultState.getBlock();
-				LOGGER.debug("Added \"" + defaultState + "\" to leaves smoothable");
 				for (final IBlockState state : block.getBlockState().getValidStates()) {
+					LOGGER.debug("Adding leaves smoothable state: " + state);
 					state.nocubes_setLeavesSmoothable(true);
 				}
 				leavesSmoothableBlocks.add(block);
@@ -265,7 +268,7 @@ public final class ConfigHelper {
 			}
 
 			final Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(blockString));
-			if (block == null) {
+			if (block == null || block == Blocks.AIR) {
 				LOGGER.error("Block Parsing error for \"" + blockString + "\". Block does not exist!");
 				return null;
 			}
@@ -286,7 +289,7 @@ public final class ConfigHelper {
 
 	@Nonnull
 	private static String getStringFromState(@Nonnull final IBlockState state) {
-//		Preconditions.checkNotNull(state, "String to serialise must not be null");
+		Preconditions.checkNotNull(state, "State to serialise must not be null");
 //		String stateString = Objects.requireNonNull(state.getBlock().getRegistryName(), "Block registry name cannot be null!").toString();
 //		final ArrayList<String> properties = new ArrayList<>();
 //		for (Map.Entry<IProperty<?>, Comparable<?>> entry : state.getProperties().entrySet()) {
