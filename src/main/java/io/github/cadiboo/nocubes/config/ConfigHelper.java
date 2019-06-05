@@ -271,7 +271,7 @@ public final class ConfigHelper {
 
 	@Nonnull
 	private static String getStringFromState(@Nonnull final IBlockState state) {
-		Preconditions.checkNotNull(state, "String to serialise must not be null");
+		Preconditions.checkNotNull(state, "State to serialise must not be null");
 		String stateString = Objects.requireNonNull(state.getBlock().getRegistryName(), "Block registry name cannot be null!").toString();
 		final ArrayList<String> properties = new ArrayList<>();
 		for (Map.Entry<IProperty<?>, Comparable<?>> entry : state.getValues().entrySet()) {

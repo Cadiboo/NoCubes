@@ -22,8 +22,6 @@ public final class StateHolder {
 
 	public static final IBlockState GRASS_BLOCK_DEFAULT = GRASS_BLOCK.getDefaultState();
 
-	public static final IBlockState PACKED_ICE_DEFAULT = PACKED_ICE.getDefaultState();
-
 	public static final IBlockState GRASS_PLANT_DEFAULT = GRASS.getDefaultState();
 
 	static {
