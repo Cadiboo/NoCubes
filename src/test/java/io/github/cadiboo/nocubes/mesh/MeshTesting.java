@@ -5,6 +5,7 @@ package io.github.cadiboo.nocubes.mesh;
  */
 public final class MeshTesting {
 
+	static final TestData EMPTY = new MeshTesting.TestData(new float[32 * 32 * 32], new byte[]{32, 32, 32});
 	static final TestData TORUS = makeVolume(
 			new float[][]{
 					{-2.0F, 2.0F, 0.2F},
@@ -21,7 +22,6 @@ public final class MeshTesting {
 			},
 			(x, y, z) -> x * x + y * y + z * z - 1.0F
 	);
-	static final TestData EMPTY = new MeshTesting.TestData(new float[32 * 32 * 32], new byte[]{32, 32, 32});
 	static final TestData HYPERELLIPTIC = makeVolume(
 			new float[][]{
 					{-1.0F, 1.0F, 0.05F},
@@ -58,7 +58,7 @@ public final class MeshTesting {
 				return (float) (Math.pow(2 * x * x + y * y + 2 * z * z - 1, 3) - 0.1F * z * z * y * y * y - y * y * y * x * x);
 			}
 	);
-	//	private static final TestData NORDSTRANDS_WEIRD_SURFACE = makeVolume(
+	//	static final TestData NORDSTRANDS_WEIRD_SURFACE = makeVolume(
 //			new float[][]{
 //					{-0.8F, 0.8F, 0.01F},
 //					{-0.8F, 0.8F, 0.01F},
@@ -110,6 +110,23 @@ public final class MeshTesting {
 			},
 			(x, y, z) -> x * x + y * y + z * z - 1.0F
 	);
+
+	static final TestData[] TEST_DATA = {
+			EMPTY,
+			TORUS,
+			BIG_SPHERE,
+			HYPERELLIPTIC,
+			NODAL_CUBIC,
+			GOURSATS_SURFACE,
+			HEART,
+//			NORDSTRANDS_WEIRD_SURFACE,
+			SINE_WAVES,
+			PERLIN_NOISE,
+			ASTEROID,
+			TERRAIN,
+			SPHERE,
+
+	};
 
 	private static TestData makeVolume(float[][] dims, final ScalarFunction f) {
 		byte[] res = new byte[3];

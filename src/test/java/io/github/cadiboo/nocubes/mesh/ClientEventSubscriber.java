@@ -35,10 +35,10 @@ public final class ClientEventSubscriber {
 
 	private static final BufferBuilder bufferBuilder = new BufferBuilder(0x200);
 
+	private static int testDataIndex = 0;
+
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
-
-		if (true) return;
 
 		if (event.phase != TickEvent.Phase.END) {
 			return;
@@ -56,7 +56,8 @@ public final class ClientEventSubscriber {
 		final BufferBuilder bufferbuilder = bufferBuilder;
 		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		final HashMap<Vec3b, FaceList> map = MeshGeneratorType.SurfaceNets.getMeshGenerator().generateChunk(MeshTesting.SINE_WAVES.data, MeshTesting.SINE_WAVES.dims);
+		final MeshTesting.TestData testData = MeshTesting.TEST_DATA[++testDataIndex % MeshTesting.TEST_DATA.length];
+		final HashMap<Vec3b, FaceList> map = MeshGeneratorType.SurfaceNets.getMeshGenerator().generateChunk(testData.data, testData.dims);
 
 		for (final Vec3b vec3b : map.keySet()) {
 			vec3b.close();
@@ -64,8 +65,8 @@ public final class ClientEventSubscriber {
 
 		for (final FaceList faces : map.values()) {
 			try {
-				for (final Face face : faces) {
-					try {
+				for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
+					try (Face face = faces.get(i)) {
 						try (
 								Vec3 v0 = face.getVertex0();
 								Vec3 v1 = face.getVertex1();
@@ -105,8 +106,6 @@ public final class ClientEventSubscriber {
 							// End back at v0. Draw with alpha this time
 							bufferbuilder.pos(v0x, v0y, v0z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
 						}
-					} finally {
-						face.close();
 					}
 				}
 
@@ -121,8 +120,6 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-
-		if (true) return;
 
 		// Code to draw the buffer
 		{
