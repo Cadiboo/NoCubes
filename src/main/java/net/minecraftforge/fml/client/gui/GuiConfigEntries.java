@@ -1,9 +1,11 @@
 package net.minecraftforge.fml.client.gui;
 
-import net.minecraftforge.fml.client.gui.GuiConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.resources.I18n;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.client.config.IConfigEntry;
 
@@ -81,17 +83,12 @@ public class GuiConfigEntries extends GuiListExtended {
 		controlWidth = resetX - controlX - 5;
 		scrollBarX = this.width;
 
-//		for (IConfigElement configElement : parent.configElements) {
+		for (ConfigValue configElement : parent.configElements) {
+			if(configElement instanceof BooleanValue) {
+				this.listEntries.add(new GuiConfigEntries.BooleanEntry(this.owningScreen, this, configElement));
+			}
 //			if (configElement != null && configElement.showInGui()) {
-//				if (configElement.getConfigEntryClass() != null)
-//					try {
-//						this.listEntries.add(configElement.getConfigEntryClass()
-//								.getConstructor(GuiConfig.class, GuiConfigEntries.class, IConfigElement.class)
-//								.newInstance(this.owningScreen, this, configElement));
-//					} catch (Throwable e) {
-//						FMLLog.log.error("There was a critical error instantiating the custom IConfigEntry for config element {}.", configElement.getName(), e);
-//					}
-//				else if (configElement.isProperty()) {
+//				if (configElement.isProperty()) {
 //					if (configElement.isList())
 //						this.listEntries.add(new GuiConfigEntries.ArrayEntry(this.owningScreen, this, configElement));
 //					else if (configElement.getType() == ConfigGuiType.BOOLEAN)
@@ -120,7 +117,7 @@ public class GuiConfigEntries extends GuiListExtended {
 //				} else if (configElement.getType() == ConfigGuiType.CONFIG_CATEGORY)
 //					this.listEntries.add(new CategoryEntry(this.owningScreen, this, configElement));
 //			}
-//		}
+		}
 	}
 
 	/**

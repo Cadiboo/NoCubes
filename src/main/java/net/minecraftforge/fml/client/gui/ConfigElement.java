@@ -45,7 +45,7 @@ public class ConfigElement {
 		return new IConfigElement() {
 			@Override
 			public boolean isProperty() {
-				return false;
+				return true;
 			}
 
 			@Override
@@ -60,22 +60,22 @@ public class ConfigElement {
 
 			@Override
 			public String getName() {
-				return null;
+				return "";
 			}
 
 			@Override
 			public String getQualifiedName() {
-				return null;
+				return "";
 			}
 
 			@Override
 			public String getLanguageKey() {
-				return null;
+				return "";
 			}
 
 			@Override
 			public String getComment() {
-				return null;
+				return "";
 			}
 
 			@Override

@@ -1,4 +1,8 @@
 {
+	"fml.configgui.tooltip.undoChanges": "Undo Changes",
+	"fml.configgui.tooltip.resetToDefault": "Reset to default",
+	"fml.configgui.tooltip.applyToSubcategories": "Apply to Subcategories",
+
 	"nocubes.addedTerrainSmoothableBlockState": "Added Terrain Smoothable",
 	"nocubes.removedTerrainSmoothableBlockState": "Removed Terrain Smoothable",
 	"nocubes.addedLeavesSmoothableBlockState": "Added Leaves Smoothable",

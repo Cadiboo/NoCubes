@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import net.minecraftforge.fml.client.config.HoverChecker;
@@ -41,8 +43,7 @@ public final class GuiConfig extends GuiScreen {
 	public final String subTitle;
 	public final GuiConfigEntries entryList;
 	public final boolean isWorldRunning;
-	public final List<IConfigElement> configElements;
-	public final List<IConfigEntry> initEntries;
+	public final List<ConfigValue> configElements;
 
 	public boolean needsRefresh = true;
 
@@ -81,7 +82,7 @@ public final class GuiConfig extends GuiScreen {
 	 *                       currently being edited.
 	 * @param configElements a List of IConfigElement objects
 	 */
-	public GuiConfig(final Minecraft minecraft, final GuiScreen parent, final String modID, @Nullable final String configID, final String title, @Nullable final String subTitle, final List<IConfigElement> configElements) {
+	public GuiConfig(final Minecraft minecraft, final GuiScreen parent, final String modID, @Nullable final String configID, final String title, @Nullable final String subTitle, final List<ConfigValue> configElements) {
 		this.minecraft = minecraft;
 		this.parent = parent;
 		this.modID = modID;
@@ -95,17 +96,16 @@ public final class GuiConfig extends GuiScreen {
 
 		this.configElements = configElements;
 		this.entryList = new GuiConfigEntries(mc, this);
-		this.initEntries = new ArrayList<>(entryList.listEntries);
 
 		this.isWorldRunning = minecraft.world != null;
 	}
 
 	public GuiConfig(final Minecraft minecraft, final GuiScreen parent) {
-		this(minecraft, parent, NoCubes.MOD_ID, "NoCubes Config");
+		this(minecraft, parent, NoCubes.MOD_ID, "NoCubes Config", GuiButtonClickConsumer.class, GuiButtonClickConsumer.class);
 	}
 
-	private static List<IConfigElement> collectConfigElements(Class<?>... configClasses) {
-		List<IConfigElement> toReturn;
+	private static List<ConfigValue> collectConfigElements(Class<?>... configClasses) {
+		List<ConfigValue> toReturn;
 		if (configClasses.length == 1) {
 			toReturn = ConfigElement.from(configClasses[0]).getChildElements();
 		} else {
