@@ -159,7 +159,7 @@ public final class ClientEventSubscriber {
 
 	}
 
-	// Coppied from the Tesselator's vboUploader - Draw everything but don't reset the buffer
+	// Coppied from the Tessellator's vboUploader - Draw everything but don't reset the buffer
 	// Unused code from vanilla is commented out, along with the code that resets the buffer
 	private static void drawBuffer(final BufferBuilder bufferBuilder) {
 		if (bufferBuilder.getVertexCount() > 0) {
@@ -192,7 +192,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-//		bufferBuilder.reset(); // Commented out from the tesselator's vboUploader. Don't reset the buffer
+//		bufferBuilder.reset(); // Commented out from the tessellator's vboUploader. Don't reset the buffer
 	}
 
 }
