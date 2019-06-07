@@ -205,7 +205,7 @@ public class MCWriter extends ClassWriter {
 	/**
 	 * deob the class without loading more classes and also attached any transformed interfaces
 	 */
-	private ClassReader patchClass(ClassReader reader) {
+	public static ClassReader patchClass(ClassReader reader) {
 		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);//don't load compute frames it's not necessary for running forge's transformer and would causes recursion/class circulatory errors
 		RemappingClassAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
 		reader.accept(remapAdapter, READER_FLAGS);

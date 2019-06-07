@@ -2,7 +2,10 @@ package io.github.cadiboo.nocubes.tempcore;
 
 import io.github.cadiboo.nocubes.tempcore.classwriter.MCWriter;
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
@@ -13,6 +16,8 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 import javax.annotation.Nullable;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,16 +75,18 @@ public final class NoCubesClassTransformer implements IClassTransformer, Opcodes
 
 	@Override
 	public byte[] transform(final String name, final String transformedName, @Nullable final byte[] basicClass) {
-		if (basicClass == null) {
-			return null;
-		}
+//		if (basicClass == null) {
+//			return null;
+//		}
 		switch (transformedName) {
 			case "net.minecraft.block.state.BlockStateContainer$StateImplementation":
-				return transformClass(basicClass, transformedName,
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar on the server
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
 						StateImplementationTransformer::transform
 				);
 			case "net.minecraft.block.state.IBlockProperties":
-				return transformClass(basicClass, transformedName,
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar on the server
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
 						IBlockPropertiesTransformer::transform
 				);
 			case "net.minecraft.client.renderer.chunk.RenderChunk":
@@ -94,6 +101,44 @@ public final class NoCubesClassTransformer implements IClassTransformer, Opcodes
 				return transformClass(basicClass, transformedName,
 						RenderGlobalTransformer::transform
 				);
+
+			// <revolting hacky code that I hate with a fiery intensity>
+
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeClientState":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : transformClass(basicClass, transformedName,
+						FMLHandshakeClientStateTransformer::transform
+				);
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeClientState$9":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : FMLHandshakeClientState$9Dump.dump();
+
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeServerState":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return transformClass(basicClass, transformedName,
+						FMLHandshakeServerStateTransformer::transform
+				);
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeServerState$7":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : FMLHandshakeServerState$7Dump.dump();
+
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeMessage":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : transformClass(basicClass, transformedName,
+						FMLHandshakeMessageTransformer::transform
+				);
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeMessage$S2CConfigData":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : FMLHandshakeMessage$S2CConfigDataDump.dump();
+
+			case "net.minecraftforge.fml.common.network.handshake.FMLHandshakeCodec":
+				// Weird class loading stuff happens in dev, this class gets loaded from our jar
+				return FMLLaunchHandler.isDeobfuscatedEnvironment() ? basicClass : transformClass(basicClass, transformedName,
+						FMLHandshakeCodecTransformer::transform
+				);
+
+			// </revolting hacky code that I hate with a fiery intensity>
+
 		}
 		return basicClass;
 	}

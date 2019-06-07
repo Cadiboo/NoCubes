@@ -105,6 +105,11 @@ dependencies {
 
 jar {
 
+	// Don't put the modified minecraft files in final jar (but compile them and everything)
+	exclude '**/net/minecraft/**'
+	// Don't put the modified forge files in final jar (but compile them and everything)
+	exclude '**/net/minecraftforge/**'
+
 	manifest {
 		if (project.hasProperty('core_plugin')) {
 			attributes 'FMLCorePluginContainsFMLMod': 'true'

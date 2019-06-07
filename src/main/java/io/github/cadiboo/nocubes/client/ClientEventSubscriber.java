@@ -1,8 +1,10 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
+import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
@@ -21,6 +23,7 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -35,6 +38,8 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
@@ -515,6 +520,20 @@ public final class ClientEventSubscriber {
 		//TODO: do this better
 		if (Config.terrainCollisions) {
 			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onClientConnectedToServerEvent(final FMLNetworkEvent.ClientConnectedToServerEvent event) {
+		if (!event.isLocal()) {
+			final NetworkManager manager = event.getManager();
+			if (manager == null) {
+				throw new NullPointerException("ARGH! Network Manager is null (" + "MANAGER" + ")");
+			}
+			if (NetworkDispatcher.get(manager).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
+				NoCubes.LOGGER.info("Connected to a vanilla server. Catching up missing behaviour.");
+				ConfigTracker.INSTANCE.loadDefaultServerConfigs();
+			}
 		}
 	}
 

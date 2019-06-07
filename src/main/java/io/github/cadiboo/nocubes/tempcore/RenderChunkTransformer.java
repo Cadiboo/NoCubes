@@ -180,9 +180,10 @@ final class RenderChunkTransformer implements Opcodes {
 					if (instruction.name.equals(getAllInBoxMutable_name) || instruction.name.equals("getAllInBoxMutable")) {
 						if (instruction.desc.equals("(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;")) {
 							if (instruction.itf == false) {
-								optifine = instruction.owner.equals("net/optifine/BlockPosM");
 								first_INVOKESTATIC_getAllInBoxMutable = instruction;
-								log("Found OptiFine");
+								log("Found Injection Point");
+								optifine = instruction.owner.equals("net/optifine/BlockPosM");
+								log("OptiFine: " + optifine);
 								break;
 							}
 						}
