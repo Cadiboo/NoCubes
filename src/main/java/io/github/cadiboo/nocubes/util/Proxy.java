@@ -14,7 +14,7 @@ import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
  */
 public interface Proxy {
 
-	void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately);
+	void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ);
 
 	void replaceFluidRendererCauseImBored();
 

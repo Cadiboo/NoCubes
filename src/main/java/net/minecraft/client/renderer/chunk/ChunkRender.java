@@ -1,16 +1,20 @@
 package net.minecraft.client.renderer.chunk;
 
 import com.google.common.collect.Sets;
+import com.mojang.blaze3d.platform.GLX;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
@@ -19,8 +23,7 @@ import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -29,46 +32,52 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-import java.nio.FloatBuffer;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
-
 @OnlyIn(Dist.CLIENT)
-public class RenderChunk implements net.minecraftforge.client.extensions.IForgeRenderChunk {
-   public volatile World world;
-   public final WorldRenderer renderGlobal;
+public class ChunkRender implements net.minecraftforge.client.extensions.IForgeRenderChunk {
+   private volatile World world;
+   private final WorldRenderer renderGlobal;
    public static int renderChunksUpdated;
    public CompiledChunk compiledChunk = CompiledChunk.DUMMY;
-   public final ReentrantLock lockCompileTask = new ReentrantLock();
-   public final ReentrantLock lockCompiledChunk = new ReentrantLock();
-   public ChunkRenderTask compileTask;
-   public final Set<TileEntity> setTileEntities = Sets.newHashSet();
-   public final FloatBuffer modelviewMatrix = GLAllocation.createDirectFloatBuffer(16);
-   public final VertexBuffer[] vertexBuffers = new VertexBuffer[BlockRenderLayer.values().length];
+   private final ReentrantLock lockCompileTask = new ReentrantLock();
+   private final ReentrantLock lockCompiledChunk = new ReentrantLock();
+   private ChunkRenderTask compileTask;
+   private final Set<TileEntity> setTileEntities = Sets.newHashSet();
+   private final VertexBuffer[] vertexBuffers = new VertexBuffer[BlockRenderLayer.values().length];
    public AxisAlignedBB boundingBox;
-   public int frameIndex = -1;
-   public boolean needsUpdate = true;
-   public final BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(-1, -1, -1);
-   public final BlockPos.MutableBlockPos[] mapEnumFacing = Util.make(new BlockPos.MutableBlockPos[6], (p_205125_0_) -> {
+   private int frameIndex = -1;
+   private boolean needsUpdate = true;
+   private final BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(-1, -1, -1);
+   private final BlockPos.MutableBlockPos[] mapEnumFacing = Util.make(new BlockPos.MutableBlockPos[6], (p_205125_0_) -> {
       for(int j = 0; j < p_205125_0_.length; ++j) {
          p_205125_0_[j] = new BlockPos.MutableBlockPos();
       }
 
    });
-   public boolean needsImmediateUpdate;
+   private boolean needsImmediateUpdate;
 
-   public RenderChunk(World p_i49841_1_, WorldRenderer p_i49841_2_) {
+   public ChunkRender(World p_i49841_1_, WorldRenderer p_i49841_2_) {
       this.world = p_i49841_1_;
       this.renderGlobal = p_i49841_2_;
-      if (OpenGlHelper.useVbo()) {
+      if (GLX.useVbo()) {
          for(int i = 0; i < BlockRenderLayer.values().length; ++i) {
             this.vertexBuffers[i] = new VertexBuffer(DefaultVertexFormats.BLOCK);
          }
       }
 
+   }
+
+   private static boolean func_217673_a(BlockPos p_217673_0_, World p_217673_1_) {
+      return !p_217673_1_.func_212866_a_(p_217673_0_.getX() >> 4, p_217673_0_.getZ() >> 4).isEmpty();
+   }
+
+   public boolean func_217674_b() {
+      int i = 24;
+      if (!(this.getDistanceSq() > 576.0D)) {
+         return true;
+      } else {
+         World world = this.getWorld();
+         return func_217673_a(this.mapEnumFacing[Direction.WEST.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.NORTH.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.EAST.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.SOUTH.ordinal()], world);
+      }
    }
 
    public boolean setFrameIndex(int frameIndexIn) {
@@ -93,11 +102,10 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
          this.position.setPos(x, y, z);
          this.boundingBox = new AxisAlignedBB((double)x, (double)y, (double)z, (double)(x + 16), (double)(y + 16), (double)(z + 16));
 
-         for(EnumFacing enumfacing : EnumFacing.values()) {
-            this.mapEnumFacing[enumfacing.ordinal()].setPos(this.position).move(enumfacing, 16);
+         for(Direction direction : Direction.values()) {
+            this.mapEnumFacing[direction.ordinal()].setPos(this.position).move(direction, 16);
          }
 
-         this.initModelviewMatrix();
       }
    }
 
@@ -129,42 +137,38 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
             generator.getLock().unlock();
          }
 
-         RenderChunkCache lvt_10_1_ = createRegionRenderCache(world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
-         net.minecraftforge.client.MinecraftForgeClient.onRebuildChunk(this.world, this.position, lvt_10_1_);
-         VisGraph lvt_11_1_ = new VisGraph();
-         HashSet lvt_12_1_ = Sets.newHashSet();
-         if (lvt_10_1_ != null) {
+         VisGraph lvt_10_1_ = new VisGraph();
+         HashSet lvt_11_1_ = Sets.newHashSet();
+         ChunkRenderCache lvt_12_1_ = generator.func_217667_c();
+         if (lvt_12_1_ != null) {
             ++renderChunksUpdated;
             boolean[] aboolean = new boolean[BlockRenderLayer.values().length];
             BlockModelRenderer.enableCache();
             Random random = new Random();
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-            // NoCubes Start
-            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
-            // NoCubes End
-            for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
-               IBlockState iblockstate = lvt_10_1_.getBlockState(blockpos$mutableblockpos);
-               Block block = iblockstate.getBlock();
-               if (iblockstate.isOpaqueCube(lvt_10_1_, blockpos$mutableblockpos)) {
-                  lvt_11_1_.setOpaqueCube(blockpos$mutableblockpos);
+            for(BlockPos blockpos2 : BlockPos.func_218278_a(blockpos, blockpos1)) {
+               BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
+               Block block = blockstate.getBlock();
+               if (blockstate.isOpaqueCube(lvt_12_1_, blockpos2)) {
+                  lvt_10_1_.setOpaqueCube(blockpos2);
                }
 
-               if (iblockstate.hasTileEntity()) {
-                  TileEntity tileentity = lvt_10_1_.getTileEntity(blockpos$mutableblockpos, Chunk.EnumCreateEntityType.CHECK);
+               if (blockstate.hasTileEntity()) {
+                  TileEntity tileentity = lvt_12_1_.getTileEntity(blockpos2, Chunk.CreateEntityType.CHECK);
                   if (tileentity != null) {
                      TileEntityRenderer<TileEntity> tileentityrenderer = TileEntityRendererDispatcher.instance.getRenderer(tileentity);
                      if (tileentityrenderer != null) {
                         if (tileentityrenderer.isGlobalRenderer(tileentity)) {
-                           lvt_12_1_.add(tileentity);
+                           lvt_11_1_.add(tileentity);
                         }
                         else compiledchunk.addTileEntity(tileentity); // FORGE: Fix MC-112730
                      }
                   }
                }
 
-               IFluidState ifluidstate = lvt_10_1_.getFluidState(blockpos$mutableblockpos);
-               net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos$mutableblockpos);
+               IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+               net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
                for(BlockRenderLayer blockrenderlayer1 : BlockRenderLayer.values()) {
                    net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockrenderlayer1);
                if (!ifluidstate.isEmpty() && ifluidstate.canRenderInLayer(blockrenderlayer1)) {
@@ -175,14 +179,10 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                      this.preRenderBlocks(bufferbuilder, blockpos);
                   }
 
-                  aboolean[j] |= blockrendererdispatcher.renderFluid(blockpos$mutableblockpos, lvt_10_1_, bufferbuilder, ifluidstate);
+                  aboolean[j] |= blockrendererdispatcher.func_215331_a(blockpos2, lvt_12_1_, bufferbuilder, ifluidstate);
                }
 
-               // NoCubes Start
-               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
-               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
-               // NoCubes End
-               if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+               if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.canRenderInLayer(blockrenderlayer1)) {
                   int k = blockrenderlayer1.ordinal();
                   BufferBuilder bufferbuilder1 = generator.getRegionRenderCacheBuilder().getBuilder(k);
                   if (!compiledchunk.isLayerStarted(blockrenderlayer1)) {
@@ -190,7 +190,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                      this.preRenderBlocks(bufferbuilder1, blockpos);
                   }
 
-                  aboolean[k] |= blockrendererdispatcher.renderBlock(iblockstate, blockpos$mutableblockpos, lvt_10_1_, bufferbuilder1, random, modelData);
+                  aboolean[k] |= blockrendererdispatcher.renderBlock(blockstate, blockpos2, lvt_12_1_, bufferbuilder1, random, modelData);
                }
                }
                net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
@@ -209,16 +209,16 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
             BlockModelRenderer.disableCache();
          }
 
-         compiledchunk.setVisibility(lvt_11_1_.computeVisibility());
+         compiledchunk.setVisibility(lvt_10_1_.computeVisibility());
          this.lockCompileTask.lock();
 
          try {
-            Set<TileEntity> set = Sets.newHashSet(lvt_12_1_);
+            Set<TileEntity> set = Sets.newHashSet(lvt_11_1_);
             Set<TileEntity> set1 = Sets.newHashSet(this.setTileEntities);
             set.removeAll(this.setTileEntities);
-            set1.removeAll(lvt_12_1_);
+            set1.removeAll(lvt_11_1_);
             this.setTileEntities.clear();
-            this.setTileEntities.addAll(lvt_12_1_);
+            this.setTileEntities.addAll(lvt_11_1_);
             this.renderGlobal.updateTileEntities(set1, set);
          } finally {
             this.lockCompileTask.unlock();
@@ -251,7 +251,11 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
       ChunkRenderTask chunkrendertask;
       try {
          this.finishCompileTask();
-         this.compileTask = new ChunkRenderTask(this, ChunkRenderTask.Type.REBUILD_CHUNK, this.getDistanceSq());
+         BlockPos blockpos = this.position.toImmutable();
+         int i = 1;
+         ChunkRenderCache chunkrendercache = createRegionRenderCache(world, blockpos.add(-1, -1, -1), blockpos.add(16, 16, 16), 1);
+
+         this.compileTask = new ChunkRenderTask(this, ChunkRenderTask.Type.REBUILD_CHUNK, this.getDistanceSq(), chunkrendercache);
          chunkrendertask = this.compileTask;
       } finally {
          this.lockCompileTask.unlock();
@@ -272,7 +276,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
                this.compileTask = null;
             }
 
-            this.compileTask = new ChunkRenderTask(this, ChunkRenderTask.Type.RESORT_TRANSPARENCY, this.getDistanceSq());
+            this.compileTask = new ChunkRenderTask(this, ChunkRenderTask.Type.RESORT_TRANSPARENCY, this.getDistanceSq(), (ChunkRenderCache)null);
             this.compileTask.setCompiledChunk(this.compiledChunk);
             chunkrendertask = this.compileTask;
             return chunkrendertask;
@@ -287,40 +291,25 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
    }
 
    protected double getDistanceSq() {
-      EntityPlayerSP entityplayersp = Minecraft.getInstance().player;
-      double d0 = this.boundingBox.minX + 8.0D - entityplayersp.posX;
-      double d1 = this.boundingBox.minY + 8.0D - entityplayersp.posY;
-      double d2 = this.boundingBox.minZ + 8.0D - entityplayersp.posZ;
+      ActiveRenderInfo activerenderinfo = Minecraft.getInstance().gameRenderer.func_215316_n();
+      double d0 = this.boundingBox.minX + 8.0D - activerenderinfo.func_216785_c().x;
+      double d1 = this.boundingBox.minY + 8.0D - activerenderinfo.func_216785_c().y;
+      double d2 = this.boundingBox.minZ + 8.0D - activerenderinfo.func_216785_c().z;
       return d0 * d0 + d1 * d1 + d2 * d2;
    }
 
-   public void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos) {
+   private void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos) {
       bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
       bufferBuilderIn.setTranslation((double)(-pos.getX()), (double)(-pos.getY()), (double)(-pos.getZ()));
    }
 
-   public void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn) {
+   private void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn) {
       if (layer == BlockRenderLayer.TRANSLUCENT && !compiledChunkIn.isLayerEmpty(layer)) {
          bufferBuilderIn.sortVertexData(x, y, z);
          compiledChunkIn.setState(bufferBuilderIn.getVertexState());
       }
 
       bufferBuilderIn.finishDrawing();
-   }
-
-   private void initModelviewMatrix() {
-      GlStateManager.pushMatrix();
-      GlStateManager.loadIdentity();
-      float f = 1.000001F;
-      GlStateManager.translatef(-8.0F, -8.0F, -8.0F);
-      GlStateManager.scalef(1.000001F, 1.000001F, 1.000001F);
-      GlStateManager.translatef(8.0F, 8.0F, 8.0F);
-      GlStateManager.getFloatv(2982, this.modelviewMatrix);
-      GlStateManager.popMatrix();
-   }
-
-   public void multModelviewMatrix() {
-      GlStateManager.multMatrixf(this.modelviewMatrix);
    }
 
    public CompiledChunk getCompiledChunk() {
@@ -341,6 +330,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
    public void stopCompileTask() {
       this.finishCompileTask();
       this.compiledChunk = CompiledChunk.DUMMY;
+      this.needsUpdate = true;
    }
 
    public void deleteGlResources() {
@@ -381,7 +371,7 @@ public class RenderChunk implements net.minecraftforge.client.extensions.IForgeR
       return this.needsUpdate && this.needsImmediateUpdate;
    }
 
-   public BlockPos getBlockPosOffset16(EnumFacing facing) {
+   public BlockPos getBlockPosOffset16(Direction facing) {
       return this.mapEnumFacing[facing.ordinal()];
    }
 

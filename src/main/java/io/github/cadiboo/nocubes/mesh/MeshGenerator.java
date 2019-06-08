@@ -4,7 +4,7 @@ import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
@@ -79,7 +79,7 @@ public interface MeshGenerator {
 										startZ + z - zOffset
 								);
 
-								final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+								final BlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
 								density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
 							}
 						}

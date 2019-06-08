@@ -3,8 +3,9 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.ClientProxy;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.state.BlockFaceShape;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.fluid.Fluid;
@@ -32,7 +33,7 @@ public final class ExtendedFluidBlockRenderer {
 			@Nonnull final BlockPos fluidPos,
 			@Nonnull final IWorldReader worldIn,
 			//TODO: eventually do better fluid rendering for 0.3.0
-			@Nonnull final IBlockState smoothableState,
+			@Nonnull final BlockState smoothableState,
 			@Nonnull final IFluidState state,
 			@Nonnull final BufferBuilder buffer,
 			//TODO: eventually do better lighting for 0.3.0
@@ -361,7 +362,7 @@ public final class ExtendedFluidBlockRenderer {
 						final BlockPos offset = renderPos.offset(enumfacing);
 						TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 						if (!isLava) {
-							IBlockState blockstate = worldIn.getBlockState(offset);
+							BlockState blockstate = worldIn.getBlockState(offset);
 							if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == BlockFaceShape.SOLID) {
 								textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
 							}

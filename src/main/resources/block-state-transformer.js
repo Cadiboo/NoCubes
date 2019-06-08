@@ -1,5 +1,5 @@
 var transformerName = "NoCubes BlockState Transformer";
-var targetClass = "net.minecraft.block.state.BlockState";
+var targetClass = "net.minecraft.block.BlockState";
 
 function initializeCoreMod() {
 	return {

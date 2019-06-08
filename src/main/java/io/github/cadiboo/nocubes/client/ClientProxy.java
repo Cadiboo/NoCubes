@@ -48,12 +48,12 @@ public final class ClientProxy implements Proxy {
 	}
 
 	@Override
-	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
+	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
 
 		final WorldRenderer worldRenderer = Minecraft.getInstance().worldRenderer;
 
 		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
-			worldRenderer.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
+			worldRenderer.markBlockRangeForRenderUpdate(minX, minY, minZ, maxX, maxY, maxZ);
 		}
 	}
 

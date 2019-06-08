@@ -16,19 +16,19 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.crash.ReportedException;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -48,6 +48,12 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ModelHelper.ENUMFACING_QUADS_ORDERED;
+import static net.minecraft.util.Direction.DOWN;
+import static net.minecraft.util.Direction.EAST;
+import static net.minecraft.util.Direction.NORTH;
+import static net.minecraft.util.Direction.SOUTH;
+import static net.minecraft.util.Direction.UP;
+import static net.minecraft.util.Direction.WEST;
 
 /**
  * @author Cadiboo
@@ -58,7 +64,7 @@ public final class MeshRenderer {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	public static void renderMesh(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -103,7 +109,7 @@ public final class MeshRenderer {
 
 						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
 
-						final IBlockState textureState = ClientUtil.getTexturePosAndState(
+						final BlockState textureState = ClientUtil.getTexturePosAndState(
 								initialPosX, initialPosY, initialPosZ,
 								texturePooledMutableBlockPos,
 								stateCache, smoothableCache,
@@ -148,7 +154,7 @@ public final class MeshRenderer {
 	}
 
 	public static void renderFaces(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -163,7 +169,7 @@ public final class MeshRenderer {
 			@Nonnull final FaceList faces,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final BlockPos texturePos,
-			@Nonnull final IBlockState textureState,
+			@Nonnull final BlockState textureState,
 			final boolean renderOppositeSides
 	) {
 		final IModelData modelData = generator.getModelData(texturePos);
@@ -307,7 +313,7 @@ public final class MeshRenderer {
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();
-										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, EnumFacing.DOWN, random).get(0));
+										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, Direction.DOWN, random).get(0));
 									}
 								}
 
@@ -449,7 +455,7 @@ public final class MeshRenderer {
 
 	//TODO: fix lighting
 	private static void renderShortGrass(
-			@Nonnull final RenderChunk renderChunk, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
+			@Nonnull final ChunkRender renderChunk, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
@@ -461,14 +467,14 @@ public final class MeshRenderer {
 			final int lightmapBlockLight0, final int lightmapBlockLight1, final int lightmapBlockLight2, final int lightmapBlockLight3
 	) {
 
-		final IBlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
+		final BlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
-		pooledMutableBlockPos.setPos(texturePos).move(EnumFacing.UP);
+		pooledMutableBlockPos.setPos(texturePos).move(Direction.UP);
 		// isBlockLoaded only checks x and z
 		if (pooledMutableBlockPos.getY() > renderChunkPosition.getY() + 16 || !blockAccess.isBlockLoaded(pooledMutableBlockPos)) {
 			return;
 		}
-		final IBlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
+		final BlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
 		if (blockStateUp == grassPlantState) {
 			return;
 		}
@@ -526,7 +532,7 @@ public final class MeshRenderer {
 			try {
 
 				for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
-					final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
+					final Direction facing = ENUMFACING_QUADS_ORDERED[facingIndex];
 					random.setSeed(posRand);
 					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, random);
 					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
@@ -832,28 +838,28 @@ public final class MeshRenderer {
 		}
 	}
 
-	private static EnumFacing toSide(final double x, final double y, final double z) {
+	private static Direction toSide(final double x, final double y, final double z) {
 		if (Math.abs(x) > Math.abs(y)) {
 			if (Math.abs(x) > Math.abs(z)) {
-				if (x < 0) return EnumFacing.WEST;
-				return EnumFacing.EAST;
+				if (x < 0) return WEST;
+				return EAST;
 			} else {
-				if (z < 0) return EnumFacing.NORTH;
-				return EnumFacing.SOUTH;
+				if (z < 0) return NORTH;
+				return SOUTH;
 			}
 		} else {
 			if (Math.abs(y) > Math.abs(z)) {
-				if (y < 0) return EnumFacing.DOWN;
-				return EnumFacing.UP;
+				if (y < 0) return DOWN;
+				return UP;
 			} else {
-				if (z < 0) return EnumFacing.NORTH;
-				return EnumFacing.SOUTH;
+				if (z < 0) return NORTH;
+				return SOUTH;
 			}
 		}
 	}
 
-	private static float diffuseLight(final EnumFacing side) {
-		if (side == EnumFacing.UP) {
+	private static float diffuseLight(final Direction side) {
+		if (side == UP) {
 			return 1f;
 		} else {
 			return .97f;

@@ -4,10 +4,12 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -124,7 +126,7 @@ public final class ClientUtil {
 	 * @return a state
 	 */
 	@Nonnull
-	public static IBlockState getTexturePosAndState(
+	public static BlockState getTexturePosAndState(
 			final int posX, final int posY, final int posZ,
 			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
 			@Nonnull final StateCache stateCache,
@@ -135,12 +137,12 @@ public final class ClientUtil {
 	) {
 
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
-		final IBlockState[] blockCacheArray = stateCache.getBlockStates();
+		final BlockState[] blockCacheArray = stateCache.getBlockStates();
 
 		if (Config.betterTextures) {
 			if (tryForBetterTexturesSnow) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-snow")) {
-					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
+					BlockState betterTextureState = blockCacheArray[stateCache.getIndex(
 							relativePosX + cacheAddX,
 							relativePosY + cacheAddY,
 							relativePosZ + cacheAddZ
@@ -165,7 +167,7 @@ public final class ClientUtil {
 			}
 			if (tryForBetterTexturesGrass) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-grass")) {
-					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
+					BlockState betterTextureState = blockCacheArray[stateCache.getIndex(
 							relativePosX + cacheAddX,
 							relativePosY + cacheAddY,
 							relativePosZ + cacheAddZ
@@ -207,7 +209,7 @@ public final class ClientUtil {
 			}
 
 			// Start at state of pos passed in
-			IBlockState state = blockCacheArray[stateCache.getIndex(
+			BlockState state = blockCacheArray[stateCache.getIndex(
 					relativePosX + cacheAddX,
 					relativePosY + cacheAddY,
 					relativePosZ + cacheAddZ
@@ -232,18 +234,18 @@ public final class ClientUtil {
 		}
 	}
 
-	public static boolean isStateSnow(final IBlockState checkState) {
+	public static boolean isStateSnow(final BlockState checkState) {
 		if (checkState == SNOW_LAYER_DEFAULT) return true;
 		if (checkState == GRASS_BLOCK_SNOWY) return true;
 		return checkState == PODZOL_SNOWY;
 	}
 
-	private static boolean isStateGrass(final IBlockState checkState) {
+	private static boolean isStateGrass(final BlockState checkState) {
 		return checkState == GRASS_BLOCK_DEFAULT;
 	}
 
 	@Nonnull
-	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IBlockState state) {
+	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockState state) {
 		return getCorrectRenderLayer(state.getBlock().getRenderLayer());
 	}
 
@@ -266,7 +268,7 @@ public final class ClientUtil {
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, ChunkRender renderChunk, BlockPos renderChunkPosition) {
 		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);

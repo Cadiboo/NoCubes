@@ -7,8 +7,10 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -25,7 +27,7 @@ import javax.annotation.Nonnull;
 public final class ExtendedFluidChunkRenderer {
 
 	public static void renderChunk(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -39,7 +41,7 @@ public final class ExtendedFluidChunkRenderer {
 	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
-			final IBlockState[] blockCacheArray = stateCache.getBlockStates();
+			final BlockState[] blockCacheArray = stateCache.getBlockStates();
 			final IFluidState[] fluidCacheArray = stateCache.getFluidStates();
 
 			final int fluidCacheLength = fluidCacheArray.length;

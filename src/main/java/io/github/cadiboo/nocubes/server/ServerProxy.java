@@ -14,7 +14,7 @@ public final class ServerProxy implements Proxy {
 	public static final ServerHangWatchdog ignored = null;
 
 	@Override
-	public void markBlocksForUpdate(final int minX, final int minY, final int minZ, final int maxX, final int maxY, final int maxZ, final boolean updateImmediately) {
+	public void markBlocksForUpdate(final int minX, final int minY, final int minZ, final int maxX, final int maxY, final int maxZ) {
 		// NOOP client only
 	}
 

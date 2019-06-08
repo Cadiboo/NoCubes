@@ -1,26 +1,26 @@
 package io.github.cadiboo.nocubes.client.gui.toast;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.BufferBuilderCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.toasts.GuiToast;
 import net.minecraft.client.gui.toasts.IToast;
+import net.minecraft.client.gui.toasts.ToastGui;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
-import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 import net.minecraftforge.client.ForgeHooksClient;
@@ -51,7 +51,7 @@ public abstract class BlockStateToast implements IToast {
 			)
 	).getMatrixVec();
 
-	BlockStateToast(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+	BlockStateToast(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 		final Minecraft minecraft = Minecraft.getInstance();
 		name = state.getBlock().getNameTextComponent().getFormattedText();
 
@@ -102,7 +102,7 @@ public abstract class BlockStateToast implements IToast {
 	}
 
 	private void build(
-			@Nonnull final IBlockState state,
+			@Nonnull final BlockState state,
 			@Nonnull final BlockPos pos,
 			@Nonnull final boolean[] startedBufferBuilders,
 			@Nonnull final IWorldReader blockAccess,
@@ -110,7 +110,7 @@ public abstract class BlockStateToast implements IToast {
 			@Nonnull final Random random
 	) {
 
-		if (state.getRenderType() != EnumBlockRenderType.MODEL) {
+		if (state.getRenderType() != BlockRenderType.MODEL) {
 			return;
 		}
 		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
@@ -151,11 +151,11 @@ public abstract class BlockStateToast implements IToast {
 
 	@Nonnull
 	@Override
-	public Visibility draw(@Nonnull final GuiToast toastGui, final long delta) {
+	public Visibility draw(@Nonnull final ToastGui toastGui, final long delta) {
 		final Minecraft minecraft = toastGui.getMinecraft();
 		minecraft.getTextureManager().bindTexture(TEXTURE_TOASTS);
 		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-		toastGui.drawTexturedModalRect(0, 0, 0, 0, 160, 32);
+		toastGui.blit(0, 0, 0, 0, 160, 32);
 
 		minecraft.fontRenderer.drawString(I18n.format(getUpdateType()) + ":", 30, 7, 0xFFFFFFFF);
 		minecraft.fontRenderer.drawString(name, 30, 18, 0xFFFFFFFF);
@@ -168,8 +168,8 @@ public abstract class BlockStateToast implements IToast {
 				break RENDER;
 			}
 			{
-				minecraft.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-				minecraft.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
+				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
+				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
 
 				GlStateManager.pushMatrix();
 				GlStateManager.translatef(0, 0, 100);
@@ -203,8 +203,8 @@ public abstract class BlockStateToast implements IToast {
 				GlStateManager.disableRescaleNormal();
 				GlStateManager.popMatrix();
 
-				minecraft.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-				minecraft.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
+				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
 			}
 		}
 
@@ -213,7 +213,7 @@ public abstract class BlockStateToast implements IToast {
 
 	public static class AddTerrain extends BlockStateToast {
 
-		public AddTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+		public AddTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
 		}
 
@@ -226,7 +226,7 @@ public abstract class BlockStateToast implements IToast {
 
 	public static class RemoveTerrain extends BlockStateToast {
 
-		public RemoveTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+		public RemoveTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
 		}
 
@@ -239,7 +239,7 @@ public abstract class BlockStateToast implements IToast {
 
 	public static class AddLeaves extends BlockStateToast {
 
-		public AddLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+		public AddLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
 		}
 
@@ -252,7 +252,7 @@ public abstract class BlockStateToast implements IToast {
 
 	public static class RemoveLeaves extends BlockStateToast {
 
-		public RemoveLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
+		public RemoveLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
 		}
 

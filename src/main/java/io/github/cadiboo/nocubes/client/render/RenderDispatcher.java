@@ -17,21 +17,21 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
-import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
@@ -48,7 +48,7 @@ import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 public final class RenderDispatcher {
 
 	public static void renderChunk(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
@@ -131,7 +131,7 @@ public final class RenderDispatcher {
 	}
 
 	private static void renderChunk(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -202,7 +202,7 @@ public final class RenderDispatcher {
 	}
 
 	private static void renderLeaves(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -300,7 +300,7 @@ public final class RenderDispatcher {
 	}
 
 	private static void renderTerrain(
-			@Nonnull final RenderChunk renderChunk,
+			@Nonnull final ChunkRender renderChunk,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
@@ -347,8 +347,8 @@ public final class RenderDispatcher {
 		}
 	}
 
-	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite) {
-		if (iblockstate.getRenderType() == EnumBlockRenderType.MODEL) {
+	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final BlockState iblockstate, final IEnviromentBlockReader world, final TextureAtlasSprite textureatlassprite) {
+		if (iblockstate.getRenderType() == BlockRenderType.MODEL) {
 			tessellatorIn.draw();
 			bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
 			final IsSmoothable isSmoothable;
@@ -376,7 +376,7 @@ public final class RenderDispatcher {
 				float green = 1.0F;
 				float blue = 1.0F;
 				float alpha = 1.0F;
-				final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
+				final int packed = iblockstate.func_215684_a(world, blockpos);
 				int lightmapSkyLight = (packed >> 16) & 0xFFFF;
 				int lightmapBlockLight = packed & 0xFFFF;
 				for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {

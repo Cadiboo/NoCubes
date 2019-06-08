@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.FluidBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
@@ -23,12 +24,12 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
+public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 	@Nonnull
-	private final BlockFluidRenderer fluidRenderer;
+	private final FluidBlockRenderer fluidRenderer;
 
-	public SmoothLightingBlockFluidRenderer(@Nonnull final BlockFluidRenderer fluidRenderer) {
+	public SmoothLightingBlockFluidRenderer(@Nonnull final FluidBlockRenderer fluidRenderer) {
 		super();
 		this.fluidRenderer = fluidRenderer;
 	}
@@ -80,6 +81,9 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			final double y = (double) pos.getY();
 			final double z = (double) pos.getZ();
 
+			final boolean smoothLighting = this.smoothLighting();
+			final boolean colors = this.colors();
+
 			if (shouldRenderUp && !func_209556_a(worldIn, pos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
 
 				// Commented out to fix transparent lines between bottom of sides.
@@ -114,7 +118,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					green0 = green1 = green2 = green3 = 1.0F;
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
-					if (!this.smoothLighting()) {
+					if (!smoothLighting) {
 						final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
 						light0 = combinedLightUpMax;
 						light1 = combinedLightUpMax;
@@ -127,7 +131,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						light2 = this.getCombinedLightUpMax(worldIn, pos.east().south());
 						light3 = this.getCombinedLightUpMax(worldIn, pos.east());
 					}
-					if (!this.colors()) {
+					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
@@ -192,7 +196,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					green0 = green1 = green2 = green3 = 1.0F;
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
-					if (!this.smoothLighting()) {
+					if (!smoothLighting) {
 						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos.down());
 						light0 = downCombinedLightUpMax;
 						light1 = downCombinedLightUpMax;
@@ -205,7 +209,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						light2 = this.getCombinedLightUpMax(worldIn, down.east().south());
 						light3 = this.getCombinedLightUpMax(worldIn, down.east());
 					}
-					if (!this.colors()) {
+					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
@@ -334,7 +338,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						green0 = green1 = green2 = green3 = 1.0F;
 						blue0 = blue1 = blue2 = blue3 = 1.0F;
 					} else {
-						if (!this.smoothLighting()) {
+						if (!smoothLighting) {
 							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, offset);
 							light0 = combinedLightUpMax;
 							light1 = combinedLightUpMax;
@@ -346,7 +350,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 							light2 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
 							light3 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 						}
-						if (!this.colors()) {
+						if (!colors) {
 							red0 = red1 = red2 = red3 = red;
 							green0 = green1 = green2 = green3 = green;
 							blue0 = blue1 = blue2 = blue3 = blue;
@@ -567,7 +571,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	@Nonnull
-	public BlockFluidRenderer getOldFluidRenderer() {
+	public FluidBlockRenderer getOldFluidRenderer() {
 		return fluidRenderer;
 	}
 

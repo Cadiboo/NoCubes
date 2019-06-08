@@ -1,11 +1,10 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
-import net.minecraft.world.IWorldReaderBase;
 import net.minecraft.world.Region;
 
 import javax.annotation.Nonnull;
@@ -15,7 +14,7 @@ import javax.annotation.Nonnull;
  */
 public final class OptiFineCompatibility {
 
-	public static void pushShaderThing(final IBlockState state, final BlockPos pos, final IWorldReader blockAccess, final BufferBuilder bufferBuilder) {
+	public static void pushShaderThing(final BlockState state, final BlockPos pos, final IWorldReader blockAccess, final BufferBuilder bufferBuilder) {
 	}
 
 	public static void pushShaderThing(final IFluidState state, final BlockPos pos, final IWorldReader blockAccess, final BufferBuilder bufferBuilder) {
@@ -25,13 +24,13 @@ public final class OptiFineCompatibility {
 	public static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
 	}
 
-	public static boolean isChunkCacheOF(@Nonnull final IWorldReaderBase reader) {
+	public static boolean isChunkCacheOF(@Nonnull final IWorldReader reader) {
 //		return reader instanceof ChunkCacheOF;
 		return false;
 	}
 
 	@Nonnull
-	public static Region getRegion(@Nonnull final IWorldReaderBase reader) {
+	public static Region getRegion(@Nonnull final IWorldReader reader) {
 //		return ((ChunkCacheOF) reader).chunkCache;
 		return null;
 	}

@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.util.pooled.cache;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.fluid.IFluidState;
 
 import javax.annotation.Nonnull;
@@ -21,7 +21,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
 
 	@Nonnull
-	private IBlockState[] blockStates;
+	private BlockState[] blockStates;
 	@Nonnull
 	private IFluidState[] fluidStates;
 
@@ -29,7 +29,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
 		super(sizeX, sizeY, sizeZ);
-		blockStates = new IBlockState[sizeX * sizeY * sizeZ];
+		blockStates = new BlockState[sizeX * sizeY * sizeZ];
 		fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
 		this.inUse = false;
 	}
@@ -55,7 +55,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 		final int size = sizeX * sizeY * sizeZ;
 
 		if (pooled.blockStates.length < size || pooled.blockStates.length > size * 1.25F) {
-			pooled.blockStates = new IBlockState[size];
+			pooled.blockStates = new BlockState[size];
 		}
 		if (pooled.fluidStates.length < size || pooled.fluidStates.length > size * 1.25F) {
 			pooled.fluidStates = new IFluidState[size];
@@ -65,7 +65,7 @@ public class StateCache extends XYZCache implements AutoCloseable {
 	}
 
 	@Nonnull
-	public IBlockState[] getBlockStates() {
+	public BlockState[] getBlockStates() {
 		return blockStates;
 	}
 

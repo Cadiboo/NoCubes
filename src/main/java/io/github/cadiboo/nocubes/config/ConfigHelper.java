@@ -10,8 +10,12 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirtSnowy;
 import net.minecraft.block.BlockMycelium;
 import net.minecraft.block.BlockRedstoneOre;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.MyceliumBlock;
+import net.minecraft.block.RedstoneOreBlock;
+import net.minecraft.block.SnowyDirtBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.state.BlockState;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.state.IProperty;
 import net.minecraft.state.StateContainer;
@@ -45,53 +49,53 @@ import static io.github.cadiboo.nocubes.config.Config.smoothLeavesType;
 import static io.github.cadiboo.nocubes.config.Config.terrainCollisions;
 import static io.github.cadiboo.nocubes.config.Config.terrainMeshGenerator;
 import static io.github.cadiboo.nocubes.config.Config.terrainSmoothable;
-import static net.minecraft.init.Blocks.ACACIA_LEAVES;
-import static net.minecraft.init.Blocks.ANDESITE;
-import static net.minecraft.init.Blocks.BEDROCK;
-import static net.minecraft.init.Blocks.BIRCH_LEAVES;
-import static net.minecraft.init.Blocks.BLACK_TERRACOTTA;
-import static net.minecraft.init.Blocks.BROWN_TERRACOTTA;
-import static net.minecraft.init.Blocks.CLAY;
-import static net.minecraft.init.Blocks.COAL_ORE;
-import static net.minecraft.init.Blocks.COARSE_DIRT;
-import static net.minecraft.init.Blocks.DARK_OAK_LEAVES;
-import static net.minecraft.init.Blocks.DIAMOND_ORE;
-import static net.minecraft.init.Blocks.DIORITE;
-import static net.minecraft.init.Blocks.DIRT;
-import static net.minecraft.init.Blocks.EMERALD_ORE;
-import static net.minecraft.init.Blocks.END_STONE;
-import static net.minecraft.init.Blocks.GLOWSTONE;
-import static net.minecraft.init.Blocks.GOLD_ORE;
-import static net.minecraft.init.Blocks.GRANITE;
-import static net.minecraft.init.Blocks.GRASS_BLOCK;
-import static net.minecraft.init.Blocks.GRASS_PATH;
-import static net.minecraft.init.Blocks.GRAVEL;
-import static net.minecraft.init.Blocks.GRAY_TERRACOTTA;
-import static net.minecraft.init.Blocks.INFESTED_STONE;
-import static net.minecraft.init.Blocks.IRON_ORE;
-import static net.minecraft.init.Blocks.JUNGLE_LEAVES;
-import static net.minecraft.init.Blocks.LAPIS_ORE;
-import static net.minecraft.init.Blocks.MAGMA_BLOCK;
-import static net.minecraft.init.Blocks.MYCELIUM;
-import static net.minecraft.init.Blocks.NETHERRACK;
-import static net.minecraft.init.Blocks.NETHER_QUARTZ_ORE;
-import static net.minecraft.init.Blocks.OAK_LEAVES;
-import static net.minecraft.init.Blocks.ORANGE_TERRACOTTA;
-import static net.minecraft.init.Blocks.PACKED_ICE;
-import static net.minecraft.init.Blocks.PODZOL;
-import static net.minecraft.init.Blocks.REDSTONE_ORE;
-import static net.minecraft.init.Blocks.RED_SAND;
-import static net.minecraft.init.Blocks.RED_SANDSTONE;
-import static net.minecraft.init.Blocks.RED_TERRACOTTA;
-import static net.minecraft.init.Blocks.SAND;
-import static net.minecraft.init.Blocks.SANDSTONE;
-import static net.minecraft.init.Blocks.SNOW;
-import static net.minecraft.init.Blocks.SOUL_SAND;
-import static net.minecraft.init.Blocks.SPRUCE_LEAVES;
-import static net.minecraft.init.Blocks.STONE;
-import static net.minecraft.init.Blocks.TERRACOTTA;
-import static net.minecraft.init.Blocks.WHITE_TERRACOTTA;
-import static net.minecraft.init.Blocks.YELLOW_TERRACOTTA;
+import static net.minecraft.block.Blocks.ACACIA_LEAVES;
+import static net.minecraft.block.Blocks.ANDESITE;
+import static net.minecraft.block.Blocks.BEDROCK;
+import static net.minecraft.block.Blocks.BIRCH_LEAVES;
+import static net.minecraft.block.Blocks.BLACK_TERRACOTTA;
+import static net.minecraft.block.Blocks.BROWN_TERRACOTTA;
+import static net.minecraft.block.Blocks.CLAY;
+import static net.minecraft.block.Blocks.COAL_ORE;
+import static net.minecraft.block.Blocks.COARSE_DIRT;
+import static net.minecraft.block.Blocks.DARK_OAK_LEAVES;
+import static net.minecraft.block.Blocks.DIAMOND_ORE;
+import static net.minecraft.block.Blocks.DIORITE;
+import static net.minecraft.block.Blocks.DIRT;
+import static net.minecraft.block.Blocks.EMERALD_ORE;
+import static net.minecraft.block.Blocks.END_STONE;
+import static net.minecraft.block.Blocks.GLOWSTONE;
+import static net.minecraft.block.Blocks.GOLD_ORE;
+import static net.minecraft.block.Blocks.GRANITE;
+import static net.minecraft.block.Blocks.GRASS_BLOCK;
+import static net.minecraft.block.Blocks.GRASS_PATH;
+import static net.minecraft.block.Blocks.GRAVEL;
+import static net.minecraft.block.Blocks.GRAY_TERRACOTTA;
+import static net.minecraft.block.Blocks.INFESTED_STONE;
+import static net.minecraft.block.Blocks.IRON_ORE;
+import static net.minecraft.block.Blocks.JUNGLE_LEAVES;
+import static net.minecraft.block.Blocks.LAPIS_ORE;
+import static net.minecraft.block.Blocks.MAGMA_BLOCK;
+import static net.minecraft.block.Blocks.MYCELIUM;
+import static net.minecraft.block.Blocks.NETHERRACK;
+import static net.minecraft.block.Blocks.NETHER_QUARTZ_ORE;
+import static net.minecraft.block.Blocks.OAK_LEAVES;
+import static net.minecraft.block.Blocks.ORANGE_TERRACOTTA;
+import static net.minecraft.block.Blocks.PACKED_ICE;
+import static net.minecraft.block.Blocks.PODZOL;
+import static net.minecraft.block.Blocks.REDSTONE_ORE;
+import static net.minecraft.block.Blocks.RED_SAND;
+import static net.minecraft.block.Blocks.RED_SANDSTONE;
+import static net.minecraft.block.Blocks.RED_TERRACOTTA;
+import static net.minecraft.block.Blocks.SAND;
+import static net.minecraft.block.Blocks.SANDSTONE;
+import static net.minecraft.block.Blocks.SNOW;
+import static net.minecraft.block.Blocks.SOUL_SAND;
+import static net.minecraft.block.Blocks.SPRUCE_LEAVES;
+import static net.minecraft.block.Blocks.STONE;
+import static net.minecraft.block.Blocks.TERRACOTTA;
+import static net.minecraft.block.Blocks.WHITE_TERRACOTTA;
+import static net.minecraft.block.Blocks.YELLOW_TERRACOTTA;
 
 /**
  * @author Cadiboo
@@ -138,7 +142,7 @@ public final class ConfigHelper {
 	}
 
 	public static void discoverDefaultTerrainSmoothable() {
-		final ArrayList<IBlockState> discoveredStates = new ArrayList<>();
+		final ArrayList<BlockState> discoveredStates = new ArrayList<>();
 		ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.map(Block::getStateContainer)
 				.map(StateContainer::getValidStates)
@@ -152,25 +156,25 @@ public final class ConfigHelper {
 								}
 							}
 						}));
-		addTerrainSmoothable(discoveredStates.toArray(new IBlockState[0]));
+		addTerrainSmoothable(discoveredStates.toArray(new BlockState[0]));
 	}
 
 	public static void discoverDefaultLeavesSmoothable() {
-		final ArrayList<IBlockState> discoveredStates = new ArrayList<>();
+		final ArrayList<BlockState> discoveredStates = new ArrayList<>();
 		ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.forEach(block -> {
-					final IBlockState defaultState = block.getDefaultState();
+					final BlockState defaultState = block.getDefaultState();
 					if (defaultState.getMaterial() == Material.LEAVES) {
 						LOGGER.debug("Discovered leaves smoothable \"" + block + "\"");
 						discoveredStates.add(defaultState);
 					}
 				});
-		addLeavesSmoothable(discoveredStates.toArray(new IBlockState[0]));
+		addLeavesSmoothable(discoveredStates.toArray(new BlockState[0]));
 	}
 
-	public static void addTerrainSmoothable(final IBlockState... states) {
+	public static void addTerrainSmoothable(final BlockState... states) {
 		if (states.length > 0) {
-			for (final IBlockState state : states) {
+			for (final BlockState state : states) {
 				LOGGER.debug("Adding terrain smoothable: " + state);
 				state.nocubes_setTerrainSmoothable(true);
 				terrainSmoothable.add(getStringFromState(state));
@@ -179,9 +183,9 @@ public final class ConfigHelper {
 		}
 	}
 
-	public static void removeTerrainSmoothable(final IBlockState... states) {
+	public static void removeTerrainSmoothable(final BlockState... states) {
 		if (states.length > 0) {
-			for (final IBlockState state : states) {
+			for (final BlockState state : states) {
 				LOGGER.debug("Removing terrain smoothable: " + state);
 				state.nocubes_setTerrainSmoothable(false);
 				terrainSmoothable.remove(getStringFromState(state));
@@ -190,13 +194,13 @@ public final class ConfigHelper {
 		}
 	}
 
-	public static void addLeavesSmoothable(final IBlockState... states) {
+	public static void addLeavesSmoothable(final BlockState... states) {
 		if (states.length > 0) {
 			synchronized (leavesSmoothableBlocks) {
-				for (final IBlockState originalState : states) {
+				for (final BlockState originalState : states) {
 					final Block block = originalState.getBlock();
 					LOGGER.debug("Adding leaves smoothable block: " + block);
-					for (final IBlockState state : block.getStateContainer().getValidStates()) {
+					for (final BlockState state : block.getStateContainer().getValidStates()) {
 						LOGGER.debug("Adding leaves smoothable state: " + state);
 						state.nocubes_setLeavesSmoothable(true);
 					}
@@ -208,13 +212,13 @@ public final class ConfigHelper {
 		}
 	}
 
-	public static void removeLeavesSmoothable(final IBlockState... states) {
+	public static void removeLeavesSmoothable(final BlockState... states) {
 		if (states.length > 0) {
 			synchronized (leavesSmoothableBlocks) {
-				for (final IBlockState originalState : states) {
+				for (final BlockState originalState : states) {
 					final Block block = originalState.getBlock();
 					LOGGER.debug("Removing leaves smoothable block: " + block);
-					for (final IBlockState state : block.getStateContainer().getValidStates()) {
+					for (final BlockState state : block.getStateContainer().getValidStates()) {
 						LOGGER.debug("Removing leaves smoothable state: " + state);
 						state.nocubes_setLeavesSmoothable(false);
 					}
@@ -230,7 +234,7 @@ public final class ConfigHelper {
 		LOGGER.debug("Initialising terrain smoothable");
 		for (final String stateString : terrainSmoothable) {
 			LOGGER.debug("Preparing to add \"" + stateString + "\" to terrain smoothable");
-			final IBlockState state = getStateFromString(stateString);
+			final BlockState state = getStateFromString(stateString);
 			if (state != null) {
 				LOGGER.debug("Added \"" + state + "\" to terrain smoothable");
 				state.nocubes_setTerrainSmoothable(true);
@@ -244,11 +248,11 @@ public final class ConfigHelper {
 		LOGGER.debug("Initialising leaves smoothable");
 		for (final String blockString : leavesSmoothable) {
 			LOGGER.debug("Preparing to add block \"" + blockString + "\" to leaves smoothable");
-			final IBlockState defaultState = getStateFromString(blockString);
+			final BlockState defaultState = getStateFromString(blockString);
 			if (defaultState != null) {
 				final Block block = defaultState.getBlock();
 				LOGGER.debug("Added \"" + defaultState + "\" to leaves smoothable");
-				for (final IBlockState state : block.getStateContainer().getValidStates()) {
+				for (final BlockState state : block.getStateContainer().getValidStates()) {
 					state.nocubes_setLeavesSmoothable(true);
 				}
 				leavesSmoothableBlocks.add(block);
@@ -259,7 +263,7 @@ public final class ConfigHelper {
 	}
 
 	@Nullable
-	private static IBlockState getStateFromString(@Nonnull final String stateString) {
+	private static BlockState getStateFromString(@Nonnull final String stateString) {
 		Preconditions.checkNotNull(stateString, "String to parse must not be null");
 		try {
 			return new BlockStateArgument().parse(new StringReader(stateString)).getState();
@@ -270,7 +274,7 @@ public final class ConfigHelper {
 	}
 
 	@Nonnull
-	private static String getStringFromState(@Nonnull final IBlockState state) {
+	private static String getStringFromState(@Nonnull final BlockState state) {
 		Preconditions.checkNotNull(state, "State to serialise must not be null");
 		String stateString = Objects.requireNonNull(state.getBlock().getRegistryName(), "Block registry name cannot be null!").toString();
 		final ArrayList<String> properties = new ArrayList<>();
@@ -291,8 +295,8 @@ public final class ConfigHelper {
 	public static List<String> getDefaultTerrainSmoothable() {
 		final List<String> vanillaStates = Lists.newArrayList(
 
-				GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, false),
-				GRASS_BLOCK.getDefaultState().with(BlockDirtSnowy.SNOWY, true),
+				GRASS_BLOCK.getDefaultState().with(SnowyDirtBlock.SNOWY, false),
+				GRASS_BLOCK.getDefaultState().with(SnowyDirtBlock.SNOWY, true),
 
 				STONE.getDefaultState(),
 				GRANITE.getDefaultState(),
@@ -302,8 +306,8 @@ public final class ConfigHelper {
 				DIRT.getDefaultState(),
 				COARSE_DIRT.getDefaultState(),
 
-				PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, false),
-				PODZOL.getDefaultState().with(BlockDirtSnowy.SNOWY, true),
+				PODZOL.getDefaultState().with(SnowyDirtBlock.SNOWY, false),
+				PODZOL.getDefaultState().with(SnowyDirtBlock.SNOWY, true),
 
 				SAND.getDefaultState(),
 				RED_SAND.getDefaultState(),
@@ -317,8 +321,8 @@ public final class ConfigHelper {
 				COAL_ORE.getDefaultState(),
 				IRON_ORE.getDefaultState(),
 				GOLD_ORE.getDefaultState(),
-				REDSTONE_ORE.getDefaultState().with(BlockRedstoneOre.LIT, false),
-				REDSTONE_ORE.getDefaultState().with(BlockRedstoneOre.LIT, true),
+				REDSTONE_ORE.getDefaultState().with(RedstoneOreBlock.LIT, false),
+				REDSTONE_ORE.getDefaultState().with(RedstoneOreBlock.LIT, true),
 				DIAMOND_ORE.getDefaultState(),
 				LAPIS_ORE.getDefaultState(),
 				EMERALD_ORE.getDefaultState(),
@@ -352,8 +356,8 @@ public final class ConfigHelper {
 
 				END_STONE.getDefaultState(),
 
-				MYCELIUM.getDefaultState().with(BlockMycelium.SNOWY, true),
-				MYCELIUM.getDefaultState().with(BlockMycelium.SNOWY, false)
+				MYCELIUM.getDefaultState().with(MyceliumBlock.SNOWY, true),
+				MYCELIUM.getDefaultState().with(MyceliumBlock.SNOWY, false)
 
 		).stream().map(ConfigHelper::getStringFromState).collect(Collectors.toList());
 

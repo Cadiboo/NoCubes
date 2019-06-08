@@ -2,16 +2,16 @@ package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import net.minecraft.block.BlockSnowLayer;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.SnowBlock;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
 
-import static net.minecraft.init.Blocks.BEDROCK;
-import static net.minecraft.init.Blocks.SNOW;
+import static net.minecraft.block.Blocks.BEDROCK;
+import static net.minecraft.block.Blocks.SNOW;
 
 /**
  * Util that is used on BOTH physical sides
@@ -26,10 +26,10 @@ public final class ModUtil {
 	/**
 	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
-	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state) {
+	public static float getIndividualBlockDensity(final boolean shouldSmooth, final BlockState state) {
 		if (shouldSmooth) {
 			if (state.getBlock() == SNOW) {
-				final int value = state.get(BlockSnowLayer.LAYERS);
+				final int value = state.get(SnowBlock.LAYERS);
 				if (value == 1) { // zero-height snow layer
 					return 1;
 				} else { // snow height between 0-8 to between -0.25F and -1
@@ -38,8 +38,8 @@ public final class ModUtil {
 			} else {
 				return state.getBlock() == BEDROCK ? -1.0005F : -1;
 			}
-		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
-			return 0F;
+//		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
+//			return 0F;
 		} else {
 			return 1;
 		}

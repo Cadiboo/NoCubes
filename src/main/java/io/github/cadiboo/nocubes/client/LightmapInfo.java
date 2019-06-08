@@ -55,12 +55,12 @@ public class LightmapInfo implements AutoCloseable {
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getInstance().gameSettings.ambientOcclusion) {
-				case 0:
+				case OFF:
 					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 				default:
-				case 1:
+				case MIN:
 					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
-				case 2:
+				case MAX:
 					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
 			}
 		}

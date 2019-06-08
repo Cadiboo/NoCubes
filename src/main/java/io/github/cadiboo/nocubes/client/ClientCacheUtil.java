@@ -28,8 +28,8 @@ public final class ClientCacheUtil {
 
 	public static LazyBlockColorCache generateLazyBlockColorCache(
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
-			@Nonnull final IWorldReaderBase cache,
-			@Nonnull final BiomeColors.ColorResolver resolver
+			@Nonnull final IWorldReader cache,
+			@Nonnull final BiomeColors.IColorResolver resolver
 	) {
 		return LazyBlockColorCache.retain(
 				//From -2 to +2
