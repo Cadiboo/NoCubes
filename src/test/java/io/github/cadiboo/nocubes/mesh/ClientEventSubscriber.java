@@ -44,7 +44,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 		final Minecraft minecraft = Minecraft.getInstance();
-		final ClientWorld world = minecraft.world;
+		final ClientWorld world = minecraft.field_71441_e;
 		if (world == null) {
 			return;
 		}

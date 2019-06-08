@@ -52,7 +52,7 @@ public final class ClientProxy implements Proxy {
 
 		final WorldRenderer worldRenderer = Minecraft.getInstance().worldRenderer;
 
-		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
+		if (worldRenderer != null && worldRenderer.field_72769_h != null && worldRenderer.viewFrustum != null) {
 			worldRenderer.markBlockRangeForRenderUpdate(minX, minY, minZ, maxX, maxY, maxZ);
 		}
 	}
@@ -60,8 +60,8 @@ public final class ClientProxy implements Proxy {
 	public void replaceFluidRendererCauseImBored() {
 		LOGGER.debug("Replacing fluid renderer");
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(blockRendererDispatcher.fluidRenderer);
-		blockRendererDispatcher.fluidRenderer = smoothLightingBlockFluidRenderer;
+		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(blockRendererDispatcher.field_175025_e);
+		blockRendererDispatcher.field_175025_e = smoothLightingBlockFluidRenderer;
 		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
 		LOGGER.debug("Replaced fluid renderer");
 	}

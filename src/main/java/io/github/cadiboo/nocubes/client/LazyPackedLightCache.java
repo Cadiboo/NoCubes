@@ -86,7 +86,7 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 	public int get(final int x, final int y, final int z) {
 		int packedLight = cache[getIndex(x, y, z)];
 		if (packedLight == -1) {
-			packedLight = stateCache.getBlockStates()[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(
+			packedLight = stateCache.getBlockStates()[stateCache.getIndex(x, y, z)].func_215684_a(
 					reader,
 					MUTABLE_BLOCK_POS.get().setPos(
 							// -2 because offset

@@ -37,7 +37,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 	}
 
 	@Override
-	public boolean render(final IEnviromentBlockReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
+	public boolean func_217638_a(final IEnviromentBlockReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
 
 //		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
 
@@ -54,7 +54,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				green = 1.0F;
 				blue = 1.0F;
 			} else {
-				final int waterColor = BiomeColors.getWaterColor(worldIn, pos);
+				final int waterColor = BiomeColors.func_217612_c(worldIn, pos);
 				red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
 				green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
 				blue = (float) (waterColor & 0xFF) / 255.0F;
@@ -74,10 +74,10 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 			boolean wasAnythingRendered = false;
 
 			final Fluid fluid = state.getFluid();
-			float fluidHeight = this.getFluidHeight(worldIn, pos, fluid);
-			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), fluid);
-			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), fluid);
-			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), fluid);
+			float fluidHeight = this.func_217640_a(worldIn, pos, fluid);
+			float fluidHeightSouth = this.func_217640_a(worldIn, pos.south(), fluid);
+			float fluidHeightEastSouth = this.func_217640_a(worldIn, pos.east().south(), fluid);
+			float fluidHeightEast = this.func_217640_a(worldIn, pos.east(), fluid);
 
 			final double x = (double) pos.getX();
 			final double y = (double) pos.getY();
@@ -121,24 +121,24 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
 					if (!smoothLighting) {
-						final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos);
+						final int combinedLightUpMax = this.func_217639_a(worldIn, pos);
 						light0 = combinedLightUpMax;
 						light1 = combinedLightUpMax;
 						light2 = combinedLightUpMax;
 						light3 = combinedLightUpMax;
 					} else {
-						light0 = this.getCombinedLightUpMax(worldIn, pos);
+						light0 = this.func_217639_a(worldIn, pos);
 						//TODO: use less new objects
-						light1 = this.getCombinedLightUpMax(worldIn, pos.south());
-						light2 = this.getCombinedLightUpMax(worldIn, pos.east().south());
-						light3 = this.getCombinedLightUpMax(worldIn, pos.east());
+						light1 = this.func_217639_a(worldIn, pos.south());
+						light2 = this.func_217639_a(worldIn, pos.east().south());
+						light3 = this.func_217639_a(worldIn, pos.east());
 					}
 					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-//						final int waterColor0 = BiomeColors.getWaterColor(worldIn, pos);
+//						final int waterColor0 = BiomeColors.func_217612_c(worldIn, pos);
 //						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 //						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 //						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
@@ -146,15 +146,15 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						green0 = green;
 						blue0 = blue;
 						//TODO: use less new objects
-						final int waterColor1 = BiomeColors.getWaterColor(worldIn, pos.south());
+						final int waterColor1 = BiomeColors.func_217612_c(worldIn, pos.south());
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColors.getWaterColor(worldIn, pos.east().south());
+						final int waterColor2 = BiomeColors.func_217612_c(worldIn, pos.east().south());
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColors.getWaterColor(worldIn, pos.east());
+						final int waterColor3 = BiomeColors.func_217612_c(worldIn, pos.east());
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -169,7 +169,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
 						x, y, z,
 						light0, light1, light2, light3,
-						state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						state.shouldRenderSides(worldIn, pos.up()), state.func_215673_c(worldIn, pos), MathHelper.getPositionRandom(pos)
 				);
 			}
 
@@ -199,17 +199,17 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
 					if (!smoothLighting) {
-						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos.down());
+						final int downCombinedLightUpMax = this.func_217639_a(worldIn, pos.down());
 						light0 = downCombinedLightUpMax;
 						light1 = downCombinedLightUpMax;
 						light2 = downCombinedLightUpMax;
 						light3 = downCombinedLightUpMax;
 					} else {
 						final BlockPos down = pos.down();
-						light0 = this.getCombinedLightUpMax(worldIn, down);
-						light1 = this.getCombinedLightUpMax(worldIn, down.south());
-						light2 = this.getCombinedLightUpMax(worldIn, down.east().south());
-						light3 = this.getCombinedLightUpMax(worldIn, down.east());
+						light0 = this.func_217639_a(worldIn, down);
+						light1 = this.func_217639_a(worldIn, down.south());
+						light2 = this.func_217639_a(worldIn, down.east().south());
+						light3 = this.func_217639_a(worldIn, down.east());
 					}
 					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
@@ -218,19 +218,19 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					} else {
 						final BlockPos down = pos.down();
 						final BlockPos downSouth = down.south();
-						final int waterColor0 = BiomeColors.getWaterColor(worldIn, downSouth);
+						final int waterColor0 = BiomeColors.func_217612_c(worldIn, downSouth);
 						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-						final int waterColor1 = BiomeColors.getWaterColor(worldIn, down);
+						final int waterColor1 = BiomeColors.func_217612_c(worldIn, down);
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east());
+						final int waterColor2 = BiomeColors.func_217612_c(worldIn, down.east());
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColors.getWaterColor(worldIn, downSouth.east());
+						final int waterColor3 = BiomeColors.func_217612_c(worldIn, downSouth.east());
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -341,35 +341,35 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						blue0 = blue1 = blue2 = blue3 = 1.0F;
 					} else {
 						if (!smoothLighting) {
-							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, offset);
+							final int combinedLightUpMax = this.func_217639_a(worldIn, offset);
 							light0 = combinedLightUpMax;
 							light1 = combinedLightUpMax;
 							light2 = combinedLightUpMax;
 							light3 = combinedLightUpMax;
 						} else {
-							light0 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
-							light1 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
-							light2 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
-							light3 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
+							light0 = this.func_217639_a(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+							light1 = this.func_217639_a(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+							light2 = this.func_217639_a(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+							light3 = this.func_217639_a(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 						}
 						if (!colors) {
 							red0 = red1 = red2 = red3 = red;
 							green0 = green1 = green2 = green3 = green;
 							blue0 = blue1 = blue2 = blue3 = blue;
 						} else {
-							final int waterColor0 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+							final int waterColor0 = BiomeColors.func_217612_c(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
 							red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 							green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 							blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-							final int waterColor1 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+							final int waterColor1 = BiomeColors.func_217612_c(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
 							red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 							green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 							blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-							final int waterColor2 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+							final int waterColor2 = BiomeColors.func_217612_c(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
 							red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 							green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 							blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-							final int waterColor3 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
+							final int waterColor3 = BiomeColors.func_217612_c(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 							red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 							green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;

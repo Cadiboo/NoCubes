@@ -218,7 +218,7 @@ public final class RenderDispatcher {
 			return;
 		}
 		try (
-				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.FOLIAGE_COLOR);
+				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.field_180289_b);
 				PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain()
 		) {
 			switch (Config.smoothLeavesType) {
@@ -314,7 +314,7 @@ public final class RenderDispatcher {
 	) {
 		try (
 				SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, IsSmoothable.TERRAIN_SMOOTHABLE);
-				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.GRASS_COLOR);
+				LazyBlockColorCache blockColorsCache = ClientCacheUtil.generateLazyBlockColorCache(renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, blockAccess, BiomeColors.field_180291_a);
 				PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain()
 		) {
 			MeshRenderer.renderMesh(
@@ -375,7 +375,7 @@ public final class RenderDispatcher {
 				float green = 1.0F;
 				float blue = 1.0F;
 				float alpha = 1.0F;
-				final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
+				final int packed = iblockstate.func_215684_a(world, blockpos);
 				int lightmapSkyLight = (packed >> 16) & 0xFFFF;
 				int lightmapBlockLight = packed & 0xFFFF;
 				for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {

@@ -55,9 +55,9 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
    });
    public boolean needsImmediateUpdate;
 
-   public ChunkRender(World worldIn, WorldRenderer worldRendererIn) {
-      this.world = worldIn;
-      this.renderGlobal = worldRendererIn;
+   public ChunkRender(World p_i49841_1_, WorldRenderer p_i49841_2_) {
+      this.world = p_i49841_1_;
+      this.renderGlobal = p_i49841_2_;
       if (GLX.useVbo()) {
          for(int i = 0; i < BlockRenderLayer.values().length; ++i) {
             this.vertexBuffers[i] = new VertexBuffer(DefaultVertexFormats.BLOCK);
@@ -66,8 +66,8 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
 
    }
 
-   private static boolean func_217673_a(BlockPos pos, World worldIn) {
-      return !worldIn.getChunk(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
+   private static boolean func_217673_a(BlockPos p_217673_0_, World p_217673_1_) {
+      return !p_217673_1_.getChunk(p_217673_0_.getX() >> 4, p_217673_0_.getZ() >> 4).isEmpty();
    }
 
    public boolean func_217674_b() {
@@ -150,7 +150,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             // NoCubes Start
             io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
             // NoCubes End
-            for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
+            for(BlockPos blockpos2 : BlockPos.func_218278_a(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
                Block block = blockstate.getBlock();
                if (blockstate.isOpaqueCube(lvt_12_1_, blockpos2)) {
