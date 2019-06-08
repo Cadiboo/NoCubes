@@ -12,15 +12,12 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.fluid.IFluidState;
-import net.minecraft.inventory.container.PlayerContainer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
 
 /**

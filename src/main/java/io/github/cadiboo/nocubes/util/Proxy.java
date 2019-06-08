@@ -19,9 +19,9 @@ public interface Proxy {
 	void replaceFluidRendererCauseImBored();
 
 	default void preloadClasses() {
-		preloadClass("net.minecraft.block.state.IBlockState", "IBlockState");
-		preloadClass("net.minecraft.block.state.BlockState", "BlockState");
-		preloadClass("net.minecraft.world.IWorldReaderBase", "IWorldReaderBase");
+		preloadClass("net.minecraft.block.BlockState", "BlockState");
+		preloadClass("net.minecraft.world.IWorldReader", "IWorldReader");
+		preloadClass("net.minecraft.world.World", "World");
 	}
 
 	default void preloadClass(@Nonnull final String qualifiedName, @Nonnull final String simpleName) {

@@ -69,8 +69,8 @@ public final class ClientProxy implements Proxy {
 	@Override
 	public void preloadClasses() {
 		Proxy.super.preloadClasses();
-		preloadClass("net.minecraft.client.renderer.chunk.RenderChunk", "RenderChunk");
-		preloadClass("net.minecraft.client.renderer.BlockFluidRenderer", "BlockFluidRenderer");
+		preloadClass("net.minecraft.client.renderer.chunk.ChunkRender", "ChunkRender");
+		preloadClass("net.minecraft.client.renderer.FluidBlockRenderer", "FluidBlockRenderer");
 	}
 
 }
