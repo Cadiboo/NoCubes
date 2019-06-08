@@ -5,13 +5,23 @@ import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.chunk.ChunkRender;
+import net.minecraft.client.renderer.chunk.ChunkRenderCache;
+import net.minecraft.client.renderer.chunk.ChunkRenderTask;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.inventory.container.PlayerContainer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author Cadiboo
@@ -19,20 +29,20 @@ import java.util.List;
 @SuppressWarnings("WeakerAccess") // Hooks are called with ASM
 public final class Hooks {
 
-//	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final RenderChunkCache lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
-//		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, random, blockrendererdispatcher);
-//	}
+	public static void preIteration(final ChunkRender renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final VisGraph lvt_10_1_, final HashSet lvt_11_1_, final ChunkRenderCache lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
+		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+	}
 
-	//return if normal rendering should happen
-	public static boolean renderBlockDamage(final BlockRendererDispatcher blockrendererdispatcher, final BlockState iblockstate, final BlockPos blockpos, final IEnviromentBlockReader world, final TextureAtlasSprite textureatlassprite) {
+	//return if normal rendering should be cancelled (i.e. normal rendering should NOT happen)
+	public static boolean renderBlockDamage(final BlockRendererDispatcher blockrendererdispatcher, final BlockState iblockstate, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite, final IEnviromentBlockReader world) {
 		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable()) {
 			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable()) {
-				return true;
+				return false;
 			}
 		}
 		final Tessellator tessellator = Tessellator.getInstance();
 		RenderDispatcher.renderSmoothBlockDamage(tessellator, tessellator.getBuffer(), blockpos, iblockstate, world, textureatlassprite);
-		return false;
+		return true;
 	}
 //
 //	//return all the voxel shapes that entityShape intersects inside area
@@ -103,77 +113,74 @@ public final class Hooks {
 //	private static boolean shouldApplyCollisions(final Entity movingEntity) {
 //		return CollisionHandler.shouldApplyMeshCollisions(movingEntity) || CollisionHandler.shouldApplyReposeCollisions(movingEntity);
 //	}
-//
-//	public static IFluidState getFluidState(final World world, final BlockPos pos) {
-//
-//		final int posX = pos.getX();
-//		final int posY = pos.getY();
-//		final int posZ = pos.getZ();
-//
-//		int currentChunkPosX = posX >> 4;
-//		int currentChunkPosZ = posZ >> 4;
-//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//
-//		final int extendRange = Config.extendFluidsRange.getRange();
-//
-//		if (extendRange == 0) {
-//			return currentChunk.getFluidState(posX, posY, posZ);
-//		}
-//
-//		final IBlockState state = currentChunk.getBlockState(posX, posY, posZ);
-//
-//		// terrain is serverside, leaves is clientside - lets see how this goes...
-//		if (!state.nocubes_isTerrainSmoothable()) {
-//			return state.getFluidState();
-//		}
-//
-//		final IFluidState fluidState = state.getFluidState();
-//		if (!fluidState.isEmpty()) {
-//			return fluidState;
-//		}
-//
-//		// For offset = -1 or -2 to offset = 1 or 2;
-//		final int maxXOffset = extendRange;
-//		final int maxZOffset = extendRange;
-//
-//		// Check up
-//		{
-//			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
-//			if (state1.isSource()) {
-//				return state1;
-//			}
-//		}
-//
-//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
-//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
-//
-//				// No point in checking myself
-//				if (xOffset == 0 && zOffset == 0) {
-//					continue;
-//				}
-//
-//				final int x = posX + xOffset;
-//				final int z = posZ + zOffset;
-//
-//				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
-//					currentChunkPosX = x >> 4;
-//					currentChunkPosZ = z >> 4;
-//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//				}
-//
-//				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
-//				if (state1.isSource()) {
-//					return state1;
-//				}
-//
-//			}
-//		}
-//
-//		return fluidState;
-//
-//	}
 
-	public static void setAll(final PlayerContainer playerContainer, final List<ItemStack> p_190896_1_) {
+	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		int currentChunkPosX = posX >> 4;
+		int currentChunkPosZ = posZ >> 4;
+		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+
+		final int extendRange = Config.extendFluidsRange.getRange();
+
+		if (extendRange == 0) {
+			return currentChunk.getFluidState(posX, posY, posZ);
+		}
+
+		final BlockState state = currentChunk.getBlockState(pos);
+
+		// terrain is serverside
+		if (!state.nocubes_isTerrainSmoothable()) {
+			return state.getFluidState();
+		}
+
+		final IFluidState fluidState = state.getFluidState();
+		if (!fluidState.isEmpty()) {
+			return fluidState;
+		}
+
+		// For offset = -1 or -2 to offset = 1 or 2;
+		final int maxXOffset = extendRange;
+		final int maxZOffset = extendRange;
+
+		// Check up
+		{
+			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+			if (state1.isSource()) {
+				return state1;
+			}
+		}
+
+		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+
+				// No point in checking myself
+				if (xOffset == 0 && zOffset == 0) {
+					continue;
+				}
+
+				final int x = posX + xOffset;
+				final int z = posZ + zOffset;
+
+				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
+					currentChunkPosX = x >> 4;
+					currentChunkPosZ = z >> 4;
+					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+				}
+
+				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
+				if (state1.isSource()) {
+					return state1;
+				}
+
+			}
+		}
+
+		return fluidState;
+
 	}
 
 }

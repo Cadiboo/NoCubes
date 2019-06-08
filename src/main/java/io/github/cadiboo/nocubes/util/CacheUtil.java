@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
@@ -26,7 +26,7 @@ public final class CacheUtil {
 	) {
 		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
-			final IBlockState[] blockStates = stateCache.getBlockStates();
+			final BlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
 			int index = 0;
@@ -63,7 +63,7 @@ public final class CacheUtil {
 			final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
 			final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
-			final IBlockState[] stateCacheArray = stateCache.getBlockStates();
+			final BlockState[] stateCacheArray = stateCache.getBlockStates();
 
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
@@ -117,7 +117,7 @@ public final class CacheUtil {
 		final int cacheSizeX = smoothableCache.sizeX;
 		final int cacheSizeY = smoothableCache.sizeY;
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
-		final IBlockState[] stateCacheArray = stateCache.getBlockStates();
+		final BlockState[] stateCacheArray = stateCache.getBlockStates();
 
 		float density = 0;
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {

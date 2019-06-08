@@ -7,18 +7,13 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockDirtSnowy;
-import net.minecraft.block.BlockMycelium;
-import net.minecraft.block.BlockRedstoneOre;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MyceliumBlock;
 import net.minecraft.block.RedstoneOreBlock;
 import net.minecraft.block.SnowyDirtBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.BlockState;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.state.IProperty;
-import net.minecraft.state.StateContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraftforge.fml.config.ModConfig;
@@ -142,21 +137,21 @@ public final class ConfigHelper {
 	}
 
 	public static void discoverDefaultTerrainSmoothable() {
-		final ArrayList<BlockState> discoveredStates = new ArrayList<>();
-		ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.map(Block::getStateContainer)
-				.map(StateContainer::getValidStates)
-				.forEach(validStates -> validStates.parallelStream()
-						.forEach(state -> {
-							if (state.isNormalCube() && state.isBlockNormalCube() && state.isSolid() && state.causesSuffocation()) {
-								final Material material = state.getMaterial();
-								if (material == Material.GROUND || material == Material.ROCK) {
-									LOGGER.debug("Discovered terrain smoothable \"" + state + "\"");
-									discoveredStates.add(state);
-								}
-							}
-						}));
-		addTerrainSmoothable(discoveredStates.toArray(new BlockState[0]));
+//		final ArrayList<BlockState> discoveredStates = new ArrayList<>();
+//		ForgeRegistries.BLOCKS.getValues().parallelStream()
+//				.map(Block::getStateContainer)
+//				.map(StateContainer::getValidStates)
+//				.forEach(validStates -> validStates.parallelStream()
+//						.forEach(state -> {
+//							if (state.isNormalCube() && state.isBlockNormalCube() && state.isSolid() && state.causesSuffocation()) {
+//								final Material material = state.getMaterial();
+//								if (material == Material.GROUND || material == Material.ROCK) {
+//									LOGGER.debug("Discovered terrain smoothable \"" + state + "\"");
+//									discoveredStates.add(state);
+//								}
+//							}
+//						}));
+//		addTerrainSmoothable(discoveredStates.toArray(new BlockState[0]));
 	}
 
 	public static void discoverDefaultLeavesSmoothable() {

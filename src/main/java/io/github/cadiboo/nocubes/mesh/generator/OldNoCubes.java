@@ -8,11 +8,8 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.Direction;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 
@@ -217,7 +214,7 @@ public class OldNoCubes implements MeshGenerator {
 	 */
 	public static boolean isBlockAirOrPlant(@Nonnull final BlockState state) {
 		Material material = state.getMaterial();
-		return (material == Material.AIR) || (material == Material.PLANTS) || (material == Material.VINE);
+		return (material == Material.AIR) || (material == Material.PLANTS) || (material == Material.TALL_PLANTS);
 	}
 
 	/**

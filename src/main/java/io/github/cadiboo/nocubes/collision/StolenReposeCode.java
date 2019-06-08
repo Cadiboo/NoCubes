@@ -4,15 +4,15 @@ import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.StateHolder;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReaderBase;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.border.WorldBorder;
 
 import javax.annotation.Nonnull;
@@ -27,7 +27,7 @@ import static java.lang.Math.max;
  */
 final class StolenReposeCode {
 
-	static VoxelShape getCollisionShape(IBlockState stateIn, IWorldReaderBase worldIn, BlockPos posIn) {
+	static VoxelShape getCollisionShape(BlockState stateIn, IWorldReader worldIn, BlockPos posIn) {
 
 		final VoxelShape collisionShape = getStateCollisionShape(stateIn, worldIn, posIn);
 
@@ -63,7 +63,7 @@ final class StolenReposeCode {
 							continue;
 						}
 
-						final IBlockState testState = worldIn.getBlockState(pooledMutableBlockPos);
+						final BlockState testState = worldIn.getBlockState(pooledMutableBlockPos);
 						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
 					}
 				}
@@ -81,7 +81,7 @@ final class StolenReposeCode {
 		}
 	}
 
-	private static VoxelShape getSlopingCollisionShape(final IBlockState state, IWorldReaderBase world, final BlockPos pos) {
+	private static VoxelShape getSlopingCollisionShape(final BlockState state, IWorldReader world, final BlockPos pos) {
 		final double height = blockHeight(pos, world, state);
 		VoxelShape shape = VoxelShapes.empty();
 		for (Direction direction : Direction.OrdinalDirections) {
@@ -90,7 +90,7 @@ final class StolenReposeCode {
 		return shape;
 	}
 
-	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IWorldReaderBase world) {
+	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IWorldReader world) {
 		final double stepHeight = blockHeight - 0.5;
 		final double height;
 		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, world) &&
@@ -111,27 +111,27 @@ final class StolenReposeCode {
 		);
 	}
 
-	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReaderBase world) {
+	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReader world) {
 		if (!world.isBlockLoaded(offsetPos) || !world.getWorldBorder().contains(offsetPos)) {
 			return true;
 		}
-		final IBlockState neighbor = world.getBlockState(offsetPos);
-		return neighbor.isTopSolid() && blockHeight(offsetPos, world, neighbor) >= stepHeight;
+		final BlockState neighbor = world.getBlockState(offsetPos);
+		return /*neighbor.isTopSolid() && */blockHeight(offsetPos, world, neighbor) >= stepHeight;
 	}
 
-	private static double blockHeight(final BlockPos pos, IBlockReader world, final IBlockState blockState) {
+	private static double blockHeight(final BlockPos pos, IBlockReader world, final BlockState blockState) {
 		VoxelShape box = getStateCollisionShape(blockState, world, pos);
-		return box.getEnd(EnumFacing.Axis.Y);
+		return box.getEnd(Axis.Y);
 	}
 
-	private static boolean canSlopeAt(final IBlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox) {
-		boolean flag = collisionBoundingBox != null && collisionBoundingBox.getEnd(EnumFacing.Axis.Y) > 0.5;
+	private static boolean canSlopeAt(final BlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox) {
+		boolean flag = collisionBoundingBox != null && collisionBoundingBox.getEnd(Axis.Y) > 0.5;
 		final BlockPos posUp = pos.up();
 		return TERRAIN_SMOOTHABLE.apply(state) && flag && getStateCollisionShape(worldIn.getBlockState(posUp), worldIn, posUp).isEmpty();
 	}
 
 	@Nonnull
-	private static VoxelShape getStateCollisionShape(final IBlockState state, final IBlockReader world, final BlockPos pos) {
+	private static VoxelShape getStateCollisionShape(final BlockState state, final IBlockReader world, final BlockPos pos) {
 		if (state == StateHolder.SNOW_LAYER_DEFAULT) {
 			return VoxelShapes.empty(); // Stop snow having a collisions AABB with no height that still blocks movement
 		} else {

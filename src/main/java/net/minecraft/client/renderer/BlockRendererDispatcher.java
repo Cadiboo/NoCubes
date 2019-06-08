@@ -37,11 +37,14 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener {
    }
 
    public void func_215329_a(BlockState p_215329_1_, BlockPos p_215329_2_, TextureAtlasSprite p_215329_3_, IEnviromentBlockReader p_215329_4_) {
+      if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, p_215329_1_, p_215329_2_, p_215329_3_, p_215329_4_)){
+         return;
+      }
       if (p_215329_1_.getRenderType() == BlockRenderType.MODEL) {
          IBakedModel ibakedmodel = this.blockModelShapes.getModel(p_215329_1_);
          long i = p_215329_1_.getPositionRandom(p_215329_2_);
          IBakedModel ibakedmodel1 = net.minecraftforge.client.ForgeHooksClient.getDamageModel(ibakedmodel, p_215329_3_, p_215329_1_, p_215329_4_, p_215329_2_, i);
-         this.blockModelRenderer.func_217631_a(p_215329_4_, ibakedmodel1, p_215329_1_, p_215329_2_, Tessellator.getInstance().getBuffer(), true, this.random, i);
+         this.blockModelRenderer.renderModel(p_215329_4_, ibakedmodel1, p_215329_1_, p_215329_2_, Tessellator.getInstance().getBuffer(), true, this.random, i);
       }
    }
 
@@ -74,7 +77,7 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener {
 
    public boolean func_215331_a(BlockPos p_215331_1_, IEnviromentBlockReader p_215331_2_, BufferBuilder p_215331_3_, IFluidState p_215331_4_) {
       try {
-         return this.fluidRenderer.func_217638_a(p_215331_2_, p_215331_1_, p_215331_3_, p_215331_4_);
+         return this.fluidRenderer.render(p_215331_2_, p_215331_1_, p_215331_3_, p_215331_4_);
       } catch (Throwable throwable) {
          CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating liquid in world");
          CrashReportCategory crashreportcategory = crashreport.makeCategory("Block being tesselated");

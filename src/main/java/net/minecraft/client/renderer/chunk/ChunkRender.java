@@ -147,7 +147,10 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             Random random = new Random();
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-            for(BlockPos blockpos2 : BlockPos.func_218278_a(blockpos, blockpos1)) {
+            // NoCubes Start
+            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+            // NoCubes End
+            for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
                Block block = blockstate.getBlock();
                if (blockstate.isOpaqueCube(lvt_12_1_, blockpos2)) {
@@ -182,6 +185,10 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                   aboolean[j] |= blockrendererdispatcher.func_215331_a(blockpos2, lvt_12_1_, bufferbuilder, ifluidstate);
                }
 
+               // NoCubes Start
+               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !blockstate.nocubes_isTerrainSmoothable())
+               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable())
+               // NoCubes End
                if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.canRenderInLayer(blockrenderlayer1)) {
                   int k = blockrenderlayer1.ordinal();
                   BufferBuilder bufferbuilder1 = generator.getRegionRenderCacheBuilder().getBuilder(k);

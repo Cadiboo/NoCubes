@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.IWorldReader;
 import org.apache.logging.log4j.LogManager;
 
@@ -25,7 +26,7 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 	private int renderChunkPosY;
 	private int renderChunkPosZ;
 	@Nonnull
-	private IWorldReader reader;
+	private IEnviromentBlockReader reader;
 	@Nonnull
 	private StateCache stateCache;
 	@Nonnull
@@ -43,7 +44,7 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	public static LazyPackedLightCache retain(
 			final int sizeX, final int sizeY, final int sizeZ,
-			@Nonnull final IWorldReader reader,
+			@Nonnull final IEnviromentBlockReader reader,
 			@Nonnull final StateCache stateCache,
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ
 	) {

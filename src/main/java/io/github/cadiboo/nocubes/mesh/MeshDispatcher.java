@@ -12,7 +12,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
@@ -240,7 +240,7 @@ public final class MeshDispatcher {
 								for (int xOffset = 0; xOffset < 2; ++xOffset) {
 
 									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
-									final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+									final BlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
 									density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
 								}
 							}

@@ -33,6 +33,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 import net.minecraftforge.client.ForgeHooksClient;
@@ -69,7 +70,7 @@ public final class MeshRenderer {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
@@ -159,7 +160,7 @@ public final class MeshRenderer {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -274,6 +275,7 @@ public final class MeshRenderer {
 							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
 								renderShortGrass(
 										renderChunk, generator, compiledChunk, renderChunkPosition,
+										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
 										blockAccess,
 										blockRendererDispatcher,
 										random,
@@ -456,7 +458,8 @@ public final class MeshRenderer {
 	//TODO: fix lighting
 	private static void renderShortGrass(
 			@Nonnull final ChunkRender renderChunk, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
-			@Nonnull final IWorldReader blockAccess,
+			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -471,7 +474,11 @@ public final class MeshRenderer {
 
 		pooledMutableBlockPos.setPos(texturePos).move(Direction.UP);
 		// isBlockLoaded only checks x and z
-		if (pooledMutableBlockPos.getY() > renderChunkPosition.getY() + 16 || !blockAccess.isBlockLoaded(pooledMutableBlockPos)) {
+		if (
+				pooledMutableBlockPos.getX() > renderChunkPositionX + 16 ||
+				pooledMutableBlockPos.getY() > renderChunkPositionY + 16 ||
+				pooledMutableBlockPos.getZ() > renderChunkPositionZ + 16
+		) {
 			return;
 		}
 		final BlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);

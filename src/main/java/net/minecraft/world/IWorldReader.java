@@ -59,10 +59,10 @@ public interface IWorldReader extends IEnviromentBlockReader {
    int getLightSubtracted(BlockPos pos, int amount);
 
    @Nullable
-   IChunk func_217353_a(int p_217353_1_, int p_217353_2_, ChunkStatus p_217353_3_, boolean p_217353_4_);
+   IChunk getChunk(int p_217353_1_, int p_217353_2_, ChunkStatus p_217353_3_, boolean p_217353_4_);
 
    @Deprecated
-   boolean func_217354_b(int p_217354_1_, int p_217354_2_);
+   boolean chunkExists(int p_217354_1_, int p_217354_2_);
 
    BlockPos getHeight(Heightmap.Type heightmapType, BlockPos pos);
 
@@ -87,15 +87,18 @@ public interface IWorldReader extends IEnviromentBlockReader {
    int getSeaLevel();
 
    default IChunk func_217349_x(BlockPos p_217349_1_) {
-      return this.func_212866_a_(p_217349_1_.getX() >> 4, p_217349_1_.getZ() >> 4);
+      return this.getChunk(p_217349_1_.getX() >> 4, p_217349_1_.getZ() >> 4);
    }
 
-   default IChunk func_212866_a_(int p_212866_1_, int p_212866_2_) {
-      return this.func_217353_a(p_212866_1_, p_212866_2_, ChunkStatus.field_222617_m, true);
+   /**
+    * Gets the chunk at the specified location.
+    */
+   default IChunk getChunk(int chunkX, int chunkZ) {
+      return this.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
    }
 
    default IChunk func_217348_a(int p_217348_1_, int p_217348_2_, ChunkStatus p_217348_3_) {
-      return this.func_217353_a(p_217348_1_, p_217348_2_, p_217348_3_, true);
+      return this.getChunk(p_217348_1_, p_217348_2_, p_217348_3_, true);
    }
 
    default ChunkStatus func_217342_O() {
@@ -103,7 +106,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
    }
 
    default boolean func_217350_a(BlockState p_217350_1_, BlockPos p_217350_2_, ISelectionContext p_217350_3_) {
-      VoxelShape voxelshape = p_217350_1_.func_215685_b(this, p_217350_2_, p_217350_3_);
+      VoxelShape voxelshape = p_217350_1_.getCollisionShape(this, p_217350_2_, p_217350_3_);
       return voxelshape.isEmpty() || this.checkNoEntityCollision((Entity)null, voxelshape.withOffset((double)p_217350_2_.getX(), (double)p_217350_2_.getY(), (double)p_217350_2_.getZ()));
    }
 
@@ -111,11 +114,11 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return this.checkNoEntityCollision(p_217346_1_, VoxelShapes.create(p_217346_1_.getBoundingBox()));
    }
 
-   default boolean func_217351_c(AxisAlignedBB p_217351_1_) {
+   default boolean areCollisionShapesEmpty(AxisAlignedBB p_217351_1_) {
       return this.isCollisionBoxesEmpty((Entity)null, p_217351_1_, Collections.emptySet());
    }
 
-   default boolean func_217345_j(Entity p_217345_1_) {
+   default boolean areCollisionShapesEmpty(Entity p_217345_1_) {
       return this.isCollisionBoxesEmpty(p_217345_1_, p_217345_1_.getBoundingBox(), Collections.emptySet());
    }
 
@@ -124,14 +127,14 @@ public interface IWorldReader extends IEnviromentBlockReader {
    }
 
    default boolean isCollisionBoxesEmpty(@Nullable Entity entityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
-      return this.func_217352_b(entityIn, aabb, entitiesToIgnore).allMatch(VoxelShape::isEmpty);
+      return this.getCollisionShapes(entityIn, aabb, entitiesToIgnore).allMatch(VoxelShape::isEmpty);
    }
 
    default Stream<VoxelShape> getCollisionBoxes(@Nullable Entity entityIn, VoxelShape shape, Set<Entity> breakOnEntityCollide) {
       return Stream.empty();
    }
 
-   default Stream<VoxelShape> func_217352_b(@Nullable final Entity p_217352_1_, AxisAlignedBB p_217352_2_, Set<Entity> p_217352_3_) {
+   default Stream<VoxelShape> getCollisionShapes(@Nullable final Entity p_217352_1_, AxisAlignedBB p_217352_2_, Set<Entity> p_217352_3_) {
       final VoxelShape voxelshape = VoxelShapes.create(p_217352_2_);
       final int i = MathHelper.floor(voxelshape.getStart(Direction.Axis.X) - 1.0E-7D) - 1;
       final int j = MathHelper.floor(voxelshape.getEnd(Direction.Axis.X) + 1.0E-7D) + 1;
@@ -139,7 +142,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
       final int l = MathHelper.floor(voxelshape.getEnd(Direction.Axis.Y) + 1.0E-7D) + 1;
       final int i1 = MathHelper.floor(voxelshape.getStart(Direction.Axis.Z) - 1.0E-7D) - 1;
       final int j1 = MathHelper.floor(voxelshape.getEnd(Direction.Axis.Z) + 1.0E-7D) + 1;
-      final ISelectionContext iselectioncontext = p_217352_1_ == null ? ISelectionContext.func_216377_a() : ISelectionContext.func_216374_a(p_217352_1_);
+      final ISelectionContext iselectioncontext = p_217352_1_ == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(p_217352_1_);
       final CubeCoordinateIterator cubecoordinateiterator = new CubeCoordinateIterator(i, k, i1, j, l, j1);
       final BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
       return Streams.concat(StreamSupport.stream(new AbstractSpliterator<VoxelShape>(Long.MAX_VALUE, 0) {
@@ -182,12 +185,12 @@ public interface IWorldReader extends IEnviromentBlockReader {
                if (k1 < 3) {
                   int l1 = j2 >> 4;
                   int i2 = l2 >> 4;
-                  IChunk ichunk = IWorldReader.this.func_217353_a(l1, i2, IWorldReader.this.func_217342_O(), false);
+                  IChunk ichunk = IWorldReader.this.getChunk(l1, i2, IWorldReader.this.func_217342_O(), false);
                   if (ichunk != null) {
                      blockpos$mutableblockpos.setPos(j2, k2, l2);
                      BlockState blockstate = ichunk.getBlockState(blockpos$mutableblockpos);
                      if ((k1 != 1 || blockstate.func_215704_f()) && (k1 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
-                        VoxelShape voxelshape2 = IWorldReader.this.getBlockState(blockpos$mutableblockpos).func_215685_b(IWorldReader.this, blockpos$mutableblockpos, iselectioncontext);
+                        VoxelShape voxelshape2 = IWorldReader.this.getBlockState(blockpos$mutableblockpos).getCollisionShape(IWorldReader.this, blockpos$mutableblockpos, iselectioncontext);
                         voxelshape3 = voxelshape2.withOffset((double)j2, (double)k2, (double)l2);
                         if (VoxelShapes.compare(voxelshape, voxelshape3, IBooleanFunction.AND)) {
                            break;
@@ -245,7 +248,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
    @Deprecated
    default boolean isBlockLoaded(BlockPos pos) {
-      return this.func_217354_b(pos.getX() >> 4, pos.getZ() >> 4);
+      return this.chunkExists(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
    default boolean isAreaLoaded(BlockPos center, int range) {
@@ -254,11 +257,11 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
    @Deprecated
    default boolean isAreaLoaded(BlockPos from, BlockPos to) {
-      return this.func_217344_a(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ());
+      return this.isAreaLoaded(from.getX(), from.getY(), from.getZ(), to.getX(), to.getY(), to.getZ());
    }
 
    @Deprecated
-   default boolean func_217344_a(int p_217344_1_, int p_217344_2_, int p_217344_3_, int p_217344_4_, int p_217344_5_, int p_217344_6_) {
+   default boolean isAreaLoaded(int p_217344_1_, int p_217344_2_, int p_217344_3_, int p_217344_4_, int p_217344_5_, int p_217344_6_) {
       if (p_217344_5_ >= 0 && p_217344_2_ < 256) {
          p_217344_1_ = p_217344_1_ >> 4;
          p_217344_3_ = p_217344_3_ >> 4;
@@ -267,7 +270,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
          for(int i = p_217344_1_; i <= p_217344_4_; ++i) {
             for(int j = p_217344_3_; j <= p_217344_6_; ++j) {
-               if (!this.func_217354_b(i, j)) {
+               if (!this.chunkExists(i, j)) {
                   return false;
                }
             }

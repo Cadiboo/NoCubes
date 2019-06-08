@@ -33,7 +33,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
@@ -55,7 +54,7 @@ public final class RenderDispatcher {
 			// Use World for eagerly generated caches
 			@Nonnull final IWorld world,
 			// Use RenderChunkCache for lazily generated caches
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final Random random,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
@@ -139,7 +138,7 @@ public final class RenderDispatcher {
 			// Use World for eagerly generated caches
 			@Nonnull final IWorld world,
 			// Use RenderChunkCache for lazily generated caches
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final Random random,
@@ -207,7 +206,7 @@ public final class RenderDispatcher {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -305,7 +304,7 @@ public final class RenderDispatcher {
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IEnviromentBlockReader blockAccess,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -376,7 +375,7 @@ public final class RenderDispatcher {
 				float green = 1.0F;
 				float blue = 1.0F;
 				float alpha = 1.0F;
-				final int packed = iblockstate.func_215684_a(world, blockpos);
+				final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
 				int lightmapSkyLight = (packed >> 16) & 0xFFFF;
 				int lightmapBlockLight = packed & 0xFFFF;
 				for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {

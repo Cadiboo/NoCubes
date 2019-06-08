@@ -1,16 +1,16 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -44,7 +44,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 		final Minecraft minecraft = Minecraft.getInstance();
-		final WorldClient world = minecraft.world;
+		final ClientWorld world = minecraft.world;
 		if (world == null) {
 			return;
 		}
@@ -138,7 +138,7 @@ public final class ClientEventSubscriber {
 			GlStateManager.enableBlend();
 			GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 			GlStateManager.lineWidth(1.0F);
-			GlStateManager.disableTexture2D();
+			GlStateManager.disableTexture();
 			GlStateManager.depthMask(false);
 
 			GlStateManager.color4f(0, 0, 0, 1);
@@ -152,7 +152,7 @@ public final class ClientEventSubscriber {
 			GlStateManager.popMatrix();
 
 			GlStateManager.depthMask(true);
-			GlStateManager.enableTexture2D();
+			GlStateManager.enableTexture();
 			GlStateManager.disableBlend();
 
 		}

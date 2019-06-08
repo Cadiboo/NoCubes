@@ -9,7 +9,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class ModProfiler extends Profiler implements AutoCloseable {
+public class ModProfiler /*extends Profiler*/ implements AutoCloseable {
 
 	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
 	private static final Logger LOGGER = LogManager.getLogger();
@@ -27,7 +27,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 
 	public ModProfiler() {
 		if (profilersEnabled) {
-			this.startProfiling(0);
+//			this.startProfiling(0);
 		}
 	}
 
@@ -35,7 +35,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 		profilersEnabled = true;
 		synchronized (PROFILERS) {
 			for (final ModProfiler profiler : PROFILERS.values()) {
-				profiler.startProfiling(0);
+//				profiler.startProfiling(0);
 			}
 		}
 	}
@@ -44,7 +44,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 		profilersEnabled = false;
 		synchronized (PROFILERS) {
 			for (final ModProfiler profiler : PROFILERS.values()) {
-				profiler.stopProfiling();
+//				profiler.stopProfiling();
 			}
 		}
 	}
@@ -56,7 +56,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	public ModProfiler start(final String name) {
 		if (startedSections == virtualSections++ && profilersEnabled) {
 			++startedSections;
-			startSection(name);
+//			startSection(name);
 		}
 		return this; // return this to allow use in try-with-resources blocks
 	}
@@ -64,7 +64,7 @@ public class ModProfiler extends Profiler implements AutoCloseable {
 	public void end() {
 		if (startedSections == virtualSections--) {
 			--startedSections;
-			endSection();
+//			endSection();
 		}
 	}
 

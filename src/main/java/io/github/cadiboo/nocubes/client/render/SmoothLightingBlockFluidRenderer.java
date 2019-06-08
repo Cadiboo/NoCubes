@@ -3,19 +3,21 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BlockFluidRenderer;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.FluidBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 
@@ -35,7 +37,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 	}
 
 	@Override
-	public boolean render(final IWorldReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
+	public boolean render(final IEnviromentBlockReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
 
 //		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
 
@@ -58,12 +60,12 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				blue = (float) (waterColor & 0xFF) / 255.0F;
 			}
 
-			final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.UP, state);
-			final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.DOWN, state) && !func_209556_a(worldIn, pos, EnumFacing.DOWN, 0.8888889F);
-			final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.NORTH, state);
-			final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.SOUTH, state);
-			final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.WEST, state);
-			final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, pos, EnumFacing.EAST, state);
+			final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, pos, Direction.UP, state);
+			final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, pos, Direction.DOWN, state) && !func_209556_a(worldIn, pos, Direction.DOWN, 0.8888889F);
+			final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, pos, Direction.NORTH, state);
+			final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, pos, Direction.SOUTH, state);
+			final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, pos, Direction.WEST, state);
+			final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, pos, Direction.EAST, state);
 
 			if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 				return false;
@@ -84,7 +86,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 			final boolean smoothLighting = this.smoothLighting();
 			final boolean colors = this.colors();
 
-			if (shouldRenderUp && !func_209556_a(worldIn, pos, EnumFacing.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
+			if (shouldRenderUp && !func_209556_a(worldIn, pos, Direction.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
 
 				// Commented out to fix transparent lines between bottom of sides.
 				// The only reason that I can think of for this code to exist in the first place
@@ -252,7 +254,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				final double z0;
 				final double x1;
 				final double z1;
-				final EnumFacing enumfacing;
+				final Direction enumfacing;
 				final boolean shouldRenderSide;
 				if (facingIndex == 0) {
 					y0 = fluidHeight;
@@ -264,7 +266,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z;// + (double) 0.001F;
 					z1 = z;// + (double) 0.001F;
-					enumfacing = EnumFacing.NORTH;
+					enumfacing = Direction.NORTH;
 					shouldRenderSide = shouldRenderNorth;
 				} else if (facingIndex == 1) {
 					y0 = fluidHeightEastSouth;
@@ -276,7 +278,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z + 1.0D;// - (double) 0.001F;
 					z1 = z + 1.0D;// - (double) 0.001F;
-					enumfacing = EnumFacing.SOUTH;
+					enumfacing = Direction.SOUTH;
 					shouldRenderSide = shouldRenderSouth;
 				} else if (facingIndex == 2) {
 					y0 = fluidHeightSouth;
@@ -288,7 +290,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					x1 = x;// + (double) 0.001F;
 					z0 = z + 1.0D;
 					z1 = z;
-					enumfacing = EnumFacing.WEST;
+					enumfacing = Direction.WEST;
 					shouldRenderSide = shouldRenderWest;
 				} else {
 					y0 = fluidHeightEast;
@@ -300,7 +302,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					x1 = x + 1.0D;// - (double) 0.001F;
 					z0 = z;
 					z1 = z + 1.0D;
-					enumfacing = EnumFacing.EAST;
+					enumfacing = Direction.EAST;
 					shouldRenderSide = shouldRenderEast;
 				}
 
@@ -308,9 +310,9 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					final BlockPos offset = pos.offset(enumfacing);
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
-						IBlockState blockstate = worldIn.getBlockState(offset);
-						if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
-							textureatlassprite2 = this.atlasSpriteWaterOverlay;
+						Block block = worldIn.getBlockState(offset).getBlock();
+						if (block == Blocks.GLASS || block instanceof StainedGlassBlock) {
+							textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
 						}
 					}
 

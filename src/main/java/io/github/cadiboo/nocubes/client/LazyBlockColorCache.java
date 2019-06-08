@@ -3,16 +3,17 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.chunk.RenderChunkCache;
+import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IWorldReaderBase;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.Region;
-import net.minecraft.world.biome.BiomeColors.ColorResolver;
 import net.minecraft.world.chunk.IChunk;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
 import java.util.Arrays;
+
+import static net.minecraft.world.biome.BiomeColors.IColorResolver;
 
 /**
  * @author Cadiboo
@@ -31,11 +32,11 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	private int renderChunkPosY;
 	private int renderChunkPosZ;
 	@Nonnull
-	private IWorldReaderBase reader;
+	private IEnviromentBlockReader reader;
 	@Nonnull
 	private int[] cache;
 	@Nonnull
-	private ColorResolver colorResolver;
+	private IColorResolver colorResolver;
 
 	private boolean inUse;
 
@@ -49,7 +50,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	@Nonnull
 	public static LazyBlockColorCache retain(
 			final int sizeX, final int sizeY, final int sizeZ,
-			@Nonnull final IWorldReaderBase reader, @Nonnull final ColorResolver colorResolver,
+			@Nonnull final IEnviromentBlockReader reader, @Nonnull final IColorResolver colorResolver,
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ
 	) {
 
@@ -109,8 +110,8 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 				final int posZ = renderChunkPosZ + zIn - 2;
 
 				final MutableBlockPos pos = MUTABLE_BLOCK_POS.get();
-				final IWorldReaderBase reader = this.reader;
-				final ColorResolver colorResolver = this.colorResolver;
+				final IEnviromentBlockReader reader = this.reader;
+				final IColorResolver colorResolver = this.colorResolver;
 				int currentChunkPosX = posX >> 4;
 				int currentChunkPosZ = posZ >> 4;
 				IChunk currentChunk = getChunk(currentChunkPosX, currentChunkPosZ, reader);
@@ -147,12 +148,12 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 		return color;
 	}
 
-	private IChunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IWorldReaderBase reader) {
+	private IChunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IEnviromentBlockReader reader) {
 //		if (reader instanceof IWorld) { // This should never be the case...
 //			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
 //		} else
-		if (reader instanceof RenderChunkCache) {
-			RenderChunkCache renderChunkCache = (RenderChunkCache) reader;
+		if (reader instanceof ChunkRenderCache) {
+			ChunkRenderCache renderChunkCache = (ChunkRenderCache) reader;
 			final int x = currentChunkPosX - renderChunkCache.chunkStartX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
 			return renderChunkCache.chunks[x][z];
@@ -160,7 +161,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 			Region region = OptiFineCompatibility.getRegion(reader);
 			final int x = currentChunkPosX - region.chunkX;
 			final int z = currentChunkPosZ - region.chunkZ;
-			return region.chunkArray[x][z];
+			return region.chunks[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
 	}
