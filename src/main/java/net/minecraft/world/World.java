@@ -495,7 +495,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    @OnlyIn(Dist.CLIENT)
    public Vec3d func_217382_a(BlockPos p_217382_1_, float p_217382_2_) {
-      return this.dimension.getSkyColor(p_217382_1_, p_217382_2_);
+       return this.dimension.getSkyColor(p_217382_1_, p_217382_2_);
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -690,7 +690,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
                      tileentity.remove();
                      this.removeTileEntity(tileentity.getPos());
                   } else
-                     throw new ReportedException(crashreport);
+                  throw new ReportedException(crashreport);
                }
                finally {
                   net.minecraftforge.server.timings.TimeTracker.TILE_ENTITY_UPDATE.trackEnd(tileentity);
@@ -702,10 +702,10 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             iterator.remove();
             this.loadedTileEntityList.remove(tileentity);
             if (this.isBlockLoaded(tileentity.getPos())) {
-               //Forge: Bugfix: If we set the tile entity it immediately sets it in the chunk, so we could be desyned
-               Chunk chunk = this.getChunk(tileentity.getPos());
-               if (chunk.getTileEntity(tileentity.getPos(), Chunk.CreateEntityType.CHECK) == tileentity)
-                  chunk.removeTileEntity(tileentity.getPos());
+                //Forge: Bugfix: If we set the tile entity it immediately sets it in the chunk, so we could be desyned
+                Chunk chunk = this.getChunk(tileentity.getPos());
+                if (chunk.getTileEntity(tileentity.getPos(), Chunk.CreateEntityType.CHECK) == tileentity)
+                   chunk.removeTileEntity(tileentity.getPos());
             }
          }
       }
@@ -1256,7 +1256,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public boolean isBlockModifiable(PlayerEntity player, BlockPos pos) {
-      return dimension.canMineBlock(player, pos);
+       return dimension.canMineBlock(player, pos);
    }
 
    public boolean canMineBlockBody(PlayerEntity player, BlockPos pos) {

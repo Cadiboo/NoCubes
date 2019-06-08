@@ -34,30 +34,30 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ChunkRender implements net.minecraftforge.client.extensions.IForgeRenderChunk {
-   private volatile World world;
-   private final WorldRenderer renderGlobal;
+   public volatile World world;
+   public final WorldRenderer renderGlobal;
    public static int renderChunksUpdated;
    public CompiledChunk compiledChunk = CompiledChunk.DUMMY;
-   private final ReentrantLock lockCompileTask = new ReentrantLock();
-   private final ReentrantLock lockCompiledChunk = new ReentrantLock();
-   private ChunkRenderTask compileTask;
-   private final Set<TileEntity> setTileEntities = Sets.newHashSet();
-   private final VertexBuffer[] vertexBuffers = new VertexBuffer[BlockRenderLayer.values().length];
+   public final ReentrantLock lockCompileTask = new ReentrantLock();
+   public final ReentrantLock lockCompiledChunk = new ReentrantLock();
+   public ChunkRenderTask compileTask;
+   public final Set<TileEntity> setTileEntities = Sets.newHashSet();
+   public final VertexBuffer[] vertexBuffers = new VertexBuffer[BlockRenderLayer.values().length];
    public AxisAlignedBB boundingBox;
-   private int frameIndex = -1;
-   private boolean needsUpdate = true;
-   private final BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(-1, -1, -1);
-   private final BlockPos.MutableBlockPos[] mapEnumFacing = Util.make(new BlockPos.MutableBlockPos[6], (p_205125_0_) -> {
+   public int frameIndex = -1;
+   public boolean needsUpdate = true;
+   public final BlockPos.MutableBlockPos position = new BlockPos.MutableBlockPos(-1, -1, -1);
+   public final BlockPos.MutableBlockPos[] mapEnumFacing = Util.make(new BlockPos.MutableBlockPos[6], (p_205125_0_) -> {
       for(int j = 0; j < p_205125_0_.length; ++j) {
          p_205125_0_[j] = new BlockPos.MutableBlockPos();
       }
 
    });
-   private boolean needsImmediateUpdate;
+   public boolean needsImmediateUpdate;
 
-   public ChunkRender(World p_i49841_1_, WorldRenderer p_i49841_2_) {
-      this.world = p_i49841_1_;
-      this.renderGlobal = p_i49841_2_;
+   public ChunkRender(World worldIn, WorldRenderer worldRendererIn) {
+      this.world = worldIn;
+      this.renderGlobal = worldRendererIn;
       if (GLX.useVbo()) {
          for(int i = 0; i < BlockRenderLayer.values().length; ++i) {
             this.vertexBuffers[i] = new VertexBuffer(DefaultVertexFormats.BLOCK);
@@ -66,8 +66,8 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
 
    }
 
-   private static boolean func_217673_a(BlockPos p_217673_0_, World p_217673_1_) {
-      return !p_217673_1_.func_212866_a_(p_217673_0_.getX() >> 4, p_217673_0_.getZ() >> 4).isEmpty();
+   private static boolean func_217673_a(BlockPos pos, World worldIn) {
+      return !worldIn.getChunk(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
    }
 
    public boolean func_217674_b() {
@@ -305,12 +305,12 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
       return d0 * d0 + d1 * d1 + d2 * d2;
    }
 
-   private void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos) {
+   public void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos) {
       bufferBuilderIn.begin(7, DefaultVertexFormats.BLOCK);
       bufferBuilderIn.setTranslation((double)(-pos.getX()), (double)(-pos.getY()), (double)(-pos.getZ()));
    }
 
-   private void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn) {
+   public void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn) {
       if (layer == BlockRenderLayer.TRANSLUCENT && !compiledChunkIn.isLayerEmpty(layer)) {
          bufferBuilderIn.sortVertexData(x, y, z);
          compiledChunkIn.setState(bufferBuilderIn.getVertexState());

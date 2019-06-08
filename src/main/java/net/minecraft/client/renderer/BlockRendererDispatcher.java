@@ -36,15 +36,15 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener {
       return this.blockModelShapes;
    }
 
-   public void func_215329_a(BlockState p_215329_1_, BlockPos p_215329_2_, TextureAtlasSprite p_215329_3_, IEnviromentBlockReader p_215329_4_) {
-      if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, p_215329_1_, p_215329_2_, p_215329_3_, p_215329_4_)){
+   public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
+      if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, sprite, reader)){
          return;
       }
-      if (p_215329_1_.getRenderType() == BlockRenderType.MODEL) {
-         IBakedModel ibakedmodel = this.blockModelShapes.getModel(p_215329_1_);
-         long i = p_215329_1_.getPositionRandom(p_215329_2_);
-         IBakedModel ibakedmodel1 = net.minecraftforge.client.ForgeHooksClient.getDamageModel(ibakedmodel, p_215329_3_, p_215329_1_, p_215329_4_, p_215329_2_, i);
-         this.blockModelRenderer.renderModel(p_215329_4_, ibakedmodel1, p_215329_1_, p_215329_2_, Tessellator.getInstance().getBuffer(), true, this.random, i);
+      if (state.getRenderType() == BlockRenderType.MODEL) {
+         IBakedModel ibakedmodel = this.blockModelShapes.getModel(state);
+         long i = state.getPositionRandom(pos);
+         IBakedModel ibakedmodel1 = net.minecraftforge.client.ForgeHooksClient.getDamageModel(ibakedmodel, sprite, state, reader, pos, i);
+         this.blockModelRenderer.renderModel(reader, ibakedmodel1, state, pos, Tessellator.getInstance().getBuffer(), true, this.random, i);
       }
    }
 
