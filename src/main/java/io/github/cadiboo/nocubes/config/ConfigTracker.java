@@ -74,16 +74,16 @@ public class ConfigTracker {
 		this.configSets.get(type).forEach(config -> openConfig(config, configBasePath));
 	}
 
-	public List<Pair<String, FMLHandshakeMessage.S2CConfigData>> syncConfigs(boolean isLocal) {
-		final Map<String, byte[]> configData = configSets.get(ModConfig.Type.SERVER).stream().collect(Collectors.toMap(ModConfig::getFileName, mc -> { //TODO: Test cpw's LambdaExceptionUtils on Oracle javac.
-			try {
-				return Files.readAllBytes(mc.getFullPath());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}));
-		return configData.entrySet().stream().map(e -> Pair.of("Config " + e.getKey(), new FMLHandshakeMessage.S2CConfigData(e.getKey(), e.getValue()))).collect(Collectors.toList());
-	}
+//	public List<Pair<String, FMLHandshakeMessage.S2CConfigData>> syncConfigs(boolean isLocal) {
+//		final Map<String, byte[]> configData = configSets.get(ModConfig.Type.SERVER).stream().collect(Collectors.toMap(ModConfig::getFileName, mc -> { //TODO: Test cpw's LambdaExceptionUtils on Oracle javac.
+//			try {
+//				return Files.readAllBytes(mc.getFullPath());
+//			} catch (IOException e) {
+//				throw new RuntimeException(e);
+//			}
+//		}));
+//		return configData.entrySet().stream().map(e -> Pair.of("Config " + e.getKey(), new FMLHandshakeMessage.S2CConfigData(e.getKey(), e.getValue()))).collect(Collectors.toList());
+//	}
 
 	private void openConfig(final ModConfig config, final Path configBasePath) {
 		LOGGER.debug("Loading config file type {} at {} for {}", config.getType(), config.getFileName(), config.getModId());
@@ -93,14 +93,14 @@ public class ConfigTracker {
 		config.save();
 	}
 
-	public void receiveSyncedConfig(final FMLHandshakeMessage.S2CConfigData s2CConfigData) {
-		if (!Minecraft.getMinecraft().isIntegratedServerRunning()) {
-			Optional.ofNullable(fileMap.get(s2CConfigData.getFileName())).ifPresent(mc -> {
-				mc.setConfigData(TomlFormat.instance().createParser().parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
-				mc.fireEvent(new ModConfig.ConfigReloading(mc));
-			});
-		}
-	}
+//	public void receiveSyncedConfig(final FMLHandshakeMessage.S2CConfigData s2CConfigData) {
+//		if (!Minecraft.getMinecraft().isIntegratedServerRunning()) {
+//			Optional.ofNullable(fileMap.get(s2CConfigData.getFileName())).ifPresent(mc -> {
+//				mc.setConfigData(TomlFormat.instance().createParser().parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
+//				mc.fireEvent(new ModConfig.ConfigReloading(mc));
+//			});
+//		}
+//	}
 
 	public void loadDefaultServerConfigs() {
 		configSets.get(ModConfig.Type.SERVER).forEach(modConfig -> {
