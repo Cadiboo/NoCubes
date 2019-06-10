@@ -107,6 +107,8 @@ public class ConfigTracker {
 			final CommentedConfig commentedConfig = CommentedConfig.inMemory();
 			modConfig.getSpec().correct(commentedConfig);
 			modConfig.setConfigData(commentedConfig);
+			// This isn't in forge, but appears to be necessary?
+			modConfig.fireEvent(new ModConfig.Loading(modConfig));
 		});
 	}
 

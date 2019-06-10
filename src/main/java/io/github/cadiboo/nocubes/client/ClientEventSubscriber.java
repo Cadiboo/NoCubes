@@ -526,14 +526,16 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onClientConnectedToServerEvent(final FMLNetworkEvent.ClientConnectedToServerEvent event) {
 		if (!event.isLocal()) {
-			final NetworkManager manager = event.getManager();
-			if (manager == null) {
-				throw new NullPointerException("ARGH! Network Manager is null (" + "MANAGER" + ")");
-			}
-			if (NetworkDispatcher.get(manager).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-				NoCubes.LOGGER.info("Connected to a vanilla server. Catching up missing behaviour.");
-				ConfigTracker.INSTANCE.loadDefaultServerConfigs();
-			}
+//			final NetworkManager manager = event.getManager();
+//			if (manager == null) {
+//				throw new NullPointerException("ARGH! Network Manager is null (" + "MANAGER" + ")");
+//			}
+//			if (NetworkDispatcher.get(manager).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
+//				NoCubes.LOGGER.info("Connected to a vanilla server. Catching up missing behaviour.");
+//				ConfigTracker.INSTANCE.loadDefaultServerConfigs();
+//			}
+			NoCubes.LOGGER.warn("Config syncing is broken. Substituting the default one");
+			ConfigTracker.INSTANCE.loadDefaultServerConfigs();
 		}
 	}
 
