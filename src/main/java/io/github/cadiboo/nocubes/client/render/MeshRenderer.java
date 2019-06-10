@@ -515,7 +515,7 @@ public final class MeshRenderer {
 		final IBakedModel model = blockRendererDispatcher.getModelForState(grassPlantState);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
 
-		final int color = BiomeColors.field_180291_a.getColor(blockAccess.getBiome(texturePos), texturePos);
+		final int color = BiomeColors.GRASS_COLOR.getColor(blockAccess.getBiome(texturePos), texturePos);
 
 		final int red = (color & 0xFF0000) >> 16;
 		final int green = (color & 0x00FF00) >> 8;

@@ -44,7 +44,7 @@ public class OldNoCubes implements MeshGenerator {
 	@Nonnull
 	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockReader blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		final HashMap<Vec3b, FaceList> map = new HashMap<>();
-		for (final BlockPos pos : BlockPos.func_218278_a(chunkPos, chunkPos.add(15, 15, 15))) {
+		for (final BlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
 
 			final FaceList faces = generateBlock(pos, blockAccess, isSmoothable, pooledMutableBlockPos);
 

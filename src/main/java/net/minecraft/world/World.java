@@ -72,7 +72,13 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    private final long cloudColour = 16777215L;
    private final Thread mainThread;
    private int skylightSubtracted;
+   /**
+    * Contains the current Linear Congruential Generator seed for block updates. Used with an A value of 3 and a C value
+    * of 0x3c6ef35f, producing a highly planar series of values ill-suited for choosing random blocks in a 16x128x16
+    * field.
+    */
    protected int updateLCG = (new Random()).nextInt();
+   /** magic number used to generate fast random numbers for 3d distribution within a chunk */
    protected final int DIST_HASH_MAGIC = 1013904223;
    public float prevRainingStrength;
    public float rainingStrength;
@@ -113,7 +119,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
          return chunk.getBiome(pos);
       } else {
          ChunkGenerator<?> chunkgenerator = this.getChunkProvider().getChunkGenerator();
-         return chunkgenerator == null ? Biomes.PLAINS : chunkgenerator.getBiomeProvider().func_222364_a(pos);
+         return chunkgenerator == null ? Biomes.PLAINS : chunkgenerator.getBiomeProvider().getBiome(pos);
       }
    }
 
@@ -217,7 +223,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             BlockState blockstate1 = this.getBlockState(pos);
             if (blockstate1 != blockstate && (blockstate1.getOpacity(this, pos) != oldOpacity || blockstate1.getLightValue() != oldLight || blockstate1.func_215691_g() || blockstate.func_215691_g())) {
                this.profiler.startSection("queueCheckLight");
-               this.getChunkProvider().func_212863_j_().func_215568_a(pos);
+               this.getChunkProvider().getLightManager().func_215568_a(pos);
                this.profiler.endSection();
             }
 
@@ -411,7 +417,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public int getLightFor(LightType type, BlockPos pos) {
-      return this.getChunkProvider().func_212863_j_().func_215569_a(type).func_215611_b(pos);
+      return this.getChunkProvider().getLightManager().func_215569_a(type).func_215611_b(pos);
    }
 
    public BlockState getBlockState(BlockPos pos) {

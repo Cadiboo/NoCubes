@@ -46,7 +46,7 @@ public final class ClientEventSubscriber {
 //		ObjectPoolingProfiler.onTick();
 
 		final Minecraft minecraft = Minecraft.getInstance();
-		final ClientPlayerEntity player = minecraft.field_71439_g;
+		final ClientPlayerEntity player = minecraft.player;
 
 //		// TODO: Temp!
 //		{
@@ -120,7 +120,7 @@ public final class ClientEventSubscriber {
 			}
 
 			BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
-			final BlockState state = minecraft.field_71441_e.getBlockState(blockPos);
+			final BlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
 				final BlockStateToast toast;
@@ -175,7 +175,7 @@ public final class ClientEventSubscriber {
 		final int playerPosX = playerPos.getX();
 		final int playerPosY = playerPos.getY();
 		final int playerPosZ = playerPos.getZ();
-		final ClientWorld world = minecraft.field_71441_e;
+		final ClientWorld world = minecraft.world;
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			for (int x = -2; x < 3; ++x) {
 				for (int z = -2; z < 3; ++z) {
@@ -208,7 +208,7 @@ public final class ClientEventSubscriber {
 		}
 
 		final Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft.field_71441_e == null || minecraft.field_71439_g == null || minecraft.getRenderViewEntity() == null) {
+		if (minecraft.world == null || minecraft.player == null || minecraft.getRenderViewEntity() == null) {
 			return;
 		}
 

@@ -114,11 +114,11 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return this.checkNoEntityCollision(p_217346_1_, VoxelShapes.create(p_217346_1_.getBoundingBox()));
    }
 
-   default boolean func_217351_c(AxisAlignedBB p_217351_1_) {
+   default boolean areCollisionShapesEmpty(AxisAlignedBB p_217351_1_) {
       return this.isCollisionBoxesEmpty((Entity)null, p_217351_1_, Collections.emptySet());
    }
 
-   default boolean func_217345_j(Entity p_217345_1_) {
+   default boolean areCollisionShapesEmpty(Entity p_217345_1_) {
       return this.isCollisionBoxesEmpty(p_217345_1_, p_217345_1_.getBoundingBox(), Collections.emptySet());
    }
 
@@ -127,14 +127,14 @@ public interface IWorldReader extends IEnviromentBlockReader {
    }
 
    default boolean isCollisionBoxesEmpty(@Nullable Entity entityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
-      return this.func_217352_b(entityIn, aabb, entitiesToIgnore).allMatch(VoxelShape::isEmpty);
+      return this.getCollisionShapes(entityIn, aabb, entitiesToIgnore).allMatch(VoxelShape::isEmpty);
    }
 
    default Stream<VoxelShape> getCollisionBoxes(@Nullable Entity entityIn, VoxelShape shape, Set<Entity> breakOnEntityCollide) {
       return Stream.empty();
    }
 
-   default Stream<VoxelShape> func_217352_b(@Nullable final Entity p_217352_1_, AxisAlignedBB p_217352_2_, Set<Entity> p_217352_3_) {
+   default Stream<VoxelShape> getCollisionShapes(@Nullable final Entity p_217352_1_, AxisAlignedBB p_217352_2_, Set<Entity> p_217352_3_) {
       final VoxelShape voxelshape = VoxelShapes.create(p_217352_2_);
       final int i = MathHelper.floor(voxelshape.getStart(Direction.Axis.X) - 1.0E-7D) - 1;
       final int j = MathHelper.floor(voxelshape.getEnd(Direction.Axis.X) + 1.0E-7D) + 1;

@@ -161,7 +161,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 			Region region = OptiFineCompatibility.getRegion(reader);
 			final int x = currentChunkPosX - region.chunkX;
 			final int z = currentChunkPosZ - region.chunkZ;
-			return region.field_72817_c[x][z];
+			return region.chunks[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
 	}

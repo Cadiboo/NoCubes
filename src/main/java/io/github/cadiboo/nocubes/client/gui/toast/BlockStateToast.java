@@ -59,7 +59,7 @@ public abstract class BlockStateToast implements IToast {
 		Arrays.fill(usedBlockRenderLayers, false);
 		final boolean[] startedBufferBuilders = new boolean[BlockRenderLayer.values().length];
 
-		this.build(state, pos, startedBufferBuilders, minecraft.field_71441_e, minecraft.getBlockRendererDispatcher(), new Random());
+		this.build(state, pos, startedBufferBuilders, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
 
 	}
 
@@ -132,7 +132,7 @@ public abstract class BlockStateToast implements IToast {
 				}
 				// OptiFine Shaders compatibility
 //				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
-				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.func_217631_a(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
+				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
 			ForgeHooksClient.setRenderLayer(null);

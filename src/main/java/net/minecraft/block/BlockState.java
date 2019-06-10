@@ -143,8 +143,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    @OnlyIn(Dist.CLIENT)
-   public int func_215684_a(IEnviromentBlockReader p_215684_1_, BlockPos p_215684_2_) {
-      return this.getBlock().func_220058_a(this, p_215684_1_, p_215684_2_);
+   public int getPackedLightmapCoords(IEnviromentBlockReader p_215684_1_, BlockPos p_215684_2_) {
+      return this.getBlock().getPackedLightmapCoords(this, p_215684_1_, p_215684_2_);
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -305,7 +305,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onBlockClicked(this, worldIn, pos, player);
    }
 
-   public boolean func_215696_m(IBlockReader p_215696_1_, BlockPos p_215696_2_) {
+   public boolean causesSuffocation(IBlockReader p_215696_1_, BlockPos p_215696_2_) {
       // NoCubes Start
       if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
       // NoCubes End
