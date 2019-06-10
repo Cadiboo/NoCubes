@@ -1,15 +1,6 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Lists;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -33,7 +24,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.NetworkTagManager;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
@@ -62,9 +52,19 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
 public abstract class World extends net.minecraftforge.common.capabilities.CapabilityProvider<World> implements IEnviromentBlockReader, IWorld, AutoCloseable, net.minecraftforge.common.extensions.IForgeWorld {
    protected static final Logger LOGGER = LogManager.getLogger();
-   private static final Direction[] field_200007_a = Direction.values();
+   private static final Direction[] FACING_VALUES = Direction.values();
    public final List<TileEntity> loadedTileEntityList = Lists.newArrayList();
    public final List<TileEntity> tickableTileEntities = Lists.newArrayList();
    protected final List<TileEntity> addedTileEntityList = Lists.newArrayList();
@@ -78,7 +78,6 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     * field.
     */
    protected int updateLCG = (new Random()).nextInt();
-   /** magic number used to generate fast random numbers for 3d distribution within a chunk */
    protected final int DIST_HASH_MAGIC = 1013904223;
    public float prevRainingStrength;
    public float rainingStrength;
@@ -172,12 +171,12 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     * Gets the chunk at the specified location.
     */
    public Chunk getChunk(int chunkX, int chunkZ) {
-      return (Chunk)this.func_217348_a(chunkX, chunkZ, ChunkStatus.FULL);
+      return (Chunk)this.getChunk(chunkX, chunkZ, ChunkStatus.FULL);
    }
 
-   public IChunk getChunk(int p_217353_1_, int p_217353_2_, ChunkStatus p_217353_3_, boolean p_217353_4_) {
-      IChunk ichunk = this.field_73020_y.getChunk(p_217353_1_, p_217353_2_, p_217353_3_, p_217353_4_);
-      if (ichunk == null && p_217353_4_) {
+   public IChunk getChunk(int x, int z, ChunkStatus requiredStatus, boolean nonnull) {
+      IChunk ichunk = this.field_73020_y.getChunk(x, z, requiredStatus, nonnull);
+      if (ichunk == null && nonnull) {
          throw new IllegalStateException("Should always be able to create a chunk!");
       } else {
          return ichunk;
@@ -435,8 +434,8 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       } else {
          // NoCubes Start
          return io.github.cadiboo.nocubes.hooks.Hooks.getFluidState(this, pos);
-         //Chunk chunk = this.getChunk(pos);
-         //return chunk.getFluidState(pos);
+//         Chunk chunk = this.getChunk(pos);
+//         return chunk.getFluidState(pos);
          // NoCubes End
       }
    }
@@ -617,7 +616,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       if (tile.getWorld() != this) tile.setWorld(this); // Forge - set the world early as vanilla doesn't set it until next tick
       if (this.processingLoadedTiles) {
          LOGGER.error("Adding block entity while ticking: {} @ {}", () -> {
-            return Registry.field_212626_o.getKey(tile.getType());
+            return Registry.BLOCK_ENTITY_TYPE.getKey(tile.getType());
          }, tile::getPos);
          return addedTileEntityList.add(tile); // Forge: wait to add new TE if we're currently processing existing ones
       }
@@ -1004,7 +1003,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     * first boolean for hostile mobs and second for peaceful mobs
     */
    public void setAllowedSpawnTypes(boolean hostile, boolean peaceful) {
-      this.getChunkProvider().func_217203_a(hostile, peaceful);
+      this.getChunkProvider().setAllowedSpawnTypes(hostile, peaceful);
       this.getDimension().setAllowedSpawnTypes(hostile, peaceful);
    }
 
@@ -1184,7 +1183,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    public int getRedstonePowerFromNeighbors(BlockPos pos) {
       int i = 0;
 
-      for(Direction direction : field_200007_a) {
+      for(Direction direction : FACING_VALUES) {
          int j = this.getRedstonePower(pos.offset(direction), direction);
          if (j >= 15) {
             return 15;
@@ -1365,7 +1364,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    public abstract void func_217399_a(MapData p_217399_1_);
 
-   public abstract int func_217395_y();
+   public abstract int getNextMapId();
 
    public void playBroadcastSound(int id, BlockPos pos, int data) {
    }
@@ -1418,7 +1417,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
          if (this.isBlockLoaded(blockpos)) {
             BlockState blockstate = this.getBlockState(blockpos);
             blockstate.onNeighborChange(this, blockpos, pos);
-            if (blockstate.func_215686_e(this, blockpos)) {
+            if (blockstate.isNormalCube(this, blockpos)) {
                blockpos = blockpos.offset(direction);
                blockstate = this.getBlockState(blockpos);
                if (blockstate.getWeakChanges(this, blockpos)) {

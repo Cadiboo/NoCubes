@@ -1,13 +1,6 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Streams;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Spliterators.AbstractSpliterator;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -26,6 +19,14 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
+
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Spliterators.AbstractSpliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface IWorldReader extends IEnviromentBlockReader {
    /**
@@ -59,7 +60,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
    int getLightSubtracted(BlockPos pos, int amount);
 
    @Nullable
-   IChunk getChunk(int p_217353_1_, int p_217353_2_, ChunkStatus p_217353_3_, boolean p_217353_4_);
+   IChunk getChunk(int x, int z, ChunkStatus requiredStatus, boolean nonnull);
 
    @Deprecated
    boolean chunkExists(int p_217354_1_, int p_217354_2_);
@@ -97,7 +98,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return this.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
    }
 
-   default IChunk func_217348_a(int p_217348_1_, int p_217348_2_, ChunkStatus p_217348_3_) {
+   default IChunk getChunk(int p_217348_1_, int p_217348_2_, ChunkStatus p_217348_3_) {
       return this.getChunk(p_217348_1_, p_217348_2_, p_217348_3_, true);
    }
 

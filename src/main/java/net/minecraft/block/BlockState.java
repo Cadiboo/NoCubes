@@ -152,8 +152,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().func_220080_a(this, p_215703_1_, p_215703_2_);
    }
 
-   public boolean func_215686_e(IBlockReader p_215686_1_, BlockPos p_215686_2_) {
-      return this.getBlock().func_220081_d(this, p_215686_1_, p_215686_2_);
+   public boolean isNormalCube(IBlockReader p_215686_1_, BlockPos p_215686_2_) {
+      return this.getBlock().isNormalCube(this, p_215686_1_, p_215686_2_);
    }
 
    public boolean canProvidePower() {
@@ -309,7 +309,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       // NoCubes Start
       if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
       // NoCubes End
-      return this.getBlock().func_220060_c(this, p_215696_1_, p_215696_2_);
+      return this.getBlock().causesSuffocation(this, p_215696_1_, p_215696_2_);
    }
 
    public BlockState updatePostPlacement(Direction face, BlockState queried, IWorld worldIn, BlockPos currentPos, BlockPos offsetPos) {
@@ -358,17 +358,17 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().getSoundType(this);
    }
 
-   public void onProjectileCollision(World p_215690_1_, BlockState p_215690_2_, BlockRayTraceResult p_215690_3_, Entity p_215690_4_) {
-      this.getBlock().onProjectileCollision(p_215690_1_, p_215690_2_, p_215690_3_, p_215690_4_);
+   public void onProjectileCollision(World worldIn, BlockState state, BlockRayTraceResult hit, Entity projectile) {
+      this.getBlock().onProjectileCollision(worldIn, state, hit, projectile);
    }
 
-   public static <T> Dynamic<T> func_215689_a(DynamicOps<T> p_215689_0_, BlockState p_215689_1_) {
+   public static <T> Dynamic<T> serialize(DynamicOps<T> p_215689_0_, BlockState p_215689_1_) {
       ImmutableMap<IProperty<?>, Comparable<?>> immutablemap = p_215689_1_.getValues();
       T t;
       if (immutablemap.isEmpty()) {
-         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.field_212618_g.getKey(p_215689_1_.getBlock()).toString())));
+         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.BLOCK.getKey(p_215689_1_.getBlock()).toString())));
       } else {
-         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.field_212618_g.getKey(p_215689_1_.getBlock()).toString()), p_215689_0_.createString("Properties"), p_215689_0_.createMap(immutablemap.entrySet().stream().map((p_215683_1_) -> {
+         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.BLOCK.getKey(p_215689_1_.getBlock()).toString()), p_215689_0_.createString("Properties"), p_215689_0_.createMap(immutablemap.entrySet().stream().map((p_215683_1_) -> {
             return Pair.of(p_215689_0_.createString(p_215683_1_.getKey().getName()), p_215689_0_.createString(IStateHolder.func_215670_b(p_215683_1_.getKey(), p_215683_1_.getValue())));
          }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)))));
       }
@@ -376,8 +376,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return new Dynamic<>(p_215689_0_, t);
    }
 
-   public static <T> BlockState func_215698_a(Dynamic<T> p_215698_0_) {
-      DefaultedRegistry defaultedregistry = Registry.field_212618_g;
+   public static <T> BlockState deserialize(Dynamic<T> p_215698_0_) {
+      DefaultedRegistry defaultedregistry = Registry.BLOCK;
       Optional<T> optional = p_215698_0_.getElement("Name");
       DynamicOps<T> dynamicops = p_215698_0_.getOps();
       Block block = (Block)defaultedregistry.getOrDefault(new ResourceLocation(optional.flatMap(dynamicops::getStringValue).orElse("minecraft:air")));
