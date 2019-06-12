@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -17,8 +18,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IEnviromentBlockReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 
 import javax.annotation.Nonnull;
@@ -28,6 +31,7 @@ import javax.annotation.Nonnull;
  */
 public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
+	private static final VoxelShape func_209556_a_hardcoded_voxelshape = VoxelShapes.create(0.0D, 0.0D, 0.0D, 1.0D, 0.8888889F, 1.0D);
 	@Nonnull
 	private final FluidBlockRenderer fluidRenderer;
 
@@ -43,6 +47,11 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
 			final boolean isLava = state.isTagged(FluidTags.LAVA);
 			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
 
@@ -60,12 +69,22 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				blue = (float) (waterColor & 0xFF) / 255.0F;
 			}
 
-			final boolean shouldRenderUp = !isAdjacentFluidSameAs(worldIn, pos, Direction.UP, state);
-			final boolean shouldRenderDown = !isAdjacentFluidSameAs(worldIn, pos, Direction.DOWN, state) && !func_209556_a(worldIn, pos, Direction.DOWN, 0.8888889F);
-			final boolean shouldRenderNorth = !isAdjacentFluidSameAs(worldIn, pos, Direction.NORTH, state);
-			final boolean shouldRenderSouth = !isAdjacentFluidSameAs(worldIn, pos, Direction.SOUTH, state);
-			final boolean shouldRenderWest = !isAdjacentFluidSameAs(worldIn, pos, Direction.WEST, state);
-			final boolean shouldRenderEast = !isAdjacentFluidSameAs(worldIn, pos, Direction.EAST, state);
+			final Fluid fluid = state.getFluid();
+
+			final IFluidState downFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x, y - 1, z));
+			final boolean func_209556_a_hardcoded_result = func_209556_a_optimised_hardcoded(worldIn, Direction.DOWN, pooledMutableBlockPos);
+			final IFluidState upFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x, y + 1, z));
+			final IFluidState northFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x, y, z - 1));
+			final IFluidState southFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x, y, z + 1));
+			final IFluidState westFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x - 1, y, z));
+			final IFluidState eastFluidState = worldIn.getFluidState(pooledMutableBlockPos.setPos(x + 1, y, z));
+
+			final boolean shouldRenderUp = !upFluidState.getFluid().isEquivalentTo(fluid);
+			final boolean shouldRenderDown = !downFluidState.getFluid().isEquivalentTo(fluid) && !func_209556_a_hardcoded_result;
+			final boolean shouldRenderNorth = !northFluidState.getFluid().isEquivalentTo(fluid);
+			final boolean shouldRenderSouth = !southFluidState.getFluid().isEquivalentTo(fluid);
+			final boolean shouldRenderWest = !westFluidState.getFluid().isEquivalentTo(fluid);
+			final boolean shouldRenderEast = !eastFluidState.getFluid().isEquivalentTo(fluid);
 
 			if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 				return false;
@@ -73,20 +92,19 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			final Fluid fluid = state.getFluid();
-			float fluidHeight = this.getFluidHeight(worldIn, pos, fluid);
-			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), fluid);
-			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), fluid);
-			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), fluid);
+			float fluidHeight = this.getFluidHeight(worldIn, fluid, x, y, z, pooledMutableBlockPos);
+			float fluidHeightSouth = this.getFluidHeight(worldIn, fluid, x, y, z + 1, pooledMutableBlockPos);
+			float fluidHeightEastSouth = this.getFluidHeight(worldIn, fluid, x + 1, y, z + 1, pooledMutableBlockPos);
+			float fluidHeightEast = this.getFluidHeight(worldIn, fluid, x + 1, y, z, pooledMutableBlockPos);
 
-			final double x = (double) pos.getX();
-			final double y = (double) pos.getY();
-			final double z = (double) pos.getZ();
+//			final double x = x;
+//			final double y = y;
+//			final double z = z;
 
 			final boolean smoothLighting = this.smoothLighting();
 			final boolean colors = this.colors();
 
-			if (shouldRenderUp && !func_209556_a(worldIn, pos, Direction.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)))) {
+			if (shouldRenderUp && !func_209556_a_optimised(worldIn, Direction.UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)), pooledMutableBlockPos.setPos(x, y + 1, z))) {
 
 				// Commented out to fix transparent lines between bottom of sides.
 				// The only reason that I can think of for this code to exist in the first place
@@ -128,10 +146,12 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						light3 = combinedLightUpMax;
 					} else {
 						light0 = this.getCombinedLightUpMax(worldIn, pos);
-						//TODO: use less new objects
-						light1 = this.getCombinedLightUpMax(worldIn, pos.south());
-						light2 = this.getCombinedLightUpMax(worldIn, pos.east().south());
-						light3 = this.getCombinedLightUpMax(worldIn, pos.east());
+						// south
+						light1 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x, y, z + 1));
+						// east south
+						light2 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z + 1));
+						// east
+						light3 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z));
 					}
 					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
@@ -145,16 +165,19 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						red0 = red;
 						green0 = green;
 						blue0 = blue;
-						//TODO: use less new objects
-						final int waterColor1 = BiomeColors.getWaterColor(worldIn, pos.south());
+
+						// south
+						final int waterColor1 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x, y, z + 1));
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColors.getWaterColor(worldIn, pos.east().south());
+						// east south
+						final int waterColor2 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z + 1));
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColors.getWaterColor(worldIn, pos.east());
+						// east
+						final int waterColor3 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z));
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -169,7 +192,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
 						x, y, z,
 						light0, light1, light2, light3,
-						state.shouldRenderSides(worldIn, pos.up()), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
+						state.shouldRenderSides(worldIn, pooledMutableBlockPos.setPos(x, y + 1, z)), state.getFlow(worldIn, pos), MathHelper.getPositionRandom(pos)
 				);
 			}
 
@@ -198,39 +221,45 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					green0 = green1 = green2 = green3 = 1.0F;
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
+					final int ym1 = y - 1;
 					if (!smoothLighting) {
-						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, pos.down());
+						final int downCombinedLightUpMax = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
 						light0 = downCombinedLightUpMax;
 						light1 = downCombinedLightUpMax;
 						light2 = downCombinedLightUpMax;
 						light3 = downCombinedLightUpMax;
 					} else {
-						final BlockPos down = pos.down();
-						light0 = this.getCombinedLightUpMax(worldIn, down);
-						light1 = this.getCombinedLightUpMax(worldIn, down.south());
-						light2 = this.getCombinedLightUpMax(worldIn, down.east().south());
-						light3 = this.getCombinedLightUpMax(worldIn, down.east());
+						// down south
+						light0 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x, ym1, z + 1));
+						// down
+						light1 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
+						// down east
+						light2 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z));
+						// down east south
+						light3 = this.getCombinedLightUpMax(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z + 1));
 					}
 					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-						final BlockPos down = pos.down();
-						final BlockPos downSouth = down.south();
-						final int waterColor0 = BiomeColors.getWaterColor(worldIn, downSouth);
+						// down south
+						final int waterColor0 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x, ym1, z + 1));
 						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-						final int waterColor1 = BiomeColors.getWaterColor(worldIn, down);
+						// down
+						final int waterColor1 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColors.getWaterColor(worldIn, down.east());
+						// down east
+						final int waterColor2 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z));
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColors.getWaterColor(worldIn, downSouth.east());
+						// down east south
+						final int waterColor3 = BiomeColors.getWaterColor(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z + 1));
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -306,11 +335,11 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 					shouldRenderSide = shouldRenderEast;
 				}
 
-				if (shouldRenderSide && !func_209556_a(worldIn, pos, enumfacing, Math.max(y0, y1))) {
-					final BlockPos offset = pos.offset(enumfacing);
+				pooledMutableBlockPos.setPos(x, y, z).move(enumfacing);
+				if (shouldRenderSide && !func_209556_a_optimised(worldIn, enumfacing, Math.max(y0, y1), pooledMutableBlockPos)) {
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
-						Block block = worldIn.getBlockState(offset).getBlock();
+						Block block = worldIn.getBlockState(pooledMutableBlockPos).getBlock();
 						if (block == Blocks.GLASS || block instanceof StainedGlassBlock) {
 							textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
 						}
@@ -341,7 +370,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 						blue0 = blue1 = blue2 = blue3 = 1.0F;
 					} else {
 						if (!smoothLighting) {
-							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, offset);
+							final int combinedLightUpMax = this.getCombinedLightUpMax(worldIn, (BlockPos) pooledMutableBlockPos);
 							light0 = combinedLightUpMax;
 							light1 = combinedLightUpMax;
 							light2 = combinedLightUpMax;
@@ -397,6 +426,54 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 		}
 	}
 
+	public boolean func_209556_a_optimised(IBlockReader reader, Direction face, float heightIn, final BlockPos blockpos) {
+		BlockState blockstate = reader.getBlockState(blockpos);
+		if (blockstate.isSolid()) {
+			VoxelShape voxelshape = VoxelShapes.create(0.0D, 0.0D, 0.0D, 1.0D, (double) heightIn, 1.0D);
+			VoxelShape voxelshape1 = blockstate.getRenderShape(reader, blockpos);
+			return VoxelShapes.isCubeSideCovered(voxelshape, voxelshape1, face);
+		} else {
+			return false;
+		}
+	}
+
+	public float getFluidHeight(
+			IBlockReader reader, Fluid fluidIn,
+			final int posX, final int posY, final int posZ,
+			final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+		int divisor = 0;
+		float height = 0.0F;
+
+		for (int z = 0; z > -2; --z) {
+			for (int x = 0; x > -2; --x) {
+				pooledMutableBlockPos.setPos(posX - x, posY + 1, posZ - z);
+
+				if (reader.getFluidState(pooledMutableBlockPos).getFluid().isEquivalentTo(fluidIn)) {
+					return 1.0F;
+				}
+
+				pooledMutableBlockPos.setPos(posX - x, posY, posZ - z);
+
+				IFluidState ifluidstate = reader.getFluidState(pooledMutableBlockPos);
+				if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
+					float fluidHeight = ifluidstate.func_215679_a(reader, pooledMutableBlockPos);
+					if (fluidHeight >= 0.8F) {
+						height += fluidHeight * 10.0F;
+						divisor += 10;
+					} else {
+						height += fluidHeight;
+						++divisor;
+					}
+				} else if (!reader.getBlockState(pooledMutableBlockPos).getMaterial().isSolid()) {
+					++divisor;
+				}
+			}
+		}
+
+		return height / (float) divisor;
+	}
+
 	public boolean renderUp(
 			final BufferBuilder buffer, final TextureAtlasSprite[] sprites,
 			final float red0, final float green0, final float blue0,
@@ -405,9 +482,27 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 			final float red3, final float green3, final float blue3,
 			final double fluidHeight, final double fluidHeightSouth, final double fluidHeightEastSouth, final double fluidHeightEast,
 			final double x, final double y, final double z,
-			final int combinedLightUpMax0, final int combinedLightUpMax1, final int combinedLightUpMax2, final int combinedLightUpMax3,
+			int combinedLightUpMax0, int combinedLightUpMax1, int combinedLightUpMax2, int combinedLightUpMax3,
 			final boolean shouldRenderUpUndersideFace, final Vec3d flowVec, final long positionRandom
 	) {
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		if (combinedLightUpMax0 == 0)
+			if (combinedLightUpMax1 > 30) combinedLightUpMax0 = combinedLightUpMax1;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax0 = combinedLightUpMax2;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax0 = combinedLightUpMax3;
+		if (combinedLightUpMax1 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax1 = combinedLightUpMax0;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax1 = combinedLightUpMax2;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax1 = combinedLightUpMax3;
+		if (combinedLightUpMax2 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax2 = combinedLightUpMax0;
+			else if (combinedLightUpMax1 > 30) combinedLightUpMax2 = combinedLightUpMax1;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax2 = combinedLightUpMax3;
+		if (combinedLightUpMax3 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax3 = combinedLightUpMax0;
+			else if (combinedLightUpMax1 > 30) combinedLightUpMax3 = combinedLightUpMax1;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax3 = combinedLightUpMax2;
+
 		float u0;
 		float u1;
 		float u2;
@@ -511,8 +606,27 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 			final double y, final float y0, final float y1,
 			final double x0, final double x1,
 			final double z0, final double z1,
-			final int combinedLightUpMax0, final int combinedLightUpMax1, final int combinedLightUpMax2, final int combinedLightUpMax3, final boolean shouldRenderOppositeFace
+			int combinedLightUpMax0, int combinedLightUpMax1, int combinedLightUpMax2, int combinedLightUpMax3,
+			final boolean shouldRenderOppositeFace
 	) {
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		if (combinedLightUpMax0 == 0)
+			if (combinedLightUpMax1 > 30) combinedLightUpMax0 = combinedLightUpMax1;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax0 = combinedLightUpMax2;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax0 = combinedLightUpMax3;
+		if (combinedLightUpMax1 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax1 = combinedLightUpMax0;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax1 = combinedLightUpMax2;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax1 = combinedLightUpMax3;
+		if (combinedLightUpMax2 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax2 = combinedLightUpMax0;
+			else if (combinedLightUpMax1 > 30) combinedLightUpMax2 = combinedLightUpMax1;
+			else if (combinedLightUpMax3 > 30) combinedLightUpMax2 = combinedLightUpMax3;
+		if (combinedLightUpMax3 == 0)
+			if (combinedLightUpMax0 > 30) combinedLightUpMax3 = combinedLightUpMax0;
+			else if (combinedLightUpMax1 > 30) combinedLightUpMax3 = combinedLightUpMax1;
+			else if (combinedLightUpMax2 > 30) combinedLightUpMax3 = combinedLightUpMax2;
+
 		final float u0 = UVHelper.getMinU(textureatlassprite);
 		final float u1 = textureatlassprite.getInterpolatedU(8.0D);
 		final float v0 = UVHelper.clampV(textureatlassprite.getInterpolatedV((double) ((1.0F - y0) * 16.0F * 0.5F)), textureatlassprite);
@@ -543,7 +657,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 	}
 
 	public boolean renderDown(
-			final int downCombinedLightUpMax0, final int downCombinedLightUpMax1, final int downCombinedLightUpMax2, final int downCombinedLightUpMax3,
+			int downCombinedLightUpMax0, int downCombinedLightUpMax1, int downCombinedLightUpMax2, int downCombinedLightUpMax3,
 			final BufferBuilder buffer, final TextureAtlasSprite textureAtlasSprite,
 			final float red0, final float green0, final float blue0,
 			final float red1, final float green1, final float blue1,
@@ -551,6 +665,24 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 			final float red3, final float green3, final float blue3,
 			final double x, final double y, final double z
 	) {
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		if (downCombinedLightUpMax0 == 0)
+			if (downCombinedLightUpMax1 > 30) downCombinedLightUpMax0 = downCombinedLightUpMax1;
+			else if (downCombinedLightUpMax2 > 30) downCombinedLightUpMax0 = downCombinedLightUpMax2;
+			else if (downCombinedLightUpMax3 > 30) downCombinedLightUpMax0 = downCombinedLightUpMax3;
+		if (downCombinedLightUpMax1 == 0)
+			if (downCombinedLightUpMax0 > 30) downCombinedLightUpMax1 = downCombinedLightUpMax0;
+			else if (downCombinedLightUpMax2 > 30) downCombinedLightUpMax1 = downCombinedLightUpMax2;
+			else if (downCombinedLightUpMax3 > 30) downCombinedLightUpMax1 = downCombinedLightUpMax3;
+		if (downCombinedLightUpMax2 == 0)
+			if (downCombinedLightUpMax0 > 30) downCombinedLightUpMax2 = downCombinedLightUpMax0;
+			else if (downCombinedLightUpMax1 > 30) downCombinedLightUpMax2 = downCombinedLightUpMax1;
+			else if (downCombinedLightUpMax3 > 30) downCombinedLightUpMax2 = downCombinedLightUpMax3;
+		if (downCombinedLightUpMax3 == 0)
+			if (downCombinedLightUpMax0 > 30) downCombinedLightUpMax3 = downCombinedLightUpMax0;
+			else if (downCombinedLightUpMax1 > 30) downCombinedLightUpMax3 = downCombinedLightUpMax1;
+			else if (downCombinedLightUpMax2 > 30) downCombinedLightUpMax3 = downCombinedLightUpMax2;
+
 		final float minU = UVHelper.getMinU(textureAtlasSprite);
 		final float maxU = UVHelper.getMaxU(textureAtlasSprite);
 		final float minV = UVHelper.getMinV(textureAtlasSprite);
@@ -587,6 +719,25 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 	public boolean textures() {
 		return Config.naturalFluidTextures;
+	}
+
+	public boolean func_209556_a_optimised_hardcoded(IBlockReader reader, Direction face, final BlockPos blockpos) {
+		BlockState blockstate = reader.getBlockState(blockpos);
+		if (blockstate.isSolid()) {
+			return VoxelShapes.isCubeSideCovered(func_209556_a_hardcoded_voxelshape, blockstate.getRenderShape(reader, blockpos), face);
+		} else {
+			return false;
+		}
+	}
+
+	public int getCombinedLightUpMax(IEnviromentBlockReader reader, PooledMutableBlockPos pooledMutableBlockPos) {
+		int light = reader.getCombinedLight(pooledMutableBlockPos, 0);
+		int lightUp = reader.getCombinedLight(pooledMutableBlockPos.move(Direction.UP), 0);
+		int k = light & 255;
+		int l = lightUp & 255;
+		int i1 = light >> 16 & 255;
+		int j1 = lightUp >> 16 & 255;
+		return (k > l ? k : l) | (i1 > j1 ? i1 : j1) << 16;
 	}
 
 }
