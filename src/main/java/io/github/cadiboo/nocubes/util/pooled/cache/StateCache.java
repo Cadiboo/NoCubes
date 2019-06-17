@@ -18,7 +18,7 @@ import javax.annotation.Nonnull;
  */
 public class StateCache extends XYZCache implements AutoCloseable {
 
-	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
+	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0, 0, 0, 0));
 
 	@Nonnull
 	private BlockState[] blockStates;
@@ -27,15 +27,21 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 	private boolean inUse;
 
-	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
-		super(sizeX, sizeY, sizeZ);
-		blockStates = new BlockState[sizeX * sizeY * sizeZ];
-		fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
+	private StateCache(
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+			final int sizeX, final int sizeY, final int sizeZ
+	) {
+		super(startPaddingX, startPaddingY, startPaddingZ, sizeX, sizeY, sizeZ);
+		this.blockStates = new BlockState[sizeX * sizeY * sizeZ];
+		this.fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
 		this.inUse = false;
 	}
 
 	@Nonnull
-	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
+	public static StateCache retain(
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+			final int sizeX, final int sizeY, final int sizeZ
+	) {
 
 		final StateCache pooled = POOL.get();
 
@@ -43,6 +49,10 @@ public class StateCache extends XYZCache implements AutoCloseable {
 			throw new IllegalStateException("StateCache is already in use!");
 		}
 		pooled.inUse = true;
+
+		pooled.startPaddingX = startPaddingX;
+		pooled.startPaddingY = startPaddingY;
+		pooled.startPaddingZ = startPaddingZ;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;

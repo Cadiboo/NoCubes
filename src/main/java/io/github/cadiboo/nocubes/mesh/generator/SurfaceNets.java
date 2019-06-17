@@ -90,10 +90,7 @@ public class SurfaceNets implements MeshGenerator {
 	@Nonnull
 	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
-		final int[] edge_table = EDGE_TABLE;
-		final int[] cube_edges = CUBE_EDGES;
-
-		final ArrayList<float[]> vertices = new ArrayList<>();
+		final ArrayList<float[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		final byte[] x = {0, 0, 0};
 		final int[] R = {1, (dims[0] + 1), (dims[0] + 1) * (dims[1] + 1)};
@@ -102,7 +99,7 @@ public class SurfaceNets implements MeshGenerator {
 
 		final int[] buffer = new int[R[2] * 2];
 
-		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>(0x180);
 
 		//March over the voxel grid
 		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0], buf_no ^= 1, R[2] = -R[2]) {
@@ -132,7 +129,7 @@ public class SurfaceNets implements MeshGenerator {
 					}
 
 					//Sum up edge intersections
-					int edge_mask = edge_table[mask];
+					int edge_mask = EDGE_TABLE[mask];
 					final float[] v = {0, 0, 0};
 					int e_count = 0;
 
@@ -149,8 +146,8 @@ public class SurfaceNets implements MeshGenerator {
 
 						//Now find the point of intersection
 						//Unpack vertices
-						final int e0 = cube_edges[i << 1];
-						final int e1 = cube_edges[(i << 1) + 1];
+						final int e0 = CUBE_EDGES[i << 1];
+						final int e1 = CUBE_EDGES[(i << 1) + 1];
 						//Unpack grid values
 						final float g0 = grid[e0];
 						final float g1 = grid[e1];
@@ -233,7 +230,6 @@ public class SurfaceNets implements MeshGenerator {
 		}
 
 		return posToFaces;
-
 	}
 
 	@Override

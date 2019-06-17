@@ -19,12 +19,22 @@ public final class CacheUtil {
 	 * Generates a {@link StateCache}
 	 */
 	public static StateCache generateStateCache(
-			final int startPosX, final int startPosY, final int startPosZ,
-			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			// from position
+			final int fromX, final int fromY, final int fromZ,
+			// to position
+			final int toX, final int toY, final int toZ,
+			// the difference between the chunkRenderPosition and from position. Always positive
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			@Nonnull final IBlockReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		final StateCache stateCache = StateCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
+		final int cacheSizeX = Math.abs(toX - fromX);
+		final int cacheSizeY = Math.abs(toY - fromY);
+		final int cacheSizeZ = Math.abs(toZ - fromZ);
+		final StateCache stateCache = StateCache.retain(
+				startPaddingX, startPaddingY, startPaddingZ,
+				cacheSizeX, cacheSizeY, cacheSizeZ
+		);
 		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
 			final BlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
@@ -33,7 +43,7 @@ public final class CacheUtil {
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						blockStates[index] = cache.getBlockState(pooledMutableBlockPos.setPos(startPosX + x, startPosY + y, startPosZ + z));
+						blockStates[index] = cache.getBlockState(pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z));
 						fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
 					}
 				}
@@ -42,7 +52,7 @@ public final class CacheUtil {
 			return stateCache;
 		} catch (final Exception e) {
 			// getBlockState/getFluidState can throw an error if its trying to get a region for a chunk out of bounds
-			// close
+			// close the state cache to prevent errors about it already being in use
 			stateCache.close();
 			throw e;
 		}
@@ -52,24 +62,41 @@ public final class CacheUtil {
 	 * Generates a {@link SmoothableCache} from a {@link StateCache}
 	 */
 	public static SmoothableCache generateSmoothableCache(
+			// from position
+			final int fromX, final int fromY, final int fromZ,
+			// to position
+			final int toX, final int toY, final int toZ,
+			// the difference between the chunkRenderPosition and from position. Always positive
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IsSmoothable isStateSmoothable
 	) {
+		final int cacheSizeX = Math.abs(toX - fromX);
+		final int cacheSizeY = Math.abs(toY - fromY);
+		final int cacheSizeZ = Math.abs(toZ - fromZ);
 		try (ModProfiler ignored = ModProfiler.get().start("generate smoothableCache")) {
-			final int cacheSizeX = stateCache.sizeX;
-			final int cacheSizeY = stateCache.sizeY;
-			final int cacheSizeZ = stateCache.sizeZ;
-
-			final SmoothableCache smoothableCache = SmoothableCache.retain(cacheSizeX, cacheSizeY, cacheSizeZ);
+			final SmoothableCache smoothableCache = SmoothableCache.retain(startPaddingX, startPaddingY, startPaddingZ, cacheSizeX, cacheSizeY, cacheSizeZ);
 			final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
+			final int stateCacheSizeX = stateCache.sizeX;
+			final int stateCacheSizeY = stateCache.sizeY;
+			final int diffX = stateCache.startPaddingX - startPaddingX;
+			final int diffY = stateCache.startPaddingY - startPaddingY;
+			final int diffZ = stateCache.startPaddingZ - startPaddingZ;
 			final BlockState[] stateCacheArray = stateCache.getBlockStates();
 
-			int index = 0;
+			int smoothableIndex = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						smoothableCacheArray[index] = isStateSmoothable.apply(stateCacheArray[index]);
+					for (int x = 0; x < cacheSizeX; ++x, ++smoothableIndex) {
+						smoothableCacheArray[smoothableIndex] = isStateSmoothable.apply(
+								stateCacheArray[stateCache.getIndex(
+										x + diffX,
+										y + diffY,
+										z + diffZ,
+										stateCacheSizeX, stateCacheSizeY
+								)]
+						);
 					}
 				}
 			}
@@ -82,21 +109,29 @@ public final class CacheUtil {
 	 * Generates a {@link DensityCache} from a {@link StateCache} and a {@link SmoothableCache}
 	 */
 	public static DensityCache generateDensityCache(
-			final int densityCacheSizeX, final int densityCacheSizeY, final int densityCacheSizeZ,
-			final int addX, final int addY, final int addZ,
+			// from position
+			final int fromX, final int fromY, final int fromZ,
+			// to position
+			final int toX, final int toY, final int toZ,
+			// the difference between the chunkRenderPosition and from position. Always positive
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache
 	) {
+		final int cacheSizeX = Math.abs(toX - fromX);
+		final int cacheSizeY = Math.abs(toY - fromY);
+		final int cacheSizeZ = Math.abs(toZ - fromZ);
 		try (ModProfiler ignored = ModProfiler.get().start("generate densityCache")) {
-			final DensityCache densityCache = DensityCache.retain(densityCacheSizeX, densityCacheSizeY, densityCacheSizeZ);
+			final DensityCache densityCache = DensityCache.retain(startPaddingX, startPaddingY, startPaddingZ, cacheSizeX, cacheSizeY, cacheSizeZ);
 			final float[] densityCacheArray = densityCache.getDensityCache();
 
 			int index = 0;
-			for (int z = 0; z < densityCacheSizeZ; ++z) {
-				for (int y = 0; y < densityCacheSizeY; ++y) {
-					for (int x = 0; x < densityCacheSizeX; ++x, ++index) {
+			for (int z = 0; z < cacheSizeZ; ++z) {
+				for (int y = 0; y < cacheSizeY; ++y) {
+					for (int x = 0; x < cacheSizeX; ++x, ++index) {
 						densityCacheArray[index] = getBlockDensity(
-								x + addX, y + addY, z + addZ,
+								x, y, z,
+								startPaddingX, startPaddingY, startPaddingZ,
 								stateCache, smoothableCache
 						);
 					}
@@ -107,26 +142,45 @@ public final class CacheUtil {
 	}
 
 	/**
-	 * Gets the density for a block (between -8 and 8) based on the smoothability of itself and its 7 neighbours in negative directions
+	 * Gets the density for a block (between -8 and 8) based on the smoothability of itself and its 7 neighbours in positive directions
 	 */
 	private static float getBlockDensity(
 			final int posX, final int posY, final int posZ,
+			// the difference between the chunkRenderPosition and the density cache's from position. Always positive
+			final int densityCacheStartPaddingX, final int densityCacheStartPaddingY, final int densityCacheStartPaddingZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache
 	) {
-		final int cacheSizeX = smoothableCache.sizeX;
-		final int cacheSizeY = smoothableCache.sizeY;
-		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
+		final int stateCacheDiffX = stateCache.startPaddingX - densityCacheStartPaddingX;
+		final int stateCacheDiffY = stateCache.startPaddingY - densityCacheStartPaddingY;
+		final int stateCacheDiffZ = stateCache.startPaddingZ - densityCacheStartPaddingZ;
+
+		final int stateCacheSizeX = stateCache.sizeX;
+		final int stateCacheSizeY = stateCache.sizeY;
 		final BlockState[] stateCacheArray = stateCache.getBlockStates();
+
+		final int smoothableCacheSizeX = smoothableCache.sizeX;
+		final int smoothableCacheSizeY = smoothableCache.sizeY;
+		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
 		float density = 0;
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {
 			for (int yOffset = 0; yOffset < 2; ++yOffset) {
 				for (int xOffset = 0; xOffset < 2; ++xOffset) {
-
-					// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
-					final int index = (posX + xOffset) + cacheSizeX * ((posY + yOffset) + cacheSizeY * (posZ + zOffset));
-					density += ModUtil.getIndividualBlockDensity(smoothableCacheArray[index], stateCacheArray[index]);
+					density += ModUtil.getIndividualBlockDensity(
+							smoothableCacheArray[smoothableCache.getIndex(
+									posX + xOffset,
+									posY + yOffset,
+									posZ + zOffset,
+									smoothableCacheSizeX, smoothableCacheSizeY
+							)],
+							stateCacheArray[stateCache.getIndex(
+									posX + xOffset + stateCacheDiffX,
+									posY + yOffset + stateCacheDiffY,
+									posZ + zOffset + stateCacheDiffZ,
+									stateCacheSizeX, stateCacheSizeY
+							)]
+					);
 				}
 			}
 		}

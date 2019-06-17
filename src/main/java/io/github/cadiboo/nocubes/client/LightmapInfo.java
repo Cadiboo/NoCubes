@@ -2,7 +2,10 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IEnviromentBlockReader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,44 +47,47 @@ public class LightmapInfo implements AutoCloseable {
 	}
 
 	public static LightmapInfo generateLightmapInfo(
-			@Nonnull final LazyPackedLightCache packedLightCache,
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
 			final Vec3 v3,
-			final int renderChunkPositionX,
-			final int renderChunkPositionY,
-			final int renderChunkPositionZ
+			final int renderChunkPosX,
+			final int renderChunkPosY,
+			final int renderChunkPosZ,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getInstance().gameSettings.ambientOcclusionStatus) {
 				case OFF:
-					return generateLightmapInfoFlat(v0, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
+					return generateLightmapInfoFlat(v0, renderChunkPosX, renderChunkPosY, renderChunkPosZ, lazyPackedLightCache, pooledMutableBlockPos);
 				default:
 				case MIN:
-					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
+					return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPosX, renderChunkPosY, renderChunkPosZ, lazyPackedLightCache, pooledMutableBlockPos);
 				case MAX:
-					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
+					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, renderChunkPosX, renderChunkPosY, renderChunkPosZ, lazyPackedLightCache, pooledMutableBlockPos);
 			}
 		}
 	}
 
 	private static LightmapInfo generateLightmapInfoSmoothAO(
 			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
-			final int renderChunkPositionX,
-			final int renderChunkPositionY,
-			final int renderChunkPositionZ,
-			@Nonnull final LazyPackedLightCache packedLightCache
+			final int renderChunkPosX,
+			final int renderChunkPosY,
+			final int renderChunkPosZ,
+			@Nonnull final LazyPackedLightCache packedLightCache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, packedLightCache);
+		return generateLightmapInfoSmooth(v0, v1, v2, v3, renderChunkPosX, renderChunkPosY, renderChunkPosZ, packedLightCache, pooledMutableBlockPos);
 	}
 
 	private static LightmapInfo generateLightmapInfoSmooth(
 			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
-			final int renderChunkPositionX,
-			final int renderChunkPositionY,
-			final int renderChunkPositionZ,
-			@Nonnull final LazyPackedLightCache packedLightCache
+			final int renderChunkPosX,
+			final int renderChunkPosY,
+			final int renderChunkPosZ,
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
@@ -90,31 +96,31 @@ public class LightmapInfo implements AutoCloseable {
 		final int[] packedLight2 = new int[27];
 		final int[] packedLight3 = new int[27];
 
-		final int v0XOffset = 1 + clamp(floor(v0.x) - renderChunkPositionX, -1, 16);
-		final int v0YOffset = 1 + clamp(floor(v0.y) - renderChunkPositionY, -1, 16);
-		final int v0ZOffset = 1 + clamp(floor(v0.z) - renderChunkPositionZ, -1, 16);
+		final int v0XOffset = 1 + clamp(floor(v0.x) - renderChunkPosX, -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y) - renderChunkPosY, -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z) - renderChunkPosZ, -1, 16);
 
-		final int v1XOffset = 1 + clamp(floor(v1.x) - renderChunkPositionX, -1, 16);
-		final int v1YOffset = 1 + clamp(floor(v1.y) - renderChunkPositionY, -1, 16);
-		final int v1ZOffset = 1 + clamp(floor(v1.z) - renderChunkPositionZ, -1, 16);
+		final int v1XOffset = 1 + clamp(floor(v1.x) - renderChunkPosX, -1, 16);
+		final int v1YOffset = 1 + clamp(floor(v1.y) - renderChunkPosY, -1, 16);
+		final int v1ZOffset = 1 + clamp(floor(v1.z) - renderChunkPosZ, -1, 16);
 
-		final int v2XOffset = 1 + clamp(floor(v2.x) - renderChunkPositionX, -1, 16);
-		final int v2YOffset = 1 + clamp(floor(v2.y) - renderChunkPositionY, -1, 16);
-		final int v2ZOffset = 1 + clamp(floor(v2.z) - renderChunkPositionZ, -1, 16);
+		final int v2XOffset = 1 + clamp(floor(v2.x) - renderChunkPosX, -1, 16);
+		final int v2YOffset = 1 + clamp(floor(v2.y) - renderChunkPosY, -1, 16);
+		final int v2ZOffset = 1 + clamp(floor(v2.z) - renderChunkPosZ, -1, 16);
 
-		final int v3XOffset = 1 + clamp(floor(v3.x) - renderChunkPositionX, -1, 16);
-		final int v3YOffset = 1 + clamp(floor(v3.y) - renderChunkPositionY, -1, 16);
-		final int v3ZOffset = 1 + clamp(floor(v3.z) - renderChunkPositionZ, -1, 16);
+		final int v3XOffset = 1 + clamp(floor(v3.x) - renderChunkPosX, -1, 16);
+		final int v3YOffset = 1 + clamp(floor(v3.y) - renderChunkPosY, -1, 16);
+		final int v3ZOffset = 1 + clamp(floor(v3.z) - renderChunkPosZ, -1, 16);
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					packedLight0[index] = packedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
-					packedLight1[index] = packedLightCache.get((v1XOffset + xOffset), (v1YOffset + yOffset), (v1ZOffset + zOffset));
-					packedLight2[index] = packedLightCache.get((v2XOffset + xOffset), (v2YOffset + yOffset), (v2ZOffset + zOffset));
-					packedLight3[index] = packedLightCache.get((v3XOffset + xOffset), (v3YOffset + yOffset), (v3ZOffset + zOffset));
+					packedLight0[index] = lazyPackedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
+					packedLight1[index] = lazyPackedLightCache.get((v1XOffset + xOffset), (v1YOffset + yOffset), (v1ZOffset + zOffset));
+					packedLight2[index] = lazyPackedLightCache.get((v2XOffset + xOffset), (v2YOffset + yOffset), (v2ZOffset + zOffset));
+					packedLight3[index] = lazyPackedLightCache.get((v3XOffset + xOffset), (v3YOffset + yOffset), (v3ZOffset + zOffset));
 				}
 			}
 		}
@@ -137,24 +143,35 @@ public class LightmapInfo implements AutoCloseable {
 
 	private static LightmapInfo generateLightmapInfoFlat(
 			@Nonnull final Vec3 v0,
-			final int renderChunkPositionX,
-			final int renderChunkPositionY,
-			final int renderChunkPositionZ,
-			@Nonnull final LazyPackedLightCache packedLightCache
+			final int renderChunkPosX,
+			final int renderChunkPosY,
+			final int renderChunkPosZ,
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
-		final int v0XOffset = 1 + clamp(floor(v0.x) - renderChunkPositionX, -1, 16);
-		final int v0YOffset = 1 + clamp(floor(v0.y) - renderChunkPositionY, -1, 16);
-		final int v0ZOffset = 1 + clamp(floor(v0.z) - renderChunkPositionZ, -1, 16);
+		final int v0XOffset = 1 + clamp(floor(v0.x) - renderChunkPosX, -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y) - renderChunkPosY, -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z) - renderChunkPosZ, -1, 16);
 
 		final int[] packedLight0 = new int[27];
+
+		final int[] cache = lazyPackedLightCache.cache;
+		final StateCache stateCache = lazyPackedLightCache.stateCache;
+		final IEnviromentBlockReader reader = lazyPackedLightCache.reader;
+		final int startPaddingX = lazyPackedLightCache.startPaddingX;
+		final int startPaddingY = lazyPackedLightCache.startPaddingY;
+		final int startPaddingZ = lazyPackedLightCache.startPaddingZ;
+		final int diffX = stateCache.startPaddingX - startPaddingX;
+		final int diffY = stateCache.startPaddingY - startPaddingY;
+		final int diffZ = stateCache.startPaddingZ - startPaddingZ;
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					packedLight0[index] = packedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset));
+					packedLight0[index] = lazyPackedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset), cache, stateCache, reader, pooledMutableBlockPos, renderChunkPosX, renderChunkPosY, renderChunkPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ);
 				}
 			}
 		}

@@ -34,7 +34,6 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IEnviromentBlockReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.BiomeColors;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -78,7 +77,6 @@ public final class MeshRenderer {
 			@Nonnull final LazyBlockColorCache blockColorsCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final SmoothableCache smoothableCache,
-			final int cacheAddX, final int cacheAddY, final int cacheAddZ,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final PooledMutableBlockPos texturePooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -114,7 +112,6 @@ public final class MeshRenderer {
 								initialPosX, initialPosY, initialPosZ,
 								texturePooledMutableBlockPos,
 								stateCache, smoothableCache,
-								cacheAddX, cacheAddY, cacheAddZ,
 								relativePosX, relativePosY, relativePosZ,
 								tryForBetterTexturesSnow, tryForBetterTexturesGrass
 						);
@@ -240,7 +237,7 @@ public final class MeshRenderer {
 						final int lightmapBlockLight3;
 
 						profiler.end(); // HACKY
-						try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)) {
+						try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pooledMutableBlockPos)) {
 
 							lightmapSkyLight0 = lightmapInfo.skylight0;
 							lightmapSkyLight1 = lightmapInfo.skylight1;
@@ -455,7 +452,7 @@ public final class MeshRenderer {
 		}
 	}
 
-	//TODO: fix lighting
+	//TODO: fix bad lighting fix
 	private static void renderShortGrass(
 			@Nonnull final ChunkRender renderChunk, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
@@ -476,8 +473,8 @@ public final class MeshRenderer {
 		// isBlockLoaded only checks x and z
 		if (
 				pooledMutableBlockPos.getX() > renderChunkPositionX + 16 ||
-				pooledMutableBlockPos.getY() > renderChunkPositionY + 16 ||
-				pooledMutableBlockPos.getZ() > renderChunkPositionZ + 16
+						pooledMutableBlockPos.getY() > renderChunkPositionY + 16 ||
+						pooledMutableBlockPos.getZ() > renderChunkPositionZ + 16
 		) {
 			return;
 		}
@@ -777,19 +774,32 @@ public final class MeshRenderer {
 						final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
 						final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
 
-						final int quadPackedLight0 = vertexData[6];
-						final int quadPackedLight1 = vertexData[formatSize + 6];
-						final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
-						final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
+						// Weird stuff is going on with emissive lighting > 1.12.2.
+						// It could be the new model system, it could be something else.
+						// Anyway, not many people are likely to complain about emissive lighting on grass
 
-						final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
-						final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
-						final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
-						final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
-						final int quadBlockLight0 = quadPackedLight0 & 0xFF;
-						final int quadBlockLight1 = quadPackedLight1 & 0xFF;
-						final int quadBlockLight2 = quadPackedLight2 & 0xFF;
-						final int quadBlockLight3 = quadPackedLight3 & 0xFF;
+//						final int quadPackedLight0 = vertexData[6];
+//						final int quadPackedLight1 = vertexData[formatSize + 6];
+//						final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
+//						final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
+//
+//						final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
+//						final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
+//						final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
+//						final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
+//						final int quadBlockLight0 = quadPackedLight0 & 0xFF;
+//						final int quadBlockLight1 = quadPackedLight1 & 0xFF;
+//						final int quadBlockLight2 = quadPackedLight2 & 0xFF;
+//						final int quadBlockLight3 = quadPackedLight3 & 0xFF;
+
+						final int quadSkyLight0 = 0;
+						final int quadSkyLight1 = 0;
+						final int quadSkyLight2 = 0;
+						final int quadSkyLight3 = 0;
+						final int quadBlockLight0 = 0;
+						final int quadBlockLight1 = 0;
+						final int quadBlockLight2 = 0;
+						final int quadBlockLight3 = 0;
 
 						bufferBuilder.pos(offX + r0x, offY + r0y, offZ + r0z).color(red, green, blue, 255).tex(v0u, v0v).lightmap((quadSkyLight0 >= lightmapSkyLight0) ? quadSkyLight0 : lightmapSkyLight0, (quadBlockLight0 >= lightmapBlockLight0) ? quadBlockLight0 : lightmapBlockLight0).endVertex();
 						bufferBuilder.pos(offX + r1x, offY + r1y, offZ + r1z).color(red, green, blue, 255).tex(v1u, v1v).lightmap((quadSkyLight1 >= lightmapSkyLight1) ? quadSkyLight1 : lightmapSkyLight1, (quadBlockLight1 >= lightmapBlockLight1) ? quadBlockLight1 : lightmapBlockLight1).endVertex();

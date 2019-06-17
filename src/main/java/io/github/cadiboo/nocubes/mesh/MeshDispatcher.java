@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
-import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -9,16 +8,12 @@ import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.HashMap;
 
 /**
@@ -26,97 +21,6 @@ import java.util.HashMap;
  */
 //TODO: clean up this class
 public final class MeshDispatcher {
-
-	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunkMeshOffset(
-			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nullable final StateCache stateCache,
-			@Nullable final SmoothableCache smoothableCache,
-			@Nullable final DensityCache densityCache,
-			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
-			@Nonnull final IsSmoothable isSmoothable,
-			@Nonnull final MeshGeneratorType meshGeneratorType
-	) {
-		if (meshGeneratorType == MeshGeneratorType.OldNoCubes) {
-			try (PooledMutableBlockPos pooledMutableBlockPos1 = PooledMutableBlockPos.retain()) {
-				return OldNoCubes.generateChunk(chunkPos, blockAccess, isSmoothable, pooledMutableBlockPos1);
-			}
-		}
-
-		final MeshGenerator meshGenerator = meshGeneratorType.getMeshGenerator();
-		return generateChunkMeshOffset(
-				chunkPos, blockAccess, pooledMutableBlockPos,
-				stateCache, smoothableCache, densityCache,
-				densityCacheAddX, densityCacheAddY, densityCacheAddZ,
-				isSmoothable,
-				meshGenerator
-		);
-	}
-
-	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunkMeshOffset(
-			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nullable final StateCache stateCache,
-			@Nullable final SmoothableCache smoothableCache,
-			@Nullable final DensityCache densityCache,
-			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
-			@Nonnull final IsSmoothable isSmoothable,
-			@Nonnull final MeshGenerator meshGenerator
-	) {
-		return offsetChunkMesh(
-				chunkPos,
-				generateChunkMeshUnOffset(
-						chunkPos, blockAccess, pooledMutableBlockPos,
-						stateCache, smoothableCache, densityCache,
-						densityCacheAddX, densityCacheAddY, densityCacheAddZ,
-						isSmoothable,
-						meshGenerator
-				)
-		);
-	}
-
-	/**
-	 * @return the un offset vertices for the chunk
-	 */
-	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunkMeshUnOffset(
-			@Nonnull final BlockPos chunkPos,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nullable final StateCache stateCache,
-			@Nullable final SmoothableCache smoothableCache,
-			@Nullable final DensityCache densityCache,
-			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
-			@Nonnull final IsSmoothable isSmoothable,
-			@Nonnull MeshGenerator meshGenerator
-	) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateChunkMeshUnOffset")) {
-			final int chunkPosX = chunkPos.getX();
-			final int chunkPosY = chunkPos.getY();
-			final int chunkPosZ = chunkPos.getZ();
-
-			// A chunk is 0-15 so 16, we add one because idk and then surface nets needs another +1 because reasons
-			final byte meshSizeX = (byte) (17 + meshGenerator.getSizeXExtension());
-			final byte meshSizeY = (byte) (17 + meshGenerator.getSizeYExtension());
-			final byte meshSizeZ = (byte) (17 + meshGenerator.getSizeZExtension());
-
-			return generateMeshUnOffset(
-					blockAccess, pooledMutableBlockPos,
-					isSmoothable,
-					stateCache,
-					chunkPosX, chunkPosY, chunkPosZ,
-					smoothableCache,
-					densityCache,
-					densityCacheAddX, densityCacheAddY, densityCacheAddZ,
-					meshSizeX, meshSizeY, meshSizeZ,
-					meshGenerator
-			);
-		}
-	}
 
 	// ++laziness
 	@Nonnull
@@ -311,7 +215,9 @@ public final class MeshDispatcher {
 	 */
 	@Nonnull
 	public static FaceList offsetFaceList(final int chunkPosX, final int chunkPosY, final int chunkPosZ, @Nonnull final FaceList faces) {
-		for (Face face : faces) {
+		final int size = faces.size();
+		for (int i = 0; i < size; ++i) {
+			final Face face = faces.get(i);
 			final Vec3 vertex0 = face.getVertex0();
 			final Vec3 vertex1 = face.getVertex1();
 			final Vec3 vertex2 = face.getVertex2();
@@ -332,68 +238,31 @@ public final class MeshDispatcher {
 		return faces;
 	}
 
-	public static HashMap<Vec3b, FaceList> generateMeshUnOffset(
-			@Nonnull final IBlockReader blockAccess, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
-			@Nonnull final IsSmoothable isSmoothable,
-			@Nullable final StateCache stateCacheIn,
-			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
-			@Nullable final SmoothableCache smoothableCacheIn,
-			@Nullable final DensityCache densityCacheIn,
-			final int densityCacheAddX, final int densityCacheAddY, final int densityCacheAddZ,
-			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
-			@Nonnull final MeshGenerator meshGenerator
-	) {
-		try (
-				final StateCache stateCache =
-						stateCacheIn != null ?
-								stateCacheIn :
-								generateMeshStateCache(
-										chunkPosX, chunkPosY, chunkPosZ,
-										meshSizeX, meshSizeY, meshSizeZ,
-										blockAccess, pooledMutableBlockPos
-								);
-				final SmoothableCache smoothableCache =
-						smoothableCacheIn != null ?
-								smoothableCacheIn :
-								CacheUtil.generateSmoothableCache(stateCache, isSmoothable);
-				final DensityCache densityCache =
-						densityCacheIn != null ?
-								densityCacheIn : CacheUtil.generateDensityCache(
-								meshSizeX, meshSizeY, meshSizeZ,
-								densityCacheAddX, densityCacheAddY, densityCacheAddZ,
-								stateCache,
-								smoothableCache
-						)
-		) {
-			return meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
-		}
-	}
-
-	@Nonnull
-	public static StateCache generateMeshStateCache(
-			final int startPosX, final int startPosY, final int startPosZ,
-			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-			@Nonnull final IBlockReader blockAccess,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
-	) {
-		try (final ModProfiler ignored = ModProfiler.get().start("generateMeshStateCache")) {
-			// Density takes +1 block on every negative axis into account so we need to start at -1 block
-			final int cacheStartPosX = startPosX - 1;
-			final int cacheStartPosY = startPosY - 1;
-			final int cacheStartPosZ = startPosZ - 1;
-
-			// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
-			final int cacheSizeX = meshSizeX + 1;
-			final int cacheSizeY = meshSizeY + 1;
-			final int cacheSizeZ = meshSizeZ + 1;
-
-			return CacheUtil.generateStateCache(
-					cacheStartPosX, cacheStartPosY, cacheStartPosZ,
-					cacheSizeX, cacheSizeY, cacheSizeZ,
-					blockAccess,
-					pooledMutableBlockPos
-			);
-		}
-	}
+	//	@Nonnull
+//	public static StateCache generateMeshStateCache(
+//			final int startPosX, final int startPosY, final int startPosZ,
+//			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
+//			@Nonnull final IBlockReader blockAccess,
+//			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+//	) {
+//		try (final ModProfiler ignored = ModProfiler.get().start("generateMeshStateCache")) {
+//			// Density takes +1 block on every negative axis into account so we need to start at -1 block
+//			final int cacheStartPosX = startPosX - 1;
+//			final int cacheStartPosY = startPosY - 1;
+//			final int cacheStartPosZ = startPosZ - 1;
+//
+//			// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
+//			final int cacheSizeX = meshSizeX + 1;
+//			final int cacheSizeY = meshSizeY + 1;
+//			final int cacheSizeZ = meshSizeZ + 1;
+//
+//			return CacheUtil.generateStateCache(
+//					cacheStartPosX, cacheStartPosY, cacheStartPosZ,
+//					cacheSizeX, cacheSizeY, cacheSizeZ,
+//					blockAccess,
+//					pooledMutableBlockPos
+//			);
+//		}
+//	}
 
 }
