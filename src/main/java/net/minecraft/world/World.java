@@ -86,7 +86,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    private int lastLightningBolt;
    public final Random rand = new Random();
    public final Dimension dimension;
-   public final AbstractChunkProvider field_73020_y;
+   public final AbstractChunkProvider chunkProvider;
    protected final WorldInfo worldInfo;
    private final IProfiler profiler;
    public final boolean isRemote;
@@ -100,8 +100,8 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       super(World.class);
       this.profiler = p_i50005_4_;
       this.worldInfo = p_i50005_1_;
-      this.dimension = p_i50005_2_.func_218270_a(this);
-      this.field_73020_y = p_i50005_3_.apply(this, this.dimension);
+      this.dimension = p_i50005_2_.create(this);
+      this.chunkProvider = p_i50005_3_.apply(this, this.dimension);
       this.isRemote = p_i50005_5_;
       this.worldBorder = this.dimension.createWorldBorder();
       this.mainThread = Thread.currentThread();
@@ -175,7 +175,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public IChunk getChunk(int x, int z, ChunkStatus requiredStatus, boolean nonnull) {
-      IChunk ichunk = this.field_73020_y.getChunk(x, z, requiredStatus, nonnull);
+      IChunk ichunk = this.chunkProvider.getChunk(x, z, requiredStatus, nonnull);
       if (ichunk == null && nonnull) {
          throw new IllegalStateException("Should always be able to create a chunk!");
       } else {
@@ -246,7 +246,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
                   this.markForRerender(pos);
                }
 
-               if ((flags & 2) != 0 && (!this.isRemote || (flags & 4) == 0) && (this.isRemote || chunk == null || chunk.func_217321_u() != null && chunk.func_217321_u().func_219065_a(ChunkHolder.LocationType.TICKING))) {
+               if ((flags & 2) != 0 && (!this.isRemote || (flags & 4) == 0) && (this.isRemote || chunk == null || chunk.func_217321_u() != null && chunk.func_217321_u().isAtLeast(ChunkHolder.LocationType.TICKING))) {
                   this.notifyBlockUpdate(pos, blockstate, newState, flags);
                }
 
@@ -667,7 +667,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
          TileEntity tileentity = iterator.next();
          if (!tileentity.isRemoved() && tileentity.hasWorld()) {
             BlockPos blockpos = tileentity.getPos();
-            if (this.field_73020_y.canTick(blockpos) && this.getWorldBorder().contains(blockpos)) {
+            if (this.chunkProvider.canTick(blockpos) && this.getWorldBorder().contains(blockpos)) {
                try {
                   net.minecraftforge.server.timings.TimeTracker.TILE_ENTITY_UPDATE.trackStart(tileentity);
                   iprofiler.startSection(() -> {
@@ -845,7 +845,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       int i1 = MathHelper.floor(bb.minZ);
       int j1 = MathHelper.ceil(bb.maxZ);
       BlockMaterialMatcher blockmaterialmatcher = BlockMaterialMatcher.forMaterial(materialIn);
-      return BlockPos.func_218287_a(i, k, i1, j - 1, l - 1, j1 - 1).anyMatch((p_217397_2_) -> {
+      return BlockPos.getAllInBox(i, k, i1, j - 1, l - 1, j1 - 1).anyMatch((p_217397_2_) -> {
          return blockmaterialmatcher.test(this.getBlockState(p_217397_2_));
       });
    }
@@ -889,7 +889,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     */
    @OnlyIn(Dist.CLIENT)
    public String getProviderName() {
-      return this.field_73020_y.makeString();
+      return this.chunkProvider.makeString();
    }
 
    @Nullable
@@ -977,7 +977,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public boolean isBlockPresent(BlockPos pos) {
-      return isOutsideBuildHeight(pos) ? false : this.field_73020_y.chunkExists(pos.getX() >> 4, pos.getZ() >> 4);
+      return isOutsideBuildHeight(pos) ? false : this.chunkProvider.chunkExists(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
    public boolean func_217400_a(BlockPos p_217400_1_, Entity p_217400_2_) {
@@ -1025,10 +1025,10 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public void close() throws IOException {
-      this.field_73020_y.close();
+      this.chunkProvider.close();
    }
 
-   public ChunkStatus func_217342_O() {
+   public ChunkStatus getChunkStatus() {
       return ChunkStatus.FULL;
    }
 
@@ -1272,7 +1272,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     * gets the world's chunk provider
     */
    public AbstractChunkProvider getChunkProvider() {
-      return this.field_73020_y;
+      return this.chunkProvider;
    }
 
    public void addBlockEvent(BlockPos pos, Block blockIn, int eventID, int eventParam) {
@@ -1392,7 +1392,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       crashreportcategory.addDetail("All players", () -> {
          return this.getPlayers().size() + " total; " + this.getPlayers();
       });
-      crashreportcategory.addDetail("Chunk stats", this.field_73020_y::makeString);
+      crashreportcategory.addDetail("Chunk stats", this.chunkProvider::makeString);
 
       try {
          this.worldInfo.addToCrashReport(crashreportcategory);
@@ -1474,7 +1474,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       return this.rand;
    }
 
-   public boolean func_217375_a(BlockPos p_217375_1_, Predicate<BlockState> p_217375_2_) {
+   public boolean hasBlockState(BlockPos p_217375_1_, Predicate<BlockState> p_217375_2_) {
       return p_217375_2_.test(this.getBlockState(p_217375_1_));
    }
 

@@ -4,14 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.util.Pair;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
@@ -51,9 +43,18 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 public class BlockState extends StateHolder<Block, BlockState> implements IStateHolder<BlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    @Nullable
-   private BlockState.Cache field_215707_c;
+   private Cache field_215707_c;
    private final int field_215708_d;
    private final boolean field_215709_e;
 
@@ -65,7 +66,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public void func_215692_c() {
       if (!this.getBlock().isVariableOpacity()) {
-         this.field_215707_c = new BlockState.Cache(this);
+         this.field_215707_c = new Cache(this);
       }
 
    }

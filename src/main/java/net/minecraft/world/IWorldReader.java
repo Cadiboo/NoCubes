@@ -63,7 +63,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
    IChunk getChunk(int x, int z, ChunkStatus requiredStatus, boolean nonnull);
 
    @Deprecated
-   boolean chunkExists(int p_217354_1_, int p_217354_2_);
+   boolean chunkExists(int chunkX, int chunkZ);
 
    BlockPos getHeight(Heightmap.Type heightmapType, BlockPos pos);
 
@@ -98,11 +98,11 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return this.getChunk(chunkX, chunkZ, ChunkStatus.FULL, true);
    }
 
-   default IChunk getChunk(int p_217348_1_, int p_217348_2_, ChunkStatus p_217348_3_) {
-      return this.getChunk(p_217348_1_, p_217348_2_, p_217348_3_, true);
+   default IChunk getChunk(int chunkX, int chunkZ, ChunkStatus requiredStatus) {
+      return this.getChunk(chunkX, chunkZ, requiredStatus, true);
    }
 
-   default ChunkStatus func_217342_O() {
+   default ChunkStatus getChunkStatus() {
       return ChunkStatus.EMPTY;
    }
 
@@ -163,13 +163,13 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
             VoxelShape voxelshape3;
             while(true) {
-               if (!cubecoordinateiterator.func_218301_a()) {
+               if (!cubecoordinateiterator.hasNext()) {
                   return false;
                }
 
-               int j2 = cubecoordinateiterator.func_218304_b();
-               int k2 = cubecoordinateiterator.func_218302_c();
-               int l2 = cubecoordinateiterator.func_218303_d();
+               int j2 = cubecoordinateiterator.getX();
+               int k2 = cubecoordinateiterator.getY();
+               int l2 = cubecoordinateiterator.getZ();
                int k1 = 0;
                if (j2 == i || j2 == j) {
                   ++k1;
@@ -186,7 +186,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
                if (k1 < 3) {
                   int l1 = j2 >> 4;
                   int i2 = l2 >> 4;
-                  IChunk ichunk = IWorldReader.this.getChunk(l1, i2, IWorldReader.this.func_217342_O(), false);
+                  IChunk ichunk = IWorldReader.this.getChunk(l1, i2, IWorldReader.this.getChunkStatus(), false);
                   if (ichunk != null) {
                      blockpos$mutableblockpos.setPos(j2, k2, l2);
                      BlockState blockstate = ichunk.getBlockState(blockpos$mutableblockpos);
