@@ -12,35 +12,35 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-final class ClientConfig {
+public final class ClientConfig {
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue renderSmoothTerrain;
+	public final ForgeConfigSpec.BooleanValue renderSmoothTerrain;
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue renderSmoothLeaves;
+	public final ForgeConfigSpec.BooleanValue renderSmoothLeaves;
 	@Nonnull
-	final ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
+	public final ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
 	@Nonnull
-	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
+	public final ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
 	@Nonnull
-	final ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
+	public final ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue applyDiffuseLighting;
+	public final ForgeConfigSpec.BooleanValue applyDiffuseLighting;
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue betterTextures;
+	public final ForgeConfigSpec.BooleanValue betterTextures;
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue shortGrass;
+	public final ForgeConfigSpec.BooleanValue shortGrass;
 
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue smoothFluidLighting;
+	public final ForgeConfigSpec.BooleanValue smoothFluidLighting;
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue smoothFluidColors;
+	public final ForgeConfigSpec.BooleanValue smoothFluidColors;
 	@Nonnull
-	final ForgeConfigSpec.BooleanValue naturalFluidTextures;
+	public final ForgeConfigSpec.BooleanValue naturalFluidTextures;
 
 	ClientConfig(@Nonnull final ForgeConfigSpec.Builder builder) {
 		builder.push("general");

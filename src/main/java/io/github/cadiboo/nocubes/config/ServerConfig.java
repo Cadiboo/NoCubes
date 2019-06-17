@@ -12,7 +12,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-final class ServerConfig {
+public final class ServerConfig {
 
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
