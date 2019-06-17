@@ -83,14 +83,14 @@ public final class CacheUtil {
 			final int diffX = stateCache.startPaddingX - startPaddingX;
 			final int diffY = stateCache.startPaddingY - startPaddingY;
 			final int diffZ = stateCache.startPaddingZ - startPaddingZ;
-			final BlockState[] stateCacheArray = stateCache.getBlockStates();
+			final BlockState[] blockStateArray = stateCache.getBlockStates();
 
 			int smoothableIndex = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++smoothableIndex) {
 						smoothableCacheArray[smoothableIndex] = isStateSmoothable.apply(
-								stateCacheArray[stateCache.getIndex(
+								blockStateArray[stateCache.getIndex(
 										x + diffX,
 										y + diffY,
 										z + diffZ,
