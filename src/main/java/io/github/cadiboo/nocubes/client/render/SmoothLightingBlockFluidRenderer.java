@@ -92,10 +92,10 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			float fluidHeight = this.getFluidHeight(worldIn, fluid, x, y, z, pooledMutableBlockPos);
-			float fluidHeightSouth = this.getFluidHeight(worldIn, fluid, x, y, z + 1, pooledMutableBlockPos);
-			float fluidHeightEastSouth = this.getFluidHeight(worldIn, fluid, x + 1, y, z + 1, pooledMutableBlockPos);
-			float fluidHeightEast = this.getFluidHeight(worldIn, fluid, x + 1, y, z, pooledMutableBlockPos);
+			final float fluidHeight = this.getFluidHeight(worldIn, fluid, x, y, z, pooledMutableBlockPos);
+			final float fluidHeightSouth = this.getFluidHeight(worldIn, fluid, x, y, z + 1, pooledMutableBlockPos);
+			final float fluidHeightEastSouth = this.getFluidHeight(worldIn, fluid, x + 1, y, z + 1, pooledMutableBlockPos);
+			final float fluidHeightEast = this.getFluidHeight(worldIn, fluid, x + 1, y, z, pooledMutableBlockPos);
 
 //			final double x = x;
 //			final double y = y;
@@ -445,15 +445,19 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 		int divisor = 0;
 		float height = 0.0F;
 
-		for (int z = 0; z > -2; --z) {
-			for (int x = 0; x > -2; --x) {
-				pooledMutableBlockPos.setPos(posX - x, posY + 1, posZ - z);
+//		for (int j = 0; j < 4; ++j) {
+//			{
+		for (int x = 0; x > -2; --x) {
+			for (int z = 0; z > -2; --z) {
+//				pooledMutableBlockPos.setPos(posX - (j & 1), posY + 1, posZ - (j >> 1 & 1));
+				pooledMutableBlockPos.setPos(posX + x, posY + 1, posZ + z);
 
 				if (reader.getFluidState(pooledMutableBlockPos).getFluid().isEquivalentTo(fluidIn)) {
 					return 1.0F;
 				}
 
-				pooledMutableBlockPos.setPos(posX - x, posY, posZ - z);
+//				pooledMutableBlockPos.setPos(posX - (j & 1), posY, posZ - (j >> 1 & 1));
+				pooledMutableBlockPos.setPos(posX + x, posY, posZ + z);
 
 				IFluidState ifluidstate = reader.getFluidState(pooledMutableBlockPos);
 				if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
