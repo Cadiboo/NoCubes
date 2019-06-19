@@ -41,7 +41,7 @@ final class ServerConfig {
 		terrainCollisions = builder
 				.comment("If realistic terrain collisions should be calculated")
 				.translation(MOD_ID + ".config.terrainCollisions")
-				.define("terrainCollisions", false);
+				.define("terrainCollisions", true);
 		builder.pop();
 	}
 
