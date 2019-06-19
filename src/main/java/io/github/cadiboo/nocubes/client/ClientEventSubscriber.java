@@ -483,9 +483,9 @@ public final class ClientEventSubscriber {
 
 		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(rayTraceResult.getBlockPos(), world, isSmoothable, meshGeneratorType)) {
-			for (final Face face : faces) {
-				try {
+		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
+			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
+				try (Face face = faces.get(i)) {
 					try (
 							Vec3 v0 = face.getVertex0();
 							Vec3 v1 = face.getVertex1();
@@ -503,8 +503,6 @@ public final class ClientEventSubscriber {
 						// End back at v0. Draw with alpha this time
 						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
 					}
-				} finally {
-					face.close();
 				}
 			}
 		}
