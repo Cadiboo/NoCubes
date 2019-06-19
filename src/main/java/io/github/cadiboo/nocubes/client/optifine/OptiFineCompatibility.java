@@ -66,7 +66,7 @@ public final class OptiFineCompatibility {
 
 	public static ChunkCache getChunkCache(final IBlockAccess reader) {
 		if (!OPTIFINE_INSTALLED) {
-			return null;
+			throw new OptiFineNotPresentException();
 		}
 		return HardOptiFineCompatibility.getChunkCache(reader);
 	}
@@ -141,12 +141,11 @@ public final class OptiFineCompatibility {
 
 	public static final class BufferBuilderOF {
 
-		@Nullable
+		@Nonnull
 		public static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			if (!OPTIFINE_INSTALLED) {
-				return null;
+				throw new OptiFineNotPresentException();
 			}
-
 			return HardOptiFineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
 		}
 
@@ -154,21 +153,19 @@ public final class OptiFineCompatibility {
 
 	public static final class BlockModelCustomizer {
 
-		@Nullable
+		@Nonnull
 		public static IBakedModel getRenderModel(@Nonnull final IBakedModel model, @Nonnull final IBlockState state, @Nonnull final Object renderEnv) {
 			if (!OPTIFINE_INSTALLED) {
-				return null;
+				throw new OptiFineNotPresentException();
 			}
-
 			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderModel(model, state, renderEnv);
 		}
 
-		@Nullable
+		@Nonnull
 		public static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final EnumFacing facing, @Nonnull final BlockRenderLayer blockRenderLayer, @Nonnull final long rand, @Nonnull final Object renderEnv) {
 			if (!OPTIFINE_INSTALLED) {
-				return null;
+				throw new OptiFineNotPresentException();
 			}
-
 			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, renderEnv);
 		}
 

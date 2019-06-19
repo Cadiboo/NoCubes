@@ -34,7 +34,7 @@ public final class ModelHelper {
 	/**
 	 * The order of {@link EnumFacing} and null used in getQuads
 	 */
-	public static final EnumFacing[] ENUMFACING_QUADS_ORDERED = {
+	public static final EnumFacing[] DIRECTION_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
 
@@ -63,8 +63,8 @@ public final class ModelHelper {
 			state = state.getBlock().getExtendedState(state, blockAccess, pos);
 		}
 
-		for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
-			final EnumFacing facing = ENUMFACING_QUADS_ORDERED[facingIndex];
+		for (int facingIndex = 0, enumfacing_quads_orderedLength = DIRECTION_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
+			final EnumFacing facing = DIRECTION_QUADS_ORDERED[facingIndex];
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand/*, modelData*/);
 			if (quads.isEmpty()) {
 				continue;

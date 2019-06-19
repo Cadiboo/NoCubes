@@ -7,42 +7,36 @@ import net.minecraft.world.IBlockAccess;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
-import java.util.Arrays;
 
 /**
  * @author Cadiboo
  */
 public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 
-	protected static final int[] EMPTY_NEGATIVE_1 = new int[22 * 22 * 22];
-	private static final ThreadLocal<LazyPackedLightCache> POOL = ThreadLocal.withInitial(() -> new LazyPackedLightCache(0, 0, 0));
+	private static final ThreadLocal<LazyPackedLightCache> POOL = ThreadLocal.withInitial(LazyPackedLightCache::new);
 	private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
-	static {
-		Arrays.fill(EMPTY_NEGATIVE_1, -1);
-	}
-
+	@Nonnull
+	public IBlockAccess reader;
+	@Nonnull
+	public StateCache stateCache;
+	@Nonnull
+	public int[] cache;
 	private int renderChunkPosX;
 	private int renderChunkPosY;
 	private int renderChunkPosZ;
-	@Nonnull
-	private IBlockAccess reader;
-	@Nonnull
-	private StateCache stateCache;
-	@Nonnull
-	private int[] cache;
-
 	private boolean inUse;
 
-	private LazyPackedLightCache(final int sizeX, final int sizeY, final int sizeZ) {
-		super(sizeX, sizeY, sizeZ);
-		this.cache = new int[sizeX * sizeY * sizeZ];
-		System.arraycopy(EMPTY_NEGATIVE_1, 0, this.cache, 0, sizeX * sizeY * sizeZ);
+	//TODO: make this a non hardcoded size so that I can render small sections of the world
+	private LazyPackedLightCache() {
+		//From -2 to +2
+		super(2, 2, 2, 20, 20, 20);
+		this.cache = new int[8000];
+		System.arraycopy(ClientUtil.NEGATIVE_1_8000, 0, this.cache, 0, 8000);
 		this.inUse = false;
 	}
 
 	@Nonnull
 	public static LazyPackedLightCache retain(
-			final int sizeX, final int sizeY, final int sizeZ,
 			@Nonnull final IBlockAccess reader,
 			@Nonnull final StateCache stateCache,
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ
@@ -62,42 +56,45 @@ public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 		pooled.renderChunkPosY = renderChunkPosY;
 		pooled.renderChunkPosZ = renderChunkPosZ;
 
-		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
-			System.arraycopy(EMPTY_NEGATIVE_1, 0, pooled.cache, 0, sizeX * sizeY * sizeZ);
-			return pooled;
-		} else {
-			pooled.sizeX = sizeX;
-			pooled.sizeY = sizeY;
-			pooled.sizeZ = sizeZ;
+		System.arraycopy(ClientUtil.NEGATIVE_1_8000, 0, pooled.cache, 0, 8000);
 
-			final int size = sizeX * sizeY * sizeZ;
-
-			if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-				pooled.cache = new int[size];
-			}
-
-			System.arraycopy(EMPTY_NEGATIVE_1, 0, pooled.cache, 0, sizeX * sizeY * sizeZ);
-
-			return pooled;
-		}
+		return pooled;
 	}
 
-	public int get(final int x, final int y, final int z) {
-		int packedLight = cache[getIndex(x, y, z)];
+	public static int get(
+			final int x, final int y, final int z,
+			final int[] cache,
+			final int index,
+			final StateCache stateCache, final IBlockAccess reader,
+			final BlockPos.MutableBlockPos mutableBlockPos,
+			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+			final int diffX, final int diffY, final int diffZ
+	) {
+		int packedLight = cache[index];
 		if (packedLight == -1) {
-			packedLight = stateCache.getBlockStates()[stateCache.getIndex(x, y, z)].getPackedLightmapCoords(
+			packedLight = stateCache.getBlockStates()[stateCache.getIndex(x + diffX, y + diffY, z + diffZ)].getPackedLightmapCoords(
 					reader,
-					MUTABLE_BLOCK_POS.get().setPos(
-							// -2 because offset
-							renderChunkPosX + x - 2,
-							renderChunkPosY + y - 2,
-							renderChunkPosZ + z - 2
+					mutableBlockPos.setPos(
+							renderChunkPosX + x - startPaddingX,
+							renderChunkPosY + y - startPaddingY,
+							renderChunkPosZ + z - startPaddingZ
 					)
 			);
-			this.cache[getIndex(x, y, z)] = packedLight;
+			cache[index] = packedLight;
 			if (packedLight == -1) LogManager.getLogger().error("BARRRF");
 		}
 		return packedLight;
+	}
+
+	@Deprecated
+	public int get(final int x, final int y, final int z) {
+		return get(x, y, z, this.cache, this.stateCache, this.reader, MUTABLE_BLOCK_POS.get(), this.renderChunkPosX, this.renderChunkPosY, this.renderChunkPosZ, this.startPaddingX, this.startPaddingY, this.startPaddingZ, this.stateCache.startPaddingX - this.startPaddingX, this.stateCache.startPaddingY - this.startPaddingY, this.stateCache.startPaddingZ - this.startPaddingZ);
+	}
+
+	@Deprecated
+	public int get(final int x, final int y, final int z, final int[] cache, final StateCache stateCache, final IBlockAccess reader, final BlockPos.MutableBlockPos mutableBlockPos, final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ, final int startPaddingX, final int startPaddingY, final int startPaddingZ, final int diffX, final int diffY, final int diffZ) {
+		return get(x, y, z, cache, getIndex(x, y, z), stateCache, reader, mutableBlockPos, renderChunkPosX, renderChunkPosY, renderChunkPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ);
 	}
 
 	@Override

@@ -11,14 +11,12 @@ import javax.annotation.Nonnull;
  */
 public final class ClientCacheUtil {
 
-	public static LazyPackedLightCache generatePackedLightCache(
+	public static LazyPackedLightCache generateLazyPackedLightCache(
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IBlockAccess cache
 	) {
 		return LazyPackedLightCache.retain(
-				//From -2 to +2
-				20, 20, 20,
 				cache,
 				stateCache,
 				renderChunkPosX, renderChunkPosY, renderChunkPosZ
@@ -31,8 +29,6 @@ public final class ClientCacheUtil {
 			@Nonnull final ColorResolver resolver
 	) {
 		return LazyBlockColorCache.retain(
-				//From -2 to +2
-				20, 20, 20,
 				cache, resolver,
 				renderChunkPosX, renderChunkPosY, renderChunkPosZ
 		);

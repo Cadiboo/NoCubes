@@ -22,8 +22,8 @@ package io.github.cadiboo.nocubes.config;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
+import io.github.cadiboo.nocubes.tempnetwork.S2CSyncConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.common.network.handshake.FMLHandshakeMessage;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -85,6 +85,17 @@ public class ConfigTracker {
 //		return configData.entrySet().stream().map(e -> Pair.of("Config " + e.getKey(), new FMLHandshakeMessage.S2CConfigData(e.getKey(), e.getValue()))).collect(Collectors.toList());
 //	}
 
+	public List<Pair<String, S2CSyncConfig>> syncConfigs(boolean isLocal) {
+		final Map<String, byte[]> configData = configSets.get(ModConfig.Type.SERVER).stream().collect(Collectors.toMap(ModConfig::getFileName, mc -> { //TODO: Test cpw's LambdaExceptionUtils on Oracle javac.
+			try {
+				return Files.readAllBytes(mc.getFullPath());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}));
+		return configData.entrySet().stream().map(e -> Pair.of("Config " + e.getKey(), new S2CSyncConfig(e.getKey(), e.getValue()))).collect(Collectors.toList());
+	}
+
 	private void openConfig(final ModConfig config, final Path configBasePath) {
 		LOGGER.debug("Loading config file type {} at {} for {}", config.getType(), config.getFileName(), config.getModId());
 		final CommentedFileConfig configData = config.getHandler().reader(configBasePath).apply(config);
@@ -101,6 +112,15 @@ public class ConfigTracker {
 //			});
 //		}
 //	}
+
+	public void receiveSyncedConfig(final S2CSyncConfig s2CConfigData) {
+		if (!Minecraft.getMinecraft().isIntegratedServerRunning()) {
+			Optional.ofNullable(fileMap.get(s2CConfigData.getFileName())).ifPresent(mc -> {
+				mc.setConfigData(TomlFormat.instance().createParser().parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
+				mc.fireEvent(new ModConfig.ConfigReloading(mc));
+			});
+		}
+	}
 
 	public void loadDefaultServerConfigs() {
 		configSets.get(ModConfig.Type.SERVER).forEach(modConfig -> {

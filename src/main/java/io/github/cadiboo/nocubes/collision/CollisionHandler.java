@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
+import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
+import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
 import static net.minecraft.util.math.MathHelper.clamp;
 
 /**
@@ -642,40 +645,26 @@ public final class CollisionHandler {
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 
-//			int i = MathHelper.floor(aabb.minX) - 1;
-//			int j = MathHelper.ceil(aabb.maxX) + 1;
-//			int k = MathHelper.floor(aabb.minY) - 1;
-//			int l = MathHelper.ceil(aabb.maxY) + 1;
-//			int i1 = MathHelper.floor(aabb.minZ) - 1;
-//			int j1 = MathHelper.ceil(aabb.maxZ) + 1;
-
-			// Density calculation needs -1 on all axis
-			final int additionalSizeNegX = 1;
-			final int additionalSizeNegY = 1;
-			final int additionalSizeNegZ = 1;
-
 			final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
 
-			final byte areaSizeX = (byte) (maxXp1 - minXm1);
-			final byte areaSizeY = (byte) (maxYp1 - minYm1);
-			final byte areaSizeZ = (byte) (maxZp1 - minZm1);
+			final byte meshSizeX = getMeshSizeX(maxXp1 - minXm1, meshGenerator);
+			final byte meshSizeY = getMeshSizeY(maxYp1 - minYm1, meshGenerator);
+			final byte meshSizeZ = getMeshSizeZ(maxZp1 - minZm1, meshGenerator);
 
-			final byte meshSizeX = (byte) (areaSizeX + meshGenerator.getSizeXExtension());
-			final byte meshSizeY = (byte) (areaSizeY + meshGenerator.getSizeYExtension());
-			final byte meshSizeZ = (byte) (areaSizeZ + meshGenerator.getSizeZExtension());
+			// DensityCache needs -1 on each NEGATIVE axis
+			final int startPosX = minXm1 - 1;
+			final int startPosY = minYm1 - 1;
+			final int startPosZ = minZm1 - 1;
 
-			final int sizeX = meshSizeX + additionalSizeNegX;
-			final int sizeY = meshSizeY + additionalSizeNegY;
-			final int sizeZ = meshSizeZ + additionalSizeNegZ;
-
-			final int startPosX = minXm1 - additionalSizeNegX;
-			final int startPosY = minYm1 - additionalSizeNegY;
-			final int startPosZ = minZm1 - additionalSizeNegZ;
+			// StateCache needs +1 on each POSITIVE axis
+			final int endPosX = maxXp1 + 1;
+			final int endPosY = maxYp1 + 1;
+			final int endPosZ = maxZp1 + 1;
 
 			if (!_this.isAreaLoaded(
 					new StructureBoundingBox(
 							startPosX, startPosY, startPosZ,
-							startPosX + sizeX, startPosY + sizeY, startPosZ + sizeZ
+							endPosX, endPosY, endPosZ
 					),
 					true
 			)) {
@@ -684,15 +673,27 @@ public final class CollisionHandler {
 
 			final ModProfiler profiler = ModProfiler.get();
 			try (
+					// DensityCache needs -1 on each NEGATIVE axis
+					// StateCache needs +1 on each POSITIVE axis
+					// Density calculation needs +1 on ALL axis, 1+1=2
 					StateCache stateCache = CacheUtil.generateStateCache(
 							startPosX, startPosY, startPosZ,
-							sizeX, sizeY, sizeZ,
+							endPosX, endPosY, endPosZ,
+							1, 1, 1,
 							_this, pooledMutableBlockPos
 					);
-					SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, TERRAIN_SMOOTHABLE);
+					SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
+							startPosX, startPosY, startPosZ,
+							// StateCache needs +1 on each POSITIVE axis
+							endPosX, endPosY, endPosZ,
+							1, 1, 1,
+							stateCache, TERRAIN_SMOOTHABLE
+					);
 					DensityCache densityCache = CacheUtil.generateDensityCache(
-							sizeX - 1, sizeY - 1, sizeZ - 1,
-							0, 0, 0,
+							startPosX, startPosY, startPosZ,
+							// DensityCache needs -1 on each NEGATIVE axis (not +1 on each positive axis as well)
+							endPosX - 1, endPosY - 1, endPosZ - 1,
+							1, 1, 1,
 							stateCache, smoothableCache
 					)
 			) {
@@ -720,6 +721,8 @@ public final class CollisionHandler {
 
 					final List<AxisAlignedBB> collidingShapes = new ArrayList<>();
 
+					final IBlockState[] blocksArray = stateCache.getBlockStates();
+
 					for (final Face face : finalFaces) {
 						try (
 								final Vec3 v0 = face.getVertex0();
@@ -727,7 +730,6 @@ public final class CollisionHandler {
 								final Vec3 v2 = face.getVertex2();
 								final Vec3 v3 = face.getVertex3()
 						) {
-							final int approximateY;
 							AxisAlignedBB originalBoxShape;
 
 							try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
@@ -735,10 +737,10 @@ public final class CollisionHandler {
 								// To stop players falling down through the world when they enable collisions
 								// (Only works on flat or near-flat surfaces)
 								//TODO: remove
-								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
-								approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
-								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
-								final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
+								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
+								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
+								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
+								final IBlockState state = blocksArray[stateCache.getIndex(
 										approximateX - startPosX,
 										approximateY - startPosY,
 										approximateZ - startPosZ

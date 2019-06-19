@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.config.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.config.ModConfig;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
+import io.github.cadiboo.nocubes.tempnetwork.ModNetworkManager;
 import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.github.cadiboo.nocubes.util.FileUtils;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -32,7 +33,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory", updateJSON = "https://Cadiboo.github.io/projects/nocubes/update.json")
+@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory", updateJSON = "https://Cadiboo.github.io/projects/nocubes/update.json", dependencies = "required-after:forge@[14.23.5.2768,);")
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
@@ -41,6 +42,8 @@ public final class NoCubes {
 	public static Proxy PROXY = null;
 	@Instance
 	public static NoCubes INSTANCE = null;
+
+	public static final ModNetworkManager NETWORK_MANAGER = new ModNetworkManager();
 
 	protected final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")

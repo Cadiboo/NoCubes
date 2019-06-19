@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
@@ -16,6 +15,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -23,7 +23,6 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -39,7 +38,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
@@ -266,10 +264,13 @@ public final class ClientEventSubscriber {
 				GlStateManager.clear(256);
 				GlStateManager.matrixMode(5889);
 				GlStateManager.enableColorMaterial();
-				GlStateManager.ortho(0.0D, (double) mc.displayWidth, (double) mc.displayHeight, 0.0D, 1000.0D, 3000.0D);
+				GlStateManager.loadIdentity();
+				final int displayWidth = mc.displayWidth;
+				final int displayHeight = mc.displayHeight;
+				GlStateManager.ortho(0.0D, (double) displayWidth, (double) displayHeight, 0.0D, 1000.0D, 3000.0D);
 				GlStateManager.matrixMode(5888);
 				GlStateManager.loadIdentity();
-				GlStateManager.scale(mc.displayWidth / 1000F, mc.displayWidth / 1000F, 1);
+				GlStateManager.scale(displayWidth / 1000F, displayWidth / 1000F, 1);
 				GlStateManager.translate(5F, 5F, 0F);
 				GlStateManager.translate(0.0F, 0.0F, -2000.0F);
 				GlStateManager.glLineWidth(1.0F);
@@ -285,7 +286,8 @@ public final class ClientEventSubscriber {
 				final int cy = 20 + 80 + 320 * (offset / 3);
 
 				GlStateManager.enableTexture2D();
-				mc.fontRenderer.drawStringWithShadow(thread.getName(), (float) (cx - 160), (float) (cy - 80 - 10 - 16), 0xFFFFFF);
+				final FontRenderer fontRenderer = mc.fontRenderer;
+				fontRenderer.drawStringWithShadow(thread.getName(), (float) (cx - 160), (float) (cy - 80 - 10 - 16), 0xFFFFFF);
 
 				GlStateManager.disableTexture2D();
 				Tessellator tessellator = Tessellator.getInstance();
@@ -303,7 +305,8 @@ public final class ClientEventSubscriber {
 
 				for (int l = 0; l < list.size(); ++l) {
 					Profiler.Result profiler$result1 = list.get(l);
-					int i11 = MathHelper.floor(profiler$result1.usePercentage / 4.0D) + 1;
+					final double usePercentage = profiler$result1.usePercentage;
+					int i1 = MathHelper.floor(usePercentage / 4.0D) + 1;
 					bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
 					int j1 = profiler$result1.getColor();
 					int k1 = j1 >> 16 & 255;
@@ -311,8 +314,8 @@ public final class ClientEventSubscriber {
 					int i2 = j1 & 255;
 					bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
 
-					for (int j2 = i11; j2 >= 0; --j2) {
-						float f = (float) ((d0 + profiler$result1.usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
+					for (int j2 = i1; j2 >= 0; --j2) {
+						float f = (float) ((d0 + usePercentage * (double) j2 / (double) i1) * (Math.PI * 2D) / 100.0D);
 						float f1 = MathHelper.sin(f) * 160.0F;
 						float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
 						bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
@@ -321,8 +324,8 @@ public final class ClientEventSubscriber {
 					tessellator.draw();
 					bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
 
-					for (int i3 = i11; i3 >= 0; --i3) {
-						float f3 = (float) ((d0 + profiler$result1.usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
+					for (int i3 = i1; i3 >= 0; --i3) {
+						float f3 = (float) ((d0 + usePercentage * (double) i3 / (double) i1) * (Math.PI * 2D) / 100.0D);
 						float f4 = MathHelper.sin(f3) * 160.0F;
 						float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
 						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
@@ -330,44 +333,47 @@ public final class ClientEventSubscriber {
 					}
 
 					tessellator.draw();
-					d0 += profiler$result1.usePercentage;
+					d0 += usePercentage;
 				}
 
 				DecimalFormat decimalformat = new DecimalFormat("##0.00");
 				GlStateManager.enableTexture2D();
-				String s11 = "";
+				String s = "";
 
-				if (!"unspecified".equals(profiler$result.profilerName)) {
-					s11 = s11 + "[0] ";
+				final String profilerName = profiler$result.profilerName;
+				if (!"unspecified".equals(profilerName)) {
+					s = s + "[0] ";
 				}
 
-				if (profiler$result.profilerName.isEmpty()) {
-					s11 = s11 + "ROOT ";
+				if (profilerName.isEmpty()) {
+					s = s + "ROOT ";
 				} else {
-					s11 = s11 + profiler$result.profilerName + ' ';
+					s = s + profilerName + ' ';
 				}
 
-//			    int l2 = 16777215;
-				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx - 160), (float) (cy - 80 - 16), 16777215);
-				s11 = decimalformat.format(profiler$result.totalUsePercentage) + "%";
-				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s11)), (float) (cy - 80 - 16), 16777215);
+//				int l2 = 16777215;
+				fontRenderer.drawStringWithShadow(s, (float) (cx - 160), (float) (cy - 80 - 16), 0xFFFFFF);
+				s = decimalformat.format(profiler$result.totalUsePercentage) + "%";
+				fontRenderer.drawStringWithShadow(s, (float) (cx + 160 - fontRenderer.getStringWidth(s)), (float) (cy - 80 - 16), 0xFFFFFF);
 
 				for (int k2 = 0; k2 < list.size(); ++k2) {
 					Profiler.Result profiler$result2 = list.get(k2);
 					StringBuilder stringbuilder = new StringBuilder();
 
-					if ("unspecified".equals(profiler$result2.profilerName)) {
+					final String profilerName1 = profiler$result2.profilerName;
+					if ("unspecified".equals(profilerName1)) {
 						stringbuilder.append("[?] ");
 					} else {
 						stringbuilder.append("[").append(k2 + 1).append("] ");
 					}
 
-					String s1 = stringbuilder.append(profiler$result2.profilerName).toString();
-					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					String s1 = stringbuilder.append(profilerName1).toString();
+					final int color = profiler$result2.getColor();
+					fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), color);
 					s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
-					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), color);
 					s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
-					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), color);
 				}
 			}
 		}
@@ -378,11 +384,9 @@ public final class ClientEventSubscriber {
 
 		if (true) return;
 
-		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves) {
-			return;
-		}
+		final Minecraft minecraft = Minecraft.getMinecraft();
 
-		final EntityPlayer player = Minecraft.getMinecraft().player;
+		final EntityPlayer player = minecraft.player;
 		if (player == null) {
 			return;
 		}
@@ -396,7 +400,7 @@ public final class ClientEventSubscriber {
 
 		GlStateManager.enableBlend();
 		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(Math.max(2.5F, (float) Minecraft.getMinecraft().displayWidth / 1920.0F * 2.5F));
+		GlStateManager.glLineWidth(Math.max(2.5F, (float) minecraft.displayWidth / 1920.0F * 2.5F));
 		GlStateManager.disableTexture2D();
 		GlStateManager.depthMask(false);
 		GlStateManager.matrixMode(5889);
@@ -534,7 +538,6 @@ public final class ClientEventSubscriber {
 //				NoCubes.LOGGER.info("Connected to a vanilla server. Catching up missing behaviour.");
 //				ConfigTracker.INSTANCE.loadDefaultServerConfigs();
 //			}
-			NoCubes.LOGGER.warn("Config syncing is broken. Substituting the default one");
 			ConfigTracker.INSTANCE.loadDefaultServerConfigs();
 		}
 	}

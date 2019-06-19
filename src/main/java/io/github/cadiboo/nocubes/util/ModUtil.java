@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.state.IBlockState;
@@ -102,6 +103,30 @@ public final class ModUtil {
 
 	public static boolean isDeveloperWorkspace() {
 		return FMLLaunchHandler.isDeobfuscatedEnvironment();
+	}
+
+	/**
+	 * We add 1 because idk (it fixes seams in between chunks)
+	 * and then surface nets needs another +1 because reasons
+	 */
+	public static byte getMeshSizeX(final int initialSize, final MeshGenerator meshGenerator) {
+		return (byte) (initialSize + meshGenerator.getSizeXExtension());
+	}
+
+	/**
+	 * We add 1 because idk (it fixes seams in between chunks)
+	 * and then surface nets needs another +1 because reasons
+	 */
+	public static byte getMeshSizeY(final int initialSize, final MeshGenerator meshGenerator) {
+		return (byte) (initialSize + meshGenerator.getSizeYExtension());
+	}
+
+	/**
+	 * We add 1 because idk (it fixes seams in between chunks)
+	 * and then surface nets needs another +1 because reasons
+	 */
+	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
+		return (byte) (initialSize + meshGenerator.getSizeZExtension());
 	}
 
 }

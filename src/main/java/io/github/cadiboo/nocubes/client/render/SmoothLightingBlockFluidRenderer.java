@@ -40,6 +40,11 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
+
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+
 			BlockLiquid blockLiquid = (BlockLiquid) state.getBlock();
 			final Material material = state.getMaterial();
 			final boolean isLava = material == Material.LAVA;
@@ -59,18 +64,18 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				blue = (float) (waterColor & 0xFF) / 255.0F;
 			}
 
-			boolean shouldRenderUp = state.shouldSideBeRendered(worldIn, pos, EnumFacing.UP);
-			shouldRenderUp &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.up()).nocubes_isTerrainSmoothable());
 			boolean shouldRenderDown = state.shouldSideBeRendered(worldIn, pos, EnumFacing.DOWN);
-			shouldRenderDown &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.down()).nocubes_isTerrainSmoothable());
+			shouldRenderDown &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y - 1, z)).nocubes_isTerrainSmoothable());
+			boolean shouldRenderUp = state.shouldSideBeRendered(worldIn, pos, EnumFacing.UP);
+			shouldRenderUp &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y + 1, z)).nocubes_isTerrainSmoothable());
 			boolean shouldRenderNorth = state.shouldSideBeRendered(worldIn, pos, EnumFacing.NORTH);
-			shouldRenderNorth &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.north()).nocubes_isTerrainSmoothable());
+			shouldRenderNorth &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z - 1)).nocubes_isTerrainSmoothable());
 			boolean shouldRenderSouth = state.shouldSideBeRendered(worldIn, pos, EnumFacing.SOUTH);
-			shouldRenderSouth &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.south()).nocubes_isTerrainSmoothable());
+			shouldRenderSouth &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z + 1)).nocubes_isTerrainSmoothable());
 			boolean shouldRenderWest = state.shouldSideBeRendered(worldIn, pos, EnumFacing.WEST);
-			shouldRenderWest &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.west()).nocubes_isTerrainSmoothable());
+			shouldRenderWest &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x - 1, y, z)).nocubes_isTerrainSmoothable());
 			boolean shouldRenderEast = state.shouldSideBeRendered(worldIn, pos, EnumFacing.EAST);
-			shouldRenderEast &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pos.east()).nocubes_isTerrainSmoothable());
+			shouldRenderEast &= !(Config.renderSmoothTerrain && worldIn.getBlockState(pooledMutableBlockPos.setPos(x + 1, y, z)).nocubes_isTerrainSmoothable());
 
 			if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 				return false;
@@ -78,14 +83,22 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			float fluidHeight = this.getFluidHeight(worldIn, pos, material);
-			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), material);
-			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), material);
-			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), material);
+//			float fluidHeight = this.getFluidHeight(worldIn, pos, material);
+//			float fluidHeightSouth = this.getFluidHeight(worldIn, pos.south(), material);
+//			float fluidHeightEastSouth = this.getFluidHeight(worldIn, pos.east().south(), material);
+//			float fluidHeightEast = this.getFluidHeight(worldIn, pos.east(), material);
 
-			final double x = (double) pos.getX();
-			final double y = (double) pos.getY();
-			final double z = (double) pos.getZ();
+			final float fluidHeight = this.getFluidHeight(worldIn, material, x, y, z, pooledMutableBlockPos);
+			final float fluidHeightSouth = this.getFluidHeight(worldIn, material, x, y, z + 1, pooledMutableBlockPos);
+			final float fluidHeightEastSouth = this.getFluidHeight(worldIn, material, x + 1, y, z + 1, pooledMutableBlockPos);
+			final float fluidHeightEast = this.getFluidHeight(worldIn, material, x + 1, y, z, pooledMutableBlockPos);
+
+//			final double x = (double) pos.getX();
+//			final double y = (double) pos.getY();
+//			final double z = (double) pos.getZ();
+
+			final boolean smoothLighting = this.smoothLighting();
+			final boolean colors = this.colors();
 
 			if (shouldRenderUp) {
 
@@ -121,41 +134,45 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					green0 = green1 = green2 = green3 = 1.0F;
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
-					if (!this.smoothLighting()) {
-						final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, pos);
+					if (!smoothLighting) {
+						final int combinedLightUpMax = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, y, z));
 						light0 = combinedLightUpMax;
 						light1 = combinedLightUpMax;
 						light2 = combinedLightUpMax;
 						light3 = combinedLightUpMax;
 					} else {
-						light0 = state.getPackedLightmapCoords(worldIn, pos);
-						//TODO: use less new objects
-						light1 = state.getPackedLightmapCoords(worldIn, pos.south());
-						light2 = state.getPackedLightmapCoords(worldIn, pos.east().south());
-						light3 = state.getPackedLightmapCoords(worldIn, pos.east());
+						light0 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, y, z));
+						// south
+						light1 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, y, z + 1));
+						// east south
+						light2 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z + 1));
+						// east
+						light3 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z));
 					}
-					if (!this.colors()) {
+					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-//						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, pos);
+//						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x, y, z));
 //						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 //						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 //						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
 						red0 = red;
 						green0 = green;
 						blue0 = blue;
-						//TODO: use less new objects
-						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, pos.south());
+						// south
+						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x, y, z + 1));
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, pos.east().south());
+						// east south
+						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z + 1));
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, pos.east());
+						// east
+						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x + 1, y, z));
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -199,39 +216,45 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					green0 = green1 = green2 = green3 = 1.0F;
 					blue0 = blue1 = blue2 = blue3 = 1.0F;
 				} else {
-					if (!this.smoothLighting()) {
-						final int downCombinedLightUpMax = state.getPackedLightmapCoords(worldIn, pos.down());
+					final int ym1 = y - 1;
+					if (!smoothLighting) {
+						final int downCombinedLightUpMax = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
 						light0 = downCombinedLightUpMax;
 						light1 = downCombinedLightUpMax;
 						light2 = downCombinedLightUpMax;
 						light3 = downCombinedLightUpMax;
 					} else {
-						final BlockPos down = pos.down();
-						light0 = state.getPackedLightmapCoords(worldIn, down);
-						light1 = state.getPackedLightmapCoords(worldIn, down.south());
-						light2 = state.getPackedLightmapCoords(worldIn, down.east().south());
-						light3 = state.getPackedLightmapCoords(worldIn, down.east());
+						// down south
+						light0 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, ym1, z + 1));
+						// down
+						light1 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
+						// down east
+						light2 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z));
+						// down east south
+						light3 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z + 1));
 					}
-					if (!this.colors()) {
+					if (!colors) {
 						red0 = red1 = red2 = red3 = red;
 						green0 = green1 = green2 = green3 = green;
 						blue0 = blue1 = blue2 = blue3 = blue;
 					} else {
-						final BlockPos down = pos.down();
-						final BlockPos downSouth = down.south();
-						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, downSouth);
+						// down south
+						final int waterColor0 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x, ym1, z + 1));
 						red0 = (float) (waterColor0 >> 16 & 0xFF) / 255.0F;
 						green0 = (float) (waterColor0 >> 8 & 0xFF) / 255.0F;
 						blue0 = (float) (waterColor0 & 0xFF) / 255.0F;
-						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, down);
+						// down
+						final int waterColor1 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x, ym1, z));
 						red1 = (float) (waterColor1 >> 16 & 0xFF) / 255.0F;
 						green1 = (float) (waterColor1 >> 8 & 0xFF) / 255.0F;
 						blue1 = (float) (waterColor1 & 0xFF) / 255.0F;
-						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, down.east());
+						// down east
+						final int waterColor2 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z));
 						red2 = (float) (waterColor2 >> 16 & 0xFF) / 255.0F;
 						green2 = (float) (waterColor2 >> 8 & 0xFF) / 255.0F;
 						blue2 = (float) (waterColor2 & 0xFF) / 255.0F;
-						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, downSouth.east());
+						// down east south
+						final int waterColor3 = BiomeColorHelper.getWaterColorAtPos(worldIn, pooledMutableBlockPos.setPos(x + 1, ym1, z + 1));
 						red3 = (float) (waterColor3 >> 16 & 0xFF) / 255.0F;
 						green3 = (float) (waterColor3 >> 8 & 0xFF) / 255.0F;
 						blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
@@ -255,7 +278,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				final double z0;
 				final double x1;
 				final double z1;
-				final EnumFacing enumfacing;
+				final EnumFacing direction;
 				final boolean shouldRenderSide;
 				if (facingIndex == 0) {
 					y0 = fluidHeight;
@@ -267,7 +290,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z;// + (double) 0.001F;
 					z1 = z;// + (double) 0.001F;
-					enumfacing = EnumFacing.NORTH;
+					direction = EnumFacing.NORTH;
 					shouldRenderSide = shouldRenderNorth;
 				} else if (facingIndex == 1) {
 					y0 = fluidHeightEastSouth;
@@ -279,7 +302,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z + 1.0D;// - (double) 0.001F;
 					z1 = z + 1.0D;// - (double) 0.001F;
-					enumfacing = EnumFacing.SOUTH;
+					direction = EnumFacing.SOUTH;
 					shouldRenderSide = shouldRenderSouth;
 				} else if (facingIndex == 2) {
 					y0 = fluidHeightSouth;
@@ -291,7 +314,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					x1 = x;// + (double) 0.001F;
 					z0 = z + 1.0D;
 					z1 = z;
-					enumfacing = EnumFacing.WEST;
+					direction = EnumFacing.WEST;
 					shouldRenderSide = shouldRenderWest;
 				} else {
 					y0 = fluidHeightEast;
@@ -303,16 +326,16 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					x1 = x + 1.0D;// - (double) 0.001F;
 					z0 = z;
 					z1 = z + 1.0D;
-					enumfacing = EnumFacing.EAST;
+					direction = EnumFacing.EAST;
 					shouldRenderSide = shouldRenderEast;
 				}
 
+				pooledMutableBlockPos.setPos(x, y, z).move(direction);
 				if (shouldRenderSide) {
-					final BlockPos offset = pos.offset(enumfacing);
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
-						IBlockState blockstate = worldIn.getBlockState(offset);
-						if (blockstate.getBlockFaceShape(worldIn, offset, enumfacing) == net.minecraft.block.state.BlockFaceShape.SOLID) {
+						IBlockState blockstate = worldIn.getBlockState(pooledMutableBlockPos);
+						if (blockstate.getBlockFaceShape(worldIn, pooledMutableBlockPos, direction) == net.minecraft.block.state.BlockFaceShape.SOLID) {
 							textureatlassprite2 = this.atlasSpriteWaterOverlay;
 						}
 					}
@@ -341,19 +364,19 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						green0 = green1 = green2 = green3 = 1.0F;
 						blue0 = blue1 = blue2 = blue3 = 1.0F;
 					} else {
-						if (!this.smoothLighting()) {
-							final int combinedLightUpMax = state.getPackedLightmapCoords(worldIn, offset);
+						if (!smoothLighting) {
+							final int combinedLightUpMax = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos);
 							light0 = combinedLightUpMax;
 							light1 = combinedLightUpMax;
 							light2 = combinedLightUpMax;
 							light3 = combinedLightUpMax;
 						} else {
-							light0 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
-							light1 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
-							light2 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
-							light3 = state.getPackedLightmapCoords(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
+							light0 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x0, y + y0, z0));
+							light1 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
+							light2 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
+							light3 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 						}
-						if (!this.colors()) {
+						if (!colors) {
 							red0 = red1 = red2 = red3 = red;
 							green0 = green1 = green2 = green3 = green;
 							blue0 = blue1 = blue2 = blue3 = blue;
@@ -397,6 +420,63 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			pooledMutableBlockPos.release();
 			OptiFineCompatibility.popShaderThing(buffer);
 		}
+	}
+
+	public int getCombinedLightUpMax_optimised(final IBlockAccess reader, PooledMutableBlockPos pooledMutableBlockPos) {
+		int light = reader.getCombinedLight(pooledMutableBlockPos, 0);
+		int lightUp = reader.getCombinedLight(pooledMutableBlockPos.move(EnumFacing.UP), 0);
+		int blockLight = light & 0xFF;
+		int blockLightUp = lightUp & 0xFF;
+		int skyLight = light >> 0x10 & 0xFF;
+		int skyLightUp = lightUp >> 0x10 & 0xFF;
+		return (blockLight > blockLightUp ? blockLight : blockLightUp) | (skyLight > skyLightUp ? skyLight : skyLightUp) << 0x10;
+	}
+
+	public float getFluidHeight(
+			IBlockAccess blockAccess, Material blockMaterial,
+			final int posX, final int posY, final int posZ,
+			final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+		int divisor = 0;
+		float height = 0.0F;
+
+//		for (int j = 0; j < 4; ++j) {
+//			{
+		for (int x = 0; x > -2; --x) {
+			for (int z = 0; z > -2; --z) {
+//				pooledMutableBlockPos.setPos(posX - (j & 1), posY + 1, posZ - (j >> 1 & 1));
+				pooledMutableBlockPos.setPos(posX + x, posY + 1, posZ + z);
+
+				if (blockAccess.getBlockState(pooledMutableBlockPos).getMaterial() == blockMaterial) {
+					return 1.0F;
+				}
+
+//				pooledMutableBlockPos.setPos(posX - (j & 1), posY, posZ - (j >> 1 & 1));
+				pooledMutableBlockPos.setPos(posX + x, posY, posZ + z);
+
+				IBlockState iblockstate = blockAccess.getBlockState(pooledMutableBlockPos);
+				Material material = iblockstate.getMaterial();
+
+				if (material != blockMaterial) {
+					if (!material.isSolid()) {
+						++height;
+						++divisor;
+					}
+				} else {
+					int k = iblockstate.getValue(BlockLiquid.LEVEL);
+
+					if (k >= 8 || k == 0) {
+						height += BlockLiquid.getLiquidHeightPercent(k) * 10.0F;
+						divisor += 10;
+					}
+
+					height += BlockLiquid.getLiquidHeightPercent(k);
+					++divisor;
+				}
+			}
+		}
+
+		return 1.0F - height / (float) divisor;
 	}
 
 	public boolean renderUp(

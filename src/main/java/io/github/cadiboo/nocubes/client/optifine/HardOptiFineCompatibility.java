@@ -23,11 +23,12 @@ import java.util.List;
  */
 final class HardOptiFineCompatibility {
 
-	public static boolean isChunkCacheOF(final Object obj) {
+	static boolean isChunkCacheOF(final Object obj) {
 		return obj instanceof ChunkCacheOF;
 	}
 
-	public static ChunkCache getChunkCache(final IBlockAccess reader) {
+	@Nonnull
+	static ChunkCache getChunkCache(final IBlockAccess reader) {
 		return ((ChunkCacheOF) reader).chunkCache;
 	}
 
@@ -66,10 +67,12 @@ final class HardOptiFineCompatibility {
 
 	static final class BlockModelCustomizerOF {
 
+		@Nonnull
 		static IBakedModel getRenderModel(@Nonnull final IBakedModel model, @Nonnull final IBlockState state, @Nonnull final Object renderEnv) {
 			return BlockModelCustomizer.getRenderModel(model, state, (RenderEnv) renderEnv);
 		}
 
+		@Nonnull
 		static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final EnumFacing facing, @Nonnull final BlockRenderLayer blockRenderLayer, @Nonnull final long rand, @Nonnull final Object renderEnv) {
 			return BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, (RenderEnv) renderEnv);
 		}

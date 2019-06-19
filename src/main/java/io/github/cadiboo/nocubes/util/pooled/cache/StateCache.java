@@ -1,23 +1,16 @@
 package io.github.cadiboo.nocubes.util.pooled.cache;
 
+
 import net.minecraft.block.state.IBlockState;
 
 import javax.annotation.Nonnull;
 
 /**
- * // Density Cache | -1, n     | n + 1
- * Density Cache    | -1, 18    | 20
- * Vertices         | -1, 16    | 18
- * Texture Cache    | -2, 17    | 20
- * Light Cache      | -2, 17    | 20
- * Color Cache      | -2, 17    | 20
- * Fluids Cache     | 0,15x0,16y| 16, 17
- *
  * @author Cadiboo
  */
 public class StateCache extends XYZCache implements AutoCloseable {
 
-	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0));
+	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0, 0, 0, 0));
 
 	@Nonnull
 	private IBlockState[] blockStates;
@@ -26,15 +19,21 @@ public class StateCache extends XYZCache implements AutoCloseable {
 
 	private boolean inUse;
 
-	private StateCache(final int sizeX, final int sizeY, final int sizeZ) {
-		super(sizeX, sizeY, sizeZ);
-		blockStates = new IBlockState[sizeX * sizeY * sizeZ];
-//		fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
+	private StateCache(
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+			final int sizeX, final int sizeY, final int sizeZ
+	) {
+		super(startPaddingX, startPaddingY, startPaddingZ, sizeX, sizeY, sizeZ);
+		this.blockStates = new IBlockState[sizeX * sizeY * sizeZ];
+//		this.fluidStates = new IFluidState[sizeX * sizeY * sizeZ];
 		this.inUse = false;
 	}
 
 	@Nonnull
-	public static StateCache retain(final int sizeX, final int sizeY, final int sizeZ) {
+	public static StateCache retain(
+			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+			final int sizeX, final int sizeY, final int sizeZ
+	) {
 
 		final StateCache pooled = POOL.get();
 
@@ -42,6 +41,10 @@ public class StateCache extends XYZCache implements AutoCloseable {
 			throw new IllegalStateException("StateCache is already in use!");
 		}
 		pooled.inUse = true;
+
+		pooled.startPaddingX = startPaddingX;
+		pooled.startPaddingY = startPaddingY;
+		pooled.startPaddingZ = startPaddingZ;
 
 		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
 			return pooled;
