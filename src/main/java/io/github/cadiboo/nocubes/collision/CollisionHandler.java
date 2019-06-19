@@ -313,19 +313,19 @@ public final class CollisionHandler {
 		final Vec3 v1v2;
 		final Vec3 v2v3;
 		final Vec3 v3v0;
-//		//0x*x3
-//		//x___x
-//		//*___*
-//		//x___x
-//		//1x*x2
-//		final Vec3 v0v1v0;
-//		final Vec3 v0v1v1;
-//		final Vec3 v1v2v1;
-//		final Vec3 v1v2v2;
-//		final Vec3 v2v3v2;
-//		final Vec3 v2v3v3;
-//		final Vec3 v3v0v3;
-//		final Vec3 v3v0v0;
+		//0x*x3
+		//x___x
+		//*___*
+		//x___x
+		//1x*x2
+		final Vec3 v0v1v0;
+		final Vec3 v0v1v1;
+		final Vec3 v1v2v1;
+		final Vec3 v1v2v2;
+		final Vec3 v2v3v2;
+		final Vec3 v2v3v3;
+		final Vec3 v3v0v3;
+		final Vec3 v3v0v0;
 		//0x*x3
 		//xa_ax
 		//*___*
@@ -335,21 +335,21 @@ public final class CollisionHandler {
 		final Vec3 v1v2v2v3;
 		final Vec3 v2v3v3v0;
 		final Vec3 v3v0v0v1;
-//		//0x*x3
-//		//xabax
-//		//*b_b*
-//		//xabax
-//		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3;
-//		final Vec3 v1v2v2v3v2v3v3v0;
-//		final Vec3 v2v3v3v0v3v0v0v1;
-//		final Vec3 v3v0v0v1v0v1v1v2;
-//		//0x*x3
-//		//xabax
-//		//*bcb*
-//		//xabax
-//		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1;
+		//0x*x3
+		//xabax
+		//*b_b*
+		//xabax
+		//1x*x2
+		final Vec3 v0v1v1v2v1v2v2v3;
+		final Vec3 v1v2v2v3v2v3v3v0;
+		final Vec3 v2v3v3v0v3v0v0v1;
+		final Vec3 v3v0v0v1v0v1v1v2;
+		//0x*x3
+		//xabax
+		//*bcb*
+		//xabax
+		//1x*x2
+		final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1;
 //		final Vec3 v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2;
 
 		try (final ModProfiler ignored = profiler.start("interpolate")) {
@@ -361,23 +361,23 @@ public final class CollisionHandler {
 			v1v2 = interp(v1, v2, 0.5F);
 			v2v3 = interp(v2, v3, 0.5F);
 			v3v0 = interp(v3, v0, 0.5F);
-//			v0v1v0 = interp(v0v1, v0, 0.5F);
-//			v0v1v1 = interp(v0v1, v1, 0.5F);
-//			v1v2v1 = interp(v1v2, v1, 0.5F);
-//			v1v2v2 = interp(v1v2, v2, 0.5F);
-//			v2v3v2 = interp(v2v3, v2, 0.5F);
-//			v2v3v3 = interp(v2v3, v3, 0.5F);
-//			v3v0v3 = interp(v3v0, v3, 0.5F);
-//			v3v0v0 = interp(v3v0, v0, 0.5F);
+			v0v1v0 = interp(v0v1, v0, 0.5F);
+			v0v1v1 = interp(v0v1, v1, 0.5F);
+			v1v2v1 = interp(v1v2, v1, 0.5F);
+			v1v2v2 = interp(v1v2, v2, 0.5F);
+			v2v3v2 = interp(v2v3, v2, 0.5F);
+			v2v3v3 = interp(v2v3, v3, 0.5F);
+			v3v0v3 = interp(v3v0, v3, 0.5F);
+			v3v0v0 = interp(v3v0, v0, 0.5F);
 			v0v1v1v2 = interp(v0v1, v1v2, 0.5F);
 			v1v2v2v3 = interp(v1v2, v2v3, 0.5F);
 			v2v3v3v0 = interp(v2v3, v3v0, 0.5F);
 			v3v0v0v1 = interp(v3v0, v0v1, 0.5F);
-//			v0v1v1v2v1v2v2v3 = interp(v0v1v1v2, v1v2v2v3, 0.5F);
-//			v1v2v2v3v2v3v3v0 = interp(v1v2v2v3, v2v3v3v0, 0.5F);
-//			v2v3v3v0v3v0v0v1 = interp(v2v3v3v0, v3v0v0v1, 0.5F);
-//			v3v0v0v1v0v1v1v2 = interp(v3v0v0v1, v0v1v1v2, 0.5F);
-//			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1 = interp(v0v1v1v2v1v2v2v3, v2v3v3v0v3v0v0v1, 0.5F);
+			v0v1v1v2v1v2v2v3 = interp(v0v1v1v2, v1v2v2v3, 0.5F);
+			v1v2v2v3v2v3v3v0 = interp(v1v2v2v3, v2v3v3v0, 0.5F);
+			v2v3v3v0v3v0v0v1 = interp(v2v3v3v0, v3v0v0v1, 0.5F);
+			v3v0v0v1v0v1v1v2 = interp(v3v0v0v1, v0v1v1v2, 0.5F);
+			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1 = interp(v0v1v1v2v1v2v2v3, v2v3v3v0v3v0v0v1, 0.5F);
 //			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2 = interp(v1v2v2v3v2v3v3v0, v3v0v0v1v0v1v1v2, 0.5F);
 		}
 
@@ -386,10 +386,10 @@ public final class CollisionHandler {
 		//_____
 		//_____
 		//1___2
-//		final AxisAlignedBB v0box;
-//		final AxisAlignedBB v1box;
-//		final AxisAlignedBB v2box;
-//		final AxisAlignedBB v3box;
+		final AxisAlignedBB v0box;
+		final AxisAlignedBB v1box;
+		final AxisAlignedBB v2box;
+		final AxisAlignedBB v3box;
 		//0_*_3
 		//_____
 		//*___*
@@ -399,19 +399,19 @@ public final class CollisionHandler {
 		final AxisAlignedBB v1v2box;
 		final AxisAlignedBB v2v3box;
 		final AxisAlignedBB v3v0box;
-//		//0x*x3
-//		//x___x
-//		//*___*
-//		//x___x
-//		//1x*x2
-//		final AxisAlignedBB v0v1v0box;
-//		final AxisAlignedBB v0v1v1box;
-//		final AxisAlignedBB v1v2v1box;
-//		final AxisAlignedBB v1v2v2box;
-//		final AxisAlignedBB v2v3v2box;
-//		final AxisAlignedBB v2v3v3box;
-//		final AxisAlignedBB v3v0v3box;
-//		final AxisAlignedBB v3v0v0box;
+		//0x*x3
+		//x___x
+		//*___*
+		//x___x
+		//1x*x2
+		final AxisAlignedBB v0v1v0box;
+		final AxisAlignedBB v0v1v1box;
+		final AxisAlignedBB v1v2v1box;
+		final AxisAlignedBB v1v2v2box;
+		final AxisAlignedBB v2v3v2box;
+		final AxisAlignedBB v2v3v3box;
+		final AxisAlignedBB v3v0v3box;
+		final AxisAlignedBB v3v0v0box;
 		//0x*x3
 		//xa_ax
 		//*___*
@@ -421,78 +421,78 @@ public final class CollisionHandler {
 		final AxisAlignedBB v1v2v2v3box;
 		final AxisAlignedBB v2v3v3v0box;
 		final AxisAlignedBB v3v0v0v1box;
-//		//0x*x3
-//		//xabax
-//		//*b_b*
-//		//xabax
-//		//1x*x2
-//		final AxisAlignedBB v0v1v1v2v1v2v2v3box;
-//		final AxisAlignedBB v1v2v2v3v2v3v3v0box;
-//		final AxisAlignedBB v2v3v3v0v3v0v0v1box;
-//		final AxisAlignedBB v3v0v0v1v0v1v1v2box;
-//		//0x*x3
-//		//xabax
-//		//*bcb*
-//		//xabax
-//		//1x*x2
-//		final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box;
+		//0x*x3
+		//xabax
+		//*b_b*
+		//xabax
+		//1x*x2
+		final AxisAlignedBB v0v1v1v2v1v2v2v3box;
+		final AxisAlignedBB v1v2v2v3v2v3v3v0box;
+		final AxisAlignedBB v2v3v3v0v3v0v0v1box;
+		final AxisAlignedBB v3v0v0v1v0v1v1v2box;
+		//0x*x3
+		//xabax
+		//*bcb*
+		//xabax
+		//1x*x2
+		final AxisAlignedBB v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box;
 //		final AxisAlignedBB v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box;
 
 		try (final ModProfiler ignored = profiler.start("createBoxes")) {
-//			v0box = createAxisAlignedBBForVertex(v0, boxRadius, maxYLevel);
-//			v1box = createAxisAlignedBBForVertex(v1, boxRadius, maxYLevel);
-//			v2box = createAxisAlignedBBForVertex(v2, boxRadius, maxYLevel);
-//			v3box = createAxisAlignedBBForVertex(v3, boxRadius, maxYLevel);
+			v0box = createAxisAlignedBBForVertex(v0, boxRadius, maxYLevel);
+			v1box = createAxisAlignedBBForVertex(v1, boxRadius, maxYLevel);
+			v2box = createAxisAlignedBBForVertex(v2, boxRadius, maxYLevel);
+			v3box = createAxisAlignedBBForVertex(v3, boxRadius, maxYLevel);
 			v0v1box = createAxisAlignedBBForVertex(v0v1, boxRadius, maxYLevel);
 			v1v2box = createAxisAlignedBBForVertex(v1v2, boxRadius, maxYLevel);
 			v2v3box = createAxisAlignedBBForVertex(v2v3, boxRadius, maxYLevel);
 			v3v0box = createAxisAlignedBBForVertex(v3v0, boxRadius, maxYLevel);
-//			v0v1v0box = createAxisAlignedBBForVertex(v0v1v0, boxRadius, originalBoxOffset);
-//			v0v1v1box = createAxisAlignedBBForVertex(v0v1v1, boxRadius, originalBoxOffset);
-//			v1v2v1box = createAxisAlignedBBForVertex(v1v2v1, boxRadius, originalBoxOffset);
-//			v1v2v2box = createAxisAlignedBBForVertex(v1v2v2, boxRadius, originalBoxOffset);
-//			v2v3v2box = createAxisAlignedBBForVertex(v2v3v2, boxRadius, originalBoxOffset);
-//			v2v3v3box = createAxisAlignedBBForVertex(v2v3v3, boxRadius, originalBoxOffset);
-//			v3v0v3box = createAxisAlignedBBForVertex(v3v0v3, boxRadius, originalBoxOffset);
-//			v3v0v0box = createAxisAlignedBBForVertex(v3v0v0, boxRadius, originalBoxOffset);
+			v0v1v0box = createAxisAlignedBBForVertex(v0v1v0, boxRadius, maxYLevel);
+			v0v1v1box = createAxisAlignedBBForVertex(v0v1v1, boxRadius, maxYLevel);
+			v1v2v1box = createAxisAlignedBBForVertex(v1v2v1, boxRadius, maxYLevel);
+			v1v2v2box = createAxisAlignedBBForVertex(v1v2v2, boxRadius, maxYLevel);
+			v2v3v2box = createAxisAlignedBBForVertex(v2v3v2, boxRadius, maxYLevel);
+			v2v3v3box = createAxisAlignedBBForVertex(v2v3v3, boxRadius, maxYLevel);
+			v3v0v3box = createAxisAlignedBBForVertex(v3v0v3, boxRadius, maxYLevel);
+			v3v0v0box = createAxisAlignedBBForVertex(v3v0v0, boxRadius, maxYLevel);
 			v0v1v1v2box = createAxisAlignedBBForVertex(v0v1v1v2, boxRadius, maxYLevel);
 			v1v2v2v3box = createAxisAlignedBBForVertex(v1v2v2v3, boxRadius, maxYLevel);
 			v2v3v3v0box = createAxisAlignedBBForVertex(v2v3v3v0, boxRadius, maxYLevel);
 			v3v0v0v1box = createAxisAlignedBBForVertex(v3v0v0v1, boxRadius, maxYLevel);
-//			v0v1v1v2v1v2v2v3box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3, boxRadius, originalBoxOffset);
-//			v1v2v2v3v2v3v3v0box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0, boxRadius, originalBoxOffset);
-//			v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
-//			v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
-//			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, boxRadius, originalBoxOffset);
-//			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, boxRadius, originalBoxOffset);
+			v0v1v1v2v1v2v2v3box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3, boxRadius, maxYLevel);
+			v1v2v2v3v2v3v3v0box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0, boxRadius, maxYLevel);
+			v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v2v3v3v0v3v0v0v1, boxRadius, maxYLevel);
+			v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v3v0v0v1v0v1v1v2, boxRadius, maxYLevel);
+			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box = createAxisAlignedBBForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, boxRadius, maxYLevel);
+//			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box = createAxisAlignedBBForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, boxRadius, maxYLevel);
 		}
 
 		try (final ModProfiler ignored = profiler.start("addBoxes")) {
-//			addCollisionBoxToList(outBoxes, v0box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v1box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v2box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v0v1box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v1v2box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v2v3box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v3v0box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v0v1v0box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v0v1v1box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v1v2v1box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v1v2v2box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v2v3v2box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v2v3v3box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v3v0v3box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v3v0v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1v2v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1v2v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2v3v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2v3v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3v0v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3v0v0box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v0v1v1v2box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v1v2v2v3box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v2v3v3v0box, predicate, ignoreIntersects);
 			addCollisionBoxToList(outBoxes, v3v0v0v1box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
-//			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
+			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2box, predicate, ignoreIntersects);
 		}
 
@@ -507,23 +507,23 @@ public final class CollisionHandler {
 		v1v2.close();
 		v2v3.close();
 		v3v0.close();
-//		v0v1v0.close();
-//		v0v1v1.close();
-//		v1v2v1.close();
-//		v1v2v2.close();
-//		v2v3v2.close();
-//		v2v3v3.close();
-//		v3v0v3.close();
-//		v3v0v0.close();
+		v0v1v0.close();
+		v0v1v1.close();
+		v1v2v1.close();
+		v1v2v2.close();
+		v2v3v2.close();
+		v2v3v3.close();
+		v3v0v3.close();
+		v3v0v0.close();
 		v0v1v1v2.close();
 		v1v2v2v3.close();
 		v2v3v3v0.close();
 		v3v0v0v1.close();
-//		v0v1v1v2v1v2v2v3.close();
-//		v1v2v2v3v2v3v3v0.close();
-//		v2v3v3v0v3v0v0v1.close();
-//		v3v0v0v1v0v1v1v2.close();
-//		v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1.close();
+		v0v1v1v2v1v2v2v3.close();
+		v1v2v2v3v2v3v3v0.close();
+		v2v3v3v0v3v0v0v1.close();
+		v3v0v0v1v0v1v1v2.close();
+		v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1.close();
 //		v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2.close();
 
 	}
@@ -750,7 +750,7 @@ public final class CollisionHandler {
 								));
 								originalBoxShape = originalBoxShape == null ? null : originalBoxShape.offset(pooledMutableBlockPos);
 							}
-							addIntersectingFaceBoxesToList(collidingShapes, face, profiler, originalBoxShape == null ? 0 : originalBoxShape.maxY, 0.15F, aabb::intersects, false);
+							addIntersectingFaceBoxesToList(collidingShapes, face, profiler, originalBoxShape == null ? 0 : originalBoxShape.maxY, 0.075F, aabb::intersects, false);
 						}
 						face.close();
 					}
