@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -11,14 +12,23 @@ import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.entity.Entity;
 import net.minecraft.fluid.IFluidState;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.IChunk;
 
+import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author Cadiboo
@@ -119,7 +129,7 @@ public final class Hooks {
 
 		int currentChunkPosX = posX >> 4;
 		int currentChunkPosZ = posZ >> 4;
-		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+		Chunk currentChunk = world.func_212866_a_(currentChunkPosX, currentChunkPosZ);
 
 		final int extendRange = Config.extendFluidsRange.getRange();
 
@@ -165,7 +175,7 @@ public final class Hooks {
 				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
 					currentChunkPosX = x >> 4;
 					currentChunkPosZ = z >> 4;
-					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+					currentChunk = world.func_212866_a_(currentChunkPosX, currentChunkPosZ);
 				}
 
 				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);
@@ -178,6 +188,15 @@ public final class Hooks {
 
 		return fluidState;
 
+	}
+
+	public static Stream<VoxelShape> getCollisionShapes(final IWorldReader _this, final Entity p_217352_1_, final AxisAlignedBB p_217352_2_, final Set<Entity> p_217352_3_, final VoxelShape voxelshape, final int i, final int j, final int k, final int l, final int i1, final int j1, final ISelectionContext iselectioncontext) {
+		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, p_217352_3_, voxelshape, i, j, k, l, i1, j1, iselectioncontext);
+	}
+
+	public static boolean canBlockStateRender(final BlockState blockstate) {
+		if (Config.renderSmoothTerrain && blockstate.nocubes_isTerrainSmoothable()) return false;
+		return !Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable();
 	}
 
 }

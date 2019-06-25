@@ -1,7 +1,8 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientProxy;
-import io.github.cadiboo.nocubes.client.gui.NoCubesConfigGui;
+import io.github.cadiboo.nocubes.client.TempClientConfigHacks;
+import io.github.cadiboo.nocubes.client.gui.config.NoCubesConfigGui;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.server.ServerProxy;
@@ -30,7 +31,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	public static final Proxy PROXY = DistExecutor.runForDist(() -> () -> new ClientProxy(), () -> () -> new ServerProxy());
+	public static final Proxy PROXY = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
 	public NoCubes() {
@@ -53,7 +54,7 @@ public final class NoCubes {
 			}
 		});
 		modEventBus.addListener((FMLClientSetupEvent event) ->
-				ModUtil.doConfigHacks()
+				TempClientConfigHacks.doConfigHacks()
 		);
 
 		final ModLoadingContext modLoadingContext = ModLoadingContext.get();

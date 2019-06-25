@@ -1,12 +1,11 @@
-package io.github.cadiboo.nocubes.client.gui;
+package io.github.cadiboo.nocubes.client.gui.config;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.MouseSettingsScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.client.settings.AbstractOption;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -19,7 +18,6 @@ public class NoCubesConfigGui extends Screen {
 	private final Minecraft minecraft;
 	private final Screen parentScreen;
 
-	private Button renderSmoothTerrain;
 	private ConfigOptionsList configOptionsList;
 
 	public NoCubesConfigGui(final Minecraft minecraft, final Screen parentScreen) {
@@ -47,6 +45,7 @@ public class NoCubesConfigGui extends Screen {
 		super.render(mouseX, mouseX, partialTicks);
 	}
 
+	@Override
 	public boolean keyPressed(int p_keyPressed_1_, int p_keyPressed_2_, int p_keyPressed_3_) {
 //		if (this.buttonId != null) {
 //			if (p_keyPressed_1_ == 256) {
@@ -75,8 +74,10 @@ public class NoCubesConfigGui extends Screen {
 		FontRenderer fontRenderer = this.minecraft.fontRenderer;
 
 		final String doneText = I18n.format("gui.done");
+//		final String cancelText = I18n.format("gui.cancel");
 
 		final int doneWidth = Math.max(fontRenderer.getStringWidth(doneText) + 20, 100);
+//		final int cancelWidth = Math.max(fontRenderer.getStringWidth(cancelText) + 20, 100);
 
 		final int buttonWidthHalf = (doneWidth + 5) / 2;
 
@@ -84,13 +85,13 @@ public class NoCubesConfigGui extends Screen {
 		final int buttonsHeight = this.height - 29;
 
 		this.addButton(new Button(halfWidth - buttonWidthHalf, buttonsHeight, doneWidth, 20, doneText,
-				$ -> this.minecraft.displayGuiScreen(parentScreen)
+				$ -> {
+					if (this.configOptionsList.saveChanged())
+						ClientUtil.tryReloadRenderers();
+					this.minecraft.displayGuiScreen(parentScreen);
+				}
 		));
 
-		this.addButton(new Button(this.width / 2 - 155, 18, 150, 20, I18n.format("options.mouse_settings"), (p_213126_1_) -> {
-			this.minecraft.displayGuiScreen(new MouseSettingsScreen(this));
-		}));
-		this.addButton(AbstractOption.AUTO_JUMP.createWidget(this.minecraft.gameSettings, this.width / 2 - 155 + 160, 18, 150));
 		this.configOptionsList = new ConfigOptionsList(this, this.minecraft);
 		this.children.add(this.configOptionsList);
 //		this.field_146493_s = this.addButton(new Button(this.width / 2 - 155, this.height - 29, 150, 20, I18n.format("controls.resetAll"), (p_213125_1_) -> {
@@ -100,19 +101,20 @@ public class NoCubesConfigGui extends Screen {
 //
 //			KeyBinding.resetKeyBindingArrayAndHash();
 //		}));
-		this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), (p_213124_1_) -> {
-			this.minecraft.displayGuiScreen(this.parentScreen);
-		}));
+//		this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), (p_213124_1_) -> {
+//			this.minecraft.displayGuiScreen(this.parentScreen);
+//		}));
 	}
 
-	public boolean mouseClicked(double p_mouseClicked_1_, double p_mouseClicked_3_, int p_mouseClicked_5_) {
+	@Override
+	public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
 //		if (this.buttonId != null) {
 //			this.options.setKeyBindingCode(this.buttonId, InputMappings.Type.MOUSE.getOrMakeInput(p_mouseClicked_5_));
 //			this.buttonId = null;
 //			KeyBinding.resetKeyBindingArrayAndHash();
 //			return true;
 //		} else {
-		return super.mouseClicked(p_mouseClicked_1_, p_mouseClicked_3_, p_mouseClicked_5_);
+		return super.mouseClicked(mouseX, mouseY, mouseButton);
 //		}
 	}
 

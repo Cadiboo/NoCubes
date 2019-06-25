@@ -1,6 +1,13 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Streams;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Spliterators.AbstractSpliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -19,14 +26,6 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
-
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Spliterators.AbstractSpliterator;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public interface IWorldReader extends IEnviromentBlockReader {
    /**
@@ -87,7 +86,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
    int getSeaLevel();
 
-   default IChunk func_217349_x(BlockPos p_217349_1_) {
+   default IChunk getChunk(BlockPos p_217349_1_) {
       return this.getChunk(p_217349_1_.getX() >> 4, p_217349_1_.getZ() >> 4);
    }
 
@@ -144,6 +143,10 @@ public interface IWorldReader extends IEnviromentBlockReader {
       final int i1 = MathHelper.floor(voxelshape.getStart(Direction.Axis.Z) - 1.0E-7D) - 1;
       final int j1 = MathHelper.floor(voxelshape.getEnd(Direction.Axis.Z) + 1.0E-7D) + 1;
       final ISelectionContext iselectioncontext = p_217352_1_ == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(p_217352_1_);
+      // NoCubes Start
+      if (true)
+         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, p_217352_1_, p_217352_2_, p_217352_3_, voxelshape, i, j, k, l, i1, j1, iselectioncontext);
+      // NoCubes End
       final CubeCoordinateIterator cubecoordinateiterator = new CubeCoordinateIterator(i, k, i1, j, l, j1);
       final BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
       return Streams.concat(StreamSupport.stream(new AbstractSpliterator<VoxelShape>(Long.MAX_VALUE, 0) {
@@ -152,7 +155,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
          public boolean tryAdvance(Consumer<? super VoxelShape> p_tryAdvance_1_) {
             if (!this.field_223028_a) {
                this.field_223028_a = true;
-               VoxelShape voxelshape1 = IWorldReader.this.getWorldBorder().func_222521_a();
+               VoxelShape voxelshape1 = IWorldReader.this.getWorldBorder().getShape();
                boolean flag = VoxelShapes.compare(voxelshape1, VoxelShapes.create(p_217352_1_.getBoundingBox().shrink(1.0E-7D)), IBooleanFunction.AND);
                boolean flag1 = VoxelShapes.compare(voxelshape1, VoxelShapes.create(p_217352_1_.getBoundingBox().grow(1.0E-7D)), IBooleanFunction.AND);
                if (!flag && flag1) {

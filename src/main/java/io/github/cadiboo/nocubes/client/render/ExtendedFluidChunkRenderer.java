@@ -37,25 +37,33 @@ public final class ExtendedFluidChunkRenderer {
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
-
 		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
 			final BlockState[] blockCacheArray = stateCache.getBlockStates();
 			final IFluidState[] fluidCacheArray = stateCache.getFluidStates();
 
-			final int fluidCacheLength = fluidCacheArray.length;
+			final int fluidCacheLength = blockCacheArray.length;
 
+			final int stateCacheSizeX = stateCache.sizeX;
+			final int stateCacheSizeY = stateCache.sizeY;
+			final int stateCacheStartPaddingX = stateCache.startPaddingX;
+			final int stateCacheStartPaddingY = stateCache.startPaddingY;
+			final int stateCacheStartPaddingZ = stateCache.startPaddingZ;
+
+			// TODO: shouldn't really be the same size as the state cache
 			final boolean[] isFluidSource = new boolean[fluidCacheLength];
-			for (int i = 0; i < fluidCacheLength; i++) {
+			for (int i = 0; i < fluidCacheLength; ++i) {
 				isFluidSource[i] = fluidCacheArray[i].isSource();
 			}
 
 			final boolean[] isSmoothable = smoothableCache.getSmoothableCache();
 
-			final int extendRange = Config.extendFluidsRange.getRange();
+			final int smoothableCacheSizeX = smoothableCache.sizeX;
+			final int smoothableCacheSizeY = smoothableCache.sizeY;
+			final int smoothableCacheStartPaddingX = smoothableCache.startPaddingX;
+			final int smoothableCacheStartPaddingY = smoothableCache.startPaddingY;
+			final int smoothableCacheStartPaddingZ = smoothableCache.startPaddingZ;
 
-			final int cacheAddX = 2;
-			final int cacheAddY = 2;
-			final int cacheAddZ = 2;
+			final int extendRange = Config.extendFluidsRange.getRange();
 
 			// For offset = -1 or -2 to offset = 1 or 2;
 			final int maxXOffset = extendRange;
@@ -65,10 +73,24 @@ public final class ExtendedFluidChunkRenderer {
 				for (int y = 0; y < 16; ++y) {
 					for (int x = 0; x < 16; ++x) {
 
-						if (!isSmoothable[smoothableCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)]) {
+						final int stateCacheOffsetX = stateCacheStartPaddingX + x;
+						final int stateCacheOffsetY = stateCacheStartPaddingY + y;
+						final int stateCacheOffsetZ = stateCacheStartPaddingZ + z;
+
+						if (!isSmoothable[smoothableCache.getIndex(
+								smoothableCacheStartPaddingX + x,
+								smoothableCacheStartPaddingY + y,
+								smoothableCacheStartPaddingZ + z,
+								smoothableCacheSizeX, smoothableCacheSizeY
+						)]) {
 							continue;
 						}
-						if (!fluidCacheArray[stateCache.getIndex(x + cacheAddX, y + cacheAddY, z + cacheAddZ)].isEmpty()) {
+						if (!fluidCacheArray[stateCache.getIndex(
+								stateCacheOffsetX,
+								stateCacheOffsetY,
+								stateCacheOffsetZ,
+								stateCacheSizeX, stateCacheSizeY
+						)].isEmpty()) {
 							continue;
 						}
 
@@ -82,13 +104,23 @@ public final class ExtendedFluidChunkRenderer {
 								}
 
 								// Add 1 or 2 to account for offset=-1 or -2
-								final int fluidStateIndex = stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ);
+								final int fluidStateIndex = stateCache.getIndex(
+										stateCacheOffsetX + xOffset,
+										stateCacheOffsetY,
+										stateCacheOffsetZ + zOffset,
+										stateCacheSizeX, stateCacheSizeY
+								);
 								if (!isFluidSource[fluidStateIndex]) {
 									continue;
 								}
 
-								// only render if block up is not solid
-								if (blockCacheArray[stateCache.getIndex(x + cacheAddX, y + cacheAddY + 1, z + cacheAddZ)].isSolid()) {
+								// Only render if block up is not solid
+								if (blockCacheArray[stateCache.getIndex(
+										stateCacheOffsetX + xOffset,
+										stateCacheOffsetY + 1,
+										stateCacheOffsetZ + zOffset,
+										stateCacheSizeX, stateCacheSizeY
+								)].isSolid()) {
 									continue;
 								}
 
@@ -98,23 +130,25 @@ public final class ExtendedFluidChunkRenderer {
 								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
 								final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+								final int worldX = renderChunkPositionX + x;
+								final int worldY = renderChunkPositionY + y;
+								final int worldZ = renderChunkPositionZ + z;
 								OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
-										renderChunkPositionX + x,
-										renderChunkPositionY + y,
-										renderChunkPositionZ + z
+										worldX,
+										worldY,
+										worldZ
 								), blockAccess, bufferBuilder);
 								try {
 									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
-											renderChunkPositionX + x,
-											renderChunkPositionY + y,
-											renderChunkPositionZ + z,
+											worldX,
+											worldY,
+											worldZ,
 											pooledMutableBlockPos.setPos(
-													renderChunkPositionX + x + xOffset,
-													renderChunkPositionY + y,
-													renderChunkPositionZ + z + zOffset
+													worldX + xOffset,
+													worldY,
+													worldZ + zOffset
 											),
 											blockAccess,
-											blockCacheArray[stateCache.getIndex(x + xOffset + cacheAddX, y + cacheAddY, z + zOffset + cacheAddZ)],
 											fluidState,
 											bufferBuilder,
 											packedLightCache
@@ -131,7 +165,6 @@ public final class ExtendedFluidChunkRenderer {
 				}
 			}
 		}
-
 	}
 
 }

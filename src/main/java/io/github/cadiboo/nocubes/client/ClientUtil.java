@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -147,22 +146,21 @@ public final class ClientUtil {
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 		final BlockState[] blockCacheArray = stateCache.getBlockStates();
 
-		final int stateStartPaddingX = stateCache.startPaddingX;
-		final int stateStartPaddingY = stateCache.startPaddingY;
-		final int stateStartPaddingZ = stateCache.startPaddingZ;
+		final int stateCacheStartPaddingX = stateCache.startPaddingX;
+		final int stateCacheStartPaddingY = stateCache.startPaddingY;
+		final int stateCacheStartPaddingZ = stateCache.startPaddingZ;
 
-		final int smoothableStartPaddingX = smoothableCache.startPaddingX;
-		final int smoothableStartPaddingY = smoothableCache.startPaddingY;
-		final int smoothableStartPaddingZ = smoothableCache.startPaddingZ;
-
+		final int stateCacheSizeX = stateCache.sizeX;
+		final int stateCacheSizeY = stateCache.sizeY;
 
 		if (Config.betterTextures) {
 			if (tryForBetterTexturesSnow) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-snow")) {
 					BlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							relativePosX + stateStartPaddingX,
-							relativePosY + stateStartPaddingY,
-							relativePosZ + stateStartPaddingZ
+							relativePosX + stateCacheStartPaddingX,
+							relativePosY + stateCacheStartPaddingY,
+							relativePosZ + stateCacheStartPaddingZ,
+							stateCacheSizeX, stateCacheSizeY
 					)];
 
 					if (isStateSnow(betterTextureState)) {
@@ -171,9 +169,10 @@ public final class ClientUtil {
 					}
 					for (int[] offset : OFFSETS_ORDERED) {
 						betterTextureState = blockCacheArray[stateCache.getIndex(
-								relativePosX + offset[0] + stateStartPaddingX,
-								relativePosY + offset[1] + stateStartPaddingY,
-								relativePosZ + offset[2] + stateStartPaddingZ
+								relativePosX + offset[0] + stateCacheStartPaddingX,
+								relativePosY + offset[1] + stateCacheStartPaddingY,
+								relativePosZ + offset[2] + stateCacheStartPaddingZ,
+								stateCacheSizeX, stateCacheSizeY
 						)];
 						if (isStateSnow(betterTextureState)) {
 							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
@@ -185,9 +184,10 @@ public final class ClientUtil {
 			if (tryForBetterTexturesGrass) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-grass")) {
 					BlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							relativePosX + stateStartPaddingX,
-							relativePosY + stateStartPaddingY,
-							relativePosZ + stateStartPaddingZ
+							relativePosX + stateCacheStartPaddingX,
+							relativePosY + stateCacheStartPaddingY,
+							relativePosZ + stateCacheStartPaddingZ,
+							stateCacheSizeX, stateCacheSizeY
 					)];
 
 					if (isStateGrass(betterTextureState)) {
@@ -196,9 +196,10 @@ public final class ClientUtil {
 					}
 					for (int[] offset : OFFSETS_ORDERED) {
 						betterTextureState = blockCacheArray[stateCache.getIndex(
-								relativePosX + offset[0] + stateStartPaddingX,
-								relativePosY + offset[1] + stateStartPaddingY,
-								relativePosZ + offset[2] + stateStartPaddingZ
+								relativePosX + offset[0] + stateCacheStartPaddingX,
+								relativePosY + offset[1] + stateCacheStartPaddingY,
+								relativePosZ + offset[2] + stateCacheStartPaddingZ,
+								stateCacheSizeX, stateCacheSizeY
 						)];
 						if (isStateGrass(betterTextureState)) {
 							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
@@ -209,40 +210,52 @@ public final class ClientUtil {
 			}
 		}
 
+		final int smoothableCacheStartPaddingX = smoothableCache.startPaddingX;
+		final int smoothableCacheStartPaddingY = smoothableCache.startPaddingY;
+		final int smoothableCacheStartPaddingZ = smoothableCache.startPaddingZ;
+
+		final int smoothableCacheSizeX = smoothableCache.sizeX;
+		final int smoothableCacheSizeY = smoothableCache.sizeY;
+
 		try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState")) {
 
 			// If pos passed in is smoothable return state from that pos
 			if (smoothableCacheArray[smoothableCache.getIndex(
-					relativePosX + smoothableStartPaddingX,
-					relativePosY + smoothableStartPaddingY,
-					relativePosZ + smoothableStartPaddingZ
+					relativePosX + smoothableCacheStartPaddingX,
+					relativePosY + smoothableCacheStartPaddingY,
+					relativePosZ + smoothableCacheStartPaddingZ,
+					smoothableCacheSizeX, smoothableCacheSizeY
 			)]) {
 				texturePooledMutablePos.setPos(posX, posY, posZ);
 				return blockCacheArray[stateCache.getIndex(
-						relativePosX + stateStartPaddingX,
-						relativePosY + stateStartPaddingY,
-						relativePosZ + stateStartPaddingZ
+						relativePosX + stateCacheStartPaddingX,
+						relativePosY + stateCacheStartPaddingY,
+						relativePosZ + stateCacheStartPaddingZ,
+						stateCacheSizeX, stateCacheSizeY
 				)];
 			}
 
 			// Start at state of pos passed in
 			BlockState state = blockCacheArray[stateCache.getIndex(
-					relativePosX + stateStartPaddingX,
-					relativePosY + stateStartPaddingY,
-					relativePosZ + stateStartPaddingZ
+					relativePosX + stateCacheStartPaddingX,
+					relativePosY + stateCacheStartPaddingY,
+					relativePosZ + stateCacheStartPaddingZ,
+					stateCacheSizeX, stateCacheSizeY
 			)];
 
 			for (int[] offset : OFFSETS_ORDERED) {
 				if (smoothableCacheArray[smoothableCache.getIndex(
-						relativePosX + offset[0] + smoothableStartPaddingX,
-						relativePosY + offset[1] + smoothableStartPaddingY,
-						relativePosZ + offset[2] + smoothableStartPaddingZ
+						relativePosX + offset[0] + smoothableCacheStartPaddingX,
+						relativePosY + offset[1] + smoothableCacheStartPaddingY,
+						relativePosZ + offset[2] + smoothableCacheStartPaddingZ,
+						smoothableCacheSizeX, smoothableCacheSizeY
 				)]) {
 					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
 					state = blockCacheArray[stateCache.getIndex(
-							relativePosX + offset[0] + stateStartPaddingX,
-							relativePosY + offset[1] + stateStartPaddingY,
-							relativePosZ + offset[2] + stateStartPaddingZ
+							relativePosX + offset[0] + stateCacheStartPaddingX,
+							relativePosY + offset[1] + stateCacheStartPaddingY,
+							relativePosZ + offset[2] + stateCacheStartPaddingZ,
+							stateCacheSizeX, stateCacheSizeY
 					)];
 					break;
 				}
@@ -340,30 +353,6 @@ public final class ClientUtil {
 			return region.chunks[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeX(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeXExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeY(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeYExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeZExtension());
 	}
 
 }

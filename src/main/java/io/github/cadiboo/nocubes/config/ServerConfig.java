@@ -12,7 +12,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-public final class ServerConfig {
+final class ServerConfig {
 
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<List<? extends String>> terrainSmoothable;
@@ -40,7 +40,7 @@ public final class ServerConfig {
 		terrainCollisions = builder
 				.comment("If realistic terrain collisions should be calculated")
 				.translation(MOD_ID + ".config.terrainCollisions")
-				.define("terrainCollisions", false);
+				.define("terrainCollisions", true);
 		builder.pop();
 	}
 

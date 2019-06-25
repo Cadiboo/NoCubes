@@ -153,7 +153,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             // NoCubes End
             for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
-               Block block = blockstate.getBlock();
+//               Block block = blockstate.getBlock();
                if (blockstate.isOpaqueCube(lvt_12_1_, blockpos2)) {
                   lvt_10_1_.setOpaqueCube(blockpos2);
                }
@@ -171,7 +171,10 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                   }
                }
 
-               IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+               // NoCubes Start
+//               IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+               IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
+               // NoCubes End
                net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
                for(BlockRenderLayer blockrenderlayer1 : BlockRenderLayer.values()) {
                    net.minecraftforge.client.ForgeHooksClient.setRenderLayer(blockrenderlayer1);
@@ -187,8 +190,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                }
 
                // NoCubes Start
-               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !blockstate.nocubes_isTerrainSmoothable())
-               if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable())
+               if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(blockstate))
                // NoCubes End
                if (blockstate.getRenderType() != BlockRenderType.INVISIBLE && blockstate.canRenderInLayer(blockrenderlayer1)) {
                   int k = blockrenderlayer1.ordinal();

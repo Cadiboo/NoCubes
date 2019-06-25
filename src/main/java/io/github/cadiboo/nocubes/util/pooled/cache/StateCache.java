@@ -6,14 +6,6 @@ import net.minecraft.fluid.IFluidState;
 import javax.annotation.Nonnull;
 
 /**
- * // Density Cache | -1, n     | n + 1
- * Density Cache    | -1, 18    | 20
- * Vertices         | -1, 16    | 18
- * Texture Cache    | -2, 17    | 20
- * Light Cache      | -2, 17    | 20
- * Color Cache      | -2, 17    | 20
- * Fluids Cache     | 0,15x0,16y| 16, 17
- *
  * @author Cadiboo
  */
 public class StateCache extends XYZCache implements AutoCloseable {

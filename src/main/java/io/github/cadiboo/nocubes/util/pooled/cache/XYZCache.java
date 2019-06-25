@@ -26,6 +26,7 @@ public class XYZCache {
 		this.sizeZ = sizeZ;
 	}
 
+	@Deprecated
 	public int getIndex(final int x, final int y, final int z) {
 		return getIndex(x, y, z, this.sizeX, this.sizeY);
 	}

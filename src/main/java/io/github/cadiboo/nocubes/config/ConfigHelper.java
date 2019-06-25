@@ -97,9 +97,9 @@ import static net.minecraft.block.Blocks.YELLOW_TERRACOTTA;
  */
 public final class ConfigHelper {
 
-	private static ModConfig clientConfig;
+	public static ModConfig clientConfig;
 
-	private static ModConfig serverConfig;
+	public static ModConfig serverConfig;
 
 	public static void bakeClient(final ModConfig config) {
 		clientConfig = config;
@@ -401,7 +401,7 @@ public final class ConfigHelper {
 		setValueAndSave(clientConfig, "general.renderSmoothLeaves", enabled);
 	}
 
-	private static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
+	public static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
 		modConfig.getConfigData().set(path, newValue);
 		modConfig.save();
 	}

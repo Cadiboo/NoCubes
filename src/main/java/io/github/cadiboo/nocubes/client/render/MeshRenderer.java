@@ -47,7 +47,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.client.ModelHelper.ENUMFACING_QUADS_ORDERED;
+import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED;
 import static net.minecraft.util.Direction.DOWN;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
@@ -64,17 +64,17 @@ public final class MeshRenderer {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	public static void renderMesh(
-			@Nonnull final ChunkRender renderChunk,
-			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final ChunkRender chunkRender,
+			@Nonnull final ChunkRenderTask chunkRenderTask,
 			@Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final BlockPos renderChunkPosition,
-			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IEnviromentBlockReader blockAccess,
+			@Nonnull final BlockPos chunkRenderPos,
+			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
+			@Nonnull final IEnviromentBlockReader reader,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
-			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final LazyBlockColorCache blockColorsCache,
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -97,14 +97,14 @@ public final class MeshRenderer {
 						ModProfiler.get().end(); // HACKY
 						ModProfiler.get().start("prepareRenderFaces"); // HACKY
 
-						final int initialPosX = renderChunkPositionX + pos.x;
-						final int initialPosY = renderChunkPositionY + pos.y;
-						final int initialPosZ = renderChunkPositionZ + pos.z;
+						final int initialPosX = chunkRenderPosX + pos.x;
+						final int initialPosY = chunkRenderPosY + pos.y;
+						final int initialPosZ = chunkRenderPosZ + pos.z;
 
 						//TODO use pos? (I've forgotten what this todo is even about)
-						final byte relativePosX = ClientUtil.getRelativePos(renderChunkPositionX, initialPosX);
-						final byte relativePosY = ClientUtil.getRelativePos(renderChunkPositionY, initialPosY);
-						final byte relativePosZ = ClientUtil.getRelativePos(renderChunkPositionZ, initialPosZ);
+						final byte relativePosX = ClientUtil.getRelativePos(chunkRenderPosX, initialPosX);
+						final byte relativePosY = ClientUtil.getRelativePos(chunkRenderPosY, initialPosY);
+						final byte relativePosZ = ClientUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
 
 						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
 
@@ -120,11 +120,11 @@ public final class MeshRenderer {
 
 						try {
 							renderFaces(
-									renderChunk, generator, compiledChunk, renderChunkPosition,
-									renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-									blockAccess, blockRendererDispatcher, random,
+									chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
+									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+									reader, blockRendererDispatcher, random,
 									usedBlockRenderLayers,
-									pooledPackedLightCache, blockColorsCache,
+									lazyPackedLightCache, lazyBlockColorCache,
 									pos, faces,
 									pooledMutableBlockPos,
 									texturePooledMutableBlockPos, textureState,
@@ -134,8 +134,8 @@ public final class MeshRenderer {
 							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
 
 							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
-							final BlockPos blockPos = new BlockPos(renderChunkPositionX + pos.x, renderChunkPositionX + pos.y, renderChunkPositionX + pos.z);
-							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, blockAccess.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
+							final BlockPos blockPos = new BlockPos(chunkRenderPosX + pos.x, chunkRenderPosX + pos.y, chunkRenderPosX + pos.z);
+							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, reader.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
 
 							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
 							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos.toImmutable(), textureState);
@@ -152,17 +152,17 @@ public final class MeshRenderer {
 	}
 
 	public static void renderFaces(
-			@Nonnull final ChunkRender renderChunk,
-			@Nonnull final ChunkRenderTask generator,
+			@Nonnull final ChunkRender chunkRender,
+			@Nonnull final ChunkRenderTask chunkRenderTask,
 			@Nonnull final CompiledChunk compiledChunk,
-			@Nonnull final BlockPos renderChunkPosition,
-			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IEnviromentBlockReader blockAccess,
+			@Nonnull final BlockPos chunkRenderPos,
+			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
+			@Nonnull final IEnviromentBlockReader reader,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final LazyPackedLightCache pooledPackedLightCache,
-			@Nonnull final LazyBlockColorCache blockColorsCache,
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -170,8 +170,14 @@ public final class MeshRenderer {
 			@Nonnull final BlockState textureState,
 			final boolean renderOppositeSides
 	) {
-		final IModelData modelData = generator.getModelData(texturePos);
+		final IModelData modelData = chunkRenderTask.getModelData(texturePos);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
+
+		final BlockRenderLayer[] blockRenderLayers = BlockRenderLayer.values();
+		final int blockRenderLayersLength = blockRenderLayers.length;
+
+		final boolean applyDiffuseLighting = Config.applyDiffuseLighting;
+		final boolean shortGrass = Config.shortGrass;
 
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
@@ -198,28 +204,28 @@ public final class MeshRenderer {
 						profiler.end(); // HACKY
 						profiler.start("calculateDiffuseLighting");
 						{
-							if (!Config.applyDiffuseLighting) {
+							if (!applyDiffuseLighting) {
 								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
 							} else {
 								diffuse0 = diffuseLight(toSide(
-										v0.x - renderChunkPositionX - pos.x,
-										v0.y - renderChunkPositionY - pos.y,
-										v0.z - renderChunkPositionZ - pos.z
+										v0.x - chunkRenderPosX - pos.x,
+										v0.y - chunkRenderPosY - pos.y,
+										v0.z - chunkRenderPosZ - pos.z
 								));
 								diffuse1 = diffuseLight(toSide(
-										v1.x - renderChunkPositionX - pos.x,
-										v1.y - renderChunkPositionY - pos.y,
-										v1.z - renderChunkPositionZ - pos.z
+										v1.x - chunkRenderPosX - pos.x,
+										v1.y - chunkRenderPosY - pos.y,
+										v1.z - chunkRenderPosZ - pos.z
 								));
 								diffuse2 = diffuseLight(toSide(
-										v2.x - renderChunkPositionX - pos.x,
-										v2.y - renderChunkPositionY - pos.y,
-										v2.z - renderChunkPositionZ - pos.z
+										v2.x - chunkRenderPosX - pos.x,
+										v2.y - chunkRenderPosY - pos.y,
+										v2.z - chunkRenderPosZ - pos.z
 								));
 								diffuse3 = diffuseLight(toSide(
-										v3.x - renderChunkPositionX - pos.x,
-										v3.y - renderChunkPositionY - pos.y,
-										v3.z - renderChunkPositionZ - pos.z
+										v3.x - chunkRenderPosX - pos.x,
+										v3.y - chunkRenderPosY - pos.y,
+										v3.z - chunkRenderPosZ - pos.z
 								));
 							}
 						}
@@ -237,7 +243,7 @@ public final class MeshRenderer {
 						final int lightmapBlockLight3;
 
 						profiler.end(); // HACKY
-						try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(pooledPackedLightCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ, pooledMutableBlockPos)) {
+						try (final LightmapInfo lightmapInfo = LightmapInfo.generateLightmapInfo(lazyPackedLightCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos)) {
 
 							lightmapSkyLight0 = lightmapInfo.skylight0;
 							lightmapSkyLight1 = lightmapInfo.skylight1;
@@ -266,14 +272,14 @@ public final class MeshRenderer {
 						float colorGreen3 = -1;
 						float colorBlue3 = -1;
 
-						if (Config.shortGrass) {
+						if (shortGrass) {
 							profiler.end(); // HACKY
 							profiler.start("shortGrass");
 							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
 								renderShortGrass(
-										renderChunk, generator, compiledChunk, renderChunkPosition,
-										renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ,
-										blockAccess,
+										chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
+										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+										reader,
 										blockRendererDispatcher,
 										random,
 										usedBlockRenderLayers,
@@ -288,9 +294,8 @@ public final class MeshRenderer {
 							profiler.start("renderMesh"); // HACKY
 						}
 
-						final BlockRenderLayer[] values = BlockRenderLayer.values();
-						for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
-							final BlockRenderLayer initialBlockRenderLayer = values[i];
+						for (int i = 0; i < blockRenderLayersLength; ++i) {
+							final BlockRenderLayer initialBlockRenderLayer = blockRenderLayers[i];
 							if (!textureState.canRenderInLayer(initialBlockRenderLayer)) {
 								continue;
 							}
@@ -298,21 +303,21 @@ public final class MeshRenderer {
 							final int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
 							ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
 
-							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, renderChunk, renderChunkPosition);
+							final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkRenderPos);
 
 							boolean wasAnythingRendered = false;
 
-							OptiFineCompatibility.pushShaderThing(textureState, texturePos, blockAccess, bufferBuilder);
+							OptiFineCompatibility.pushShaderThing(textureState, texturePos, reader, bufferBuilder);
 							try {
 
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
 									random.setSeed(posRand);
-									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, blockAccess, blockRendererDispatcher, modelData, random, correctedBlockRenderLayer);
+									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, reader, blockRendererDispatcher, modelData, random, correctedBlockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();
-										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, Direction.DOWN, random).get(0));
+										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, DOWN, random, modelData).get(0));
 									}
 								}
 
@@ -377,7 +382,7 @@ public final class MeshRenderer {
 											profiler.end(); // HACKY
 											try (
 													final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
-													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(blockColorsCache, v0, v1, v2, v3, renderChunkPositionX, renderChunkPositionY, renderChunkPositionZ)
+													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos)
 											) {
 												colorRed0 = blockColorInfo.red0;
 												colorGreen0 = blockColorInfo.green0;
@@ -454,9 +459,10 @@ public final class MeshRenderer {
 
 	//TODO: fix bad lighting fix
 	private static void renderShortGrass(
-			@Nonnull final ChunkRender renderChunk, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final BlockPos renderChunkPosition,
-			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IEnviromentBlockReader blockAccess,
+			@Nonnull final ChunkRender chunkRender, @Nonnull final ChunkRenderTask chunkRenderTask, @Nonnull final CompiledChunk compiledChunk,
+			@Nonnull final BlockPos chunkRenderPos,
+			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
+			@Nonnull final IEnviromentBlockReader reader,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
@@ -469,20 +475,21 @@ public final class MeshRenderer {
 
 		final BlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
-		pooledMutableBlockPos.setPos(texturePos).move(Direction.UP);
+		// TODO StateCache?
+		pooledMutableBlockPos.setPos(texturePos).move(UP);
 		// isBlockLoaded only checks x and z
 		if (
-				pooledMutableBlockPos.getX() > renderChunkPositionX + 16 ||
-						pooledMutableBlockPos.getY() > renderChunkPositionY + 16 ||
-						pooledMutableBlockPos.getZ() > renderChunkPositionZ + 16
+				pooledMutableBlockPos.getX() > chunkRenderPosX + 16 ||
+						pooledMutableBlockPos.getY() > chunkRenderPosY + 16 ||
+						pooledMutableBlockPos.getZ() > chunkRenderPosZ + 16
 		) {
 			return;
 		}
-		final BlockState blockStateUp = blockAccess.getBlockState(pooledMutableBlockPos);
+		final BlockState blockStateUp = reader.getBlockState(pooledMutableBlockPos);
 		if (blockStateUp == grassPlantState) {
 			return;
 		}
-		if (blockStateUp.isOpaqueCube(blockAccess, pooledMutableBlockPos)) {
+		if (blockStateUp.isOpaqueCube(reader, pooledMutableBlockPos)) {
 			return;
 		}
 		if (blockStateUp.getMaterial().isLiquid()) {
@@ -491,7 +498,7 @@ public final class MeshRenderer {
 
 		final double shortGrassHeight = 0.25D;
 
-		final Vec3d offset = grassPlantState.getOffset(blockAccess, texturePos);
+		final Vec3d offset = grassPlantState.getOffset(reader, texturePos);
 		final double offX = offset.x;
 		final double offY = 0;
 		final double offZ = offset.z;
@@ -512,11 +519,14 @@ public final class MeshRenderer {
 		final IBakedModel model = blockRendererDispatcher.getModelForState(grassPlantState);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
 
-		final int color = BiomeColors.GRASS_COLOR.getColor(blockAccess.getBiome(texturePos), texturePos);
+		// TODO: BlockColorsCache?
+		final int color = BiomeColors.GRASS_COLOR.getColor(reader.getBiome(texturePos), texturePos);
 
 		final int red = (color & 0xFF0000) >> 16;
 		final int green = (color & 0x00FF00) >> 8;
 		final int blue = (color & 0x0000FF);
+
+		final int DIRECTION_QUADS_ORDERED_length = DIRECTION_QUADS_ORDERED.length;
 
 		final BlockRenderLayer[] values = BlockRenderLayer.values();
 		for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
@@ -528,15 +538,15 @@ public final class MeshRenderer {
 			final int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
 			ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
 
-			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, renderChunk, renderChunkPosition);
+			final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkRenderPos);
 
 			boolean wasAnythingRendered = false;
 
-			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, blockAccess, bufferBuilder);
+			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
 			try {
 
-				for (int facingIndex = 0, enumfacing_quads_orderedLength = ENUMFACING_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
-					final Direction facing = ENUMFACING_QUADS_ORDERED[facingIndex];
+				for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_length; ++facingIndex) {
+					final Direction facing = DIRECTION_QUADS_ORDERED[facingIndex];
 					random.setSeed(posRand);
 					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, random);
 					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
@@ -828,31 +838,15 @@ public final class MeshRenderer {
 	}
 
 	private static double max(double d0, final double d1, final double d2, final double d3) {
-		if (d0 < d1) {
-			d0 = d1;
-		}
-		if (d0 < d2) {
-			d0 = d2;
-		}
-		if (d0 < d3) {
-			return d3;
-		} else {
-			return d0;
-		}
+		if (d0 < d1) d0 = d1;
+		if (d0 < d2) d0 = d2;
+		return d0 < d3 ? d3 : d0;
 	}
 
 	private static double min(double d0, final double d1, final double d2, final double d3) {
-		if (d0 > d1) {
-			d0 = d1;
-		}
-		if (d0 > d2) {
-			d0 = d2;
-		}
-		if (d0 > d3) {
-			return d3;
-		} else {
-			return d0;
-		}
+		if (d0 > d1) d0 = d1;
+		if (d0 > d2) d0 = d2;
+		return d0 > d3 ? d3 : d0;
 	}
 
 	private static Direction toSide(final double x, final double y, final double z) {

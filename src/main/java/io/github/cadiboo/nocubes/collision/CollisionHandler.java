@@ -7,258 +7,38 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.IWorldReader;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * @author Cadiboo
  */
-//TODO FIXME use VoxelShapePart instead of tons of VoxelShapes
 public final class CollisionHandler {
 
-//	public static Stream<VoxelShape> getCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
-//
-//		if (!Config.terrainCollisions) {
-//			return Stream.concat(
-//					getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//							.limit(1L)
-//							.filter(predicate)
-//			);
-//		}
-//
-//		if (!shouldApplyMeshCollisions(movingEntity)) {
-//			if (!shouldApplyReposeCollisions(movingEntity)) {
-//				return Stream.concat(
-//						getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//						Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//								.limit(1L)
-//								.filter(predicate)
-//				);
-//			} else {
-//				return getReposeCollisionShapes(iWorldReaderBase, movingEntity, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate);
-//			}
-//		}
-//
-//		// Density calculation needs -1 on all axis
-//		final int additionalSizeNegX = 1;
-//		final int additionalSizeNegY = 1;
-//		final int additionalSizeNegZ = 1;
-//
-//		final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
-//
-//		final byte areaSizeX = (byte) (maxXp1 - minXm1);
-//		final byte areaSizeY = (byte) (maxYp1 - minYm1);
-//		final byte areaSizeZ = (byte) (maxZp1 - minZm1);
-//
-//		final byte meshSizeX = (byte) (areaSizeX + meshGenerator.getSizeXExtension());
-//		final byte meshSizeY = (byte) (areaSizeY + meshGenerator.getSizeYExtension());
-//		final byte meshSizeZ = (byte) (areaSizeZ + meshGenerator.getSizeZExtension());
-//
-//		final int sizeX = meshSizeX + additionalSizeNegX;
-//		final int sizeY = meshSizeY + additionalSizeNegY;
-//		final int sizeZ = meshSizeZ + additionalSizeNegZ;
-//
-//		final int startPosX = minXm1 - additionalSizeNegX;
-//		final int startPosY = minYm1 - additionalSizeNegY;
-//		final int startPosZ = minZm1 - additionalSizeNegZ;
-//
-//		if (!iWorldReaderBase.isAreaLoaded(
-//				startPosX, startPosY, startPosZ,
-//				startPosX + sizeX, startPosY + sizeY, startPosZ + sizeZ,
-//				true
-//		)) {
-//			return Stream.concat(
-//					getCollisionShapesExcludingSmoothable(null, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//					Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//							.limit(1L)
-//							.filter(predicate)
-//			);
-//		}
-//
-//		final ModProfiler profiler = ModProfiler.get();
-//		try (
-//				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-//				StateCache stateCache = CacheUtil.generateStateCache(
-//						startPosX, startPosY, startPosZ,
-//						sizeX, sizeY, sizeZ,
-//						iWorldReaderBase, pooledMutableBlockPos
-//				);
-//				SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(stateCache, TERRAIN_SMOOTHABLE);
-//				DensityCache densityCache = CacheUtil.generateDensityCache(
-//						sizeX - 1, sizeY - 1, sizeZ - 1,
-//						0, 0, 0,
-//						stateCache, smoothableCache
-//				)
-//		) {
-//
-//			final HashMap<Vec3b, FaceList> meshData;
-//			try (final ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
-//				meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
-//			}
-//
-//			try (final ModProfiler ignored = profiler.start("Offset collisions mesh")) {
-//				MeshDispatcher.offsetMesh(minXm1, minYm1, minZm1, meshData);
-//			}
-//
-//			try (FaceList finalFaces = FaceList.retain()) {
-//
-//				try (final ModProfiler ignored = profiler.start("Combine collisions faces")) {
-//					for (final FaceList generatedFaceList : meshData.values()) {
-//						finalFaces.addAll(generatedFaceList);
-//						generatedFaceList.close();
-//					}
-//					for (final Vec3b vec3b : meshData.keySet()) {
-//						vec3b.close();
-//					}
-//				}
-//
-//				final List<VoxelShape> collidingShapes = new ArrayList<>();
-//
-//				for (final Face face : finalFaces) {
-//					try (
-//							final Vec3 v0 = face.getVertex0();
-//							final Vec3 v1 = face.getVertex1();
-//							final Vec3 v2 = face.getVertex2();
-//							final Vec3 v3 = face.getVertex3()
-//					) {
-//						final int approximateY;
-//						final VoxelShape originalBoxShape;
-//
-//						try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
-//							// Snap collision VoxelShapes max Y to max Y VoxelShapes of original block at pos if smaller than original
-//							// To stop players falling down through the world when they enable collisions
-//							// (Only works on flat or near-flat surfaces)
-//							//TODO: remove
-//							final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, startPosX + sizeX);
-//							approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, startPosY + sizeY);
-//							final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, startPosZ + sizeZ);
-//							final IBlockState state = stateCache.getBlockStates()[stateCache.getIndex(
-//									approximateX - startPosX,
-//									approximateY - startPosY,
-//									approximateZ - startPosZ
-//							)];
-//							originalBoxShape = state.getCollisionShape(iWorldReaderBase, pooledMutableBlockPos.setPos(
-//									approximateX, approximateY, approximateZ
-//							));
-//						}
-//						addIntersectingFaceBoxesToList(collidingShapes, face, profiler, approximateY + originalBoxShape.getEnd(Axis.Y), 0.15F, predicate, false);
-//					}
-//					face.close();
-//				}
-//
-//				return Stream.concat(
-//						Stream.concat(
-//								getCollisionShapesExcludingSmoothable(TERRAIN_SMOOTHABLE, iWorldReaderBase, area, entityShape, isEntityInsideWorldBorder, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, isAreaInsideWorldBorder, voxelshapepart, predicate),
-//								collidingShapes.stream()
-//						), Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//								.limit(1L)
-//								.filter(predicate)
-//				);
-//
-//			}
-//		}
-//	}
-//
-//	//TODO
-//	private static Stream<VoxelShape> getReposeCollisionShapes(final IWorldReaderBase iWorldReaderBase, final Entity movingEntity, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
-//		return Stream.concat(
-//				StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(minXm1, minYm1, minZm1, maxXp1 - 1, maxYp1 - 1, maxZp1 - 1).spliterator(), false).map((pos) -> {
-//					int k1 = pos.getX();
-//					int l1 = pos.getY();
-//					int i2 = pos.getZ();
-//					boolean flag1 = k1 == minXm1 || k1 == maxXp1 - 1;
-//					boolean flag2 = l1 == minYm1 || l1 == maxYp1 - 1;
-//					boolean flag3 = i2 == minZm1 || i2 == maxZp1 - 1;
-//					if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && iWorldReaderBase.isBlockLoaded(pos)) {
-//						final VoxelShape voxelshape;
-//						if (isEntityInsideWorldBorder && !isAreaInsideWorldBorder && !worldborder.contains(pos)) {
-//							voxelshape = VoxelShapes.fullCube();
-//						} else {
-//							//Added stuff here
-//							final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
-//							if (TERRAIN_SMOOTHABLE.apply(blockState)) {
-//								voxelshape = StolenReposeCode.getCollisionShape(blockState, iWorldReaderBase, pos);
-//							} else {
-//								voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);
-//							}
-//							//End added stuff
-//						}
-//
-//						VoxelShape voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
-//						if (VoxelShapes.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
-//							return VoxelShapes.empty();
-//						} else if (voxelshape == VoxelShapes.fullCube()) {
-//							voxelshapepart.setFilled(k1 - minXm1, l1 - minYm1, i2 - minZm1, true, true);
-//							return VoxelShapes.empty();
-//						} else {
-//							return voxelshape.withOffset((double) k1, (double) l1, (double) i2);
-//						}
-//					} else {
-//						return VoxelShapes.empty();
-//					}
-//				}).filter(predicate),
-//				Stream.generate(() -> new VoxelShapeInt(voxelshapepart, minXm1, minYm1, minZm1))
-//						.limit(1L)
-//						.filter(predicate)
-//		);
-//	}
-//
-//	private static int roundAvg(double d0, double d1, double d2, double d3) {
-//		return (int) ((Math.round(d0) + Math.round(d1) + Math.round(d2) + Math.round(d3)) / 4D);
-//	}
-//
-//	//hmmm
-//	private static int floorAvg(double d0, double d1, double d2, double d3) {
-//		return MathHelper.floor((d0 + d1 + d2 + d3) / 4D);
-//	}
-//
-//	//hmmm
-//	private static int average(final double d0, final double d1, final double d2, final double d3) {
-//		return (int) ((d0 + d1 + d2 + d3) / 4);
-//	}
-//
-//	public static Stream<VoxelShape> getCollisionShapesExcludingSmoothable(@Nullable final IsSmoothable isSmoothable, final IWorldReaderBase iWorldReaderBase, final VoxelShape area, final VoxelShape entityShape, final boolean isEntityInsideWorldBorder, final int i, final int j, final int k, final int l, final int i1, final int j1, final WorldBorder worldborder, final boolean isAreaInsideWorldBorder, final VoxelShapePart voxelshapepart, final Predicate<VoxelShape> predicate) {
-//		return StreamSupport.stream(BlockPos.MutableBlockPos.getAllInBoxMutable(i, k, i1, j - 1, l - 1, j1 - 1).spliterator(), false).map((pos) -> {
-//			int k1 = pos.getX();
-//			int l1 = pos.getY();
-//			int i2 = pos.getZ();
-//			boolean flag1 = k1 == i || k1 == j - 1;
-//			boolean flag2 = l1 == k || l1 == l - 1;
-//			boolean flag3 = i2 == i1 || i2 == j1 - 1;
-//			if ((!flag1 || !flag2) && (!flag2 || !flag3) && (!flag3 || !flag1) && iWorldReaderBase.isBlockLoaded(pos)) {
-//				final VoxelShape voxelshape;
-//				if (isEntityInsideWorldBorder && !isAreaInsideWorldBorder && !worldborder.contains(pos)) {
-//					voxelshape = VoxelShapes.fullCube();
-//				} else {
-//					//Added stuff here
-//					final IBlockState blockState = iWorldReaderBase.getBlockState(pos);
-//					if (isSmoothable != null && (isSmoothable.apply(blockState))) {
-//						voxelshape = VoxelShapes.empty();
-//					} else {
-//						voxelshape = blockState.getCollisionShape(iWorldReaderBase, pos);
-//					}
-//					//End added stuff
-//				}
-//
-//				VoxelShape voxelshape1 = entityShape.withOffset((double) (-k1), (double) (-l1), (double) (-i2));
-//				if (VoxelShapes.compare(voxelshape1, voxelshape, IBooleanFunction.AND)) {
-//					return VoxelShapes.empty();
-//				} else if (voxelshape == VoxelShapes.fullCube()) {
-//					voxelshapepart.setFilled(k1 - i, l1 - k, i2 - i1, true, true);
-//					return VoxelShapes.empty();
-//				} else {
-//					return voxelshape.withOffset((double) k1, (double) l1, (double) i2);
-//				}
-//			} else {
-//				return VoxelShapes.empty();
-//			}
-//		}).filter(predicate);
-//	}
+	private static int roundAvg(double d0, double d1, double d2, double d3) {
+		return (int) ((Math.round(d0) + Math.round(d1) + Math.round(d2) + Math.round(d3)) / 4D);
+	}
+
+	//hmmm
+	private static int floorAvg(double d0, double d1, double d2, double d3) {
+		return MathHelper.floor((d0 + d1 + d2 + d3) / 4D);
+	}
+
+	//hmmm
+	private static int average(final double d0, final double d1, final double d2, final double d3) {
+		return (int) ((d0 + d1 + d2 + d3) / 4);
+	}
 
 	private static void addIntersectingFaceBoxesToList(
 			final List<VoxelShape> outBoxes,
@@ -447,10 +227,10 @@ public final class CollisionHandler {
 //			addCollisionBoxToList(outBoxes, v1box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v2box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v3box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v0v1box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v1v2box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v2v3box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v3v0box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v0v1box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v1v2box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v2v3box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v3v0box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v0v1v0box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v0v1v1box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v1v2v1box, predicate, ignoreIntersects);
@@ -459,10 +239,10 @@ public final class CollisionHandler {
 //			addCollisionBoxToList(outBoxes, v2v3v3box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v3v0v3box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v3v0v0box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v0v1v1v2box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v1v2v2v3box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v2v3v3v0box, predicate, ignoreIntersects);
-			addCollisionBoxToList(outBoxes, v3v0v0v1box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v0v1v1v2box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v1v2v2v3box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v2v3v3v0box, predicate, ignoreIntersects);
+			addCollisionShapeToList(outBoxes, v3v0v0v1box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v0v1v1v2v1v2v2v3box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v1v2v2v3v2v3v3v0box, predicate, ignoreIntersects);
 //			addCollisionBoxToList(outBoxes, v2v3v3v0v3v0v0v1box, predicate, ignoreIntersects);
@@ -503,14 +283,14 @@ public final class CollisionHandler {
 
 	}
 
-	private static void addCollisionBoxToList(
-			final List<VoxelShape> collidingBoxes,
-			final VoxelShape box,
+	private static void addCollisionShapeToList(
+			final List<VoxelShape> collidingShapes,
+			final VoxelShape shape,
 			final Predicate<VoxelShape> predicate,
 			final boolean ignoreIntersects
 	) {
-		if (ignoreIntersects || predicate.test(box)) {
-			collidingBoxes.add(box);
+		if (ignoreIntersects || predicate.test(shape)) {
+			collidingShapes.add(shape);
 		}
 	}
 
@@ -522,8 +302,11 @@ public final class CollisionHandler {
 		);
 	}
 
-	private static VoxelShape createVoxelShapeForVertex(final Vec3 vec3, final float boxRadius, final double maxY) {
-
+	private static VoxelShape createVoxelShapeForVertex(
+			final Vec3 vec3,
+			final float boxRadius,
+			final double maxY
+	) {
 		final double vy = vec3.y;
 		final double vx = vec3.x;
 		final double vz = vec3.z;
@@ -539,7 +322,6 @@ public final class CollisionHandler {
 				isOverMax ? vy : vy + boxRadius,
 				vz + boxRadius
 		);
-
 	}
 
 	public static boolean shouldApplyMeshCollisions(@Nullable final Entity entity) {
@@ -548,6 +330,61 @@ public final class CollisionHandler {
 
 	public static boolean shouldApplyReposeCollisions(@Nullable final Entity entity) {
 		return entity instanceof ItemEntity || entity instanceof LivingEntity;
+	}
+
+	public static Stream<VoxelShape> getMeshCollisions(
+			final IWorldReader _this,
+			final Entity entity, final AxisAlignedBB aabb,
+			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final ISelectionContext context
+	) {
+		return Stream.of();
+	}
+
+	public static Stream<VoxelShape> getReposeCollisions(
+			final IWorldReader _this,
+			final Entity entity, final AxisAlignedBB aabb,
+			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final ISelectionContext context
+	) {
+		return Stream.of();
+	}
+
+	public static Stream<VoxelShape> getVanillaCollisions(
+			final IWorldReader _this,
+			final Entity entity, final AxisAlignedBB aabb,
+			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final ISelectionContext context
+	) {
+		return Stream.of(VoxelShapes.empty());
+	}
+
+	@Nonnull
+	public static Stream<VoxelShape> getCollisionShapes(
+			final IWorldReader _this,
+			final Entity entity, final AxisAlignedBB aabb,
+			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final ISelectionContext context
+	) {
+		if (shouldApplyMeshCollisions(entity)) {
+			return getMeshCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+		} else if (shouldApplyReposeCollisions(entity)) {
+			return getReposeCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+		} else {
+			return getVanillaCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+		}
 	}
 
 }

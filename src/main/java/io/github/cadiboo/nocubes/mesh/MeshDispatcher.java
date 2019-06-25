@@ -26,12 +26,12 @@ public final class MeshDispatcher {
 	@Nonnull
 	public static FaceList generateBlockMeshOffset(
 			@Nonnull final BlockPos pos,
-			@Nonnull final IBlockReader blockAccess,
+			@Nonnull final IBlockReader reader,
 			@Nonnull final IsSmoothable isSmoothable,
 			@Nonnull final MeshGeneratorType meshGenerator
 	) {
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
-			return generateBlockMeshOffset(pos, blockAccess, pooledMutableBlockPos, isSmoothable, meshGenerator);
+			return generateBlockMeshOffset(pos, reader, pooledMutableBlockPos, isSmoothable, meshGenerator);
 		}
 	}
 
@@ -41,18 +41,18 @@ public final class MeshDispatcher {
 	@Nonnull
 	public static FaceList generateBlockMeshOffset(
 			@Nonnull final BlockPos pos,
-			@Nonnull final IBlockReader blockAccess,
+			@Nonnull final IBlockReader reader,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final IsSmoothable isSmoothable,
 			@Nonnull final MeshGeneratorType meshGenerator
 	) {
 
 		if (meshGenerator == MeshGeneratorType.OldNoCubes) {
-			return OldNoCubes.generateBlock(pos, blockAccess, isSmoothable, pooledMutableBlockPos);
+			return OldNoCubes.generateBlock(pos, reader, isSmoothable, pooledMutableBlockPos);
 		}
 
 		final FaceList chunkData = generateBlockMeshUnOffset(
-				pos, blockAccess, pooledMutableBlockPos,
+				pos, reader, pooledMutableBlockPos,
 				isSmoothable,
 				meshGenerator
 		);
@@ -68,11 +68,17 @@ public final class MeshDispatcher {
 	 * @return the un offset vertices for the block
 	 */
 	@Nonnull
-	public static FaceList generateBlockMeshUnOffset(@Nonnull final BlockPos pos, @Nonnull final IBlockReader blockAccess, final PooledMutableBlockPos pooledMutableBlockPos, @Nonnull final IsSmoothable isSmoothable, @Nonnull final MeshGeneratorType meshGeneratorType) {
+	public static FaceList generateBlockMeshUnOffset(
+			@Nonnull final BlockPos pos,
+			@Nonnull final IBlockReader reader,
+			final PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final IsSmoothable isSmoothable,
+			@Nonnull final MeshGeneratorType meshGeneratorType
+	) {
 
 		try (ModProfiler ignored = ModProfiler.get().start("generateBlock")) {
 //			if(true)
-//				return meshGeneratorType.generateBlock(pos, blockAccess, isSmoothable);
+//				return meshGeneratorType.generateBlock(pos, reader, isSmoothable);
 
 			final int posX = pos.getX();
 			final int posY = pos.getY();
@@ -144,7 +150,7 @@ public final class MeshDispatcher {
 								for (int xOffset = 0; xOffset < 2; ++xOffset) {
 
 									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
-									final BlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
+									final BlockState state = reader.getBlockState(pooledMutableBlockPos);
 									density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
 								}
 							}
@@ -192,7 +198,10 @@ public final class MeshDispatcher {
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
 	 */
 	@Nonnull
-	public static HashMap<Vec3b, FaceList> offsetChunkMesh(@Nonnull final BlockPos chunkPos, @Nonnull final HashMap<Vec3b, FaceList> chunkData) {
+	public static HashMap<Vec3b, FaceList> offsetChunkMesh(
+			@Nonnull final BlockPos chunkPos,
+			@Nonnull final HashMap<Vec3b, FaceList> chunkData
+	) {
 		offsetMesh(chunkPos.getX(), chunkPos.getY(), chunkPos.getZ(), chunkData);
 		return chunkData;
 	}
@@ -202,7 +211,10 @@ public final class MeshDispatcher {
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
 	 */
 	@Nonnull
-	public static HashMap<Vec3b, FaceList> offsetMesh(final int offsetX, final int offsetY, final int offsetZ, @Nonnull final HashMap<Vec3b, FaceList> meshData) {
+	public static HashMap<Vec3b, FaceList> offsetMesh(
+			final int offsetX, final int offsetY, final int offsetZ,
+			@Nonnull final HashMap<Vec3b, FaceList> meshData
+	) {
 		for (FaceList faces : meshData.values()) {
 			offsetFaceList(offsetX, offsetY, offsetZ, faces);
 		}
@@ -214,7 +226,10 @@ public final class MeshDispatcher {
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
 	 */
 	@Nonnull
-	public static FaceList offsetFaceList(final int chunkPosX, final int chunkPosY, final int chunkPosZ, @Nonnull final FaceList faces) {
+	public static FaceList offsetFaceList(
+			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
+			@Nonnull final FaceList faces
+	) {
 		final int size = faces.size();
 		for (int i = 0; i < size; ++i) {
 			final Face face = faces.get(i);
@@ -237,32 +252,5 @@ public final class MeshDispatcher {
 		}
 		return faces;
 	}
-
-	//	@Nonnull
-//	public static StateCache generateMeshStateCache(
-//			final int startPosX, final int startPosY, final int startPosZ,
-//			final int meshSizeX, final int meshSizeY, final int meshSizeZ,
-//			@Nonnull final IBlockReader blockAccess,
-//			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
-//	) {
-//		try (final ModProfiler ignored = ModProfiler.get().start("generateMeshStateCache")) {
-//			// Density takes +1 block on every negative axis into account so we need to start at -1 block
-//			final int cacheStartPosX = startPosX - 1;
-//			final int cacheStartPosY = startPosY - 1;
-//			final int cacheStartPosZ = startPosZ - 1;
-//
-//			// Density takes +1 block on every negative axis into account so we need to add 1 to the size of the cache (it only takes +1 on NEGATIVE axis)
-//			final int cacheSizeX = meshSizeX + 1;
-//			final int cacheSizeY = meshSizeY + 1;
-//			final int cacheSizeZ = meshSizeZ + 1;
-//
-//			return CacheUtil.generateStateCache(
-//					cacheStartPosX, cacheStartPosY, cacheStartPosZ,
-//					cacheSizeX, cacheSizeY, cacheSizeZ,
-//					blockAccess,
-//					pooledMutableBlockPos
-//			);
-//		}
-//	}
 
 }

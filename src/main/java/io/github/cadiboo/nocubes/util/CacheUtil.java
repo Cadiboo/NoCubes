@@ -43,7 +43,8 @@ public final class CacheUtil {
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						blockStates[index] = cache.getBlockState(pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z));
+						pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z);
+						blockStates[index] = cache.getBlockState(pooledMutableBlockPos);
 						fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
 					}
 				}
@@ -63,10 +64,13 @@ public final class CacheUtil {
 	 */
 	public static SmoothableCache generateSmoothableCache(
 			// from position
+			// Usually chunkRenderPosition - 1 because DensityCaches need 1 extra block on each negative axis
 			final int fromX, final int fromY, final int fromZ,
 			// to position
+			// Usually chunkRenderPosition + size + 1 because SmoothableCaches need 1 extra block on each axis
 			final int toX, final int toY, final int toZ,
 			// the difference between the chunkRenderPosition and from position. Always positive
+			// Usually 1 because DensityCaches need 1 extra block on each negative axis
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final IsSmoothable isStateSmoothable
@@ -110,10 +114,12 @@ public final class CacheUtil {
 	 */
 	public static DensityCache generateDensityCache(
 			// from position
+			// Usually chunkRenderPosition - 1 because DensityCaches need 1 extra block on each negative axis
 			final int fromX, final int fromY, final int fromZ,
 			// to position
 			final int toX, final int toY, final int toZ,
 			// the difference between the chunkRenderPosition and from position. Always positive
+			// Usually 1 because DensityCaches need 1 extra block on each negative axis
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache

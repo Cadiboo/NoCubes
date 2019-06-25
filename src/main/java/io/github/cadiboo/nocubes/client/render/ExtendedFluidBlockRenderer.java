@@ -33,8 +33,6 @@ public final class ExtendedFluidBlockRenderer {
 			final double x, final double y, final double z,
 			@Nonnull final BlockPos fluidPos,
 			@Nonnull final IWorldReader worldIn,
-			//TODO: eventually do better fluid rendering for 0.3.0
-			@Nonnull final BlockState smoothableState,
 			@Nonnull final IFluidState state,
 			@Nonnull final BufferBuilder buffer,
 			//TODO: eventually do better lighting for 0.3.0

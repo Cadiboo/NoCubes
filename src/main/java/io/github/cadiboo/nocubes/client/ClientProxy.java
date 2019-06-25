@@ -7,6 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
 import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
@@ -23,6 +25,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
  *
  * @author Cadiboo
  */
+// OnlyIn is here so that we explicitly crash if the class gets loaded when not on the client
+@OnlyIn(Dist.CLIENT)
 public final class ClientProxy implements Proxy {
 
 	public static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", GLFW_KEY_O, "key.categories." + MOD_ID);

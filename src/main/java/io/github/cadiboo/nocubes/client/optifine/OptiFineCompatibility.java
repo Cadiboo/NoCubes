@@ -5,7 +5,6 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.Region;
 
 import javax.annotation.Nonnull;
@@ -33,7 +32,7 @@ public final class OptiFineCompatibility {
 	@Nonnull
 	public static Region getRegion(@Nonnull final IEnviromentBlockReader reader) {
 //		return ((ChunkCacheOF) reader).chunkCache;
-		return null;
+		throw new OptiFineNotPresentException();
 	}
 
 }

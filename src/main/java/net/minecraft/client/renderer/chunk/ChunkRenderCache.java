@@ -42,6 +42,7 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 		this.chunks = chunks;
 		this.cacheStartPos = start;
 
+		// Start removed code
 //		this.cacheSizeX = end.getX() - start.getX() + 1;
 //		this.cacheSizeY = end.getY() - start.getY() + 1;
 //		this.cacheSizeZ = end.getZ() - start.getZ() + 1;
@@ -59,7 +60,9 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 //			lvt_12_1_ = this.getIndex(lvt_8_1_);
 //			this.blockStates[lvt_12_1_] = lvt_11_1_.getBlockState(lvt_8_1_);
 //		}
+		// End removed code
 
+		// Start added code
 		final int startX = start.getX();
 		final int startY = start.getY();
 		final int startZ = start.getZ();
@@ -116,6 +119,7 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 
 		this.blockStates = blockStates;
 		this.fluidStates = fluidStates;
+		// End added code
 
 	}
 
@@ -135,12 +139,17 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 
 		boolean empty = true;
 
+		// Start added code
+		IS_EMPTY:
+		// End added code
 		for (int x = start.getX() >> 4; x <= end.getX() >> 4; ++x) {
 			for (int z = start.getZ() >> 4; z <= end.getZ() >> 4; ++z) {
 				Chunk chunk = chunks[x - chunkStartX][z - chunkStartZ];
 				if (!chunk.isEmptyBetween(start.getY(), end.getY())) {
 					empty = false;
-					break;
+					// Start added code
+					break IS_EMPTY;
+					// End added code
 				}
 			}
 		}
@@ -148,7 +157,9 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 		if (empty) {
 			return null;
 		} else {
+			// Start removed code
 //            int lvt_10_3_ = true;
+			// End removed code
 			BlockPos startAndPadding = start.add(-1, -1, -1);
 			BlockPos endAndPadding = end.add(1, 1, 1);
 			return new ChunkRenderCache(world, chunkStartX, chunkStartZ, chunks, startAndPadding, endAndPadding);
