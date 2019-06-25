@@ -2,6 +2,11 @@ package net.minecraft.client.renderer.chunk;
 
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.GLX;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -26,12 +31,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
-import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
 @OnlyIn(Dist.CLIENT)
 public class ChunkRender implements net.minecraftforge.client.extensions.IForgeRenderChunk {
@@ -68,7 +67,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
    }
 
    private static boolean func_217673_a(BlockPos pos, World worldIn) {
-      return !worldIn.getChunk(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
+      return !worldIn.func_212866_a_(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
    }
 
    public boolean func_217674_b() {
@@ -100,11 +99,11 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
    public void setPosition(int x, int y, int z) {
       if (x != this.position.getX() || y != this.position.getY() || z != this.position.getZ()) {
          this.stopCompileTask();
-         this.position.setPos(x, y, z);
+         this.position.func_181079_c(x, y, z);
          this.boundingBox = new AxisAlignedBB((double)x, (double)y, (double)z, (double)(x + 16), (double)(y + 16), (double)(z + 16));
 
          for(Direction direction : Direction.values()) {
-            this.mapEnumFacing[direction.ordinal()].setPos(this.position).move(direction, 16);
+            this.mapEnumFacing[direction.ordinal()].func_189533_g(this.position).move(direction, 16);
          }
 
       }
@@ -153,7 +152,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             // NoCubes End
             for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
-//               Block block = blockstate.getBlock();
+               Block block = blockstate.getBlock();
                if (blockstate.isOpaqueCube(lvt_12_1_, blockpos2)) {
                   lvt_10_1_.setOpaqueCube(blockpos2);
                }
@@ -163,7 +162,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                   if (tileentity != null) {
                      TileEntityRenderer<TileEntity> tileentityrenderer = TileEntityRendererDispatcher.instance.getRenderer(tileentity);
                      if (tileentityrenderer != null) {
-                        if (tileentityrenderer.isGlobalRenderer(tileentity)) {
+                        if (tileentityrenderer.func_188185_a(tileentity)) {
                            lvt_11_1_.add(tileentity);
                         }
                         else compiledchunk.addTileEntity(tileentity); // FORGE: Fix MC-112730

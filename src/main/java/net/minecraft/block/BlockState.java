@@ -4,6 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.util.Pair;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
@@ -43,30 +51,21 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
-
 public class BlockState extends StateHolder<Block, BlockState> implements IStateHolder<BlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    @Nullable
-   private Cache field_215707_c;
-   private final int field_215708_d;
+   private BlockState.Cache field_215707_c;
+   private final int lightLevel;
    private final boolean field_215709_e;
 
-   public BlockState(Block p_i49958_1_, ImmutableMap<IProperty<?>, Comparable<?>> p_i49958_2_) {
-      super(p_i49958_1_, p_i49958_2_);
-      this.field_215708_d = p_i49958_1_.getLightValue(this);
-      this.field_215709_e = p_i49958_1_.func_220074_n(this);
+   public BlockState(Block blockIn, ImmutableMap<IProperty<?>, Comparable<?>> properties) {
+      super(blockIn, properties);
+      this.lightLevel = blockIn.getLightValue(this);
+      this.field_215709_e = blockIn.func_220074_n(this);
    }
 
    public void func_215692_c() {
       if (!this.getBlock().isVariableOpacity()) {
-         this.field_215707_c = new Cache(this);
+         this.field_215707_c = new BlockState.Cache(this);
       }
 
    }
@@ -79,8 +78,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().getMaterial(this);
    }
 
-   public boolean canEntitySpawn(IBlockReader p_215688_1_, BlockPos p_215688_2_, EntityType<?> p_215688_3_) {
-      return this.getBlock().canEntitySpawn(this, p_215688_1_, p_215688_2_, p_215688_3_);
+   public boolean canEntitySpawn(IBlockReader worldIn, BlockPos pos, EntityType<?> type) {
+      return this.getBlock().canEntitySpawn(this, worldIn, pos, type);
    }
 
    public boolean propagatesSkylightDown(IBlockReader worldIn, BlockPos pos) {
@@ -91,9 +90,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.field_215707_c != null ? this.field_215707_c.field_222501_e : this.getBlock().getOpacity(this, worldIn, pos);
    }
 
-   @OnlyIn(Dist.CLIENT)
-   public VoxelShape func_215702_a(IBlockReader p_215702_1_, BlockPos p_215702_2_, Direction p_215702_3_) {
-      return this.field_215707_c != null && this.field_215707_c.field_222502_f != null ? this.field_215707_c.field_222502_f[p_215702_3_.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(p_215702_1_, p_215702_2_), p_215702_3_);
+   public VoxelShape func_215702_a(IBlockReader worldIn, BlockPos pos, Direction p_215702_3_) {
+      return this.field_215707_c != null && this.field_215707_c.field_222502_f != null ? this.field_215707_c.field_222502_f[p_215702_3_.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), p_215702_3_);
    }
 
    public boolean func_215704_f() {
@@ -105,7 +103,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public int getLightValue() {
-      return this.field_215708_d;
+      return this.lightLevel;
    }
 
    /** @deprecated use {@link BlockState#isAir(IBlockReader, BlockPos) */
@@ -144,17 +142,17 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    @OnlyIn(Dist.CLIENT)
-   public int getPackedLightmapCoords(IEnviromentBlockReader p_215684_1_, BlockPos p_215684_2_) {
-      return this.getBlock().getPackedLightmapCoords(this, p_215684_1_, p_215684_2_);
+   public int getPackedLightmapCoords(IEnviromentBlockReader p_215684_1_, BlockPos pos) {
+      return this.getBlock().getPackedLightmapCoords(this, p_215684_1_, pos);
    }
 
    @OnlyIn(Dist.CLIENT)
-   public float func_215703_d(IBlockReader p_215703_1_, BlockPos p_215703_2_) {
-      return this.getBlock().func_220080_a(this, p_215703_1_, p_215703_2_);
+   public float func_215703_d(IBlockReader p_215703_1_, BlockPos pos) {
+      return this.getBlock().func_220080_a(this, p_215703_1_, pos);
    }
 
-   public boolean isNormalCube(IBlockReader p_215686_1_, BlockPos p_215686_2_) {
-      return this.getBlock().isNormalCube(this, p_215686_1_, p_215686_2_);
+   public boolean isNormalCube(IBlockReader p_215686_1_, BlockPos pos) {
+      return this.getBlock().isNormalCube(this, p_215686_1_, pos);
    }
 
    public boolean canProvidePower() {
@@ -215,11 +213,11 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
-      return this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
+      return this.field_215707_c != null ? this.field_215707_c.field_223626_g : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
-   public VoxelShape getCollisionShape(IBlockReader p_215685_1_, BlockPos p_215685_2_, ISelectionContext p_215685_3_) {
-      return this.getBlock().getCollisionShape(this, p_215685_1_, p_215685_2_, p_215685_3_);
+   public VoxelShape getCollisionShape(IBlockReader p_215685_1_, BlockPos pos, ISelectionContext p_215685_3_) {
+      return this.getBlock().getCollisionShape(this, p_215685_1_, pos, p_215685_3_);
    }
 
    public VoxelShape getRenderShape(IBlockReader worldIn, BlockPos pos) {
@@ -408,6 +406,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       private final boolean field_222500_d;
       private final int field_222501_e;
       private final VoxelShape[] field_222502_f;
+      private final VoxelShape field_223626_g;
       private final boolean field_222503_g;
 
       private Cache(BlockState p_i50627_1_) {
@@ -427,9 +426,9 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
             }
          }
 
-         VoxelShape voxelshape1 = block.getCollisionShape(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
+         this.field_223626_g = block.getCollisionShape(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
          this.field_222503_g = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
-            return voxelshape1.getStart(p_222491_1_) < 0.0D || voxelshape1.getEnd(p_222491_1_) > 1.0D;
+            return this.field_223626_g.getStart(p_222491_1_) < 0.0D || this.field_223626_g.getEnd(p_222491_1_) > 1.0D;
          });
       }
    }

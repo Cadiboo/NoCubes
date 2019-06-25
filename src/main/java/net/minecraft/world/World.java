@@ -112,12 +112,12 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public Biome getBiomeBody(BlockPos pos) {
-      AbstractChunkProvider abstractchunkprovider = this.getChunkProvider();
+      AbstractChunkProvider abstractchunkprovider = this.func_72863_F();
       Chunk chunk = abstractchunkprovider.getChunk(pos.getX() >> 4, pos.getZ() >> 4, false);
       if (chunk != null) {
          return chunk.getBiome(pos);
       } else {
-         ChunkGenerator<?> chunkgenerator = this.getChunkProvider().getChunkGenerator();
+         ChunkGenerator<?> chunkgenerator = this.func_72863_F().getChunkGenerator();
          return chunkgenerator == null ? Biomes.PLAINS : chunkgenerator.getBiomeProvider().getBiome(pos);
       }
    }
@@ -151,26 +151,23 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    /**
     * Check if the given BlockPos has valid coordinates
     */
-   public static boolean isValid(BlockPos p_175701_0_) {
-      return !isOutsideBuildHeight(p_175701_0_) && p_175701_0_.getX() >= -30000000 && p_175701_0_.getZ() >= -30000000 && p_175701_0_.getX() < 30000000 && p_175701_0_.getZ() < 30000000;
+   public static boolean isValid(BlockPos pos) {
+      return !isOutsideBuildHeight(pos) && pos.getX() >= -30000000 && pos.getZ() >= -30000000 && pos.getX() < 30000000 && pos.getZ() < 30000000;
    }
 
-   public static boolean isOutsideBuildHeight(BlockPos p_189509_0_) {
-      return isYOutOfBounds(p_189509_0_.getY());
+   public static boolean isOutsideBuildHeight(BlockPos pos) {
+      return isYOutOfBounds(pos.getY());
    }
 
-   public static boolean isYOutOfBounds(int p_217405_0_) {
-      return p_217405_0_ < 0 || p_217405_0_ >= 256;
+   public static boolean isYOutOfBounds(int y) {
+      return y < 0 || y >= 256;
    }
 
    public Chunk getChunkAt(BlockPos pos) {
-      return this.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+      return this.func_212866_a_(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
-   /**
-    * Gets the chunk at the specified location.
-    */
-   public Chunk getChunk(int chunkX, int chunkZ) {
+   public Chunk func_212866_a_(int chunkX, int chunkZ) {
       return (Chunk)this.getChunk(chunkX, chunkZ, ChunkStatus.FULL);
    }
 
@@ -222,7 +219,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             BlockState blockstate1 = this.getBlockState(pos);
             if (blockstate1 != blockstate && (blockstate1.getOpacity(this, pos) != oldOpacity || blockstate1.getLightValue() != oldLight || blockstate1.func_215691_g() || blockstate.func_215691_g())) {
                this.profiler.startSection("queueCheckLight");
-               this.getChunkProvider().getLightManager().checkBlock(pos);
+               this.func_72863_F().func_212863_j_().checkBlock(pos);
                this.profiler.endSection();
             }
 
@@ -316,7 +313,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    }
 
-   public void markForRerender(BlockPos p_217396_1_) {
+   public void markForRerender(BlockPos pos) {
    }
 
    public void notifyNeighborsOfStateChange(BlockPos pos, Block blockIn) {
@@ -404,7 +401,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       int i;
       if (x >= -30000000 && z >= -30000000 && x < 30000000 && z < 30000000) {
          if (this.chunkExists(x >> 4, z >> 4)) {
-            i = this.getChunk(x >> 4, z >> 4).getTopBlockY(heightmapType, x & 15, z & 15) + 1;
+            i = this.func_212866_a_(x >> 4, z >> 4).getTopBlockY(heightmapType, x & 15, z & 15) + 1;
          } else {
             i = 0;
          }
@@ -416,14 +413,14 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    public int getLightFor(LightType type, BlockPos pos) {
-      return this.getChunkProvider().getLightManager().getLightEngine(type).getLightFor(pos);
+      return this.func_72863_F().func_212863_j_().getLightEngine(type).getLightFor(pos);
    }
 
    public BlockState getBlockState(BlockPos pos) {
       if (isOutsideBuildHeight(pos)) {
          return Blocks.VOID_AIR.getDefaultState();
       } else {
-         Chunk chunk = this.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+         Chunk chunk = this.func_212866_a_(pos.getX() >> 4, pos.getZ() >> 4);
          return chunk.getBlockState(pos);
       }
    }
@@ -434,7 +431,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       } else {
          // NoCubes Start
          return io.github.cadiboo.nocubes.hooks.Hooks.getFluidState(this, pos);
-//         Chunk chunk = this.getChunkAt(pos);
+//         Chunk chunk = this.getChunk(pos);
 //         return chunk.getFluidState(pos);
          // NoCubes End
       }
@@ -763,7 +760,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
          for(int k1 = i; k1 < j; ++k1) {
             for(int l1 = k; l1 < l; ++l1) {
                for(int i2 = i1; i2 < j1; ++i2) {
-                  BlockState blockstate = this.getBlockState(blockpos$pooledmutableblockpos.setPos(k1, l1, i2));
+                  BlockState blockstate = this.getBlockState(blockpos$pooledmutableblockpos.func_181079_c(k1, l1, i2));
                   if (!blockstate.isAir(this, blockpos$pooledmutableblockpos)) {
                      boolean flag = true;
                      return flag;
@@ -788,7 +785,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             for(int k1 = i; k1 < j; ++k1) {
                for(int l1 = k; l1 < l; ++l1) {
                   for(int i2 = i1; i2 < j1; ++i2) {
-                     BlockState state = this.getBlockState(blockpos$pooledmutableblockpos.setPos(k1, l1, i2));
+                     BlockState state = this.getBlockState(blockpos$pooledmutableblockpos.func_181079_c(k1, l1, i2));
                      if (state.isBurning(this, blockpos$pooledmutableblockpos)) {
                         boolean flag = true;
                         return flag;
@@ -818,7 +815,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             for(int k1 = i; k1 < j; ++k1) {
                for(int l1 = k; l1 < l; ++l1) {
                   for(int i2 = i1; i2 < j1; ++i2) {
-                     BlockState blockstate = this.getBlockState(blockpos$pooledmutableblockpos.setPos(k1, l1, i2));
+                     BlockState blockstate = this.getBlockState(blockpos$pooledmutableblockpos.func_181079_c(k1, l1, i2));
                      if (blockstate.getBlock() == blockIn) {
                         BlockState blockstate1 = blockstate;
                         return blockstate1;
@@ -1003,7 +1000,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     * first boolean for hostile mobs and second for peaceful mobs
     */
    public void setAllowedSpawnTypes(boolean hostile, boolean peaceful) {
-      this.getChunkProvider().setAllowedSpawnTypes(hostile, peaceful);
+      this.func_72863_F().setAllowedSpawnTypes(hostile, peaceful);
       this.getDimension().setAllowedSpawnTypes(hostile, peaceful);
    }
 
@@ -1044,7 +1041,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
       for(int i1 = i; i1 <= j; ++i1) {
          for(int j1 = k; j1 <= l; ++j1) {
-            Chunk chunk = this.getChunkProvider().getChunk(i1, j1, false);
+            Chunk chunk = this.func_72863_F().getChunk(i1, j1, false);
             if (chunk != null) {
                chunk.getEntitiesWithinAABBForEntity(entityIn, boundingBox, list, predicate);
             }
@@ -1063,7 +1060,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
       for(int i1 = i; i1 < j; ++i1) {
          for(int j1 = k; j1 < l; ++j1) {
-            Chunk chunk = this.getChunkProvider().getChunk(i1, j1, false);
+            Chunk chunk = this.func_72863_F().getChunk(i1, j1, false);
             if (chunk != null) {
                chunk.func_217313_a(p_217394_1_, p_217394_2_, list, p_217394_3_);
             }
@@ -1082,7 +1079,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
       for(int i1 = i; i1 < j; ++i1) {
          for(int j1 = k; j1 < l; ++j1) {
-            Chunk chunk = this.getChunkProvider().getChunk(i1, j1, false);
+            Chunk chunk = this.func_72863_F().getChunk(i1, j1, false);
             if (chunk != null) {
                chunk.getEntitiesOfTypeWithinAABB(clazz, aabb, list, filter);
             }
@@ -1232,7 +1229,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    protected void advanceTime() {
       this.setGameTime(this.worldInfo.getGameTime() + 1L);
-      if (this.worldInfo.getGameRulesInstance().getBoolean("doDaylightCycle")) {
+      if (this.worldInfo.getGameRulesInstance().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
          this.setDayTime(this.worldInfo.getDayTime() + 1L);
       }
 
@@ -1268,10 +1265,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    public void setEntityState(Entity entityIn, byte state) {
    }
 
-   /**
-    * gets the world's chunk provider
-    */
-   public AbstractChunkProvider getChunkProvider() {
+   public AbstractChunkProvider func_72863_F() {
       return this.chunkProvider;
    }
 
@@ -1388,11 +1382,13 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
     */
    public CrashReportCategory fillCrashReport(CrashReport report) {
       CrashReportCategory crashreportcategory = report.makeCategoryDepth("Affected level", 1);
-      crashreportcategory.addDetail("Level name", this.worldInfo == null ? "????" : this.worldInfo.getWorldName());
       crashreportcategory.addDetail("All players", () -> {
          return this.getPlayers().size() + " total; " + this.getPlayers();
       });
       crashreportcategory.addDetail("Chunk stats", this.chunkProvider::makeString);
+      crashreportcategory.addDetail("Level dimension", () -> {
+         return this.dimension.getType().toString();
+      });
 
       try {
          this.worldInfo.addToCrashReport(crashreportcategory);
@@ -1409,7 +1405,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    public void makeFireworks(double x, double y, double z, double motionX, double motionY, double motionZ, @Nullable CompoundNBT compound) {
    }
 
-   public abstract Scoreboard getScoreboard();
+   public abstract Scoreboard func_96441_U();
 
    public void updateComparatorOutputLevel(BlockPos pos, Block blockIn) {
       for(Direction direction : Direction.values()) { //Forge: TODO: change to VALUES once ATed
