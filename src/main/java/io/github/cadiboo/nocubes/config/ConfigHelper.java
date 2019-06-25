@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.config;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockMycelium;
@@ -90,9 +89,9 @@ import static net.minecraft.item.EnumDyeColor.YELLOW;
  */
 public final class ConfigHelper {
 
-	private static ModConfig clientConfig;
+	public static ModConfig clientConfig;
 
-	private static ModConfig serverConfig;
+	public static ModConfig serverConfig;
 
 	public static void bakeClient(final ModConfig config) {
 		clientConfig = config;
@@ -417,7 +416,7 @@ public final class ConfigHelper {
 		setValueAndSave(clientConfig, "general.renderSmoothLeaves", enabled);
 	}
 
-	private static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
+	public static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
 		modConfig.getConfigData().set(path, newValue);
 		modConfig.save();
 	}

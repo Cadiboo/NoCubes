@@ -29,6 +29,8 @@ import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.inventory.InventoryHelper;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
@@ -36,6 +38,7 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeColorHelper;
+import net.minecraftforge.items.ItemStackHandler;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
@@ -230,7 +233,7 @@ public final class RenderDispatcher {
 		} catch (Exception e) {
 			CrashReport crashReport = new CrashReport("Error rendering NoCubes chunk!", e);
 			crashReport.makeCategory("Rendering chunk");
-//			throw new ReportedException(crashReport);
+			throw new ReportedException(crashReport);
 		} finally {
 			pooledMutableBlockPos.release();
 		}
@@ -474,6 +477,16 @@ public final class RenderDispatcher {
 		tessellatorIn.draw();
 		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 		bufferBuilderIn.noColor();
+	}
+
+	private static void dropInventoryItems(final World worldIn, final double x, final double y, final double z, final ItemStackHandler inventory) {
+		final int inventorySize = inventory.getSlots();
+		for (int slotIndex = 0; slotIndex < inventorySize; ++slotIndex) {
+			final ItemStack itemstack = inventory.getStackInSlot(slotIndex);
+			if (!itemstack.isEmpty()) {
+				InventoryHelper.spawnItemStack(worldIn, x, y, z, itemstack);
+			}
+		}
 	}
 
 }

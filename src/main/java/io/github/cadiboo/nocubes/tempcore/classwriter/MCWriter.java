@@ -64,6 +64,17 @@ public class MCWriter extends ClassWriter {
 	}
 
 	/**
+	 * deob the class without loading more classes and also attached any transformed interfaces
+	 */
+	public static ClassReader patchClass(ClassReader reader) {
+		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);//don't load compute frames it's not necessary for running forge's transformer and would causes recursion/class circulatory errors
+		RemappingClassAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
+		reader.accept(remapAdapter, READER_FLAGS);
+
+		return new ClassReader(classWriter.toByteArray());
+	}
+
+	/**
 	 * Returns the internal names of the ancestor classes of the given type.
 	 *
 	 * @param type the internal name of a class or interface.
@@ -200,17 +211,6 @@ public class MCWriter extends ClassWriter {
 			e.printStackTrace();
 			throw new RuntimeException(e.toString());
 		}
-	}
-
-	/**
-	 * deob the class without loading more classes and also attached any transformed interfaces
-	 */
-	public static ClassReader patchClass(ClassReader reader) {
-		ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);//don't load compute frames it's not necessary for running forge's transformer and would causes recursion/class circulatory errors
-		RemappingClassAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
-		reader.accept(remapAdapter, READER_FLAGS);
-
-		return new ClassReader(classWriter.toByteArray());
 	}
 
 }

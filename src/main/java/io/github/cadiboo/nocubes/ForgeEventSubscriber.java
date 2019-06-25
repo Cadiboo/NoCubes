@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ConfigTracker;
-import io.github.cadiboo.nocubes.tempnetwork.ModNetworkManager;
 import io.github.cadiboo.nocubes.tempnetwork.S2CSyncConfig;
 import io.github.cadiboo.nocubes.world.ModWorldEventListener;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,7 +9,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +42,10 @@ public final class ForgeEventSubscriber {
 			return;
 		}
 		final EntityPlayerMP playerMP = (EntityPlayerMP) player;
+		final SimpleNetworkWrapper network = NoCubes.NETWORK_MANAGER.NETWORK;
 		for (final Pair<String, S2CSyncConfig> pair : ConfigTracker.INSTANCE.syncConfigs(false)) {
-			NoCubes.NETWORK_MANAGER.NETWORK.sendTo(pair.getValue(), playerMP);
+			network.sendTo(pair.getValue(), playerMP);
 		}
 	}
-
 
 }

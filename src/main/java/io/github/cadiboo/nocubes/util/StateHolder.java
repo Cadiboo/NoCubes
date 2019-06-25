@@ -9,7 +9,6 @@ import static net.minecraft.block.BlockDirt.SNOWY;
 import static net.minecraft.block.BlockDirt.VARIANT;
 import static net.minecraft.init.Blocks.DIRT;
 import static net.minecraft.init.Blocks.GRASS;
-import static net.minecraft.init.Blocks.PACKED_ICE;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 import static net.minecraft.init.Blocks.TALLGRASS;
 

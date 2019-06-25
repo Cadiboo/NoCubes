@@ -47,7 +47,12 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED;
-import static net.minecraft.util.EnumFacing.*;
+import static net.minecraft.util.EnumFacing.DOWN;
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.UP;
+import static net.minecraft.util.EnumFacing.WEST;
 
 /**
  * @author Cadiboo

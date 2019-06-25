@@ -16,9 +16,9 @@ public final class ConfigHolder {
 	@Nonnull
 	public static final ForgeConfigSpec SERVER_SPEC;
 	@Nonnull
-	static final ClientConfig CLIENT;
+	public static final ClientConfig CLIENT;
 	@Nonnull
-	static final ServerConfig SERVER;
+	public static final ServerConfig SERVER;
 	static {
 		{
 			final Pair<ClientConfig, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ClientConfig::new);

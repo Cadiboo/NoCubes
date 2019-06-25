@@ -8,8 +8,6 @@ import java.util.List;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
-//import net.minecraftforge.common.ForgeConfigSpec;
-
 /**
  * @author Cadiboo
  */

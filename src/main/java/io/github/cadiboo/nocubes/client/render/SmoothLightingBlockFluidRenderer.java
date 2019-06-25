@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -18,6 +19,11 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;
 
 import javax.annotation.Nonnull;
+
+import static net.minecraft.util.EnumFacing.EAST;
+import static net.minecraft.util.EnumFacing.NORTH;
+import static net.minecraft.util.EnumFacing.SOUTH;
+import static net.minecraft.util.EnumFacing.WEST;
 
 /**
  * @author Cadiboo
@@ -187,7 +193,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 						fluidHeight, fluidHeightSouth, fluidHeightEastSouth, fluidHeightEast,
 						x, y, z,
 						light0, light1, light2, light3,
-						blockLiquid.shouldRenderSides(worldIn, pos.up()), blockLiquid.getFlow(worldIn, pos, state), MathHelper.getPositionRandom(pos)
+						blockLiquid.shouldRenderSides(worldIn, pooledMutableBlockPos.setPos(x, y + 1, z)), blockLiquid.getFlow(worldIn, pos, state), MathHelper.getCoordinateRandom(x, y, z)
 				);
 			}
 
@@ -271,6 +277,8 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 				);
 			}
 
+			final TextureAtlasSprite atlasSpriteWaterOverlay = this.atlasSpriteWaterOverlay;
+
 			for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
 				final float y0;
 				final float y1;
@@ -290,7 +298,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z;// + (double) 0.001F;
 					z1 = z;// + (double) 0.001F;
-					direction = EnumFacing.NORTH;
+					direction = NORTH;
 					shouldRenderSide = shouldRenderNorth;
 				} else if (facingIndex == 1) {
 					y0 = fluidHeightEastSouth;
@@ -302,7 +310,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					// is to try and solve z-fighting issues.
 					z0 = z + 1.0D;// - (double) 0.001F;
 					z1 = z + 1.0D;// - (double) 0.001F;
-					direction = EnumFacing.SOUTH;
+					direction = SOUTH;
 					shouldRenderSide = shouldRenderSouth;
 				} else if (facingIndex == 2) {
 					y0 = fluidHeightSouth;
@@ -314,7 +322,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					x1 = x;// + (double) 0.001F;
 					z0 = z + 1.0D;
 					z1 = z;
-					direction = EnumFacing.WEST;
+					direction = WEST;
 					shouldRenderSide = shouldRenderWest;
 				} else {
 					y0 = fluidHeightEast;
@@ -326,7 +334,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					x1 = x + 1.0D;// - (double) 0.001F;
 					z0 = z;
 					z1 = z + 1.0D;
-					direction = EnumFacing.EAST;
+					direction = EAST;
 					shouldRenderSide = shouldRenderEast;
 				}
 
@@ -335,8 +343,8 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
 						IBlockState blockstate = worldIn.getBlockState(pooledMutableBlockPos);
-						if (blockstate.getBlockFaceShape(worldIn, pooledMutableBlockPos, direction) == net.minecraft.block.state.BlockFaceShape.SOLID) {
-							textureatlassprite2 = this.atlasSpriteWaterOverlay;
+						if (blockstate.getBlockFaceShape(worldIn, pooledMutableBlockPos, direction) == BlockFaceShape.SOLID) {
+							textureatlassprite2 = atlasSpriteWaterOverlay;
 						}
 					}
 
@@ -399,7 +407,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 							blue3 = (float) (waterColor3 & 0xFF) / 255.0F;
 						}
 					}
-					wasAnythingRendered = renderSide(
+					wasAnythingRendered = this.renderSide(
 							buffer, textureatlassprite2,
 							red0, green0, blue0,
 							red1, green1, blue1,
@@ -410,7 +418,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 							x0, x1,
 							z0, z1,
 							light0, light1, light2, light3,
-							textureatlassprite2 != this.atlasSpriteWaterOverlay
+							textureatlassprite2 != atlasSpriteWaterOverlay
 					);
 				}
 			}
@@ -561,14 +569,51 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			v3 = UVHelper.clampV(flowingSprite.getInterpolatedV((double) (8.0F + (-cosMagicAtan2Flow - sinMagicAtan2Flow) * 16.0F)), flowingSprite);
 		}
 
-		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
-		final int blockLight0 = combinedLightUpMax0 & '\uffff';
-		final int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
-		final int blockLight1 = combinedLightUpMax1 & '\uffff';
-		final int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
-		final int blockLight2 = combinedLightUpMax2 & '\uffff';
-		final int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
-		final int blockLight3 = combinedLightUpMax3 & '\uffff';
+		int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
+		int blockLight0 = combinedLightUpMax0 & '\uffff';
+		int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
+		int blockLight1 = combinedLightUpMax1 & '\uffff';
+		int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
+		int blockLight2 = combinedLightUpMax2 & '\uffff';
+		int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
+		int blockLight3 = combinedLightUpMax3 & '\uffff';
+
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		// Get light from neighbours and from diagonally across
+		final int skyLight0Check = skyLight0 - 0x70;
+		final int skyLight1Check = skyLight1 - 0x70;
+		final int skyLight2Check = skyLight2 - 0x70;
+		final int skyLight3Check = skyLight3 - 0x70;
+		if (skyLight0 < skyLight1Check) skyLight0 = skyLight1;
+		else if (skyLight0 < skyLight2Check) skyLight0 = skyLight2;
+		else if (skyLight0 < skyLight3Check) skyLight0 = skyLight3;
+		if (skyLight1 < skyLight0Check) skyLight1 = skyLight0;
+		else if (skyLight1 < skyLight2Check) skyLight1 = skyLight2;
+		else if (skyLight1 < skyLight3Check) skyLight1 = skyLight3;
+		if (skyLight2 < skyLight0Check) skyLight2 = skyLight0;
+		else if (skyLight2 < skyLight1Check) skyLight2 = skyLight1;
+		else if (skyLight2 < skyLight3Check) skyLight2 = skyLight3;
+		if (skyLight3 < skyLight0Check) skyLight3 = skyLight0;
+		else if (skyLight3 < skyLight1Check) skyLight3 = skyLight1;
+		else if (skyLight3 < skyLight2Check) skyLight3 = skyLight2;
+
+		// If light is max cancel check
+		final int blockLight0Check = blockLight0 == 0xF0 ? 0 : blockLight0 - 0xD0;
+		final int blockLight1Check = blockLight1 == 0xF0 ? 0 : blockLight1 - 0xD0;
+		final int blockLight2Check = blockLight2 == 0xF0 ? 0 : blockLight2 - 0xD0;
+		final int blockLight3Check = blockLight3 == 0xF0 ? 0 : blockLight3 - 0xD0;
+		if (blockLight0 < blockLight1Check) blockLight0 = blockLight1;
+		else if (blockLight0 < blockLight2Check) blockLight0 = blockLight2;
+		else if (blockLight0 < blockLight3Check) blockLight0 = blockLight3;
+		if (blockLight1 < blockLight0Check) blockLight1 = blockLight0;
+		else if (blockLight1 < blockLight2Check) blockLight1 = blockLight2;
+		else if (blockLight1 < blockLight3Check) blockLight1 = blockLight3;
+		if (blockLight2 < blockLight0Check) blockLight2 = blockLight0;
+		else if (blockLight2 < blockLight1Check) blockLight2 = blockLight1;
+		else if (blockLight2 < blockLight3Check) blockLight2 = blockLight3;
+		if (blockLight3 < blockLight0Check) blockLight3 = blockLight0;
+		else if (blockLight3 < blockLight1Check) blockLight3 = blockLight1;
+		else if (blockLight3 < blockLight2Check) blockLight3 = blockLight2;
 
 		buffer.pos(x + 0.0D, y + fluidHeight, z + 0.0D).color(red0, green0, blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
 		buffer.pos(x + 0.0D, y + fluidHeightSouth, z + 1.0D).color(red1, green1, blue1, 1.0F).tex((double) u1, (double) v1).lightmap(skyLight1, blockLight1).endVertex();
@@ -593,7 +638,8 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			final double y, final float y0, final float y1,
 			final double x0, final double x1,
 			final double z0, final double z1,
-			final int combinedLightUpMax0, final int combinedLightUpMax1, final int combinedLightUpMax2, final int combinedLightUpMax3, final boolean shouldRenderOppositeFace
+			int combinedLightUpMax0, int combinedLightUpMax1, int combinedLightUpMax2, int combinedLightUpMax3,
+			final boolean shouldRenderOppositeFace
 	) {
 		final float u0 = UVHelper.getMinU(textureatlassprite);
 		final float u1 = textureatlassprite.getInterpolatedU(8.0D);
@@ -601,14 +647,51 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		final float v1 = UVHelper.clampV(textureatlassprite.getInterpolatedV((double) ((1.0F - y1) * 16.0F * 0.5F)), textureatlassprite);
 		final float v2 = textureatlassprite.getInterpolatedV(8.0D);
 
-		final int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
-		final int blockLight0 = combinedLightUpMax0 & '\uffff';
-		final int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
-		final int blockLight1 = combinedLightUpMax1 & '\uffff';
-		final int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
-		final int blockLight2 = combinedLightUpMax2 & '\uffff';
-		final int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
-		final int blockLight3 = combinedLightUpMax3 & '\uffff';
+		int skyLight0 = combinedLightUpMax0 >> 16 & '\uffff';
+		int blockLight0 = combinedLightUpMax0 & '\uffff';
+		int skyLight1 = combinedLightUpMax1 >> 16 & '\uffff';
+		int blockLight1 = combinedLightUpMax1 & '\uffff';
+		int skyLight2 = combinedLightUpMax2 >> 16 & '\uffff';
+		int blockLight2 = combinedLightUpMax2 & '\uffff';
+		int skyLight3 = combinedLightUpMax3 >> 16 & '\uffff';
+		int blockLight3 = combinedLightUpMax3 & '\uffff';
+
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		// Get light from neighbours and from diagonally across
+		final int skyLight0Check = skyLight0 - 0x70;
+		final int skyLight1Check = skyLight1 - 0x70;
+		final int skyLight2Check = skyLight2 - 0x70;
+		final int skyLight3Check = skyLight3 - 0x70;
+		if (skyLight0 < skyLight1Check) skyLight0 = skyLight1;
+		else if (skyLight0 < skyLight2Check) skyLight0 = skyLight2;
+		else if (skyLight0 < skyLight3Check) skyLight0 = skyLight3;
+		if (skyLight1 < skyLight0Check) skyLight1 = skyLight0;
+		else if (skyLight1 < skyLight2Check) skyLight1 = skyLight2;
+		else if (skyLight1 < skyLight3Check) skyLight1 = skyLight3;
+		if (skyLight2 < skyLight0Check) skyLight2 = skyLight0;
+		else if (skyLight2 < skyLight1Check) skyLight2 = skyLight1;
+		else if (skyLight2 < skyLight3Check) skyLight2 = skyLight3;
+		if (skyLight3 < skyLight0Check) skyLight3 = skyLight0;
+		else if (skyLight3 < skyLight1Check) skyLight3 = skyLight1;
+		else if (skyLight3 < skyLight2Check) skyLight3 = skyLight2;
+
+		// If light is max cancel check
+		final int blockLight0Check = blockLight0 == 0xF0 ? 0 : blockLight0 - 0xD0;
+		final int blockLight1Check = blockLight1 == 0xF0 ? 0 : blockLight1 - 0xD0;
+		final int blockLight2Check = blockLight2 == 0xF0 ? 0 : blockLight2 - 0xD0;
+		final int blockLight3Check = blockLight3 == 0xF0 ? 0 : blockLight3 - 0xD0;
+		if (blockLight0 < blockLight1Check) blockLight0 = blockLight1;
+		else if (blockLight0 < blockLight2Check) blockLight0 = blockLight2;
+		else if (blockLight0 < blockLight3Check) blockLight0 = blockLight3;
+		if (blockLight1 < blockLight0Check) blockLight1 = blockLight0;
+		else if (blockLight1 < blockLight2Check) blockLight1 = blockLight2;
+		else if (blockLight1 < blockLight3Check) blockLight1 = blockLight3;
+		if (blockLight2 < blockLight0Check) blockLight2 = blockLight0;
+		else if (blockLight2 < blockLight1Check) blockLight2 = blockLight1;
+		else if (blockLight2 < blockLight3Check) blockLight2 = blockLight3;
+		if (blockLight3 < blockLight0Check) blockLight3 = blockLight0;
+		else if (blockLight3 < blockLight1Check) blockLight3 = blockLight1;
+		else if (blockLight3 < blockLight2Check) blockLight3 = blockLight2;
 
 		final float diffuse = facingIndex < 2 ? 0.8F : 0.6F;
 		buffer.pos(x0, y + (double) y0, z0).color(diffuse * red0, diffuse * green0, diffuse * blue0, 1.0F).tex((double) u0, (double) v0).lightmap(skyLight0, blockLight0).endVertex();
@@ -625,7 +708,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 	}
 
 	public boolean renderDown(
-			final int downCombinedLightUpMax0, final int downCombinedLightUpMax1, final int downCombinedLightUpMax2, final int downCombinedLightUpMax3,
+			int downCombinedLightUpMax0, int downCombinedLightUpMax1, int downCombinedLightUpMax2, int downCombinedLightUpMax3,
 			final BufferBuilder buffer, final TextureAtlasSprite textureAtlasSprite,
 			final float red0, final float green0, final float blue0,
 			final float red1, final float green1, final float blue1,
@@ -638,14 +721,51 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		final float minV = UVHelper.getMinV(textureAtlasSprite);
 		final float maxV = UVHelper.getMaxV(textureAtlasSprite);
 
-		final int skyLight0 = downCombinedLightUpMax0 >> 16 & '\uffff';
-		final int blockLight0 = downCombinedLightUpMax0 & '\uffff';
-		final int skyLight1 = downCombinedLightUpMax1 >> 16 & '\uffff';
-		final int blockLight1 = downCombinedLightUpMax1 & '\uffff';
-		final int skyLight2 = downCombinedLightUpMax2 >> 16 & '\uffff';
-		final int blockLight2 = downCombinedLightUpMax2 & '\uffff';
-		final int skyLight3 = downCombinedLightUpMax3 >> 16 & '\uffff';
-		final int blockLight3 = downCombinedLightUpMax3 & '\uffff';
+		int skyLight0 = downCombinedLightUpMax0 >> 16 & '\uffff';
+		int blockLight0 = downCombinedLightUpMax0 & '\uffff';
+		int skyLight1 = downCombinedLightUpMax1 >> 16 & '\uffff';
+		int blockLight1 = downCombinedLightUpMax1 & '\uffff';
+		int skyLight2 = downCombinedLightUpMax2 >> 16 & '\uffff';
+		int blockLight2 = downCombinedLightUpMax2 & '\uffff';
+		int skyLight3 = downCombinedLightUpMax3 >> 16 & '\uffff';
+		int blockLight3 = downCombinedLightUpMax3 & '\uffff';
+
+		// Correct full black lighting at edges, without breaking smooth lighting as it fades out normally
+		// Get light from neighbours and from diagonally across
+		final int skyLight0Check = skyLight0 - 0x70;
+		final int skyLight1Check = skyLight1 - 0x70;
+		final int skyLight2Check = skyLight2 - 0x70;
+		final int skyLight3Check = skyLight3 - 0x70;
+		if (skyLight0 < skyLight1Check) skyLight0 = skyLight1;
+		else if (skyLight0 < skyLight2Check) skyLight0 = skyLight2;
+		else if (skyLight0 < skyLight3Check) skyLight0 = skyLight3;
+		if (skyLight1 < skyLight0Check) skyLight1 = skyLight0;
+		else if (skyLight1 < skyLight2Check) skyLight1 = skyLight2;
+		else if (skyLight1 < skyLight3Check) skyLight1 = skyLight3;
+		if (skyLight2 < skyLight0Check) skyLight2 = skyLight0;
+		else if (skyLight2 < skyLight1Check) skyLight2 = skyLight1;
+		else if (skyLight2 < skyLight3Check) skyLight2 = skyLight3;
+		if (skyLight3 < skyLight0Check) skyLight3 = skyLight0;
+		else if (skyLight3 < skyLight1Check) skyLight3 = skyLight1;
+		else if (skyLight3 < skyLight2Check) skyLight3 = skyLight2;
+
+		// If light is max cancel check
+		final int blockLight0Check = blockLight0 == 0xF0 ? 0 : blockLight0 - 0xD0;
+		final int blockLight1Check = blockLight1 == 0xF0 ? 0 : blockLight1 - 0xD0;
+		final int blockLight2Check = blockLight2 == 0xF0 ? 0 : blockLight2 - 0xD0;
+		final int blockLight3Check = blockLight3 == 0xF0 ? 0 : blockLight3 - 0xD0;
+		if (blockLight0 < blockLight1Check) blockLight0 = blockLight1;
+		else if (blockLight0 < blockLight2Check) blockLight0 = blockLight2;
+		else if (blockLight0 < blockLight3Check) blockLight0 = blockLight3;
+		if (blockLight1 < blockLight0Check) blockLight1 = blockLight0;
+		else if (blockLight1 < blockLight2Check) blockLight1 = blockLight2;
+		else if (blockLight1 < blockLight3Check) blockLight1 = blockLight3;
+		if (blockLight2 < blockLight0Check) blockLight2 = blockLight0;
+		else if (blockLight2 < blockLight1Check) blockLight2 = blockLight1;
+		else if (blockLight2 < blockLight3Check) blockLight2 = blockLight3;
+		if (blockLight3 < blockLight0Check) blockLight3 = blockLight0;
+		else if (blockLight3 < blockLight1Check) blockLight3 = blockLight1;
+		else if (blockLight3 < blockLight2Check) blockLight3 = blockLight2;
 
 		buffer.pos(x, y, z + 1.0D).color(0.5F * red0, 0.5F * green0, 0.5F * blue0, 1.0F).tex((double) minU, (double) maxV).lightmap(skyLight0, blockLight0).endVertex();
 		buffer.pos(x, y, z).color(0.5F * red1, 0.5F * green1, 0.5F * blue1, 1.0F).tex((double) minU, (double) minV).lightmap(skyLight1, blockLight1).endVertex();

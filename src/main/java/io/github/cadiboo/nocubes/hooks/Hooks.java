@@ -25,8 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
-
 /**
  * @author Cadiboo
  */

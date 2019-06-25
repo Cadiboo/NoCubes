@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util.pooled.cache;
 
-
 import net.minecraft.block.state.IBlockState;
 
 import javax.annotation.Nonnull;

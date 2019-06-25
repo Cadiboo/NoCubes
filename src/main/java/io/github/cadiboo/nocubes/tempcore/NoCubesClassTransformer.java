@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.tempcore;
 
 import io.github.cadiboo.nocubes.tempcore.classwriter.MCWriter;
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -16,8 +15,6 @@ import org.objectweb.asm.util.TraceClassVisitor;
 
 import javax.annotation.Nullable;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;

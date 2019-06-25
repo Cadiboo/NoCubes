@@ -33,19 +33,22 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-@Mod(modid = MOD_ID, guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory", updateJSON = "https://Cadiboo.github.io/projects/nocubes/update.json", dependencies = "required-after:forge@[14.23.5.2768,);")
+@Mod(
+		modid = MOD_ID,
+		guiFactory = "io.github.cadiboo.nocubes.client.ConfigGuiFactory",
+		updateJSON = "https://Cadiboo.github.io/projects/nocubes/update.json",
+		dependencies = "required-after:forge@[14.23.5.2779,);" // ObfuscationReflectionHelper reimplemented
+)
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+	public static final ModNetworkManager NETWORK_MANAGER = new ModNetworkManager();
 	@SidedProxy(serverSide = "io.github.cadiboo.nocubes.server.ServerProxy", clientSide = "io.github.cadiboo.nocubes.client.ClientProxy")
 	public static Proxy PROXY = null;
 	@Instance
 	public static NoCubes INSTANCE = null;
-
-	public static final ModNetworkManager NETWORK_MANAGER = new ModNetworkManager();
-
-	protected final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
+	public final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 	protected Optional<Consumer<ModConfig.ModConfigEvent>> configHandler = Optional.empty();
 
