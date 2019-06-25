@@ -1,4 +1,5 @@
 {
 	"ChunkRender Transformer": "chunk-render-transformer.js",
-	"BlockState Transformer": "block-state-transformer.js"
+	"BlockState Transformer": "block-state-transformer.js",
+	"World Transformer": "world-transformer.js"
 }

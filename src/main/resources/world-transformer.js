@@ -86,18 +86,18 @@ function injectGetFluidStateHook(instructions) {
 //    ARETURN
 
 
-	var getChunk_name = mapMethod("func_175726_f"); // getChunk
+	var getChunkAt_name = mapMethod("func_175726_f"); // getChunkAt
 
-	var first_INVOKEVIRTUAL_World_getChunk;
+	var first_INVOKEVIRTUAL_World_getChunkAt;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKEVIRTUAL) {
 			if (instruction.owner == "net/minecraft/world/World") {
-				if (instruction.name == getChunk_name) {
+				if (instruction.name == getChunkAt_name) {
 					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;") {
 						if (instruction.itf == false) {
-							first_INVOKEVIRTUAL_World_getChunk = instruction;
+							first_INVOKEVIRTUAL_World_getChunkAt = instruction;
 							log("Found injection point " + instruction);
 							break;
 						}
@@ -106,13 +106,13 @@ function injectGetFluidStateHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKEVIRTUAL_World_getChunk) {
+	if (!first_INVOKEVIRTUAL_World_getChunkAt) {
 		throw "Error: Couldn't find injection point!";
 	}
 
 	var next_ARETURN;
 //	var arrayLength = instructions.size();
-	for (var i = instructions.indexOf(first_INVOKEVIRTUAL_World_getChunk); i < arrayLength; ++i) {
+	for (var i = instructions.indexOf(first_INVOKEVIRTUAL_World_getChunkAt); i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == ARETURN) {
 			next_ARETURN = instruction;
@@ -144,9 +144,9 @@ function injectGetFluidStateHook(instructions) {
 	toInject.add(new InsnNode(ARETURN));
 
 	// Inject instructions
-	instructions.insertBefore(first_INVOKEVIRTUAL_World_getChunk, toInject);
+	instructions.insertBefore(first_INVOKEVIRTUAL_World_getChunkAt, toInject);
 
-	removeBetweenInclusive(instructions, first_INVOKEVIRTUAL_World_getChunk, next_ARETURN);
+	removeBetweenInclusive(instructions, first_INVOKEVIRTUAL_World_getChunkAt, next_ARETURN);
 
 }
 

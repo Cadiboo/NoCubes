@@ -21,7 +21,8 @@ var targetMethods = [
 	// rebuildChunk
 	new TargetMethod("func_178581_b", "(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;)V",
 		new MethodTransformer(injectPreIterationHook, "injectPreIterationHook"),
-		new MethodTransformer(injectBlockRenderHook, "injectBlockRenderHook")
+		new MethodTransformer(injectBlockRenderHook, "injectBlockRenderHook"),
+		new MethodTransformer(injectFluidRenderBypass, "injectFluidRenderBypass")
 	)
 ];
 finish();
@@ -176,8 +177,7 @@ function injectBlockRenderHook(instructions) {
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
 //	// NoCubes Start
-//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
-//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+//	if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(blockstate)))
 //	// NoCubes End
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
@@ -197,36 +197,25 @@ function injectBlockRenderHook(instructions) {
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
 //    IFEQ L61
 
-//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.func_215331_a (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
 //    IOR
 //    BASTORE
-//   L55
-//    LINENUMBER 179 L55
+//   L54
+//    LINENUMBER 192 L54
 //   FRAME CHOP 2
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
-//    IFEQ L62
 //    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L63
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.canBlockStateRender (Lnet/minecraft/block/BlockState;)Z
+//    IFEQ L61
 //   L62
-//    LINENUMBER 180 L62
-//   FRAME SAME
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
-//    IFEQ L64
-//    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.nocubes_isLeavesSmoothable ()Z (itf)
-//    IFNE L63
-//   L64
-//    LINENUMBER 181 L64
-//   FRAME SAME
+//    LINENUMBER 194 L62
 //    ALOAD 18
 //    INVOKEVIRTUAL net/minecraft/block/BlockState.getRenderType ()Lnet/minecraft/block/BlockRenderType;
 //    GETSTATIC net/minecraft/block/BlockRenderType.INVISIBLE : Lnet/minecraft/block/BlockRenderType;
-//    IF_ACMPEQ L62
+//    IF_ACMPEQ L61
 //    ALOAD 18
 //    ALOAD 25
 //    INVOKEVIRTUAL net/minecraft/block/BlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z
-//    IFEQ L63
+//    IFEQ L61
 
 	var blockCannotRenderLabel;
 
@@ -288,45 +277,135 @@ function injectBlockRenderHook(instructions) {
 	var renderSmoothLeavesChecksLabel = new LabelNode();
 
 	// Make list of instructions to inject
-	toInject.add(new FieldInsnNode(Opcodes.GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
-	toInject.add(new JumpInsnNode(Opcodes.IFEQ, renderSmoothLeavesChecksLabel));
 	toInject.add(new VarInsnNode(Opcodes.ALOAD, 18)); // blockstate
 	toInject.add(new MethodInsnNode(
 			//int opcode
-			Opcodes.INVOKEVIRTUAL,
+			Opcodes.INVOKESTATIC,
 			//String owner
-			"net/minecraft/block/BlockState",
+			"io/github/cadiboo/nocubes/hooks/Hooks",
 			//String name
-			"nocubes_isTerrainSmoothable",
+			"canBlockStateRender",
 			//String descriptor
-			"()Z",
+			"(Lnet/minecraft/block/BlockState;)Z",
 			//boolean isInterface
 			false
 	));
-	toInject.add(new JumpInsnNode(Opcodes.IFNE, blockCannotRenderLabel));
-
-	toInject.add(renderSmoothLeavesChecksLabel);
-	toInject.add(new FieldInsnNode(Opcodes.GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
-	toInject.add(new JumpInsnNode(Opcodes.IFEQ, originalInstructionsLabel));
-	toInject.add(new VarInsnNode(Opcodes.ALOAD, 18)); // blockstate
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			Opcodes.INVOKEVIRTUAL,
-			//String owner
-			"net/minecraft/block/BlockState",
-			//String name
-			"nocubes_isLeavesSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(Opcodes.IFNE, blockCannotRenderLabel));
+	toInject.add(new JumpInsnNode(Opcodes.IFEQ, blockCannotRenderLabel));
 
 	toInject.add(originalInstructionsLabel);
 
 	// Inject instructions
 	instructions.insert(firstLabelBefore_BlockState_getRenderType, toInject);
+
+}
+
+// Finds the first instruction INVOKEVIRTUAL ChunkRenderCache.getFluidState
+// then injects
+// and then removes the two previous instructions and then the instruction
+function injectFluidRenderBypass(instructions) {
+
+//	}
+//
+//	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+//	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
+
+//	}
+//
+//	// NoCubes Start
+////	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
+//	IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
+//	// NoCubes End
+//	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
+
+//    ALOAD 5
+//    ALOAD 20
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
+//   L40
+//    LINENUMBER 175 L40
+//   FRAME CHOP 2
+//    ALOAD 12
+//    ALOAD 17
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderCache.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
+//    ASTORE 20
+//   L48
+//    LINENUMBER 177 L48
+//    ALOAD 4
+//    ALOAD 17
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
+//    ASTORE 21
+
+//    ALOAD 5
+//    ALOAD 20
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
+//   L40
+//    LINENUMBER 175 L40
+//   FRAME CHOP 2
+//    GETSTATIC net/minecraft/fluid/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
+//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
+//    ASTORE 20
+//   L48
+//    LINENUMBER 177 L48
+//    ALOAD 4
+//    ALOAD 17
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
+//    ASTORE 21
+
+	var getFluidState_name = ASMAPI.mapMethod("func_204610_c"); // getFluidState
+
+	var first_INVOKEVIRTUAL_getFluidState;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == Opcodes.INVOKEVIRTUAL) {
+			if (instruction.owner == "net/minecraft/client/renderer/chunk/ChunkRenderCache") {
+				if (instruction.name == getFluidState_name) {
+					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;") {
+						if (instruction.itf == false) {
+							first_INVOKEVIRTUAL_getFluidState = instruction;
+							log("Found injection point " + instruction);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	if (!first_INVOKEVIRTUAL_getFluidState) {
+		throw "Error: Couldn't find injection point!";
+	}
+
+	var toInject = new InsnList();
+
+	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
+
+	var Fluids_EMPTY_name = ASMAPI.mapField("field_204541_a"); // Fluids.EMPTY
+	var Fluid_getDefaultState_name = ASMAPI.mapMethod("func_207188_f"); // Fluid#getDefaultState
+
+	// Make list of instructions to inject
+	toInject.add(new FieldInsnNode(Opcodes.GETSTATIC, "net/minecraft/fluid/Fluids", Fluids_EMPTY_name, "Lnet/minecraft/fluid/Fluid;"));
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			Opcodes.INVOKEVIRTUAL,
+			//String owner
+			"net/minecraft/fluid/Fluid",
+			//String name
+			Fluid_getDefaultState_name,
+			//String descriptor
+			"()Lnet/minecraft/fluid/IFluidState;",
+			//boolean isInterface
+			false
+	));
+
+	toInject.add(originalInstructionsLabel);
+
+	// Inject instructions
+	instructions.insert(first_INVOKEVIRTUAL_getFluidState, toInject);
+
+	// Remove "ALOAD 12", "ALOAD 17", "INVOKEVIRTUAL getFluidState"
+	instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious().getPrevious());
+	instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
+	instructions.remove(first_INVOKEVIRTUAL_getFluidState);
 
 }
 
