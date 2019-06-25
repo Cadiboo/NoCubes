@@ -190,8 +190,8 @@ public final class Hooks {
 
 	}
 
-	public static Stream<VoxelShape> getCollisionShapes(final IWorldReader _this, final Entity p_217352_1_, final AxisAlignedBB p_217352_2_, final Set<Entity> p_217352_3_, final VoxelShape voxelshape, final int i, final int j, final int k, final int l, final int i1, final int j1, final ISelectionContext iselectioncontext) {
-		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, p_217352_3_, voxelshape, i, j, k, l, i1, j1, iselectioncontext);
+	public static Stream<VoxelShape> getCollisionShapes(final IWorldReader _this, final Entity p_217352_1_, final AxisAlignedBB p_217352_2_, final int i, final int j, final int k, final int l, final int i1, final int j1, final ISelectionContext iselectioncontext) {
+		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, i, j, k, l, i1, j1, iselectioncontext);
 	}
 
 	public static boolean canBlockStateRender(final BlockState blockstate) {

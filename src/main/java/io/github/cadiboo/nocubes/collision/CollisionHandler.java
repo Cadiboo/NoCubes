@@ -335,7 +335,6 @@ public final class CollisionHandler {
 	public static Stream<VoxelShape> getMeshCollisions(
 			final IWorldReader _this,
 			final Entity entity, final AxisAlignedBB aabb,
-			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
 			final int minXm1, final int maxXp1,
 			final int minYm1, final int maxYp1,
 			final int minZm1, final int maxZp1,
@@ -347,7 +346,6 @@ public final class CollisionHandler {
 	public static Stream<VoxelShape> getReposeCollisions(
 			final IWorldReader _this,
 			final Entity entity, final AxisAlignedBB aabb,
-			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
 			final int minXm1, final int maxXp1,
 			final int minYm1, final int maxYp1,
 			final int minZm1, final int maxZp1,
@@ -359,7 +357,6 @@ public final class CollisionHandler {
 	public static Stream<VoxelShape> getVanillaCollisions(
 			final IWorldReader _this,
 			final Entity entity, final AxisAlignedBB aabb,
-			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
 			final int minXm1, final int maxXp1,
 			final int minYm1, final int maxYp1,
 			final int minZm1, final int maxZp1,
@@ -372,18 +369,17 @@ public final class CollisionHandler {
 	public static Stream<VoxelShape> getCollisionShapes(
 			final IWorldReader _this,
 			final Entity entity, final AxisAlignedBB aabb,
-			final Set<Entity> entitiesToIgnore, final VoxelShape voxelShape,
 			final int minXm1, final int maxXp1,
 			final int minYm1, final int maxYp1,
 			final int minZm1, final int maxZp1,
 			final ISelectionContext context
 	) {
 		if (shouldApplyMeshCollisions(entity)) {
-			return getMeshCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
 		} else if (shouldApplyReposeCollisions(entity)) {
-			return getReposeCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+			return getReposeCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
 		} else {
-			return getVanillaCollisions(_this, entity, aabb, entitiesToIgnore, voxelShape, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
 		}
 	}
 

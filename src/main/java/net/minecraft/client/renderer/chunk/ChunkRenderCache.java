@@ -133,7 +133,7 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
 
 		for (int x = chunkStartX; x <= chunkEndX; ++x) {
 			for (int z = chunkStartZ; z <= chunkEndZ; ++z) {
-				chunks[x - chunkStartX][z - chunkStartZ] = world.getChunk(x, z);
+				chunks[x - chunkStartX][z - chunkStartZ] = world.func_212866_a_(x, z);
 			}
 		}
 

@@ -476,7 +476,7 @@ public final class MeshRenderer {
 		final BlockState grassPlantState = StateHolder.GRASS_PLANT_DEFAULT;
 
 		// TODO StateCache?
-		pooledMutableBlockPos.setPos(texturePos).move(UP);
+		pooledMutableBlockPos.func_189533_g(texturePos).move(UP);
 		// isBlockLoaded only checks x and z
 		if (
 				pooledMutableBlockPos.getX() > chunkRenderPosX + 16 ||
