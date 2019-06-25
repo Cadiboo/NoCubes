@@ -40,6 +40,7 @@ public final class CacheUtil {
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
 			int index = 0;
+			// TODO: Optimise and use chunks
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
