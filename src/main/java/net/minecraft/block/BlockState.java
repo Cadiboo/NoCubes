@@ -53,7 +53,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class BlockState extends StateHolder<Block, BlockState> implements IStateHolder<BlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    @Nullable
-   private BlockState.Cache field_215707_c;
+   private BlockState.Cache cache;
    private final int lightLevel;
    private final boolean field_215709_e;
 
@@ -65,7 +65,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public void func_215692_c() {
       if (!this.getBlock().isVariableOpacity()) {
-         this.field_215707_c = new BlockState.Cache(this);
+         this.cache = new BlockState.Cache(this);
       }
 
    }
@@ -83,19 +83,19 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean propagatesSkylightDown(IBlockReader worldIn, BlockPos pos) {
-      return this.field_215707_c != null ? this.field_215707_c.field_222500_d : this.getBlock().propagatesSkylightDown(this, worldIn, pos);
+      return this.cache != null ? this.cache.propagatesSkylightDown : this.getBlock().propagatesSkylightDown(this, worldIn, pos);
    }
 
    public int getOpacity(IBlockReader worldIn, BlockPos pos) {
-      return this.field_215707_c != null ? this.field_215707_c.field_222501_e : this.getBlock().getOpacity(this, worldIn, pos);
+      return this.cache != null ? this.cache.opacity : this.getBlock().getOpacity(this, worldIn, pos);
    }
 
    public VoxelShape func_215702_a(IBlockReader worldIn, BlockPos pos, Direction p_215702_3_) {
-      return this.field_215707_c != null && this.field_215707_c.field_222502_f != null ? this.field_215707_c.field_222502_f[p_215702_3_.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), p_215702_3_);
+      return this.cache != null && this.cache.field_222502_f != null ? this.cache.field_222502_f[p_215702_3_.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), p_215702_3_);
    }
 
    public boolean func_215704_f() {
-      return this.field_215707_c == null || this.field_215707_c.field_222503_g;
+      return this.cache == null || this.cache.field_222503_g;
    }
 
    public boolean func_215691_g() {
@@ -188,7 +188,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean isOpaqueCube(IBlockReader worldIn, BlockPos pos) {
-      return this.field_215707_c != null ? this.field_215707_c.field_222499_c : this.getBlock().isOpaqueCube(this, worldIn, pos);
+      return this.cache != null ? this.cache.opaqueCube : this.getBlock().isOpaqueCube(this, worldIn, pos);
    }
 
    public boolean isSolid() {
@@ -196,7 +196,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
       if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
       // NoCubes End
-      return this.field_215707_c != null ? this.field_215707_c.field_222498_b : this.getBlock().isSolid(this);
+      return this.cache != null ? this.cache.solid : this.getBlock().isSolid(this);
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -213,7 +213,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
-      return this.field_215707_c != null ? this.field_215707_c.field_223626_g : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
+      return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
    public VoxelShape getCollisionShape(IBlockReader p_215685_1_, BlockPos pos, ISelectionContext p_215685_3_) {
@@ -400,35 +400,35 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    static final class Cache {
-      private static final Direction[] field_222497_a = Direction.values();
-      private final boolean field_222498_b;
-      private final boolean field_222499_c;
-      private final boolean field_222500_d;
-      private final int field_222501_e;
+      private static final Direction[] DIRECTIONS = Direction.values();
+      private final boolean solid;
+      private final boolean opaqueCube;
+      private final boolean propagatesSkylightDown;
+      private final int opacity;
       private final VoxelShape[] field_222502_f;
-      private final VoxelShape field_223626_g;
+      private final VoxelShape collisionShape;
       private final boolean field_222503_g;
 
-      private Cache(BlockState p_i50627_1_) {
-         Block block = p_i50627_1_.getBlock();
-         this.field_222498_b = block.isSolid(p_i50627_1_);
-         this.field_222499_c = block.isOpaqueCube(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
-         this.field_222500_d = block.propagatesSkylightDown(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
-         this.field_222501_e = block.getOpacity(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
-         if (!p_i50627_1_.isSolid()) {
+      private Cache(BlockState stateIn) {
+         Block block = stateIn.getBlock();
+         this.solid = block.isSolid(stateIn);
+         this.opaqueCube = block.isOpaqueCube(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
+         this.propagatesSkylightDown = block.propagatesSkylightDown(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
+         this.opacity = block.getOpacity(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
+         if (!stateIn.isSolid()) {
             this.field_222502_f = null;
          } else {
-            this.field_222502_f = new VoxelShape[field_222497_a.length];
-            VoxelShape voxelshape = block.getRenderShape(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
+            this.field_222502_f = new VoxelShape[DIRECTIONS.length];
+            VoxelShape voxelshape = block.getRenderShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
 
-            for(Direction direction : field_222497_a) {
+            for(Direction direction : DIRECTIONS) {
                this.field_222502_f[direction.ordinal()] = VoxelShapes.func_216387_a(voxelshape, direction);
             }
          }
 
-         this.field_223626_g = block.getCollisionShape(p_i50627_1_, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
+         this.collisionShape = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
          this.field_222503_g = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
-            return this.field_223626_g.getStart(p_222491_1_) < 0.0D || this.field_223626_g.getEnd(p_222491_1_) > 1.0D;
+            return this.collisionShape.getStart(p_222491_1_) < 0.0D || this.collisionShape.getEnd(p_222491_1_) > 1.0D;
          });
       }
    }

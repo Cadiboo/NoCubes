@@ -76,7 +76,7 @@ public class OldNoCubes implements MeshGenerator {
 
 		if (points != null) {
 			for (final Direction facing : Direction.values()) {
-				if (isSmoothable.apply(blockAccess.getBlockState(pooledMutableBlockPos.func_189533_g(pos).move(facing)))) {
+				if (isSmoothable.apply(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).move(facing)))) {
 					continue;
 				}
 

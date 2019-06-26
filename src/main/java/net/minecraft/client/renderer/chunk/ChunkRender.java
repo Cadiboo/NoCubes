@@ -66,17 +66,17 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
 
    }
 
-   private static boolean func_217673_a(BlockPos pos, World worldIn) {
-      return !worldIn.func_212866_a_(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
+   private static boolean isChunkEmpty(BlockPos pos, World worldIn) {
+      return !worldIn.getChunk(pos.getX() >> 4, pos.getZ() >> 4).isEmpty();
    }
 
-   public boolean func_217674_b() {
+   public boolean shouldStayLoaded() {
       int i = 24;
       if (!(this.getDistanceSq() > 576.0D)) {
          return true;
       } else {
          World world = this.getWorld();
-         return func_217673_a(this.mapEnumFacing[Direction.WEST.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.NORTH.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.EAST.ordinal()], world) && func_217673_a(this.mapEnumFacing[Direction.SOUTH.ordinal()], world);
+         return isChunkEmpty(this.mapEnumFacing[Direction.WEST.ordinal()], world) && isChunkEmpty(this.mapEnumFacing[Direction.NORTH.ordinal()], world) && isChunkEmpty(this.mapEnumFacing[Direction.EAST.ordinal()], world) && isChunkEmpty(this.mapEnumFacing[Direction.SOUTH.ordinal()], world);
       }
    }
 
@@ -99,11 +99,11 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
    public void setPosition(int x, int y, int z) {
       if (x != this.position.getX() || y != this.position.getY() || z != this.position.getZ()) {
          this.stopCompileTask();
-         this.position.func_181079_c(x, y, z);
+         this.position.setPos(x, y, z);
          this.boundingBox = new AxisAlignedBB((double)x, (double)y, (double)z, (double)(x + 16), (double)(y + 16), (double)(z + 16));
 
          for(Direction direction : Direction.values()) {
-            this.mapEnumFacing[direction.ordinal()].func_189533_g(this.position).move(direction, 16);
+            this.mapEnumFacing[direction.ordinal()].setPos(this.position).move(direction, 16);
          }
 
       }
@@ -139,7 +139,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
 
          VisGraph lvt_10_1_ = new VisGraph();
          HashSet lvt_11_1_ = Sets.newHashSet();
-         ChunkRenderCache lvt_12_1_ = generator.func_217667_c();
+         ChunkRenderCache lvt_12_1_ = generator.takeChunkRenderCache();
          if (lvt_12_1_ != null) {
             ++renderChunksUpdated;
             boolean[] aboolean = new boolean[BlockRenderLayer.values().length];
@@ -147,9 +147,6 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             Random random = new Random();
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
-            // NoCubes Start
-            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
-            // NoCubes End
             for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
                Block block = blockstate.getBlock();
@@ -162,7 +159,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                   if (tileentity != null) {
                      TileEntityRenderer<TileEntity> tileentityrenderer = TileEntityRendererDispatcher.instance.getRenderer(tileentity);
                      if (tileentityrenderer != null) {
-                        if (tileentityrenderer.func_188185_a(tileentity)) {
+                        if (tileentityrenderer.isGlobalRenderer(tileentity)) {
                            lvt_11_1_.add(tileentity);
                         }
                         else compiledchunk.addTileEntity(tileentity); // FORGE: Fix MC-112730
@@ -185,7 +182,7 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
                      this.preRenderBlocks(bufferbuilder, blockpos);
                   }
 
-                  aboolean[j] |= blockrendererdispatcher.func_215331_a(blockpos2, lvt_12_1_, bufferbuilder, ifluidstate);
+                  aboolean[j] |= blockrendererdispatcher.renderFluid(blockpos2, lvt_12_1_, bufferbuilder, ifluidstate);
                }
 
                // NoCubes Start

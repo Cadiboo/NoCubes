@@ -129,7 +129,7 @@ public final class Hooks {
 
 		int currentChunkPosX = posX >> 4;
 		int currentChunkPosZ = posZ >> 4;
-		Chunk currentChunk = world.func_212866_a_(currentChunkPosX, currentChunkPosZ);
+		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
 
 		final int extendRange = Config.extendFluidsRange.getRange();
 
@@ -175,7 +175,7 @@ public final class Hooks {
 				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
 					currentChunkPosX = x >> 4;
 					currentChunkPosZ = z >> 4;
-					currentChunk = world.func_212866_a_(currentChunkPosX, currentChunkPosZ);
+					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
 				}
 
 				final IFluidState state1 = currentChunk.getFluidState(x, posY, z);

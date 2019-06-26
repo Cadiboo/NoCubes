@@ -75,7 +75,7 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener {
       }
    }
 
-   public boolean func_215331_a(BlockPos p_215331_1_, IEnviromentBlockReader p_215331_2_, BufferBuilder p_215331_3_, IFluidState p_215331_4_) {
+   public boolean renderFluid(BlockPos p_215331_1_, IEnviromentBlockReader p_215331_2_, BufferBuilder p_215331_3_, IFluidState p_215331_4_) {
       try {
          return this.fluidRenderer.render(p_215331_2_, p_215331_1_, p_215331_3_, p_215331_4_);
       } catch (Throwable throwable) {
