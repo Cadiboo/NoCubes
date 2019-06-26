@@ -144,59 +144,58 @@ public interface IWorldReader extends IEnviromentBlockReader {
       int j1 = MathHelper.floor(aabb.maxZ + 1.0E-7D) + 1;
       final ISelectionContext iselectioncontext = entityIn == null ? ISelectionContext.dummy() : ISelectionContext.forEntity(entityIn);
       // NoCubes Start
-      if (true)
-         return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, entityIn, aabb, i, j, k, l, i1, j1, iselectioncontext);
+      return io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapes(this, entityIn, aabb, i, j, k, l, i1, j1, iselectioncontext);
       // NoCubes End
-      final CubeCoordinateIterator cubecoordinateiterator = new CubeCoordinateIterator(i, k, i1, j, l, j1);
-      final BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-      final VoxelShape voxelshape = VoxelShapes.create(aabb);
-      return StreamSupport.stream(new AbstractSpliterator<VoxelShape>(Long.MAX_VALUE, 1280) {
-         boolean isEntityNull = entityIn == null;
-
-         public boolean tryAdvance(Consumer<? super VoxelShape> p_tryAdvance_1_) {
-            if (!this.isEntityNull) {
-               this.isEntityNull = true;
-               VoxelShape voxelshape1 = IWorldReader.this.getWorldBorder().getShape();
-               boolean flag = VoxelShapes.compare(voxelshape1, VoxelShapes.create(entityIn.getBoundingBox().shrink(1.0E-7D)), IBooleanFunction.AND);
-               boolean flag1 = VoxelShapes.compare(voxelshape1, VoxelShapes.create(entityIn.getBoundingBox().grow(1.0E-7D)), IBooleanFunction.AND);
-               if (!flag && flag1) {
-                  p_tryAdvance_1_.accept(voxelshape1);
-                  return true;
-               }
-            }
-
-            VoxelShape voxelshape3;
-            while(true) {
-               if (!cubecoordinateiterator.hasNext()) {
-                  return false;
-               }
-
-               int j2 = cubecoordinateiterator.getX();
-               int k2 = cubecoordinateiterator.getY();
-               int l2 = cubecoordinateiterator.getZ();
-               int k1 = cubecoordinateiterator.func_223473_e();
-               if (k1 != 3) {
-                  int l1 = j2 >> 4;
-                  int i2 = l2 >> 4;
-                  IChunk ichunk = IWorldReader.this.getChunk(l1, i2, IWorldReader.this.getChunkStatus(), false);
-                  if (ichunk != null) {
-                     blockpos$mutableblockpos.setPos(j2, k2, l2);
-                     BlockState blockstate = ichunk.getBlockState(blockpos$mutableblockpos);
-                     if ((k1 != 1 || blockstate.func_215704_f()) && (k1 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
-                        VoxelShape voxelshape2 = blockstate.getCollisionShape(IWorldReader.this, blockpos$mutableblockpos, iselectioncontext);
-                        voxelshape3 = voxelshape2.withOffset((double)j2, (double)k2, (double)l2);
-                        if (VoxelShapes.compare(voxelshape, voxelshape3, IBooleanFunction.AND)) {
-                           break;
-                        }
-                     }
-                  }
-               }
-            }
-
-            p_tryAdvance_1_.accept(voxelshape3);
-            return true;
-         }
-      }, false);
+//      final CubeCoordinateIterator cubecoordinateiterator = new CubeCoordinateIterator(i, k, i1, j, l, j1);
+//      final BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+//      final VoxelShape voxelshape = VoxelShapes.create(aabb);
+//      return StreamSupport.stream(new AbstractSpliterator<VoxelShape>(Long.MAX_VALUE, 1280) {
+//         boolean isEntityNull = entityIn == null;
+//
+//         public boolean tryAdvance(Consumer<? super VoxelShape> p_tryAdvance_1_) {
+//            if (!this.isEntityNull) {
+//               this.isEntityNull = true;
+//               VoxelShape voxelshape1 = IWorldReader.this.getWorldBorder().getShape();
+//               boolean flag = VoxelShapes.compare(voxelshape1, VoxelShapes.create(entityIn.getBoundingBox().shrink(1.0E-7D)), IBooleanFunction.AND);
+//               boolean flag1 = VoxelShapes.compare(voxelshape1, VoxelShapes.create(entityIn.getBoundingBox().grow(1.0E-7D)), IBooleanFunction.AND);
+//               if (!flag && flag1) {
+//                  p_tryAdvance_1_.accept(voxelshape1);
+//                  return true;
+//               }
+//            }
+//
+//            VoxelShape voxelshape3;
+//            while(true) {
+//               if (!cubecoordinateiterator.hasNext()) {
+//                  return false;
+//               }
+//
+//               int j2 = cubecoordinateiterator.getX();
+//               int k2 = cubecoordinateiterator.getY();
+//               int l2 = cubecoordinateiterator.getZ();
+//               int k1 = cubecoordinateiterator.func_223473_e();
+//               if (k1 != 3) {
+//                  int l1 = j2 >> 4;
+//                  int i2 = l2 >> 4;
+//                  IChunk ichunk = IWorldReader.this.getChunk(l1, i2, IWorldReader.this.getChunkStatus(), false);
+//                  if (ichunk != null) {
+//                     blockpos$mutableblockpos.setPos(j2, k2, l2);
+//                     BlockState blockstate = ichunk.getBlockState(blockpos$mutableblockpos);
+//                     if ((k1 != 1 || blockstate.func_215704_f()) && (k1 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
+//                        VoxelShape voxelshape2 = blockstate.getCollisionShape(IWorldReader.this, blockpos$mutableblockpos, iselectioncontext);
+//                        voxelshape3 = voxelshape2.withOffset((double)j2, (double)k2, (double)l2);
+//                        if (VoxelShapes.compare(voxelshape, voxelshape3, IBooleanFunction.AND)) {
+//                           break;
+//                        }
+//                     }
+//                  }
+//               }
+//            }
+//
+//            p_tryAdvance_1_.accept(voxelshape3);
+//            return true;
+//         }
+//      }, false);
    }
 
    default boolean hasWater(BlockPos pos) {
