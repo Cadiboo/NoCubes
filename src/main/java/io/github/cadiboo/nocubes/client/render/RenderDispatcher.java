@@ -376,8 +376,8 @@ public final class RenderDispatcher {
 									mesh,
 									smoothableCache,
 									pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-									false,
-									true, true
+									true,
+									true, false
 							);
 						}
 					}
@@ -432,8 +432,8 @@ public final class RenderDispatcher {
 								mesh,
 								smoothableCache,
 								pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-								false,
-								true, true
+								true,
+								true, false
 						);
 					}
 					break;
