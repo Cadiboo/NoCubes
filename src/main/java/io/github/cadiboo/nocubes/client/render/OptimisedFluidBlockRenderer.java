@@ -347,42 +347,43 @@ public final class OptimisedFluidBlockRenderer {
 		boolean shouldRenderEast = !eastFluidState.getFluid().isEquivalentTo(fluid) && !eastBlockState.isSolid();
 
 		if (densityCache != null) {
+			// > -6 means that the block is very outside the isosurface
 			shouldRenderDown &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX,
 					densityCacheOffsetY - 1,
 					densityCacheOffsetZ,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 			shouldRenderUp &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX,
 					densityCacheOffsetY + 1,
 					densityCacheOffsetZ,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 			shouldRenderNorth &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX,
 					densityCacheOffsetY,
 					densityCacheOffsetZ - 1,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 			shouldRenderSouth &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX,
 					densityCacheOffsetY,
 					densityCacheOffsetZ + 1,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 			shouldRenderWest &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX - 1,
 					densityCacheOffsetY,
 					densityCacheOffsetZ,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 			shouldRenderEast &= densityArray[densityCache.getIndex(
 					densityCacheOffsetX + 1,
 					densityCacheOffsetY,
 					densityCacheOffsetZ,
 					densityCacheSizeX, densityCacheSizeY
-			)] > 0;
+			)] > -6;
 		}
 
 		if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
