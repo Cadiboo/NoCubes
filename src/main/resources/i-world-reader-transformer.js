@@ -180,77 +180,79 @@ function initializeCoreMod() {
 				log("Starting");
 				var hasFinished = false;
 				try {
+					(function() { // Workaround for a Nashorn bug on Java < 80u60
 
-					if (fieldsToAdd.length > 0) {
-						start("Adding Fields");
-						var fields = classNode.fields;
-						for (var i in fieldsToAdd) {
-							var field = fieldsToAdd[i];
-							log("Adding Field \"" + field.name + "\"");
-							fields.add(field);
-						}
-						finish();
-					}
-
-					if (methodsToAdd.length > 0) {
-						start("Adding Methods");
-						var methods = classNode.methods;
-						for (var i in methodsToAdd) {
-							var method = methodsToAdd[i];
-							log("Adding Method \"" + method.name + "\"");
-							methods.add(method);
-						}
-						finish();
-					}
-
-					if (targetMethods.length > 0) {
-						var targetMethodsToFind = targetMethods.length;
-						start("Transforming Methods");
-						for (var j in targetMethods) {
-							var targetMethod = targetMethods[j];
-							log("Target Method \"" + targetMethod.name + "\" - \"" + targetMethod.desc + "\"");
-						}
-						var methods = classNode.methods;
-						for (var i in methods) {
-							if (targetMethodsToFind == 0) {
-								break;
+						if (fieldsToAdd.length > 0) {
+							start("Adding Fields");
+							var fields = classNode.fields;
+							for (var i in fieldsToAdd) {
+								var field = fieldsToAdd[i];
+								log("Adding Field \"" + field.name + "\"");
+								fields.add(field);
 							}
-							var method = methods[i];
-							var methodName = method.name;
-							var methodDesc = method.desc;
-							var methodInstructions = method.instructions;
-							log("Examining Method \"" + methodName + "\" - \"" + methodDesc + "\"");
+							finish();
+						}
+
+						if (methodsToAdd.length > 0) {
+							start("Adding Methods");
+							var methods = classNode.methods;
+							for (var i in methodsToAdd) {
+								var method = methodsToAdd[i];
+								log("Adding Method \"" + method.name + "\"");
+								methods.add(method);
+							}
+							finish();
+						}
+
+						if (targetMethods.length > 0) {
+							var targetMethodsToFind = targetMethods.length;
+							start("Transforming Methods");
 							for (var j in targetMethods) {
 								var targetMethod = targetMethods[j];
-								var targetMethodName = targetMethod.name;
-								var targetMethodDesc = targetMethod.desc;
-								if (targetMethodName.equals(methodName) && targetMethodDesc.equals(methodDesc)) {
-									log("Target Method \"" + targetMethodName + "\" - \"" + targetMethodDesc + "\" matched");
-									--targetMethodsToFind;
-									targetMethod.found = true;
-									var methodTransformers = targetMethod.transformers;
-									for (var k in methodTransformers) {
-										var methodTransformer = methodTransformers[k];
-										start("Apply " + methodTransformer.name);
-										methodTransformer.func(methodInstructions);
-										finish();
+								log("Target Method \"" + targetMethod.name + "\" - \"" + targetMethod.desc + "\"");
+							}
+							var methods = classNode.methods;
+							for (var i in methods) {
+								if (targetMethodsToFind == 0) {
+									break;
+								}
+								var method = methods[i];
+								var methodName = method.name;
+								var methodDesc = method.desc;
+								var methodInstructions = method.instructions;
+								log("Examining Method \"" + methodName + "\" - \"" + methodDesc + "\"");
+								for (var j in targetMethods) {
+									var targetMethod = targetMethods[j];
+									var targetMethodName = targetMethod.name;
+									var targetMethodDesc = targetMethod.desc;
+									if (targetMethodName.equals(methodName) && targetMethodDesc.equals(methodDesc)) {
+										log("Target Method \"" + targetMethodName + "\" - \"" + targetMethodDesc + "\" matched");
+										--targetMethodsToFind;
+										targetMethod.found = true;
+										var methodTransformers = targetMethod.transformers;
+										for (var k in methodTransformers) {
+											var methodTransformer = methodTransformers[k];
+											start("Apply " + methodTransformer.name);
+											methodTransformer.func(methodInstructions);
+											finish();
+										}
 									}
 								}
 							}
+							if (targetMethodsToFind != 0) {
+								for (var j in targetMethods) {
+									var targetMethod = targetMethods[j];
+									if (!targetMethod.found) {
+										log("Failed to find Target Method \"" + targetMethod.name + "\" - \"" + targetMethod.desc + "\"!");
+									}
+								}
+								throw "Failed to find all Target Methods!";
+							}
+							finish();
 						}
-						if (targetMethodsToFind != 0) {
-							for (var j in targetMethods) {
-    							var targetMethod = targetMethods[j];
-    							if (!targetMethod.found) {
-    								log("Failed to find Target Method \"" + targetMethod.name + "\" - \"" + targetMethod.desc + "\"!");
-    							}
-    						}
-    						throw "Failed to find all Target Methods!";
-						}
-						finish();
-					}
 
-					hasFinished = true;
+						hasFinished = true;
+					})(); // Workaround for a Nashorn bug on Java < 80u60
 				} finally {
 					// Hacks because rethrowing an exception sets the linenumber to where it was re-thrown
 					if(!hasFinished) {
