@@ -3,6 +3,8 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -19,6 +21,7 @@ import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -415,7 +418,6 @@ public final class CollisionHandler {
 	private static boolean getMeshCollisions(final World _this, final Entity entityIn, final AxisAlignedBB aabb, final boolean p_191504_3_, final List<AxisAlignedBB> outList, final int minXm1, final int maxXp1, final int minYm1, final int maxYp1, final int minZm1, final int maxZp1, final WorldBorder worldborder, final boolean flag, final boolean flag1) {
 		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
-
 			final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
 
 			final byte meshSizeX = getMeshSizeX(maxXp1 - minXm1, meshGenerator);
@@ -471,7 +473,16 @@ public final class CollisionHandler {
 
 				final HashMap<Vec3b, FaceList> meshData;
 				try (final ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
-					meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+					if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
+						// TODO: Remove
+						meshData = new HashMap<>();
+						meshData.put(
+								Vec3b.retain((byte) 0, (byte) 0, (byte) 0),
+								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN_SMOOTHABLE, pooledMutableBlockPos)
+						);
+					} else {
+						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+					}
 				}
 
 				try (final ModProfiler ignored = profiler.start("Offset collisions mesh")) {
@@ -497,20 +508,20 @@ public final class CollisionHandler {
 					final int stateCacheSizeX = stateCache.sizeX;
 					final int stateCacheSizeY = stateCache.sizeY;
 
-					for (final Face face : finalFaces) {
+					for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
 						try (
+								final Face face = finalFaces.get(i);
 								final Vec3 v0 = face.getVertex0();
 								final Vec3 v1 = face.getVertex1();
 								final Vec3 v2 = face.getVertex2();
 								final Vec3 v3 = face.getVertex3()
 						) {
-							AxisAlignedBB originalBoxShape;
-
+							final double maxY;
 							try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
 								// Snap collision AxisAlignedBBs max Y to max Y AxisAlignedBBs of original block at pos if smaller than original
 								// To stop players falling down through the world when they enable collisions
 								// (Only works on flat or near-flat surfaces)
-								//TODO: remove
+								// TODO: remove
 								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
 								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
 								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
@@ -520,14 +531,13 @@ public final class CollisionHandler {
 										approximateZ - startPosZ,
 										stateCacheSizeX, stateCacheSizeY
 								)];
-								originalBoxShape = state.getCollisionBoundingBox(_this, pooledMutableBlockPos.setPos(
+								final AxisAlignedBB originalCollisionShape = state.getCollisionBoundingBox(_this, pooledMutableBlockPos.setPos(
 										approximateX, approximateY, approximateZ
 								));
-								originalBoxShape = originalBoxShape == null ? null : originalBoxShape.offset(pooledMutableBlockPos);
+								maxY = originalCollisionShape == null ? approximateY : approximateY + originalCollisionShape.maxY;
 							}
-							addIntersectingFaceBoxesToList(collidingShapes, face, profiler, originalBoxShape == null ? 0 : originalBoxShape.maxY, 0.15F, aabb::intersects, false);
+							addIntersectingFaceBoxesToList(collidingShapes, face, profiler, maxY, 0.15F, aabb::intersects, false);
 						}
-						face.close();
 					}
 
 					outList.addAll(collidingShapes);
