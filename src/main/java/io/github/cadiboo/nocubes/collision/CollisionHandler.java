@@ -424,9 +424,10 @@ public final class CollisionHandler {
 
 				final float[] densityCacheArray = densityCache.getDensityCache();
 
+				final VoxelShape aabbShape = VoxelShapes.create(aabb);
+
 				// Get vanilla collisions (taking density into account)
 				{
-					final VoxelShape aabbShape = VoxelShapes.create(aabb);
 					final int sizeX = maxXp1 - minXm1;
 					final int sizeY = maxYp1 - minYm1;
 					final int sizeZ = maxZp1 - minZm1;
@@ -505,8 +506,6 @@ public final class CollisionHandler {
 							vec3b.close();
 						}
 					}
-
-					final VoxelShape aabbShape = VoxelShapes.create(aabb);
 
 					final BlockState[] blocksArray = stateCache.getBlockStates();
 
