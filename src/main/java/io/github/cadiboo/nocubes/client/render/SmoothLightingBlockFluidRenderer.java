@@ -45,12 +45,6 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 	public SmoothLightingBlockFluidRenderer(@Nonnull final FluidBlockRenderer fluidRenderer) {
 		super();
 		this.fluidRenderer = fluidRenderer;
-		// 1.14.2 changed initAtlasSprites so its no-longer called from the constructor
-		// Its now called from BlockRendererDispatcher#onResourceManagerReload
-		// This gets called BEFORE we replace the fluid renderer
-		// This means that unless we call it here, it never gets called for us.
-		// If it never gets called for us, we try and render fluids with null textures
-		this.initAtlasSprites();
 	}
 
 	@Override
