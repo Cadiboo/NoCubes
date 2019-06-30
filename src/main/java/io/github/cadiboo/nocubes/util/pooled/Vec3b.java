@@ -8,7 +8,7 @@ import java.util.ArrayList;
  *
  * @author Cadiboo
  */
-public class Vec3b implements Cloneable, AutoCloseable {
+public final class Vec3b implements Cloneable, AutoCloseable {
 
 	private static final ArrayList<Vec3b> POOL = new ArrayList<>();
 

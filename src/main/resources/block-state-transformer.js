@@ -311,30 +311,32 @@ function injectIsSolidHook(instructions) {
 // 2) inject right after first label
 function injectCausesSuffocationHook(instructions) {
 
-//	return this.getBlock().causesSuffocation(this);
+//	return this.getBlock().causesSuffocation(this, reader, pos);
 
 //	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
+//	if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, reader, pos)) return false;
 //	// NoCubes End
-//	return this.getBlock().causesSuffocation(this);
+//	return this.getBlock().causesSuffocation(this, reader, pos);
 
 
-//  public default causesSuffocation()Z
+//  public default causesSuffocation(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
 //   L0
 //    LINENUMBER 321 L0
 //    ALOAD 0
 //    INVOKEVIRTUAL net/minecraft/block/BlockState.getBlock ()Lnet/minecraft/block/Block;
 //    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;)Z
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
 //    IRETURN
 
-//  public default causesSuffocation()Z
+//  public causesSuffocation(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
 //   L0
 //    LINENUMBER 325 L0
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
-//    IFEQ L1
 //    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.nocubes_isTerrainSmoothable ()Z
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.doesNotCauseSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
 //    IFEQ L1
 //    ICONST_0
 //    IRETURN
@@ -344,7 +346,9 @@ function injectCausesSuffocationHook(instructions) {
 //    ALOAD 0
 //    INVOKEVIRTUAL net/minecraft/block/BlockState.getBlock ()Lnet/minecraft/block/Block;
 //    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;)Z
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
 //    IRETURN
 
 
@@ -368,18 +372,18 @@ function injectCausesSuffocationHook(instructions) {
 	var originalInstructionsLabel = new LabelNode();
 
 	// Make list of instructions to inject
-	toInject.add(new FieldInsnNode(Opcodes.GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
-	toInject.add(new JumpInsnNode(Opcodes.IFEQ, originalInstructionsLabel));
 	toInject.add(new VarInsnNode(Opcodes.ALOAD, 0)); // this
+	toInject.add(new VarInsnNode(Opcodes.ALOAD, 1)); // reader
+	toInject.add(new VarInsnNode(Opcodes.ALOAD, 2)); // pos
 	toInject.add(new MethodInsnNode(
 			//int opcode
-			Opcodes.INVOKEVIRTUAL,
+			Opcodes.INVOKESTATIC,
 			//String owner
-			"net/minecraft/block/BlockState",
+			"io/github/cadiboo/nocubes/hooks/Hooks",
 			//String name
-			"nocubes_isTerrainSmoothable",
+			"doesNotCauseSuffocation",
 			//String descriptor
-			"()Z",
+			"(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z",
 			//boolean isInterface
 			false
 	));

@@ -1,10 +1,15 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
+import net.minecraft.fluid.IFluidState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
 
@@ -130,6 +135,72 @@ public final class ModUtil {
 	 */
 	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
 		return (byte) (initialSize + meshGenerator.getSizeZExtension());
+	}
+
+	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
+
+		int currentChunkPosX = posX >> 4;
+		int currentChunkPosZ = posZ >> 4;
+		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+
+		final int extendRange = Config.extendFluidsRange.getRange();
+
+		if (extendRange == 0) {
+			return currentChunk.getFluidState(posX, posY, posZ);
+		}
+
+		final BlockState state = currentChunk.getBlockState(pos);
+
+		// Do not extend if not terrain smoothable
+		if (!state.nocubes_isTerrainSmoothable()) {
+			return state.getFluidState();
+		}
+
+		final IFluidState fluidState = state.getFluidState();
+		if (!fluidState.isEmpty()) {
+			return fluidState;
+		}
+
+		// For offset = -1 or -2 to offset = 1 or 2;
+		final int maxXOffset = extendRange;
+		final int maxZOffset = extendRange;
+
+		// Check up
+		{
+			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+			if (state1.isSource()) {
+				return state1;
+			}
+		}
+
+		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+
+				// No point in checking myself
+				if (xOffset == 0 && zOffset == 0) {
+					continue;
+				}
+
+				final int checkX = posX + xOffset;
+				final int checkZ = posZ + zOffset;
+
+				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
+					currentChunkPosX = checkX >> 4;
+					currentChunkPosZ = checkZ >> 4;
+					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+				}
+
+				final IFluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
+				if (state1.isSource()) {
+					return state1;
+				}
+
+			}
+		}
+		return fluidState;
 	}
 
 }

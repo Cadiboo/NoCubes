@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class DensityCache extends XYZCache implements AutoCloseable {
+public final class DensityCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0, 0, 0, 0));
 

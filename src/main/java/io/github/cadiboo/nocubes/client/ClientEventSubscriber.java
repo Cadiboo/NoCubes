@@ -64,9 +64,6 @@ public final class ClientEventSubscriber {
 
 		if (event.phase != TickEvent.Phase.END) return;
 
-//		if (false)
-//		ObjectPoolingProfiler.onTick();
-
 		final Minecraft minecraft = Minecraft.getInstance();
 		final ClientPlayerEntity player = minecraft.player;
 
@@ -437,7 +434,6 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		final float partialTicks = event.getPartialTicks();
 		final BlockPos pos = blockRayTraceResult.getPos();
 		final BlockState blockState = world.getBlockState(pos);
 		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {

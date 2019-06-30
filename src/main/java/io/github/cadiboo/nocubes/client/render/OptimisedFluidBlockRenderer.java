@@ -37,6 +37,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Random;
 
+import static net.minecraft.util.Direction.EAST;
+import static net.minecraft.util.Direction.NORTH;
+import static net.minecraft.util.Direction.SOUTH;
+import static net.minecraft.util.Direction.WEST;
+
 /**
  * @author Cadiboo
  */
@@ -109,6 +114,10 @@ public final class OptimisedFluidBlockRenderer {
 		final IEnviromentBlockReader lazyBlockColorsCacheReader = lazyBlockColorsCache.reader;
 		final IColorResolver lazyBlockColorsCacheColorResolver = lazyBlockColorsCache.colorResolver;
 
+		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
+		final TextureAtlasSprite[] atlasSpritesLava = fluidRenderer.atlasSpritesLava;
+		final TextureAtlasSprite[] atlasSpritesWater = fluidRenderer.atlasSpritesWater;
+
 		for (int z = 0; z < 16; ++z) {
 			for (int y = 0; y < 16; ++y) {
 				for (int x = 0; x < 16; ++x) {
@@ -142,7 +151,8 @@ public final class OptimisedFluidBlockRenderer {
 									fluidRenderer,
 									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 									x, y, z,
-									index, fluidStateArray, blockStateArray,
+//									index,
+									fluidStateArray, blockStateArray,
 									stateCacheSizeX, stateCacheSizeY,
 									stateCacheStartPaddingX, stateCacheStartPaddingY, stateCacheStartPaddingZ,
 									stateCache,
@@ -178,10 +188,11 @@ public final class OptimisedFluidBlockRenderer {
 									lazyBlockColorsCacheColorResolver,
 
 									fluidState,
-									random,
+//									random,
 									bufferBuilder,
 									chunkRenderCache,
-									pooledMutableBlockPos
+									pooledMutableBlockPos,
+									atlasSpriteWaterOverlay, atlasSpritesLava, atlasSpritesWater
 							);
 						} finally {
 							OptiFineCompatibility.popShaderThing(bufferBuilder);
@@ -198,7 +209,7 @@ public final class OptimisedFluidBlockRenderer {
 			final SmoothLightingBlockFluidRenderer fluidRenderer,
 			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 			final int relativeX, final int relativeY, final int relativeZ,
-			final int fluidStateArrayIndex,
+//			final int fluidStateArrayIndex,
 			final IFluidState[] fluidStateArray,
 			final BlockState[] blockStateArray,
 			final int stateCacheSizeX, final int stateCacheSizeY,
@@ -236,10 +247,11 @@ public final class OptimisedFluidBlockRenderer {
 			final IColorResolver lazyBlockColorsCacheColorResolver,
 
 			final IFluidState state,
-			final Random random,
+//			final Random random,
 			final BufferBuilder buffer,
 			final IEnviromentBlockReader chunkRenderCache,
-			final PooledMutableBlockPos pooledMutableBlockPos
+			final PooledMutableBlockPos pooledMutableBlockPos,
+			final TextureAtlasSprite atlasSpriteWaterOverlay, final TextureAtlasSprite[] atlasSpritesLava, final TextureAtlasSprite[] atlasSpritesWater
 	) {
 		final int x = chunkRenderPosX + relativeX;
 		final int y = chunkRenderPosY + relativeY;
@@ -262,7 +274,7 @@ public final class OptimisedFluidBlockRenderer {
 		final int densityCacheOffsetZ = densityCacheStartPaddingZ + relativeZ;
 
 		final boolean isLava = state.isTagged(FluidTags.LAVA);
-		final TextureAtlasSprite[] atextureatlassprite = isLava ? fluidRenderer.atlasSpritesLava : fluidRenderer.atlasSpritesWater;
+		final TextureAtlasSprite[] atextureatlassprite = isLava ? atlasSpritesLava : atlasSpritesWater;
 
 		final float red;
 		final float green;
@@ -795,6 +807,8 @@ public final class OptimisedFluidBlockRenderer {
 			);
 		}
 
+//		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
+
 		for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
 			final float y0;
 			final float y1;
@@ -814,7 +828,7 @@ public final class OptimisedFluidBlockRenderer {
 				// is to try and solve z-fighting issues.
 				z0 = z;// + (double) 0.001F;
 				z1 = z;// + (double) 0.001F;
-				direction = Direction.NORTH;
+				direction = NORTH;
 				shouldRenderSide = shouldRenderNorth;
 			} else if (facingIndex == 1) {
 				y0 = fluidHeightEastSouth;
@@ -826,7 +840,7 @@ public final class OptimisedFluidBlockRenderer {
 				// is to try and solve z-fighting issues.
 				z0 = z + 1;// - (double) 0.001F;
 				z1 = z + 1;// - (double) 0.001F;
-				direction = Direction.SOUTH;
+				direction = SOUTH;
 				shouldRenderSide = shouldRenderSouth;
 			} else if (facingIndex == 2) {
 				y0 = fluidHeightSouth;
@@ -838,7 +852,7 @@ public final class OptimisedFluidBlockRenderer {
 				x1 = x;// + (double) 0.001F;
 				z0 = z + 1;
 				z1 = z;
-				direction = Direction.WEST;
+				direction = WEST;
 				shouldRenderSide = shouldRenderWest;
 			} else {
 				y0 = fluidHeightEast;
@@ -850,7 +864,7 @@ public final class OptimisedFluidBlockRenderer {
 				x1 = x + 1;// - (double) 0.001F;
 				z0 = z;
 				z1 = z + 1;
-				direction = Direction.EAST;
+				direction = EAST;
 				shouldRenderSide = shouldRenderEast;
 			}
 
@@ -871,7 +885,7 @@ public final class OptimisedFluidBlockRenderer {
 					)].getBlock();
 //					Block block = worldIn.getBlockState(pooledMutableBlockPos).getBlock();
 					if (block == Blocks.GLASS || block instanceof StainedGlassBlock) {
-						textureatlassprite2 = fluidRenderer.atlasSpriteWaterOverlay;
+						textureatlassprite2 = atlasSpriteWaterOverlay;
 					}
 				}
 
@@ -904,15 +918,15 @@ public final class OptimisedFluidBlockRenderer {
 						final int combinedLightUpMax = getCombinedLightUpMax(
 								lazyPackedLightCacheStartPaddingX + offsetRelativeX, lazyPackedLightCacheStartPaddingY + offsetRelativeY, lazyPackedLightCacheStartPaddingZ + offsetRelativeZ,
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY,
-							lazyPackedLightCache,
-							lazyPackedLightCacheCache,
-							lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
-							lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
-							lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
-							lazyPackedLightCacheReader,
-							pooledMutableBlockPos
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY,
+								lazyPackedLightCache,
+								lazyPackedLightCacheCache,
+								lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
+								lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
+								lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
+								lazyPackedLightCacheReader,
+								pooledMutableBlockPos
 						);
 						light0 = combinedLightUpMax;
 						light1 = combinedLightUpMax;
@@ -923,54 +937,54 @@ public final class OptimisedFluidBlockRenderer {
 						light0 = getCombinedLightUpMax(
 								lazyPackedLightCacheStartPaddingX + (x0 - chunkRenderPosX), lazyPackedLightCacheStartPaddingY + (MathHelper.floor(y + y0) - chunkRenderPosY), lazyPackedLightCacheStartPaddingZ + (z0 - chunkRenderPosZ),
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY,
-							lazyPackedLightCache,
-							lazyPackedLightCacheCache,
-							lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
-							lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
-							lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
-							lazyPackedLightCacheReader,
-							pooledMutableBlockPos
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY,
+								lazyPackedLightCache,
+								lazyPackedLightCacheCache,
+								lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
+								lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
+								lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
+								lazyPackedLightCacheReader,
+								pooledMutableBlockPos
 						);
 //						light1 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x1, y + y1, z1));
 						light1 = getCombinedLightUpMax(lazyPackedLightCacheStartPaddingX + (x1 - chunkRenderPosX), lazyPackedLightCacheStartPaddingY + (MathHelper.floor(y + y1) - chunkRenderPosY), lazyPackedLightCacheStartPaddingZ + (z1 - chunkRenderPosZ),
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY,
-							lazyPackedLightCache,
-							lazyPackedLightCacheCache,
-							lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
-							lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
-							lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
-							lazyPackedLightCacheReader,
-							pooledMutableBlockPos
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY,
+								lazyPackedLightCache,
+								lazyPackedLightCacheCache,
+								lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
+								lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
+								lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
+								lazyPackedLightCacheReader,
+								pooledMutableBlockPos
 						);
 //						light2 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x1, y, z1));
 						light2 = getCombinedLightUpMax(lazyPackedLightCacheStartPaddingX + (x1 - chunkRenderPosX), lazyPackedLightCacheStartPaddingY + (y - chunkRenderPosY), lazyPackedLightCacheStartPaddingZ + (z1 - chunkRenderPosZ),
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY,
-							lazyPackedLightCache,
-							lazyPackedLightCacheCache,
-							lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
-							lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
-							lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
-							lazyPackedLightCacheReader,
-							pooledMutableBlockPos
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY,
+								lazyPackedLightCache,
+								lazyPackedLightCacheCache,
+								lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
+								lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
+								lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
+								lazyPackedLightCacheReader,
+								pooledMutableBlockPos
 						);
 //						light3 = this.getCombinedLightUpMax_optimised(worldIn, pooledMutableBlockPos.setPos(x0, y, z0));
 						light3 = getCombinedLightUpMax(lazyPackedLightCacheStartPaddingX + (x0 - chunkRenderPosX), lazyPackedLightCacheStartPaddingY + (y - chunkRenderPosY), lazyPackedLightCacheStartPaddingZ + (z0 - chunkRenderPosZ),
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							stateCacheSizeX, stateCacheSizeY,
-							lazyPackedLightCache,
-							lazyPackedLightCacheCache,
-							lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
-							lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
-							lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
-							lazyPackedLightCacheReader,
-							pooledMutableBlockPos
+								stateCache,
+								stateCacheSizeX, stateCacheSizeY,
+								lazyPackedLightCache,
+								lazyPackedLightCacheCache,
+								lazyPackedLightCacheSizeX, lazyPackedLightCacheSizeY,
+								lazyPackedLightCacheStartPaddingX, lazyPackedLightCacheStartPaddingY, lazyPackedLightCacheStartPaddingZ,
+								lazyPackedLightCacheDiffX, lazyPackedLightCacheDiffY, lazyPackedLightCacheDiffZ,
+								lazyPackedLightCacheReader,
+								pooledMutableBlockPos
 						);
 					}
 					if (!colors) {
@@ -1047,7 +1061,7 @@ public final class OptimisedFluidBlockRenderer {
 						x0, x1,
 						z0, z1,
 						light0, light1, light2, light3,
-						textureatlassprite2 != fluidRenderer.atlasSpriteWaterOverlay
+						textureatlassprite2 != atlasSpriteWaterOverlay
 				);
 			}
 		}

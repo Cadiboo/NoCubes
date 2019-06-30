@@ -27,11 +27,11 @@ public class XYZCache {
 	}
 
 	@Deprecated
-	public int getIndex(final int x, final int y, final int z) {
+	public final int getIndex(final int x, final int y, final int z) {
 		return getIndex(x, y, z, this.sizeX, this.sizeY);
 	}
 
-	public int getIndex(final int x, final int y, final int z, final int sizeX, final int sizeY) {
+	public final int getIndex(final int x, final int y, final int z, final int sizeX, final int sizeY) {
 		// (width * height * z) + (width * y) + x
 		// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 		return x + sizeX * (y + sizeY * z);

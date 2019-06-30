@@ -486,7 +486,7 @@ public final class MeshRenderer {
 			return;
 		}
 		final BlockState blockStateUp = reader.getBlockState(pooledMutableBlockPos);
-		if (blockStateUp == grassPlantState) {
+		if (blockStateUp == grassPlantState || blockStateUp == StateHolder.TALL_GRASS_PLANT_BOTTOM) {
 			return;
 		}
 		if (blockStateUp.isOpaqueCube(reader, pooledMutableBlockPos)) {

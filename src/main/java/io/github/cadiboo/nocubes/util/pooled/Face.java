@@ -6,7 +6,7 @@ import java.util.ArrayList;
 /**
  * @author Cadiboo
  */
-public class Face implements AutoCloseable {
+public final class Face implements AutoCloseable {
 
 	private static final ArrayList<Face> POOL = new ArrayList<>();
 

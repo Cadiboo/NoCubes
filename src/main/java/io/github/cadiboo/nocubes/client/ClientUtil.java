@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.Region;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
 
 import javax.annotation.Nonnull;
@@ -353,6 +354,84 @@ public final class ClientUtil {
 			return region.chunks[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
+	}
+
+	public static void setupChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
+		// Start removed code
+//		this.cacheSizeX = end.getX() - start.getX() + 1;
+//		this.cacheSizeY = end.getY() - start.getY() + 1;
+//		this.cacheSizeZ = end.getZ() - start.getZ() + 1;
+//		this.blockStates = new BlockState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
+//		this.fluidStates = new IFluidState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
+//
+//		BlockPos lvt_8_1_;
+//		Chunk lvt_11_1_;
+//		int lvt_12_1_;
+//		for(Iterator var7 = BlockPos.getAllInBoxMutable(start, end).iterator(); var7.hasNext(); this.fluidStates[lvt_12_1_] = lvt_11_1_.getFluidState(lvt_8_1_)) {
+//			lvt_8_1_ = (BlockPos)var7.next();
+//			int lvt_9_1_ = (lvt_8_1_.getX() >> 4) - chunkStartX;
+//			int lvt_10_1_ = (lvt_8_1_.getZ() >> 4) - chunkStartZ;
+//			lvt_11_1_ = chunks[lvt_9_1_][lvt_10_1_];
+//			lvt_12_1_ = this.getIndex(lvt_8_1_);
+//			this.blockStates[lvt_12_1_] = lvt_11_1_.getBlockState(lvt_8_1_);
+//		}
+		// End removed code
+		final int startX = start.getX();
+		final int startY = start.getY();
+		final int startZ = start.getZ();
+
+		final int cacheSizeX = end.getX() - startX + 1;
+		final int cacheSizeY = end.getY() - startY + 1;
+		final int cacheSizeZ = end.getZ() - startZ + 1;
+
+		final int size = cacheSizeX * cacheSizeY * cacheSizeZ;
+		final BlockState[] blockStates = new BlockState[size];
+		final IFluidState[] fluidStates = new IFluidState[size];
+
+		int cx = (startX >> 4) - chunkStartX;
+		int cz = (startZ >> 4) - chunkStartZ;
+		Chunk currentChunk = chunks[cx][cz];
+
+		try (BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain()) {
+			int index = 0;
+			for (int z = 0; z < cacheSizeZ; ++z) {
+				for (int y = 0; y < cacheSizeY; ++y) {
+					for (int x = 0; x < cacheSizeX; ++x, ++index) {
+
+						final int posX = startX + x;
+						final int posY = startY + y;
+						final int posZ = startZ + z;
+
+						final int ccx = ((startX + x) >> 4) - chunkStartX;
+						final int ccz = ((startZ + z) >> 4) - chunkStartZ;
+
+						boolean changed = false;
+						if (cx != ccx) {
+							cx = ccx;
+							changed = true;
+						}
+						if (cz != ccz) {
+							cz = ccz;
+							changed = true;
+						}
+						if (changed) {
+							currentChunk = chunks[cx][cz];
+						}
+
+						pooledMutableBlockPos.setPos(posX, posY, posZ);
+						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
+					}
+				}
+			}
+		}
+
+		_this.cacheSizeX = cacheSizeX;
+		_this.cacheSizeY = cacheSizeY;
+		_this.cacheSizeZ = cacheSizeZ;
+
+		_this.blockStates = blockStates;
+		_this.fluidStates = fluidStates;
 	}
 
 }

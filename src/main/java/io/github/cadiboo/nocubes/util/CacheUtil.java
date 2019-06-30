@@ -1,14 +1,18 @@
 package io.github.cadiboo.nocubes.util;
 
+import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReader;
+import net.minecraft.world.chunk.IChunk;
 
 import javax.annotation.Nonnull;
+
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
@@ -25,7 +29,7 @@ public final class CacheUtil {
 			final int toX, final int toY, final int toZ,
 			// the difference between the chunkRenderPosition and from position. Always positive
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
-			@Nonnull final IBlockReader cache,
+			@Nonnull final IWorldReader cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		final int cacheSizeX = Math.abs(toX - fromX);
@@ -39,17 +43,8 @@ public final class CacheUtil {
 			final BlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
-			int index = 0;
-			// TODO: Optimise and use chunks
-			for (int z = 0; z < cacheSizeZ; ++z) {
-				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z);
-						blockStates[index] = cache.getBlockState(pooledMutableBlockPos);
-						fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
-					}
-				}
-			}
+			fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates, fluidStates);
+			calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
 
 			return stateCache;
 		} catch (final Exception e) {
@@ -57,6 +52,130 @@ public final class CacheUtil {
 			// close the state cache to prevent errors about it already being in use
 			stateCache.close();
 			throw e;
+		}
+	}
+
+	/**
+	 * Because we fill state caches in an optimised way, our World#getFluidState override isn't applied,
+	 * so we need to extend fluids.
+	 */
+	private static void calculateStateCacheExtendedFluids(
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final BlockState[] blockStates, @Nonnull final IFluidState[] fluidStates, @Nonnull final StateCache stateCache,
+			final int stateCacheSizeX, final int stateCacheSizeY
+	) {
+		final int extend = Config.extendFluidsRange.getRange();
+		if (extend < 1) {
+			return;
+		}
+		final int fluidStatesLength = fluidStates.length;
+		final IFluidState[] extendedFluidStates = new IFluidState[fluidStatesLength];
+
+		int index = 0;
+		for (int z = 0; z < cacheSizeZ; ++z) {
+			for (int y = 0; y < cacheSizeY; ++y) {
+				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+
+					// Do not extend if not terrain smoothable
+					if(!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
+						continue;
+					}
+
+					SEARCH_FOR_FLUID:
+					for (int xOffset = -extend; xOffset <= extend; ++xOffset) {
+						for (int zOffset = -extend; zOffset <= extend; ++zOffset) {
+
+							// No point in checking myself
+							if (xOffset == 0 && zOffset == 0) {
+								continue;
+							}
+
+							final int checkX = x + xOffset;
+							final int checkZ = z + zOffset;
+
+							if (checkX < 0 || checkX >= cacheSizeX) continue;
+							if (checkZ < 0 || checkZ >= cacheSizeZ) continue;
+
+							final IFluidState state1 = fluidStates[stateCache.getIndex(
+									checkX,
+									y,
+									checkZ,
+									stateCacheSizeX, stateCacheSizeY
+							)];
+							if (state1.isSource()) {
+								extendedFluidStates[index] = state1;
+								break SEARCH_FOR_FLUID;
+							}
+
+						}
+					}
+
+				}
+			}
+		}
+
+		for (int i = 0; i < fluidStatesLength; ++i) {
+			final IFluidState extendedFluidState = extendedFluidStates[i];
+			if (extendedFluidState != null) {
+				fluidStates[i] = extendedFluidState;
+			}
+		}
+
+	}
+
+	/**
+	 * Fills a state cache in an optimised way getting values from chunks rather than from the world
+	 * Could be optimised even more to use ChunkSections
+	 */
+	private static void fillStateCache(
+			final int fromX, final int fromY, final int fromZ,
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final IWorldReader cache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			final BlockState[] blockStates, final IFluidState[] fluidStates
+	) {
+
+//		int index = 0;
+//		for (int z = 0; z < cacheSizeZ; ++z) {
+//			for (int y = 0; y < cacheSizeY; ++y) {
+//				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+//					pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z);
+//					blockStates[index] = cache.getBlockState(pooledMutableBlockPos);
+//					fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
+//				}
+//			}
+//		}
+
+		int cx = fromX >> 4;
+		int cz = fromZ >> 4;
+		IChunk currentChunk = cache.getChunk(cx, cz);
+		int index = 0;
+		for (int z = 0; z < cacheSizeZ; ++z) {
+			for (int y = 0; y < cacheSizeY; ++y) {
+				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+
+					final int checkX = fromX + x;
+					final int checkZ = fromZ + z;
+
+					boolean changed = false;
+
+					if (cx != checkX >> 4) {
+						cx = checkX >> 4;
+						changed = true;
+					}
+					if (cz != checkZ >> 4) {
+						cz = checkZ >> 4;
+						changed = true;
+					}
+					if (changed) {
+						currentChunk = cache.getChunk(cx, cz);
+					}
+
+					pooledMutableBlockPos.setPos(checkX, fromY + y, checkZ);
+					blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+					fluidStates[index] = currentChunk.getFluidState(pooledMutableBlockPos);
+				}
+			}
 		}
 	}
 

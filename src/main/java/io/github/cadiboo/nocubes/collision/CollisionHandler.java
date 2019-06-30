@@ -420,6 +420,62 @@ public final class CollisionHandler {
 					)
 			) {
 
+				final List<VoxelShape> collidingShapes = new ArrayList<>();
+
+				final float[] densityCacheArray = densityCache.getDensityCache();
+
+				// Get vanilla collisions (taking density into account)
+				{
+					final VoxelShape aabbShape = VoxelShapes.create(aabb);
+					final int sizeX = maxXp1 - minXm1;
+					final int sizeY = maxYp1 - minYm1;
+					final int sizeZ = maxZp1 - minZm1;
+
+					final BlockState[] blockStateArray = stateCache.getBlockStates();
+					final int stateOffsetX = stateCache.startPaddingX;
+					final int stateOffsetY = stateCache.startPaddingY;
+					final int stateOffsetZ = stateCache.startPaddingZ;
+					final int stateCacheSizeX = stateCache.sizeX;
+					final int stateCacheSizeY = stateCache.sizeY;
+
+					final int densityOffsetX = densityCache.startPaddingX;
+					final int densityOffsetY = densityCache.startPaddingY;
+					final int densityOffsetZ = densityCache.startPaddingZ;
+					final int densityCacheSizeX = densityCache.sizeX;
+					final int densityCacheSizeY = densityCache.sizeY;
+
+					for (int z = 0; z < sizeZ; ++z) {
+						for (int y = 0; y < sizeY; ++y) {
+							for (int x = 0; x < sizeX; ++x) {
+								final BlockState blockState = blockStateArray[stateCache.getIndex(
+										stateOffsetX + x,
+										stateOffsetY + y,
+										stateOffsetZ + z,
+										stateCacheSizeX, stateCacheSizeY
+								)];
+								if (!blockState.nocubes_isTerrainSmoothable()
+										||
+										densityCacheArray[densityCache.getIndex(
+												densityOffsetX + x,
+												densityOffsetY + y,
+												densityOffsetZ + z,
+												densityCacheSizeX, densityCacheSizeY
+										)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely isnide)
+								) {
+									final int posX = minXm1 + x;
+									final int posY = minYm1 + y;
+									final int posZ = minZm1 + z;
+									pooledMutableBlockPos.setPos(posX, posY, posZ);
+									final VoxelShape offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos).withOffset(posX, posY, posZ);
+									if (VoxelShapes.compare(aabbShape, offsetCollisionShape, IBooleanFunction.AND)) {
+										collidingShapes.add(offsetCollisionShape);
+									}
+								}
+							}
+						}
+					}
+				}
+
 				final HashMap<Vec3b, FaceList> meshData;
 				try (ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
 					if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
@@ -430,7 +486,7 @@ public final class CollisionHandler {
 								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN_SMOOTHABLE, pooledMutableBlockPos)
 						);
 					} else {
-						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+						meshData = meshGenerator.generateChunk(densityCacheArray, new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 					}
 				}
 
@@ -449,8 +505,6 @@ public final class CollisionHandler {
 							vec3b.close();
 						}
 					}
-
-					final List<VoxelShape> collidingShapes = new ArrayList<>();
 
 					final VoxelShape aabbShape = VoxelShapes.create(aabb);
 

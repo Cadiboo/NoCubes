@@ -467,14 +467,6 @@ public final class RenderDispatcher {
 			float maxU = UVHelper.getMaxU(textureatlassprite);
 			float minV = UVHelper.getMinV(textureatlassprite);
 			float maxV = UVHelper.getMaxV(textureatlassprite);
-//			int color = Minecraft.getInstance().getBlockColors().getColor(iblockstate, world, blockpos, -1);
-//			float red = (float) (color >> 16 & 255) / 255.0F;
-//			float green = (float) (color >> 8 & 255) / 255.0F;
-//			float blue = (float) (color & 255) / 255.0F;
-			float red = 1.0F;
-			float green = 1.0F;
-			float blue = 1.0F;
-			float alpha = 1.0F;
 			final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
 			int lightmapSkyLight = (packed >> 16) & 0xFFFF;
 			int lightmapBlockLight = packed & 0xFFFF;
@@ -486,10 +478,10 @@ public final class RenderDispatcher {
 							Vec3 v2 = face.getVertex2();
 							Vec3 v3 = face.getVertex3()
 					) {
-						bufferBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						bufferBuilderIn.pos(v0.x, v0.y, v0.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						bufferBuilderIn.pos(v1.x, v1.y, v1.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						bufferBuilderIn.pos(v2.x, v2.y, v2.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
+						bufferBuilderIn.pos(v3.x, v3.y, v3.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
 					}
 				}
 			}

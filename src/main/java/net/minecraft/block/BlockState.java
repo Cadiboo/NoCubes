@@ -306,7 +306,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public boolean causesSuffocation(IBlockReader p_215696_1_, BlockPos p_215696_2_) {
       // NoCubes Start
-      if (io.github.cadiboo.nocubes.config.Config.terrainCollisions && this.nocubes_isTerrainSmoothable()) return false;
+      if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, p_215696_1_, p_215696_2_)) return false;
       // NoCubes End
       return this.getBlock().causesSuffocation(this, p_215696_1_, p_215696_2_);
    }
