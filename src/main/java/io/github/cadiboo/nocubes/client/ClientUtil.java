@@ -419,8 +419,11 @@ public final class ClientUtil {
 						}
 
 						pooledMutableBlockPos.setPos(posX, posY, posZ);
-						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
-						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
+//						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+//						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
+						final BlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
+						blockStates[index] = blockState;
+						fluidStates[index] = blockState.getFluidState();
 					}
 				}
 			}

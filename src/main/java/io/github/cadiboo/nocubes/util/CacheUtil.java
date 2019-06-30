@@ -172,8 +172,11 @@ public final class CacheUtil {
 					}
 
 					pooledMutableBlockPos.setPos(checkX, fromY + y, checkZ);
-					blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
-					fluidStates[index] = currentChunk.getFluidState(pooledMutableBlockPos);
+//					blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+//					fluidStates[index] = currentChunk.getFluidState(pooledMutableBlockPos);
+					final BlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
+					blockStates[index] = blockState;
+					fluidStates[index] = blockState.getFluidState();
 				}
 			}
 		}
