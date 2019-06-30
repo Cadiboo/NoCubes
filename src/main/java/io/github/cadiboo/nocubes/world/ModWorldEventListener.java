@@ -21,9 +21,9 @@ public final class ModWorldEventListener implements IWorldEventListener {
 
 	@Override
 	public void notifyBlockUpdate(final World worldIn, final BlockPos pos, final IBlockState oldState, final IBlockState newState, final int flags) {
-		int posX = pos.getX();
-		int posY = pos.getY();
-		int posZ = pos.getZ();
+		final int posX = pos.getX();
+		final int posY = pos.getY();
+		final int posZ = pos.getZ();
 		NoCubes.PROXY.markBlocksForUpdate(
 				posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND,
 				posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND,
