@@ -40,7 +40,6 @@ final class StolenReposeCode {
 				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
 				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()
 		) {
-
 			final WorldBorder worldBorder = worldIn.getWorldBorder();
 
 			final int startX = posIn.getX();
@@ -70,6 +69,8 @@ final class StolenReposeCode {
 			}
 		}
 
+		// > 0 means outside isosurface
+		// > -1 means mostly outside isosurface
 		if (density > -1) {
 			return VoxelShapes.empty();
 		} else if (canSlopeAt(stateIn, worldIn, posIn, collisionShape)) {
@@ -120,8 +121,7 @@ final class StolenReposeCode {
 	}
 
 	private static double blockHeight(final BlockPos pos, IBlockReader world, final BlockState blockState) {
-		VoxelShape box = getStateCollisionShape(blockState, world, pos);
-		return box.getEnd(Axis.Y);
+		return getStateCollisionShape(blockState, world, pos).getEnd(Axis.Y);
 	}
 
 	private static boolean canSlopeAt(final BlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox) {
