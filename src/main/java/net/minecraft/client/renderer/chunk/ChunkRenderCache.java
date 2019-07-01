@@ -1,10 +1,6 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
-
 package net.minecraft.client.renderer.chunk;
 
+import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.tileentity.TileEntity;
@@ -14,119 +10,128 @@ import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.Chunk.CreateEntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-
 @OnlyIn(Dist.CLIENT)
 public class ChunkRenderCache implements IEnviromentBlockReader {
+   public int chunkStartX;
+   public int chunkStartZ;
+   public BlockPos cacheStartPos;
+   public int cacheSizeX;
+   public int cacheSizeY;
+   public int cacheSizeZ;
+   public Chunk[][] chunks;
+   public BlockState[] blockStates;
+   public IFluidState[] fluidStates;
+   public World world;
 
-	public final int chunkStartX;
-	public final int chunkStartZ;
-	public final BlockPos cacheStartPos;
-	public /*final*/ int cacheSizeX;
-	public /*final*/ int cacheSizeY;
-	public /*final*/ int cacheSizeZ;
-	public final Chunk[][] chunks;
-	public /*final*/ BlockState[] blockStates;
-	public /*final*/ IFluidState[] fluidStates;
-	public final World world;
+   /**
+    * generates a RenderChunkCache, but returns null if the chunk is empty (contains only air)
+    */
+   @Nullable
+   public static ChunkRenderCache generateCache(World worldIn, BlockPos from, BlockPos to, int padding) {
+      int i = from.getX() - padding >> 4;
+      int j = from.getZ() - padding >> 4;
+      int k = to.getX() + padding >> 4;
+      int l = to.getZ() + padding >> 4;
+      Chunk[][] achunk = new Chunk[k - i + 1][l - j + 1];
 
-	public ChunkRenderCache(World world, int chunkStartX, int chunkStartZ, Chunk[][] chunks, BlockPos start, BlockPos end) {
-		this.world = world;
-		this.chunkStartX = chunkStartX;
-		this.chunkStartZ = chunkStartZ;
-		this.chunks = chunks;
-		this.cacheStartPos = start;
-		// NoCubes Start
-		io.github.cadiboo.nocubes.hooks.Hooks.initChunkRenderCache(this, chunkStartX, chunkStartZ, chunks, start, end);
-		// NoCubes End
-	}
+      for(int i1 = i; i1 <= k; ++i1) {
+         for(int j1 = j; j1 <= l; ++j1) {
+            achunk[i1 - i][j1 - j] = worldIn.getChunk(i1, j1);
+         }
+      }
 
-	@Nullable
-	public static ChunkRenderCache generateCache(World world, BlockPos start, BlockPos end, int padding) {
-		int chunkStartX = start.getX() - padding >> 4;
-		int chunkStartZ = start.getZ() - padding >> 4;
-		int chunkEndX = end.getX() + padding >> 4;
-		int chunkEndZ = end.getZ() + padding >> 4;
-		Chunk[][] chunks = new Chunk[chunkEndX - chunkStartX + 1][chunkEndZ - chunkStartZ + 1];
+      boolean flag = true;
 
-		for (int x = chunkStartX; x <= chunkEndX; ++x) {
-			for (int z = chunkStartZ; z <= chunkEndZ; ++z) {
-				chunks[x - chunkStartX][z - chunkStartZ] = world.getChunk(x, z);
-			}
-		}
+      // NoCubes Start
+      IS_EMPTY:
+      // NoCubes End
+      for(int l1 = from.getX() >> 4; l1 <= to.getX() >> 4; ++l1) {
+         for(int k1 = from.getZ() >> 4; k1 <= to.getZ() >> 4; ++k1) {
+            Chunk chunk = achunk[l1 - i][k1 - j];
+            if (!chunk.isEmptyBetween(from.getY(), to.getY())) {
+               flag = false;
+               // NoCubes Start
+               break IS_EMPTY;
+               // NoCubes End
+            }
+         }
+      }
 
-		boolean empty = true;
+      if (flag) {
+         return null;
+      } else {
+         int i2 = 1;
+         BlockPos blockpos = from.add(-1, -1, -1);
+         BlockPos blockpos1 = to.add(1, 1, 1);
+         return new ChunkRenderCache(worldIn, i, j, achunk, blockpos, blockpos1);
+      }
+   }
 
-		// NoCubes Start
-		IS_EMPTY:
-		// NoCubes End
-		for (int x = start.getX() >> 4; x <= end.getX() >> 4; ++x) {
-			for (int z = start.getZ() >> 4; z <= end.getZ() >> 4; ++z) {
-				Chunk chunk = chunks[x - chunkStartX][z - chunkStartZ];
-				if (!chunk.isEmptyBetween(start.getY(), end.getY())) {
-					empty = false;
-					// NoCubes Start
-					break IS_EMPTY;
-					// NoCubes End
-				}
-			}
-		}
+   public ChunkRenderCache(World worldIn, int chunkStartXIn, int chunkStartZIn, Chunk[][] chunksIn, BlockPos startPos, BlockPos endPos) {
+      this.world = worldIn;
+      this.chunkStartX = chunkStartXIn;
+      this.chunkStartZ = chunkStartZIn;
+      this.chunks = chunksIn;
+      this.cacheStartPos = startPos;
+      io.github.cadiboo.nocubes.hooks.Hooks.initChunkRenderCache(this, chunkStartXIn, chunkStartZIn, chunksIn, startPos, endPos);
+//      this.cacheSizeX = endPos.getX() - startPos.getX() + 1;
+//      this.cacheSizeY = endPos.getY() - startPos.getY() + 1;
+//      this.cacheSizeZ = endPos.getZ() - startPos.getZ() + 1;
+//      this.blockStates = new BlockState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
+//      this.fluidStates = new IFluidState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
+//
+//      for(BlockPos blockpos : BlockPos.getAllInBoxMutable(startPos, endPos)) {
+//         int i = (blockpos.getX() >> 4) - chunkStartXIn;
+//         int j = (blockpos.getZ() >> 4) - chunkStartZIn;
+//         Chunk chunk = chunksIn[i][j];
+//         int k = this.getIndex(blockpos);
+//         this.blockStates[k] = chunk.getBlockState(blockpos);
+//         this.fluidStates[k] = chunk.getFluidState(blockpos);
+//      }
 
-		if (empty) {
-			return null;
-		} else {
-			// Start removed code
-//            int lvt_10_3_ = true;
-			// End removed code
-			BlockPos startAndPadding = start.add(-1, -1, -1);
-			BlockPos endAndPadding = end.add(1, 1, 1);
-			return new ChunkRenderCache(world, chunkStartX, chunkStartZ, chunks, startAndPadding, endAndPadding);
-		}
-	}
+   }
 
-	protected final int getIndex(BlockPos pos) {
-		return this.getIndex(pos.getX(), pos.getY(), pos.getZ());
-	}
+   protected final int getIndex(BlockPos pos) {
+      return this.getIndex(pos.getX(), pos.getY(), pos.getZ());
+   }
 
-	protected int getIndex(int xIn, int yIn, int zIn) {
-		int x = xIn - this.cacheStartPos.getX();
-		int y = yIn - this.cacheStartPos.getY();
-		int z = zIn - this.cacheStartPos.getZ();
-		return z * this.cacheSizeX * this.cacheSizeY + y * this.cacheSizeX + x;
-	}
+   protected int getIndex(int xIn, int yIn, int zIn) {
+      int i = xIn - this.cacheStartPos.getX();
+      int j = yIn - this.cacheStartPos.getY();
+      int k = zIn - this.cacheStartPos.getZ();
+      return k * this.cacheSizeX * this.cacheSizeY + j * this.cacheSizeX + i;
+   }
 
-	public Biome getBiome(BlockPos pos) {
-		int x = (pos.getX() >> 4) - this.chunkStartX;
-		int z = (pos.getZ() >> 4) - this.chunkStartZ;
-		return this.chunks[x][z].getBiome(pos);
-	}
+   public BlockState getBlockState(BlockPos pos) {
+      return this.blockStates[this.getIndex(pos)];
+   }
 
-	public int getLightFor(LightType type, BlockPos pos) {
-		return this.world.getLightFor(type, pos);
-	}
+   public IFluidState getFluidState(BlockPos pos) {
+      return this.fluidStates[this.getIndex(pos)];
+   }
 
-	@Nullable
-	public TileEntity getTileEntity(BlockPos pos) {
-		return this.getTileEntity(pos, CreateEntityType.IMMEDIATE);
-	}
+   public int getLightFor(LightType type, BlockPos pos) {
+      return this.world.getLightFor(type, pos);
+   }
 
-	public BlockState getBlockState(BlockPos pos) {
-		return this.blockStates[this.getIndex(pos)];
-	}
+   public Biome getBiome(BlockPos pos) {
+      int i = (pos.getX() >> 4) - this.chunkStartX;
+      int j = (pos.getZ() >> 4) - this.chunkStartZ;
+      return this.chunks[i][j].getBiome(pos);
+   }
 
-	public IFluidState getFluidState(BlockPos pos) {
-		return this.fluidStates[this.getIndex(pos)];
-	}
+   @Nullable
+   public TileEntity getTileEntity(BlockPos pos) {
+      return this.getTileEntity(pos, Chunk.CreateEntityType.IMMEDIATE);
+   }
 
-	@Nullable
-	public TileEntity getTileEntity(BlockPos pos, CreateEntityType type) {
-		int x = (pos.getX() >> 4) - this.chunkStartX;
-		int z = (pos.getZ() >> 4) - this.chunkStartZ;
-		return this.chunks[x][z].getTileEntity(pos, type);
-	}
-
+   @Nullable
+   public TileEntity getTileEntity(BlockPos pos, Chunk.CreateEntityType creationType) {
+      int i = (pos.getX() >> 4) - this.chunkStartX;
+      int j = (pos.getZ() >> 4) - this.chunkStartZ;
+      return this.chunks[i][j].getTileEntity(pos, creationType);
+   }
 }

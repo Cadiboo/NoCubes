@@ -357,25 +357,6 @@ public final class ClientUtil {
 	}
 
 	public static void setupChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
-		// Start removed code
-//		this.cacheSizeX = end.getX() - start.getX() + 1;
-//		this.cacheSizeY = end.getY() - start.getY() + 1;
-//		this.cacheSizeZ = end.getZ() - start.getZ() + 1;
-//		this.blockStates = new BlockState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
-//		this.fluidStates = new IFluidState[this.cacheSizeX * this.cacheSizeY * this.cacheSizeZ];
-//
-//		BlockPos lvt_8_1_;
-//		Chunk lvt_11_1_;
-//		int lvt_12_1_;
-//		for(Iterator var7 = BlockPos.getAllInBoxMutable(start, end).iterator(); var7.hasNext(); this.fluidStates[lvt_12_1_] = lvt_11_1_.getFluidState(lvt_8_1_)) {
-//			lvt_8_1_ = (BlockPos)var7.next();
-//			int lvt_9_1_ = (lvt_8_1_.getX() >> 4) - chunkStartX;
-//			int lvt_10_1_ = (lvt_8_1_.getZ() >> 4) - chunkStartZ;
-//			lvt_11_1_ = chunks[lvt_9_1_][lvt_10_1_];
-//			lvt_12_1_ = this.getIndex(lvt_8_1_);
-//			this.blockStates[lvt_12_1_] = lvt_11_1_.getBlockState(lvt_8_1_);
-//		}
-		// End removed code
 		final int startX = start.getX();
 		final int startY = start.getY();
 		final int startZ = start.getZ();

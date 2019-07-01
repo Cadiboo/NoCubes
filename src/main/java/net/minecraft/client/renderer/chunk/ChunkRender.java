@@ -2,11 +2,6 @@ package net.minecraft.client.renderer.chunk;
 
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.GLX;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
-import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -31,6 +26,12 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import javax.annotation.Nullable;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 @OnlyIn(Dist.CLIENT)
 public class ChunkRender implements net.minecraftforge.client.extensions.IForgeRenderChunk {

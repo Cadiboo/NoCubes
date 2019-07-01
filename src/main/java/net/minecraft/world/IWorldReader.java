@@ -1,13 +1,6 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Streams;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Spliterators.AbstractSpliterator;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -26,6 +19,14 @@ import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
+
+import javax.annotation.Nullable;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Spliterators.AbstractSpliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface IWorldReader extends IEnviromentBlockReader {
    /**

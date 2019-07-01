@@ -4,14 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.util.Pair;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
@@ -51,9 +43,18 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 public class BlockState extends StateHolder<Block, BlockState> implements IStateHolder<BlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    @Nullable
-   private BlockState.Cache cache;
+   private Cache cache;
    private final int lightLevel;
    private final boolean field_215709_e;
 
@@ -65,7 +66,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public void func_215692_c() {
       if (!this.getBlock().isVariableOpacity()) {
-         this.cache = new BlockState.Cache(this);
+         this.cache = new Cache(this);
       }
 
    }
@@ -246,8 +247,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().eventReceived(this, worldIn, pos, id, param);
    }
 
-   public void neighborChanged(World p_215697_1_, BlockPos p_215697_2_, Block p_215697_3_, BlockPos p_215697_4_, boolean p_215697_5_) {
-      this.getBlock().neighborChanged(this, p_215697_1_, p_215697_2_, p_215697_3_, p_215697_4_, p_215697_5_);
+   public void neighborChanged(World p_215697_1_, BlockPos p_215697_2_, Block p_215697_3_, BlockPos p_215697_4_, boolean isMoving) {
+      this.getBlock().neighborChanged(this, p_215697_1_, p_215697_2_, p_215697_3_, p_215697_4_, isMoving);
    }
 
    /**
@@ -268,8 +269,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().updateDiagonalNeighbors(this, worldIn, pos, flags);
    }
 
-   public void onBlockAdded(World p_215705_1_, BlockPos p_215705_2_, BlockState p_215705_3_, boolean p_215705_4_) {
-      this.getBlock().onBlockAdded(this, p_215705_1_, p_215705_2_, p_215705_3_, p_215705_4_);
+   public void onBlockAdded(World p_215705_1_, BlockPos p_215705_2_, BlockState p_215705_3_, boolean isMoving) {
+      this.getBlock().onBlockAdded(this, p_215705_1_, p_215705_2_, p_215705_3_, isMoving);
    }
 
    public void onReplaced(World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
