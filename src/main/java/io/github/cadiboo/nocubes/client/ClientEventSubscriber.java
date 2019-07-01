@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
+import io.github.cadiboo.nocubes.client.gui.widget.IngameModListButton;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
@@ -15,6 +16,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.screen.IngameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -33,6 +37,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -41,6 +46,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -513,6 +519,21 @@ public final class ClientEventSubscriber {
 		//TODO: do this better
 		if (Config.terrainCollisions) {
 			event.setCanceled(true);
+		}
+	}
+
+	@SubscribeEvent
+	public static void onGuiOpenEvent(final GuiOpenEvent event) {
+		final Screen gui = event.getGui();
+		if (gui instanceof IngameMenuScreen) {
+			final List<Widget> buttons = gui.buttons;
+			if (buttons.stream().noneMatch(widget -> widget instanceof IngameModListButton)) {
+				int maxY = 0;
+				for (final Widget button : buttons) {
+					maxY = Math.max(button.y, maxY);
+				}
+				gui.addButton(new IngameModListButton(gui, maxY + 24));
+			}
 		}
 	}
 
