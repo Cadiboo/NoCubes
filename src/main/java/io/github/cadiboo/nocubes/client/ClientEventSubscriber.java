@@ -38,7 +38,6 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
-import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -46,7 +45,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -54,6 +52,7 @@ import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.api.distmarker.Dist.CLIENT;
+import static net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 
@@ -110,7 +109,7 @@ public final class ClientEventSubscriber {
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
 				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
-				
+
 //				final boolean setTo;
 //				if (!Config.terrainCollisions) {
 //					if (canEnableTerrainCollisions(minecraft, player)) {
@@ -533,17 +532,14 @@ public final class ClientEventSubscriber {
 	}
 
 	@SubscribeEvent
-	public static void onGuiOpenEvent(final GuiOpenEvent event) {
+	public static void onInitGuiEvent(final InitGuiEvent event) {
 		final Screen gui = event.getGui();
 		if (gui instanceof IngameMenuScreen) {
-			final List<Widget> buttons = gui.buttons;
-			if (buttons.stream().noneMatch(widget -> widget instanceof IngameModListButton)) {
-				int maxY = 0;
-				for (final Widget button : buttons) {
-					maxY = Math.max(button.y, maxY);
-				}
-				gui.addButton(new IngameModListButton(gui, maxY + 24));
+			int maxY = 0;
+			for (final Widget button : event.getWidgetList()) {
+				maxY = Math.max(button.y, maxY);
 			}
+			event.addWidget(new IngameModListButton(gui, maxY + 24));
 		}
 	}
 
