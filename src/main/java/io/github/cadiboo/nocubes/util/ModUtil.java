@@ -8,7 +8,11 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
+import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
@@ -16,6 +20,7 @@ import net.minecraftforge.fml.VersionChecker;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.block.Blocks.BEDROCK;
 import static net.minecraft.block.Blocks.SNOW;
 
@@ -201,6 +206,46 @@ public final class ModUtil {
 			}
 		}
 		return fluidState;
+	}
+
+	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
+		final float density;
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+			float density1 = 0;
+
+//			final WorldBorder worldBorder = ((IWorldReader) reader).getWorldBorder();
+
+			final int startX = pos.getX();
+			final int startY = pos.getY();
+			final int startZ = pos.getZ();
+
+			for (int zOffset = 0; zOffset < 2; ++zOffset) {
+				for (int yOffset = 0; yOffset < 2; ++yOffset) {
+					for (int xOffset = 0; xOffset < 2; ++xOffset) {
+
+						pooledMutableBlockPos.setPos(
+								startX - xOffset,
+								startY - yOffset,
+								startZ - zOffset
+						);
+
+//						// Return a fully solid cube if its not loaded
+//						if (!((IWorldReader) reader).isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
+//							density1 += 1;
+//							continue;
+//						}
+
+						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
+						density1 += getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+					}
+				}
+			}
+			density = density1;
+		}
+
+		// > 0 means outside isosurface
+		// > -4 means mostly outside isosurface
+		return density > -4;
 	}
 
 }

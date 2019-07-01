@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -19,6 +20,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
@@ -104,14 +106,17 @@ public final class Hooks {
 
 	/**
 	 * Called from: BlockState#causesSuffocation before any other logic
-	 * Calls: Nothing (yet) TODO
+	 * Calls: ModUtil.doesTerrainCauseSuffocation
 	 *
-	 * @return If the state does NOT cause suffocation
+	 * @return If the state does NOT cause suffocation (If normal suffocation checks should be bypassed and false returned)
 	 */
-	public static boolean doesNotCauseSuffocation(final BlockState blockState, final IBlockReader p_215696_1_, final BlockPos p_215696_2_) {
+	public static boolean doesNotCauseSuffocation(final BlockState blockState, final IBlockReader reader, final BlockPos pos) {
 		if (Config.terrainCollisions) {
-			//TODO density check
-			return blockState.nocubes_isTerrainSmoothable();
+			if (!blockState.nocubes_isTerrainSmoothable()) {
+				return false; // Let vanilla handle suffocation normally
+			} else {
+				return ModUtil.doesTerrainCauseSuffocation(reader, pos);
+			}
 		}
 		return false;
 	}
