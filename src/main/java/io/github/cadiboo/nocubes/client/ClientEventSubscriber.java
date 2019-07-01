@@ -109,24 +109,26 @@ public final class ClientEventSubscriber {
 		//Collisions
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
-				final boolean setTo;
-				if (!Config.terrainCollisions) {
-					if (canEnableTerrainCollisions(minecraft, player)) {
-						ConfigHelper.setTerrainCollisions(true);
-						setTo = true;
-						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
-						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
-					} else {
-						setTo = Config.terrainCollisions;
-						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
-					}
-				} else {
-					ConfigHelper.setTerrainCollisions(false);
-					setTo = false;
-					player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisabled"));
-				}
-				// Config saving is async so set it now
-				Config.terrainCollisions = setTo;
+				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
+				
+//				final boolean setTo;
+//				if (!Config.terrainCollisions) {
+//					if (canEnableTerrainCollisions(minecraft, player)) {
+//						ConfigHelper.setTerrainCollisions(true);
+//						setTo = true;
+//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
+//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
+//					} else {
+//						setTo = Config.terrainCollisions;
+//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
+//					}
+//				} else {
+//					ConfigHelper.setTerrainCollisions(false);
+//					setTo = false;
+//					player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisabled"));
+//				}
+//				// Config saving is async so set it now
+//				Config.terrainCollisions = setTo;
 			}
 		}
 

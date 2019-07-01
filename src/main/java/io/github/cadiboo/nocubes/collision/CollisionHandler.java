@@ -369,15 +369,15 @@ public final class CollisionHandler {
 			final int minZm1, final int maxZp1,
 			final ISelectionContext context
 	) {
-		if (!Config.terrainCollisions) {
+//		if (!Config.terrainCollisions) {
 			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-		} else if (shouldApplyMeshCollisions(entity)) {
-			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-		} else if (shouldApplyReposeCollisions(entity)) {
-			return getReposeCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-		} else {
-			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-		}
+//		} else if (shouldApplyMeshCollisions(entity)) {
+//			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		} else if (shouldApplyReposeCollisions(entity)) {
+//			return getReposeCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		} else {
+//			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		}
 	}
 
 }
