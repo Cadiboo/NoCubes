@@ -14,6 +14,7 @@ import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.screen.IngameMenuScreen;
@@ -45,7 +46,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.apache.logging.log4j.LogManager;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -378,9 +378,12 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
 
-		if (true) return;
-
 		final Minecraft minecraft = Minecraft.getInstance();
+
+		final GameSettings gameSettings = minecraft.gameSettings;
+		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI) {
+			return;
+		}
 
 		final ClientPlayerEntity player = minecraft.player;
 		if (player == null) {
@@ -406,8 +409,13 @@ public final class ClientEventSubscriber {
 		double d0 = projectedView.x;
 		double d1 = projectedView.y;
 		double d2 = projectedView.z;
-		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(2), new HashSet<>()).collect(Collectors.toList())) {
-			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0.0F, 1, 1, 0.4F);
+		// Draw nearby collisions
+		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(3)).collect(Collectors.toList())) {
+			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0, 1, 1, 0.4F);
+		}
+		// Draw player intersecting collisions
+		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition())).collect(Collectors.toList())) {
+			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 1, 0, 0, 0.4F);
 		}
 		GlStateManager.popMatrix();
 		GlStateManager.matrixMode(5888);
