@@ -1,5 +1,5 @@
-var transformerName = "NoCubes World Transformer";
-var targetClass = "net.minecraft.world.World";
+var transformerName = "NoCubes ClientWorld Transformer";
+var targetClass = "net.minecraft.client.world.ClientWorld";
 clinit();
 start("Initialisation");
 
@@ -18,10 +18,10 @@ finish();
 
 start("targetMethods");
 var targetMethods = [
- 	// getFluidState
+ 	// markForRerender
 	new TargetMethod(
-		"func_204610_c", "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;",
-		new MethodTransformer(injectGetFluidStateHook, "injectGetFluidStateHook")
+		"func_217396_m", "(Lnet/minecraft/util/math/BlockPos;)V",
+		new MethodTransformer(injectMarkForRerenderHook, "injectMarkForRerenderHook")
 	)
 ];
 finish();
@@ -29,133 +29,92 @@ finish();
 finish();
 
 
-// Finds the first instruction INVOKEVIRTUAL World.getChunk
-// Finds the next instruction ARETURN
-// Inserts before World.getChunk
-// removes everything between World.getChunk and ARETURN
-function injectGetFluidStateHook(instructions) {
+// 1) Finds the first label
+// 2) injects after first label
+function injectMarkForRerenderHook(instructions) {
+
+//	public void markForRerender(BlockPos pos) {
+//		this.worldRenderer.markBlockRangeForRenderUpdate(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+//	}
 
 //	public void markForRerender(BlockPos pos) {
 //		// NoCubes Start
 //		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(pos, this.worldRenderer);
 //		// NoCubes End
-////		this.worldRenderer.markBlockRangeForRenderUpdate(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
-//		}
-
-//	public void markForRerender(BlockPos pos) {
-//		// NoCubes Start
-//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(pos, this.worldRenderer);
-//		// NoCubes End
-////		this.worldRenderer.markBlockRangeForRenderUpdate(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
-//		}
+//	}
 
 
-//  public getFluidState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
+//  public markForRerender(Lnet/minecraft/util/math/BlockPos;)V
 //   L0
-//    LINENUMBER 553 L0
-//    ALOAD 1
-//    INVOKESTATIC net/minecraft/world/World.isOutsideBuildHeight (Lnet/minecraft/util/math/BlockPos;)Z
-//    IFEQ L1
-//   L2
-//    LINENUMBER 554 L2
-//    GETSTATIC net/minecraft/init/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
-//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
-//    ARETURN
-//   L1
-//    LINENUMBER 556 L1
-//   FRAME SAME
+//    LINENUMBER 525 L0
 //    ALOAD 0
+//    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
 //    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/world/World.getChunk (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;
-//    ASTORE 2
-//   L3
-//    LINENUMBER 557 L3
-//    ALOAD 2
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
 //    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
-//    ARETURN
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
+//    ALOAD 1
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
+//    ALOAD 1
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
+//    ALOAD 1
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
+//    ALOAD 1
+//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
+//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.markBlockRangeForRenderUpdate (IIIIII)V
+//   L1
+//    LINENUMBER 526 L1
+//    RETURN
 
-//  public getFluidState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
+//  public markForRerender(Lnet/minecraft/util/math/BlockPos;)V
 //   L0
-//    LINENUMBER 640 L0
+//    LINENUMBER 548 L0
 //    ALOAD 1
-//    INVOKESTATIC net/minecraft/world/World.isOutsideBuildHeight (Lnet/minecraft/util/math/BlockPos;)Z
-//    IFEQ L1
-//   L2
-//    LINENUMBER 641 L2
-//    GETSTATIC net/minecraft/init/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
-//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
-//    ARETURN
-//   L1
-//    LINENUMBER 644 L1
-//   FRAME SAME
 //    ALOAD 0
-//    ALOAD 1
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getFluidState (Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
-//    ARETURN
+//    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.markForRerender (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/WorldRenderer;)V
+//    RETURN
 
 
-	var getChunkAt_name = ASMAPI.mapMethod("func_175726_f"); // getChunkAt
-
-	var first_INVOKEVIRTUAL_World_getChunkAt;
+	var firstLabel;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == Opcodes.INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/world/World") {
-				if (instruction.name == getChunkAt_name) {
-					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;") {
-						if (instruction.itf == false) {
-							first_INVOKEVIRTUAL_World_getChunkAt = instruction;
-							log("Found injection point " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKEVIRTUAL_World_getChunkAt) {
-		throw "Error: Couldn't find injection point!";
-	}
-
-	var next_ARETURN;
-//	var arrayLength = instructions.size();
-	for (var i = instructions.indexOf(first_INVOKEVIRTUAL_World_getChunkAt); i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == Opcodes.ARETURN) {
-			next_ARETURN = instruction;
+		if (instruction.getType() == AbstractInsnNode.LABEL) {
+			firstLabel = instruction;
 			log("Found injection point " + instruction);
 			break;
 		}
 	}
-	if (!next_ARETURN) {
+	if (!firstLabel) {
 		throw "Error: Couldn't find injection point!";
 	}
 
 	var toInject = new InsnList();
 
 	// Labels n stuff
+	var worldRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer
 
 	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(Opcodes.ALOAD, 1)); // pos
+	toInject.add(new VarInsnNode(Opcodes.ALOAD, 0)); // this
+	toInject.add(new FieldInsnNode(Opcodes.GETFIELD, "net/minecraft/client/world/ClientWorld", worldRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			Opcodes.INVOKESTATIC,
 			//String owner
 			"io/github/cadiboo/nocubes/hooks/Hooks",
 			//String name
-			"getFluidState",
+			"markForRerender",
 			//String descriptor
-			"(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;",
+			"(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/WorldRenderer;)V",
 			//boolean isInterface
 			false
 	));
-	toInject.add(new InsnNode(Opcodes.ARETURN));
+	toInject.add(new InsnNode(Opcodes.RETURN));
 
 	// Inject instructions
-	instructions.insertBefore(first_INVOKEVIRTUAL_World_getChunkAt, toInject);
-
-	removeBetweenInclusive(instructions, first_INVOKEVIRTUAL_World_getChunkAt, next_ARETURN);
+	instructions.insert(firstLabel, toInject);
 
 }
 
