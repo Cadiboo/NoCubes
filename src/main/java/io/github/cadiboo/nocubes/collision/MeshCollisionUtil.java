@@ -313,5 +313,4 @@ public final class MeshCollisionUtil {
 		);
 	}
 
-
 }

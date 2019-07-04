@@ -180,7 +180,7 @@ public final class RenderDispatcher {
 				) {
 					try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
 							// Fluid renderer needs +2 on all axis because reasons
-							chunkRenderPosX-2, chunkRenderPosY-2, chunkRenderPosZ-2,
+							chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 							// Fluid renderer needs +2 on all axis because reasons
 							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 							2, 2, 2,
@@ -204,7 +204,7 @@ public final class RenderDispatcher {
 			} else {
 				try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
 						// Fluid renderer needs +2 on all axis because reasons
-						chunkRenderPosX-2, chunkRenderPosY-2, chunkRenderPosZ-2,
+						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 						// Fluid renderer needs +2 on all axis because reasons
 						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 						2, 2, 2,

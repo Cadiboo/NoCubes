@@ -38,12 +38,8 @@ import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-import static java.lang.Math.round;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
-import static net.minecraft.util.math.MathHelper.clamp;
 import static net.minecraftforge.fml.common.ObfuscationReflectionHelper.remapName;
 
 /**
@@ -54,9 +50,9 @@ import static net.minecraftforge.fml.common.ObfuscationReflectionHelper.remapNam
 @SuppressWarnings("WeakerAccess")
 public final class ClientUtil {
 
-	static final int[] NEGATIVE_1_8000 = new int[8000];
 	public static final BlockRenderLayer[] BLOCK_RENDER_LAYER_VALUES = BlockRenderLayer.values();
 	public static final int BLOCK_RENDER_LAYER_VALUES_LENGTH = BLOCK_RENDER_LAYER_VALUES.length;
+	static final int[] NEGATIVE_1_8000 = new int[8000];
 	private static final Field BLOCK_COLORS_REGISTRY = findBlockColorsRegistryField();
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours

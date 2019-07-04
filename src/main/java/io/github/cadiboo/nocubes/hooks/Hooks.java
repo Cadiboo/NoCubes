@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -20,7 +19,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
@@ -40,8 +38,6 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings("WeakerAccess") // Hooks are called with ASM
 public final class Hooks {
-
-	private static final int BLOCK_UPDATE_EXTEND = 2;
 
 	/**
 	 * Called from: ChunkRender#rebuildChunk right before the BlockPos.getAllInBoxMutable iteration
@@ -100,8 +96,7 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(final BlockState blockstate) {
 		if (Config.renderSmoothTerrain && blockstate.nocubes_isTerrainSmoothable()) return false;
-		if (Config.renderSmoothLeaves && blockstate.nocubes_isLeavesSmoothable()) return false;
-		return true;
+		return !Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable();
 	}
 
 	/**
