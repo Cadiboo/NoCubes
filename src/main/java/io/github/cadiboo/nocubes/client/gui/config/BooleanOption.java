@@ -20,10 +20,6 @@ public class BooleanOption extends Option {
 		this.setter = setter;
 	}
 
-	public void set(final String str) {
-		this.set("true".equals(str));
-	}
-
 	public void save() {
 		this.set(!this.get());
 	}

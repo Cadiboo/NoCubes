@@ -9,13 +9,13 @@ import java.util.function.Function;
 @OnlyIn(Dist.CLIENT)
 public class EnumOption extends Option {
 
-	private final Function<Integer, Integer> cycler;
+	private final Function<Integer, Integer> cyclerAndSaver;
 	private final Function<EnumOption, String> translatedNameGetter;
 	private int currentOrdinal;
 
-	public EnumOption(String translationKey, Function<Integer, Integer> cycler, Function<EnumOption, String> translatedNameGetter, int initialOrdinal) {
+	public EnumOption(String translationKey, Function<Integer, Integer> cyclerAndSaver, Function<EnumOption, String> translatedNameGetter, int initialOrdinal) {
 		super(translationKey);
-		this.cycler = cycler;
+		this.cyclerAndSaver = cyclerAndSaver;
 		this.translatedNameGetter = translatedNameGetter;
 		this.currentOrdinal = initialOrdinal;
 	}
@@ -23,7 +23,7 @@ public class EnumOption extends Option {
 	@Override
 	public Widget createWidget(int width) {
 		return new OptionButton(0, 0, width, 20, this, this.getTranslatedName(), widget -> {
-			this.currentOrdinal = this.cycler.apply(this.currentOrdinal);
+			this.currentOrdinal = this.cyclerAndSaver.apply(this.currentOrdinal);
 			widget.setMessage(this.getTranslatedName());
 		});
 	}

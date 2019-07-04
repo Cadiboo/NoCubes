@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.config.ConfigHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.list.AbstractOptionList;
 import net.minecraft.client.resources.I18n;
@@ -48,7 +49,9 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 
 		// Client
 		{
-			entries.add(new CategoryEntry(MOD_ID + ".config.client"));
+			final CategoryEntry clientCategoryEntry = new CategoryEntry(MOD_ID + ".config.client");
+			entries.add(clientCategoryEntry);
+			this.addEntry(clientCategoryEntry);
 			getConfigValues(ConfigHolder.CLIENT).forEach((configValue, name) -> {
 				final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.clientConfig);
 				entries.add(e);
@@ -59,7 +62,9 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 		// Server
 		if (this.minecraft.world != null) {
 			if (this.minecraft.getIntegratedServer() != null) {
-				entries.add(new CategoryEntry(MOD_ID + ".config.server"));
+				final CategoryEntry serverCategoryEntry = new CategoryEntry(MOD_ID + ".config.server");
+				entries.add(serverCategoryEntry);
+				this.addEntry(serverCategoryEntry);
 				getConfigValues(ConfigHolder.SERVER).forEach((configValue, name) -> {
 					final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.serverConfig);
 					entries.add(e);
@@ -91,7 +96,11 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 		} else if (configValue instanceof EnumValue<?>) {
 			return new EnumValueEntry<>((EnumValue<?>) configValue, name, configSupplier);
 		} else {
-			return new NotImplementedValueEntry<>(configValue, name, configSupplier);
+			try {
+				return new ListValueEntry<>((ConfigValue<List<? extends String>>) configValue, name, configSupplier);
+			} catch (Exception e) {
+				return new NotImplementedValueEntry<>(configValue, name, configSupplier);
+			}
 		}
 	}
 
@@ -156,7 +165,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 
 		@Override
 		public void render(int p_render_1_, int y, int x, int p_render_4_, int p_render_5_, int mouseX, int mouseY, boolean isHovered, float partialTicks) {
-			ConfigOptionsList.this.minecraft.fontRenderer.drawString("Category: " + this.labelText, (float) (configGui.width / 2 - this.labelWidth / 2), (float) (y + p_render_5_ - 9 - 1), 0xFFFFFF);
+			ConfigOptionsList.this.minecraft.fontRenderer.drawString("Category: " + this.labelText, (float) (configGui.width / 2 - this.labelWidth), (float) (y + p_render_5_ - 9 - 1), 0xFFFFFF);
 		}
 
 		@Nonnull
@@ -203,6 +212,10 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 			final Widget widget = this.widgetSupplier.getValue();
 			widget.x = x;
 			widget.y = y;
+			if (widget instanceof TextFieldWidget) {
+				widget.x += 2;
+				widget.y += 2;
+			}
 			widget.render(mouseX, mouseY, partialTicks);
 		}
 
@@ -252,7 +265,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 			this.values = this.initialValue.getDeclaringClass().getEnumConstants();
 		}
 
-		private int cycle(final int ordinal) {
+		private int cycleAndSave(final int ordinal) {
 			final int i = (ordinal + 1) % this.values.length;
 			this.handleChanged(this.values[i]);
 			return i;
@@ -264,8 +277,31 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 
 		@Override
 		protected Widget makeWidget() {
-			return new EnumOption(this.text, this::cycle, this::getTranslatedText, this.currentValue.ordinal())
+			return new EnumOption(this.text, this::cycleAndSave, this::getTranslatedText, this.currentValue.ordinal())
 					.createWidget((configGui.width / 4) * 3);
+		}
+
+	}
+
+	@OnlyIn(Dist.CLIENT)
+	class ListValueEntry<T> extends ValueEntry<List<? extends T>> {
+
+		ListValueEntry(final ConfigValue<List<? extends T>> listValue, final String name, final Supplier<ModConfig> configSupplier) {
+			super(listValue, name, configSupplier);
+		}
+
+		@Override
+		protected Widget makeWidget() {
+			return new ListOption(this.text, () -> this.currentValue.stream().map(Object::toString).toArray(String[]::new), this::handleChanged)
+					.createWidget((configGui.width / 4) * 3);
+		}
+
+		private void handleChanged(final String[] newValue) {
+			final ArrayList<T> list = new ArrayList<>();
+			for (String str : newValue) {
+				list.add((T) str);
+			}
+			this.handleChanged(list);
 		}
 
 	}
