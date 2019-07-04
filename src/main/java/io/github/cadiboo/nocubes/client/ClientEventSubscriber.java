@@ -145,7 +145,7 @@ public final class ClientEventSubscriber {
 				break SMOOTHABLES;
 			}
 
-			BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
+			final BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
 			final BlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
