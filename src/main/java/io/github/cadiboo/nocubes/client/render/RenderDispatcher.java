@@ -11,6 +11,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -86,11 +87,13 @@ public final class RenderDispatcher {
 		int stateCacheEndY = 0;
 		int stateCacheEndZ = 0;
 
-		// Fluids Cache        | -1, 16   | 18
+		// TODO: Test fluids cache stuff (State, Light & Colors)
+		//  to see what their min required values actually are
+		// Fluids Cache        | -2, 17   | 20
 		{
-			stateCachePaddingX = 1;
-			stateCachePaddingY = 1;
-			stateCachePaddingZ = 1;
+			stateCachePaddingX = 2;
+			stateCachePaddingY = 2;
+			stateCachePaddingZ = 2;
 			stateCacheEndX = 17;
 			stateCacheEndY = 17;
 			stateCacheEndZ = 17;
@@ -141,26 +144,14 @@ public final class RenderDispatcher {
 						stateCachePaddingX, stateCachePaddingY, stateCachePaddingZ,
 						world, pooledMutableBlockPos
 				);
-				LazyPackedLightCache lazyPackedLightCache =
-						Config.renderSmoothTerrain || Config.renderSmoothLeaves ?
-								ClientCacheUtil.generateLazyPackedLightCache(
-										chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-										chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-										2, 2, 2,
-										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-										stateCache,
-										chunkRenderCache
-								)
-								:
-								// Fluid renderer needs -1 for bottom rendering
-								ClientCacheUtil.generateLazyPackedLightCache(
-										chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-										chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-										1, 1, 1,
-										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-										stateCache,
-										chunkRenderCache
-								)
+				LazyPackedLightCache lazyPackedLightCache = ClientCacheUtil.generateLazyPackedLightCache(
+						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
+						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+						2, 2, 2,
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+						stateCache,
+						chunkRenderCache
+				)
 		) {
 			if (Config.renderSmoothTerrain) {
 				final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
@@ -187,22 +178,19 @@ public final class RenderDispatcher {
 								stateCache, smoothableCache
 						)
 				) {
-					try (
-							LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-									// TODO: if fluidRenderer.smoothColors
-									// Fluid renderer needs +1 on all axis for smooth colors
-									chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-									1, 1, 1,
-									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR
-							)
-					) {
+					try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
+							// Fluid renderer needs +2 on all axis because reasons
+							chunkRenderPosX-2, chunkRenderPosY-2, chunkRenderPosZ-2,
+							// Fluid renderer needs +2 on all axis because reasons
+							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+							2, 2, 2,
+							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+					)) {
 						OptimisedFluidBlockRenderer.renderChunk(
 								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 								pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-								meshGenerator, meshSizeX, meshSizeY, meshSizeZ,
-								smoothableCache, densityCache
+								densityCache
 						);
 					}
 					renderTerrainChunk(
@@ -214,22 +202,19 @@ public final class RenderDispatcher {
 					);
 				}
 			} else {
-				try (
-						LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-								// TODO: if fluidRenderer.smoothColors
-								// Fluid renderer needs +1 for smooth colors
-								chunkRenderPosX + 17, chunkRenderPosY + 17, chunkRenderPosZ + 17,
-								0, 0, 0,
-								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR
-						)
-				) {
+				try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
+						// Fluid renderer needs +2 on all axis because reasons
+						chunkRenderPosX-2, chunkRenderPosY-2, chunkRenderPosZ-2,
+						// Fluid renderer needs +2 on all axis because reasons
+						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+						2, 2, 2,
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+				)) {
 					OptimisedFluidBlockRenderer.renderChunk(
 							chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 							pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-							null, (byte) 0, (byte) 0, (byte) 0,
-							null, null
+							null
 					);
 				}
 			}
@@ -251,7 +236,7 @@ public final class RenderDispatcher {
 		} catch (Exception e) {
 			CrashReport crashReport = new CrashReport("Error rendering NoCubes chunk!", e);
 			crashReport.makeCategory("Rendering chunk");
-//			throw new ReportedException(crashReport);
+			throw new ReportedException(crashReport);
 		}
 	}
 
@@ -270,7 +255,7 @@ public final class RenderDispatcher {
 						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 						2, 2, 2,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.GRASS_COLOR
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.GRASS_COLOR, blockState -> ModUtil.isMaterialGrass(blockState.getMaterial())
 				)
 		) {
 			final HashMap<Vec3b, FaceList> mesh;
@@ -321,7 +306,7 @@ public final class RenderDispatcher {
 						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 						2, 2, 2,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.FOLIAGE_COLOR
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.FOLIAGE_COLOR, blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial())
 				)
 		) {
 			switch (Config.smoothLeavesType) {

@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
@@ -9,6 +10,7 @@ import net.minecraftforge.fml.common.EnhancedRuntimeException;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
+import java.util.function.Predicate;
 
 import static net.minecraft.world.biome.BiomeColors.IColorResolver;
 
@@ -29,6 +31,8 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	public int[] cache;
 	@Nonnull
 	public IColorResolver colorResolver;
+	@Nonnull
+	public Predicate<BlockState> shouldApply;
 
 	private boolean inUse;
 
@@ -47,7 +51,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	public static LazyBlockColorCache retain(
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			final int sizeX, final int sizeY, final int sizeZ,
-			@Nonnull final IEnviromentBlockReader reader, @Nonnull final IColorResolver colorResolver,
+			@Nonnull final IEnviromentBlockReader reader, @Nonnull final IColorResolver colorResolver, @Nonnull final Predicate<BlockState> shouldApply,
 			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ
 	) {
 
@@ -60,6 +64,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
 		pooled.reader = reader;
 		pooled.colorResolver = colorResolver;
+		pooled.shouldApply = shouldApply;
 
 		pooled.chunkRenderPosX = chunkRenderPosX;
 		pooled.chunkRenderPosY = chunkRenderPosY;
@@ -97,56 +102,23 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 			final MutableBlockPos pos,
 			final IEnviromentBlockReader reader,
-			final IColorResolver colorResolver
+			final IColorResolver colorResolver,
+			final boolean useCache
 	) {
 		try {
-			int color = cache[index];
-			if (color == -1) {
-
-				{
-					int red = 0;
-					int green = 0;
-					int blue = 0;
-
-					// -2 because offset
-					final int posX = chunkRenderPosX + xIn - 2;
-					final int posY = chunkRenderPosY + yIn - 2;
-					final int posZ = chunkRenderPosZ + zIn - 2;
-
-					int currentChunkPosX = posX >> 4;
-					int currentChunkPosZ = posZ >> 4;
-					Biome[] currentChunkBiomes = ClientUtil.getChunk(currentChunkPosX, currentChunkPosZ, reader).getBiomes();
-
-					for (int zOffset = -radius; zOffset < max; ++zOffset) {
-						for (int xOffset = -radius; xOffset < max; ++xOffset) {
-
-							int x = posX + xOffset;
-							int z = posZ + zOffset;
-
-							if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
-								currentChunkPosX = x >> 4;
-								currentChunkPosZ = z >> 4;
-								currentChunkBiomes = ClientUtil.getChunk(currentChunkPosX, currentChunkPosZ, reader).getBiomes();
-							}
-
-							pos.setPos(x, posY, z);
-
-							final int resolvedColor = colorResolver.getColor(currentChunkBiomes[(z & 15) << 4 | x & 15], pos);
-
-							red += (resolvedColor & 0xFF0000) >> 16;
-							green += (resolvedColor & '\uff00') >> 8;
-							blue += resolvedColor & 0xFF;
-						}
-					}
-					color = (red / area & 0xFF) << 16 | (green / area & 0xFF) << 8 | blue / area & 0xFF;
-				}
-
-				cache[index] = color;
+			if (useCache) {
+				int color = cache[index];
 				if (color == -1) {
-					LogManager.getLogger().error("Color = -1. wtf");
+					color = getColor(xIn, yIn, zIn, radius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pos, reader, colorResolver);
+					cache[index] = color;
+					if (color == -1) {
+						LogManager.getLogger().error("Color = -1. wtf");
+					}
 				}
+				return color;
+			} else {
+				return getColor(xIn, yIn, zIn, radius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pos, reader, colorResolver);
 			}
-			return color;
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			throw new CustomArrayIndexOutOfBoundsException(
 					xIn, yIn, zIn,
@@ -157,8 +129,47 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 					pos,
 					reader,
 					colorResolver,
-					e);
+					e
+			);
 		}
+	}
+
+	public static int getColor(final int xIn, final int yIn, final int zIn, final int radius, final int area, final int max, final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ, final MutableBlockPos pos, final IEnviromentBlockReader reader, final IColorResolver colorResolver) {
+		int red = 0;
+		int green = 0;
+		int blue = 0;
+
+		// -2 because offset
+		final int posX = chunkRenderPosX + xIn - 2;
+		final int posY = chunkRenderPosY + yIn - 2;
+		final int posZ = chunkRenderPosZ + zIn - 2;
+
+		int currentChunkPosX = posX >> 4;
+		int currentChunkPosZ = posZ >> 4;
+		Biome[] currentChunkBiomes = ClientUtil.getChunk(currentChunkPosX, currentChunkPosZ, reader).getBiomes();
+
+		for (int zOffset = -radius; zOffset < max; ++zOffset) {
+			for (int xOffset = -radius; xOffset < max; ++xOffset) {
+
+				int x = posX + xOffset;
+				int z = posZ + zOffset;
+
+				if (currentChunkPosX != x >> 4 || currentChunkPosZ != z >> 4) {
+					currentChunkPosX = x >> 4;
+					currentChunkPosZ = z >> 4;
+					currentChunkBiomes = ClientUtil.getChunk(currentChunkPosX, currentChunkPosZ, reader).getBiomes();
+				}
+
+				pos.setPos(x, posY, z);
+
+				final int resolvedColor = colorResolver.getColor(currentChunkBiomes[(z & 15) << 4 | x & 15], pos);
+
+				red += (resolvedColor & 0xFF0000) >> 16;
+				green += (resolvedColor & '\uff00') >> 8;
+				blue += resolvedColor & 0xFF;
+			}
+		}
+		return (red / area & 0xFF) << 16 | (green / area & 0xFF) << 8 | blue / area & 0xFF;
 	}
 
 	@Override
@@ -169,12 +180,13 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 	@Deprecated
 	public int get(final int xIn, final int yIn, final int zIn) {
 		final int biomeBlendRadius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
-		return get(xIn, yIn, zIn, this.cache, getIndex(xIn, yIn, zIn, this.sizeX, this.sizeY), biomeBlendRadius, (biomeBlendRadius * 2 + 1) * (biomeBlendRadius * 2 + 1), biomeBlendRadius + 1, this.chunkRenderPosX, this.chunkRenderPosY, this.chunkRenderPosZ, MUTABLE_BLOCK_POS.get(), this.reader, this.colorResolver);
+		final int d = biomeBlendRadius * 2 + 1;
+		return get(xIn, yIn, zIn, this.cache, getIndex(xIn, yIn, zIn, this.sizeX, this.sizeY), biomeBlendRadius, d * d, biomeBlendRadius + 1, this.chunkRenderPosX, this.chunkRenderPosY, this.chunkRenderPosZ, MUTABLE_BLOCK_POS.get(), this.reader, this.colorResolver, true);
 	}
 
 	@Deprecated
-	public int get(final int xIn, final int yIn, final int zIn, final int[] cache, final int radius, final int area, final int max, final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ, final MutableBlockPos pos, final IEnviromentBlockReader reader, final IColorResolver colorResolver) {
-		return get(xIn, yIn, zIn, cache, getIndex(xIn, yIn, zIn, this.sizeX, this.sizeY), radius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pos, reader, colorResolver);
+	public int get(final int xIn, final int yIn, final int zIn, final int[] cache, final int radius, final int area, final int max, final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ, final MutableBlockPos pos, final IEnviromentBlockReader reader, final IColorResolver colorResolver, final boolean useCache) {
+		return get(xIn, yIn, zIn, cache, getIndex(xIn, yIn, zIn, this.sizeX, this.sizeY), radius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pos, reader, colorResolver, useCache);
 	}
 
 	private static class CustomArrayIndexOutOfBoundsException extends EnhancedRuntimeException {

@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.SmoothLightingBlockFluidRenderer;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.util.Proxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -38,7 +38,7 @@ public final class ClientProxy implements Proxy {
 	public static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
 	public static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
 
-	public static SmoothLightingBlockFluidRenderer fluidRenderer;
+	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
 
 	static {
 		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
@@ -64,9 +64,8 @@ public final class ClientProxy implements Proxy {
 	public void replaceFluidRendererCauseImBored() {
 		LOGGER.debug("Replacing fluid renderer");
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-		final SmoothLightingBlockFluidRenderer smoothLightingBlockFluidRenderer = new SmoothLightingBlockFluidRenderer(blockRendererDispatcher.fluidRenderer);
-		blockRendererDispatcher.fluidRenderer = smoothLightingBlockFluidRenderer;
-		ClientProxy.fluidRenderer = smoothLightingBlockFluidRenderer;
+		final SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();
+		blockRendererDispatcher.fluidRenderer = ClientProxy.smoothLightingBlockFluidRenderer = smoothLightingBlockFluidRenderer;
 		LOGGER.debug("Replaced fluid renderer");
 	}
 

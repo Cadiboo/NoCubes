@@ -1,10 +1,12 @@
 package io.github.cadiboo.nocubes.client;
 
+import cpw.mods.modlauncher.api.INameMappingService;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -13,6 +15,10 @@ import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.renderer.color.IBlockColor;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
@@ -21,9 +27,12 @@ import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.Region;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
+import net.minecraftforge.registries.IRegistryDelegate;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Map;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
@@ -35,6 +44,7 @@ import static java.lang.Math.round;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 import static net.minecraft.util.math.MathHelper.clamp;
+import static net.minecraftforge.fml.common.ObfuscationReflectionHelper.remapName;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -45,6 +55,9 @@ import static net.minecraft.util.math.MathHelper.clamp;
 public final class ClientUtil {
 
 	static final int[] NEGATIVE_1_8000 = new int[8000];
+	public static final BlockRenderLayer[] BLOCK_RENDER_LAYER_VALUES = BlockRenderLayer.values();
+	public static final int BLOCK_RENDER_LAYER_VALUES_LENGTH = BLOCK_RENDER_LAYER_VALUES.length;
+	private static final Field BLOCK_COLORS_REGISTRY = findBlockColorsRegistryField();
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
@@ -79,54 +92,6 @@ public final class ClientUtil {
 	};
 	static {
 		Arrays.fill(ClientUtil.NEGATIVE_1_8000, -1);
-	}
-
-	/**
-	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @param green the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @param blue  the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @return the color in ARGB format
-	 */
-	public static int colori(int red, int green, int blue) {
-
-		red = clamp(red, 0x00, 0xFF);
-		green = clamp(green, 0x00, 0xFF);
-		blue = clamp(blue, 0x00, 0xFF);
-
-		final int alpha = 0xFF;
-
-		// 0x alpha red green blue
-		// 0xaarrggbb
-
-		// int colorRGBA = 0;
-		// colorRGBA |= red << 16;
-		// colorRGBA |= green << 8;
-		// colorRGBA |= blue << 0;
-		// colorRGBA |= alpha << 24;
-
-		return blue | red << 16 | green << 8 | alpha << 24;
-
-	}
-
-	/**
-	 * @param red   the red value of the color, 0F and 1F
-	 * @param green the green value of the color, 0F and 1F
-	 * @param blue  the blue value of the color, 0F and 1F
-	 * @return the color in ARGB format
-	 */
-	public static int colorf(final float red, final float green, final float blue) {
-		final int redInt = max(0, min(255, round(red * 255)));
-		final int greenInt = max(0, min(255, round(green * 255)));
-		final int blueInt = max(0, min(255, round(blue * 255)));
-		return colori(redInt, greenInt, blueInt);
-	}
-
-	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
-		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
-	}
-
-	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
-		return packedLightmapCoords & 0xFFFF; // get lower 4 bytes
 	}
 
 	/**
@@ -276,11 +241,6 @@ public final class ClientUtil {
 	}
 
 	@Nonnull
-	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockState state) {
-		return getCorrectRenderLayer(state.getBlock().getRenderLayer());
-	}
-
-	@Nonnull
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IFluidState state) {
 		return getCorrectRenderLayer(state.getRenderLayer());
 	}
@@ -399,6 +359,7 @@ public final class ClientUtil {
 							currentChunk = chunks[cx][cz];
 						}
 
+						// TODO: Use System.arrayCopy on the chunk sections
 						pooledMutableBlockPos.setPos(posX, posY, posZ);
 //						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
 //						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
@@ -416,6 +377,31 @@ public final class ClientUtil {
 
 		_this.blockStates = blockStates;
 		_this.fluidStates = fluidStates;
+	}
+
+	private static Field findBlockColorsRegistryField() {
+		final String fieldName = remapName(INameMappingService.Domain.FIELD, "field_186725_a");
+		try {
+			final Field field = BlockColors.class.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			return field;
+		} catch (NoSuchFieldException e) {
+			final CrashReport crashReport = new CrashReport("Unable to find field \"" + fieldName + "\". Field does not exist!", e);
+			crashReport.makeCategory("Finding Field");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsRegistry(final BlockColors blockColors) {
+//		return blockColors.colors;
+		try {
+			return (Map<IRegistryDelegate<Block>, IBlockColor>) BLOCK_COLORS_REGISTRY.get(blockColors);
+		} catch (IllegalAccessException e) {
+			final CrashReport crashReport = new CrashReport("Unable to access field!", e);
+			crashReport.makeCategory("Accessing Field");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

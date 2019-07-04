@@ -1,9 +1,11 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.BlockState;
 import net.minecraft.world.IEnviromentBlockReader;
 
 import javax.annotation.Nonnull;
+import java.util.function.Predicate;
 
 import static net.minecraft.world.biome.BiomeColors.IColorResolver;
 
@@ -44,7 +46,8 @@ public final class ClientCacheUtil {
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			final int renderChunkPosX, final int renderChunkPosY, final int renderChunkPosZ,
 			@Nonnull final IEnviromentBlockReader cache,
-			@Nonnull final IColorResolver resolver
+			@Nonnull final IColorResolver resolver,
+			@Nonnull final Predicate<BlockState> shouldApply
 	) {
 		final int cacheSizeX = Math.abs(toX - fromX);
 		final int cacheSizeY = Math.abs(toY - fromY);
@@ -52,7 +55,7 @@ public final class ClientCacheUtil {
 		return LazyBlockColorCache.retain(
 				startPaddingX, startPaddingY, startPaddingZ,
 				cacheSizeX, cacheSizeY, cacheSizeZ,
-				cache, resolver,
+				cache, resolver, shouldApply,
 				renderChunkPosX, renderChunkPosY, renderChunkPosZ
 		);
 	}

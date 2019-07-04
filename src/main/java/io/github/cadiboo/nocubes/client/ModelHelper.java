@@ -36,6 +36,7 @@ public final class ModelHelper {
 	public static final Direction[] DIRECTION_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
+	public static final int DIRECTION_QUADS_ORDERED_LENGTH = DIRECTION_QUADS_ORDERED.length;
 
 	@Nullable
 	public static List<BakedQuad> getQuads(BlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockReader blockAccess, final BlockRendererDispatcher blockRendererDispatcher, final IModelData modelData, final Random posRand, final BlockRenderLayer blockRenderLayer) {

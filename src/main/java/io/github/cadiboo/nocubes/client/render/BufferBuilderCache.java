@@ -3,15 +3,18 @@ package io.github.cadiboo.nocubes.client.render;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.BlockRenderLayer;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
+
 /**
  * @author Cadiboo
  */
 public class BufferBuilderCache {
 
-	protected final BufferBuilder[] worldRenderers = new BufferBuilder[BlockRenderLayer.values().length];
+	protected final BufferBuilder[] worldRenderers = new BufferBuilder[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 
 	public BufferBuilderCache() {
-		this(0x200000, 0x20000, 0x20000, 0x40000);
+		this(0x200_000, 0x20_000, 0x20_000, 0x40_000);
 	}
 
 	public BufferBuilderCache(final int solidSize, final int cutoutSize, final int cutoutMippedSize, final int translucentSize) {

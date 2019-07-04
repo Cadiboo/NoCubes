@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
@@ -33,6 +34,7 @@ public final class ExtendedFluidChunkRenderer {
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
+			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final LazyPackedLightCache packedLightCache
@@ -151,6 +153,7 @@ public final class ExtendedFluidChunkRenderer {
 											blockAccess,
 											fluidState,
 											bufferBuilder,
+											blockRendererDispatcher,
 											packedLightCache
 									);
 								} finally {

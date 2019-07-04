@@ -34,6 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
+
 /**
  * @author Cadiboo
  */
@@ -42,7 +45,7 @@ public abstract class BlockStateToast implements IToast {
 	@Nonnull
 	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
 	@Nonnull
-	private final boolean[] usedBlockRenderLayers = new boolean[BlockRenderLayer.values().length];
+	private final boolean[] usedBlockRenderLayers = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 	@Nonnull
 	private final String name;
 	private final Matrix4f itemCameraTransformMaterix = TRSRTransformation.from(
@@ -57,9 +60,8 @@ public abstract class BlockStateToast implements IToast {
 
 		// Reset values
 		Arrays.fill(usedBlockRenderLayers, false);
-		final boolean[] startedBufferBuilders = new boolean[BlockRenderLayer.values().length];
 
-		this.build(state, pos, startedBufferBuilders, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
+		this.build(state, pos, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
 
 	}
 
@@ -104,7 +106,6 @@ public abstract class BlockStateToast implements IToast {
 	private void build(
 			@Nonnull final BlockState state,
 			@Nonnull final BlockPos pos,
-			@Nonnull final boolean[] startedBufferBuilders,
 			@Nonnull final IWorldReader blockAccess,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random
@@ -113,9 +114,11 @@ public abstract class BlockStateToast implements IToast {
 		if (state.getRenderType() != BlockRenderType.MODEL) {
 			return;
 		}
+		final boolean[] startedBufferBuilders = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
 		{
-			for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
+			for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; i++) {
+				final BlockRenderLayer blockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 				if (!state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
 					continue;
 				}
@@ -124,7 +127,7 @@ public abstract class BlockStateToast implements IToast {
 				final BufferBuilder bufferBuilder = bufferCache.get(blockRenderLayerId);
 				if (!startedBufferBuilders[blockRenderLayerId]) {
 					startedBufferBuilders[blockRenderLayerId] = true;
-					// Copied from RenderChunk
+					// Copied from RenderChunk#preRenderBlocks
 					{
 						bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 						bufferBuilder.setTranslation((-pos.getX()), (-pos.getY()), (-pos.getZ()));

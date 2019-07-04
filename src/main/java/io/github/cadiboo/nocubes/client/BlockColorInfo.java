@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.biome.BiomeColors.IColorResolver;
@@ -85,7 +84,7 @@ public class BlockColorInfo implements AutoCloseable {
 	}
 
 	public static BlockColorInfo generateBlockColorInfo(
-			@Nonnull final LazyBlockColorCache lazyBlockColorsCache,
+			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
@@ -93,6 +92,12 @@ public class BlockColorInfo implements AutoCloseable {
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
+			final int[] cache,
+			final int sizeX, final int sizeY,
+			final int biomeBlendRadius, final int area, final int max,
+			final IEnviromentBlockReader reader,
+			final IColorResolver colorResolver,
+			final boolean useCache,
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
@@ -129,16 +134,6 @@ public class BlockColorInfo implements AutoCloseable {
 		final int v3YOffset = 1 + clamp(floor(v3.y) - chunkRenderPosY, -1, 16);
 		final int v3ZOffset = 1 + clamp(floor(v3.z) - chunkRenderPosZ, -1, 16);
 
-		final int[] cache = lazyBlockColorsCache.cache;
-		final int sizeX = lazyBlockColorsCache.sizeX;
-		final int sizeY = lazyBlockColorsCache.sizeY;
-		final int biomeBlendRadius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
-		final int d = biomeBlendRadius * 2 + 1;
-		final int area = d * d;
-		final int max = biomeBlendRadius + 1;
-		final IEnviromentBlockReader reader = lazyBlockColorsCache.reader;
-		final IColorResolver colorResolver = lazyBlockColorsCache.colorResolver;
-
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
@@ -147,19 +142,19 @@ public class BlockColorInfo implements AutoCloseable {
 					final int x0 = v0XOffset + xOffset;
 					final int y0 = v0YOffset + yOffset;
 					final int z0 = v0ZOffset + zOffset;
-					blockColor0[index] = LazyBlockColorCache.get(x0, y0, z0, cache, lazyBlockColorsCache.getIndex(x0, y0, z0, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver);
+					blockColor0[index] = LazyBlockColorCache.get(x0, y0, z0, cache, lazyBlockColorCache.getIndex(x0, y0, z0, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
 					final int x1 = v1XOffset + xOffset;
 					final int y1 = v1YOffset + yOffset;
 					final int z1 = v1ZOffset + zOffset;
-					blockColor1[index] = LazyBlockColorCache.get(x1, y1, z1, cache, lazyBlockColorsCache.getIndex(x1, y1, z1, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver);
+					blockColor1[index] = LazyBlockColorCache.get(x1, y1, z1, cache, lazyBlockColorCache.getIndex(x1, y1, z1, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
 					final int x2 = v2XOffset + xOffset;
 					final int y2 = v2YOffset + yOffset;
 					final int z2 = v2ZOffset + zOffset;
-					blockColor2[index] = LazyBlockColorCache.get(x2, y2, z2, cache, lazyBlockColorsCache.getIndex(x2, y2, z2, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver);
+					blockColor2[index] = LazyBlockColorCache.get(x2, y2, z2, cache, lazyBlockColorCache.getIndex(x2, y2, z2, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
 					final int x3 = v3XOffset + xOffset;
 					final int y3 = v3YOffset + yOffset;
 					final int z3 = v3ZOffset + zOffset;
-					blockColor3[index] = LazyBlockColorCache.get(x3, y3, z3, cache, lazyBlockColorsCache.getIndex(x3, y3, z3, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver);
+					blockColor3[index] = LazyBlockColorCache.get(x3, y3, z3, cache, lazyBlockColorCache.getIndex(x3, y3, z3, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
 				}
 			}
 		}

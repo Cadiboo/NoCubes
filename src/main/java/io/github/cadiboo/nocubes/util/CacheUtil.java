@@ -11,6 +11,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.chunk.IChunk;
 
 import javax.annotation.Nonnull;
+import java.util.Arrays;
 
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 
@@ -18,6 +19,10 @@ import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
  * @author Cadiboo
  */
 public final class CacheUtil {
+
+	@SuppressWarnings("MismatchedReadAndWriteOfArray") // It should never be written to and all its values should always be null
+	private static final IFluidState[] NULL_FLUID_STATES = new IFluidState[8000];
+	private static final ThreadLocal<IFluidState[]> EXTEND_FLUID_STATES_THREAD_LOCAL = ThreadLocal.withInitial(() -> new IFluidState[0]);
 
 	/**
 	 * Generates a {@link StateCache}
@@ -69,7 +74,17 @@ public final class CacheUtil {
 			return;
 		}
 		final int fluidStatesLength = fluidStates.length;
-		final IFluidState[] extendedFluidStates = new IFluidState[fluidStatesLength];
+		IFluidState[] extendedFluidStates = EXTEND_FLUID_STATES_THREAD_LOCAL.get();
+		if (extendedFluidStates.length < fluidStatesLength) {
+			extendedFluidStates = new IFluidState[fluidStatesLength];
+			EXTEND_FLUID_STATES_THREAD_LOCAL.set(extendedFluidStates);
+		} else {
+			if (fluidStatesLength > 0x4000) {
+				Arrays.fill(extendedFluidStates, null);
+			} else {
+				System.arraycopy(NULL_FLUID_STATES, 0, extendedFluidStates, 0, fluidStatesLength);
+			}
+		}
 
 		int index = 0;
 		for (int z = 0; z < cacheSizeZ; ++z) {
@@ -77,7 +92,7 @@ public final class CacheUtil {
 				for (int x = 0; x < cacheSizeX; ++x, ++index) {
 
 					// Do not extend if not terrain smoothable
-					if(!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
+					if (!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
 						continue;
 					}
 
@@ -171,6 +186,7 @@ public final class CacheUtil {
 						currentChunk = cache.getChunk(cx, cz);
 					}
 
+					// TODO: Use System.arrayCopy on the chunk sections
 					pooledMutableBlockPos.setPos(checkX, fromY + y, checkZ);
 //					blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
 //					fluidStates[index] = currentChunk.getFluidState(pooledMutableBlockPos);

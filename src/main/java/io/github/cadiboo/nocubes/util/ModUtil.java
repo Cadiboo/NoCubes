@@ -6,13 +6,12 @@ import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
+import net.minecraft.block.material.Material;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
-import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
@@ -246,6 +245,15 @@ public final class ModUtil {
 		// > 0 means outside isosurface
 		// > -4 means mostly outside isosurface
 		return density > -4;
+	}
+
+	public static boolean isMaterialGrass(final Material material) {
+		return material == Material.TALL_PLANTS || // tall grass
+				material == Material.ORGANIC; // grass block
+	}
+
+	public static boolean isMaterialLeaves(final Material material) {
+		return material == Material.LEAVES;
 	}
 
 }

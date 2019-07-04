@@ -5,9 +5,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -16,6 +14,7 @@ import net.minecraft.block.StainedGlassBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.FluidBlockRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -37,6 +36,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
 import static net.minecraft.util.Direction.SOUTH;
@@ -48,16 +49,11 @@ import static net.minecraft.util.Direction.WEST;
 public final class OptimisedFluidBlockRenderer {
 
 	public static void renderChunk(
-
 			@Nonnull final ChunkRender chunkRender, @Nonnull final BlockPos chunkRenderPos, @Nonnull final ChunkRenderTask generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final IEnviromentBlockReader chunkRenderCache, @Nonnull final boolean[] usedBlockRenderLayers, @Nonnull final Random random, @Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 			final PooledMutableBlockPos pooledMutableBlockPos,
 			final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache, final LazyBlockColorCache lazyBlockColorsCache,
-
-			@Nullable final MeshGenerator meshGenerator,
-			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
-			@Nullable final SmoothableCache smoothableCache, @Nullable final DensityCache densityCache
-
+			@Nullable final DensityCache densityCache
 	) {
 		final IFluidState[] fluidStateArray = stateCache.getFluidStates();
 		final BlockState[] blockStateArray = stateCache.getBlockStates();
@@ -85,10 +81,13 @@ public final class OptimisedFluidBlockRenderer {
 			densityCacheStartPaddingZ = densityCache.startPaddingZ;
 		}
 
-		final SmoothLightingBlockFluidRenderer fluidRenderer = ClientProxy.fluidRenderer;
+		final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientProxy.smoothLightingBlockFluidRenderer;
+		final FluidBlockRenderer fluidRenderer = blockRendererDispatcher.fluidRenderer;
 
-		final BlockRenderLayer[] blockRenderLayers = BlockRenderLayer.values();
-		final int blockRenderLayersLength = blockRenderLayers.length;
+		// Use fluidRenderer sprites instead of smoothLightingFluidBlockRenderer sprites for compatibility
+		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
+		final TextureAtlasSprite[] atlasSpritesLava = fluidRenderer.atlasSpritesLava;
+		final TextureAtlasSprite[] atlasSpritesWater = fluidRenderer.atlasSpritesWater;
 
 		final int[] lazyPackedLightCacheCache = lazyPackedLightCache.cache;
 		final int lazyPackedLightCacheSizeX = lazyPackedLightCache.sizeX;
@@ -114,10 +113,6 @@ public final class OptimisedFluidBlockRenderer {
 		final IEnviromentBlockReader lazyBlockColorsCacheReader = lazyBlockColorsCache.reader;
 		final IColorResolver lazyBlockColorsCacheColorResolver = lazyBlockColorsCache.colorResolver;
 
-		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
-		final TextureAtlasSprite[] atlasSpritesLava = fluidRenderer.atlasSpritesLava;
-		final TextureAtlasSprite[] atlasSpritesWater = fluidRenderer.atlasSpritesWater;
-
 		for (int z = 0; z < 16; ++z) {
 			for (int y = 0; y < 16; ++y) {
 				for (int x = 0; x < 16; ++x) {
@@ -134,8 +129,8 @@ public final class OptimisedFluidBlockRenderer {
 
 					pooledMutableBlockPos.setPos(chunkRenderPosX + x, chunkRenderPosY + y, chunkRenderPosZ + z);
 
-					for (int i = 0; i < blockRenderLayersLength; ++i) {
-						final BlockRenderLayer initialBlockRenderLayer = blockRenderLayers[i];
+					for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; i++) {
+						final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 						if (!fluidState.canRenderInLayer(initialBlockRenderLayer)) {
 							continue;
 						}
@@ -148,7 +143,7 @@ public final class OptimisedFluidBlockRenderer {
 						OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos, chunkRenderCache, bufferBuilder);
 						try {
 							usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= renderBlock(
-									fluidRenderer,
+									smoothLightingFluidBlockRenderer,
 									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 									x, y, z,
 //									index,
@@ -206,7 +201,7 @@ public final class OptimisedFluidBlockRenderer {
 	}
 
 	private static boolean renderBlock(
-			final SmoothLightingBlockFluidRenderer fluidRenderer,
+			final SmoothLightingFluidBlockRenderer fluidRenderer,
 			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 			final int relativeX, final int relativeY, final int relativeZ,
 //			final int fluidStateArrayIndex,
@@ -272,33 +267,6 @@ public final class OptimisedFluidBlockRenderer {
 		final int densityCacheOffsetX = densityCacheStartPaddingX + relativeX;
 		final int densityCacheOffsetY = densityCacheStartPaddingY + relativeY;
 		final int densityCacheOffsetZ = densityCacheStartPaddingZ + relativeZ;
-
-		final boolean isLava = state.isTagged(FluidTags.LAVA);
-		final TextureAtlasSprite[] atextureatlassprite = isLava ? atlasSpritesLava : atlasSpritesWater;
-
-		final float red;
-		final float green;
-		final float blue;
-		if (isLava) {
-			red = 1.0F;
-			green = 1.0F;
-			blue = 1.0F;
-		} else {
-			final int waterColor = getWaterColor(
-					lazyBlockColorsCacheOffsetX, lazyBlockColorsCacheOffsetY, lazyBlockColorsCacheOffsetZ,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-					lazyBlockColorsCache,
-					lazyBlockColorsCacheCache,
-					lazyBlockColorsCacheSizeX, lazyBlockColorsCacheSizeY,
-					biomeBlendRadius, lazyBlockColorsCacheArea, lazyBlockColorsCacheMax,
-					lazyBlockColorsCacheReader,
-					lazyBlockColorsCacheColorResolver,
-					pooledMutableBlockPos
-			);
-			red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
-			green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
-			blue = (float) (waterColor & 0xFF) / 255.0F;
-		}
 
 		final Fluid fluid = state.getFluid();
 
@@ -400,6 +368,33 @@ public final class OptimisedFluidBlockRenderer {
 
 		if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 			return false;
+		}
+
+		final boolean isLava = state.isTagged(FluidTags.LAVA);
+		final TextureAtlasSprite[] atextureatlassprite = isLava ? atlasSpritesLava : atlasSpritesWater;
+
+		final float red;
+		final float green;
+		final float blue;
+		if (isLava) {
+			red = 1.0F;
+			green = 1.0F;
+			blue = 1.0F;
+		} else {
+			final int waterColor = getWaterColor(
+					lazyBlockColorsCacheOffsetX, lazyBlockColorsCacheOffsetY, lazyBlockColorsCacheOffsetZ,
+					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+					lazyBlockColorsCache,
+					lazyBlockColorsCacheCache,
+					lazyBlockColorsCacheSizeX, lazyBlockColorsCacheSizeY,
+					biomeBlendRadius, lazyBlockColorsCacheArea, lazyBlockColorsCacheMax,
+					lazyBlockColorsCacheReader,
+					lazyBlockColorsCacheColorResolver,
+					pooledMutableBlockPos
+			);
+			red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
+			green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
+			blue = (float) (waterColor & 0xFF) / 255.0F;
 		}
 
 		boolean wasAnythingRendered = false;
@@ -807,8 +802,6 @@ public final class OptimisedFluidBlockRenderer {
 			);
 		}
 
-//		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
-
 		for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
 			final float y0;
 			final float y1;
@@ -1082,7 +1075,7 @@ public final class OptimisedFluidBlockRenderer {
 			final IColorResolver resolver,
 			final PooledMutableBlockPos pooledMutableBlockPos
 	) {
-		return LazyBlockColorCache.get(x, y, z, cache, lazyBlockColorsCache.getIndex(x, y, z, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, resolver);
+		return LazyBlockColorCache.get(x, y, z, cache, lazyBlockColorsCache.getIndex(x, y, z, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, resolver, true);
 	}
 
 	private static int getCombinedLightUpMax(

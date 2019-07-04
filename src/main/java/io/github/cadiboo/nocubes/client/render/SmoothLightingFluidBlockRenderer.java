@@ -24,8 +24,6 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.biome.BiomeColors;
 
-import javax.annotation.Nonnull;
-
 import static net.minecraft.util.Direction.DOWN;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
@@ -36,45 +34,22 @@ import static net.minecraft.util.Direction.WEST;
 /**
  * @author Cadiboo
  */
-public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
+public class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
 
 	private static final VoxelShape func_209556_a_hardcoded_voxelshape = VoxelShapes.create(0.0D, 0.0D, 0.0D, 1.0D, 0.8888889F, 1.0D);
-	@Nonnull
-	private final FluidBlockRenderer fluidRenderer;
 
-	public SmoothLightingBlockFluidRenderer(@Nonnull final FluidBlockRenderer fluidRenderer) {
+	public SmoothLightingFluidBlockRenderer() {
 		super();
-		this.fluidRenderer = fluidRenderer;
 	}
 
 	@Override
 	public boolean render(final IEnviromentBlockReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
-
-//		if (true) return fluidRenderer.render(worldIn, pos, buffer, state);
-
-		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
+			OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
 
 			final int x = pos.getX();
 			final int y = pos.getY();
 			final int z = pos.getZ();
-
-			final boolean isLava = state.isTagged(FluidTags.LAVA);
-			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
-
-			final float red;
-			final float green;
-			final float blue;
-			if (isLava) {
-				red = 1.0F;
-				green = 1.0F;
-				blue = 1.0F;
-			} else {
-				final int waterColor = BiomeColors.getWaterColor(worldIn, pos);
-				red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
-				green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
-				blue = (float) (waterColor & 0xFF) / 255.0F;
-			}
 
 			final Fluid fluid = state.getFluid();
 
@@ -110,6 +85,24 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 
 			final boolean smoothLighting = this.smoothLighting();
 			final boolean colors = this.colors();
+
+			final boolean isLava = state.isTagged(FluidTags.LAVA);
+			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
+			final TextureAtlasSprite atlasSpriteWaterOverlay = this.atlasSpriteWaterOverlay;
+
+			final float red;
+			final float green;
+			final float blue;
+			if (isLava) {
+				red = 1.0F;
+				green = 1.0F;
+				blue = 1.0F;
+			} else {
+				final int waterColor = BiomeColors.getWaterColor(worldIn, pos);
+				red = (float) (waterColor >> 16 & 0xFF) / 255.0F;
+				green = (float) (waterColor >> 8 & 0xFF) / 255.0F;
+				blue = (float) (waterColor & 0xFF) / 255.0F;
+			}
 
 			if (shouldRenderUp && !func_209556_a_optimised(worldIn, UP, Math.min(Math.min(fluidHeight, fluidHeightSouth), Math.min(fluidHeightEastSouth, fluidHeightEast)), pooledMutableBlockPos.setPos(x, y + 1, z))) {
 
@@ -282,8 +275,6 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				);
 			}
 
-			final TextureAtlasSprite atlasSpriteWaterOverlay = this.atlasSpriteWaterOverlay;
-
 			for (int facingIndex = 0; facingIndex < 4; ++facingIndex) {
 				final float y0;
 				final float y1;
@@ -344,7 +335,7 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 				}
 
 				pooledMutableBlockPos.setPos(x, y, z).move(direction);
-				if (shouldRenderSide && !func_209556_a_optimised(worldIn, direction, Math.max(y0, y1), pooledMutableBlockPos)) {
+				if (shouldRenderSide && !this.func_209556_a_optimised(worldIn, direction, Math.max(y0, y1), pooledMutableBlockPos)) {
 					TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
 					if (!isLava) {
 						Block block = worldIn.getBlockState(pooledMutableBlockPos).getBlock();
@@ -771,11 +762,6 @@ public class SmoothLightingBlockFluidRenderer extends FluidBlockRenderer {
 		buffer.pos(x + 1.0D, y, z).color(0.5F * red2, 0.5F * green2, 0.5F * blue2, 1.0F).tex((double) maxU, (double) minV).lightmap(skyLight2, blockLight2).endVertex();
 		buffer.pos(x + 1.0D, y, z + 1.0D).color(0.5F * red3, 0.5F * green3, 0.5F * blue3, 1.0F).tex((double) maxU, (double) maxV).lightmap(skyLight3, blockLight3).endVertex();
 		return true;
-	}
-
-	@Nonnull
-	public FluidBlockRenderer getOldFluidRenderer() {
-		return fluidRenderer;
 	}
 
 	public boolean smoothLighting() {

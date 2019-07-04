@@ -17,11 +17,13 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.crash.CrashReport;
@@ -47,7 +49,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
 import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED;
+import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED_LENGTH;
 import static net.minecraft.util.Direction.DOWN;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
@@ -173,11 +178,22 @@ public final class MeshRenderer {
 		final IModelData modelData = chunkRenderTask.getModelData(texturePos);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
 
-		final BlockRenderLayer[] blockRenderLayers = BlockRenderLayer.values();
-		final int blockRenderLayersLength = blockRenderLayers.length;
-
 		final boolean applyDiffuseLighting = Config.applyDiffuseLighting;
 		final boolean shortGrass = Config.shortGrass;
+
+		final boolean colorsCacheApplicableToTextureState = lazyBlockColorCache.shouldApply.test(textureState);
+
+		final int[] lazyBlockColorCacheCache = lazyBlockColorCache.cache;
+		final int lazyBlockColorCacheSizeX = lazyBlockColorCache.sizeX;
+		final int lazyBlockColorCacheSizeY = lazyBlockColorCache.sizeY;
+		final int biomeBlendRadius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
+		final int d = biomeBlendRadius * 2 + 1;
+		final int lazyBlockColorCacheArea = d * d;
+		final int lazyBlockColorCacheMax = biomeBlendRadius + 1;
+		final BiomeColors.IColorResolver colorResolver = lazyBlockColorCache.colorResolver;
+
+		final IBlockColor textureColorGetter = ClientUtil.getBlockColorsRegistry(Minecraft.getInstance().getBlockColors()).get(textureState.getBlock().delegate);
+		final boolean textureColorGetterIsNonNull = textureColorGetter != null;
 
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
@@ -201,36 +217,35 @@ public final class MeshRenderer {
 						float diffuse1;
 						float diffuse2;
 						float diffuse3;
-						profiler.end(); // HACKY
-						profiler.start("calculateDiffuseLighting");
-						{
-							if (!applyDiffuseLighting) {
-								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
-							} else {
-								diffuse0 = diffuseLight(toSide(
-										v0.x - chunkRenderPosX - pos.x,
-										v0.y - chunkRenderPosY - pos.y,
-										v0.z - chunkRenderPosZ - pos.z
-								));
-								diffuse1 = diffuseLight(toSide(
-										v1.x - chunkRenderPosX - pos.x,
-										v1.y - chunkRenderPosY - pos.y,
-										v1.z - chunkRenderPosZ - pos.z
-								));
-								diffuse2 = diffuseLight(toSide(
-										v2.x - chunkRenderPosX - pos.x,
-										v2.y - chunkRenderPosY - pos.y,
-										v2.z - chunkRenderPosZ - pos.z
-								));
-								diffuse3 = diffuseLight(toSide(
-										v3.x - chunkRenderPosX - pos.x,
-										v3.y - chunkRenderPosY - pos.y,
-										v3.z - chunkRenderPosZ - pos.z
-								));
-							}
+
+						if (!applyDiffuseLighting) {
+							diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+						} else {
+							profiler.end(); // HACKY
+							profiler.start("calculateDiffuseLighting");
+							diffuse0 = diffuseLight(toSide(
+									v0.x - chunkRenderPosX - pos.x,
+									v0.y - chunkRenderPosY - pos.y,
+									v0.z - chunkRenderPosZ - pos.z
+							));
+							diffuse1 = diffuseLight(toSide(
+									v1.x - chunkRenderPosX - pos.x,
+									v1.y - chunkRenderPosY - pos.y,
+									v1.z - chunkRenderPosZ - pos.z
+							));
+							diffuse2 = diffuseLight(toSide(
+									v2.x - chunkRenderPosX - pos.x,
+									v2.y - chunkRenderPosY - pos.y,
+									v2.z - chunkRenderPosZ - pos.z
+							));
+							diffuse3 = diffuseLight(toSide(
+									v3.x - chunkRenderPosX - pos.x,
+									v3.y - chunkRenderPosY - pos.y,
+									v3.z - chunkRenderPosZ - pos.z
+							));
+							profiler.end();
+							profiler.start("renderMesh"); // HACKY
 						}
-						profiler.end();
-						profiler.start("renderMesh"); // HACKY
 
 						final int lightmapSkyLight0;
 						final int lightmapSkyLight1;
@@ -294,8 +309,8 @@ public final class MeshRenderer {
 							profiler.start("renderMesh"); // HACKY
 						}
 
-						for (int i = 0; i < blockRenderLayersLength; ++i) {
-							final BlockRenderLayer initialBlockRenderLayer = blockRenderLayers[i];
+						for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
+							final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 							if (!textureState.canRenderInLayer(initialBlockRenderLayer)) {
 								continue;
 							}
@@ -377,12 +392,13 @@ public final class MeshRenderer {
 									final float green3;
 									final float blue3;
 
-									if (quad.hasTintIndex() || BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
+									final boolean hasTintIndex = quad.hasTintIndex();
+									if (BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
 										if (!hasSetColors) {
 											profiler.end(); // HACKY
 											try (
 													final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
-													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos)
+													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyBlockColorCacheCache, lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY, biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax, reader, colorResolver, true, pooledMutableBlockPos)
 											) {
 												colorRed0 = blockColorInfo.red0;
 												colorGreen0 = blockColorInfo.green0;
@@ -412,6 +428,89 @@ public final class MeshRenderer {
 										red3 = colorRed3;
 										green3 = colorGreen3;
 										blue3 = colorBlue3;
+									} else if (hasTintIndex) {
+										if (colorsCacheApplicableToTextureState) {
+											if (!hasSetColors) {
+												profiler.end(); // HACKY
+												try (
+														final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
+														final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyBlockColorCacheCache, lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY, biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax, reader, colorResolver, true, pooledMutableBlockPos)
+												) {
+													colorRed0 = blockColorInfo.red0;
+													colorGreen0 = blockColorInfo.green0;
+													colorBlue0 = blockColorInfo.blue0;
+													colorRed1 = blockColorInfo.red1;
+													colorGreen1 = blockColorInfo.green1;
+													colorBlue1 = blockColorInfo.blue1;
+													colorRed2 = blockColorInfo.red2;
+													colorGreen2 = blockColorInfo.green2;
+													colorBlue2 = blockColorInfo.blue2;
+													colorRed3 = blockColorInfo.red3;
+													colorGreen3 = blockColorInfo.green3;
+													colorBlue3 = blockColorInfo.blue3;
+												}
+												hasSetColors = true;
+												profiler.start("renderMesh"); // HACKY
+											}
+											red0 = colorRed0;
+											green0 = colorGreen0;
+											blue0 = colorBlue0;
+											red1 = colorRed1;
+											green1 = colorGreen1;
+											blue1 = colorBlue1;
+											red2 = colorRed2;
+											green2 = colorGreen2;
+											blue2 = colorBlue2;
+											red3 = colorRed3;
+											green3 = colorGreen3;
+											blue3 = colorBlue3;
+										} else { // don't use cache
+											if (textureColorGetterIsNonNull) {
+												final int tintIndex = quad.getTintIndex();
+												profiler.end(); // HACKY
+												try (
+														final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
+														final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(
+																lazyBlockColorCache, v0, v1, v2, v3,
+																chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+																lazyBlockColorCacheCache,
+																lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY,
+																biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax,
+																reader,
+																(ignored1, colorPos) -> textureColorGetter.getColor(textureState, reader, colorPos, tintIndex),
+																false,
+																pooledMutableBlockPos
+														)
+												) {
+													red0 = blockColorInfo.red0;
+													green0 = blockColorInfo.green0;
+													blue0 = blockColorInfo.blue0;
+													red1 = blockColorInfo.red1;
+													green1 = blockColorInfo.green1;
+													blue1 = blockColorInfo.blue1;
+													red2 = blockColorInfo.red2;
+													green2 = blockColorInfo.green2;
+													blue2 = blockColorInfo.blue2;
+													red3 = blockColorInfo.red3;
+													green3 = blockColorInfo.green3;
+													blue3 = blockColorInfo.blue3;
+												}
+												profiler.start("renderMesh"); // HACKY
+											} else {
+												red0 = 1F;
+												green0 = 1F;
+												blue0 = 1F;
+												red1 = 1F;
+												green1 = 1F;
+												blue1 = 1F;
+												red2 = 1F;
+												green2 = 1F;
+												blue2 = 1F;
+												red3 = 1F;
+												green3 = 1F;
+												blue3 = 1F;
+											}
+										}
 									} else {
 										red0 = 1F;
 										green0 = 1F;
@@ -526,11 +625,8 @@ public final class MeshRenderer {
 		final int green = (color & 0x00FF00) >> 8;
 		final int blue = (color & 0x0000FF);
 
-		final int DIRECTION_QUADS_ORDERED_length = DIRECTION_QUADS_ORDERED.length;
-
-		final BlockRenderLayer[] values = BlockRenderLayer.values();
-		for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
-			final BlockRenderLayer initialBlockRenderLayer = values[i];
+		for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
+			final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 			if (!grassPlantState.getBlock().canRenderInLayer(grassPlantState, initialBlockRenderLayer)) {
 				continue;
 			}
@@ -545,7 +641,7 @@ public final class MeshRenderer {
 			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
 			try {
 
-				for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_length; ++facingIndex) {
+				for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
 					final Direction facing = DIRECTION_QUADS_ORDERED[facingIndex];
 					random.setSeed(posRand);
 					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, random);
