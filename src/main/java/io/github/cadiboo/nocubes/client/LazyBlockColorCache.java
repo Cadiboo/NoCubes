@@ -17,7 +17,7 @@ import static net.minecraft.world.biome.BiomeColors.IColorResolver;
 /**
  * @author Cadiboo
  */
-public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
+public final class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<LazyBlockColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBlockColorCache(0, 0, 0, 0, 0, 0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);

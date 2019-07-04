@@ -214,7 +214,7 @@ public abstract class BlockStateToast implements IToast {
 		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
-	public static class AddTerrain extends BlockStateToast {
+	public static final class AddTerrain extends BlockStateToast {
 
 		public AddTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -227,7 +227,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class RemoveTerrain extends BlockStateToast {
+	public static final class RemoveTerrain extends BlockStateToast {
 
 		public RemoveTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -240,7 +240,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class AddLeaves extends BlockStateToast {
+	public static final class AddLeaves extends BlockStateToast {
 
 		public AddLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -253,7 +253,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class RemoveLeaves extends BlockStateToast {
+	public static final class RemoveLeaves extends BlockStateToast {
 
 		public RemoveLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);

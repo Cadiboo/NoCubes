@@ -5,7 +5,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class ModProfiler /*extends Profiler*/ implements AutoCloseable {
+public final class ModProfiler /*extends Profiler*/ implements AutoCloseable {
 
 	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
 

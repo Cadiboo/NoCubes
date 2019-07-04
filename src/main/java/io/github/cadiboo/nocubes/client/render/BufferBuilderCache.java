@@ -8,7 +8,7 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VAL
 /**
  * @author Cadiboo
  */
-public class BufferBuilderCache {
+public final class BufferBuilderCache {
 
 	protected final BufferBuilder[] worldRenderers = new BufferBuilder[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 

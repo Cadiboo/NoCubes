@@ -5,7 +5,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-public class OptionButton extends Button {
+public final class OptionButton extends Button {
 
 	private final Option option;
 

@@ -21,7 +21,7 @@ import java.util.HashMap;
  * @author Cadiboo
  * @author Click_Me
  */
-public class OldNoCubes implements MeshGenerator {
+public final class OldNoCubes implements MeshGenerator {
 
 	// Points order
 	public static final int X0Y0Z0 = 0;

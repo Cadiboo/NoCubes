@@ -13,7 +13,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-public class NoCubesConfigGui extends Screen {
+public final class NoCubesConfigGui extends Screen {
 
 	private final Minecraft minecraft;
 	private final Screen parentScreen;

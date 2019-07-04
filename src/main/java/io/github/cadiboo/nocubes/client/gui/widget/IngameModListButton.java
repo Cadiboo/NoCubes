@@ -9,7 +9,7 @@ import net.minecraftforge.fml.client.gui.GuiModList;
 /**
  * @author Cadiboo
  */
-public class IngameModListButton extends Button {
+public final class IngameModListButton extends Button {
 
 	public IngameModListButton(final Screen gui, final int y) {
 		super(gui.width / 2 - 102, y, 204, 20, I18n.format("fml.menu.mods"), button -> Minecraft.getInstance().displayGuiScreen(new GuiModList(gui)));

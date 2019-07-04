@@ -34,7 +34,7 @@ import static net.minecraft.util.Direction.WEST;
 /**
  * @author Cadiboo
  */
-public class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
+public final class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
 
 	private static final VoxelShape func_209556_a_hardcoded_voxelshape = VoxelShapes.create(0.0D, 0.0D, 0.0D, 1.0D, 0.8888889F, 1.0D);
 

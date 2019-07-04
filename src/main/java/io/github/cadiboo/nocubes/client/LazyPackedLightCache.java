@@ -12,7 +12,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class LazyPackedLightCache extends XYZCache implements AutoCloseable {
+public final class LazyPackedLightCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<LazyPackedLightCache> POOL = ThreadLocal.withInitial(() -> new LazyPackedLightCache(0, 0, 0, 0, 0, 0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);

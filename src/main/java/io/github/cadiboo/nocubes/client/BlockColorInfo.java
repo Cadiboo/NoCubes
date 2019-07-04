@@ -21,7 +21,7 @@ import static net.minecraft.util.math.MathHelper.floor;
 /**
  * @author Cadiboo
  */
-public class BlockColorInfo implements AutoCloseable {
+public final class BlockColorInfo implements AutoCloseable {
 
 	public static final boolean RAINBOW = isWearItPurpleDay();
 	public static final boolean BLACK = isHalloween();

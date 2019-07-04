@@ -15,7 +15,7 @@ import static net.minecraft.util.math.MathHelper.floor;
 /**
  * @author Cadiboo
  */
-public class LightmapInfo implements AutoCloseable {
+public final class LightmapInfo implements AutoCloseable {
 
 	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
 

@@ -368,7 +368,7 @@ public final class CollisionHandler {
 			final ISelectionContext context
 	) {
 //		if (!Config.terrainCollisions) {
-			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+		return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
 //		} else if (shouldApplyMeshCollisions(entity)) {
 //			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
 //		} else if (shouldApplyReposeCollisions(entity)) {

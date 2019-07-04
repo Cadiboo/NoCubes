@@ -34,7 +34,7 @@ import static net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 /**
  * @author Cadiboo
  */
-class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
+final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 
 	private static final Joiner DOT_JOINER = Joiner.on(".");
 
@@ -153,7 +153,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	class CategoryEntry extends ConfigOptionsList.Entry {
+	final class CategoryEntry extends ConfigOptionsList.Entry {
 
 		private final String labelText;
 		private final int labelWidth;
@@ -240,7 +240,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	class BooleanValueEntry extends ValueEntry<Boolean> {
+	final class BooleanValueEntry extends ValueEntry<Boolean> {
 
 		BooleanValueEntry(final BooleanValue booleanValue, final String name, final Supplier<ModConfig> configSupplier) {
 			super(booleanValue, name, configSupplier);
@@ -255,7 +255,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	class EnumValueEntry<T extends Enum<T>> extends ValueEntry<T> {
+	final class EnumValueEntry<T extends Enum<T>> extends ValueEntry<T> {
 
 		final T[] values;
 
@@ -284,7 +284,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 	}
 
 	@OnlyIn(Dist.CLIENT)
-	class ListValueEntry<T> extends ValueEntry<List<? extends T>> {
+	final class ListValueEntry<T> extends ValueEntry<List<? extends T>> {
 
 		ListValueEntry(final ConfigValue<List<? extends T>> listValue, final String name, final Supplier<ModConfig> configSupplier) {
 			super(listValue, name, configSupplier);
@@ -306,7 +306,7 @@ class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry> {
 
 	}
 
-	private class NotImplementedValueEntry<T> extends ValueEntry<T> {
+	private final class NotImplementedValueEntry<T> extends ValueEntry<T> {
 
 		NotImplementedValueEntry(final ConfigValue<T> configValue, final String name, final Supplier<ModConfig> configSupplier) {
 			super(configValue, name, configSupplier);

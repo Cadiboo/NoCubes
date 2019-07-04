@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @OnlyIn(Dist.CLIENT)
-public class ListOption extends Option {
+public final class ListOption extends Option {
 
 	private final Supplier<String[]> getter;
 	private final Consumer<String[]> setter;
