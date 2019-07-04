@@ -139,6 +139,7 @@ public class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 		int green = 0;
 		int blue = 0;
 
+		// TODO FIXME: I don't think that this should be hardcoded -2?
 		// -2 because offset
 		final int posX = chunkRenderPosX + xIn - 2;
 		final int posY = chunkRenderPosY + yIn - 2;

@@ -6,8 +6,6 @@ import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 
@@ -18,8 +16,6 @@ import static net.minecraft.util.math.MathHelper.floor;
  * @author Cadiboo
  */
 public class LightmapInfo implements AutoCloseable {
-
-	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
 

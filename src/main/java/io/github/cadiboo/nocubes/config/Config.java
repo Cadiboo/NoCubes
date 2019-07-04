@@ -18,7 +18,7 @@ import java.util.Set;
 public final class Config {
 
 	@Nonnull
-	static final Logger LOGGER = LogManager.getLogger();
+	static final Logger LOGGER = LogManager.getLogger("NoCubes Config");
 	@Nonnull
 	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
 

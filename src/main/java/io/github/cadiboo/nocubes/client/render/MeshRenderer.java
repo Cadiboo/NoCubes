@@ -66,7 +66,7 @@ import static net.minecraft.util.Direction.WEST;
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public final class MeshRenderer {
 
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger("NoCubes MeshRenderer");
 
 	public static void renderMesh(
 			@Nonnull final ChunkRender chunkRender,

@@ -1,8 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.HashMap;
 
 /**
@@ -11,7 +8,6 @@ import java.util.HashMap;
 public class ModProfiler /*extends Profiler*/ implements AutoCloseable {
 
 	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
-	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
 		final ModProfiler profiler = new ModProfiler();
