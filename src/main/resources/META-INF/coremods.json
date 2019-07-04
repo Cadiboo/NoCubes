@@ -1,9 +1,3 @@
 {
-	"ChunkRender Transformer": "chunk-render-transformer.js",
-	"BlockState Transformer": "block-state-transformer.js",
-	"World Transformer": "world-transformer.js",
-	"IWorldReader Transformer": "i-world-reader-transformer.js",
-	"ChunkRenderCache Transformer": "chunk-render-cache-transformer.js",
-	"BlockRendererDispatcher Transformer": "block-renderer-dispatcher-transformer.js",
-	"Client World Transformer": "client-world-transformer.js"
+	"NoCubes Transformer": "nocubes-transformer.js"
 }
