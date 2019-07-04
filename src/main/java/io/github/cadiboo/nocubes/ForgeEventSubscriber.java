@@ -17,7 +17,7 @@ public final class ForgeEventSubscriber {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	@SubscribeEvent
-	public void onTickEvent(final TickEvent event) {
+	public static void onTickEvent(final TickEvent event) {
 		Config.terrainCollisions = false;
 	}
 
