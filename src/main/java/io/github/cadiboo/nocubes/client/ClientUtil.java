@@ -241,6 +241,7 @@ public final class ClientUtil {
 		return getCorrectRenderLayer(state.getRenderLayer());
 	}
 
+	// TODO: Optimise `Minecraft.getInstance().gameSettings.mipmapLevels`? Store it in a field somewhere?
 	@Nonnull
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockRenderLayer blockRenderLayer) {
 		switch (blockRenderLayer) {
