@@ -8,6 +8,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.fluid.IFluidState;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
@@ -31,10 +32,13 @@ import static net.minecraft.block.Blocks.SNOW;
 @SuppressWarnings("WeakerAccess")
 public final class ModUtil {
 
-	private static final Random RANDOM = new Random();
+	// TODO: Remove once Direction.VALUES is ATed
+	public static final Direction[] DIRECTION_VALUES = Direction.values();
+	public static final int DIRECTION_VALUES_LENGTH = DIRECTION_VALUES.length;
+	public static final Random RANDOM = new Random();
 
 	/**
-	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
+	 * @return Negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final BlockState state) {
 		if (shouldSmooth) {
