@@ -109,25 +109,29 @@ public final class ClientEventSubscriber {
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
 				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
-
-//				final boolean setTo;
-//				if (!Config.terrainCollisions) {
-//					if (canEnableTerrainCollisions(minecraft, player)) {
-//						ConfigHelper.setTerrainCollisions(true);
-//						setTo = true;
-//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
-//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
-//					} else {
-//						setTo = Config.terrainCollisions;
-//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
-//					}
+//				if (!minecraft.isSingleplayer()) {
+//					// TODO: Send packet to server requesting enabling collisions?
+//					player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotSingleplayer"));
 //				} else {
-//					ConfigHelper.setTerrainCollisions(false);
-//					setTo = false;
-//					player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisabled"));
+//					final boolean setTo;
+//					if (!Config.terrainCollisions) {
+//						if (canEnableTerrainCollisions(minecraft, player)) {
+//							ConfigHelper.setTerrainCollisions(true);
+//							setTo = true;
+//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
+//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
+//						} else {
+//							setTo = Config.terrainCollisions;
+//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
+//						}
+//					} else {
+//						ConfigHelper.setTerrainCollisions(false);
+//						setTo = false;
+//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisabled"));
+//					}
+//					// Config saving is async so set it now
+//					Config.terrainCollisions = setTo;
 //				}
-//				// Config saving is async so set it now
-//				Config.terrainCollisions = setTo;
 			}
 		}
 
@@ -149,18 +153,25 @@ public final class ClientEventSubscriber {
 			final BlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
-				final BlockStateToast toast;
-				if (!state.nocubes_isTerrainSmoothable()) {
-					ConfigHelper.addTerrainSmoothable(state);
-					toast = new BlockStateToast.AddTerrain(state, blockPos);
-				} else {
-					ConfigHelper.removeTerrainSmoothable(state);
-					toast = new BlockStateToast.RemoveTerrain(state, blockPos);
+				if (!minecraft.isSingleplayer()) {
+					// TODO: Send packet to server requesting adding terrain smoothable?
+					player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainSmoothableNotSingleplayer"));
 				}
-				minecraft.getToastGui().add(toast);
+//				else // FIXME: Commented out to let people still do it, for the time being
+				{
+					final BlockStateToast toast;
+					if (!state.nocubes_isTerrainSmoothable()) {
+						ConfigHelper.addTerrainSmoothable(state);
+						toast = new BlockStateToast.AddTerrain(state, blockPos);
+					} else {
+						ConfigHelper.removeTerrainSmoothable(state);
+						toast = new BlockStateToast.RemoveTerrain(state, blockPos);
+					}
+					minecraft.getToastGui().add(toast);
 
-				if (Config.renderSmoothTerrain) {
-					ClientUtil.tryReloadRenderers();
+					if (Config.renderSmoothTerrain) {
+						ClientUtil.tryReloadRenderers();
+					}
 				}
 			}
 			if (leavesPressed) {

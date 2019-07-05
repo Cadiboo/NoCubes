@@ -18,6 +18,9 @@
 	"nocubes.collisionsDisabled": "NoCubes terrain collisions disabled",
 	"nocubes.collisionsDisablePress": "To disable terrain collisions press %s",
 
+	"nocubes.collisionsNotSingleplayer": "You're not in singleplayer! I haven't written the code to handle syncing collision changes on multiplayer servers yet. Glitches may happen!",
+	"nocubes.terrainSmoothableNotSingleplayer": "You're not in singleplayer! I haven't written the code to handle syncing terrain smoothable changes on multiplayer servers yet. Glitches may happen!",
+
 	"nocubes.config.title": "NoCubes Config Gui Beta (Changes aren't instant)",
 	"nocubes.config.client": "Client Config",
 	"nocubes.config.renderSmoothTerrain": "Render Smooth Terrain",
