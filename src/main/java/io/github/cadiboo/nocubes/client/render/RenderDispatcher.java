@@ -190,7 +190,7 @@ public final class RenderDispatcher {
 								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 								pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-								densityCache
+								Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes ? null : densityCache
 						);
 					}
 					renderTerrainChunk(
@@ -334,7 +334,7 @@ public final class RenderDispatcher {
 								)
 						) {
 							final HashMap<Vec3b, FaceList> mesh;
-							if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
+							if (Config.leavesMeshGenerator == MeshGeneratorType.OldNoCubes) {
 								// TODO: Remove
 								mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, isSmoothable, pooledMutableBlockPos);
 							} else {
@@ -390,7 +390,7 @@ public final class RenderDispatcher {
 							)
 					) {
 						final HashMap<Vec3b, FaceList> mesh;
-						if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
+						if (Config.leavesMeshGenerator == MeshGeneratorType.OldNoCubes) {
 							// TODO: Remove
 							mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, isSmoothable, pooledMutableBlockPos);
 						} else {
