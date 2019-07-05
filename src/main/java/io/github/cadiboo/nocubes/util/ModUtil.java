@@ -260,4 +260,27 @@ public final class ModUtil {
 		return material == Material.LEAVES;
 	}
 
+	/**
+	 * @param chunkPos The chunk position as a {@link BlockPos}
+	 * @param blockPos The {@link BlockPos}
+	 * @return The position relative to the chunkPos
+	 */
+	public static byte getRelativePos(final int chunkPos, final int blockPos) {
+		final int blockPosChunkPos = (blockPos >> 4) << 4;
+		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
+			return getRelativePos(blockPos);
+		} else {
+			// can be anything. usually between -1 and 16
+			return (byte) (blockPos - chunkPos);
+		}
+	}
+
+	/**
+	 * @param blockPos The {@link BlockPos}
+	 * @return The position (between 0-15) relative to the blockPos's chunk position
+	 */
+	public static byte getRelativePos(final int blockPos) {
+		return (byte) (blockPos & 15);
+	}
+
 }

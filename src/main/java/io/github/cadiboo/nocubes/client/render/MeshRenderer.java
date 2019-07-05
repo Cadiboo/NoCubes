@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -107,9 +108,9 @@ public final class MeshRenderer {
 						final int initialPosZ = chunkRenderPosZ + pos.z;
 
 						//TODO use pos? (I've forgotten what this todo is even about)
-						final byte relativePosX = ClientUtil.getRelativePos(chunkRenderPosX, initialPosX);
-						final byte relativePosY = ClientUtil.getRelativePos(chunkRenderPosY, initialPosY);
-						final byte relativePosZ = ClientUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
+						final byte relativePosX = ModUtil.getRelativePos(chunkRenderPosX, initialPosX);
+						final byte relativePosY = ModUtil.getRelativePos(chunkRenderPosY, initialPosY);
+						final byte relativePosZ = ModUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
 
 						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
 

@@ -271,29 +271,6 @@ public final class ClientUtil {
 		}
 	}
 
-	/**
-	 * @param chunkPos the chunk position as a {@link BlockPos}
-	 * @param blockPos the {@link BlockPos}
-	 * @return the position relative to the chunkPos
-	 */
-	public static byte getRelativePos(final int chunkPos, final int blockPos) {
-		final int blockPosChunkPos = (blockPos >> 4) << 4;
-		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
-			return getRelativePos(blockPos);
-		} else {
-			// can be anything. usually between -1 and 16
-			return (byte) (blockPos - chunkPos);
-		}
-	}
-
-	/**
-	 * @param blockPos the {@link BlockPos}
-	 * @return the position (between 0-15) relative to the blockPos's chunk position
-	 */
-	public static byte getRelativePos(final int blockPos) {
-		return (byte) (blockPos & 15);
-	}
-
 	public static IChunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IEnviromentBlockReader reader) {
 //		if (reader instanceof IWorld) { // This should never be the case...
 //			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
