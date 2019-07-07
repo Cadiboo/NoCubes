@@ -23,7 +23,7 @@ import javax.annotation.Nonnull;
 
 import static net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindClassException;
 
-public class ReflectionClassHelper {
+public final class ReflectionClassHelper {
 
 	@SuppressWarnings("unchecked")
 	@Nonnull
