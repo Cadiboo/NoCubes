@@ -70,7 +70,7 @@ public final class Hooks {
 	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
 	 * Calls: ModUtil.getFluidState to handle extended fluids
 	 *
-	 * @return an IFluidState
+	 * @return An IFluidState
 	 */
 	public static IFluidState getFluidState(final World world, final BlockPos pos) {
 		return ModUtil.getFluidState(world, pos);
@@ -80,7 +80,7 @@ public final class Hooks {
 	 * Called from: IWorldReader#getCollisionShapes(Entity, AxisAlignedBB) after the ISelectionContext is generated
 	 * Calls: CollisionHandler.getCollisionShapes to handle mesh, repose and vanilla collisions
 	 *
-	 * @return the collisions for the entity
+	 * @return The collisions for the entity
 	 */
 	public static Stream<VoxelShape> getCollisionShapes(final IWorldReader _this, final Entity p_217352_1_, final AxisAlignedBB p_217352_2_, final int i, final int j, final int k, final int l, final int i1, final int j1, final ISelectionContext iselectioncontext) {
 		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, i, j, k, l, i1, j1, iselectioncontext);

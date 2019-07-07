@@ -13,6 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
@@ -42,7 +43,7 @@ public final class ModUtil {
 	 */
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final BlockState state) {
 		if (shouldSmooth) {
-			if (state.getBlock() == SNOW) {
+			if (state.getBlock() == SNOW) { // Snow layer
 				final int value = state.get(SnowBlock.LAYERS);
 				if (value == 1) { // zero-height snow layer
 					return 1;
@@ -53,7 +54,8 @@ public final class ModUtil {
 				return state.getBlock() == BEDROCK ? -1.0005F : -1;
 			}
 //		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
-//			return 0F;
+		} else if (state.isSolid()) {
+			return 0F;
 		} else {
 			return 1;
 		}
@@ -65,7 +67,7 @@ public final class ModUtil {
 	 *
 	 * @param vec3 the vec3
 	 */
-	public static Vec3 offsetVertex(Vec3 vec3) {
+	public static Vec3 offsetVertex(final Vec3 vec3) {
 		long rand = (long) (vec3.x * 3129871.0D) ^ (long) vec3.z * 116129781L ^ (long) vec3.y;
 		rand = rand * rand * 42317861L + rand * 11;
 		vec3.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
@@ -211,12 +213,16 @@ public final class ModUtil {
 		return fluidState;
 	}
 
+	/**
+	 * Mostly copied from StolenReposeCode.getDensity
+	 */
 	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
-		final float density;
-		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
-			float density1 = 0;
-
-//			final WorldBorder worldBorder = ((IWorldReader) reader).getWorldBorder();
+		float density = 0;
+		try (
+				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
+				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()
+		) {
+//			final WorldBorder worldBorder = reader.getWorldBorder();
 
 			final int startX = pos.getX();
 			final int startY = pos.getY();
@@ -233,17 +239,16 @@ public final class ModUtil {
 						);
 
 //						// Return a fully solid cube if its not loaded
-//						if (!((IWorldReader) reader).isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
-//							density1 += 1;
+//						if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
+//							density += 1;
 //							continue;
 //						}
 
 						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
-						density1 += getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
 					}
 				}
 			}
-			density = density1;
 		}
 
 		// > 0 means outside isosurface
@@ -251,8 +256,12 @@ public final class ModUtil {
 		return density > -4;
 	}
 
+	/**
+	 * @param material The {@link Material} to check
+	 * @return If the material is tallgrass/grass plant/grass block
+	 */
 	public static boolean isMaterialGrass(final Material material) {
-		return material == Material.TALL_PLANTS || // tall grass
+		return material == Material.TALL_PLANTS || // tall grass, grass plant
 				material == Material.ORGANIC; // grass block
 	}
 

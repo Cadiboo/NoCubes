@@ -32,6 +32,7 @@ public interface MeshGenerator {
 	 * @param neighbourDensityGrid the neighbour density grid
 	 * @return the block vertices
 	 */
+	// TODO FIXME: Deal with this
 	@Nonnull
 	FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
 
@@ -47,9 +48,11 @@ public interface MeshGenerator {
 		return 0;
 	}
 
+	// TODO FIXME: Deal with this
 	@Nonnull
 	FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockReader cache, @Nonnull final IsSmoothable isSmoothable);
 
+	// TODO FIXME: Deal with this
 	@Nonnull
 	default float[] generateScalarFieldData(
 			final int startX, final int startY, final int startZ,

@@ -34,6 +34,7 @@ public final class ListOption extends Option {
 	@Override
 	public Widget createWidget(int width) {
 		final TextFieldWidget textFieldWidget = new TextFieldWidget(Minecraft.getInstance().fontRenderer, 0, 0, width - 4, 16, I18n.format(this.getTranslationKey())) {
+			@Override
 			public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
 				if (super.charTyped(p_charTyped_1_, p_charTyped_2_)) {
 					ListOption.this.set(this.getText().split(", "));

@@ -43,7 +43,7 @@ public final class NoCubes {
 				ModUtil.launchUpdateDaemon(ModList.get().getModContainerById(MOD_ID).get())
 		);
 		modEventBus.addListener((FMLLoadCompleteEvent event) ->
-				PROXY.replaceFluidRendererCauseImBored()
+				PROXY.replaceFluidRenderer()
 		);
 		modEventBus.addListener((ModConfig.ModConfigEvent event) -> {
 			final ModConfig config = event.getConfig();

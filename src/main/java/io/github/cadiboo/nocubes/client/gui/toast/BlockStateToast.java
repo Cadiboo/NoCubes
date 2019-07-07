@@ -42,27 +42,24 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VAL
  */
 public abstract class BlockStateToast implements IToast {
 
+	private static final Matrix4f ITEM_CAMERA_TRANSFORM_MATRIX = TRSRTransformation.from(
+			new ItemTransformVec3f(
+					new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
+			)
+	).getMatrixVec();
+
 	@Nonnull
 	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
 	@Nonnull
 	private final boolean[] usedBlockRenderLayers = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 	@Nonnull
 	private final String name;
-	private final Matrix4f itemCameraTransformMaterix = TRSRTransformation.from(
-			new ItemTransformVec3f(
-					new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
-			)
-	).getMatrixVec();
 
 	BlockStateToast(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
 		final Minecraft minecraft = Minecraft.getInstance();
-		name = state.getBlock().getNameTextComponent().getFormattedText();
-
-		// Reset values
-		Arrays.fill(usedBlockRenderLayers, false);
+		this.name = state.getBlock().getNameTextComponent().getFormattedText();
 
 		this.build(state, pos, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
-
 	}
 
 	/**
@@ -106,14 +103,14 @@ public abstract class BlockStateToast implements IToast {
 	private void build(
 			@Nonnull final BlockState state,
 			@Nonnull final BlockPos pos,
-			@Nonnull final IWorldReader blockAccess,
+			@Nonnull final IWorldReader reader,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random
 	) {
-
 		if (state.getRenderType() != BlockRenderType.MODEL) {
 			return;
 		}
+
 		final boolean[] startedBufferBuilders = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
 		{
@@ -134,8 +131,8 @@ public abstract class BlockStateToast implements IToast {
 					}
 				}
 				// OptiFine Shaders compatibility
-//				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
-				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
+//				OptiFineCompatibility.pushShaderThing(state, pos, reader, bufferBuilder);
+				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(reader, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
 			ForgeHooksClient.setRenderLayer(null);
@@ -191,7 +188,7 @@ public abstract class BlockStateToast implements IToast {
 					RenderHelper.enableGUIStandardItemLighting();
 				}
 				{
-					ForgeHooksClient.multiplyCurrentGlMatrix(itemCameraTransformMaterix);
+					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORM_MATRIX);
 				}
 			}
 			for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {

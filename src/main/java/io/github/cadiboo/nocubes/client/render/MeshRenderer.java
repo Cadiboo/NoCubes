@@ -17,6 +17,7 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -38,8 +39,10 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.biome.BiomeColors;
+import net.minecraft.world.biome.BiomeColors.IColorResolver;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.registries.IRegistryDelegate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -89,8 +92,9 @@ public final class MeshRenderer {
 			final boolean renderOppositeSides,
 			final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
 	) {
-
 		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
+
+			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = ClientUtil.getBlockColorsRegistry(Minecraft.getInstance().getBlockColors());
 
 			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
 				try (final Vec3b pos = entry.getKey()) {
@@ -131,6 +135,7 @@ public final class MeshRenderer {
 									reader, blockRendererDispatcher, random,
 									usedBlockRenderLayers,
 									lazyPackedLightCache, lazyBlockColorCache,
+									blockColorsRegistry,
 									pos, faces,
 									pooledMutableBlockPos,
 									texturePooledMutableBlockPos, textureState,
@@ -169,6 +174,7 @@ public final class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
+			@Nonnull final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -191,9 +197,10 @@ public final class MeshRenderer {
 		final int d = biomeBlendRadius * 2 + 1;
 		final int lazyBlockColorCacheArea = d * d;
 		final int lazyBlockColorCacheMax = biomeBlendRadius + 1;
-		final BiomeColors.IColorResolver colorResolver = lazyBlockColorCache.colorResolver;
+		final IColorResolver colorResolver = lazyBlockColorCache.colorResolver;
 
-		final IBlockColor textureColorGetter = ClientUtil.getBlockColorsRegistry(Minecraft.getInstance().getBlockColors()).get(textureState.getBlock().delegate);
+		// TODO: Only get if required (on first use)
+		final IBlockColor textureColorGetter = blockColorsRegistry.get(textureState.getBlock().delegate);
 		final boolean textureColorGetterIsNonNull = textureColorGetter != null;
 
 		final ModProfiler profiler = ModProfiler.get();
@@ -642,10 +649,10 @@ public final class MeshRenderer {
 			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
 			try {
 
-				for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
-					final Direction facing = DIRECTION_QUADS_ORDERED[facingIndex];
+				for (int directionIndex = 0; directionIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++directionIndex) {
+					final Direction direction = DIRECTION_QUADS_ORDERED[directionIndex];
 					random.setSeed(posRand);
-					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, random);
+					final List<BakedQuad> quads = model.getQuads(grassPlantState, direction, random);
 					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
 						final BakedQuad quad = quads.get(quadIndex);
 						wasAnythingRendered = true;

@@ -5,7 +5,6 @@ import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.util.Proxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -51,17 +50,7 @@ public final class ClientProxy implements Proxy {
 		ClientRegistry.registerKeyBinding(tempToggleTerrainCollisions);
 	}
 
-	@Override
-	public void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
-
-		final WorldRenderer worldRenderer = Minecraft.getInstance().worldRenderer;
-
-		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
-			worldRenderer.markBlockRangeForRenderUpdate(minX, minY, minZ, maxX, maxY, maxZ);
-		}
-	}
-
-	public void replaceFluidRendererCauseImBored() {
+	public void replaceFluidRenderer() {
 		LOGGER.debug("Replacing fluid renderer");
 		final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 		final SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();

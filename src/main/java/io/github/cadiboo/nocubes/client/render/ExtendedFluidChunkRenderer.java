@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IWorldReader;
 
 import javax.annotation.Nonnull;
@@ -25,21 +26,23 @@ import javax.annotation.Nonnull;
  */
 public final class ExtendedFluidChunkRenderer {
 
+	private static final ThreadLocal<boolean[]> IS_FLUID_SOURCE_THREAD_LOCAL = ThreadLocal.withInitial(() -> new boolean[0]);
+
 	public static void renderChunk(
-			@Nonnull final ChunkRender renderChunk,
+			@Nonnull final ChunkRender chunkRender,
 			@Nonnull final ChunkRenderTask generator,
 			@Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos renderChunkPosition,
 			final int renderChunkPositionX, final int renderChunkPositionY, final int renderChunkPositionZ,
-			@Nonnull final IWorldReader blockAccess,
-			@Nonnull final BlockPos.PooledMutableBlockPos pooledMutableBlockPos,
+			@Nonnull final IWorldReader reader,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final StateCache stateCache,
 			@Nonnull final SmoothableCache smoothableCache,
-			@Nonnull final LazyPackedLightCache packedLightCache
+			@Nonnull final LazyPackedLightCache lazyPackedLightCache
 	) {
-		try (final ModProfiler ignored = ModProfiler.get().start("render extended fluid chunk")) {
+		try (final ModProfiler ignored = ModProfiler.get().start("Render extended fluid chunk")) {
 			final BlockState[] blockCacheArray = stateCache.getBlockStates();
 			final IFluidState[] fluidCacheArray = stateCache.getFluidStates();
 
@@ -51,8 +54,12 @@ public final class ExtendedFluidChunkRenderer {
 			final int stateCacheStartPaddingY = stateCache.startPaddingY;
 			final int stateCacheStartPaddingZ = stateCache.startPaddingZ;
 
+			boolean[] isFluidSource = IS_FLUID_SOURCE_THREAD_LOCAL.get();
 			// TODO: shouldn't really be the same size as the state cache
-			final boolean[] isFluidSource = new boolean[fluidCacheLength];
+			if (isFluidSource.length < fluidCacheLength) {
+				isFluidSource = new boolean[fluidCacheLength];
+				IS_FLUID_SOURCE_THREAD_LOCAL.set(isFluidSource);
+			}
 			for (int i = 0; i < fluidCacheLength; ++i) {
 				isFluidSource[i] = fluidCacheArray[i].isSource();
 			}
@@ -131,7 +138,7 @@ public final class ExtendedFluidChunkRenderer {
 								final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(fluidState);
 								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 
-								final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, renderChunk, renderChunkPosition);
+								final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, blockRenderLayerOrdinal, compiledChunk, blockRenderLayer, chunkRender, renderChunkPosition);
 								final int worldX = renderChunkPositionX + x;
 								final int worldY = renderChunkPositionY + y;
 								final int worldZ = renderChunkPositionZ + z;
@@ -139,7 +146,7 @@ public final class ExtendedFluidChunkRenderer {
 										worldX,
 										worldY,
 										worldZ
-								), blockAccess, bufferBuilder);
+								), reader, bufferBuilder);
 								try {
 									usedBlockRenderLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
 											worldX,
@@ -150,11 +157,11 @@ public final class ExtendedFluidChunkRenderer {
 													worldY,
 													worldZ + zOffset
 											),
-											blockAccess,
+											reader,
 											fluidState,
 											bufferBuilder,
 											blockRendererDispatcher,
-											packedLightCache
+											lazyPackedLightCache
 									);
 								} finally {
 									OptiFineCompatibility.popShaderThing(bufferBuilder);

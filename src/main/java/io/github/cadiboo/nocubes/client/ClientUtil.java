@@ -237,6 +237,13 @@ public final class ClientUtil {
 	}
 
 	@Nonnull
+	@Deprecated
+	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockState state) {
+		return getCorrectRenderLayer(state.getBlock().getRenderLayer());
+	}
+
+	@Nonnull
+	@Deprecated
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IFluidState state) {
 		return getCorrectRenderLayer(state.getRenderLayer());
 	}
@@ -256,11 +263,11 @@ public final class ClientUtil {
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, ChunkRender renderChunk, BlockPos renderChunkPosition) {
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, ChunkRender chunkRender, BlockPos renderChunkPosition) {
 		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
-			renderChunk.preRenderBlocks(bufferBuilder, renderChunkPosition);
+			chunkRender.preRenderBlocks(bufferBuilder, renderChunkPosition);
 		}
 		return bufferBuilder;
 	}

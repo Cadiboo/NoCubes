@@ -99,10 +99,14 @@ public final class ExtendedFluidBlockRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			final float fluidHeight = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, renderX, renderY, renderZ, pooledMutableBlockPos);
-			final float fluidHeightSouth = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, renderX, renderY, renderZ + 1, pooledMutableBlockPos);
-			final float fluidHeightEastSouth = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, renderX + 1, renderY, renderZ + 1, pooledMutableBlockPos);
-			final float fluidHeightEast = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, renderX + 1, renderY, renderZ, pooledMutableBlockPos);
+			final int fluidX = fluidPos.getX();
+			final int fluidY = fluidPos.getY();
+			final int fluidZ = fluidPos.getZ();
+
+			final float fluidHeight = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, fluidX, fluidY, fluidZ, pooledMutableBlockPos);
+			final float fluidHeightSouth = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, fluidX, fluidY, fluidZ + 1, pooledMutableBlockPos);
+			final float fluidHeightEastSouth = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, fluidX + 1, fluidY, fluidZ + 1, pooledMutableBlockPos);
+			final float fluidHeightEast = smoothLightingFluidBlockRenderer.getFluidHeight(worldIn, fluid, fluidX + 1, fluidY, fluidZ, pooledMutableBlockPos);
 
 			final boolean smoothLighting = smoothLightingFluidBlockRenderer.smoothLighting();
 			final boolean colors = smoothLightingFluidBlockRenderer.colors();

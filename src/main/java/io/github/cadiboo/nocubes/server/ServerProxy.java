@@ -15,12 +15,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class ServerProxy implements Proxy {
 
 	@Override
-	public void markBlocksForUpdate(final int minX, final int minY, final int minZ, final int maxX, final int maxY, final int maxZ) {
-		// NOOP client only
-	}
-
-	@Override
-	public void replaceFluidRendererCauseImBored() {
+	public void replaceFluidRenderer() {
 		// NOOP client only
 	}
 

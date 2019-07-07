@@ -354,7 +354,9 @@ public final class ConfigHelper {
 				MYCELIUM.getDefaultState().with(MyceliumBlock.SNOWY, true),
 				MYCELIUM.getDefaultState().with(MyceliumBlock.SNOWY, false)
 
-		).stream().map(ConfigHelper::getStringFromState).collect(Collectors.toList());
+		).stream()
+				.map(ConfigHelper::getStringFromState)
+				.collect(Collectors.toList());
 
 		final List<String> moddedStates = Lists.newArrayList(
 
@@ -377,7 +379,10 @@ public final class ConfigHelper {
 				ACACIA_LEAVES,
 				DARK_OAK_LEAVES
 
-		).stream().map(Block::getRegistryName).map(ResourceLocation::toString).collect(Collectors.toList());
+		).stream()
+				.map(Block::getRegistryName)
+				.map(ResourceLocation::toString)
+				.collect(Collectors.toList());
 
 		final List<String> moddedStates = Lists.newArrayList(
 

@@ -62,6 +62,26 @@ public final class CollisionHandler {
 		return entity instanceof ItemEntity || entity instanceof LivingEntity;
 	}
 
+	@Nonnull
+	public static Stream<VoxelShape> getCollisionShapes(
+			final IWorldReader _this,
+			final Entity entity, final AxisAlignedBB aabb,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final ISelectionContext context
+	) {
+//		if (!Config.terrainCollisions) {
+			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		} else if (shouldApplyMeshCollisions(entity)) {
+//			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		} else if (shouldApplyReposeCollisions(entity)) {
+//			return getReposeCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		} else {
+//			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
+//		}
+	}
+
 	public static Stream<VoxelShape> getMeshCollisions(
 			final IWorldReader _this,
 			final Entity entity, final AxisAlignedBB aabb,
@@ -356,26 +376,6 @@ public final class CollisionHandler {
 				return true;
 			}
 		}, false);
-	}
-
-	@Nonnull
-	public static Stream<VoxelShape> getCollisionShapes(
-			final IWorldReader _this,
-			final Entity entity, final AxisAlignedBB aabb,
-			final int minXm1, final int maxXp1,
-			final int minYm1, final int maxYp1,
-			final int minZm1, final int maxZp1,
-			final ISelectionContext context
-	) {
-//		if (!Config.terrainCollisions) {
-		return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-//		} else if (shouldApplyMeshCollisions(entity)) {
-//			return getMeshCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-//		} else if (shouldApplyReposeCollisions(entity)) {
-//			return getReposeCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-//		} else {
-//			return getVanillaCollisions(_this, entity, aabb, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, context);
-//		}
 	}
 
 }

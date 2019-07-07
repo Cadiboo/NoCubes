@@ -536,7 +536,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
-		//TODO: do this better
+		// TODO: Do this better (Do the same thing as StolenReposeCode.getDensity)
 		if (Config.terrainCollisions) {
 			event.setCanceled(true);
 		}
