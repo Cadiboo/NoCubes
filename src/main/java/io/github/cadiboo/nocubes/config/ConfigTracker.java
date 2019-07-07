@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class ConfigTracker {
+public final class ConfigTracker {
 
 	public static final ConfigTracker INSTANCE = new ConfigTracker();
 	//	static final Marker CONFIG = MarkerManager.getMarker("CONFIG");

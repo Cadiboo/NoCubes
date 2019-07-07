@@ -24,52 +24,6 @@ import static io.github.cadiboo.nocubes.tempcore.NoCubesClassTransformer.start;
  */
 final class RenderChunkTransformer implements Opcodes {
 
-	// Local variable indexes
-	private static final int ALOCALVARIABLE_this = 0;
-	private static final int FLOCALVARIABLE_x = 1;
-	private static final int FLOCALVARIABLE_y = 2;
-	private static final int FLOCALVARIABLE_z = 3;
-	private static final int ALOCALVARIABLE_generator = 4;
-	private static final int ALOCALVARIABLE_compiledchunk = 5;
-	private static final int ILOCALVARIABLE_i_unused = 6;
-	private static final int ALOCALVARIABLE_blockpos_startPos = 7;
-	private static final int ALOCALVARIABLE_blockpos1_endPos = 8;
-	private static final int ALOCALVARIABLE_world = 9;
-	private static final int ALOCALVARIABLE_lvt_10_1__ChunkCache = 10;
-	private static final int ALOCALVARIABLE_lvt_11_1__VisGraph = 11;
-	private static final int ALOCALVARIABLE_lvt_12_1__HashSetTileEntities = 12;
-	private static final int ALOCALVARIABLE_aboolean_usedBlockRenderLayers = 13;
-	private static final int ALOCALVARIABLE_set_TileEntities = 13;
-	// signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-	// declaration: set extends java.util.Set<net.minecraft.tileentity.TileEntity>
-	private static final int ALOCALVARIABLE_random = 14;
-	private static final int ALOCALVARIABLE_set1_TileEntities = 14;
-	// signature Ljava/util/Set<Lnet/minecraft/tileentity/TileEntity;>;
-	// declaration: set1 extends java.util.Set<net.minecraft.tileentity.TileEntity>
-	private static final int ALOCALVARIABLE_blockrendererdispatcher = 15;
-	private static final int ALOCALVARIABLE_blockpos$mutableblockpos = 17;
-	//	private static final int ALOCALVARIABLE_iblockstate = 18;
-	private static final int ALOCALVARIABLE_block = 19;
-	private static final int ALOCALVARIABLE_blockrenderlayer = 19;
-	private static final int ALOCALVARIABLE_tileentity = 20;
-	private static final int ALOCALVARIABLE_ifluidstate = 20;
-	private static final int ALOCALVARIABLE_tileentityrenderer = 21;
-	// signature Lnet/minecraft/client/renderer/tileentity/TileEntityRenderer<Lnet/minecraft/tileentity/TileEntity;>;
-	// declaration: tileentityrenderer extends net.minecraft.client.renderer.tileentity.TileEntityRenderer<net.minecraft.tileentity.TileEntity>
-	private static final int ALOCALVARIABLE_blockrenderlayer1 = 24;
-	private static final int ILOCALVARIABLE_j = 25;
-	private static final int ILOCALVARIABLE_k = 25;
-	private static final int ALOCALVARIABLE_bufferbuilder = 26;
-	private static final int ALOCALVARIABLE_bufferbuilder1 = 26;
-
-	private static final int ALOAD_blockAccess_chunkCacheOF = 11;
-	private static final int ALOAD_aboolean = 12;
-	private static final int ALOAD_blockrendererdispatcher = 13;
-	private static final int ALOAD_blockpos$mutableblockpos = 17;
-	private static final int ALOAD_iblockstate = 18;
-	private static final int ALOAD_block = 19;
-	private static final int ALOAD_blockrenderlayer1 = 22;
-	private static final int ALOAD_bufferbuilder = 24;
 	private static boolean optifine;
 
 	static void transform(final ClassNode classNode) {
@@ -301,8 +255,7 @@ final class RenderChunkTransformer implements Opcodes {
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
 //	// NoCubes Start
-//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
-//	if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+//	if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(iblockstate))
 //	// NoCubes End
 //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
@@ -313,44 +266,33 @@ final class RenderChunkTransformer implements Opcodes {
 //    LINENUMBER 174 L54
 //   FRAME CHOP 2
 //    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
 //    GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
 //    IF_ACMPEQ L61
 //    ALOAD 18
 //    ALOAD 25
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
 //    IFEQ L61
 
-//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
+//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.func_215331_a (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
 //    IOR
 //    BASTORE
-//   L55
-//    LINENUMBER 179 L55
+//   L54
+//    LINENUMBER 192 L54
 //   FRAME CHOP 2
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
-//    IFEQ L62
 //    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isTerrainSmoothable ()Z (itf)
-//    IFNE L63
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.canBlockStateRender (Lnet/minecraft/block/BlockState;)Z
+//    IFEQ L61
 //   L62
-//    LINENUMBER 180 L62
-//   FRAME SAME
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
-//    IFEQ L64
+//    LINENUMBER 194 L62
 //    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isLeavesSmoothable ()Z (itf)
-//    IFNE L63
-//   L64
-//    LINENUMBER 181 L64
-//   FRAME SAME
-//    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//    GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//    IF_ACMPEQ L63
+//    INVOKEVIRTUAL net/minecraft/block/BlockState.getRenderType ()Lnet/minecraft/block/BlockRenderType;
+//    GETSTATIC net/minecraft/block/BlockRenderType.INVISIBLE : Lnet/minecraft/block/BlockRenderType;
+//    IF_ACMPEQ L61
 //    ALOAD 18
 //    ALOAD 25
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
-//    IFEQ L63
+//    INVOKEVIRTUAL net/minecraft/block/BlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z
+//    IFEQ L61
 
 		LabelNode blockCannotRenderLabel = null;
 
@@ -411,43 +353,22 @@ final class RenderChunkTransformer implements Opcodes {
 
 		// Labels n stuff
 		LabelNode originalInstructionsLabel = new LabelNode();
-		LabelNode renderSmoothLeavesChecksLabel = new LabelNode();
 
 		// Make list of instructions to inject
-		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
-		toInject.add(new JumpInsnNode(IFEQ, renderSmoothLeavesChecksLabel));
 		toInject.add(new VarInsnNode(ALOAD, optifine ? 18 : 15)); // iblockstate
 		toInject.add(new MethodInsnNode(
 				//int opcode
-				INVOKEINTERFACE,
+				INVOKESTATIC,
 				//String owner
-				"net/minecraft/block/state/IBlockProperties",
+				"io/github/cadiboo/nocubes/hooks/Hooks",
 				//String name
-				"nocubes_isTerrainSmoothable",
+				"canBlockStateRender",
 				//String descriptor
-				"()Z",
+				"(Lnet/minecraft/block/state/IBlockState;)Z",
 				//boolean isInterface
-				true
+				false
 		));
-		toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
-
-		toInject.add(renderSmoothLeavesChecksLabel);
-		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
-		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-		toInject.add(new VarInsnNode(ALOAD, optifine ? 18 : 15)); // iblockstate
-		toInject.add(new MethodInsnNode(
-				//int opcode
-				INVOKEINTERFACE,
-				//String owner
-				"net/minecraft/block/state/IBlockProperties",
-				//String name
-				"nocubes_isLeavesSmoothable",
-				//String descriptor
-				"()Z",
-				//boolean isInterface
-				true
-		));
-		toInject.add(new JumpInsnNode(IFNE, blockCannotRenderLabel));
+		toInject.add(new JumpInsnNode(IFEQ, blockCannotRenderLabel));
 
 		toInject.add(originalInstructionsLabel);
 

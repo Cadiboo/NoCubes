@@ -37,13 +37,24 @@ public final class ModelHelper {
 	public static final EnumFacing[] DIRECTION_QUADS_ORDERED = {
 			UP, null, DOWN, NORTH, EAST, SOUTH, WEST,
 	};
+	public static final int DIRECTION_QUADS_ORDERED_LENGTH = DIRECTION_QUADS_ORDERED.length;
 
 	@Nullable
-	public static List<BakedQuad> getQuads(IBlockState state, final BlockPos pos, final BufferBuilder bufferBuilder, final IBlockAccess blockAccess, final BlockRendererDispatcher blockRendererDispatcher, /*final IModelData modelData,*/ final long posRand, final BlockRenderLayer blockRenderLayer) {
+	public static List<BakedQuad> getQuads(
+			IBlockState state,
+			final BlockPos pos,
+			final BufferBuilder bufferBuilder,
+			final IBlockAccess reader,
+			final BlockRendererDispatcher blockRendererDispatcher,
+//			final IModelData modelData,
+//			final Random posRand,
+			final long posRand,
+			final BlockRenderLayer blockRenderLayer
+	) {
 
 		try (final ModProfiler ignored = ModProfiler.get().start("getActualState")) {
 			try {
-				state = state.getActualState(blockAccess, pos);
+				state = state.getActualState(reader, pos);
 			} catch (Exception ignored1) {
 			}
 		}
@@ -53,17 +64,17 @@ public final class ModelHelper {
 		Object renderEnv = null;
 
 		if (OPTIFINE_INSTALLED) {
-//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(blockAccess, state, pos);
-			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, blockAccess, state, pos);
+//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(reader, state, pos);
+			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, reader, state, pos);
 
 			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 		}
 
 		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
-			state = state.getBlock().getExtendedState(state, blockAccess, pos);
+			state = state.getBlock().getExtendedState(state, reader, pos);
 		}
 
-		for (int facingIndex = 0, enumfacing_quads_orderedLength = DIRECTION_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
+		for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
 			final EnumFacing facing = DIRECTION_QUADS_ORDERED[facingIndex];
 			List<BakedQuad> quads = model.getQuads(state, facing, posRand/*, modelData*/);
 			if (quads.isEmpty()) {
@@ -72,7 +83,7 @@ public final class ModelHelper {
 
 			if (OPTIFINE_INSTALLED) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-					quads = BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, posRand, renderEnv);
+					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, facing, blockRenderLayer, posRand, renderEnv);
 					if (quads.isEmpty()) {
 						continue;
 					}

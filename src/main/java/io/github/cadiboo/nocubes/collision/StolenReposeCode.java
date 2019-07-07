@@ -34,43 +34,7 @@ final class StolenReposeCode {
 			return;
 		}
 
-		float density = 0;
-		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try (
-				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density")
-		) {
-
-			final WorldBorder worldBorder = worldIn.getWorldBorder();
-
-			final int startX = posIn.getX();
-			final int startY = posIn.getY();
-			final int startZ = posIn.getZ();
-
-			for (int zOffset = 0; zOffset < 2; ++zOffset) {
-				for (int yOffset = 0; yOffset < 2; ++yOffset) {
-					for (int xOffset = 0; xOffset < 2; ++xOffset) {
-
-						pooledMutableBlockPos.setPos(
-								startX - xOffset,
-								startY - yOffset,
-								startZ - zOffset
-						);
-
-						// Return a fully solid cube if its not loaded
-						if (!worldIn.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
-							density += 1;
-							continue;
-						}
-
-						final IBlockState testState = worldIn.getBlockState(pooledMutableBlockPos);
-						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
-					}
-				}
-			}
-		} finally {
-			pooledMutableBlockPos.release();
-		}
-
+		final float density = getDensity(worldIn, posIn);
 		if (density > -1) {
 			return;
 		}
@@ -79,6 +43,45 @@ final class StolenReposeCode {
 		} else {
 			stateIn.addCollisionBoxToList(worldIn, posIn, entityBox, collidingBoxes, entityIn, isActualState);
 		}
+	}
+
+	private static float getDensity(final World reader, final BlockPos pos) {
+		float density = 0;
+		try (ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density")) {
+			PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+			try {
+				final WorldBorder worldBorder = reader.getWorldBorder();
+
+				final int startX = pos.getX();
+				final int startY = pos.getY();
+				final int startZ = pos.getZ();
+
+				for (int zOffset = 0; zOffset < 2; ++zOffset) {
+					for (int yOffset = 0; yOffset < 2; ++yOffset) {
+						for (int xOffset = 0; xOffset < 2; ++xOffset) {
+
+							pooledMutableBlockPos.setPos(
+									startX - xOffset,
+									startY - yOffset,
+									startZ - zOffset
+							);
+
+							// Return a fully solid cube if its not loaded
+							if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
+								density += 1;
+								continue;
+							}
+
+							final IBlockState testState = reader.getBlockState(pooledMutableBlockPos);
+							density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+						}
+					}
+				}
+			} finally {
+				pooledMutableBlockPos.release();
+			}
+		}
+		return density;
 	}
 
 	private static boolean canSlope(final IBlockState state) {

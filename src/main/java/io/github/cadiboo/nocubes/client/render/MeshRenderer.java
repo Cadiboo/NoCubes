@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -16,7 +17,9 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -24,6 +27,7 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
@@ -36,6 +40,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.registries.IRegistryDelegate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -46,13 +51,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
 import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED;
+import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED_LENGTH;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
 import static net.minecraft.util.EnumFacing.SOUTH;
 import static net.minecraft.util.EnumFacing.UP;
 import static net.minecraft.util.EnumFacing.WEST;
+import static net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
 
 /**
  * @author Cadiboo
@@ -60,7 +69,7 @@ import static net.minecraft.util.EnumFacing.WEST;
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public final class MeshRenderer {
 
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final Logger LOGGER = LogManager.getLogger("NoCubes MeshRenderer");
 
 	public static void renderMesh(
 			@Nonnull final RenderChunk chunkRender,
@@ -82,9 +91,8 @@ public final class MeshRenderer {
 			final boolean renderOppositeSides,
 			final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
 	) {
-
 		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
-
+			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = ClientUtil.getBlockColorsRegistry(Minecraft.getMinecraft().getBlockColors());
 			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
 				try (final Vec3b pos = entry.getKey()) {
 					try (final FaceList faces = entry.getValue()) {
@@ -101,9 +109,9 @@ public final class MeshRenderer {
 						final int initialPosZ = chunkRenderPosZ + pos.z;
 
 						//TODO use pos? (I've forgotten what this todo is even about)
-						final byte relativePosX = ClientUtil.getRelativePos(chunkRenderPosX, initialPosX);
-						final byte relativePosY = ClientUtil.getRelativePos(chunkRenderPosY, initialPosY);
-						final byte relativePosZ = ClientUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
+						final byte relativePosX = ModUtil.getRelativePos(chunkRenderPosX, initialPosX);
+						final byte relativePosY = ModUtil.getRelativePos(chunkRenderPosY, initialPosY);
+						final byte relativePosZ = ModUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
 
 						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
 
@@ -124,6 +132,7 @@ public final class MeshRenderer {
 									reader, blockRendererDispatcher, random,
 									usedBlockRenderLayers,
 									lazyPackedLightCache, lazyBlockColorCache,
+									blockColorsRegistry,
 									pos, faces,
 									pooledMutableBlockPos,
 									texturePooledMutableBlockPos, textureState,
@@ -150,7 +159,7 @@ public final class MeshRenderer {
 
 	}
 
-	public static void renderFaces(
+	private static void renderFaces(
 			@Nonnull final RenderChunk chunkRender,
 			@Nonnull final ChunkCompileTaskGenerator chunkRenderTask,
 			@Nonnull final CompiledChunk compiledChunk,
@@ -162,6 +171,7 @@ public final class MeshRenderer {
 			@Nonnull final boolean[] usedBlockRenderLayers,
 			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
+			@Nonnull final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry,
 			@Nonnull final Vec3b pos,
 			@Nonnull final FaceList faces,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
@@ -171,6 +181,25 @@ public final class MeshRenderer {
 	) {
 //		final IModelData modelData = chunkRenderTask.getModelData(texturePos);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
+
+		final boolean applyDiffuseLighting = Config.applyDiffuseLighting;
+		final boolean shortGrass = Config.shortGrass;
+
+		final boolean colorsCacheApplicableToTextureState = lazyBlockColorCache.shouldApply.test(textureState);
+
+		final int[] lazyBlockColorCacheCache = lazyBlockColorCache.cache;
+		final int lazyBlockColorCacheSizeX = lazyBlockColorCache.sizeX;
+		final int lazyBlockColorCacheSizeY = lazyBlockColorCache.sizeY;
+//		final int biomeBlendRadius = Minecraft.getInstance().gameSettings.biomeBlendRadius;
+		final int biomeBlendRadius = 3;
+		final int d = biomeBlendRadius * 2 + 1;
+		final int lazyBlockColorCacheArea = d * d;
+		final int lazyBlockColorCacheMax = biomeBlendRadius + 1;
+		final ColorResolver colorResolver = lazyBlockColorCache.colorResolver;
+
+		// TODO: Only get if required (on first use)
+		final IBlockColor textureColorGetter = blockColorsRegistry.get(textureState.getBlock().delegate);
+		final boolean textureColorGetterIsNonNull = textureColorGetter != null;
 
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
@@ -194,36 +223,35 @@ public final class MeshRenderer {
 						float diffuse1;
 						float diffuse2;
 						float diffuse3;
-						profiler.end(); // HACKY
-						profiler.start("calculateDiffuseLighting");
-						{
-							if (!Config.applyDiffuseLighting) {
-								diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
-							} else {
-								diffuse0 = diffuseLight(toSide(
-										v0.x - chunkRenderPosX - pos.x,
-										v0.y - chunkRenderPosY - pos.y,
-										v0.z - chunkRenderPosZ - pos.z
-								));
-								diffuse1 = diffuseLight(toSide(
-										v1.x - chunkRenderPosX - pos.x,
-										v1.y - chunkRenderPosY - pos.y,
-										v1.z - chunkRenderPosZ - pos.z
-								));
-								diffuse2 = diffuseLight(toSide(
-										v2.x - chunkRenderPosX - pos.x,
-										v2.y - chunkRenderPosY - pos.y,
-										v2.z - chunkRenderPosZ - pos.z
-								));
-								diffuse3 = diffuseLight(toSide(
-										v3.x - chunkRenderPosX - pos.x,
-										v3.y - chunkRenderPosY - pos.y,
-										v3.z - chunkRenderPosZ - pos.z
-								));
-							}
+
+						if (!applyDiffuseLighting) {
+							diffuse0 = diffuse1 = diffuse2 = diffuse3 = 1;
+						} else {
+							profiler.end(); // HACKY
+							profiler.start("calculateDiffuseLighting");
+							diffuse0 = diffuseLight(toSide(
+									v0.x - chunkRenderPosX - pos.x,
+									v0.y - chunkRenderPosY - pos.y,
+									v0.z - chunkRenderPosZ - pos.z
+							));
+							diffuse1 = diffuseLight(toSide(
+									v1.x - chunkRenderPosX - pos.x,
+									v1.y - chunkRenderPosY - pos.y,
+									v1.z - chunkRenderPosZ - pos.z
+							));
+							diffuse2 = diffuseLight(toSide(
+									v2.x - chunkRenderPosX - pos.x,
+									v2.y - chunkRenderPosY - pos.y,
+									v2.z - chunkRenderPosZ - pos.z
+							));
+							diffuse3 = diffuseLight(toSide(
+									v3.x - chunkRenderPosX - pos.x,
+									v3.y - chunkRenderPosY - pos.y,
+									v3.z - chunkRenderPosZ - pos.z
+							));
+							profiler.end();
+							profiler.start("renderMesh"); // HACKY
 						}
-						profiler.end();
-						profiler.start("renderMesh"); // HACKY
 
 						final int lightmapSkyLight0;
 						final int lightmapSkyLight1;
@@ -265,7 +293,7 @@ public final class MeshRenderer {
 						float colorGreen3 = -1;
 						float colorBlue3 = -1;
 
-						if (Config.shortGrass) {
+						if (shortGrass) {
 							profiler.end(); // HACKY
 							profiler.start("shortGrass");
 							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
@@ -287,9 +315,8 @@ public final class MeshRenderer {
 							profiler.start("renderMesh"); // HACKY
 						}
 
-						final BlockRenderLayer[] values = BlockRenderLayer.values();
-						for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
-							final BlockRenderLayer initialBlockRenderLayer = values[i];
+						for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
+							final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 							if (!textureState.getBlock().canRenderInLayer(textureState, initialBlockRenderLayer)) {
 								continue;
 							}
@@ -306,12 +333,12 @@ public final class MeshRenderer {
 
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
-//									random.setSeed(posRand);
-									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, reader, blockRendererDispatcher/*, modelData*/, posRand, correctedBlockRenderLayer);
+									random.setSeed(posRand);
+									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, reader, blockRendererDispatcher, /*modelData, random,*/ posRand, correctedBlockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();
-										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, DOWN, posRand).get(0));
+										quads.add(blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(null, DOWN, posRand /* random, modelData*/).get(0));
 									}
 								}
 
@@ -371,12 +398,13 @@ public final class MeshRenderer {
 									final float green3;
 									final float blue3;
 
-									if (quad.hasTintIndex() || BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
+									final boolean hasTintIndex = quad.hasTintIndex();
+									if (BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
 										if (!hasSetColors) {
 											profiler.end(); // HACKY
 											try (
 													final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
-													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ)
+													final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyBlockColorCacheCache, lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY, biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax, reader, colorResolver, true, pooledMutableBlockPos)
 											) {
 												colorRed0 = blockColorInfo.red0;
 												colorGreen0 = blockColorInfo.green0;
@@ -406,6 +434,89 @@ public final class MeshRenderer {
 										red3 = colorRed3;
 										green3 = colorGreen3;
 										blue3 = colorBlue3;
+									} else if (hasTintIndex) {
+										if (colorsCacheApplicableToTextureState) {
+											if (!hasSetColors) {
+												profiler.end(); // HACKY
+												try (
+														final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
+														final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(lazyBlockColorCache, v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyBlockColorCacheCache, lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY, biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax, reader, colorResolver, true, pooledMutableBlockPos)
+												) {
+													colorRed0 = blockColorInfo.red0;
+													colorGreen0 = blockColorInfo.green0;
+													colorBlue0 = blockColorInfo.blue0;
+													colorRed1 = blockColorInfo.red1;
+													colorGreen1 = blockColorInfo.green1;
+													colorBlue1 = blockColorInfo.blue1;
+													colorRed2 = blockColorInfo.red2;
+													colorGreen2 = blockColorInfo.green2;
+													colorBlue2 = blockColorInfo.blue2;
+													colorRed3 = blockColorInfo.red3;
+													colorGreen3 = blockColorInfo.green3;
+													colorBlue3 = blockColorInfo.blue3;
+												}
+												hasSetColors = true;
+												profiler.start("renderMesh"); // HACKY
+											}
+											red0 = colorRed0;
+											green0 = colorGreen0;
+											blue0 = colorBlue0;
+											red1 = colorRed1;
+											green1 = colorGreen1;
+											blue1 = colorBlue1;
+											red2 = colorRed2;
+											green2 = colorGreen2;
+											blue2 = colorBlue2;
+											red3 = colorRed3;
+											green3 = colorGreen3;
+											blue3 = colorBlue3;
+										} else { // don't use cache
+											if (textureColorGetterIsNonNull) {
+												final int tintIndex = quad.getTintIndex();
+												profiler.end(); // HACKY
+												try (
+														final ModProfiler ignored = ModProfiler.get().start("generateBlockColorInfo");
+														final BlockColorInfo blockColorInfo = BlockColorInfo.generateBlockColorInfo(
+																lazyBlockColorCache, v0, v1, v2, v3,
+																chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+																lazyBlockColorCacheCache,
+																lazyBlockColorCacheSizeX, lazyBlockColorCacheSizeY,
+																biomeBlendRadius, lazyBlockColorCacheArea, lazyBlockColorCacheMax,
+																reader,
+																(ignored1, colorPos) -> textureColorGetter.colorMultiplier(textureState, reader, colorPos, tintIndex),
+																false,
+																pooledMutableBlockPos
+														)
+												) {
+													red0 = blockColorInfo.red0;
+													green0 = blockColorInfo.green0;
+													blue0 = blockColorInfo.blue0;
+													red1 = blockColorInfo.red1;
+													green1 = blockColorInfo.green1;
+													blue1 = blockColorInfo.blue1;
+													red2 = blockColorInfo.red2;
+													green2 = blockColorInfo.green2;
+													blue2 = blockColorInfo.blue2;
+													red3 = blockColorInfo.red3;
+													green3 = blockColorInfo.green3;
+													blue3 = blockColorInfo.blue3;
+												}
+												profiler.start("renderMesh"); // HACKY
+											} else {
+												red0 = 1F;
+												green0 = 1F;
+												blue0 = 1F;
+												red1 = 1F;
+												green1 = 1F;
+												blue1 = 1F;
+												red2 = 1F;
+												green2 = 1F;
+												blue2 = 1F;
+												red3 = 1F;
+												green3 = 1F;
+												blue3 = 1F;
+											}
+										}
 									} else {
 										red0 = 1F;
 										green0 = 1F;
@@ -451,7 +562,6 @@ public final class MeshRenderer {
 		}
 	}
 
-	//TODO: fix bad lighting fix
 	private static void renderShortGrass(
 			@Nonnull final RenderChunk chunkRender, @Nonnull final ChunkCompileTaskGenerator chunkRenderTask, @Nonnull final CompiledChunk compiledChunk,
 			@Nonnull final BlockPos chunkRenderPos,
@@ -480,7 +590,7 @@ public final class MeshRenderer {
 			return;
 		}
 		final IBlockState blockStateUp = reader.getBlockState(pooledMutableBlockPos);
-		if (blockStateUp == grassPlantState) {
+		if (blockStateUp == grassPlantState || blockStateUp == StateHolder.TALL_GRASS_PLANT_BOTTOM) {
 			return;
 		}
 		if (blockStateUp.isOpaqueCube(/*reader, pooledMutableBlockPos*/)) {
@@ -520,9 +630,8 @@ public final class MeshRenderer {
 		final int green = (color & 0x00FF00) >> 8;
 		final int blue = (color & 0x0000FF);
 
-		final BlockRenderLayer[] values = BlockRenderLayer.values();
-		for (int i = 0, valuesLength = values.length; i < valuesLength; ++i) {
-			final BlockRenderLayer initialBlockRenderLayer = values[i];
+		for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
+			final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 			if (!grassPlantState.getBlock().canRenderInLayer(grassPlantState, initialBlockRenderLayer)) {
 				continue;
 			}
@@ -537,10 +646,10 @@ public final class MeshRenderer {
 			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
 			try {
 
-				for (int facingIndex = 0, enumfacing_quads_orderedLength = DIRECTION_QUADS_ORDERED.length; facingIndex < enumfacing_quads_orderedLength; ++facingIndex) {
-					final EnumFacing facing = DIRECTION_QUADS_ORDERED[facingIndex];
-//					random.setSeed(posRand);
-					final List<BakedQuad> quads = model.getQuads(grassPlantState, facing, posRand);
+				for (int directionIndex = 0; directionIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++directionIndex) {
+					final EnumFacing direction = DIRECTION_QUADS_ORDERED[directionIndex];
+					random.setSeed(posRand);
+					final List<BakedQuad> quads = model.getQuads(grassPlantState, direction, posRand /*random*/);
 					for (int quadIndex = 0, quadsSize = quads.size(); quadIndex < quadsSize; ++quadIndex) {
 						final BakedQuad quad = quads.get(quadIndex);
 						wasAnythingRendered = true;
@@ -776,32 +885,28 @@ public final class MeshRenderer {
 						final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
 						final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
 
-						// Weird stuff is going on with emissive lighting > 1.12.2.
-						// It could be the new model system, it could be something else.
-						// Anyway, not many people are likely to complain about emissive lighting on grass
+						final int quadPackedLight0 = vertexData[6];
+						final int quadPackedLight1 = vertexData[formatSize + 6];
+						final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
+						final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
 
-//						final int quadPackedLight0 = vertexData[6];
-//						final int quadPackedLight1 = vertexData[formatSize + 6];
-//						final int quadPackedLight2 = vertexData[formatSize * 2 + 6];
-//						final int quadPackedLight3 = vertexData[formatSize * 3 + 6];
-//
-//						final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
-//						final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
-//						final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
-//						final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
-//						final int quadBlockLight0 = quadPackedLight0 & 0xFF;
-//						final int quadBlockLight1 = quadPackedLight1 & 0xFF;
-//						final int quadBlockLight2 = quadPackedLight2 & 0xFF;
-//						final int quadBlockLight3 = quadPackedLight3 & 0xFF;
+						final int quadSkyLight0 = (quadPackedLight0 >> 16) & 0xFF;
+						final int quadSkyLight1 = (quadPackedLight1 >> 16) & 0xFF;
+						final int quadSkyLight2 = (quadPackedLight2 >> 16) & 0xFF;
+						final int quadSkyLight3 = (quadPackedLight3 >> 16) & 0xFF;
+						final int quadBlockLight0 = quadPackedLight0 & 0xFF;
+						final int quadBlockLight1 = quadPackedLight1 & 0xFF;
+						final int quadBlockLight2 = quadPackedLight2 & 0xFF;
+						final int quadBlockLight3 = quadPackedLight3 & 0xFF;
 
-						final int quadSkyLight0 = 0;
-						final int quadSkyLight1 = 0;
-						final int quadSkyLight2 = 0;
-						final int quadSkyLight3 = 0;
-						final int quadBlockLight0 = 0;
-						final int quadBlockLight1 = 0;
-						final int quadBlockLight2 = 0;
-						final int quadBlockLight3 = 0;
+//						final int quadSkyLight0 = 0;
+//						final int quadSkyLight1 = 0;
+//						final int quadSkyLight2 = 0;
+//						final int quadSkyLight3 = 0;
+//						final int quadBlockLight0 = 0;
+//						final int quadBlockLight1 = 0;
+//						final int quadBlockLight2 = 0;
+//						final int quadBlockLight3 = 0;
 
 						bufferBuilder.pos(offX + r0x, offY + r0y, offZ + r0z).color(red, green, blue, 255).tex(v0u, v0v).lightmap((quadSkyLight0 >= lightmapSkyLight0) ? quadSkyLight0 : lightmapSkyLight0, (quadBlockLight0 >= lightmapBlockLight0) ? quadBlockLight0 : lightmapBlockLight0).endVertex();
 						bufferBuilder.pos(offX + r1x, offY + r1y, offZ + r1z).color(red, green, blue, 255).tex(v1u, v1v).lightmap((quadSkyLight1 >= lightmapSkyLight1) ? quadSkyLight1 : lightmapSkyLight1, (quadBlockLight1 >= lightmapBlockLight1) ? quadBlockLight1 : lightmapBlockLight1).endVertex();
@@ -830,31 +935,15 @@ public final class MeshRenderer {
 	}
 
 	private static double max(double d0, final double d1, final double d2, final double d3) {
-		if (d0 < d1) {
-			d0 = d1;
-		}
-		if (d0 < d2) {
-			d0 = d2;
-		}
-		if (d0 < d3) {
-			return d3;
-		} else {
-			return d0;
-		}
+		if (d0 < d1) d0 = d1;
+		if (d0 < d2) d0 = d2;
+		return d0 < d3 ? d3 : d0;
 	}
 
 	private static double min(double d0, final double d1, final double d2, final double d3) {
-		if (d0 > d1) {
-			d0 = d1;
-		}
-		if (d0 > d2) {
-			d0 = d2;
-		}
-		if (d0 > d3) {
-			return d3;
-		} else {
-			return d0;
-		}
+		if (d0 > d1) d0 = d1;
+		if (d0 > d2) d0 = d2;
+		return d0 > d3 ? d3 : d0;
 	}
 
 	private static EnumFacing toSide(final double x, final double y, final double z) {

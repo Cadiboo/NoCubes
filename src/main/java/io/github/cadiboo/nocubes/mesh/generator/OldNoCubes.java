@@ -10,7 +10,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
@@ -18,11 +17,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.HashMap;
 
+import static io.github.cadiboo.nocubes.util.ModUtil.DIRECTION_VALUES;
+import static io.github.cadiboo.nocubes.util.ModUtil.DIRECTION_VALUES_LENGTH;
+
 /**
  * @author Cadiboo
  * @author Click_Me
  */
-public class OldNoCubes implements MeshGenerator {
+public final class OldNoCubes implements MeshGenerator {
 
 	// Points order
 	public static final int X0Y0Z0 = 0;
@@ -35,21 +37,22 @@ public class OldNoCubes implements MeshGenerator {
 	public static final int X0Y1Z1 = 7;
 
 	/**
-	 * @param chunkPos              the position of the chunk
-	 * @param blockAccess           the IBlockAccess
-	 * @param isSmoothable          the smoothable function
-	 * @param pooledMutableBlockPos
-	 * @return the chunk data
+	 * @param chunkPos              The position of the chunk
+	 * @param reader                The {@link IBlockAccess}
+	 * @param isSmoothable          The {@link IsSmoothable} function
+	 * @param pooledMutableBlockPos The {@link PooledMutableBlockPos} to use
+	 * @return The chunk data
 	 */
 	// TODO: state caches etc.
 	@Nonnull
-	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static HashMap<Vec3b, FaceList> generateChunk(@Nonnull final BlockPos chunkPos, @Nonnull final IBlockAccess reader, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		final HashMap<Vec3b, FaceList> map = new HashMap<>();
-		for (final MutableBlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
+		for (final BlockPos pos : BlockPos.getAllInBoxMutable(chunkPos, chunkPos.add(15, 15, 15))) {
 
-			final FaceList faces = generateBlock(pos, blockAccess, isSmoothable, pooledMutableBlockPos);
+			final FaceList faces = generateBlock(pos, reader, isSmoothable, pooledMutableBlockPos);
 
 			map.put(Vec3b.retain(
+					// TODO: {@link ModUtil.getRelativePos}?
 					// Convert block pos to relative block pos
 					// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
 					(byte) (pos.getX() & 15), (byte) (pos.getY() & 15), (byte) (pos.getZ() & 15)
@@ -58,26 +61,35 @@ public class OldNoCubes implements MeshGenerator {
 		return map;
 	}
 
+	/**
+	 * @param pos                   The position of the block
+	 * @param reader                The {@link IBlockAccess}
+	 * @param isSmoothable          The {@link IsSmoothable} function
+	 * @param pooledMutableBlockPos The {@link PooledMutableBlockPos} to use
+	 * @return The face list for the pos
+	 */
 	@Nonnull
-	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess reader, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		final int posX = pos.getX();
 		final int posY = pos.getY();
 		final int posZ = pos.getZ();
 
+		// TODO: {@link ModUtil.getRelativePos}?
 		// Convert block pos to relative block pos
 		// For example 68 -> 4, 127 -> 15, 4 -> 4, 312312312 -> 8
 		final int relativePosX = posX & 15;
 		final int relativePosY = posY & 15;
 		final int relativePosZ = posZ & 15;
 
-		final IBlockState state = blockAccess.getBlockState(pos);
-		final Vec3[] points = getPoints(posX, posY, posZ, relativePosX, relativePosY, relativePosZ, state, blockAccess, isSmoothable, pooledMutableBlockPos);
+		final IBlockState state = reader.getBlockState(pos);
+		final Vec3[] points = getPoints(posX, posY, posZ, relativePosX, relativePosY, relativePosZ, state, reader, isSmoothable, pooledMutableBlockPos);
 		final FaceList faces = FaceList.retain();
 
 		if (points != null) {
-			for (final EnumFacing facing : EnumFacing.values()) {
-				if (isSmoothable.apply(blockAccess.getBlockState(pooledMutableBlockPos.setPos(pos).offset(facing)))) {
+			for (int i = 0; i < DIRECTION_VALUES_LENGTH; ++i) {
+				final EnumFacing direction = DIRECTION_VALUES[i];
+				if (isSmoothable.apply(reader.getBlockState(pooledMutableBlockPos.setPos(pos).move(direction)))) {
 					continue;
 				}
 
@@ -90,7 +102,7 @@ public class OldNoCubes implements MeshGenerator {
 				//1-2
 				//0,0-1,0
 				//0,1-1,1
-				switch (facing) {
+				switch (direction) {
 					default:
 					case DOWN:
 						vertex0 = points[X0Y0Z1];
@@ -138,16 +150,29 @@ public class OldNoCubes implements MeshGenerator {
 				));
 			}
 
-			for (final Vec3 point : points) {
-				point.close();
+			for (int i = 0, pointsLength = points.length; i < pointsLength; i++) {
+				points[i].close();
 			}
 
 		}
 		return faces;
 	}
 
+	/**
+	 * @param posX                  The X position of the block
+	 * @param posY                  The Y position of the block
+	 * @param posZ                  The Z position of the block
+	 * @param relativePosX          I've forgotten what, if anything, this is meant to be used for
+	 * @param relativePosY          I've forgotten what, if anything, this is meant to be used for
+	 * @param relativePosZ          I've forgotten what, if anything, this is meant to be used for
+	 * @param state                 The {@link IBlockState}
+	 * @param reader                The {@link IBlockAccess}
+	 * @param isSmoothable          The {@link IsSmoothable} function
+	 * @param pooledMutableBlockPos The {@link PooledMutableBlockPos} to use
+	 * @return The (smoothed) 8 points that make the block
+	 */
 	@Nullable
-	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess reader, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
 		if (!isSmoothable.apply(state)) {
 			return null;
@@ -177,10 +202,10 @@ public class OldNoCubes implements MeshGenerator {
 			point.y += posY;
 			point.z += posZ;
 
-			if (!doesPointIntersectWithManufactured(blockAccess, point, pooledMutableBlockPos)) {
-				if ((pointIndex < 4) && (doesPointBottomIntersectWithAir(blockAccess, point, pooledMutableBlockPos))) {
+			if (!doesPointIntersectWithManufactured(reader, point, isSmoothable, pooledMutableBlockPos)) {
+				if ((pointIndex < 4) && (doesPointBottomIntersectWithAir(reader, point, pooledMutableBlockPos))) {
 					point.y = posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-				} else if ((pointIndex >= 4) && (doesPointTopIntersectWithAir(blockAccess, point, pooledMutableBlockPos))) {
+				} else if ((pointIndex >= 4) && (doesPointTopIntersectWithAir(reader, point, pooledMutableBlockPos))) {
 					point.y = posY + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
 				}
 //				if (ModConfig.offsetVertices) {
@@ -268,16 +293,16 @@ public class OldNoCubes implements MeshGenerator {
 		return (intersects) && (notOnly);
 	}
 
-	public static boolean doesPointIntersectWithManufactured(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
+	public static boolean doesPointIntersectWithManufactured(@Nonnull final IBlockAccess world, @Nonnull final Vec3 point, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 		for (int i = 0; i < 4; i++) {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			IBlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if ((!isBlockAirOrPlant(state0)) && (!IsSmoothable.TERRAIN_SMOOTHABLE.apply(state0))) {
+			if ((!isBlockAirOrPlant(state0)) && (!isSmoothable.apply(state0))) {
 				return true;
 			}
 			IBlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if ((!isBlockAirOrPlant(state1)) && (!IsSmoothable.TERRAIN_SMOOTHABLE.apply(state1))) {
+			if ((!isBlockAirOrPlant(state1)) && (!isSmoothable.apply(state1))) {
 				return true;
 			}
 		}
@@ -298,7 +323,7 @@ public class OldNoCubes implements MeshGenerator {
 
 	@Nonnull
 	@Override
-	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable) {
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess reader, @Nonnull final IsSmoothable isSmoothable) {
 		throw new UnsupportedOperationException();
 	}
 

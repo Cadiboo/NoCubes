@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class DensityCache extends XYZCache implements AutoCloseable {
+public final class DensityCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0, 0, 0, 0));
 
@@ -31,9 +31,9 @@ public class DensityCache extends XYZCache implements AutoCloseable {
 
 		final DensityCache pooled = POOL.get();
 
-//		if (pooled.inUse) {
-//			throw new IllegalStateException("DensityCache is already in use!");
-//		}
+		if (pooled.inUse) {
+			throw new IllegalStateException("DensityCache is already in use!");
+		}
 		pooled.inUse = true;
 
 		pooled.startPaddingX = startPaddingX;

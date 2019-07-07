@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client.gui.config;
 import java.util.function.Function;
 
 //@OnlyIn(Dist.CLIENT)
-public class EnumOption extends Option {
+public final  class EnumOption extends Option {
 
 	private final Function<Integer, Integer> cycler;
 	private final Function<EnumOption, String> translatedNameGetter;

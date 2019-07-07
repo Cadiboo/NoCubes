@@ -27,7 +27,7 @@ public class ReflectionClassHelper {
 
 	@SuppressWarnings("unchecked")
 	@Nonnull
-	public static Class<? super Object> getClass(@Nonnull final ClassLoader loader, @Nonnull final String className) {
+	public static Class<? super Object> findClass(@Nonnull final ClassLoader loader, @Nonnull final String className) {
 		try {
 			return (Class<? super Object>) Class.forName(className, false, loader);
 		} catch (Exception e) {

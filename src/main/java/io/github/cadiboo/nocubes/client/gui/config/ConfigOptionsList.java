@@ -26,7 +26,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-class ConfigOptionsList extends GuiListExtended {
+final class ConfigOptionsList extends GuiListExtended {
 
 	private static final Joiner DOT_JOINER = Joiner.on(".");
 	final List<Entry> entries;
@@ -82,7 +82,11 @@ class ConfigOptionsList extends GuiListExtended {
 		} else if (configValue instanceof EnumValue<?>) {
 			return new EnumValueEntry<>((EnumValue<?>) configValue, name, configSupplier);
 		} else {
-			return new NotImplementedValueEntry<>(configValue, name, configSupplier);
+			try {
+				return new ListValueEntry<>((ConfigValue<List<? extends String>>) configValue, name, configSupplier);
+			} catch (Exception e) {
+				return new NotImplementedValueEntry<>(configValue, name, configSupplier);
+			}
 		}
 	}
 
@@ -155,7 +159,7 @@ class ConfigOptionsList extends GuiListExtended {
 	}
 
 	//	@OnlyIn(Dist.CLIENT)
-	class CategoryEntry extends ConfigOptionsList.Entry {
+	final class CategoryEntry extends ConfigOptionsList.Entry {
 
 		private final String labelText;
 		private final int labelWidth;
@@ -239,7 +243,7 @@ class ConfigOptionsList extends GuiListExtended {
 	}
 
 	//	@OnlyIn(Dist.CLIENT)
-	class BooleanValueEntry extends ValueEntry<Boolean> {
+	final class BooleanValueEntry extends ValueEntry<Boolean> {
 
 		BooleanValueEntry(final BooleanValue booleanValue, final String name, final Supplier<ModConfig> configSupplier) {
 			super(booleanValue, name, configSupplier);
@@ -254,7 +258,7 @@ class ConfigOptionsList extends GuiListExtended {
 	}
 
 	//	@OnlyIn(Dist.CLIENT)
-	class EnumValueEntry<T extends Enum<T>> extends ValueEntry<T> {
+	final class EnumValueEntry<T extends Enum<T>> extends ValueEntry<T> {
 
 		final T[] values;
 
@@ -282,7 +286,29 @@ class ConfigOptionsList extends GuiListExtended {
 
 	}
 
-	private class NotImplementedValueEntry<T> extends ValueEntry<T> {
+	final class ListValueEntry<T> extends ValueEntry<List<? extends T>> {
+
+		ListValueEntry(final ConfigValue<List<? extends T>> listValue, final String name, final Supplier<ModConfig> configSupplier) {
+			super(listValue, name, configSupplier);
+		}
+
+		@Override
+		protected OptionButton makeWidget() {
+			return new ListOption(this.text, () -> this.currentValue.stream().map(Object::toString).toArray(String[]::new), this::handleChanged)
+					.createWidget((configGui.width / 4) * 3);
+		}
+
+		private void handleChanged(final String[] newValue) {
+			final ArrayList<T> list = new ArrayList<>();
+			for (String str : newValue) {
+				list.add((T) str);
+			}
+			this.handleChanged(list);
+		}
+
+	}
+
+	private final class NotImplementedValueEntry<T> extends ValueEntry<T> {
 
 		NotImplementedValueEntry(final ConfigValue<T> configValue, final String name, final Supplier<ModConfig> configSupplier) {
 			super(configValue, name, configSupplier);

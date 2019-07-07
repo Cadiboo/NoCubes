@@ -188,8 +188,7 @@ public class RenderChunk
                 int j = blockrenderlayer1.ordinal();
 
                 // NoCubes Start
-                if (!io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable())
-                if (!io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable())
+                if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(iblockstate))
                 // NoCubes End
                 if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE)
                 {

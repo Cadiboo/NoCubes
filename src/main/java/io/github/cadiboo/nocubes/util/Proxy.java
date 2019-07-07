@@ -16,7 +16,7 @@ public interface Proxy {
 
 	void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately);
 
-	void replaceFluidRendererCauseImBored();
+	void replaceFluidRenderer();
 
 	default void preloadClasses() {
 		preloadClass("net.minecraft.block.state.IBlockProperties", "IBlockProperties");

@@ -17,11 +17,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -38,11 +40,13 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
@@ -65,10 +69,13 @@ public final class ClientEventSubscriber {
 
 		if (event.phase != TickEvent.Phase.END) return;
 
-//		if (false)
-//		ObjectPoolingProfiler.onTick();
-
 		final Minecraft minecraft = Minecraft.getMinecraft();
+
+		final NetHandlerPlayClient connection = minecraft.getConnection();
+		if (connection != null && NetworkDispatcher.get(connection.getNetworkManager()).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
+			Config.terrainCollisions = false;
+		}
+
 		final EntityPlayerSP player = minecraft.player;
 
 //		// TODO: Temp!
@@ -107,35 +114,58 @@ public final class ClientEventSubscriber {
 		//Collisions
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
-				final boolean setTo;
-				if (!Config.terrainCollisions) {
-					if (canEnableTerrainCollisions(minecraft, player)) {
-						ConfigHelper.setTerrainCollisions(true);
-						setTo = true;
-						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsEnabledWarning"));
-						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getDisplayName())));
-					} else {
-						setTo = Config.terrainCollisions;
-						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotOnFlat"));
-					}
+//				player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsBroken114"));
+				if (!minecraft.isSingleplayer()) {
+					// TODO: Send packet to server requesting enabling collisions?
+					player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotSingleplayer"));
 				} else {
-					ConfigHelper.setTerrainCollisions(false);
-					setTo = false;
-					player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisabled"));
+					final boolean setTo;
+					if (!Config.terrainCollisions) {
+						if (canEnableTerrainCollisions(minecraft, player)) {
+							ConfigHelper.setTerrainCollisions(true);
+							setTo = true;
+							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsEnabledWarning"));
+							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getDisplayName())));
+						} else {
+							setTo = Config.terrainCollisions;
+							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotOnFlat"));
+						}
+					} else {
+						ConfigHelper.setTerrainCollisions(false);
+						setTo = false;
+						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisabled"));
+					}
+					// Config saving is async so set it now
+					Config.terrainCollisions = setTo;
 				}
-				// Config saving is async so set it now
-				Config.terrainCollisions = setTo;
 			}
 		}
 
 		//Smoothables
+		SMOOTHABLES:
 		{
-			if (ClientProxy.toggleTerrainSmoothableBlockState.isPressed()) {
-				final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
-				if (objectMouseOver.typeOfHit == BLOCK) {
-					BlockPos blockPos = objectMouseOver.getBlockPos();
-					final IBlockState state = minecraft.world.getBlockState(blockPos);
+			final boolean terrainPressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
+			final boolean leavesPressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
+			if (!terrainPressed && !leavesPressed) {
+				break SMOOTHABLES;
+			}
 
+			final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
+			if (objectMouseOver.typeOfHit != BLOCK) {
+				break SMOOTHABLES;
+			}
+
+//			final BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
+			final BlockPos blockPos = objectMouseOver.getBlockPos();
+			final IBlockState state = minecraft.world.getBlockState(blockPos);
+
+			if (terrainPressed) {
+				if (!minecraft.isSingleplayer()) {
+					// TODO: Send packet to server requesting adding terrain smoothable?
+					player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainSmoothableNotSingleplayer"));
+				}
+//				else // FIXME: Commented out to let people still do it, for the time being
+				{
 					final BlockStateToast toast;
 					if (!state.nocubes_isTerrainSmoothable()) {
 						ConfigHelper.addTerrainSmoothable(state);
@@ -151,25 +181,19 @@ public final class ClientEventSubscriber {
 					}
 				}
 			}
-			if (ClientProxy.toggleLeavesSmoothableBlockState.isPressed()) {
-				final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
-				if (objectMouseOver.typeOfHit == BLOCK) {
-					BlockPos blockPos = objectMouseOver.getBlockPos();
-					final IBlockState state = minecraft.world.getBlockState(blockPos);
+			if (leavesPressed) {
+				final BlockStateToast toast;
+				if (!state.nocubes_isLeavesSmoothable()) {
+					ConfigHelper.addLeavesSmoothable(state);
+					toast = new BlockStateToast.AddLeaves(state, blockPos);
+				} else {
+					ConfigHelper.removeLeavesSmoothable(state);
+					toast = new BlockStateToast.RemoveLeaves(state, blockPos);
+				}
+				minecraft.getToastGui().add(toast);
 
-					final BlockStateToast toast;
-					if (!state.nocubes_isLeavesSmoothable()) {
-						ConfigHelper.addLeavesSmoothable(state);
-						toast = new BlockStateToast.AddLeaves(state, blockPos);
-					} else {
-						ConfigHelper.removeLeavesSmoothable(state);
-						toast = new BlockStateToast.RemoveLeaves(state, blockPos);
-					}
-					minecraft.getToastGui().add(toast);
-
-					if (Config.renderSmoothLeaves) {
-						ClientUtil.tryReloadRenderers();
-					}
+				if (Config.renderSmoothLeaves) {
+					ClientUtil.tryReloadRenderers();
 				}
 			}
 		}
@@ -382,9 +406,12 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
 
-		if (true) return;
-
 		final Minecraft minecraft = Minecraft.getMinecraft();
+
+		final GameSettings gameSettings = minecraft.gameSettings;
+		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI) {
+			return;
+		}
 
 		final EntityPlayer player = minecraft.player;
 		if (player == null) {
@@ -409,8 +436,13 @@ public final class ClientEventSubscriber {
 		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
 		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
 		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
-		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, player.getEntityBoundingBox().grow(2))) {
-			RenderGlobal.drawSelectionBoundingBox(voxelShape.grow(0.0020000000949949026D).offset(-d0, -d1, -d2), 0.0F, 1, 1, 0.4F);
+		// Draw nearby collisions
+		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()).grow(3))) {
+			RenderGlobal.drawSelectionBoundingBox(voxelShape.offset(-d0, -d1, -d2), 0, 1, 1, 0.4F);
+		}
+		// Draw player intersecting collisions
+		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()))) {
+			RenderGlobal.drawSelectionBoundingBox(voxelShape.offset(-d0, -d1, -d2), 1, 0, 0, 0.4F);
 		}
 		GlStateManager.popMatrix();
 		GlStateManager.matrixMode(5888);

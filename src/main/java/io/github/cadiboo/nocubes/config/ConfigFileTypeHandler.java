@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Function;
 
-public class ConfigFileTypeHandler {
+public final class ConfigFileTypeHandler {
 
 	private static final Logger LOGGER = LogManager.getLogger();
 	static ConfigFileTypeHandler TOML = new ConfigFileTypeHandler();

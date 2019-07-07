@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class SurfaceNets implements MeshGenerator {
+public final class SurfaceNets implements MeshGenerator {
 
 	private static final int[] CUBE_EDGES = new int[24];
 	private static final int[] EDGE_TABLE = new int[256];

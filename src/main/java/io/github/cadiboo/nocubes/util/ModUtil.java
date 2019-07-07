@@ -4,7 +4,10 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnow;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
@@ -23,14 +26,17 @@ import static net.minecraft.init.Blocks.SNOW_LAYER;
 @SuppressWarnings("WeakerAccess")
 public final class ModUtil {
 
-	private static final Random RANDOM = new Random();
+	// TODO: Remove once Direction.VALUES is ATed
+	public static final EnumFacing[] DIRECTION_VALUES = EnumFacing.VALUES;
+	public static final int DIRECTION_VALUES_LENGTH = DIRECTION_VALUES.length;
+	public static final Random RANDOM = new Random();
 
 	/**
-	 * @return negative density if the block is smoothable (inside the isosurface), positive if it isn't
+	 * @return Negative density if the block is smoothable (inside the isosurface), positive if it isn't
 	 */
 	public static float getIndividualBlockDensity(final boolean shouldSmooth, final IBlockState state) {
 		if (shouldSmooth) {
-			if (state.getBlock() == SNOW_LAYER) {
+			if (state.getBlock() == SNOW_LAYER) { // Snow layer
 				final int value = state.getValue(BlockSnow.LAYERS);
 				if (value == 1) { // zero-height snow layer
 					return 1;
@@ -41,6 +47,7 @@ public final class ModUtil {
 				return state.getBlock() == BEDROCK ? -1.0005F : -1;
 			}
 		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
+//		} else if (state.isSolid()) {
 			return 0F;
 		} else {
 			return 1;
@@ -53,7 +60,7 @@ public final class ModUtil {
 	 *
 	 * @param vec3 the vec3
 	 */
-	public static Vec3 offsetVertex(Vec3 vec3) {
+	public static Vec3 offsetVertex(final Vec3 vec3) {
 		long rand = (long) (vec3.x * 3129871.0D) ^ (long) vec3.z * 116129781L ^ (long) vec3.y;
 		rand = rand * rand * 42317861L + rand * 11;
 		vec3.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
@@ -72,6 +79,7 @@ public final class ModUtil {
 		new Thread(() -> {
 			while (true) {
 
+//				final VersionChecker.CheckResult checkResult = VersionChecker.getResult(modContainer.getModInfo());
 				final ForgeVersion.CheckResult checkResult = ForgeVersion.getResult(modContainer);
 				switch (checkResult.status) {
 					default:
@@ -97,11 +105,17 @@ public final class ModUtil {
 				}
 			}
 
+//		}, modContainer.getModInfo().getDisplayName() + " Update Daemon").start();
 		}, modContainer.getName() + " Update Daemon").start();
 
 	}
 
 	public static boolean isDeveloperWorkspace() {
+//		final String target = System.getenv().get("target");
+//		if (target == null) {
+//			return false;
+//		}
+//		return target.contains("userdev");
 		return FMLLaunchHandler.isDeobfuscatedEnvironment();
 	}
 
@@ -127,6 +141,153 @@ public final class ModUtil {
 	 */
 	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
 		return (byte) (initialSize + meshGenerator.getSizeZExtension());
+	}
+
+//	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+//		final int posX = pos.getX();
+//		final int posY = pos.getY();
+//		final int posZ = pos.getZ();
+//
+//		int currentChunkPosX = posX >> 4;
+//		int currentChunkPosZ = posZ >> 4;
+//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//
+//		final int extendRange = Config.extendFluidsRange.getRange();
+//
+//		if (extendRange == 0) {
+//			return currentChunk.getFluidState(posX, posY, posZ);
+//		}
+//
+//		final BlockState state = currentChunk.getBlockState(pos);
+//
+//		// Do not extend if not terrain smoothable
+//		if (!state.nocubes_isTerrainSmoothable()) {
+//			return state.getFluidState();
+//		}
+//
+//		final IFluidState fluidState = state.getFluidState();
+//		if (!fluidState.isEmpty()) {
+//			return fluidState;
+//		}
+//
+//		// For offset = -1 or -2 to offset = 1 or 2;
+//		final int maxXOffset = extendRange;
+//		final int maxZOffset = extendRange;
+//
+//		// Check up
+//		{
+//			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+//			if (state1.isSource()) {
+//				return state1;
+//			}
+//		}
+//
+//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+//
+//				// No point in checking myself
+//				if (xOffset == 0 && zOffset == 0) {
+//					continue;
+//				}
+//
+//				final int checkX = posX + xOffset;
+//				final int checkZ = posZ + zOffset;
+//
+//				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
+//					currentChunkPosX = checkX >> 4;
+//					currentChunkPosZ = checkZ >> 4;
+//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//				}
+//
+//				final IFluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
+//				if (state1.isSource()) {
+//					return state1;
+//				}
+//
+//			}
+//		}
+//		return fluidState;
+//	}
+
+//	/**
+//	 * Mostly copied from StolenReposeCode.getDensity
+//	 */
+//	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
+//		float density = 0;
+//		try (
+//				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
+//				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()
+//		) {
+////			final WorldBorder worldBorder = reader.getWorldBorder();
+//
+//			final int startX = pos.getX();
+//			final int startY = pos.getY();
+//			final int startZ = pos.getZ();
+//
+//			for (int zOffset = 0; zOffset < 2; ++zOffset) {
+//				for (int yOffset = 0; yOffset < 2; ++yOffset) {
+//					for (int xOffset = 0; xOffset < 2; ++xOffset) {
+//
+//						pooledMutableBlockPos.setPos(
+//								startX - xOffset,
+//								startY - yOffset,
+//								startZ - zOffset
+//						);
+//
+////						// Return a fully solid cube if its not loaded
+////						if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
+////							density += 1;
+////							continue;
+////						}
+//
+//						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
+//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+//					}
+//				}
+//			}
+//		}
+//
+//		// > 0 means outside isosurface
+//		// > -4 means mostly outside isosurface
+//		return density > -4;
+//	}
+
+	/**
+	 * @param material The {@link Material} to check
+	 * @return If the material is tallgrass/grass plant/grass block
+	 */
+	public static boolean isMaterialGrass(final Material material) {
+//		return material == Material.TALL_PLANTS || // tall grass, grass plant
+//				material == Material.ORGANIC; // grass block
+		return material == Material.VINE || // tall grass, grass plant
+				material == Material.GRASS; // grass block
+	}
+
+	public static boolean isMaterialLeaves(final Material material) {
+		return material == Material.LEAVES;
+	}
+
+	/**
+	 * @param chunkPos The chunk position as a {@link BlockPos}
+	 * @param blockPos The {@link BlockPos}
+	 * @return The position relative to the chunkPos
+	 */
+	public static byte getRelativePos(final int chunkPos, final int blockPos) {
+		final int blockPosChunkPos = (blockPos >> 4) << 4;
+		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
+			return getRelativePos(blockPos);
+		} else {
+			// can be anything. usually between -1 and 16
+			return (byte) (blockPos - chunkPos);
+		}
+	}
+
+	/**
+	 * @param blockPos The {@link BlockPos}
+	 * @return The position (between 0-15) relative to the blockPos's chunk position
+	 */
+	public static byte getRelativePos(final int blockPos) {
+		return (byte) (blockPos & 15);
 	}
 
 }

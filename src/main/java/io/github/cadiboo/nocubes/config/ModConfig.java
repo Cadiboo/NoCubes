@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-public class ModConfig {
+public final class ModConfig {
 
 	private final Type type;
 	private final ForgeConfigSpec spec;

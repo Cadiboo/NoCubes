@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.tempcore.classwriter;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 
-public class ObfHelper {
+public final class ObfHelper {
 
 	public static Boolean obfuscated = null;
 

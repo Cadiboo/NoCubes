@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -12,26 +13,32 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.renderer.color.IBlockColor;
+import net.minecraft.crash.CrashReport;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
+import net.minecraftforge.registries.IRegistryDelegate;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Map;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-import static java.lang.Math.round;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
-import static net.minecraft.util.math.MathHelper.clamp;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -41,7 +48,10 @@ import static net.minecraft.util.math.MathHelper.clamp;
 @SuppressWarnings("WeakerAccess")
 public final class ClientUtil {
 
+	public static final BlockRenderLayer[] BLOCK_RENDER_LAYER_VALUES = BlockRenderLayer.values();
+	public static final int BLOCK_RENDER_LAYER_VALUES_LENGTH = BLOCK_RENDER_LAYER_VALUES.length;
 	static final int[] NEGATIVE_1_8000 = new int[8000];
+	private static final Field BLOCK_COLORS_REGISTRY = findBlockColorsRegistryField();
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
@@ -79,54 +89,6 @@ public final class ClientUtil {
 	}
 
 	/**
-	 * @param red   the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @param green the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @param blue  the red value of the color, between 0x00 (decimal 0) and 0xFF (decimal 255)
-	 * @return the color in ARGB format
-	 */
-	public static int colori(int red, int green, int blue) {
-
-		red = clamp(red, 0x00, 0xFF);
-		green = clamp(green, 0x00, 0xFF);
-		blue = clamp(blue, 0x00, 0xFF);
-
-		final int alpha = 0xFF;
-
-		// 0x alpha red green blue
-		// 0xaarrggbb
-
-		// int colorRGBA = 0;
-		// colorRGBA |= red << 16;
-		// colorRGBA |= green << 8;
-		// colorRGBA |= blue << 0;
-		// colorRGBA |= alpha << 24;
-
-		return blue | red << 16 | green << 8 | alpha << 24;
-
-	}
-
-	/**
-	 * @param red   the red value of the color, 0F and 1F
-	 * @param green the green value of the color, 0F and 1F
-	 * @param blue  the blue value of the color, 0F and 1F
-	 * @return the color in ARGB format
-	 */
-	public static int colorf(final float red, final float green, final float blue) {
-		final int redInt = max(0, min(255, round(red * 255)));
-		final int greenInt = max(0, min(255, round(green * 255)));
-		final int blueInt = max(0, min(255, round(blue * 255)));
-		return colori(redInt, greenInt, blueInt);
-	}
-
-	public static int getLightmapSkyLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
-		return (packedLightmapCoords >> 16) & 0xFFFF; // get upper 4 bytes
-	}
-
-	public static int getLightmapBlockLightCoordsFromPackedLightmapCoords(int packedLightmapCoords) {
-		return packedLightmapCoords & 0xFFFF; // get lower 4 bytes
-	}
-
-	/**
 	 * Returns a state and sets the texturePooledMutablePos to the pos it found
 	 *
 	 * @return a state
@@ -155,9 +117,9 @@ public final class ClientUtil {
 			if (tryForBetterTexturesSnow) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-snow")) {
 					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							stateCacheStartPaddingX + relativePosX,
-							stateCacheStartPaddingY + relativePosY,
-							stateCacheStartPaddingZ + relativePosZ,
+							relativePosX + stateCacheStartPaddingX,
+							relativePosY + stateCacheStartPaddingY,
+							relativePosZ + stateCacheStartPaddingZ,
 							stateCacheSizeX, stateCacheSizeY
 					)];
 
@@ -167,9 +129,9 @@ public final class ClientUtil {
 					}
 					for (int[] offset : OFFSETS_ORDERED) {
 						betterTextureState = blockCacheArray[stateCache.getIndex(
-								stateCacheStartPaddingX + relativePosX + offset[0],
-								stateCacheStartPaddingY + relativePosY + offset[1],
-								stateCacheStartPaddingZ + relativePosZ + offset[2],
+								relativePosX + offset[0] + stateCacheStartPaddingX,
+								relativePosY + offset[1] + stateCacheStartPaddingY,
+								relativePosZ + offset[2] + stateCacheStartPaddingZ,
 								stateCacheSizeX, stateCacheSizeY
 						)];
 						if (isStateSnow(betterTextureState)) {
@@ -182,9 +144,9 @@ public final class ClientUtil {
 			if (tryForBetterTexturesGrass) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-grass")) {
 					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							stateCacheStartPaddingX + relativePosX,
-							stateCacheStartPaddingY + relativePosY,
-							stateCacheStartPaddingZ + relativePosZ,
+							relativePosX + stateCacheStartPaddingX,
+							relativePosY + stateCacheStartPaddingY,
+							relativePosZ + stateCacheStartPaddingZ,
 							stateCacheSizeX, stateCacheSizeY
 					)];
 
@@ -194,9 +156,9 @@ public final class ClientUtil {
 					}
 					for (int[] offset : OFFSETS_ORDERED) {
 						betterTextureState = blockCacheArray[stateCache.getIndex(
-								stateCacheStartPaddingX + relativePosX + offset[0],
-								stateCacheStartPaddingY + relativePosY + offset[1],
-								stateCacheStartPaddingZ + relativePosZ + offset[2],
+								relativePosX + offset[0] + stateCacheStartPaddingX,
+								relativePosY + offset[1] + stateCacheStartPaddingY,
+								relativePosZ + offset[2] + stateCacheStartPaddingZ,
 								stateCacheSizeX, stateCacheSizeY
 						)];
 						if (isStateGrass(betterTextureState)) {
@@ -212,7 +174,6 @@ public final class ClientUtil {
 		final int smoothableCacheStartPaddingY = smoothableCache.startPaddingY;
 		final int smoothableCacheStartPaddingZ = smoothableCache.startPaddingZ;
 
-
 		final int smoothableCacheSizeX = smoothableCache.sizeX;
 		final int smoothableCacheSizeY = smoothableCache.sizeY;
 
@@ -220,40 +181,40 @@ public final class ClientUtil {
 
 			// If pos passed in is smoothable return state from that pos
 			if (smoothableCacheArray[smoothableCache.getIndex(
-					smoothableCacheStartPaddingX + relativePosX,
-					smoothableCacheStartPaddingY + relativePosY,
-					smoothableCacheStartPaddingZ + relativePosZ,
+					relativePosX + smoothableCacheStartPaddingX,
+					relativePosY + smoothableCacheStartPaddingY,
+					relativePosZ + smoothableCacheStartPaddingZ,
 					smoothableCacheSizeX, smoothableCacheSizeY
 			)]) {
 				texturePooledMutablePos.setPos(posX, posY, posZ);
 				return blockCacheArray[stateCache.getIndex(
-						stateCacheStartPaddingX + relativePosX,
-						stateCacheStartPaddingY + relativePosY,
-						stateCacheStartPaddingZ + relativePosZ,
+						relativePosX + stateCacheStartPaddingX,
+						relativePosY + stateCacheStartPaddingY,
+						relativePosZ + stateCacheStartPaddingZ,
 						stateCacheSizeX, stateCacheSizeY
 				)];
 			}
 
 			// Start at state of pos passed in
 			IBlockState state = blockCacheArray[stateCache.getIndex(
-					stateCacheStartPaddingX + relativePosX,
-					stateCacheStartPaddingY + relativePosY,
-					stateCacheStartPaddingZ + relativePosZ,
+					relativePosX + stateCacheStartPaddingX,
+					relativePosY + stateCacheStartPaddingY,
+					relativePosZ + stateCacheStartPaddingZ,
 					stateCacheSizeX, stateCacheSizeY
 			)];
 
 			for (int[] offset : OFFSETS_ORDERED) {
 				if (smoothableCacheArray[smoothableCache.getIndex(
-						smoothableCacheStartPaddingX + relativePosX + offset[0],
-						smoothableCacheStartPaddingY + relativePosY + offset[1],
-						smoothableCacheStartPaddingZ + relativePosZ + offset[2],
+						relativePosX + offset[0] + smoothableCacheStartPaddingX,
+						relativePosY + offset[1] + smoothableCacheStartPaddingY,
+						relativePosZ + offset[2] + smoothableCacheStartPaddingZ,
 						smoothableCacheSizeX, smoothableCacheSizeY
 				)]) {
 					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
 					state = blockCacheArray[stateCache.getIndex(
-							stateCacheStartPaddingX + relativePosX + offset[0],
-							stateCacheStartPaddingY + relativePosY + offset[1],
-							stateCacheStartPaddingZ + relativePosZ + offset[2],
+							relativePosX + offset[0] + stateCacheStartPaddingX,
+							relativePosY + offset[1] + stateCacheStartPaddingY,
+							relativePosZ + offset[2] + stateCacheStartPaddingZ,
 							stateCacheSizeX, stateCacheSizeY
 					)];
 					break;
@@ -274,15 +235,18 @@ public final class ClientUtil {
 	}
 
 	@Nonnull
+	@Deprecated
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IBlockState state) {
 		return getCorrectRenderLayer(state.getBlock().getRenderLayer());
 	}
 
 //	@Nonnull
+//	@Deprecated
 //	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final IFluidState state) {
 //		return getCorrectRenderLayer(state.getRenderLayer());
 //	}
 
+	// TODO: Optimise `Minecraft.getInstance().gameSettings.mipmapLevels`? Store it in a field somewhere?
 	@Nonnull
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockRenderLayer blockRenderLayer) {
 		switch (blockRenderLayer) {
@@ -297,43 +261,20 @@ public final class ClientUtil {
 		}
 	}
 
-	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk renderChunk, BlockPos renderChunkPosition) {
+	public static BufferBuilder startOrContinueBufferBuilder(final ChunkCompileTaskGenerator generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, RenderChunk chunkRender, BlockPos renderChunkPosition) {
 		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getWorldRendererByLayerId(blockRenderLayerOrdinal);
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
-			renderChunk.preRenderBlocks(bufferBuilder, renderChunkPosition);
+			chunkRender.preRenderBlocks(bufferBuilder, renderChunkPosition);
 		}
 		return bufferBuilder;
 	}
 
 	public static void tryReloadRenderers() {
-		final RenderGlobal renderGlobal = Minecraft.getMinecraft().renderGlobal;
-		if (renderGlobal != null) {
-			renderGlobal.loadRenderers();
+		final RenderGlobal worldRenderer = Minecraft.getMinecraft().renderGlobal;
+		if (worldRenderer != null) {
+			worldRenderer.loadRenderers();
 		}
-	}
-
-	/**
-	 * @param chunkPos the chunk position as a {@link BlockPos}
-	 * @param blockPos the {@link BlockPos}
-	 * @return the position relative to the chunkPos
-	 */
-	public static byte getRelativePos(final int chunkPos, final int blockPos) {
-		final int blockPosChunkPos = (blockPos >> 4) << 4;
-		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
-			return getRelativePos(blockPos);
-		} else {
-			// can be anything. usually between -1 and 16
-			return (byte) (blockPos - chunkPos);
-		}
-	}
-
-	/**
-	 * @param blockPos the {@link BlockPos}
-	 * @return the position (between 0-15) relative to the blockPos's chunk position
-	 */
-	public static byte getRelativePos(final int blockPos) {
-		return (byte) (blockPos & 15);
 	}
 
 	public static Chunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IBlockAccess reader) {
@@ -346,12 +287,103 @@ public final class ClientUtil {
 			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
 			return renderChunkCache.chunkArray[x][z];
 		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
-			ChunkCache chunkCache = OptiFineCompatibility.getChunkCache(reader);
-			final int x = currentChunkPosX - chunkCache.chunkX;
-			final int z = currentChunkPosZ - chunkCache.chunkZ;
-			return chunkCache.chunkArray[x][z];
+			ChunkCache region = OptiFineCompatibility.getChunkCache(reader);
+			final int x = currentChunkPosX - region.chunkX;
+			final int z = currentChunkPosZ - region.chunkZ;
+			return region.chunkArray[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
+	}
+
+//	public static void setupChunkRenderCache(final ChunkCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
+//		final int startX = start.getX();
+//		final int startY = start.getY();
+//		final int startZ = start.getZ();
+//
+//		final int cacheSizeX = end.getX() - startX + 1;
+//		final int cacheSizeY = end.getY() - startY + 1;
+//		final int cacheSizeZ = end.getZ() - startZ + 1;
+//
+//		final int size = cacheSizeX * cacheSizeY * cacheSizeZ;
+//		final IBlockState[] blockStates = new IBlockState[size];
+////		final IFluidState[] fluidStates = new IFluidState[size];
+//
+//		int cx = (startX >> 4) - chunkStartX;
+//		int cz = (startZ >> 4) - chunkStartZ;
+//		Chunk currentChunk = chunks[cx][cz];
+//
+//		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
+//		try {
+//			int index = 0;
+//			for (int z = 0; z < cacheSizeZ; ++z) {
+//				for (int y = 0; y < cacheSizeY; ++y) {
+//					for (int x = 0; x < cacheSizeX; ++x, ++index) {
+//
+//						final int posX = startX + x;
+//						final int posY = startY + y;
+//						final int posZ = startZ + z;
+//
+//						final int ccx = ((startX + x) >> 4) - chunkStartX;
+//						final int ccz = ((startZ + z) >> 4) - chunkStartZ;
+//
+//						boolean changed = false;
+//						if (cx != ccx) {
+//							cx = ccx;
+//							changed = true;
+//						}
+//						if (cz != ccz) {
+//							cz = ccz;
+//							changed = true;
+//						}
+//						if (changed) {
+//							currentChunk = chunks[cx][cz];
+//						}
+//
+//						// TODO: Use System.arrayCopy on the chunk sections
+//						pooledMutableBlockPos.setPos(posX, posY, posZ);
+////						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+////						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
+//						final IBlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
+//						blockStates[index] = blockState;
+////						fluidStates[index] = blockState.getFluidState();
+//					}
+//				}
+//			}
+//		} finally {
+//			pooledMutableBlockPos.release();
+//		}
+//
+//		_this.cacheSizeX = cacheSizeX;
+//		_this.cacheSizeY = cacheSizeY;
+//		_this.cacheSizeZ = cacheSizeZ;
+//
+//		_this.blockStates = blockStates;
+////		_this.fluidStates = fluidStates;
+//	}
+
+	private static Field findBlockColorsRegistryField() {
+		try {
+//			return ObfuscationReflectionHelper.findField(BlockColors.class, "field_186725_a");
+			// Forge seems to do weird stuff and rename the field, so its always "blockColorMap" instead of "field_186725_a"/"mapBlockColors"
+			// I'm keeping all the names in for safety
+			return ReflectionHelper.findField(BlockColors.class, "blockColorMap", "field_186725_a", "mapBlockColors");
+		} catch (UnableToFindFieldException e) {
+			final CrashReport crashReport = new CrashReport("Unable to find field \"" + "field_186725_a" + "\". Field does not exist!", e);
+			crashReport.makeCategory("Finding Field");
+			throw new ReportedException(crashReport);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsRegistry(final BlockColors blockColors) {
+//		return blockColors.colors;
+		try {
+			return (Map<IRegistryDelegate<Block>, IBlockColor>) BLOCK_COLORS_REGISTRY.get(blockColors);
+		} catch (IllegalAccessException e) {
+			final CrashReport crashReport = new CrashReport("Unable to access field!", e);
+			crashReport.makeCategory("Accessing Field");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

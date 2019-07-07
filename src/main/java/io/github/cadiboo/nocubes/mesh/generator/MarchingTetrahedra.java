@@ -16,7 +16,7 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class MarchingTetrahedra implements MeshGenerator {
+public final class MarchingTetrahedra implements MeshGenerator {
 
 	private final byte[][] CUBE_VERTICES = {
 			{0, 0, 0},

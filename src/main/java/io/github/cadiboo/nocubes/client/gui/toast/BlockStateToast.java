@@ -35,33 +35,32 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
+
 /**
  * @author Cadiboo
  */
 public abstract class BlockStateToast implements IToast {
 
-	@Nonnull
-	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
-	@Nonnull
-	private final boolean[] usedBlockRenderLayers = new boolean[BlockRenderLayer.values().length];
-	@Nonnull
-	private final String name;
-	private final Matrix4f itemCameraTransformMaterix = TRSRTransformation.from(
+	private static final Matrix4f ITEM_CAMERA_TRANSFORM_MATRIX = TRSRTransformation.from(
 			new ItemTransformVec3f(
 					new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
 			)
 	).getMatrix();
 
+	@Nonnull
+	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
+	@Nonnull
+	private final boolean[] usedBlockRenderLayers = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
+	@Nonnull
+	private final String name;
+
 	BlockStateToast(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 		final Minecraft minecraft = Minecraft.getMinecraft();
-		name = I18n.format(state.getBlock().getTranslationKey());
+		this.name = I18n.format(state.getBlock().getTranslationKey());
 
-		// Reset values
-		Arrays.fill(usedBlockRenderLayers, false);
-		final boolean[] startedBufferBuilders = new boolean[BlockRenderLayer.values().length];
-
-		this.build(state, pos, startedBufferBuilders, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
-
+		this.build(state, pos, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
 	}
 
 	/**
@@ -105,18 +104,19 @@ public abstract class BlockStateToast implements IToast {
 	private void build(
 			@Nonnull final IBlockState state,
 			@Nonnull final BlockPos pos,
-			@Nonnull final boolean[] startedBufferBuilders,
-			@Nonnull final IBlockAccess blockAccess,
+			@Nonnull final IBlockAccess reader,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random
 	) {
-
 		if (state.getRenderType() != EnumBlockRenderType.MODEL) {
 			return;
 		}
+
+		final boolean[] startedBufferBuilders = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
 		{
-			for (BlockRenderLayer blockRenderLayer : BlockRenderLayer.values()) {
+			for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; i++) {
+				final BlockRenderLayer blockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
 				if (!state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
 					continue;
 				}
@@ -125,15 +125,15 @@ public abstract class BlockStateToast implements IToast {
 				final BufferBuilder bufferBuilder = bufferCache.get(blockRenderLayerId);
 				if (!startedBufferBuilders[blockRenderLayerId]) {
 					startedBufferBuilders[blockRenderLayerId] = true;
-					// Copied from RenderChunk
+					// Copied from RenderChunk#preRenderBlocks
 					{
 						bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 						bufferBuilder.setTranslation((-pos.getX()), (-pos.getY()), (-pos.getZ()));
 					}
 				}
 				// OptiFine Shaders compatibility
-//				OptiFineCompatibility.pushShaderThing(state, pos, blockAccess, bufferBuilder);
-				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(blockAccess, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, MathHelper.getPositionRandom(pos));
+//				OptiFineCompatibility.pushShaderThing(state, pos, reader, bufferBuilder);
+				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(reader, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, MathHelper.getPositionRandom(pos));
 //				OptiFineCompatibility.popShaderThing(bufferBuilder);
 			}
 			ForgeHooksClient.setRenderLayer(null);
@@ -189,7 +189,7 @@ public abstract class BlockStateToast implements IToast {
 					RenderHelper.enableGUIStandardItemLighting();
 				}
 				{
-					ForgeHooksClient.multiplyCurrentGlMatrix(itemCameraTransformMaterix);
+					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORM_MATRIX);
 				}
 			}
 			for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {
@@ -212,7 +212,7 @@ public abstract class BlockStateToast implements IToast {
 		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
-	public static class AddTerrain extends BlockStateToast {
+	public static final class AddTerrain extends BlockStateToast {
 
 		public AddTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -225,7 +225,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class RemoveTerrain extends BlockStateToast {
+	public static final class RemoveTerrain extends BlockStateToast {
 
 		public RemoveTerrain(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -238,7 +238,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class AddLeaves extends BlockStateToast {
+	public static final class AddLeaves extends BlockStateToast {
 
 		public AddLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);
@@ -251,7 +251,7 @@ public abstract class BlockStateToast implements IToast {
 
 	}
 
-	public static class RemoveLeaves extends BlockStateToast {
+	public static final class RemoveLeaves extends BlockStateToast {
 
 		public RemoveLeaves(@Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
 			super(state, pos);

@@ -32,7 +32,7 @@ public final class OptiFineCompatibility {
 	static {
 		boolean optiFineInstalled;
 		try {
-			ReflectionClassHelper.getClass(Loader.instance().getModClassLoader(), "Config");
+			ReflectionClassHelper.findClass(Loader.instance().getModClassLoader(), "Config");
 			optiFineInstalled = true;
 		} catch (UnableToFindClassException e) {
 			// Its ok, This just means that OptiFine isn't installed
@@ -80,7 +80,7 @@ public final class OptiFineCompatibility {
 			} else {
 				final String className = "Config";
 				try {
-					clazz = ReflectionClassHelper.getClass(Loader.instance().getModClassLoader(), className);
+					clazz = ReflectionClassHelper.findClass(Loader.instance().getModClassLoader(), className);
 				} catch (UnableToFindClassException e) {
 					final CrashReport crashReport = new CrashReport("Unable to find class \"" + className + "\". Class does not exist!", e);
 					crashReport.makeCategory("Finding Class");

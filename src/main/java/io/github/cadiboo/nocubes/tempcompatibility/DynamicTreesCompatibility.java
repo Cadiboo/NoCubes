@@ -16,7 +16,7 @@ public final class DynamicTreesCompatibility {
 	static {
 		Class<? super Block> tempBlockRooty = null;
 		try {
-			tempBlockRooty = ReflectionClassHelper.getClass(DynamicTreesCompatibility.class.getClassLoader(), "com.ferreusveritas.dynamictrees.blocks.BlockRooty");
+			tempBlockRooty = ReflectionClassHelper.findClass(DynamicTreesCompatibility.class.getClassLoader(), "com.ferreusveritas.dynamictrees.blocks.BlockRooty");
 		} catch (UnableToFindClassException e) {
 			// dynamictrees is not installed
 		}

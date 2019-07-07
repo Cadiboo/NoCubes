@@ -58,7 +58,7 @@ import static com.electronwill.nightconfig.core.ConfigSpec.CorrectionAction.REPL
  * and other things Forge configs would find useful.
  */
 
-public class ForgeConfigSpec extends UnmodifiableConfigWrapper<Config> {
+public final class ForgeConfigSpec extends UnmodifiableConfigWrapper<Config> {
 
 	private static final Joiner LINE_JOINER = Joiner.on("\n");
 	private static final Joiner DOT_JOINER = Joiner.on(".");

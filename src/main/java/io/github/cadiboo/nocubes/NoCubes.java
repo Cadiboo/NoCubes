@@ -98,7 +98,7 @@ public final class NoCubes {
 
 	@Mod.EventHandler
 	public void onPostInit(final FMLPostInitializationEvent event) {
-		PROXY.replaceFluidRendererCauseImBored();
+		PROXY.replaceFluidRenderer();
 	}
 
 	@Mod.EventHandler

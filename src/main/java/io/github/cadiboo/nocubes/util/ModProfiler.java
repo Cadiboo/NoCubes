@@ -9,10 +9,9 @@ import java.util.HashMap;
 /**
  * @author Cadiboo
  */
-public class ModProfiler extends Profiler implements AutoCloseable {
+public final class ModProfiler extends Profiler implements AutoCloseable {
 
 	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
-	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static final ThreadLocal<ModProfiler> PROFILER = ThreadLocal.withInitial(() -> {
 		final ModProfiler profiler = new ModProfiler();

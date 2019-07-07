@@ -7,6 +7,7 @@ import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -18,8 +19,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;
 
-import javax.annotation.Nonnull;
-
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
 import static net.minecraft.util.EnumFacing.SOUTH;
@@ -28,14 +27,10 @@ import static net.minecraft.util.EnumFacing.WEST;
 /**
  * @author Cadiboo
  */
-public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
+public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 
-	@Nonnull
-	private final BlockFluidRenderer fluidRenderer;
-
-	public SmoothLightingBlockFluidRenderer(@Nonnull final BlockFluidRenderer fluidRenderer) {
-		super(fluidRenderer.blockColors);
-		this.fluidRenderer = fluidRenderer;
+	public SmoothLightingFluidBlockRenderer() {
+		super(Minecraft.getMinecraft().getBlockRendererDispatcher().fluidRenderer.blockColors);
 	}
 
 	@Override
@@ -51,7 +46,7 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 			final int y = pos.getY();
 			final int z = pos.getZ();
 
-			BlockLiquid blockLiquid = (BlockLiquid) state.getBlock();
+			final BlockLiquid blockLiquid = (BlockLiquid) state.getBlock();
 			final Material material = state.getMaterial();
 			final boolean isLava = material == Material.LAVA;
 			final TextureAtlasSprite[] atextureatlassprite = isLava ? this.atlasSpritesLava : this.atlasSpritesWater;
@@ -772,11 +767,6 @@ public class SmoothLightingBlockFluidRenderer extends BlockFluidRenderer {
 		buffer.pos(x + 1.0D, y, z).color(0.5F * red2, 0.5F * green2, 0.5F * blue2, 1.0F).tex((double) maxU, (double) minV).lightmap(skyLight2, blockLight2).endVertex();
 		buffer.pos(x + 1.0D, y, z + 1.0D).color(0.5F * red3, 0.5F * green3, 0.5F * blue3, 1.0F).tex((double) maxU, (double) maxV).lightmap(skyLight3, blockLight3).endVertex();
 		return true;
-	}
-
-	@Nonnull
-	public BlockFluidRenderer getOldFluidRenderer() {
-		return fluidRenderer;
 	}
 
 	public boolean smoothLighting() {

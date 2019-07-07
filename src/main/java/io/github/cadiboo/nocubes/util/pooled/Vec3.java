@@ -8,7 +8,7 @@ import java.util.ArrayList;
  *
  * @author Cadiboo
  */
-public class Vec3 implements AutoCloseable {
+public final class Vec3 implements AutoCloseable {
 
 	private static final ArrayList<Vec3> POOL = new ArrayList<>();
 
@@ -73,7 +73,6 @@ public class Vec3 implements AutoCloseable {
 
 	@Override
 	public void close() {
-
 		synchronized (POOL) {
 //			if (POOL.size() < (ModConfig.enableCollisions ? 2_000_000 : 60_000)) {
 			{

@@ -7,7 +7,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class StateCache extends XYZCache implements AutoCloseable {
+public final class StateCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<StateCache> POOL = ThreadLocal.withInitial(() -> new StateCache(0, 0, 0, 0, 0, 0));
 

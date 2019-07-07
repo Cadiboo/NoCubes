@@ -13,7 +13,7 @@ import net.minecraftforge.fml.relauncher.Side;
 /**
  * @author Cadiboo
  */
-public class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncConfig, IMessage> {
+public final class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncConfig, IMessage> {
 
 	private /*final*/ String fileName;
 	private /*final*/ byte[] fileData;

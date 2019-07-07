@@ -5,7 +5,7 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public class SmoothableCache extends XYZCache implements AutoCloseable {
+public final class SmoothableCache extends XYZCache implements AutoCloseable {
 
 	private static final ThreadLocal<SmoothableCache> POOL = ThreadLocal.withInitial(() -> new SmoothableCache(0, 0, 0, 0, 0, 0));
 

@@ -48,7 +48,7 @@ import java.util.Map;
  *
  * @author Eric Bruneton
  */
-public class MCWriter extends ClassWriter {
+public final class MCWriter extends ClassWriter {
 
 	private static final boolean RECALC_FRAMES = Boolean.parseBoolean(System.getProperty("FORGE_FORCE_FRAME_RECALC", "false"));
 	private static final int READER_FLAGS = RECALC_FRAMES ? ClassReader.SKIP_FRAMES : ClassReader.EXPAND_FRAMES;

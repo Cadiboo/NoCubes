@@ -5,7 +5,8 @@ import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 
 import javax.annotation.Nonnull;
 
@@ -13,6 +14,10 @@ import javax.annotation.Nonnull;
  * @author Cadiboo
  */
 public final class CacheUtil {
+
+//	@SuppressWarnings("MismatchedReadAndWriteOfArray") // It should never be written to and all its values should always be null
+//	private static final IFluidState[] NULL_FLUID_STATES = new IFluidState[8000];
+//	private static final ThreadLocal<IFluidState[]> EXTEND_FLUID_STATES_THREAD_LOCAL = ThreadLocal.withInitial(() -> new IFluidState[0]);
 
 	/**
 	 * Generates a {@link StateCache}
@@ -24,7 +29,7 @@ public final class CacheUtil {
 			final int toX, final int toY, final int toZ,
 			// the difference between the chunkRenderPosition and from position. Always positive
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
-			@Nonnull final IBlockAccess cache,
+			@Nonnull final World cache,
 			@Nonnull PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		final int cacheSizeX = Math.abs(toX - fromX);
@@ -38,16 +43,8 @@ public final class CacheUtil {
 			final IBlockState[] blockStates = stateCache.getBlockStates();
 //			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
-			int index = 0;
-			for (int z = 0; z < cacheSizeZ; ++z) {
-				for (int y = 0; y < cacheSizeY; ++y) {
-					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z);
-						blockStates[index] = cache.getBlockState(pooledMutableBlockPos);
-//						fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
-					}
-				}
-			}
+			fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates/*, fluidStates*/);
+//			calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
 
 			return stateCache;
 		} catch (final Exception e) {
@@ -55,6 +52,144 @@ public final class CacheUtil {
 			// close the state cache to prevent errors about it already being in use
 			stateCache.close();
 			throw e;
+		}
+	}
+
+//	/**
+//	 * Because we fill state caches in an optimised way, our World#getFluidState override isn't applied,
+//	 * so we need to extend fluids.
+//	 */
+//	private static void calculateStateCacheExtendedFluids(
+//			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+//			@Nonnull final BlockState[] blockStates, @Nonnull final IFluidState[] fluidStates, @Nonnull final StateCache stateCache,
+//			final int stateCacheSizeX, final int stateCacheSizeY
+//	) {
+//		final int extend = Config.extendFluidsRange.getRange();
+//		if (extend < 1) {
+//			return;
+//		}
+//		final int fluidStatesLength = fluidStates.length;
+//		IFluidState[] extendedFluidStates = EXTEND_FLUID_STATES_THREAD_LOCAL.get();
+//		if (extendedFluidStates.length < fluidStatesLength) {
+//			extendedFluidStates = new IFluidState[fluidStatesLength];
+//			EXTEND_FLUID_STATES_THREAD_LOCAL.set(extendedFluidStates);
+//		} else {
+//			if (fluidStatesLength > 0x4000) {
+//				Arrays.fill(extendedFluidStates, null);
+//			} else {
+//				System.arraycopy(NULL_FLUID_STATES, 0, extendedFluidStates, 0, fluidStatesLength);
+//			}
+//		}
+//
+//		int index = 0;
+//		for (int z = 0; z < cacheSizeZ; ++z) {
+//			for (int y = 0; y < cacheSizeY; ++y) {
+//				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+//
+//					// Do not extend if not terrain smoothable
+//					if (!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
+//						continue;
+//					}
+//
+//					SEARCH_FOR_FLUID:
+//					for (int xOffset = -extend; xOffset <= extend; ++xOffset) {
+//						for (int zOffset = -extend; zOffset <= extend; ++zOffset) {
+//
+//							// No point in checking myself
+//							if (xOffset == 0 && zOffset == 0) {
+//								continue;
+//							}
+//
+//							final int checkX = x + xOffset;
+//							final int checkZ = z + zOffset;
+//
+//							if (checkX < 0 || checkX >= cacheSizeX) continue;
+//							if (checkZ < 0 || checkZ >= cacheSizeZ) continue;
+//
+//							final IFluidState state1 = fluidStates[stateCache.getIndex(
+//									checkX,
+//									y,
+//									checkZ,
+//									stateCacheSizeX, stateCacheSizeY
+//							)];
+//							if (state1.isSource()) {
+//								extendedFluidStates[index] = state1;
+//								break SEARCH_FOR_FLUID;
+//							}
+//
+//						}
+//					}
+//
+//				}
+//			}
+//		}
+//
+//		for (int i = 0; i < fluidStatesLength; ++i) {
+//			final IFluidState extendedFluidState = extendedFluidStates[i];
+//			if (extendedFluidState != null) {
+//				fluidStates[i] = extendedFluidState;
+//			}
+//		}
+//
+//	}
+
+	/**
+	 * Fills a state cache in an optimised way getting values from chunks rather than from the world
+	 * Could be optimised even more to use ChunkSections
+	 */
+	private static void fillStateCache(
+			final int fromX, final int fromY, final int fromZ,
+			final int cacheSizeX, final int cacheSizeY, final int cacheSizeZ,
+			@Nonnull final World cache,
+			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
+			final IBlockState[] blockStates//, final IFluidState[] fluidStates
+	) {
+
+//		int index = 0;
+//		for (int z = 0; z < cacheSizeZ; ++z) {
+//			for (int y = 0; y < cacheSizeY; ++y) {
+//				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+//					pooledMutableBlockPos.setPos(fromX + x, fromY + y, fromZ + z);
+//					blockStates[index] = cache.getBlockState(pooledMutableBlockPos);
+//					fluidStates[index] = cache.getFluidState(pooledMutableBlockPos);
+//				}
+//			}
+//		}
+
+		int cx = fromX >> 4;
+		int cz = fromZ >> 4;
+		Chunk currentChunk = cache.getChunk(cx, cz);
+		int index = 0;
+		for (int z = 0; z < cacheSizeZ; ++z) {
+			for (int y = 0; y < cacheSizeY; ++y) {
+				for (int x = 0; x < cacheSizeX; ++x, ++index) {
+
+					final int checkX = fromX + x;
+					final int checkZ = fromZ + z;
+
+					boolean changed = false;
+
+					if (cx != checkX >> 4) {
+						cx = checkX >> 4;
+						changed = true;
+					}
+					if (cz != checkZ >> 4) {
+						cz = checkZ >> 4;
+						changed = true;
+					}
+					if (changed) {
+						currentChunk = cache.getChunk(cx, cz);
+					}
+
+					// TODO: Use System.arrayCopy on the chunk sections
+					pooledMutableBlockPos.setPos(checkX, fromY + y, checkZ);
+//					blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
+//					fluidStates[index] = currentChunk.getFluidState(pooledMutableBlockPos);
+					final IBlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
+					blockStates[index] = blockState;
+//					fluidStates[index] = blockState.getFluidState();
+				}
+			}
 		}
 	}
 
@@ -66,6 +201,7 @@ public final class CacheUtil {
 			// Usually chunkRenderPosition - 1 because DensityCaches need 1 extra block on each negative axis
 			final int fromX, final int fromY, final int fromZ,
 			// to position
+			// Usually chunkRenderPosition + size + 1 because SmoothableCaches need 1 extra block on each axis
 			final int toX, final int toY, final int toZ,
 			// the difference between the chunkRenderPosition and from position. Always positive
 			// Usually 1 because DensityCaches need 1 extra block on each negative axis

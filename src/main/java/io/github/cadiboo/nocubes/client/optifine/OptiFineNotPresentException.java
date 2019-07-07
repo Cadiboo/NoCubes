@@ -5,7 +5,7 @@ import net.minecraftforge.fml.common.EnhancedRuntimeException;
 /**
  * @author Cadiboo
  */
-public class OptiFineNotPresentException extends EnhancedRuntimeException {
+public final class OptiFineNotPresentException extends EnhancedRuntimeException {
 
 	@Override
 	protected void printStackTrace(final WrappedPrintStream stream) {
