@@ -20,6 +20,7 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.screen.IngameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.Widget;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -43,6 +44,8 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.network.ConnectionType;
+import net.minecraftforge.fml.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.stream.Collectors;
@@ -70,6 +73,12 @@ public final class ClientEventSubscriber {
 		if (event.phase != TickEvent.Phase.END) return;
 
 		final Minecraft minecraft = Minecraft.getInstance();
+
+		final ClientPlayNetHandler connection = minecraft.getConnection();
+		if (connection != null && NetworkHooks.getConnectionType(connection::getNetworkManager) != ConnectionType.MODDED) {
+			Config.terrainCollisions = false;
+		}
+
 		final ClientPlayerEntity player = minecraft.player;
 
 //		// TODO: Temp!
