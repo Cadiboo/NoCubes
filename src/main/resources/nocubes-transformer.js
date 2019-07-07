@@ -932,7 +932,6 @@ function injectBlockRenderHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-	var renderSmoothLeavesChecksLabel = new LabelNode();
 
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
