@@ -87,17 +87,17 @@ public final class RenderDispatcher {
 		int stateCacheEndY = 0;
 		int stateCacheEndZ = 0;
 
-		// TODO: Test fluids cache stuff (State, Light & Colors)
-		//  to see what their min required values actually are
-		// Fluids Cache        | -2, 17   | 20
-		{
-			stateCachePaddingX = 2;
-			stateCachePaddingY = 2;
-			stateCachePaddingZ = 2;
-			stateCacheEndX = 17;
-			stateCacheEndY = 17;
-			stateCacheEndZ = 17;
-		}
+//		// TODO: Test fluids cache stuff (State, Light & Colors)
+//		//  to see what their min required values actually are
+//		// Fluids Cache        | -2, 17   | 20
+//		{
+//			stateCachePaddingX = 2;
+//			stateCachePaddingY = 2;
+//			stateCachePaddingZ = 2;
+//			stateCacheEndX = 17;
+//			stateCacheEndY = 17;
+//			stateCacheEndZ = 17;
+//		}
 
 		if (Config.renderSmoothTerrain) {
 			final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
@@ -179,6 +179,20 @@ public final class RenderDispatcher {
 									stateCache, smoothableCache
 							)
 					) {
+						ExtendedFluidChunkRenderer.renderChunk(
+								chunkRender,
+								chunkRenderTask,
+								compiledChunk,
+								chunkRenderPos,
+								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+								chunkRenderCache,
+								pooledMutableBlockPos,
+								usedBlockRenderLayers,
+								blockRendererDispatcher,
+								stateCache,
+								smoothableCache,
+								lazyPackedLightCache
+						);
 //						try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
 //								// Fluid renderer needs +2 on all axis because reasons
 //								chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
