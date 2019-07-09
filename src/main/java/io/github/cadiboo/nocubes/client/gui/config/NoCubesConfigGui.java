@@ -8,6 +8,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
+import net.minecraftforge.fml.client.config.GuiConfigEntries;
 import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
@@ -94,8 +95,8 @@ public final class NoCubesConfigGui extends GuiScreen {
 	protected void keyTyped(char eventChar, int eventKey) {
 		if (eventKey == Keyboard.KEY_ESCAPE)
 			this.mc.displayGuiScreen(parentScreen);
-//		else
-//			this.configOptionsList.keyTyped(eventChar, eventKey);
+		else
+			this.configOptionsList.keyTyped(eventChar, eventKey);
 	}
 
 	/**
@@ -104,7 +105,7 @@ public final class NoCubesConfigGui extends GuiScreen {
 	@Override
 	protected void mouseClicked(int x, int y, int mouseEvent) throws IOException {
 		if (mouseEvent != 0 || !this.configOptionsList.mouseClicked(x, y, mouseEvent)) {
-//			this.configOptionsList.mouseClickedPassThru(x, y, mouseEvent);
+			this.configOptionsList.mouseClickedPassThru(x, y, mouseEvent);
 			super.mouseClicked(x, y, mouseEvent);
 		}
 	}
@@ -181,7 +182,7 @@ public final class NoCubesConfigGui extends GuiScreen {
 	@Override
 	public void updateScreen() {
 		super.updateScreen();
-//		this.configOptionsList.updateScreen();
+		this.configOptionsList.updateScreen();
 	}
 
 }

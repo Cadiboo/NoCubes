@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.fml.client.config.GuiButtonExt;
 
 //@OnlyIn(Dist.CLIENT)
-public class OptionButton extends GuiButtonExt {
+public final class OptionButton extends GuiButtonExt {
 
 	protected final IPressable onPressedHandler;
 

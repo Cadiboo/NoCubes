@@ -1,7 +1,8 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
 import joptsimple.internal.Strings;
-import net.minecraft.client.resources.I18n;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiTextField;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -18,7 +19,7 @@ public final class ListOption extends Option {
 		this.setter = setter;
 	}
 
-	private void set(String[] newValue) {
+	public void set(String[] newValue) {
 		this.setter.accept(newValue);
 	}
 
@@ -27,12 +28,16 @@ public final class ListOption extends Option {
 	}
 
 	@Override
-	public OptionButton createWidget(int width) {
-		final TextFieldOption textFieldWidget = new TextFieldOption(0, 0, width - 4, 16, this, I18n.format(this.getTranslationKey()), p_onPress_1_ -> {
-		}) {
+	public GuiTextField createWidget(int width) {
+		return new GuiTextField(0, Minecraft.getMinecraft().fontRenderer, 0, 0, width - 4, 16) {{
+			this.setMaxStringLength(9999999);
+			this.setText(Strings.join(ListOption.this.get(), ", "));
+			this.setGuiResponder(null);
+		}
+
 			@Override
-			public boolean textboxKeyTyped(char p_charTyped_1_, int p_charTyped_2_) {
-				if (super.textboxKeyTyped(p_charTyped_1_, p_charTyped_2_)) {
+			public boolean textboxKeyTyped(char typedChar, int keyCode) {
+				if (super.textboxKeyTyped(typedChar, keyCode)) {
 					ListOption.this.set(this.getText().split(", "));
 					return true;
 				} else {
@@ -40,9 +45,6 @@ public final class ListOption extends Option {
 				}
 			}
 		};
-		textFieldWidget.setMaxStringLength(9999999);
-		textFieldWidget.setText(Strings.join(this.get(), ", "));
-		return textFieldWidget;
 	}
 
 }

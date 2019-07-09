@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.resources.I18n;
 
 //@OnlyIn(Dist.CLIENT)
@@ -11,7 +12,7 @@ public abstract class Option {
 		this.translationKey = translationKeyIn;
 	}
 
-	public abstract OptionButton createWidget(int width);
+	public abstract Gui createWidget(int width);
 
 	public String getDisplayString() {
 		return I18n.format(this.translationKey) + ": ";
