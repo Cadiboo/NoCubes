@@ -227,6 +227,12 @@ public final class ConfigHelper {
 
 	private static void initTerrainSmoothable() {
 		LOGGER.debug("Initialising terrain smoothable");
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			for (BlockState state : block.getStateContainer().getValidStates()) {
+				state.nocubes_setTerrainSmoothable(false);
+			}
+		}
+		LOGGER.debug("Reset all BlockStates to unsmoothable");
 		for (final String stateString : terrainSmoothable) {
 			LOGGER.debug("Preparing to add \"" + stateString + "\" to terrain smoothable");
 			final BlockState state = getStateFromString(stateString);
@@ -241,6 +247,12 @@ public final class ConfigHelper {
 
 	private static void initLeavesSmoothable() {
 		LOGGER.debug("Initialising leaves smoothable");
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			for (BlockState state : block.getStateContainer().getValidStates()) {
+				state.nocubes_setLeavesSmoothable(false);
+			}
+		}
+		LOGGER.debug("Reset all BlockStates to unsmoothable");
 		for (final String blockString : leavesSmoothable) {
 			LOGGER.debug("Preparing to add block \"" + blockString + "\" to leaves smoothable");
 			final BlockState defaultState = getStateFromString(blockString);
