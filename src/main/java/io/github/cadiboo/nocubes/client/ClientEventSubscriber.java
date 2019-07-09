@@ -91,7 +91,7 @@ public final class ClientEventSubscriber {
 //			}
 //		}
 
-		//Rendering
+		// Rendering
 		{
 			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
 				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
@@ -111,7 +111,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		//Collisions
+		// Collisions
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
 //				player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsBroken114"));
@@ -141,7 +141,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		//Smoothables
+		// Smoothables
 		SMOOTHABLES:
 		{
 			final boolean terrainPressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
@@ -551,7 +551,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
-		//TODO: do this better
+		// TODO: Do this better (Do the same thing as StolenReposeCode.getDensity)
 		if (Config.terrainCollisions) {
 			event.setCanceled(true);
 		}
