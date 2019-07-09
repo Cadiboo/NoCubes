@@ -39,5 +39,4 @@
 	"nocubes.config.extendFluidsRange": "Extend Fluids Range",
 	"nocubes.config.terrainMeshGenerator": "Terrain Mesh Generator",
 	"nocubes.config.terrainCollisions": "Terrain Collisions"
-
 }
