@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import net.minecraft.block.Block;
@@ -219,6 +220,12 @@ public final class ConfigHelper {
 
 	private static void initTerrainSmoothable() {
 		LOGGER.debug("Initialising terrain smoothable");
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			for (IBlockState state : block.getBlockState().getValidStates()) {
+				state.nocubes_setTerrainSmoothable(false);
+			}
+		}
+		LOGGER.debug("Reset all BlockStates to unsmoothable");
 		for (final String stateString : terrainSmoothable) {
 			LOGGER.debug("Preparing to add \"" + stateString + "\" to terrain smoothable");
 			final IBlockState state = getStateFromString(stateString);
@@ -233,6 +240,12 @@ public final class ConfigHelper {
 
 	private static void initLeavesSmoothable() {
 		LOGGER.debug("Initialising leaves smoothable");
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			for (IBlockState state : block.getBlockState().getValidStates()) {
+				state.nocubes_setLeavesSmoothable(false);
+			}
+		}
+		LOGGER.debug("Reset all BlockStates to unsmoothable");
 		for (final String blockString : leavesSmoothable) {
 			LOGGER.debug("Preparing to add block \"" + blockString + "\" to leaves smoothable");
 			final IBlockState defaultState = getStateFromString(blockString);
