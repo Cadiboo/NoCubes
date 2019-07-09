@@ -210,11 +210,12 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 		@Override
 		public void render(int p_render_1_, int y, int x, int p_render_4_, int p_render_5_, int mouseX, int mouseY, boolean isHovered, float partialTicks) {
 			final Widget widget = this.widgetSupplier.getValue();
-			widget.x = x;
-			widget.y = y;
 			if (widget instanceof TextFieldWidget) {
-				widget.x += 2;
-				widget.y += 2;
+				widget.x = x + 2;
+				widget.y = y + 2;
+			} else {
+				widget.x = x;
+				widget.y = y;
 			}
 			widget.render(mouseX, mouseY, partialTicks);
 		}

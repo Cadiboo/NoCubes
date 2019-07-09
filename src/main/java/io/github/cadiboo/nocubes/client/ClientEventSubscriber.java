@@ -94,7 +94,7 @@ public final class ClientEventSubscriber {
 //			}
 //		}
 
-		//Rendering
+		// Rendering
 		{
 			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
 				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
@@ -114,7 +114,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		//Collisions
+		// Collisions
 		{
 			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
 				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
@@ -144,7 +144,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		//Smoothables
+		// Smoothables
 		SMOOTHABLES:
 		{
 			final boolean terrainPressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
