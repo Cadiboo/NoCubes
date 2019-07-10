@@ -62,7 +62,7 @@ minecraft {
 			property 'forge.logging.console.level', 'debug'
 
 			mods {
-				examplemod {
+				nocubes {
 					// Main sources (everything that goes in your final compiled mod. From /src/main/)
 					source sourceSets.main
 					// Test sources (debugging, unit tests. From /src/test/)
@@ -72,7 +72,7 @@ minecraft {
 		}
 
 		server {
-			workingDirectory project.file('run')
+			workingDirectory project.file('run/server')
 
 			// Recommended logging data for a userdev environment
 			property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
@@ -81,7 +81,7 @@ minecraft {
 			property 'forge.logging.console.level', 'debug'
 
 			mods {
-				examplemod {
+				nocubes {
 					// Main sources (everything that goes in your final compiled mod. From /src/main/)
 					source sourceSets.main
 					// Test sources (debugging, unit tests. From /src/test/)
