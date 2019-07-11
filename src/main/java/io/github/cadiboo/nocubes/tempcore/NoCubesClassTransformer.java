@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Consumer;
 
+import static io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin.DEVELOPER_ENVIRONMENT;
 import static io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin.DUMP_BYTECODE_DIR;
 import static io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin.MOD_LOCATION;
 import static org.objectweb.asm.ClassReader.SKIP_FRAMES;
@@ -75,12 +76,12 @@ public final class NoCubesClassTransformer implements IClassTransformer, Opcodes
 		switch (transformedName) {
 			case "net.minecraft.block.state.BlockStateContainer$StateImplementation":
 				// Weird class loading stuff happens in dev, this class gets loaded from our jar on the server
-				return FMLLaunchHandler.isDeobfuscatedEnvironment() && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
+				return DEVELOPER_ENVIRONMENT && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
 						StateImplementationTransformer::transform
 				);
 			case "net.minecraft.block.state.IBlockProperties":
 				// Weird class loading stuff happens in dev, this class gets loaded from our jar on the server
-				return FMLLaunchHandler.isDeobfuscatedEnvironment() && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
+				return DEVELOPER_ENVIRONMENT && FMLLaunchHandler.side() != Side.CLIENT ? basicClass : transformClass(basicClass, transformedName,
 						IBlockPropertiesTransformer::transform
 				);
 			case "net.minecraft.client.renderer.chunk.RenderChunk":

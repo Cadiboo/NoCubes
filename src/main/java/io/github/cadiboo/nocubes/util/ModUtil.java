@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.material.Material;
@@ -116,7 +117,7 @@ public final class ModUtil {
 //			return false;
 //		}
 //		return target.contains("userdev");
-		return FMLLaunchHandler.isDeobfuscatedEnvironment();
+		return NoCubesLoadingPlugin.DEVELOPER_ENVIRONMENT;
 	}
 
 	/**
