@@ -145,6 +145,14 @@ public final class CollisionHandler {
 
 				final float[] densityCacheArray = densityCache.getDensityCache();
 
+				final BlockState[] blockStateArray = stateCache.getBlockStates();
+
+				final int stateOffsetX = stateCache.startPaddingX;
+				final int stateOffsetY = stateCache.startPaddingY;
+				final int stateOffsetZ = stateCache.startPaddingZ;
+				final int stateCacheSizeX = stateCache.sizeX;
+				final int stateCacheSizeY = stateCache.sizeY;
+
 				final VoxelShape aabbShape = VoxelShapes.create(aabb);
 
 				// Get vanilla collisions (taking density into account)
@@ -152,13 +160,6 @@ public final class CollisionHandler {
 					final int sizeX = maxXp1 - minXm1;
 					final int sizeY = maxYp1 - minYm1;
 					final int sizeZ = maxZp1 - minZm1;
-
-					final BlockState[] blockStateArray = stateCache.getBlockStates();
-					final int stateOffsetX = stateCache.startPaddingX;
-					final int stateOffsetY = stateCache.startPaddingY;
-					final int stateOffsetZ = stateCache.startPaddingZ;
-					final int stateCacheSizeX = stateCache.sizeX;
-					final int stateCacheSizeY = stateCache.sizeY;
 
 					final int densityOffsetX = densityCache.startPaddingX;
 					final int densityOffsetY = densityCache.startPaddingY;
@@ -182,7 +183,7 @@ public final class CollisionHandler {
 												densityOffsetY + y,
 												densityOffsetZ + z,
 												densityCacheSizeX, densityCacheSizeY
-										)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely isnide)
+										)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely inside)
 								) {
 									final int posX = minXm1 + x;
 									final int posY = minYm1 + y;
@@ -228,11 +229,6 @@ public final class CollisionHandler {
 						}
 					}
 
-					final BlockState[] blocksArray = stateCache.getBlockStates();
-
-					final int stateCacheSizeX = stateCache.sizeX;
-					final int stateCacheSizeY = stateCache.sizeY;
-
 					for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
 						try (
 								final Face face = finalFaces.get(i);
@@ -250,7 +246,7 @@ public final class CollisionHandler {
 								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
 								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
 								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
-								final BlockState state = blocksArray[stateCache.getIndex(
+								final BlockState state = blockStateArray[stateCache.getIndex(
 										approximateX - startPosX,
 										approximateY - startPosY,
 										approximateZ - startPosZ,
