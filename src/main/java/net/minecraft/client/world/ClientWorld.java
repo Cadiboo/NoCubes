@@ -4,9 +4,14 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.function.BooleanSupplier;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -61,15 +66,9 @@ import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.function.BooleanSupplier;
-
 @OnlyIn(Dist.CLIENT)
 public class ClientWorld extends World {
-   private final List<Entity> field_217428_a = Lists.newArrayList();
+   private final List<Entity> globalEntities = Lists.newArrayList();
    private final Int2ObjectMap<Entity> entitiesById = new Int2ObjectOpenHashMap<>();
    private final ClientPlayNetHandler connection;
    private final WorldRenderer worldRenderer;
@@ -104,8 +103,8 @@ public class ClientWorld extends World {
       this.getProfiler().endSection();
    }
 
-   public Iterable<Entity> func_217416_b() {
-      return Iterables.concat(this.entitiesById.values(), this.field_217428_a);
+   public Iterable<Entity> getAllEntities() {
+      return Iterables.concat(this.entitiesById.values(), this.globalEntities);
    }
 
    public void tickEntities() {
@@ -113,15 +112,15 @@ public class ClientWorld extends World {
       iprofiler.startSection("entities");
       iprofiler.startSection("global");
 
-      for(int i = 0; i < this.field_217428_a.size(); ++i) {
-         Entity entity = this.field_217428_a.get(i);
+      for(int i = 0; i < this.globalEntities.size(); ++i) {
+         Entity entity = this.globalEntities.get(i);
          this.func_217390_a((p_217415_0_) -> {
             ++p_217415_0_.ticksExisted;
             if (p_217415_0_.canUpdate())
             p_217415_0_.tick();
          }, entity);
          if (entity.removed) {
-            this.field_217428_a.remove(i--);
+            this.globalEntities.remove(i--);
          }
       }
 
@@ -260,7 +259,7 @@ public class ClientWorld extends World {
    }
 
    public void addLightning(LightningBoltEntity p_217410_1_) {
-      this.field_217428_a.add(p_217410_1_);
+      this.globalEntities.add(p_217410_1_);
    }
 
    public void addPlayer(int p_217408_1_, AbstractClientPlayerEntity p_217408_2_) {

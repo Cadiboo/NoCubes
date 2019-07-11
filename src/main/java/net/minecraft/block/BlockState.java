@@ -4,6 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.Dynamic;
 import com.mojang.datafixers.types.DynamicOps;
 import com.mojang.datafixers.util.Pair;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.material.MaterialColor;
 import net.minecraft.block.material.PushReaction;
@@ -43,18 +51,9 @@ import net.minecraft.world.storage.loot.LootContext;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import javax.annotation.Nullable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
-
 public class BlockState extends StateHolder<Block, BlockState> implements IStateHolder<BlockState>, net.minecraftforge.common.extensions.IForgeBlockState {
    @Nullable
-   private Cache cache;
+   private BlockState.Cache cache;
    private final int lightLevel;
    private final boolean field_215709_e;
 
@@ -66,7 +65,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public void func_215692_c() {
       if (!this.getBlock().isVariableOpacity()) {
-         this.cache = new Cache(this);
+         this.cache = new BlockState.Cache(this);
       }
 
    }
@@ -91,12 +90,12 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.cache != null ? this.cache.opacity : this.getBlock().getOpacity(this, worldIn, pos);
    }
 
-   public VoxelShape func_215702_a(IBlockReader worldIn, BlockPos pos, Direction p_215702_3_) {
-      return this.cache != null && this.cache.field_222502_f != null ? this.cache.field_222502_f[p_215702_3_.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), p_215702_3_);
+   public VoxelShape func_215702_a(IBlockReader worldIn, BlockPos pos, Direction directionIn) {
+      return this.cache != null && this.cache.renderShapes != null ? this.cache.renderShapes[directionIn.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), directionIn);
    }
 
    public boolean func_215704_f() {
-      return this.cache == null || this.cache.field_222503_g;
+      return this.cache == null || this.cache.isCollisionShapeLargerThanFullBlock;
    }
 
    public boolean func_215691_g() {
@@ -143,17 +142,17 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    @OnlyIn(Dist.CLIENT)
-   public int getPackedLightmapCoords(IEnviromentBlockReader p_215684_1_, BlockPos pos) {
-      return this.getBlock().getPackedLightmapCoords(this, p_215684_1_, pos);
+   public int getPackedLightmapCoords(IEnviromentBlockReader reader, BlockPos pos) {
+      return this.getBlock().getPackedLightmapCoords(this, reader, pos);
    }
 
    @OnlyIn(Dist.CLIENT)
-   public float func_215703_d(IBlockReader p_215703_1_, BlockPos pos) {
-      return this.getBlock().func_220080_a(this, p_215703_1_, pos);
+   public float func_215703_d(IBlockReader reader, BlockPos pos) {
+      return this.getBlock().func_220080_a(this, reader, pos);
    }
 
-   public boolean isNormalCube(IBlockReader p_215686_1_, BlockPos pos) {
-      return this.getBlock().isNormalCube(this, p_215686_1_, pos);
+   public boolean isNormalCube(IBlockReader reader, BlockPos pos) {
+      return this.getBlock().isNormalCube(this, reader, pos);
    }
 
    public boolean canProvidePower() {
@@ -209,16 +208,16 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getShape(worldIn, pos, ISelectionContext.dummy());
    }
 
-   public VoxelShape getShape(IBlockReader p_215700_1_, BlockPos p_215700_2_, ISelectionContext p_215700_3_) {
-      return this.getBlock().getShape(this, p_215700_1_, p_215700_2_, p_215700_3_);
+   public VoxelShape getShape(IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+      return this.getBlock().getShape(this, worldIn, pos, context);
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
       return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
-   public VoxelShape getCollisionShape(IBlockReader p_215685_1_, BlockPos pos, ISelectionContext p_215685_3_) {
-      return this.getBlock().getCollisionShape(this, p_215685_1_, pos, p_215685_3_);
+   public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+      return this.getBlock().getCollisionShape(this, worldIn, pos, context);
    }
 
    public VoxelShape getRenderShape(IBlockReader worldIn, BlockPos pos) {
@@ -229,8 +228,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().getRaytraceShape(this, worldIn, pos);
    }
 
-   public final boolean func_215682_a(IBlockReader p_215682_1_, BlockPos p_215682_2_, Entity p_215682_3_) {
-      return Block.doesSideFillSquare(this.getCollisionShape(p_215682_1_, p_215682_2_, ISelectionContext.forEntity(p_215682_3_)), Direction.UP);
+   public final boolean func_215682_a(IBlockReader reader, BlockPos pos, Entity entityIn) {
+      return Block.doesSideFillSquare(this.getCollisionShape(reader, pos, ISelectionContext.forEntity(entityIn)), Direction.UP);
    }
 
    public Vec3d getOffset(IBlockReader access, BlockPos pos) {
@@ -247,8 +246,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().eventReceived(this, worldIn, pos, id, param);
    }
 
-   public void neighborChanged(World p_215697_1_, BlockPos p_215697_2_, Block p_215697_3_, BlockPos p_215697_4_, boolean isMoving) {
-      this.getBlock().neighborChanged(this, p_215697_1_, p_215697_2_, p_215697_3_, p_215697_4_, isMoving);
+   public void neighborChanged(World worldIn, BlockPos p_215697_2_, Block blockIn, BlockPos p_215697_4_, boolean isMoving) {
+      this.getBlock().neighborChanged(this, worldIn, p_215697_2_, blockIn, p_215697_4_, isMoving);
    }
 
    /**
@@ -269,8 +268,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().updateDiagonalNeighbors(this, worldIn, pos, flags);
    }
 
-   public void onBlockAdded(World p_215705_1_, BlockPos p_215705_2_, BlockState p_215705_3_, boolean isMoving) {
-      this.getBlock().onBlockAdded(this, p_215705_1_, p_215705_2_, p_215705_3_, isMoving);
+   public void onBlockAdded(World worldIn, BlockPos pos, BlockState oldState, boolean isMoving) {
+      this.getBlock().onBlockAdded(this, worldIn, pos, oldState, isMoving);
    }
 
    public void onReplaced(World worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
@@ -289,27 +288,27 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onEntityCollision(this, worldIn, pos, entityIn);
    }
 
-   public void spawnAdditionalDrops(World p_215706_1_, BlockPos p_215706_2_, ItemStack p_215706_3_) {
-      this.getBlock().spawnAdditionalDrops(this, p_215706_1_, p_215706_2_, p_215706_3_);
+   public void spawnAdditionalDrops(World worldIn, BlockPos pos, ItemStack stack) {
+      this.getBlock().spawnAdditionalDrops(this, worldIn, pos, stack);
    }
 
-   public List<ItemStack> getDrops(LootContext.Builder p_215693_1_) {
-      return this.getBlock().getDrops(this, p_215693_1_);
+   public List<ItemStack> getDrops(LootContext.Builder builder) {
+      return this.getBlock().getDrops(this, builder);
    }
 
-   public boolean onBlockActivated(World p_215687_1_, PlayerEntity p_215687_2_, Hand p_215687_3_, BlockRayTraceResult p_215687_4_) {
-      return this.getBlock().onBlockActivated(this, p_215687_1_, p_215687_4_.getPos(), p_215687_2_, p_215687_3_, p_215687_4_);
+   public boolean onBlockActivated(World worldIn, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+      return this.getBlock().onBlockActivated(this, worldIn, hit.getPos(), player, handIn, hit);
    }
 
    public void onBlockClicked(World worldIn, BlockPos pos, PlayerEntity player) {
       this.getBlock().onBlockClicked(this, worldIn, pos, player);
    }
 
-   public boolean causesSuffocation(IBlockReader p_215696_1_, BlockPos p_215696_2_) {
+   public boolean causesSuffocation(IBlockReader worldIn, BlockPos pos) {
       // NoCubes Start
-      if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, p_215696_1_, p_215696_2_)) return false;
+      if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, worldIn, pos)) return false;
       // NoCubes End
-      return this.getBlock().causesSuffocation(this, p_215696_1_, p_215696_2_);
+      return this.getBlock().causesSuffocation(this, worldIn, pos);
    }
 
    public BlockState updatePostPlacement(Direction face, BlockState queried, IWorld worldIn, BlockPos currentPos, BlockPos offsetPos) {
@@ -333,8 +332,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    @Nullable
-   public INamedContainerProvider getContainer(World p_215699_1_, BlockPos p_215699_2_) {
-      return this.getBlock().getContainer(this, p_215699_1_, p_215699_2_);
+   public INamedContainerProvider getContainer(World worldIn, BlockPos pos) {
+      return this.getBlock().getContainer(this, worldIn, pos);
    }
 
    public boolean isIn(Tag<Block> tagIn) {
@@ -362,26 +361,26 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onProjectileCollision(worldIn, state, hit, projectile);
    }
 
-   public static <T> Dynamic<T> serialize(DynamicOps<T> p_215689_0_, BlockState p_215689_1_) {
-      ImmutableMap<IProperty<?>, Comparable<?>> immutablemap = p_215689_1_.getValues();
+   public static <T> Dynamic<T> serialize(DynamicOps<T> opsIn, BlockState state) {
+      ImmutableMap<IProperty<?>, Comparable<?>> immutablemap = state.getValues();
       T t;
       if (immutablemap.isEmpty()) {
-         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.BLOCK.getKey(p_215689_1_.getBlock()).toString())));
+         t = opsIn.createMap(ImmutableMap.of(opsIn.createString("Name"), opsIn.createString(Registry.BLOCK.getKey(state.getBlock()).toString())));
       } else {
-         t = p_215689_0_.createMap(ImmutableMap.of(p_215689_0_.createString("Name"), p_215689_0_.createString(Registry.BLOCK.getKey(p_215689_1_.getBlock()).toString()), p_215689_0_.createString("Properties"), p_215689_0_.createMap(immutablemap.entrySet().stream().map((p_215683_1_) -> {
-            return Pair.of(p_215689_0_.createString(p_215683_1_.getKey().getName()), p_215689_0_.createString(IStateHolder.func_215670_b(p_215683_1_.getKey(), p_215683_1_.getValue())));
+         t = opsIn.createMap(ImmutableMap.of(opsIn.createString("Name"), opsIn.createString(Registry.BLOCK.getKey(state.getBlock()).toString()), opsIn.createString("Properties"), opsIn.createMap(immutablemap.entrySet().stream().map((p_215683_1_) -> {
+            return Pair.of(opsIn.createString(p_215683_1_.getKey().getName()), opsIn.createString(IStateHolder.func_215670_b(p_215683_1_.getKey(), p_215683_1_.getValue())));
          }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)))));
       }
 
-      return new Dynamic<>(p_215689_0_, t);
+      return new Dynamic<>(opsIn, t);
    }
 
-   public static <T> BlockState deserialize(Dynamic<T> p_215698_0_) {
+   public static <T> BlockState deserialize(Dynamic<T> dynamic) {
       DefaultedRegistry defaultedregistry = Registry.BLOCK;
-      Optional<T> optional = p_215698_0_.getElement("Name");
-      DynamicOps<T> dynamicops = p_215698_0_.getOps();
+      Optional<T> optional = dynamic.getElement("Name");
+      DynamicOps<T> dynamicops = dynamic.getOps();
       Block block = (Block)defaultedregistry.getOrDefault(new ResourceLocation(optional.flatMap(dynamicops::getStringValue).orElse("minecraft:air")));
-      Map<String, String> map = p_215698_0_.get("Properties").asMap((p_215701_0_) -> {
+      Map<String, String> map = dynamic.get("Properties").asMap((p_215701_0_) -> {
          return p_215701_0_.asString("");
       }, (p_215694_0_) -> {
          return p_215694_0_.asString("");
@@ -393,7 +392,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
          String s = entry.getKey();
          IProperty<?> iproperty = statecontainer.getProperty(s);
          if (iproperty != null) {
-            blockstate = IStateHolder.func_215671_a(blockstate, iproperty, s, p_215698_0_.toString(), entry.getValue());
+            blockstate = IStateHolder.func_215671_a(blockstate, iproperty, s, dynamic.toString(), entry.getValue());
          }
       }
 
@@ -406,9 +405,9 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       private final boolean opaqueCube;
       private final boolean propagatesSkylightDown;
       private final int opacity;
-      private final VoxelShape[] field_222502_f;
+      private final VoxelShape[] renderShapes;
       private final VoxelShape collisionShape;
-      private final boolean field_222503_g;
+      private final boolean isCollisionShapeLargerThanFullBlock;
 
       private Cache(BlockState stateIn) {
          Block block = stateIn.getBlock();
@@ -417,18 +416,18 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
          this.propagatesSkylightDown = block.propagatesSkylightDown(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
          this.opacity = block.getOpacity(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
          if (!stateIn.isSolid()) {
-            this.field_222502_f = null;
+            this.renderShapes = null;
          } else {
-            this.field_222502_f = new VoxelShape[DIRECTIONS.length];
+            this.renderShapes = new VoxelShape[DIRECTIONS.length];
             VoxelShape voxelshape = block.getRenderShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
 
             for(Direction direction : DIRECTIONS) {
-               this.field_222502_f[direction.ordinal()] = VoxelShapes.func_216387_a(voxelshape, direction);
+               this.renderShapes[direction.ordinal()] = VoxelShapes.func_216387_a(voxelshape, direction);
             }
          }
 
          this.collisionShape = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
-         this.field_222503_g = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
+         this.isCollisionShapeLargerThanFullBlock = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
             return this.collisionShape.getStart(p_222491_1_) < 0.0D || this.collisionShape.getEnd(p_222491_1_) > 1.0D;
          });
       }

@@ -1,6 +1,15 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -24,6 +33,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.NetworkTagManager;
 import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.Direction;
 import net.minecraft.util.SoundCategory;
@@ -51,16 +61,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public abstract class World extends net.minecraftforge.common.capabilities.CapabilityProvider<World> implements IEnviromentBlockReader, IWorld, AutoCloseable, net.minecraftforge.common.extensions.IForgeWorld {
    protected static final Logger LOGGER = LogManager.getLogger();
@@ -490,7 +490,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    @OnlyIn(Dist.CLIENT)
-   public Vec3d func_217382_a(BlockPos p_217382_1_, float p_217382_2_) {
+   public Vec3d getSkyColor(BlockPos p_217382_1_, float p_217382_2_) {
        return this.dimension.getSkyColor(p_217382_1_, p_217382_2_);
    }
 
@@ -1340,7 +1340,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    public boolean isRainingAt(BlockPos position) {
       if (!this.isRaining()) {
          return false;
-      } else if (!this.func_217337_f(position)) {
+      } else if (!this.isSkyLightMax(position)) {
          return false;
       } else if (this.getHeight(Heightmap.Type.MOTION_BLOCKING, position).getY() > position.getY()) {
          return false;

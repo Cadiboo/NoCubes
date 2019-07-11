@@ -2,6 +2,11 @@ package net.minecraft.client.renderer.chunk;
 
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.GLX;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -26,12 +31,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-
-import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.locks.ReentrantLock;
 
 @OnlyIn(Dist.CLIENT)
 public class ChunkRender implements net.minecraftforge.client.extensions.IForgeRenderChunk {
@@ -148,6 +147,9 @@ public class ChunkRender implements net.minecraftforge.client.extensions.IForgeR
             Random random = new Random();
             BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
 
+            // NoCubes Start
+            io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
+            // NoCubes End
             for(BlockPos blockpos2 : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
                BlockState blockstate = lvt_12_1_.getBlockState(blockpos2);
                Block block = blockstate.getBlock();

@@ -1,6 +1,13 @@
 package net.minecraft.world;
 
 import com.google.common.collect.Streams;
+import java.util.Collections;
+import java.util.Set;
+import java.util.Spliterators.AbstractSpliterator;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -20,14 +27,6 @@ import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.gen.Heightmap;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Spliterators.AbstractSpliterator;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 public interface IWorldReader extends IEnviromentBlockReader {
    /**
     * Checks to see if an air block exists at the provided location. Note that this only checks to see if the blocks
@@ -39,10 +38,10 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
    default boolean canBlockSeeSky(BlockPos pos) {
       if (pos.getY() >= this.getSeaLevel()) {
-         return this.func_217337_f(pos);
+         return this.isSkyLightMax(pos);
       } else {
          BlockPos blockpos = new BlockPos(pos.getX(), this.getSeaLevel(), pos.getZ());
-         if (!this.func_217337_f(blockpos)) {
+         if (!this.isSkyLightMax(blockpos)) {
             return false;
          } else {
             for(BlockPos blockpos1 = blockpos.down(); blockpos1.getY() > pos.getY(); blockpos1 = blockpos1.down()) {
@@ -87,8 +86,8 @@ public interface IWorldReader extends IEnviromentBlockReader {
 
    int getSeaLevel();
 
-   default IChunk getChunk(BlockPos p_217349_1_) {
-      return this.getChunk(p_217349_1_.getX() >> 4, p_217349_1_.getZ() >> 4);
+   default IChunk getChunk(BlockPos pos) {
+      return this.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
    }
 
    default IChunk getChunk(int chunkX, int chunkZ) {
@@ -103,21 +102,21 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return ChunkStatus.EMPTY;
    }
 
-   default boolean func_217350_a(BlockState p_217350_1_, BlockPos p_217350_2_, ISelectionContext p_217350_3_) {
-      VoxelShape voxelshape = p_217350_1_.getCollisionShape(this, p_217350_2_, p_217350_3_);
-      return voxelshape.isEmpty() || this.checkNoEntityCollision((Entity)null, voxelshape.withOffset((double)p_217350_2_.getX(), (double)p_217350_2_.getY(), (double)p_217350_2_.getZ()));
+   default boolean func_217350_a(BlockState blockStateIn, BlockPos pos, ISelectionContext selectionContext) {
+      VoxelShape voxelshape = blockStateIn.getCollisionShape(this, pos, selectionContext);
+      return voxelshape.isEmpty() || this.checkNoEntityCollision((Entity)null, voxelshape.withOffset((double)pos.getX(), (double)pos.getY(), (double)pos.getZ()));
    }
 
-   default boolean func_217346_i(Entity p_217346_1_) {
-      return this.checkNoEntityCollision(p_217346_1_, VoxelShapes.create(p_217346_1_.getBoundingBox()));
+   default boolean checkNoEntityCollision(Entity entityIn) {
+      return this.checkNoEntityCollision(entityIn, VoxelShapes.create(entityIn.getBoundingBox()));
    }
 
-   default boolean areCollisionShapesEmpty(AxisAlignedBB p_217351_1_) {
-      return this.isCollisionBoxesEmpty((Entity)null, p_217351_1_, Collections.emptySet());
+   default boolean areCollisionShapesEmpty(AxisAlignedBB aabb) {
+      return this.isCollisionBoxesEmpty((Entity)null, aabb, Collections.emptySet());
    }
 
-   default boolean areCollisionShapesEmpty(Entity p_217345_1_) {
-      return this.isCollisionBoxesEmpty(p_217345_1_, p_217345_1_.getBoundingBox(), Collections.emptySet());
+   default boolean areCollisionShapesEmpty(Entity entityIn) {
+      return this.isCollisionBoxesEmpty(entityIn, entityIn.getBoundingBox(), Collections.emptySet());
    }
 
    default boolean isCollisionBoxesEmpty(Entity entityIn, AxisAlignedBB aabb) {
@@ -128,12 +127,12 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return this.getCollisionShapes(entityIn, aabb, entitiesToIgnore).allMatch(VoxelShape::isEmpty);
    }
 
-   default Stream<VoxelShape> func_223439_a(@Nullable Entity entityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
+   default Stream<VoxelShape> getEmptyCollisionShapes(@Nullable Entity entityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
       return Stream.empty();
    }
 
    default Stream<VoxelShape> getCollisionShapes(@Nullable Entity enitityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
-      return Streams.concat(this.getCollisionShapes(enitityIn, aabb), this.func_223439_a(enitityIn, aabb, entitiesToIgnore));
+      return Streams.concat(this.getCollisionShapes(enitityIn, aabb), this.getEmptyCollisionShapes(enitityIn, aabb, entitiesToIgnore));
    }
 
    default Stream<VoxelShape> getCollisionShapes(@Nullable final Entity entityIn, AxisAlignedBB aabb) {
