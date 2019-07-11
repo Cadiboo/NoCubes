@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientProxy;
+import io.github.cadiboo.nocubes.client.ClientEventSubscriber;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
@@ -81,7 +81,7 @@ public final class OptimisedFluidBlockRenderer {
 			densityCacheStartPaddingZ = densityCache.startPaddingZ;
 		}
 
-		final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientProxy.smoothLightingBlockFluidRenderer;
+		final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer;
 		final FluidBlockRenderer fluidRenderer = blockRendererDispatcher.fluidRenderer;
 
 		// Use fluidRenderer sprites instead of smoothLightingFluidBlockRenderer sprites for compatibility

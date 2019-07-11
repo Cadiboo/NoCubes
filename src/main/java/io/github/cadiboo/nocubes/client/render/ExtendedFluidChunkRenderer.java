@@ -135,6 +135,7 @@ public final class ExtendedFluidChunkRenderer {
 
 								final IFluidState fluidState = fluidCacheArray[fluidStateIndex];
 
+								// TODO: BlockRenderLayer.for
 								final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(fluidState);
 								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
 

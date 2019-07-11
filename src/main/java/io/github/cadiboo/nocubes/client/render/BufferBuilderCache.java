@@ -10,7 +10,7 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VAL
  */
 public final class BufferBuilderCache {
 
-	protected final BufferBuilder[] worldRenderers = new BufferBuilder[BLOCK_RENDER_LAYER_VALUES_LENGTH];
+	private final BufferBuilder[] worldRenderers = new BufferBuilder[BLOCK_RENDER_LAYER_VALUES_LENGTH];
 
 	public BufferBuilderCache() {
 		this(0x200_000, 0x20_000, 0x20_000, 0x40_000);

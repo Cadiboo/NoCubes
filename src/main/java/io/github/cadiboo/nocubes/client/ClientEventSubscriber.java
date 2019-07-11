@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import com.mojang.blaze3d.platform.GlStateManager;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.gui.widget.IngameModListButton;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
@@ -27,6 +28,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -42,6 +44,7 @@ import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.network.ConnectionType;
@@ -58,6 +61,12 @@ import static net.minecraftforge.api.distmarker.Dist.CLIENT;
 import static net.minecraftforge.client.event.GuiScreenEvent.InitGuiEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_C;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_I;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_K;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_N;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_O;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -66,6 +75,28 @@ import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
  */
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
+
+	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", GLFW_KEY_O, "key.categories." + MOD_ID);
+	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", GLFW_KEY_I, "key.categories." + MOD_ID);
+	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", GLFW_KEY_P, "key.categories." + MOD_ID);
+//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", GLFW_KEY_J, "key.categories." + MOD_ID);
+
+	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", GLFW_KEY_N, "key.categories." + MOD_ID);
+	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
+	private static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
+
+	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
+
+	static {
+		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
+		ClientRegistry.registerKeyBinding(toggleRenderSmoothLeaves);
+		ClientRegistry.registerKeyBinding(toggleProfilers);
+//		ClientRegistry.registerKeyBinding(tempDiscoverSmoothables);
+
+		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
+		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
+		ClientRegistry.registerKeyBinding(tempToggleTerrainCollisions);
+	}
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
@@ -83,7 +114,7 @@ public final class ClientEventSubscriber {
 
 //		// TODO: Temp!
 //		{
-//			if (ClientProxy.tempDiscoverSmoothables.isPressed()) {
+//			if (tempDiscoverSmoothables.isPressed()) {
 ////				LOGGER.info("Discovering smoothables...");
 //				player.sendMessage(new TextComponentString("Discovering smoothables..."));
 //				final long startTime = System.nanoTime();
@@ -96,7 +127,7 @@ public final class ClientEventSubscriber {
 
 		// Rendering
 		{
-			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
+			if (toggleRenderSmoothTerrain.isPressed()) {
 				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
 				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
 				// Config saving is async so set it now
@@ -104,7 +135,7 @@ public final class ClientEventSubscriber {
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
-			if (ClientProxy.toggleRenderSmoothLeaves.isPressed()) {
+			if (toggleRenderSmoothLeaves.isPressed()) {
 				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
 				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
 				// Config saving is async so set it now
@@ -116,7 +147,7 @@ public final class ClientEventSubscriber {
 
 		// Collisions
 		{
-			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
+			if (tempToggleTerrainCollisions.isPressed()) {
 				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
 //				if (!minecraft.isSingleplayer()) {
 //					// TODO: Send packet to server requesting enabling collisions?
@@ -128,7 +159,7 @@ public final class ClientEventSubscriber {
 //							ConfigHelper.setTerrainCollisions(true);
 //							setTo = true;
 //							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
-//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(ClientProxy.tempToggleTerrainCollisions.getKey().getTranslationKey())));
+//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(tempToggleTerrainCollisions.getKey().getTranslationKey())));
 //						} else {
 //							setTo = Config.terrainCollisions;
 //							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
@@ -147,8 +178,8 @@ public final class ClientEventSubscriber {
 		// Smoothables
 		SMOOTHABLES:
 		{
-			final boolean terrainPressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
-			final boolean leavesPressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
+			final boolean terrainPressed = toggleTerrainSmoothableBlockState.isPressed();
+			final boolean leavesPressed = toggleLeavesSmoothableBlockState.isPressed();
 			if (!terrainPressed && !leavesPressed) {
 				break SMOOTHABLES;
 			}
@@ -200,7 +231,7 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		if (ClientProxy.toggleProfilers.isPressed()) {
+		if (toggleProfilers.isPressed()) {
 			synchronized (ModProfiler.PROFILERS) {
 				if (ModProfiler.profilersEnabled) {
 					ModProfiler.disableProfiling();

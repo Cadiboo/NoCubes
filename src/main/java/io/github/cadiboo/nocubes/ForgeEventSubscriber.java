@@ -14,6 +14,7 @@ public final class ForgeEventSubscriber {
 
 	@SubscribeEvent
 	public static void onTickEvent(final TickEvent event) {
+		// TODO: Remove once collisions work
 		Config.terrainCollisions = false;
 	}
 

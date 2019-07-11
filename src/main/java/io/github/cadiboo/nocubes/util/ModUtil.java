@@ -7,13 +7,14 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.block.material.Material;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
@@ -21,6 +22,7 @@ import net.minecraftforge.fml.VersionChecker;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.block.Blocks.BEDROCK;
 import static net.minecraft.block.Blocks.SNOW;
@@ -147,6 +149,10 @@ public final class ModUtil {
 		return (byte) (initialSize + meshGenerator.getSizeZExtension());
 	}
 
+	/**
+	 * Handle FluidStates for extended fluids.
+	 * Called from {@link io.github.cadiboo.nocubes.hooks.Hooks#getFluidState(World, BlockPos)}
+	 */
 	public static IFluidState getFluidState(final World world, final BlockPos pos) {
 		final int posX = pos.getX();
 		final int posY = pos.getY();
@@ -215,6 +221,7 @@ public final class ModUtil {
 
 	/**
 	 * Mostly copied from StolenReposeCode.getDensity
+	 * Called from {@link io.github.cadiboo.nocubes.hooks.Hooks#doesNotCauseSuffocation(BlockState, IBlockReader, BlockPos)}
 	 */
 	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
 		float density = 0;
@@ -290,6 +297,23 @@ public final class ModUtil {
 	 */
 	public static byte getRelativePos(final int blockPos) {
 		return (byte) (blockPos & 15);
+	}
+
+	public static void preloadClass(@Nonnull final String qualifiedName, @Nonnull final String simpleName) {
+		try {
+			LOGGER.info("Loading class \"" + simpleName + "\"...");
+			final ClassLoader classLoader = NoCubes.class.getClassLoader();
+			final long startTime = System.nanoTime();
+			Class.forName(qualifiedName, false, classLoader);
+			LOGGER.info("Loaded class \"" + simpleName + "\" in " + (System.nanoTime() - startTime) + " nano seconds");
+			LOGGER.info("Initialising class \"" + simpleName + "\"...");
+			Class.forName(qualifiedName, true, classLoader);
+			LOGGER.info("Initialised \"" + simpleName + "\"");
+		} catch (final ClassNotFoundException e) {
+			final CrashReport crashReport = new CrashReport("Failed to load class \"" + simpleName + "\". This should not be possible!", e);
+			crashReport.makeCategory("Loading class");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

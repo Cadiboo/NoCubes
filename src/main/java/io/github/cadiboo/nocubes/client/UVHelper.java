@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public final class UVHelper {
 
-	// add or subtract from the sprites UV location to remove transparent lines in between textures
+	// Add or subtract from the sprites UV location to remove transparent lines in between textures
 	private static final float UV_CORRECT = 1 / 10000F;
 
 	/**

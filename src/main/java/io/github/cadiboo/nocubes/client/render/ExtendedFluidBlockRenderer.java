@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientProxy;
+import io.github.cadiboo.nocubes.client.ClientEventSubscriber;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import net.minecraft.block.Block;
@@ -51,7 +51,7 @@ public final class ExtendedFluidBlockRenderer {
 		) {
 			OptiFineCompatibility.pushShaderThing(state, renderPos, worldIn, buffer);
 
-			final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientProxy.smoothLightingBlockFluidRenderer;
+			final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer;
 
 			final Fluid fluid = state.getFluid();
 

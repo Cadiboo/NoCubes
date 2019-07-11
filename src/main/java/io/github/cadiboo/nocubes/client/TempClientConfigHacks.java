@@ -19,6 +19,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
  *
  * @author Cadiboo
  */
+@SuppressWarnings("all")
 public final class TempClientConfigHacks {
 
 	public static void doConfigHacks() {
@@ -46,7 +47,7 @@ public final class TempClientConfigHacks {
 
 	private static class ConfigModInfo extends ModInfo {
 
-		public ConfigModInfo(ModInfo modInfo) {
+		private ConfigModInfo(ModInfo modInfo) {
 			super(modInfo.getOwningFile(), modInfo.getModConfig());
 		}
 
