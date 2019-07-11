@@ -48,6 +48,9 @@ function initializeCoreMod() {
 	GOTO = Opcodes.GOTO;
 
 	LABEL = AbstractInsnNode.LABEL;
+	METHOD_INSN = AbstractInsnNode.METHOD_INSN;
+
+	isOptiFinePresent = false;
 
 	return {
 		"ChunkRenderCache#<init>": {
@@ -58,7 +61,18 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V"
 			},
 			"transformer": function(methodNode) {
-				injectInitChunkRenderCacheHook(methodNode.instructions);
+				// OptiFine makes the BlockState[] and IFluidState[] null.
+				// Vanilla doesn't use null anywhere in the method.
+				var instructions = methodNode.instructions;
+				for (var i = instructions.size() - 1; i >= 0; --i) {
+					if (instructions.get(i).getOpcode() == ACONST_NULL) {
+						isOptiFinePresent = true;
+						print("Found OptiFine - ChunkRenderCache#<init> NULL");
+						break;
+					}
+				}
+				if (!isOptiFinePresent)
+					injectInitChunkRenderCacheHook(instructions);
 				return methodNode;
 			}
 		},
@@ -70,6 +84,32 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;I)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;"
 			},
 			"transformer": function(methodNode) {
+				// OptiFine immediately calls another method.
+				// Vanilla returns null when the chunk is empty.
+				var instructions = methodNode.instructions;
+				for (var i = instructions.size() - 1; i >= 0; --i) {
+					if (instructions.get(i).getOpcode() == ACONST_NULL) {
+						print("Found lack of OptiFine - ChunkRenderCache#generateCache NULL");
+						isOptiFinePresent = false;
+						break;
+					}
+				}
+				if (!isOptiFinePresent)
+					injectGenerateCacheHook(instructions);
+				return methodNode;
+			}
+		},
+		"ChunkRenderCache#generateCache OptiFine": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
+				"methodName": "generateCache",
+				"methodDesc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;"
+			},
+			"transformer": function(methodNode) {
+				// OptiFine added method
+				isOptiFinePresent = true;
+				print("Found OptiFine - ChunkRenderCache#generateCache OptiFine");
 				injectGenerateCacheHook(methodNode.instructions);
 				return methodNode;
 			}
@@ -257,7 +297,7 @@ function injectInitChunkRenderCacheHook(instructions) {
 	}
 
 	var firstLabelBefore_first_INVOKEVIRTUAL_getX;
-	for (i = instructions.indexOf(first_INVOKEVIRTUAL_getX); i >=0; --i) {
+	for (i = instructions.indexOf(first_INVOKEVIRTUAL_getX); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
 			firstLabelBefore_first_INVOKEVIRTUAL_getX = instruction;
@@ -499,7 +539,7 @@ function injectGenerateCacheHook(instructions) {
 	var firstACONST_NULL_then_ARETURN;
 	var previousInsn; // The previous insn that was checked (technically the next insn in the list)
 	var arrayLength = instructions.size();
-	for (var i = arrayLength - 1; i >=0; --i) {
+	for (var i = arrayLength - 1; i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == ACONST_NULL) {
 			if (!previousInsn) {
@@ -519,7 +559,7 @@ function injectGenerateCacheHook(instructions) {
 
 	// 2) Find previous IFEQ
 	var firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstACONST_NULL_then_ARETURN); i >=0; --i) {
+	for (i = instructions.indexOf(firstACONST_NULL_then_ARETURN); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == IFEQ) {
 			firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
@@ -533,7 +573,7 @@ function injectGenerateCacheHook(instructions) {
 
 	// 3) Find previous Label
 	var firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >=0; --i) {
+	for (i = instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
 			firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
@@ -549,7 +589,7 @@ function injectGenerateCacheHook(instructions) {
 	var isEmptyBetween_name = ASMAPI.mapMethod("func_76606_c"); // isEmptyBetween
 
 	var firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >=0; --i) {
+	for (i = instructions.indexOf(firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKEVIRTUAL) {
 			if (instruction.owner == "net/minecraft/world/chunk/Chunk") {
@@ -772,7 +812,7 @@ function injectPreIterationHook(instructions) {
 	}
 
 	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
-	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >=0; --i) {
+	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
 			firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable = instruction;
@@ -902,7 +942,7 @@ function injectBlockRenderHook(instructions) {
 	}
 
 	var firstLabelBefore_BlockState_getRenderType;
-	for (i = instructions.indexOf(BlockState_getRenderType); i >=0; --i) {
+	for (i = instructions.indexOf(BlockState_getRenderType); i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
 			firstLabelBefore_BlockState_getRenderType = instruction;
@@ -1007,16 +1047,37 @@ function injectFluidRenderBypass(instructions) {
 //    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
 //    ASTORE 21
 
-	var getFluidState_name = ASMAPI.mapMethod("func_204610_c"); // getFluidState
+	// Check if any instructions reference an OptiFine class.
+	for (var i = instructions.size() - 1; i >= 0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
+			isOptiFinePresent = true;
+			print("Found OptiFine - ChunkCacheOF class");
+			break;
+		}
+	}
+
+	var getFluidState_owner;
+	var getFluidState_name;
+	var getFluidState_desc;
+	if (!isOptiFinePresent) {
+		getFluidState_owner = "net/minecraft/client/renderer/chunk/ChunkRenderCache";
+		getFluidState_name = ASMAPI.mapMethod("func_204610_c"); // ChunkRenderCache#getFluidState
+		getFluidState_desc = "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;";
+	} else {
+		getFluidState_owner = "net/minecraft/block/BlockState";
+		getFluidState_name = ASMAPI.mapMethod("func_204520_s"); // BlockState#getFluidState
+		getFluidState_desc = "()Lnet/minecraft/fluid/IFluidState;";
+	}
 
 	var first_INVOKEVIRTUAL_getFluidState;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/client/renderer/chunk/ChunkRenderCache") {
+			if (instruction.owner == getFluidState_owner) {
 				if (instruction.name == getFluidState_name) {
-					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;") {
+					if (instruction.desc == getFluidState_desc) {
 						if (instruction.itf == false) {
 							first_INVOKEVIRTUAL_getFluidState = instruction;
 							print("Found injection point \"first_INVOKEVIRTUAL_getFluidState\" " + instruction);
