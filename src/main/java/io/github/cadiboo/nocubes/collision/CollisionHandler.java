@@ -214,7 +214,7 @@ public final class CollisionHandler {
 					),
 					true
 			)) {
-				return getVanillaCollisions(_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1);
+				return getFallbackMeshCollisions(_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1);
 			}
 
 			final ModProfiler profiler = ModProfiler.get();
@@ -243,6 +243,57 @@ public final class CollisionHandler {
 							stateCache, smoothableCache
 					)
 			) {
+
+				final List<AxisAlignedBB> collidingShapes = new ArrayList<>();
+
+				final float[] densityCacheArray = densityCache.getDensityCache();
+
+				final IBlockState[] blockStateArray = stateCache.getBlockStates();
+
+				final int stateOffsetX = stateCache.startPaddingX;
+				final int stateOffsetY = stateCache.startPaddingY;
+				final int stateOffsetZ = stateCache.startPaddingZ;
+				final int stateCacheSizeX = stateCache.sizeX;
+				final int stateCacheSizeY = stateCache.sizeY;
+
+//				final VoxelShape aabbShape = VoxelShapes.create(aabb);
+
+				// Get vanilla collisions (taking density into account)
+				{
+					final int sizeX = maxXp1 - minXm1;
+					final int sizeY = maxYp1 - minYm1;
+					final int sizeZ = maxZp1 - minZm1;
+
+					final int densityOffsetX = densityCache.startPaddingX;
+					final int densityOffsetY = densityCache.startPaddingY;
+					final int densityOffsetZ = densityCache.startPaddingZ;
+					final int densityCacheSizeX = densityCache.sizeX;
+					final int densityCacheSizeY = densityCache.sizeY;
+
+					for (int z = 0; z < sizeZ; ++z) {
+						for (int y = 0; y < sizeY; ++y) {
+							for (int x = 0; x < sizeX; ++x) {
+								final IBlockState blockState = blockStateArray[stateCache.getIndex(
+										stateOffsetX + x,
+										stateOffsetY + y,
+										stateOffsetZ + z,
+										stateCacheSizeX, stateCacheSizeY
+								)];
+								if (!blockState.nocubes_isTerrainSmoothable()
+										||
+										densityCacheArray[densityCache.getIndex(
+												densityOffsetX + x,
+												densityOffsetY + y,
+												densityOffsetZ + z,
+												densityCacheSizeX, densityCacheSizeY
+										)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely inside)
+								) {
+									blockState.addCollisionBoxToList(_this, pooledMutableBlockPos.setPos(minXm1 + x, minYm1 + y, minZm1 + z), aabb, collidingShapes, entityIn, false);
+								}
+							}
+						}
+					}
+				}
 
 				final HashMap<Vec3b, FaceList> meshData;
 				try (final ModProfiler ignored = profiler.start("Calculate collisions mesh")) {
@@ -274,13 +325,6 @@ public final class CollisionHandler {
 						}
 					}
 
-					final List<AxisAlignedBB> collidingShapes = new ArrayList<>();
-
-					final IBlockState[] blocksArray = stateCache.getBlockStates();
-
-					final int stateCacheSizeX = stateCache.sizeX;
-					final int stateCacheSizeY = stateCache.sizeY;
-
 					for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
 						try (
 								final Face face = finalFaces.get(i);
@@ -298,7 +342,7 @@ public final class CollisionHandler {
 								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
 								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
 								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
-								final IBlockState state = blocksArray[stateCache.getIndex(
+								final IBlockState state = blockStateArray[stateCache.getIndex(
 										approximateX - startPosX,
 										approximateY - startPosY,
 										approximateZ - startPosZ,
@@ -361,6 +405,22 @@ public final class CollisionHandler {
 			pooledMutableBlockPos.release();
 		}
 		return !outList.isEmpty();
+	}
+
+	private static boolean getFallbackMeshCollisions(
+			final World _this,
+			final Entity entityIn,
+			final AxisAlignedBB aabb,
+			final boolean p_191504_3_,
+			final List<AxisAlignedBB> outList,
+			final int minXm1, final int maxXp1,
+			final int minYm1, final int maxYp1,
+			final int minZm1, final int maxZp1,
+			final WorldBorder worldborder,
+			final boolean flag,
+			final boolean flag1
+	) {
+		return getVanillaCollisions(_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1);
 	}
 
 }
