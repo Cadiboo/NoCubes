@@ -29,11 +29,12 @@ public final class ListOption extends Option {
 
 	@Override
 	public GuiTextField createWidget(int width) {
-		return new GuiTextField(0, Minecraft.getMinecraft().fontRenderer, 0, 0, width - 4, 16) {{
-			this.setMaxStringLength(9999999);
-			this.setText(Strings.join(ListOption.this.get(), ", "));
-			this.setGuiResponder(null);
-		}
+		return new GuiTextField(0, Minecraft.getMinecraft().fontRenderer, 0, 0, width - 4, 16) {
+			{
+				this.setMaxStringLength(9999999);
+				this.setText(Strings.join(ListOption.this.get(), ", "));
+				this.setGuiResponder(null);
+			}
 
 			@Override
 			public boolean textboxKeyTyped(char typedChar, int keyCode) {

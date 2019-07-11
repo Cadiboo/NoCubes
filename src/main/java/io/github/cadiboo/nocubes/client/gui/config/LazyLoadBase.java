@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.client.gui.config;
 
 import java.util.function.Supplier;
 
-public  final class LazyLoadBase<T> {
+public final class LazyLoadBase<T> {
 
 	private Supplier<T> supplier;
 	private T value;

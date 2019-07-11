@@ -46,7 +46,6 @@ import org.apache.logging.log4j.LogManager;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;

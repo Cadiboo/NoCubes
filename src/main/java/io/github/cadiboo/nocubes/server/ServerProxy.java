@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.server;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.Proxy;
-import net.minecraft.server.dedicated.ServerHangWatchdog;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;

@@ -1,8 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.profiler.Profiler;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
