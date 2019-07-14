@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -23,7 +24,8 @@ public final class OptiFineCompatibility {
 	static {
 		boolean optiFineInstalled;
 		try {
-			Class.forName("net.optifine.Config");
+			// Reflector is an integral part of OptiFine and isn't likely to be moved around
+			Class.forName("net.optifine.reflect.Reflector");
 			NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
 			optiFineInstalled = true;
 		} catch (ClassNotFoundException e) {
@@ -40,6 +42,10 @@ public final class OptiFineCompatibility {
 		} else {
 			HardOptiFineCompatibility.pushShaderThing(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
 		}
+	}
+
+	public static void pushShaderThing(@Nonnull final IFluidState iFluidState, @Nonnull final BlockPos blockPosIn, @Nonnull final IEnviromentBlockReader blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+		pushShaderThing(iFluidState.getBlockState(), blockPosIn, blockAccess, worldRendererIn);
 	}
 
 	public static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
