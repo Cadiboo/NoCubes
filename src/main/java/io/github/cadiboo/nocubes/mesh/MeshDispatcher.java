@@ -68,7 +68,7 @@ public final class MeshDispatcher {
 	 * @return the un offset vertices for the block
 	 */
 	@Nonnull
-	public static FaceList generateBlockMeshUnOffset(
+	private static FaceList generateBlockMeshUnOffset(
 			@Nonnull final BlockPos pos,
 			@Nonnull final IBlockReader reader,
 			final PooledMutableBlockPos pooledMutableBlockPos,
@@ -226,7 +226,7 @@ public final class MeshDispatcher {
 	 * Offsets the data from relative pos to real pos and applies offsetVertices
 	 */
 	@Nonnull
-	public static FaceList offsetFaceList(
+	private static FaceList offsetFaceList(
 			final int chunkPosX, final int chunkPosY, final int chunkPosZ,
 			@Nonnull final FaceList faces
 	) {
