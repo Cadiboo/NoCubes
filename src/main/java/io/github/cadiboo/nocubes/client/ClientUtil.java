@@ -24,7 +24,6 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
-import net.minecraft.world.Region;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.registries.IRegistryDelegate;
@@ -284,15 +283,15 @@ public final class ClientUtil {
 //			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
 //		} else
 		if (reader instanceof ChunkRenderCache) {
-			ChunkRenderCache renderChunkCache = (ChunkRenderCache) reader;
+			final ChunkRenderCache renderChunkCache = (ChunkRenderCache) reader;
 			final int x = currentChunkPosX - renderChunkCache.chunkStartX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
 			return renderChunkCache.chunks[x][z];
 		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
-			Region region = OptiFineCompatibility.getRegion(reader);
-			final int x = currentChunkPosX - region.chunkX;
-			final int z = currentChunkPosZ - region.chunkZ;
-			return region.chunks[x][z];
+			final ChunkRenderCache renderChunkCache = OptiFineCompatibility.getChunkRenderCache(reader);
+			final int x = currentChunkPosX - renderChunkCache.chunkStartX;
+			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
+			return renderChunkCache.chunks[x][z];
 		}
 		throw new IllegalStateException("Should Not Reach Here!");
 	}

@@ -1,5 +1,8 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.BlockState;
@@ -11,6 +14,7 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
@@ -18,6 +22,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.OPTIFINE_INSTALLED;
 import static net.minecraft.util.Direction.DOWN;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
@@ -43,34 +48,27 @@ public final class ModelHelper {
 			BlockState state,
 			final BlockPos pos,
 			final BufferBuilder bufferBuilder,
-			final IBlockReader reader,
+			final IEnviromentBlockReader reader,
 			final BlockRendererDispatcher blockRendererDispatcher,
 			final IModelData modelData,
 			final Random posRand,
+			final long posRandLong,
 			final BlockRenderLayer blockRenderLayer
 	) {
-
-//		try (final ModProfiler ignored = ModProfiler.get().start("getActualState")) {
-//			try {
-//				state = state.getActualState(reader, pos);
-//			} catch (Exception ignored1) {
-//			}
-//		}
-
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
-//		Object renderEnv = null;
+		Object renderEnv = null;
 
-//		if (OPTIFINE_INSTALLED) {
-////		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(reader, state, pos);
-//			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, reader, state, pos);
-//
-//			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
-//		}
+		if (OPTIFINE_INSTALLED) {
+//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(reader, state, pos);
+			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, reader, state, pos);
 
-//		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
-//			state = state.getBlock().getExtendedState(state, reader, pos);
-//		}
+			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
+		}
+
+		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
+			state = state.getBlock().getExtendedState(state, reader, pos);
+		}
 
 		for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
 			final Direction facing = DIRECTION_QUADS_ORDERED[facingIndex];
@@ -79,14 +77,14 @@ public final class ModelHelper {
 				continue;
 			}
 
-//			if (OPTIFINE_INSTALLED) {
-//				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-//					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, facing, blockRenderLayer, posRand, renderEnv);
-//					if (quads.isEmpty()) {
-//						continue;
-//					}
-//				}
-//			}
+			if (OPTIFINE_INSTALLED) {
+				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
+					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, facing, blockRenderLayer, posRandLong, renderEnv);
+					if (quads.isEmpty()) {
+						continue;
+					}
+				}
+			}
 
 			return quads;
 		}

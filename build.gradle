@@ -124,8 +124,9 @@ dependencies {
 // Jar Manifest
 jar {
 
-	// Don't put the modified minecraft files in final jar (but compile them and everything)
+	// Don't put the modified minecraft/optifine files in final jar (but compile them and everything)
 	exclude '**/net/minecraft/**'
+	exclude '**/net/optifine/**'
 
 	manifest {
 		attributes([

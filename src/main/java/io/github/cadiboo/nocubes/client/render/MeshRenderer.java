@@ -183,7 +183,7 @@ public final class MeshRenderer {
 			final boolean renderOppositeSides
 	) {
 		final IModelData modelData = chunkRenderTask.getModelData(texturePos);
-		final long posRand = MathHelper.getPositionRandom(texturePos);
+		final long posRand = textureState.getPositionRandom(texturePos);
 
 		final boolean applyDiffuseLighting = Config.applyDiffuseLighting;
 		final boolean shortGrass = Config.shortGrass;
@@ -336,7 +336,7 @@ public final class MeshRenderer {
 								List<BakedQuad> quads;
 								try (ModProfiler ignored1 = profiler.start("getQuads")) {
 									random.setSeed(posRand);
-									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, reader, blockRendererDispatcher, modelData, random, correctedBlockRenderLayer);
+									quads = ModelHelper.getQuads(textureState, texturePos, bufferBuilder, reader, blockRendererDispatcher, modelData, random, posRand, correctedBlockRenderLayer);
 									if (quads == null) {
 										LOGGER.warn("Got null quads for " + textureState.getBlock() + " at " + texturePos);
 										quads = new ArrayList<>();
