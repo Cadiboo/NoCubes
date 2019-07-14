@@ -18,6 +18,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.IngameMenuScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.Widget;
@@ -35,6 +36,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -51,6 +53,9 @@ import net.minecraftforge.fml.network.ConnectionType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
 
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
@@ -200,7 +205,7 @@ public final class ClientEventSubscriber {
 //				else // FIXME: Commented out to let people still do it, for the time being
 				{
 					final BlockStateToast toast;
-					if (!state.nocubes_isTerrainSmoothable()) {
+					if (!state.nocubes_isTerrainSmoothable) {
 						ConfigHelper.addTerrainSmoothable(state);
 						toast = new BlockStateToast.AddTerrain(state, blockPos);
 					} else {
@@ -216,7 +221,7 @@ public final class ClientEventSubscriber {
 			}
 			if (leavesPressed) {
 				final BlockStateToast toast;
-				if (!state.nocubes_isLeavesSmoothable()) {
+				if (!state.nocubes_isLeavesSmoothable) {
 					ConfigHelper.addLeavesSmoothable(state);
 					toast = new BlockStateToast.AddLeaves(state, blockPos);
 				} else {
@@ -232,12 +237,10 @@ public final class ClientEventSubscriber {
 		}
 
 		if (toggleProfilers.isPressed()) {
-			synchronized (ModProfiler.PROFILERS) {
-				if (ModProfiler.profilersEnabled) {
-					ModProfiler.disableProfiling();
-				} else {
-					ModProfiler.enableProfiling();
-				}
+			if (ModProfiler.isProfilingEnabled()) {
+				ModProfiler.disableProfiling();
+			} else {
+				ModProfiler.enableProfiling();
 			}
 		}
 	}
@@ -280,7 +283,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
 
-		if (!ModProfiler.profilersEnabled) {
+		if (!ModProfiler.isProfilingEnabled()) {
 			return;
 		}
 
@@ -302,129 +305,134 @@ public final class ClientEventSubscriber {
 	}
 
 	private static void renderProfilers() {
-//		final Minecraft mc = Minecraft.getInstance();
-//
-//		synchronized (ModProfiler.PROFILERS) {
-//			int visibleIndex = 0;
-//			for (Map.Entry<Thread, ModProfiler> entry : ModProfiler.PROFILERS.entrySet()) {
-//				Thread thread = entry.getKey();
-//				ModProfiler profiler = entry.getValue();
-//				List<Profiler.Result> list = profiler.getProfilingData("");
-//				if (list.size() < 2) { // Continue of thread is idle
-//					continue;
-//				}
-//				final int offset = visibleIndex++;
-//
-//				Profiler.Result profiler$result = list.remove(0);
-//				GlStateManager.clear(256);
-//				GlStateManager.matrixMode(5889);
-//				GlStateManager.enableColorMaterial();
-//				GlStateManager.loadIdentity();
-//				GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
-//				GlStateManager.matrixMode(5888);
-//				GlStateManager.loadIdentity();
-//				GlStateManager.scalef(mc.mainWindow.getFramebufferWidth() / 1000F, mc.mainWindow.getFramebufferWidth() / 1000F, 1);
-//				GlStateManager.translatef(5F, 5F, 0F);
-//				GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
-//				GlStateManager.lineWidth(1.0F);
-//
-////				int i = 160;
-////				int j = this.displayWidth - 160 - 10;
-////				int k = this.displayHeight - 320;
-////				int j = mc.displayWidth - (offset % 2) * 160;
-////				int k = mc.displayHeight - (offset & 2) * 320;
-////				final int cx = 176 + (offset) * 50;
-////				final int cy = 80 + (offset & 2) * 320;
-//				final int cx = 160 + 320 * (offset % 3);
-//				final int cy = 20 + 80 + 320 * (offset / 3);
-//
-//				GlStateManager.enableTexture2D();
-//				mc.fontRenderer.drawStringWithShadow(thread.getName(), (float) (cx - 160), (float) (cy - 80 - 10 - 16), 0xFFFFFF);
-//
-//				GlStateManager.disableTexture2D();
-//				Tessellator tessellator = Tessellator.getInstance();
-//				BufferBuilder bufferbuilder = tessellator.getBuffer();
-//
-//				GlStateManager.enableBlend();
-//				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
-//				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
-//				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
-//				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
-//				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
-//				tessellator.draw();
-//				GlStateManager.disableBlend();
-//				double d0 = 0.0D;
-//
-//				for (int l = 0; l < list.size(); ++l) {
-//					Profiler.Result profiler$result1 = list.get(l);
-//					int i11 = MathHelper.floor(profiler$result1.usePercentage / 4.0D) + 1;
-//					bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
-//					int j1 = profiler$result1.getColor();
-//					int k1 = j1 >> 16 & 255;
-//					int l1 = j1 >> 8 & 255;
-//					int i2 = j1 & 255;
-//					bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
-//
-//					for (int j2 = i11; j2 >= 0; --j2) {
-//						float f = (float) ((d0 + profiler$result1.usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
-//						float f1 = MathHelper.sin(f) * 160.0F;
-//						float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
-//						bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
-//					}
-//
-//					tessellator.draw();
-//					bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
-//
-//					for (int i3 = i11; i3 >= 0; --i3) {
-//						float f3 = (float) ((d0 + profiler$result1.usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
-//						float f4 = MathHelper.sin(f3) * 160.0F;
-//						float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
-//						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
-//						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5 + 10.0F), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
-//					}
-//
-//					tessellator.draw();
-//					d0 += profiler$result1.usePercentage;
-//				}
-//
-//				DecimalFormat decimalformat = new DecimalFormat("##0.00");
-//				GlStateManager.enableTexture2D();
-//				String s11 = "";
-//
-//				if (!"unspecified".equals(profiler$result.profilerName)) {
-//					s11 = s11 + "[0] ";
-//				}
-//
-//				if (profiler$result.profilerName.isEmpty()) {
-//					s11 = s11 + "ROOT ";
-//				} else {
-//					s11 = s11 + profiler$result.profilerName + ' ';
-//				}
-//
-////			    int l2 = 16777215;
-//				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx - 160), (float) (cy - 80 - 16), 16777215);
-//				s11 = decimalformat.format(profiler$result.totalUsePercentage) + "%";
-//				mc.fontRenderer.drawStringWithShadow(s11, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s11)), (float) (cy - 80 - 16), 16777215);
-//
-//				for (int k2 = 0; k2 < list.size(); ++k2) {
-//					Profiler.Result profiler$result2 = list.get(k2);
-//					StringBuilder stringbuilder = new StringBuilder();
-//
-//					if ("unspecified".equals(profiler$result2.profilerName)) {
-//						stringbuilder.append("[?] ");
-//					} else {
-//						stringbuilder.append("[").append(k2 + 1).append("] ");
-//					}
-//
-//					String s1 = stringbuilder.append(profiler$result2.profilerName).toString();
-//					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
-//					s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
-//					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
-//					s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
-//					mc.fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - mc.fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
-//				}
-//			}
-//		}
+		final Minecraft mc = Minecraft.getInstance();
+
+		synchronized (ModProfiler.PROFILERS) {
+			int visibleIndex = 0;
+			for (Map.Entry<Thread, ModProfiler> entry : ModProfiler.PROFILERS.entrySet()) {
+				Thread thread = entry.getKey();
+				ModProfiler profiler = entry.getValue();
+				List<ModProfiler.Result> list = profiler.getProfilingData("");
+				if (list.size() < 2) { // Continue of thread is idle
+					continue;
+				}
+				final int offset = visibleIndex++;
+
+				ModProfiler.Result profiler$result = list.remove(0);
+				final int size = list.size();
+
+				GlStateManager.clear(256, Minecraft.IS_RUNNING_ON_MAC);
+				GlStateManager.matrixMode(5889);
+				GlStateManager.enableColorMaterial();
+				GlStateManager.loadIdentity();
+				GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
+				GlStateManager.matrixMode(5888);
+				GlStateManager.loadIdentity();
+				GlStateManager.scalef(mc.mainWindow.getFramebufferWidth() / 1000F, mc.mainWindow.getFramebufferWidth() / 1000F, 1);
+				GlStateManager.translatef(5F, 5F, 0F);
+				GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
+				GlStateManager.lineWidth(1.0F);
+
+//				int i = 160;
+//				int j = this.displayWidth - 160 - 10;
+//				int k = this.displayHeight - 320;
+//				int j = mc.displayWidth - (offset % 2) * 160;
+//				int k = mc.displayHeight - (offset & 2) * 320;
+//				final int cx = 176 + (offset) * 50;
+//				final int cy = 80 + (offset & 2) * 320;
+				final int cx = 160 + 320 * (offset % 3);
+				final int cy = 20 + 80 + 320 * (offset / 3);
+
+				GlStateManager.enableTexture();
+				final FontRenderer fontRenderer = mc.fontRenderer;
+				fontRenderer.drawStringWithShadow(thread.getName(), (float) (cx - 160), (float) (cy - 80 - 10 - 16), 0xFFFFFF);
+
+				GlStateManager.disableTexture();
+				Tessellator tessellator = Tessellator.getInstance();
+				BufferBuilder bufferbuilder = tessellator.getBuffer();
+
+				GlStateManager.enableBlend();
+				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_COLOR);
+				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx - 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) (cy + 320), 0.0D).color(200, 0, 0, 0).endVertex();
+				bufferbuilder.pos((double) ((float) cx + 176.0F), (double) ((float) cy - 96.0F - 16.0F), 0.0D).color(200, 0, 0, 0).endVertex();
+				tessellator.draw();
+				GlStateManager.disableBlend();
+				double d0 = 0.0D;
+
+				for (int i = 0; i < size; ++i) {
+					final ModProfiler.Result profiler$result1 = list.get(i);
+					final double usePercentage = profiler$result1.usePercentage;
+					int i11 = MathHelper.floor(usePercentage / 4.0D) + 1;
+					bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
+					int j1 = profiler$result1.getColor();
+					int k1 = j1 >> 16 & 255;
+					int l1 = j1 >> 8 & 255;
+					int i2 = j1 & 255;
+					bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
+
+					for (int j2 = i11; j2 >= 0; --j2) {
+						float f = (float) ((d0 + usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
+						float f1 = MathHelper.sin(f) * 160.0F;
+						float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
+						bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
+					}
+
+					tessellator.draw();
+					bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
+
+					for (int i3 = i11; i3 >= 0; --i3) {
+						float f3 = (float) ((d0 + usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
+						float f4 = MathHelper.sin(f3) * 160.0F;
+						float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
+						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
+						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5 + 10.0F), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
+					}
+
+					tessellator.draw();
+					d0 += usePercentage;
+				}
+
+				DecimalFormat decimalformat = new DecimalFormat("##0.00");
+				GlStateManager.enableTexture();
+				String str = "";
+
+				final String profilerName = profiler$result.profilerName;
+				if (!"unspecified".equals(profilerName)) {
+					str = str + "[0] ";
+				}
+
+				if (profilerName.isEmpty()) {
+					str = str + "ROOT ";
+				} else {
+					str = str + profilerName + ' ';
+				}
+
+				fontRenderer.drawStringWithShadow(str, (float) (cx - 160), (float) (cy - 80 - 16), 0xFFFFFF);
+				str = decimalformat.format(profiler$result.totalUsePercentage) + "%";
+				fontRenderer.drawStringWithShadow(str, (float) (cx + 160 - fontRenderer.getStringWidth(str)), (float) (cy - 80 - 16), 0xFFFFFF);
+
+				for (int k2 = 0; k2 < size; ++k2) {
+					ModProfiler.Result profiler$result2 = list.get(k2);
+					StringBuilder stringbuilder = new StringBuilder();
+
+					final String profilerName1 = profiler$result2.profilerName;
+					if ("unspecified".equals(profilerName1)) {
+						stringbuilder.append("[?] ");
+					} else {
+						stringbuilder.append("[").append(k2 + 1).append("] ");
+					}
+
+					String s1 = stringbuilder.append(profilerName1).toString();
+					fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+				}
+			}
+		}
 	}
 
 	@SubscribeEvent
@@ -508,11 +516,11 @@ public final class ClientEventSubscriber {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && blockState.nocubes_isTerrainSmoothable()) {
+		if (Config.renderSmoothTerrain && blockState.nocubes_isTerrainSmoothable) {
 			isSmoothable = TERRAIN_SMOOTHABLE;
 			meshGeneratorType = Config.terrainMeshGenerator;
 			event.setCanceled(true);
-		} else if (Config.renderSmoothLeaves && blockState.nocubes_isLeavesSmoothable()) {
+		} else if (Config.renderSmoothLeaves && blockState.nocubes_isLeavesSmoothable) {
 			isSmoothable = LEAVES_SMOOTHABLE;
 			meshGeneratorType = Config.leavesMeshGenerator;
 			event.setCanceled(true);
