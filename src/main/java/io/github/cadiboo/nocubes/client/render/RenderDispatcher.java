@@ -11,6 +11,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -178,14 +179,17 @@ public final class RenderDispatcher {
 								stateCache, smoothableCache
 						)
 				) {
-					try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-							// Fluid renderer needs +2 on all axis because reasons
-							chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-							// Fluid renderer needs +2 on all axis because reasons
-							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-							2, 2, 2,
-							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
-					)) {
+					try (
+							LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
+									// Fluid renderer needs +2 on all axis because reasons
+									chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
+									// Fluid renderer needs +2 on all axis because reasons
+									chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+									2, 2, 2,
+									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+							);
+							ModProfiler ignored = ModProfiler.get().start("OptimisedFluidBlockRenderer_renderChunkDensity")
+					) {
 						OptimisedFluidBlockRenderer.renderChunk(
 								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
@@ -202,14 +206,17 @@ public final class RenderDispatcher {
 					);
 				}
 			} else {
-				try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-						// Fluid renderer needs +2 on all axis because reasons
-						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-						// Fluid renderer needs +2 on all axis because reasons
-						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-						2, 2, 2,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
-				)) {
+				try (
+						LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
+								// Fluid renderer needs +2 on all axis because reasons
+								chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
+								// Fluid renderer needs +2 on all axis because reasons
+								chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+								2, 2, 2,
+								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+						);
+						ModProfiler ignored = ModProfiler.get().start("OptimisedFluidBlockRenderer_renderChunk")
+				) {
 					OptimisedFluidBlockRenderer.renderChunk(
 							chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
