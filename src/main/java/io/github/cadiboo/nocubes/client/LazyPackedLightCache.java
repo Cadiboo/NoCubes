@@ -99,19 +99,44 @@ public final class LazyPackedLightCache extends XYZCache implements AutoCloseabl
 		try {
 			int packedLight = cache[index];
 			if (packedLight == -1) {
-				packedLight = stateCache.getBlockStates()[stateCache.getIndex(
-						x + diffX,
-						y + diffY,
-						z + diffZ,
-						stateCacheSizeX, stateCacheSizeY
-				)].getPackedLightmapCoords(
-						reader,
-						mutableBlockPos.setPos(
-								chunkRenderPosX + x - startPaddingX,
-								chunkRenderPosY + y - startPaddingY,
-								chunkRenderPosZ + z - startPaddingZ
-						)
-				);
+				try {
+					packedLight = stateCache.getBlockStates()[stateCache.getIndex(
+							x + diffX,
+							y + diffY,
+							z + diffZ,
+							stateCacheSizeX, stateCacheSizeY
+					)].getPackedLightmapCoords(
+							reader,
+							mutableBlockPos.setPos(
+									chunkRenderPosX + x - startPaddingX,
+									chunkRenderPosY + y - startPaddingY,
+									chunkRenderPosZ + z - startPaddingZ
+							)
+					);
+				} catch (final ArrayIndexOutOfBoundsException e) {
+					throw new CustomArrayIndexOutOfBoundsException.StateCacheException(
+							x, y, z,
+							cache,
+							index,
+							stateCache, reader,
+							mutableBlockPos,
+							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+							startPaddingX, startPaddingY, startPaddingZ,
+							diffX, diffY, diffZ,
+							e,
+							x + diffX,
+							y + diffY,
+							z + diffZ,
+							stateCacheSizeX,
+							stateCacheSizeY,
+							stateCache.getIndex(
+									x + diffX,
+									y + diffY,
+									z + diffZ,
+									stateCacheSizeX, stateCacheSizeY
+							)
+					);
+				}
 				cache[index] = packedLight;
 				if (packedLight == -1) LogManager.getLogger().error("BARRRF");
 			}
@@ -166,7 +191,18 @@ public final class LazyPackedLightCache extends XYZCache implements AutoCloseabl
 		private final int diffY;
 		private final int diffZ;
 
-		CustomArrayIndexOutOfBoundsException(final int x, final int y, final int z, final int[] cache, final int index, final StateCache stateCache, final IEnviromentBlockReader reader, final MutableBlockPos mutableBlockPos, final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ, final int startPaddingX, final int startPaddingY, final int startPaddingZ, final int diffX, final int diffY, final int diffZ, final ArrayIndexOutOfBoundsException e) {
+		CustomArrayIndexOutOfBoundsException(
+				final int x, final int y, final int z,
+				final int[] cache,
+				final int index,
+				final StateCache stateCache,
+				final IEnviromentBlockReader reader,
+				final MutableBlockPos mutableBlockPos,
+				final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
+				final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+				final int diffX, final int diffY, final int diffZ,
+				final ArrayIndexOutOfBoundsException e
+		) {
 			super(e);
 			this.x = x;
 			this.y = y;
@@ -206,6 +242,66 @@ public final class LazyPackedLightCache extends XYZCache implements AutoCloseabl
 			stream.println("diffX: " + diffX);
 			stream.println("diffY: " + diffY);
 			stream.println("diffZ: " + diffZ);
+		}
+
+		public static class StateCacheException extends CustomArrayIndexOutOfBoundsException {
+
+			private final int xPdiffX;
+			private final int yPdiffY;
+			private final int zPdiffZ;
+			private final int stateCacheSizeX;
+			private final int stateCacheSizeY;
+			private final int stateCacheIndex;
+
+			StateCacheException(
+					final int x, final int y, final int z,
+					final int[] cache,
+					final int index,
+					final StateCache stateCache,
+					final IEnviromentBlockReader reader,
+					final MutableBlockPos mutableBlockPos,
+					final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
+					final int startPaddingX, final int startPaddingY, final int startPaddingZ,
+					final int diffX, final int diffY, final int diffZ,
+					final ArrayIndexOutOfBoundsException e,
+					final int xPdiffX,
+					final int yPdiffY,
+					final int zPdiffZ,
+					final int stateCacheSizeX,
+					final int stateCacheSizeY,
+					final int stateCacheIndex
+			) {
+				super(
+						x, y, z,
+						cache,
+						index,
+						stateCache,
+						reader,
+						mutableBlockPos,
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+						startPaddingX, startPaddingY, startPaddingZ,
+						diffX, diffY, diffZ,
+						e
+				);
+				this.xPdiffX = xPdiffX;
+				this.yPdiffY = yPdiffY;
+				this.zPdiffZ = zPdiffZ;
+				this.stateCacheSizeX = stateCacheSizeX;
+				this.stateCacheSizeY = stateCacheSizeY;
+				this.stateCacheIndex = stateCacheIndex;
+			}
+
+			@Override
+			protected void printStackTrace(final WrappedPrintStream stream) {
+				super.printStackTrace();
+				stream.println("x + diffX: " + xPdiffX);
+				stream.println("y + diffY: " + yPdiffY);
+				stream.println("z + diffZ: " + zPdiffZ);
+				stream.println("stateCacheSizeX: " + stateCacheSizeX);
+				stream.println("stateCacheSizeY: " + stateCacheSizeY);
+				stream.println("stateCacheIndex: " + stateCacheIndex);
+			}
+
 		}
 
 	}
