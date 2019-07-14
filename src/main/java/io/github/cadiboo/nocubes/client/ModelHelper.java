@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
 import io.github.cadiboo.nocubes.util.ModProfiler;
@@ -13,7 +12,6 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.IModelData;
 

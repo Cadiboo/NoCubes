@@ -13,8 +13,6 @@ import net.minecraft.world.chunk.IChunk;
 import javax.annotation.Nonnull;
 import java.util.Arrays;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
-
 /**
  * @author Cadiboo
  */
