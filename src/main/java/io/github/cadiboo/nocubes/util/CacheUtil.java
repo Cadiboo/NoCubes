@@ -44,12 +44,16 @@ public final class CacheUtil {
 				startPaddingX, startPaddingY, startPaddingZ,
 				cacheSizeX, cacheSizeY, cacheSizeZ
 		);
-		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
+		try {
 			final BlockState[] blockStates = stateCache.getBlockStates();
 			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
-			fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates, fluidStates);
-			calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
+			try (ModProfiler ignored = ModProfiler.get().start("fillStateCache")) {
+				fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates, fluidStates);
+			}
+			try (ModProfiler ignored = ModProfiler.get().start("calculateStateCacheExtendedFluids")) {
+				calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
+			}
 
 			return stateCache;
 		} catch (final Exception e) {
