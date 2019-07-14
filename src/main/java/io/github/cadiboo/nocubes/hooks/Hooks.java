@@ -56,8 +56,8 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean renderBlockDamage(final BlockRendererDispatcher blockrendererdispatcher, final BlockState iblockstate, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite, final IEnviromentBlockReader world) {
-		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable()) {
-			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable()) {
+		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable) {
+			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable) {
 				return false;
 			}
 		}
@@ -95,8 +95,8 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(final BlockState blockstate) {
-		if (Config.renderSmoothTerrain && blockstate.nocubes_isTerrainSmoothable()) return false;
-		return !Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable();
+		if (Config.renderSmoothTerrain && blockstate.nocubes_isTerrainSmoothable) return false;
+		return !Config.renderSmoothLeaves || !blockstate.nocubes_isLeavesSmoothable;
 	}
 
 	/**
@@ -107,7 +107,7 @@ public final class Hooks {
 	 */
 	public static boolean doesNotCauseSuffocation(final BlockState blockState, final IBlockReader reader, final BlockPos pos) {
 		if (Config.terrainCollisions) {
-			if (!blockState.nocubes_isTerrainSmoothable()) {
+			if (!blockState.nocubes_isTerrainSmoothable) {
 				return false; // Let vanilla handle suffocation normally
 			} else {
 				return ModUtil.doesTerrainCauseSuffocation(reader, pos);

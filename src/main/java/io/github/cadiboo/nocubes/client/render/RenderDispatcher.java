@@ -440,10 +440,10 @@ public final class RenderDispatcher {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && iblockstate.nocubes_isTerrainSmoothable()) {
+		if (Config.renderSmoothTerrain && iblockstate.nocubes_isTerrainSmoothable) {
 			isSmoothable = TERRAIN_SMOOTHABLE;
 			meshGeneratorType = Config.terrainMeshGenerator;
-		} else if (Config.renderSmoothLeaves && iblockstate.nocubes_isLeavesSmoothable()) {
+		} else if (Config.renderSmoothLeaves && iblockstate.nocubes_isLeavesSmoothable) {
 			isSmoothable = LEAVES_SMOOTHABLE;
 			meshGeneratorType = Config.leavesMeshGenerator;
 		} else {

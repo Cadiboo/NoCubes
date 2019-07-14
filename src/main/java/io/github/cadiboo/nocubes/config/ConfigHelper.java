@@ -175,7 +175,7 @@ public final class ConfigHelper {
 		if (states.length > 0) {
 			for (final BlockState state : states) {
 				LOGGER.debug(CONFIG_SMOOTHABLE, "Adding terrain smoothable: " + state);
-				state.nocubes_setTerrainSmoothable(true);
+				state.nocubes_isTerrainSmoothable = true;
 				terrainSmoothable.add(getStringFromState(state));
 			}
 			setValueAndSave(serverConfig, "general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
@@ -186,7 +186,7 @@ public final class ConfigHelper {
 		if (states.length > 0) {
 			for (final BlockState state : states) {
 				LOGGER.debug(CONFIG_SMOOTHABLE, "Removing terrain smoothable: " + state);
-				state.nocubes_setTerrainSmoothable(false);
+				state.nocubes_isTerrainSmoothable = false;
 				terrainSmoothable.remove(getStringFromState(state));
 			}
 			setValueAndSave(serverConfig, "general.terrainSmoothable", new ArrayList<>(terrainSmoothable));
@@ -201,7 +201,7 @@ public final class ConfigHelper {
 					LOGGER.debug(CONFIG_SMOOTHABLE, "Adding leaves smoothable block: " + block);
 					for (final BlockState state : block.getStateContainer().getValidStates()) {
 						LOGGER.debug(CONFIG_SMOOTHABLE, "Adding leaves smoothable state: " + state);
-						state.nocubes_setLeavesSmoothable(true);
+						state.nocubes_isLeavesSmoothable = true;
 					}
 					leavesSmoothable.add(block.getRegistryName().toString());
 					leavesSmoothableBlocks.add(block);
@@ -219,7 +219,7 @@ public final class ConfigHelper {
 					LOGGER.debug(CONFIG_SMOOTHABLE, "Removing leaves smoothable block: " + block);
 					for (final BlockState state : block.getStateContainer().getValidStates()) {
 						LOGGER.debug(CONFIG_SMOOTHABLE, "Removing leaves smoothable state: " + state);
-						state.nocubes_setLeavesSmoothable(false);
+						state.nocubes_isLeavesSmoothable = false;
 					}
 					leavesSmoothable.remove(block.getRegistryName().toString());
 					leavesSmoothableBlocks.remove(block);
@@ -233,7 +233,7 @@ public final class ConfigHelper {
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Initialising terrain smoothable");
 		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
 			for (BlockState state : block.getStateContainer().getValidStates()) {
-				state.nocubes_setTerrainSmoothable(false);
+				state.nocubes_isTerrainSmoothable = false;
 			}
 		}
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Reset all BlockStates to unsmoothable");
@@ -242,7 +242,7 @@ public final class ConfigHelper {
 			final BlockState state = getStateFromString(stateString);
 			if (state != null) {
 				LOGGER.debug(CONFIG_SMOOTHABLE, "Added \"" + state + "\" to terrain smoothable");
-				state.nocubes_setTerrainSmoothable(true);
+				state.nocubes_isTerrainSmoothable = true;
 			} else {
 				LOGGER.error(CONFIG_SMOOTHABLE, "Cannot add invalid state \"" + stateString + "\" to terrain smoothable");
 			}
@@ -253,7 +253,7 @@ public final class ConfigHelper {
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Initialising leaves smoothable");
 		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
 			for (BlockState state : block.getStateContainer().getValidStates()) {
-				state.nocubes_setLeavesSmoothable(false);
+				state.nocubes_isLeavesSmoothable = false;
 			}
 		}
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Reset all BlockStates to unsmoothable");
@@ -264,7 +264,7 @@ public final class ConfigHelper {
 				final Block block = defaultState.getBlock();
 				LOGGER.debug(CONFIG_SMOOTHABLE, "Added \"" + defaultState + "\" to leaves smoothable");
 				for (final BlockState state : block.getStateContainer().getValidStates()) {
-					state.nocubes_setLeavesSmoothable(true);
+					state.nocubes_isLeavesSmoothable = true;
 				}
 				leavesSmoothableBlocks.add(block);
 			} else {

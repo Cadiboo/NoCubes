@@ -176,7 +176,7 @@ public final class CollisionHandler {
 										stateOffsetZ + z,
 										stateCacheSizeX, stateCacheSizeY
 								)];
-								if (!blockState.nocubes_isTerrainSmoothable()
+								if (!blockState.nocubes_isTerrainSmoothable
 										||
 										densityCacheArray[densityCache.getIndex(
 												densityOffsetX + x,
@@ -296,7 +296,7 @@ public final class CollisionHandler {
 						pooledMutableBlockPos.setPos(x, y, z);
 						final BlockState blockState = _this.getBlockState(pooledMutableBlockPos);
 						final VoxelShape offsetCollisionShape;
-						if (blockState.nocubes_isTerrainSmoothable()) {
+						if (blockState.nocubes_isTerrainSmoothable) {
 							offsetCollisionShape = StolenReposeCode.getCollisionShape(blockState, _this, pooledMutableBlockPos);
 						} else {
 							offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos).withOffset(x, y, z);

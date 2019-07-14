@@ -92,7 +92,7 @@ public final class CacheUtil {
 				for (int x = 0; x < cacheSizeX; ++x, ++index) {
 
 					// Do not extend if not terrain smoothable
-					if (!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
+					if (!blockStates[index].nocubes_isTerrainSmoothable) {
 						continue;
 					}
 

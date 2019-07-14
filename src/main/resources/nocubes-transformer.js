@@ -42,7 +42,6 @@ function initializeCoreMod() {
 	IF_ACMPEQ = Opcodes.IF_ACMPEQ;
 
 	GETFIELD = Opcodes.GETFIELD;
-	PUTFIELD = Opcodes.PUTFIELD;
 	GETSTATIC = Opcodes.GETSTATIC;
 
 	GOTO = Opcodes.GOTO;
@@ -211,11 +210,6 @@ function initializeCoreMod() {
 				// Params: int access, String name, String descriptor, String signature, Object value
 				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isTerrainSmoothable", "Z", null, false));
 				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isLeavesSmoothable", "Z", null, false));
-				var methods = classNode.methods;
-				methods.add(make_nocubes_isTerrainSmoothable());
-				methods.add(make_nocubes_setTerrainSmoothable());
-				methods.add(make_nocubes_isLeavesSmoothable());
-				methods.add(make_nocubes_setLeavesSmoothable());
 				return classNode;
 			}
 		}
@@ -1468,150 +1462,6 @@ function injectGetFluidStateHook(instructions) {
 
 }
 
-//// access flags 0x2
-//  private Z nocubes_isTerrainSmoothable
-//  private Z nocubes_isLeavesSmoothable
-//
-//  // access flags 0x1
-//  public nocubes_isTerrainSmoothable()Z
-//   L0
-//    LINENUMBER 27 L0
-//    ALOAD 0
-//    GETFIELD net/minecraft/block/BlockState.nocubes_isTerrainSmoothable : Z
-//    IRETURN
-//   L1
-//    LOCALVARIABLE this Lnet/minecraft/block/BlockState; L0 L1 0
-//    MAXSTACK = 1
-//    MAXLOCALS = 1
-//
-//  // access flags 0x1
-//  public nocubes_setTerrainSmoothable(Z)V
-//   L0
-//    LINENUMBER 32 L0
-//    ALOAD 0
-//    ILOAD 1
-//    PUTFIELD net/minecraft/block/BlockState.nocubes_isTerrainSmoothable : Z
-//   L1
-//    LINENUMBER 33 L1
-//    RETURN
-//   L2
-//    LOCALVARIABLE this Lnet/minecraft/block/BlockState; L0 L2 0
-//    LOCALVARIABLE isTerrainSmoothable Z L0 L2 1
-//    MAXSTACK = 2
-//    MAXLOCALS = 2
-//
-//  // access flags 0x1
-//  public nocubes_isLeavesSmoothable()Z
-//   L0make_nocubes_setLeavesSmoothable
-//    LINENUMBER 27 L0
-//    ALOAD 0
-//    GETFIELD net/minecraft/block/BlockState.nocubes_isLeavesSmoothable : Z
-//    IRETURN
-//   L1
-//    LOCALVARIABLE this Lnet/minecraft/block/BlockState; L0 L1 0
-//    MAXSTACK = 1
-//    MAXLOCALS = 1
-//
-//  // access flags 0x1
-//  public nocubes_setLeavesSmoothable(Z)V
-//   L0
-//    LINENUMBER 32 L0
-//    ALOAD 0
-//    ILOAD 1
-//    PUTFIELD net/minecraft/block/BlockState.nocubes_isLeavesSmoothable : Z
-//   L1
-//    LINENUMBER 33 L1
-//    RETURN
-//   L2
-//    LOCALVARIABLE this Lnet/minecraft/block/BlockState; L0 L2 0
-//    LOCALVARIABLE isTerrainSmoothable Z L0 L2 1
-//    MAXSTACK = 2
-//    MAXLOCALS = 2
-
-
-function make_nocubes_isTerrainSmoothable() {
-	var method = new MethodNode(
-//		final int access,
-		ACC_PUBLIC,
-//		final String name,
-		"nocubes_isTerrainSmoothable",
-//		final String descriptor,
-		"()Z",
-//		final String signature,
-		null,
-//		final String[] exceptions
-		null
-	);
-	var instructions = method.instructions;
-	instructions.add(new VarInsnNode(ALOAD, 0)); // this
-	instructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/BlockState", "nocubes_isTerrainSmoothable", "Z"));
-	instructions.add(new InsnNode(IRETURN));
-	return method;
-}
-
-function make_nocubes_setTerrainSmoothable() {
-	var method = new MethodNode(
-//		final int access,
-		ACC_PUBLIC,
-//		final String name,
-		"nocubes_setTerrainSmoothable",
-//		final String descriptor,
-		"(Z)V",
-//		final String signature,
-		null,
-//		final String[] exceptions
-		null
-	);
-	var instructions = method.instructions;
-	instructions.add(new VarInsnNode(ALOAD, 0)); // this
-	instructions.add(new VarInsnNode(ILOAD, 1)); // newIsTerrainSmoothable
-	instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/BlockState", "nocubes_isTerrainSmoothable", "Z"));
-	instructions.add(new InsnNode(RETURN));
-	return method;
-}
-
-function make_nocubes_isLeavesSmoothable() {
-	var method = new MethodNode(
-//		final int access,
-		ACC_PUBLIC,
-//		final String name,
-		"nocubes_isLeavesSmoothable",
-//		final String descriptor,
-		"()Z",
-//		final String signature,
-		null,
-//		final String[] exceptions
-		null
-	);
-	var instructions = method.instructions;
-	instructions.add(new VarInsnNode(ALOAD, 0)); // this
-	instructions.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/BlockState", "nocubes_isLeavesSmoothable", "Z"));
-	instructions.add(new InsnNode(IRETURN));
-	return method;
-}
-
-function make_nocubes_setLeavesSmoothable() {
-	var method = new MethodNode(
-//		final int access,
-		ACC_PUBLIC,
-//		final String name,
-		"nocubes_setLeavesSmoothable",
-//		final String descriptor,
-		"(Z)V",
-//		final String signature,
-		null,
-//		final String[] exceptions
-		null
-	);
-	var instructions = method.instructions;
-	instructions.add(new VarInsnNode(ALOAD, 0)); // this
-	instructions.add(new VarInsnNode(ILOAD, 1)); // newIsLeavesSmoothable
-	instructions.add(new FieldInsnNode(PUTFIELD, "net/minecraft/block/BlockState", "nocubes_isLeavesSmoothable", "Z"));
-	instructions.add(new InsnNode(RETURN));
-	return method;
-}
-
-
 // 1) Find first label
 // 2) inject right after first label
 function injectIsSolidHook(instructions) {
@@ -1619,8 +1469,8 @@ function injectIsSolidHook(instructions) {
 //	return this.getBlock().isSolid(this);
 
 //	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
-//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
+//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable) return false;
+//	if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable) return false;
 //	// NoCubes End
 //	return this.getBlock().isSolid(this);
 
@@ -1640,7 +1490,7 @@ function injectIsSolidHook(instructions) {
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
 //    IFEQ L1
 //    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.nocubes_isTerrainSmoothable ()Z
+//    GETFIELD net/minecraft/block/BlockState.nocubes_isTerrainSmoothable : Z
 //    IFEQ L1
 //    ICONST_0
 //    IRETURN
@@ -1650,7 +1500,7 @@ function injectIsSolidHook(instructions) {
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
 //    IFEQ L2
 //    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.nocubes_isLeavesSmoothable ()Z
+//    GETFIELD net/minecraft/block/BlockState.nocubes_isLeavesSmoothable : Z
 //    IFEQ L2
 //    ICONST_0
 //    IRETURN
@@ -1688,18 +1538,7 @@ function injectIsSolidHook(instructions) {
 	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, leavesChecksLabel));
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEVIRTUAL,
-			//String owner
-			"net/minecraft/block/BlockState",
-			//String name
-			"nocubes_isTerrainSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/BlockState", "nocubes_isTerrainSmoothable", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, leavesChecksLabel));
 	toInject.add(new InsnNode(ICONST_0));
 	toInject.add(new InsnNode(IRETURN));
@@ -1707,18 +1546,7 @@ function injectIsSolidHook(instructions) {
 	toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKEVIRTUAL,
-			//String owner
-			"net/minecraft/block/BlockState",
-			//String name
-			"nocubes_isLeavesSmoothable",
-			//String descriptor
-			"()Z",
-			//boolean isInterface
-			false
-	));
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/BlockState", "nocubes_isLeavesSmoothable", "Z"));
 	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 	toInject.add(new InsnNode(ICONST_0));
 	toInject.add(new InsnNode(IRETURN));

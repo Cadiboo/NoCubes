@@ -193,8 +193,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
 
    public boolean isSolid() {
       // NoCubes Start
-      if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable()) return false;
-      if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable()) return false;
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable) return false;
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable) return false;
       // NoCubes End
       return this.cache != null ? this.cache.solid : this.getBlock().isSolid(this);
    }
@@ -433,31 +433,9 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       }
    }
 
-   // ******** NoCubes Start ******** //
-
+   // *************** NoCubes Start *************** //
    public boolean nocubes_isTerrainSmoothable = false;
    public boolean nocubes_isLeavesSmoothable = false;
-
-   /**
-    * does NOT take into account whether NoCubes is enabled or not
-    */
-   public boolean nocubes_isTerrainSmoothable() {
-      return this.nocubes_isTerrainSmoothable;
-   }
-
-   public void nocubes_setTerrainSmoothable(final boolean newIsTerrainSmoothable) {
-      this.nocubes_isTerrainSmoothable = newIsTerrainSmoothable;
-   }
-
-   /**
-    * does NOT take into account whether NoCubes is enabled or not
-    */
-   public boolean nocubes_isLeavesSmoothable() {
-      return this.nocubes_isLeavesSmoothable;
-   }
-
-   public void nocubes_setLeavesSmoothable(final boolean newIsLeavesSmoothable) {
-      this.nocubes_isLeavesSmoothable = newIsLeavesSmoothable;
-   }
+   // **************** NoCubes End **************** //
 
 }

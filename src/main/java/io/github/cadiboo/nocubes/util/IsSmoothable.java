@@ -9,9 +9,9 @@ import net.minecraft.block.BlockState;
  */
 public interface IsSmoothable {
 
-	IsSmoothable TERRAIN_SMOOTHABLE = BlockState::nocubes_isTerrainSmoothable;
+	IsSmoothable TERRAIN_SMOOTHABLE = blockState -> blockState.nocubes_isTerrainSmoothable;
 
-	IsSmoothable LEAVES_SMOOTHABLE = BlockState::nocubes_isLeavesSmoothable;
+	IsSmoothable LEAVES_SMOOTHABLE = blockState -> blockState.nocubes_isLeavesSmoothable;
 
 	/**
 	 * @param state the state to be tested
