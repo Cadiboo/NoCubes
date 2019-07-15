@@ -1,17 +1,12 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 

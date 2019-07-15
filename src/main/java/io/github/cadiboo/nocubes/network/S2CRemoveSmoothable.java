@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;

@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.TranslationTextComponent;
