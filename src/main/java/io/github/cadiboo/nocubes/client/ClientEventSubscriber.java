@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.gui.widget.IngameModListButton;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
@@ -8,11 +9,16 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.network.C2SRequestAddSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestDisableCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestEnableCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestRemoveSmoothable;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.GameSettings;
@@ -34,13 +40,11 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
@@ -115,8 +119,6 @@ public final class ClientEventSubscriber {
 			Config.terrainCollisions = false;
 		}
 
-		final ClientPlayerEntity player = minecraft.player;
-
 //		// TODO: Temp!
 //		{
 //			if (tempDiscoverSmoothables.isPressed()) {
@@ -153,30 +155,11 @@ public final class ClientEventSubscriber {
 		// Collisions
 		{
 			if (tempToggleTerrainCollisions.isPressed()) {
-				player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsBroken114"));
-//				if (!minecraft.isSingleplayer()) {
-//					// TODO: Send packet to server requesting enabling collisions?
-//					player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotSingleplayer"));
-//				} else {
-//					final boolean setTo;
-//					if (!Config.terrainCollisions) {
-//						if (canEnableTerrainCollisions(minecraft, player)) {
-//							ConfigHelper.setTerrainCollisions(true);
-//							setTo = true;
-//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsEnabledWarning"));
-//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisablePress", new TranslationTextComponent(tempToggleTerrainCollisions.getKey().getTranslationKey())));
-//						} else {
-//							setTo = Config.terrainCollisions;
-//							player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNotOnFlat"));
-//						}
-//					} else {
-//						ConfigHelper.setTerrainCollisions(false);
-//						setTo = false;
-//						player.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsDisabled"));
-//					}
-//					// Config saving is async so set it now
-//					Config.terrainCollisions = setTo;
-//				}
+				if (Config.terrainCollisions) {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableCollisions());
+				} else {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableCollisions());
+				}
 			}
 		}
 
@@ -198,25 +181,10 @@ public final class ClientEventSubscriber {
 			final BlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
-				if (!minecraft.isSingleplayer()) {
-					// TODO: Send packet to server requesting adding terrain smoothable?
-					player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainSmoothableNotSingleplayer"));
-				}
-//				else // FIXME: Commented out to let people still do it, for the time being
-				{
-					final BlockStateToast toast;
-					if (!state.nocubes_isTerrainSmoothable) {
-						ConfigHelper.addTerrainSmoothable(state);
-						toast = new BlockStateToast.AddTerrain(state, blockPos);
-					} else {
-						ConfigHelper.removeTerrainSmoothable(state);
-						toast = new BlockStateToast.RemoveTerrain(state, blockPos);
-					}
-					minecraft.getToastGui().add(toast);
-
-					if (Config.renderSmoothTerrain) {
-						ClientUtil.tryReloadRenderers();
-					}
+				if (state.nocubes_isTerrainSmoothable) {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveSmoothable(Block.getStateId(state)));
+				} else {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestAddSmoothable(Block.getStateId(state)));
 				}
 			}
 			if (leavesPressed) {
@@ -243,41 +211,6 @@ public final class ClientEventSubscriber {
 				ModProfiler.enableProfiling();
 			}
 		}
-	}
-
-	private static boolean canEnableTerrainCollisions(final Minecraft minecraft, final ClientPlayerEntity player) {
-		boolean topAllSolid = true;
-		boolean topAllNonSolid = true;
-		boolean bottomAllSolid = true;
-		boolean bottomAllNonSolid = true;
-
-		final BlockPos playerPos = player.getPosition();
-		final int playerPosX = playerPos.getX();
-		final int playerPosY = playerPos.getY();
-		final int playerPosZ = playerPos.getZ();
-		final ClientWorld world = minecraft.world;
-		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
-			for (int x = -2; x < 3; ++x) {
-				for (int z = -2; z < 3; ++z) {
-					{
-						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY, playerPosZ + z);
-						final boolean topIsSolid = !world.getBlockState(pooledMutableBlockPos).getCollisionShape(world, pooledMutableBlockPos).isEmpty();
-						topAllSolid &= topIsSolid;
-						topAllNonSolid &= (!topIsSolid);
-					}
-					{
-						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY - 1, playerPosZ + z);
-						final boolean bottomIsSolid = !world.getBlockState(pooledMutableBlockPos).getCollisionShape(world, pooledMutableBlockPos).isEmpty();
-						bottomAllSolid &= bottomIsSolid;
-						bottomAllNonSolid &= (!bottomIsSolid);
-					}
-				}
-			}
-		}
-
-		if (topAllNonSolid && bottomAllSolid) {
-			return true;
-		} else return topAllNonSolid && bottomAllNonSolid;
 	}
 
 	@SubscribeEvent

@@ -4,6 +4,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.DoublePlantBlock;
 import net.minecraft.block.SnowyDirtBlock;
 
+import static net.minecraft.block.Blocks.AIR;
 import static net.minecraft.block.Blocks.GRASS;
 import static net.minecraft.block.Blocks.GRASS_BLOCK;
 import static net.minecraft.block.Blocks.PODZOL;
@@ -15,6 +16,8 @@ import static net.minecraft.state.properties.DoubleBlockHalf.LOWER;
  * @author Cadiboo
  */
 public final class StateHolder {
+
+	public static final BlockState AIR_DEFAULT = AIR.getDefaultState();
 
 	public static final BlockState SNOW_LAYER_DEFAULT = SNOW.getDefaultState();
 	public static final BlockState GRASS_BLOCK_SNOWY = GRASS_BLOCK.getDefaultState().with(SnowyDirtBlock.SNOWY, true);

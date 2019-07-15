@@ -5,6 +5,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -408,6 +410,14 @@ public final class ConfigHelper {
 		finalStates.addAll(vanillaStates);
 		finalStates.addAll(moddedStates);
 		return finalStates;
+	}
+
+	public static void setExtendFluidsRange(final ExtendFluidsRange newRange) {
+		setValueAndSave(serverConfig, "general.extendFluidsRange", newRange);
+	}
+
+	public static void setTerrainMeshGenerator(final MeshGeneratorType newGenerator) {
+		setValueAndSave(serverConfig, "general.terrainMeshGenerator", newGenerator);
 	}
 
 	public static void setTerrainCollisions(final boolean enabled) {

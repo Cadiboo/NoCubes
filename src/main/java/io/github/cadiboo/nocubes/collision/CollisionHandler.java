@@ -189,7 +189,7 @@ public final class CollisionHandler {
 									final int posY = minYm1 + y;
 									final int posZ = minZm1 + z;
 									pooledMutableBlockPos.setPos(posX, posY, posZ);
-									final VoxelShape offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos).withOffset(posX, posY, posZ);
+									final VoxelShape offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos, context).withOffset(posX, posY, posZ);
 									if (VoxelShapes.compare(aabbShape, offsetCollisionShape, IBooleanFunction.AND)) {
 										collidingShapes.add(offsetCollisionShape);
 									}
@@ -254,7 +254,7 @@ public final class CollisionHandler {
 								)];
 								final VoxelShape originalCollisionShape = state.getCollisionShape(_this, pooledMutableBlockPos.setPos(
 										approximateX, approximateY, approximateZ
-								));
+								), context);
 								maxY = approximateY + originalCollisionShape.getEnd(Axis.Y);
 							}
 //							MeshCollisionUtil.addIntersectingFaceShapesToList(collidingShapes, face, profiler, maxY, 0.15F, aabb::intersects, false);

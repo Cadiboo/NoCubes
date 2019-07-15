@@ -12,14 +12,9 @@
 	"nocubes.key.toggleRenderSmoothTerrain": "Toggle Smooth Terrain Rendering",
 	"nocubes.key.toggleRenderSmoothLeaves": "Toggle Smooth Leaves Rendering",
 
-	"nocubes.collisionsBroken114": "Unfortunately collisions don't work on 1.14 yet. We are working to fix this and they should be out in the next release.",
-	"nocubes.collisionsNotOnFlat": "You are not on a flat surface! Please get on a flat surface before enabling collisions!",
-	"nocubes.collisionsEnabledWarning": "NoCubes terrain collisions enabled. These are highly experimental and unoptimsied!",
+	"nocubes.collisionsEnabled": "NoCubes terrain collisions enabled",
 	"nocubes.collisionsDisabled": "NoCubes terrain collisions disabled",
-	"nocubes.collisionsDisablePress": "To disable terrain collisions press %s",
-
-	"nocubes.collisionsNotSingleplayer": "You're not in singleplayer! I haven't written the code to handle syncing collision changes on multiplayer servers yet. Glitches may happen!",
-	"nocubes.terrainSmoothableNotSingleplayer": "You're not in singleplayer! I haven't written the code to handle syncing terrain smoothable changes on multiplayer servers yet. Glitches may happen!",
+	"nocubes.collisionsNoPermission": "You need to be an operator to change NoCubes terrain collisions",
 
 	"nocubes.config.title": "NoCubes Config Gui Beta (Changes aren't instant)",
 	"nocubes.config.client": "Client Config",

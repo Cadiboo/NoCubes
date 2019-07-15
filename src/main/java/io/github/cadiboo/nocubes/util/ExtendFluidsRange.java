@@ -9,6 +9,8 @@ public enum ExtendFluidsRange {
 	OneBlock(1),
 	TwoBlocks(2);
 
+	public static final ExtendFluidsRange[] VALUES = values();
+
 	private final int range;
 
 	ExtendFluidsRange(final int range) {
