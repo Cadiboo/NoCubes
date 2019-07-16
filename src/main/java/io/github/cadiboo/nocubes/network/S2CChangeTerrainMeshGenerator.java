@@ -10,23 +10,23 @@ import java.util.function.Supplier;
 /**
  * @author Cadiboo
  */
-public final class S2CChangeMeshGenerator {
+public final class S2CChangeTerrainMeshGenerator {
 
 	private final MeshGeneratorType newGenerator;
 
-	public S2CChangeMeshGenerator(final MeshGeneratorType meshGeneratorType) {
+	public S2CChangeTerrainMeshGenerator(final MeshGeneratorType meshGeneratorType) {
 		this.newGenerator = meshGeneratorType;
 	}
 
-	public static void encode(final S2CChangeMeshGenerator msg, final PacketBuffer packetBuffer) {
+	public static void encode(final S2CChangeTerrainMeshGenerator msg, final PacketBuffer packetBuffer) {
 		packetBuffer.writeInt(msg.newGenerator.ordinal());
 	}
 
-	public static S2CChangeMeshGenerator decode(final PacketBuffer packetBuffer) {
-		return new S2CChangeMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
+	public static S2CChangeTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
+		return new S2CChangeTerrainMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
 	}
 
-	public static void handle(final S2CChangeMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(final S2CChangeTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		contextSupplier.get().enqueueWork(() -> Config.terrainMeshGenerator = msg.newGenerator);
 	}
 

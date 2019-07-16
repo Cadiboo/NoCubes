@@ -9,10 +9,10 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
-import io.github.cadiboo.nocubes.network.C2SRequestAddSmoothable;
-import io.github.cadiboo.nocubes.network.C2SRequestDisableCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestEnableCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestRemoveSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -155,9 +155,9 @@ public final class ClientEventSubscriber {
 		{
 			if (tempToggleTerrainCollisions.isPressed()) {
 				if (Config.terrainCollisions) {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableCollisions());
+					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
 				} else {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableCollisions());
+					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableTerrainCollisions());
 				}
 			}
 		}
@@ -181,9 +181,9 @@ public final class ClientEventSubscriber {
 
 			if (terrainPressed) {
 				if (state.nocubes_isTerrainSmoothable) {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveSmoothable(Block.getStateId(state)));
+					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
 				} else {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestAddSmoothable(Block.getStateId(state)));
+					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
 				}
 			}
 			if (leavesPressed) {

@@ -8,13 +8,19 @@
 	"nocubes.key.toggleTerrainSmoothableBlockState": "Toggle Terrain Smoothable BlockState",
 	"nocubes.key.toggleLeavesSmoothableBlockState": "Toggle Leaves Smoothable BlockState",
 	"nocubes.key.toggleProfilers": "Toggle Profilers",
-	"nocubes.key.tempToggleTerrainCollisions": "[TEMP] Toggle Terrain Collisions",
+	"nocubes.key.tempToggleTerrainCollisions": "Toggle Terrain Collisions",
 	"nocubes.key.toggleRenderSmoothTerrain": "Toggle Smooth Terrain Rendering",
 	"nocubes.key.toggleRenderSmoothLeaves": "Toggle Smooth Leaves Rendering",
 
-	"nocubes.collisionsEnabled": "NoCubes terrain collisions enabled",
-	"nocubes.collisionsDisabled": "NoCubes terrain collisions disabled",
-	"nocubes.collisionsNoPermission": "You need to be an operator to change NoCubes terrain collisions",
+	"nocubes.terrainCollisionsEnabled": "NoCubes Terrain Collisions enabled",
+	"nocubes.terrainCollisionsDisabled": "NoCubes Terrain Collisions disabled",
+
+	"nocubes.addTerrainSmoothableNoPermission": "You need to be an operator to add a Terrain Smoothable",
+	"nocubes.changeExtendFluidsRangeNoPermission": "You need to be an operator to change the Extend Fluids Range",
+	"nocubes.changeTerrainMeshGeneratorNoPermission": "You need to be an operator to change the Terrain Mesh Generator",
+	"nocubes.disableCollisionsNoPermission": "You need to be an operator to disable NoCubes Terrain Collisions",
+	"nocubes.enableCollisionsNoPermission": "You need to be an operator to enable NoCubes Terrain Collisions",
+	"nocubes.removeTerrainSmoothableNoPermission": "You need to be an operator to remove a Terrain Smoothable",
 
 	"nocubes.config.title": "NoCubes Config Gui Beta (Changes aren't instant)",
 	"nocubes.config.client": "Client Config",

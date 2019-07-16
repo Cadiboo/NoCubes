@@ -16,16 +16,16 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 /**
  * @author Cadiboo
  */
-public final class C2SRequestEnableCollisions {
+public final class C2SRequestEnableTerrainCollisions {
 
-	public static void encode(final C2SRequestEnableCollisions msg, final PacketBuffer packetBuffer) {
+	public static void encode(final C2SRequestEnableTerrainCollisions msg, final PacketBuffer packetBuffer) {
 	}
 
-	public static C2SRequestEnableCollisions decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestEnableCollisions();
+	public static C2SRequestEnableTerrainCollisions decode(final PacketBuffer packetBuffer) {
+		return new C2SRequestEnableTerrainCollisions();
 	}
 
-	public static void handle(final C2SRequestEnableCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(final C2SRequestEnableTerrainCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
@@ -36,9 +36,9 @@ public final class C2SRequestEnableCollisions {
 				// Config saving is async so set it now
 				Config.terrainCollisions = true;
 				ConfigHelper.setTerrainCollisions(true);
-				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CEnableCollisions());
+				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CEnableTerrainCollisions());
 			} else {
-				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".collisionsNoPermission"));
+				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".enableTerrainCollisionsNoPermission"));
 			}
 		});
 	}

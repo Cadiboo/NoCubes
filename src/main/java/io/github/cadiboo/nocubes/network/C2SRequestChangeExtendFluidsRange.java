@@ -6,10 +6,13 @@ import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import java.util.function.Supplier;
+
+import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
  * @author Cadiboo
@@ -34,12 +37,17 @@ public final class C2SRequestChangeExtendFluidsRange {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
-			if (sender != null && sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
+			if (sender == null) {
+				return;
+			}
+			if (sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
 				final ExtendFluidsRange newRange = msg.newRange;
 				// Config saving is async so set it now
 				Config.extendFluidsRange = newRange;
 				ConfigHelper.setExtendFluidsRange(newRange);
 				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CChangeExtendFluidsRange(newRange));
+			} else {
+				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeExtendFluidsRangeNoPermission"));
 			}
 		});
 	}
