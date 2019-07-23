@@ -12,6 +12,7 @@
 	"nocubes.key.toggleRenderSmoothTerrain": "Toggle Smooth Terrain Rendering",
 	"nocubes.key.toggleRenderSmoothLeaves": "Toggle Smooth Leaves Rendering",
 
+	"nocubes.terrainCollisions114": "NoCubes Terrain Collisions don't work properly in 1.14 yet. This is being worked on and will be fixed soon",
 	"nocubes.terrainCollisionsEnabled": "NoCubes Terrain Collisions enabled",
 	"nocubes.terrainCollisionsDisabled": "NoCubes Terrain Collisions disabled",
 
