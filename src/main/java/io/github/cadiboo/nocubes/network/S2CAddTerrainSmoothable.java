@@ -35,7 +35,7 @@ public final class S2CAddTerrainSmoothable {
 
 	public static void handle(final S2CAddTerrainSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
-			context.enqueueWork(() -> {
+		context.enqueueWork(() -> {
 			final int blockStateId = msg.blockStateId;
 			final BlockState blockState = Block.getStateById(blockStateId);
 			if (blockState == StateHolder.AIR_DEFAULT) {
