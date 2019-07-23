@@ -192,10 +192,6 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean isSolid() {
-      // NoCubes Start
-      if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable) return false;
-      if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable) return false;
-      // NoCubes End
       return this.cache != null ? this.cache.solid : this.getBlock().isSolid(this);
    }
 
@@ -213,7 +209,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
-      return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
+      return this.cache != null ? this.cache.field_225501_g : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
@@ -305,9 +301,6 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean causesSuffocation(IBlockReader worldIn, BlockPos pos) {
-      // NoCubes Start
-      if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, worldIn, pos)) return false;
-      // NoCubes End
       return this.getBlock().causesSuffocation(this, worldIn, pos);
    }
 
@@ -361,6 +354,14 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onProjectileCollision(worldIn, state, hit, projectile);
    }
 
+   public boolean func_224755_d(IBlockReader p_224755_1_, BlockPos p_224755_2_, Direction p_224755_3_) {
+      return this.cache != null ? this.cache.field_225493_i[p_224755_3_.ordinal()] : Block.hasSolidSide(this, p_224755_1_, p_224755_2_, p_224755_3_);
+   }
+
+   public boolean func_224756_o(IBlockReader p_224756_1_, BlockPos p_224756_2_) {
+      return this.cache != null ? this.cache.field_225494_j : Block.isOpaque(this.getCollisionShape(p_224756_1_, p_224756_2_));
+   }
+
    public static <T> Dynamic<T> serialize(DynamicOps<T> opsIn, BlockState state) {
       ImmutableMap<IProperty<?>, Comparable<?>> immutablemap = state.getValues();
       T t;
@@ -406,8 +407,10 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       private final boolean propagatesSkylightDown;
       private final int opacity;
       private final VoxelShape[] renderShapes;
-      private final VoxelShape collisionShape;
+      private final VoxelShape field_225501_g;
       private final boolean isCollisionShapeLargerThanFullBlock;
+      private final boolean[] field_225493_i;
+      private final boolean field_225494_j;
 
       private Cache(BlockState stateIn) {
          Block block = stateIn.getBlock();
@@ -426,10 +429,17 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
             }
          }
 
-         this.collisionShape = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
+         this.field_225501_g = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
          this.isCollisionShapeLargerThanFullBlock = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
-            return this.collisionShape.getStart(p_222491_1_) < 0.0D || this.collisionShape.getEnd(p_222491_1_) > 1.0D;
+            return this.field_225501_g.getStart(p_222491_1_) < 0.0D || this.field_225501_g.getEnd(p_222491_1_) > 1.0D;
          });
+         this.field_225493_i = new boolean[6];
+
+         for(Direction direction1 : DIRECTIONS) {
+            this.field_225493_i[direction1.ordinal()] = Block.hasSolidSide(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, direction1);
+         }
+
+         this.field_225494_j = Block.isOpaque(stateIn.getCollisionShape(EmptyBlockReader.INSTANCE, BlockPos.ZERO));
       }
    }
 

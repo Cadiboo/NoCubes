@@ -131,8 +131,8 @@ public interface IWorldReader extends IEnviromentBlockReader {
       return Stream.empty();
    }
 
-   default Stream<VoxelShape> getCollisionShapes(@Nullable Entity enitityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
-      return Streams.concat(this.getCollisionShapes(enitityIn, aabb), this.getEmptyCollisionShapes(enitityIn, aabb, entitiesToIgnore));
+   default Stream<VoxelShape> getCollisionShapes(@Nullable Entity entityIn, AxisAlignedBB aabb, Set<Entity> entitiesToIgnore) {
+      return Streams.concat(this.getCollisionShapes(entityIn, aabb), this.getEmptyCollisionShapes(entityIn, aabb, entitiesToIgnore));
    }
 
    default Stream<VoxelShape> getCollisionShapes(@Nullable final Entity entityIn, AxisAlignedBB aabb) {

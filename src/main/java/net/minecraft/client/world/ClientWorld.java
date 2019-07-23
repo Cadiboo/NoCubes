@@ -355,7 +355,7 @@ public class ClientWorld extends World {
          ifluidstate.animateTick(this, pos, random);
          IParticleData iparticledata = ifluidstate.getDripParticleData();
          if (iparticledata != null && this.rand.nextInt(10) == 0) {
-            boolean flag = Block.hasSolidSide(blockstate, this, pos, Direction.DOWN);
+            boolean flag = blockstate.func_224755_d(this, pos, Direction.DOWN);
             BlockPos blockpos = pos.down();
             this.spawnFluidParticle(blockpos, this.getBlockState(blockpos), iparticledata, flag);
          }
@@ -542,11 +542,11 @@ public class ClientWorld extends World {
       this.worldRenderer.notifyBlockUpdate(this, pos, oldState, newState, flags);
    }
 
-   public void markForRerender(BlockPos pos) {
+   public void func_225319_b(BlockPos pos, BlockState newState, BlockState oldState) {
       // NoCubes Start
-      io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(pos, this.worldRenderer);
+      io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, newState, oldState);
       // NoCubes End
-//      this.worldRenderer.markBlockRangeForRenderUpdate(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+//      this.worldRenderer.func_224746_a(pos, newState, oldState);
    }
 
    public void markSurroundingsForRerender(int sectionX, int sectionY, int sectionZ) {

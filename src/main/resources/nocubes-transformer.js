@@ -144,8 +144,8 @@ function initializeCoreMod() {
 			"target": {
 				"type": "METHOD",
 				"class": "net.minecraft.client.world.ClientWorld",
-				"methodName": "func_217396_m",
-				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;)V"
+				"methodName": "func_225319_b",
+				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"
 			},
 			"transformer": function(methodNode) {
 				injectMarkForRerenderHook(methodNode.instructions);
@@ -1125,46 +1125,41 @@ function injectFluidRenderBypass(instructions) {
 // 2) injects after first label
 function injectMarkForRerenderHook(instructions) {
 
-//	public void markForRerender(BlockPos pos) {
-//		this.worldRenderer.markBlockRangeForRenderUpdate(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+//	public void markForRerender(BlockPos pos, BlockState newState, BlockState oldState) {
+//		this.worldRenderer.markForRerender(pos, newState, oldState);
 //	}
 
-//	public void markForRerender(BlockPos pos) {
+//   public void markForRerender(BlockPos pos, BlockState newState, BlockState oldState) {
 //		// NoCubes Start
-//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(pos, this.worldRenderer);
+//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, newState, oldState);
 //		// NoCubes End
 //	}
 
 
-//  public markForRerender(Lnet/minecraft/util/math/BlockPos;)V
+//  public markForRerender(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L0
 //    LINENUMBER 525 L0
 //    ALOAD 0
 //    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
 //    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.markBlockRangeForRenderUpdate (IIIIII)V
+//    ALOAD 2
+//    ALOAD 3
+//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.markForRerender (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L1
 //    LINENUMBER 526 L1
 //    RETURN
 
-//  public markForRerender(Lnet/minecraft/util/math/BlockPos;)V
+//  public markForRerender(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L0
-//    LINENUMBER 548 L0
-//    ALOAD 1
+//    LINENUMBER 547 L0
+//    ALOAD 0
+//    GETFIELD net/minecraft/client/world/ClientWorld.mc : Lnet/minecraft/client/Minecraft;
 //    ALOAD 0
 //    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.markForRerender (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/WorldRenderer;)V
+//    ALOAD 1
+//    ALOAD 2
+//    ALOAD 3
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.markForRerender (Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //    RETURN
 
 
@@ -1185,12 +1180,17 @@ function injectMarkForRerenderHook(instructions) {
 	var toInject = new InsnList();
 
 	// Labels n stuff
+	var mc_name = ASMAPI.mapField("field_73037_M"); // mc
 	var worldRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer
 
 	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 1)); // pos
+	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", mc_name, "Lnet/minecraft/client/Minecraft;"));
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
 	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", worldRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
+	toInject.add(new VarInsnNode(ALOAD, 1)); // pos
+	toInject.add(new VarInsnNode(ALOAD, 2)); // newState
+	toInject.add(new VarInsnNode(ALOAD, 3)); // oldState
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -1199,7 +1199,7 @@ function injectMarkForRerenderHook(instructions) {
 			//String name
 			"markForRerender",
 			//String descriptor
-			"(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/WorldRenderer;)V",
+			"(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V",
 			//boolean isInterface
 			false
 	));

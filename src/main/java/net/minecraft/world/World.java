@@ -48,13 +48,13 @@ import net.minecraft.world.biome.Biomes;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.AbstractChunkProvider;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkHolder;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.ChunkGenerator;
 import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.server.ChunkHolder;
 import net.minecraft.world.storage.MapData;
 import net.minecraft.world.storage.WorldInfo;
 import net.minecraftforge.api.distmarker.Dist;
@@ -240,7 +240,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
          {
             if (blockstate1 == newState) {
                if (blockstate != blockstate1) {
-                  this.markForRerender(pos);
+                  this.func_225319_b(pos, blockstate, blockstate1);
                }
 
                if ((flags & 2) != 0 && (!this.isRemote || (flags & 4) == 0) && (this.isRemote || chunk == null || chunk.func_217321_u() != null && chunk.func_217321_u().isAtLeast(ChunkHolder.LocationType.TICKING))) {
@@ -313,7 +313,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    }
 
-   public void markForRerender(BlockPos pos) {
+   public void func_225319_b(BlockPos p_225319_1_, BlockState p_225319_2_, BlockState p_225319_3_) {
    }
 
    public void notifyNeighborsOfStateChange(BlockPos pos, Block blockIn) {
@@ -491,7 +491,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
 
    @OnlyIn(Dist.CLIENT)
    public Vec3d getSkyColor(BlockPos p_217382_1_, float p_217382_2_) {
-       return this.dimension.getSkyColor(p_217382_1_, p_217382_2_);
+      return this.dimension.getSkyColor(p_217382_1_, p_217382_2_);
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -1076,12 +1076,33 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       int k = MathHelper.floor((aabb.minZ - getMaxEntityRadius()) / 16.0D);
       int l = MathHelper.ceil((aabb.maxZ + getMaxEntityRadius()) / 16.0D);
       List<T> list = Lists.newArrayList();
+      AbstractChunkProvider abstractchunkprovider = this.getChunkProvider();
 
       for(int i1 = i; i1 < j; ++i1) {
          for(int j1 = k; j1 < l; ++j1) {
-            Chunk chunk = this.getChunkProvider().getChunk(i1, j1, false);
+            Chunk chunk = abstractchunkprovider.getChunk(i1, j1, false);
             if (chunk != null) {
                chunk.getEntitiesOfTypeWithinAABB(clazz, aabb, list, filter);
+            }
+         }
+      }
+
+      return list;
+   }
+
+   public <T extends Entity> List<T> func_225316_b(Class<? extends T> p_225316_1_, AxisAlignedBB p_225316_2_, @Nullable Predicate<? super T> p_225316_3_) {
+      int i = MathHelper.floor((p_225316_2_.minX - 2.0D) / 16.0D);
+      int j = MathHelper.ceil((p_225316_2_.maxX + 2.0D) / 16.0D);
+      int k = MathHelper.floor((p_225316_2_.minZ - 2.0D) / 16.0D);
+      int l = MathHelper.ceil((p_225316_2_.maxZ + 2.0D) / 16.0D);
+      List<T> list = Lists.newArrayList();
+      AbstractChunkProvider abstractchunkprovider = this.getChunkProvider();
+
+      for(int i1 = i; i1 < j; ++i1) {
+         for(int j1 = k; j1 < l; ++j1) {
+            Chunk chunk = abstractchunkprovider.func_225313_a(i1, j1);
+            if (chunk != null) {
+               chunk.getEntitiesOfTypeWithinAABB(p_225316_1_, p_225316_2_, list, p_225316_3_);
             }
          }
       }

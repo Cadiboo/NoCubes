@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -95,9 +96,7 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(final BlockState blockstate) {
-		if (Config.renderSmoothTerrain && blockstate.nocubes_isTerrainSmoothable) return false;
-//		if (Config.renderSmoothLeaves && blockstate.nocubes_isLeavesSmoothable) return false;
-		return true;
+		return !Config.renderSmoothTerrain || !blockstate.nocubes_isTerrainSmoothable;//		if (Config.renderSmoothLeaves && blockstate.nocubes_isLeavesSmoothable) return false;
 	}
 
 	/**
@@ -127,22 +126,26 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: ClientWorld#markForRerender(BlockPos)
+	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender)
 	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
+	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender)
+	 * and calls ModelManager#func_224742_a(BlockState, BlockState) (areUnequal)
 	 * This fixes seams that appear when meshes along chunk borders change
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void markForRerender(final BlockPos pos, final WorldRenderer worldRenderer) {
-		final int posX = pos.getX();
-		final int posY = pos.getY();
-		final int posZ = pos.getZ();
-		final int maxX = posX + 2;
-		final int maxY = posY + 2;
-		final int maxZ = posZ + 2;
-		for (int z = posZ - 2; z <= maxZ; ++z) {
-			for (int y = posY - 2; y <= maxY; ++y) {
-				for (int x = posX - 2; x <= maxX; ++x) {
-					worldRenderer.markForRerender(x >> 4, y >> 4, z >> 4);
+	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState newState, final BlockState oldState) {
+		if (minecraft.getModelManager().func_224742_a(newState, oldState)) {
+			final int posX = pos.getX();
+			final int posY = pos.getY();
+			final int posZ = pos.getZ();
+			final int maxX = posX + 2;
+			final int maxY = posY + 2;
+			final int maxZ = posZ + 2;
+			for (int z = posZ - 2; z <= maxZ; ++z) {
+				for (int y = posY - 2; y <= maxY; ++y) {
+					for (int x = posX - 2; x <= maxX; ++x) {
+						worldRenderer.markForRerender(x >> 4, y >> 4, z >> 4);
+					}
 				}
 			}
 		}
