@@ -27,7 +27,9 @@ public final class S2CChangeTerrainMeshGenerator {
 	}
 
 	public static void handle(final S2CChangeTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		contextSupplier.get().enqueueWork(() -> Config.terrainMeshGenerator = msg.newGenerator);
+		final NetworkEvent.Context context = contextSupplier.get();
+		context.enqueueWork(() -> Config.terrainMeshGenerator = msg.newGenerator);
+		context.setPacketHandled(true);
 	}
 
 }

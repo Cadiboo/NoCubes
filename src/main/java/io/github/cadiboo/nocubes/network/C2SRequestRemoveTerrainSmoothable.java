@@ -54,6 +54,7 @@ public final class C2SRequestRemoveTerrainSmoothable {
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".removeTerrainSmoothableNoPermission"));
 			}
 		});
+		context.setPacketHandled(true);
 	}
 
 }

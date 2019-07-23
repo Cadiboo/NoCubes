@@ -41,6 +41,7 @@ public final class C2SRequestEnableTerrainCollisions {
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".enableTerrainCollisionsNoPermission"));
 			}
 		});
+		context.setPacketHandled(true);
 	}
 
 }

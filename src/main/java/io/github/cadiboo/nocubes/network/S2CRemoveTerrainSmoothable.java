@@ -34,7 +34,8 @@ public final class S2CRemoveTerrainSmoothable {
 	}
 
 	public static void handle(final S2CRemoveTerrainSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		contextSupplier.get().enqueueWork(() -> {
+		final NetworkEvent.Context context = contextSupplier.get();
+		context.enqueueWork(() -> {
 			final int blockStateId = msg.blockStateId;
 			final BlockState blockState = Block.getStateById(blockStateId);
 			if (blockState == StateHolder.AIR_DEFAULT) {
@@ -47,6 +48,7 @@ public final class S2CRemoveTerrainSmoothable {
 				ClientUtil.tryReloadRenderers();
 			}
 		});
+		context.setPacketHandled(true);
 	}
 
 }

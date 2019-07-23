@@ -27,7 +27,9 @@ public final class S2CChangeExtendFluidsRange {
 	}
 
 	public static void handle(final S2CChangeExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		contextSupplier.get().enqueueWork(() -> Config.extendFluidsRange = msg.newRange);
+		final NetworkEvent.Context context = contextSupplier.get();
+		context.enqueueWork(() -> Config.extendFluidsRange = msg.newRange);
+		context.setPacketHandled(true);
 	}
 
 }

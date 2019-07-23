@@ -23,10 +23,12 @@ public final class S2CEnableTerrainCollisions {
 	}
 
 	public static void handle(final S2CEnableTerrainCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		contextSupplier.get().enqueueWork(() -> {
+		final NetworkEvent.Context context = contextSupplier.get();
+		context.enqueueWork(() -> {
 			Config.terrainCollisions = true;
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisionsEnabled"));
 		});
+		context.setPacketHandled(true);
 	}
 
 }

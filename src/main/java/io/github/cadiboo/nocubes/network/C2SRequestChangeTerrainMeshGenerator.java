@@ -50,6 +50,7 @@ public final class C2SRequestChangeTerrainMeshGenerator {
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeTerrainMeshGeneratorNoPermission"));
 			}
 		});
+		context.setPacketHandled(true);
 	}
 
 }

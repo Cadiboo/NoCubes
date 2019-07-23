@@ -50,6 +50,7 @@ public final class C2SRequestChangeExtendFluidsRange {
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeExtendFluidsRangeNoPermission"));
 			}
 		});
+		context.setPacketHandled(true);
 	}
 
 }
