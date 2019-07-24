@@ -66,49 +66,47 @@ public final class ClientEventSubscriber {
 		for (final FaceList faces : map.values()) {
 			try {
 				for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
-					try (Face face = faces.get(i)) {
-						try (
-								Vec3 v0 = face.getVertex0();
-								Vec3 v1 = face.getVertex1();
-								Vec3 v2 = face.getVertex2();
-								Vec3 v3 = face.getVertex3()
-						) {
-							// Hologram colors:
-							// "http://irfandiawhite.co/2019/03/11/blue-hologram-color-code/"
-							// Onahou - #CFF7FB (0.81, 0.93, 0.98, 1.00)
-							// Onahou - #CFEDFB (0.81, 0.93, 0.98, 1.00)
-							// Hawkes Blue - #CFE4FB (0.81, 0.89, 0.98, 1.00)
-							// Hawkes Blue - #CFDCFB (0.81, 0.86, 0.98, 1.00)
-							// Lavender Blue - #CDD0F9 (0.80, 0.82, 0.98, 1.00)
-							// "https://www.colorhexa.com/33b5e5"
-							// Picton Blue - #33B5E5 (0.20, 0.71, 0.90, 1.00)
-							// Picton Blue - #44B7E1 (0.27, 0.72, 0.88, 1.00)
-							// Picton Blue - #4CC2E6 (0.30, 0.76, 0.90, 1.00)
-							// From Picture on "https://www.minecraftforge.net/forum/topic/70900-creating-a-hologramwireframe/"
-							// Faded Cyan - #81FEFD (0.49, 0.99, 0.99, 1.00)
-							// Electric Blue - #7EFCFD (0.49, 0.99, 0.99, 1.00)
-							// Faded Cyan - #93FBF9 (0.58, 0.98, 0.98, 1.00)
-							// Danube - #5D86C4 (0.36, 0.53, 0.77, 1.00)
-							// From WIPTech
-							// ? - #3B9AC9FF (0.60, 0.79, 1.00, 1.00)
-							// This was already in my palette and it looked good
-							// Faded Blue - #8A8EF9 (0.54, 0.56, 0.98, 1.00)
-							// The color I ended up using was none of these
-							// Picton Blue - #3399FF (0.20, 0.60, 1.00)
-							final double v0x = v0.x;
-							final double v0y = v0.y;
-							final double v0z = v0.z;
-							// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
-							bufferbuilder.pos(v0x, v0y, v0z).color(0.20F, 0.60F, 1.00F, 0.0F).endVertex();
-							bufferbuilder.pos(v1.x, v1.y, v1.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
-							bufferbuilder.pos(v2.x, v2.y, v2.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
-							bufferbuilder.pos(v3.x, v3.y, v3.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
-							// End back at v0. Draw with alpha this time
-							bufferbuilder.pos(v0x, v0y, v0z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
-						}
+					try (
+							Face face = faces.get(i);
+							Vec3 v0 = face.getVertex0();
+							Vec3 v1 = face.getVertex1();
+							Vec3 v2 = face.getVertex2();
+							Vec3 v3 = face.getVertex3()
+					) {
+						// Hologram colors:
+						// "http://irfandiawhite.co/2019/03/11/blue-hologram-color-code/"
+						// Onahou - #CFF7FB (0.81, 0.93, 0.98, 1.00)
+						// Onahou - #CFEDFB (0.81, 0.93, 0.98, 1.00)
+						// Hawkes Blue - #CFE4FB (0.81, 0.89, 0.98, 1.00)
+						// Hawkes Blue - #CFDCFB (0.81, 0.86, 0.98, 1.00)
+						// Lavender Blue - #CDD0F9 (0.80, 0.82, 0.98, 1.00)
+						// "https://www.colorhexa.com/33b5e5"
+						// Picton Blue - #33B5E5 (0.20, 0.71, 0.90, 1.00)
+						// Picton Blue - #44B7E1 (0.27, 0.72, 0.88, 1.00)
+						// Picton Blue - #4CC2E6 (0.30, 0.76, 0.90, 1.00)
+						// From Picture on "https://www.minecraftforge.net/forum/topic/70900-creating-a-hologramwireframe/"
+						// Faded Cyan - #81FEFD (0.49, 0.99, 0.99, 1.00)
+						// Electric Blue - #7EFCFD (0.49, 0.99, 0.99, 1.00)
+						// Faded Cyan - #93FBF9 (0.58, 0.98, 0.98, 1.00)
+						// Danube - #5D86C4 (0.36, 0.53, 0.77, 1.00)
+						// From WIPTech
+						// ? - #3B9AC9FF (0.60, 0.79, 1.00, 1.00)
+						// This was already in my palette and it looked good
+						// Faded Blue - #8A8EF9 (0.54, 0.56, 0.98, 1.00)
+						// The color I ended up using was none of these
+						// Picton Blue - #3399FF (0.20, 0.60, 1.00)
+						final double v0x = v0.x;
+						final double v0y = v0.y;
+						final double v0z = v0.z;
+						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+						bufferbuilder.pos(v0x, v0y, v0z).color(0.20F, 0.60F, 1.00F, 0.0F).endVertex();
+						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
+						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
+						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
+						// End back at v0. Draw with alpha this time
+						bufferbuilder.pos(v0x, v0y, v0z).color(0.20F, 0.60F, 1.00F, 0.4F).endVertex();
 					}
 				}
-
 			} finally {
 				faces.close();
 			}
