@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -71,8 +72,14 @@ public final class ClientEventSubscriber {
 		final Minecraft minecraft = Minecraft.getMinecraft();
 
 		final NetHandlerPlayClient connection = minecraft.getConnection();
-		if (connection != null && NetworkDispatcher.get(connection.getNetworkManager()).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-			Config.terrainCollisions = false;
+		if (connection != null) {
+			final NetworkManager networkManager = connection.getNetworkManager();
+			if (networkManager != null) {
+				final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
+				if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
+					Config.terrainCollisions = false;
+				}
+			}
 		}
 
 		final EntityPlayerSP player = minecraft.player;
