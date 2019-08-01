@@ -93,7 +93,7 @@ public final class NoCubesConfigGui extends GuiScreen {
 	@Override
 	protected void keyTyped(char eventChar, int eventKey) {
 		if (eventKey == Keyboard.KEY_ESCAPE)
-			this.mc.displayGuiScreen(parentScreen);
+			this.mc.displayGuiScreen(this.parentScreen);
 		else
 			this.configOptionsList.keyTyped(eventChar, eventKey);
 	}
