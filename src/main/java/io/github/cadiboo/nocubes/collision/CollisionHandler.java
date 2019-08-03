@@ -297,7 +297,7 @@ public final class CollisionHandler {
 						final BlockState blockState = _this.getBlockState(pooledMutableBlockPos);
 						final VoxelShape offsetCollisionShape;
 						if (blockState.nocubes_isTerrainSmoothable) {
-							offsetCollisionShape = StolenReposeCode.getCollisionShape(blockState, _this, pooledMutableBlockPos, context).withOffset(x, y, z);
+							offsetCollisionShape = StolenReposeCode.getCollisionShape(blockState, _this, pooledMutableBlockPos, context);
 						} else {
 							offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos, context).withOffset(x, y, z);
 						}
