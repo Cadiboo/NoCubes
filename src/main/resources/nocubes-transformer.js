@@ -16,7 +16,7 @@ function initializeCoreMod() {
 	/*Class*/ MethodInsnNode = Java.type("org.objectweb.asm.tree.MethodInsnNode");
 	/*Class*/ JumpInsnNode = Java.type("org.objectweb.asm.tree.JumpInsnNode");
 	/*Class*/ TypeInsnNode = Java.type("org.objectweb.asm.tree.TypeInsnNode");
-	
+
 	ACC_PUBLIC = Opcodes.ACC_PUBLIC;
 
 	INVOKESTATIC = Opcodes.INVOKESTATIC;
@@ -25,12 +25,14 @@ function initializeCoreMod() {
 	ALOAD = Opcodes.ALOAD;
 	ILOAD = Opcodes.ILOAD;
 	FLOAD = Opcodes.FLOAD;
-	
+	DLOAD = Opcodes.DLOAD;
+
 	ISTORE = Opcodes.ISTORE;
 
 	RETURN = Opcodes.RETURN;
 	ARETURN = Opcodes.ARETURN;
 	IRETURN = Opcodes.IRETURN;
+	DRETURN = Opcodes.DRETURN;
 
 	NEW = Opcodes.NEW;
 
@@ -211,6 +213,18 @@ function initializeCoreMod() {
 				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isTerrainSmoothable", "Z", null, false));
 				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isLeavesSmoothable", "Z", null, false));
 				return classNode;
+			}
+		},
+		"VoxelShapes#getAllowedOffset": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.util.math.shapes.VoxelShapes",
+				"methodName": "func_216386_a",
+				"methodDesc": "(Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;)D"
+			},
+			"transformer": function(methodNode) {
+				injectGetAllowedOffsetHook(methodNode.instructions);
+				return methodNode;
 			}
 		}
 	}
@@ -1649,6 +1663,130 @@ function injectCausesSuffocationHook(instructions) {
 
 }
 
+// 1) Finds the first instruction NEW World.getChunk
+// 2) Finds the next instruction ARETURN
+// 3) Inserts before World.getChunk
+// 4) Removes everything between World.getChunk and ARETURN
+function injectGetAllowedOffsetHook(instructions) {
+
+//	Direction.Axis rotZ = rot.rotate(Direction.Axis.Z);
+//	BlockPos.MutableBlockPos mbp = new BlockPos.MutableBlockPos();
+
+//	Direction.Axis rotZ = rot.rotate(Direction.Axis.Z);
+//	// NoCubes Start
+//	return io.github.cadiboo.nocubes.hooks.Hooks.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, rot, rotX, rotY, rotZ);
+//	// NoCubes End
+////	BlockPos.MutableBlockPos mbp = new BlockPos.MutableBlockPos();
+
+
+//   L7
+//    LINENUMBER 197 L7
+//    ALOAD 7
+//    GETSTATIC net/minecraft/util/Direction$Axis.Z : Lnet/minecraft/util/Direction$Axis;
+//    INVOKEVIRTUAL net/minecraft/util/AxisRotation.rotate (Lnet/minecraft/util/Direction$Axis;)Lnet/minecraft/util/Direction$Axis;
+//    ASTORE 10
+//   L8
+//    LINENUMBER 198 L8
+//    NEW net/minecraft/util/math/BlockPos$MutableBlockPos
+//    DUP
+//    INVOKESPECIAL net/minecraft/util/math/BlockPos$MutableBlockPos.<init> ()V
+//    ASTORE 11
+//   L9
+//    LINENUMBER 199 L9
+//    ALOAD 0
+//    ALOAD 8
+//    INVOKEVIRTUAL net/minecraft/util/math/AxisAlignedBB.getMin (Lnet/minecraft/util/Direction$Axis;)D
+//    LDC 1.0E-7
+//    DSUB
+//    INVOKESTATIC net/minecraft/util/math/MathHelper.floor (D)I
+//    ICONST_1
+//    ISUB
+//    ISTORE 12
+
+//   L7
+//    LINENUMBER 197 L7
+//    ALOAD 7
+//    GETSTATIC net/minecraft/util/Direction$Axis.Z : Lnet/minecraft/util/Direction$Axis;
+//    INVOKEVIRTUAL net/minecraft/util/AxisRotation.rotate (Lnet/minecraft/util/Direction$Axis;)Lnet/minecraft/util/Direction$Axis;
+//    ASTORE 10
+//   L8
+//    LINENUMBER 199 L8
+//    ALOAD 0
+//    ALOAD 1
+//    DLOAD 2
+//    ALOAD 4
+//    ALOAD 5
+//    ALOAD 6
+//    ALOAD 7
+//    ALOAD 8
+//    ALOAD 9
+//    ALOAD 10
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getAllowedOffset (Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;Lnet/minecraft/util/AxisRotation;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;)D
+//    DRETURN
+
+
+	var first_NEW_MutableBlockPos;
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getOpcode() == NEW) {
+			if (instruction.desc == "net/minecraft/util/math/BlockPos$MutableBlockPos") {
+				first_NEW_MutableBlockPos = instruction;
+				print("Found injection point \"first_NEW_MutableBlockPos\" " + instruction);
+				break;
+			}
+		}
+	}
+	if (!first_NEW_MutableBlockPos) {
+		throw "Error: Couldn't find injection point \"first_NEW_MutableBlockPos\"!";
+	}
+
+	var firstLabelBefore_first_NEW_MutableBlockPos;
+	for (i = instructions.indexOf(first_NEW_MutableBlockPos); i >= 0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == LABEL) {
+			firstLabelBefore_first_NEW_MutableBlockPos = instruction;
+			print("Found label \"firstLabelBefore_first_NEW_MutableBlockPos\" " + instruction);
+			break;
+		}
+	}
+	if (!firstLabelBefore_first_NEW_MutableBlockPos) {
+		throw "Error: Couldn't find label \"firstLabelBefore_first_NEW_MutableBlockPos\"!";
+	}
+
+	var toInject = new InsnList();
+
+	// Labels n stuff
+
+	// Make list of instructions to inject
+	toInject.add(new VarInsnNode(ALOAD, 0)); // collisionBox
+	toInject.add(new VarInsnNode(ALOAD, 1)); // worldReader
+	toInject.add(new VarInsnNode(DLOAD, 2)); // desiredOffset
+	toInject.add(new VarInsnNode(ALOAD, 4)); // selectionContext
+	toInject.add(new VarInsnNode(ALOAD, 5)); // rotationAxis
+	toInject.add(new VarInsnNode(ALOAD, 6)); // possibleHits
+	toInject.add(new VarInsnNode(ALOAD, 7)); // reversedRotation
+	toInject.add(new VarInsnNode(ALOAD, 8)); // rotX
+	toInject.add(new VarInsnNode(ALOAD, 9)); // rotY
+	toInject.add(new VarInsnNode(ALOAD, 10)); // rotZ
+	toInject.add(new MethodInsnNode(
+			//int opcode
+			INVOKESTATIC,
+			//String owner
+			"io/github/cadiboo/nocubes/hooks/Hooks",
+			//String name
+			"getAllowedOffset",
+			//String descriptor
+			"(Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;Lnet/minecraft/util/AxisRotation;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;)D",
+			//boolean isInterface
+			false
+	));
+	toInject.add(new InsnNode(DRETURN));
+
+	// Inject instructions
+	instructions.insert(firstLabelBefore_first_NEW_MutableBlockPos, toInject);
+
+}
 
 
 

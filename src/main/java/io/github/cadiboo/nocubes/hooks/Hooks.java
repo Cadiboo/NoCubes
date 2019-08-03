@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.hooks;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.VoxelShapesHandler;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
@@ -18,6 +19,8 @@ import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.entity.Entity;
 import net.minecraft.fluid.IFluidState;
+import net.minecraft.util.AxisRotation;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -149,6 +152,14 @@ public final class Hooks {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Called from: VoxelShapes.getAllowedOffset(AxisAlignedBB, IWorldReader, double, ISelectionContext, AxisRotation, Stream) before the MutableBlockPos is created
+	 * Calls: VoxelShapesHandler.getAllowedOffset to handle mesh, repose and vanilla collisions offsets
+	 */
+	public static double getAllowedOffset(final AxisAlignedBB collisionBox, final IWorldReader worldReader, final double desiredOffset, final ISelectionContext selectionContext, final AxisRotation rotationAxis, final Stream<VoxelShape> possibleHits, final AxisRotation reversedRotation, final Direction.Axis rotX, final Direction.Axis rotY, final Direction.Axis rotZ) {
+		return VoxelShapesHandler.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, reversedRotation, rotX, rotY, rotZ);
 	}
 
 }
