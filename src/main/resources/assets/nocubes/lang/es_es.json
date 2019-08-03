@@ -8,7 +8,7 @@
 	"nocubes.key.toggleTerrainSmoothableBlockState": "Cambiar Terreno Suavizables BlockState",
 	"nocubes.key.toggleLeavesSmoothableBlockState": "Cambiar Hojas Suavizables BlockState",
 	"nocubes.key.toggleProfilers": "Cambiar Perfilado",
-	"nocubes.key.tempToggleTerrainCollisions": "Cambiar Terreno Movimiento",
+	"nocubes.key.toggleTerrainCollisions": "Cambiar Terreno Movimiento",
 	"nocubes.key.toggleRenderSmoothTerrain": "Cambiar Suavizables Terreno Dibujando",
 	"nocubes.key.toggleRenderSmoothLeaves": "Cambiar Suavizables Hojas Dibujando",
 

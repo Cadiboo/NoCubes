@@ -8,7 +8,7 @@
 	"nocubes.key.toggleTerrainSmoothableBlockState": "Toggle Terrain Smoothable BlockState",
 	"nocubes.key.toggleLeavesSmoothableBlockState": "Toggle Leaves Smoothable BlockState",
 	"nocubes.key.toggleProfilers": "Toggle Profilers",
-	"nocubes.key.tempToggleTerrainCollisions": "Toggle Terrain Collisions",
+	"nocubes.key.toggleTerrainCollisions": "Toggle Terrain Collisions",
 	"nocubes.key.toggleRenderSmoothTerrain": "Toggle Smooth Terrain Rendering",
 	"nocubes.key.toggleRenderSmoothLeaves": "Toggle Smooth Leaves Rendering",
 

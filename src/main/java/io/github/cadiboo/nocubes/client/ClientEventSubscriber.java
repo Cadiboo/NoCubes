@@ -91,7 +91,7 @@ public final class ClientEventSubscriber {
 
 	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", GLFW_KEY_N, "key.categories." + MOD_ID);
 	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
-	private static final KeyBinding tempToggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.tempToggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
+	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
 
 	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
 
@@ -103,7 +103,7 @@ public final class ClientEventSubscriber {
 
 		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
 		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
-		ClientRegistry.registerKeyBinding(tempToggleTerrainCollisions);
+		ClientRegistry.registerKeyBinding(toggleTerrainCollisions);
 	}
 
 	@SubscribeEvent
@@ -153,7 +153,7 @@ public final class ClientEventSubscriber {
 
 		// Collisions
 		{
-			if (tempToggleTerrainCollisions.isPressed()) {
+			if (toggleTerrainCollisions.isPressed()) {
 				if (Config.terrainCollisions) {
 					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
 				} else {
