@@ -9,6 +9,7 @@ import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
@@ -27,11 +28,11 @@ import static java.lang.Math.max;
  */
 final class StolenReposeCode {
 
-	static VoxelShape getCollisionShape(BlockState stateIn, IWorldReader worldIn, BlockPos posIn) {
+	public static VoxelShape getCollisionShape(BlockState stateIn, IWorldReader worldIn, BlockPos posIn, final ISelectionContext context) {
 
-		final VoxelShape collisionShape = getStateCollisionShape(stateIn, worldIn, posIn);
+		final VoxelShape collisionShape = getStateCollisionShape(stateIn, worldIn, posIn, context);
 
-		if (collisionShape.isEmpty()) {  // optimization
+		if (collisionShape.isEmpty()) { // optimization
 			return collisionShape;
 		}
 
@@ -40,9 +41,9 @@ final class StolenReposeCode {
 		// > -1 means mostly outside isosurface
 		if (density > -1) {
 			return VoxelShapes.empty();
-		} else if (canSlopeAt(stateIn, worldIn, posIn, collisionShape)) {
+		} else if (canSlopeAt(stateIn, worldIn, posIn, collisionShape, context)) {
 			try (ModProfiler ignored = ModProfiler.get().start("Collisions getSlopingCollisionShape")) {
-				return getSlopingCollisionShape(stateIn, worldIn, posIn);
+				return getSlopingCollisionShape(stateIn, worldIn, posIn, context);
 			}
 		} else {
 			return collisionShape;
@@ -86,21 +87,23 @@ final class StolenReposeCode {
 		return density;
 	}
 
-	private static VoxelShape getSlopingCollisionShape(final BlockState state, IWorldReader world, final BlockPos pos) {
-		final double height = blockHeight(pos, world, state);
+	private static VoxelShape getSlopingCollisionShape(final BlockState state, IWorldReader world, final BlockPos pos, final ISelectionContext context) {
+		final double height = blockHeight(pos, world, state, context);
 		VoxelShape shape = VoxelShapes.empty();
 		for (Direction direction : Direction.OrdinalDirections) {
-			shape = VoxelShapes.combine(shape, cornerBox(pos, direction, height, world), IBooleanFunction.OR);
+			shape = VoxelShapes.combine(shape, cornerBox(pos, direction, height, world, context), IBooleanFunction.OR);
 		}
 		return shape;
 	}
 
-	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IWorldReader world) {
+	private static VoxelShape cornerBox(final BlockPos pos, Direction direction, double blockHeight, IWorldReader world, final ISelectionContext context) {
 		final double stepHeight = blockHeight - 0.5;
 		final double height;
-		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, world) &&
-				stepHigh(pos.add(0, 0, direction.z), stepHeight, world) &&
-				stepHigh(pos.add(direction.x, 0, direction.z), stepHeight, world)) {
+		final int dirX = direction.x;
+		final int dirZ = direction.z;
+		if (stepHigh(pos.add(dirX, 0, 0), stepHeight, world, context) &&
+				stepHigh(pos.add(0, 0, dirZ), stepHeight, world, context) &&
+				stepHigh(pos.add(dirX, 0, dirZ), stepHeight, world, context)) {
 			height = blockHeight;
 		} else {
 			height = stepHeight;
@@ -116,30 +119,30 @@ final class StolenReposeCode {
 		);
 	}
 
-	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReader world) {
+	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReader world, final ISelectionContext context) {
 		if (!world.isBlockLoaded(offsetPos) || !world.getWorldBorder().contains(offsetPos)) {
 			return true;
 		}
 		final BlockState neighbor = world.getBlockState(offsetPos);
-		return /*neighbor.isTopSolid() && */blockHeight(offsetPos, world, neighbor) >= stepHeight;
+		return /*neighbor.isTopSolid() && */blockHeight(offsetPos, world, neighbor, context) >= stepHeight;
 	}
 
-	private static double blockHeight(final BlockPos pos, IBlockReader world, final BlockState blockState) {
-		return getStateCollisionShape(blockState, world, pos).getEnd(Axis.Y);
+	private static double blockHeight(final BlockPos pos, IBlockReader world, final BlockState blockState, final ISelectionContext context) {
+		return getStateCollisionShape(blockState, world, pos, context).getEnd(Axis.Y);
 	}
 
-	private static boolean canSlopeAt(final BlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox) {
+	private static boolean canSlopeAt(final BlockState state, IBlockReader worldIn, final BlockPos pos, final VoxelShape collisionBoundingBox, final ISelectionContext context) {
 		boolean flag = collisionBoundingBox != null && collisionBoundingBox.getEnd(Axis.Y) > 0.5;
 		final BlockPos posUp = pos.up();
-		return TERRAIN_SMOOTHABLE.apply(state) && flag && getStateCollisionShape(worldIn.getBlockState(posUp), worldIn, posUp).isEmpty();
+		return TERRAIN_SMOOTHABLE.apply(state) && flag && getStateCollisionShape(worldIn.getBlockState(posUp), worldIn, posUp, context).isEmpty();
 	}
 
 	@Nonnull
-	private static VoxelShape getStateCollisionShape(final BlockState state, final IBlockReader world, final BlockPos pos) {
+	private static VoxelShape getStateCollisionShape(final BlockState state, final IBlockReader world, final BlockPos pos, final ISelectionContext context) {
 		if (state == StateHolder.SNOW_LAYER_DEFAULT) {
 			return VoxelShapes.empty(); // Stop snow having a collisions AABB with no height that still blocks movement
 		} else {
-			return state.getCollisionShape(world, pos);
+			return state.getCollisionShape(world, pos, context);
 		}
 	}
 
