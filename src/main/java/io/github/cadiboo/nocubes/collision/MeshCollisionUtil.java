@@ -15,6 +15,13 @@ import java.util.function.Predicate;
  */
 public final class MeshCollisionUtil {
 
+	private static final VoxelShapeConsumer ADD_COLLISION_SHAPE_TO_LIST = new VoxelShapeConsumer() {
+		@Override
+		void accept(final List<VoxelShape> outShapes, final Vec3 v, final VoxelShape shape, final Predicate<VoxelShape> doesShapeIntersect, final boolean ignoreIntersects) {
+			addCollisionShapeToList(outShapes, shape, doesShapeIntersect, ignoreIntersects);
+		}
+	};
+
 	private static int roundAvg(double d0, double d1, double d2, double d3) {
 		return (int) ((Math.round(d0) + Math.round(d1) + Math.round(d2) + Math.round(d3)) / 4D);
 	}
@@ -37,6 +44,19 @@ public final class MeshCollisionUtil {
 			final float shapeRadius,
 			final Predicate<VoxelShape> doesShapeIntersect,
 			final boolean ignoreIntersects
+	) {
+		doWithEachCollisionShape(outShapes, face, profiler, maxYLevel, shapeRadius, doesShapeIntersect, ignoreIntersects, ADD_COLLISION_SHAPE_TO_LIST);
+	}
+
+	static void doWithEachCollisionShape(
+			final List<VoxelShape> outShapes,
+			final Face face,
+			final ModProfiler profiler,
+			final double maxYLevel,
+			final float shapeRadius,
+			final Predicate<VoxelShape> doesShapeIntersect,
+			final boolean ignoreIntersects,
+			final VoxelShapeConsumer consumer
 	) {
 
 		//0___3
@@ -211,33 +231,33 @@ public final class MeshCollisionUtil {
 //			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape = createVoxelShapeForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, shapeRadius, maxYLevel);
 		}
 
-		try (ModProfiler ignored = profiler.start("addVoxelShapes")) {
-//			addCollisionShapeToList(outShapes, v0shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v2shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v3shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v0v1shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v1v2shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v2v3shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v3v0shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v0v1v0shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v0v1v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v1v2v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v1v2v2shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v2v3v2shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v2v3v3shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v3v0v3shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v3v0v0shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
-			addCollisionShapeToList(outShapes, v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v0v1v1v2v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v1v2v2v3v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			addCollisionShapeToList(outShapes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
+		try (ModProfiler ignored = profiler.start("consumeVoxelShapes")) {
+//			consumer.accept(outShapes, v0, v0shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v1, v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v2, v2shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v3, v3shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v0v1, v0v1shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v1v2, v1v2shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v2v3, v2v3shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v3v0, v3v0shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v0v1v0, v0v1v0shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v0v1v1, v0v1v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v1v2v1, v1v2v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v1v2v2, v1v2v2shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v2v3v2, v2v3v2shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v2v3v3, v2v3v3shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v3v0v3, v3v0v3shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v3v0v0, v3v0v0shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v0v1v1v2, v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v1v2v2v3, v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v2v3v3v0, v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
+			consumer.accept(outShapes, v3v0v0v1, v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v0v1v1v2v1v2v2v3, v0v1v1v2v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v1v2v2v3v2v3v3v0, v1v2v2v3v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v2v3v3v0v3v0v0v1, v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v3v0v0v1v0v1v1v2, v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
+//			consumer.accept(outShapes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
 		}
 
 		//DO NOT CLOSE original face vectors
@@ -311,6 +331,12 @@ public final class MeshCollisionUtil {
 				isOverMax ? vy : vy + boxRadius,
 				vz + boxRadius
 		);
+	}
+
+	abstract static class VoxelShapeConsumer {
+
+		abstract void accept(final List<VoxelShape> outShapes, final Vec3 v, final VoxelShape v1v2shape, final Predicate<VoxelShape> doesShapeIntersect, final boolean ignoreIntersects);
+
 	}
 
 }
