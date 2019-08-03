@@ -353,7 +353,13 @@ public final class VoxelShapesHandler {
 							// func_215704_f -> isCollisionShapeLargerThanFullBlock
 							if (flag != 1 || blockstate.func_215704_f()) {
 								if (flag != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
-									desiredOffset = StolenReposeCode.getCollisionShape(blockstate, worldReader, pos, selectionContext).getAllowedOffset(rotZ, collisionBox/*.offset(-pos.getX(), -pos.getY(), -pos.getZ())*/, desiredOffset);
+									final VoxelShape unOffsetCollisionShape;
+									if (blockstate.nocubes_isTerrainSmoothable) {
+										unOffsetCollisionShape = StolenReposeCode.getCollisionShape(blockstate, worldReader, pos, selectionContext);
+									} else {
+										unOffsetCollisionShape = blockstate.getCollisionShape(worldReader, pos, selectionContext);
+									}
+									desiredOffset = unOffsetCollisionShape.getAllowedOffset(rotZ, collisionBox.offset(-pos.getX(), -pos.getY(), -pos.getZ()), desiredOffset);
 									if (Math.abs(desiredOffset) < 0.0000001) {
 										return 0.0D;
 									}

@@ -19,7 +19,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -299,7 +298,7 @@ public final class CollisionHandler {
 						final BlockState blockState = _this.getBlockState(pooledMutableBlockPos);
 						final VoxelShape offsetCollisionShape;
 						if (blockState.nocubes_isTerrainSmoothable) {
-							offsetCollisionShape = StolenReposeCode.getCollisionShape(blockState, _this, pooledMutableBlockPos, context);
+							offsetCollisionShape = StolenReposeCode.getCollisionShape(blockState, _this, pooledMutableBlockPos, context).withOffset(x, y, z);
 						} else {
 							offsetCollisionShape = blockState.getCollisionShape(_this, pooledMutableBlockPos, context).withOffset(x, y, z);
 						}

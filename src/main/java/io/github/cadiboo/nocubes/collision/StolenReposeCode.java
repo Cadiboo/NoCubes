@@ -29,14 +29,14 @@ import static java.lang.Math.max;
 final class StolenReposeCode {
 
 	/**
-	 * @return the OFFSET collision shape
+	 * @return the UN OFFSET collision shape
 	 */
 	public static VoxelShape getCollisionShape(BlockState stateIn, IWorldReader worldIn, BlockPos posIn, final ISelectionContext context) {
 
 		final VoxelShape collisionShape = getStateCollisionShape(stateIn, worldIn, posIn, context);
 
 		if (collisionShape.isEmpty()) { // optimization
-			return collisionShape.withOffset(posIn.getX(), posIn.getY(), posIn.getZ());
+			return collisionShape;
 		}
 
 		final float density = getDensity(worldIn, posIn);
@@ -49,7 +49,7 @@ final class StolenReposeCode {
 				return getSlopingCollisionShape(stateIn, worldIn, posIn, context);
 			}
 		} else {
-			return collisionShape.withOffset(posIn.getX(), posIn.getY(), posIn.getZ());
+			return collisionShape;
 		}
 	}
 
@@ -112,17 +112,17 @@ final class StolenReposeCode {
 			height = stepHeight;
 		}
 
-		final int posX = pos.getX();
-		final int posY = pos.getY();
-		final int posZ = pos.getZ();
-		return VoxelShapes.create(
-				posX + max(0.0, dirX / 2.0), posY, posZ + max(0.0, dirZ / 2.0),
-				posX + max(0.5, dirX), posY + height, posZ + max(0.5, dirZ)
-		);
+//		final int posX = pos.getX();
+//		final int posY = pos.getY();
+//		final int posZ = pos.getZ();
 //		return VoxelShapes.create(
-//				max(0.0, direction.x / 2.0), 0, max(0.0, direction.z / 2.0),
-//				max(0.5, direction.x), height, max(0.5, direction.z)
+//				posX + max(0.0, dirX / 2.0), posY, posZ + max(0.0, dirZ / 2.0),
+//				posX + max(0.5, dirX), posY + height, posZ + max(0.5, dirZ)
 //		);
+		return VoxelShapes.create(
+				max(0.0, dirX / 2.0), 0, max(0.0, dirZ / 2.0),
+				max(0.5, dirX), height, max(0.5, dirZ)
+		);
 	}
 
 	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, IWorldReader world, final ISelectionContext context) {
