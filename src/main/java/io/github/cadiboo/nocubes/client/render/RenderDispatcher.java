@@ -317,7 +317,7 @@ public final class RenderDispatcher {
 		) {
 			switch (Config.smoothLeavesType) {
 				case SEPARATE:
-					for (final Block smoothableBlock : Config.getLeavesSmoothableBlocks()) {
+					for (final Block smoothableBlock : Config.leavesSmoothableBlocks) {
 						final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.apply(checkState) && checkState.getBlock() == smoothableBlock);
 						// FIXME: Why is it like this... why
 						try (
