@@ -27,6 +27,7 @@
 	"nocubes.config.client": "客户端配置",
 	"nocubes.config.renderSmoothTerrain": "渲染平滑地形",
 	"nocubes.config.renderSmoothLeaves": "渲染平滑树叶",
+	"nocubes.config.renderSmoothAndVanillaLeaves": "渲染光滑和香草叶",
 	"nocubes.config.leavesSmoothable": "可平滑树叶",
 	"nocubes.config.leavesMeshGenerator": "树叶网格生成器",
 	"nocubes.config.smoothLeavesType": "平滑树叶类型",

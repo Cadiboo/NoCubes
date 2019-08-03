@@ -39,6 +39,7 @@ import static io.github.cadiboo.nocubes.config.Config.leavesMeshGenerator;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothable;
 import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
 import static io.github.cadiboo.nocubes.config.Config.naturalFluidTextures;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothAndVanillaLeaves;
 import static io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves;
 import static io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain;
 import static io.github.cadiboo.nocubes.config.Config.shortGrass;
@@ -113,6 +114,7 @@ public final class ConfigHelper {
 		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
 
 		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
+		renderSmoothAndVanillaLeaves = ConfigHolder.CLIENT.renderSmoothAndVanillaLeaves.get();
 		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get();
 		leavesSmoothable = Sets.newHashSet(ConfigHolder.CLIENT.leavesSmoothable.get());
 		initLeavesSmoothable();

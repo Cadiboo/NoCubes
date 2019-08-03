@@ -99,7 +99,13 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(final BlockState blockstate) {
-		return !Config.renderSmoothTerrain || !blockstate.nocubes_isTerrainSmoothable;//		if (Config.renderSmoothLeaves && blockstate.nocubes_isLeavesSmoothable) return false;
+		if (blockstate.nocubes_isTerrainSmoothable && Config.renderSmoothTerrain) return false;
+		if (blockstate.nocubes_isLeavesSmoothable) {
+			if (Config.renderSmoothLeaves)
+				return Config.renderSmoothAndVanillaLeaves;
+			return true;
+		}
+		return true;
 	}
 
 	/**

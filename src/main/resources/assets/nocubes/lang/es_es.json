@@ -27,6 +27,7 @@
 	"nocubes.config.client": "Configuración del Cliente",
 	"nocubes.config.renderSmoothTerrain": "Dibuja Suavizables Terreno",
 	"nocubes.config.renderSmoothLeaves": "Dibuja Suavizables Hojas",
+	"nocubes.config.renderSmoothAndVanillaLeaves": "Dibuja Hojas Suavizables y de Vainilla",
 	"nocubes.config.leavesSmoothable": "Hojas Suavizables",
 	"nocubes.config.leavesMeshGenerator": "Hojas Estructura Fabricante",
 	"nocubes.config.smoothLeavesType": "Suave Hojas Tipo",

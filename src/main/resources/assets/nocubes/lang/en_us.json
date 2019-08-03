@@ -27,6 +27,7 @@
 	"nocubes.config.client": "Client Config",
 	"nocubes.config.renderSmoothTerrain": "Render Smooth Terrain",
 	"nocubes.config.renderSmoothLeaves": "Render Smooth Leaves",
+	"nocubes.config.renderSmoothAndVanillaLeaves": "Render both Smooth and Vanilla Leaves",
 	"nocubes.config.leavesSmoothable": "Leaves Smoothable",
 	"nocubes.config.leavesMeshGenerator": "Leaves Mesh Generator",
 	"nocubes.config.smoothLeavesType": "Smooth Leaves Type",

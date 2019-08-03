@@ -26,6 +26,7 @@ public final class Config {
 	// Client
 	public static boolean renderSmoothTerrain;
 	public static boolean renderSmoothLeaves;
+	public static boolean renderSmoothAndVanillaLeaves;
 	public static MeshGeneratorType leavesMeshGenerator;
 	public static Set<String> leavesSmoothable;
 	public static SmoothLeavesType smoothLeavesType;
