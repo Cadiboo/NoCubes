@@ -55,7 +55,9 @@ import static net.minecraft.util.math.MathHelper.clamp;
 public final class CollisionHandler {
 
 	public static boolean shouldApplyMeshCollisions(@Nullable final Entity entity) {
-		return entity instanceof PlayerEntity;
+		// FIXME: Collisions be borked, fix & re-enable
+		return false;
+//		return entity instanceof PlayerEntity;
 	}
 
 	public static boolean shouldApplyReposeCollisions(@Nullable final Entity entity) {
