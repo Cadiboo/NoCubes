@@ -27,6 +27,12 @@ public final class NoCubesConfigGui extends Screen {
 	}
 
 	@Override
+	public void tick() {
+		this.configOptionsList.children().forEach(ConfigOptionsList.Entry::tick);
+		super.tick();
+	}
+
+	@Override
 	public void render(final int mouseX, final int mouseY, final float partialTicks) {
 		this.renderBackground();
 

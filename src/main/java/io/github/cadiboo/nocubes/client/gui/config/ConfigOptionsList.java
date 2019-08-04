@@ -150,6 +150,9 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 
 		abstract String getTranslatedText();
 
+		void tick() {
+		}
+
 	}
 
 	@OnlyIn(Dist.CLIENT)
@@ -303,6 +306,12 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 				list.add((T) str);
 			}
 			this.handleChanged(list);
+		}
+
+		@Override
+		void tick() {
+			super.tick();
+			((TextFieldWidget)this.widgetSupplier.getValue()).tick();
 		}
 
 	}
