@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.network;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import net.minecraft.client.Minecraft;
@@ -38,6 +39,9 @@ public final class S2CSetTerrainMeshGenerator {
 			final MeshGeneratorType newGenerator = msg.newGenerator;
 			Config.terrainMeshGenerator = newGenerator;
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".setTerrainMeshGenerator", newGenerator));
+			if (Config.renderSmoothTerrain) {
+				ClientUtil.tryReloadRenderers();
+			}
 		}));
 		context.setPacketHandled(true);
 	}

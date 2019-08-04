@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.network;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraft.client.Minecraft;
@@ -38,6 +39,7 @@ public final class S2CSetExtendFluidsRange {
 			final ExtendFluidsRange newRange = msg.newRange;
 			Config.extendFluidsRange = newRange;
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".setExtendFluidsRange", newRange));
+			ClientUtil.tryReloadRenderers();
 		}));
 		context.setPacketHandled(true);
 	}
