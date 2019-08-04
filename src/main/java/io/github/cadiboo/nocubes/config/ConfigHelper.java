@@ -7,6 +7,7 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
+import io.github.cadiboo.nocubes.util.StateHolder;
 import joptsimple.internal.Strings;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -26,6 +27,7 @@ import org.apache.logging.log4j.MarkerManager;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -235,46 +237,46 @@ public final class ConfigHelper {
 
 	private static void initTerrainSmoothable() {
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Initialising terrain smoothable");
-		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
-			for (BlockState state : block.getStateContainer().getValidStates()) {
-				state.nocubes_isTerrainSmoothable = false;
+
+		final HashSet<BlockState> smoothableStates = new HashSet<>();
+		for (final String stateString : terrainSmoothable) {
+			final BlockState blockState = getStateFromString(stateString);
+			if (blockState != null && blockState != StateHolder.AIR_DEFAULT) {
+				smoothableStates.add(blockState);
+			} else {
+				LOGGER.error(CONFIG_SMOOTHABLE, "Cannot add invalid blockState \"" + stateString + "\" to terrain smoothable");
 			}
 		}
-		LOGGER.debug(CONFIG_SMOOTHABLE, "Reset all BlockStates to unsmoothable");
-		for (final String stateString : terrainSmoothable) {
-			LOGGER.debug(CONFIG_SMOOTHABLE, "Preparing to add \"" + stateString + "\" to terrain smoothable");
-			final BlockState state = getStateFromString(stateString);
-			if (state != null) {
-				LOGGER.debug(CONFIG_SMOOTHABLE, "Added \"" + state + "\" to terrain smoothable");
-				state.nocubes_isTerrainSmoothable = true;
-			} else {
-				LOGGER.error(CONFIG_SMOOTHABLE, "Cannot add invalid state \"" + stateString + "\" to terrain smoothable");
+
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			for (final BlockState state : block.getStateContainer().getValidStates()) {
+				state.nocubes_isTerrainSmoothable = smoothableStates.contains(state);
 			}
 		}
 	}
 
 	private static void initLeavesSmoothable() {
 		LOGGER.debug(CONFIG_SMOOTHABLE, "Initialising leaves smoothable");
-		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
-			for (BlockState state : block.getStateContainer().getValidStates()) {
-				state.nocubes_isLeavesSmoothable = false;
-			}
-		}
-		LOGGER.debug(CONFIG_SMOOTHABLE, "Reset all BlockStates to unsmoothable");
+
+		final HashSet<Block> smoothableBlocks = new HashSet<>();
 		for (final String blockString : leavesSmoothable) {
-			LOGGER.debug(CONFIG_SMOOTHABLE, "Preparing to add block \"" + blockString + "\" to leaves smoothable");
 			final BlockState defaultState = getStateFromString(blockString);
-			if (defaultState != null) {
+			if (defaultState != null && defaultState != StateHolder.AIR_DEFAULT) {
 				final Block block = defaultState.getBlock();
-				LOGGER.debug(CONFIG_SMOOTHABLE, "Added \"" + defaultState + "\" to leaves smoothable");
-				for (final BlockState state : block.getStateContainer().getValidStates()) {
-					state.nocubes_isLeavesSmoothable = true;
-				}
-				leavesSmoothableBlocks.add(block);
+				smoothableBlocks.add(block);
 			} else {
 				LOGGER.error(CONFIG_SMOOTHABLE, "Cannot add invalid block \"" + blockString + "\" to leaves smoothable");
 			}
 		}
+
+		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
+			final boolean isBlockSmoothable = smoothableBlocks.contains(block);
+			for (final BlockState state : block.getStateContainer().getValidStates()) {
+				state.nocubes_isLeavesSmoothable = isBlockSmoothable;
+			}
+		}
+		leavesSmoothableBlocks.clear();
+		leavesSmoothableBlocks.addAll(smoothableBlocks);
 	}
 
 	@Nullable
