@@ -24,7 +24,7 @@ public final class S2CRemoveTerrainSmoothable {
 
 	private final int blockStateId;
 
-	S2CRemoveTerrainSmoothable(final int blockStateId) {
+	public S2CRemoveTerrainSmoothable(final int blockStateId) {
 		this.blockStateId = blockStateId;
 	}
 
