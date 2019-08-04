@@ -49,6 +49,14 @@ minecraft {
 
 	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
+// TODO: reimplement this
+//	if (project.hasProperty('mc_username')) {
+//		clientRunArgs += ['--username', project.mc_username]
+//		if (project.hasProperty('mc_password')) {
+//			clientRunArgs += ['--password', project.mc_password]
+//		}
+//	}
+	
 	// Default run configurations.
 	// These can be tweaked, removed, or duplicated as needed.
 	runs {
