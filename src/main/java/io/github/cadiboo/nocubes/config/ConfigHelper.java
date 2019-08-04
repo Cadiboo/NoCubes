@@ -375,7 +375,27 @@ public final class ConfigHelper {
 				.collect(Collectors.toList());
 
 		final List<String> moddedStates = Lists.newArrayList(
-
+				"biomesoplenty:grass[snowy=false,variant=sandy]",
+				"biomesoplenty:dirt[coarse=false,variant=sandy]",
+				"biomesoplenty:white_sand",
+				"biomesoplenty:grass[snowy=false,variant=silty]",
+				"biomesoplenty:dirt[coarse=false,variant=loamy]",
+				"biomesoplenty:grass[snowy=false,variant=loamy]",
+				"biomesoplenty:dried_sand",
+				"biomesoplenty:hard_ice",
+				"biomesoplenty:mud[variant=mud]",
+				"biomesoplenty:dirt[coarse=false,variant=silty]",
+				"chisel:marble2[variation=7]",
+				"chisel:limestone2[variation=7]",
+				"dynamictrees:rootydirtspecies[life=0]",
+				"dynamictrees:rootysand[life=0]",
+				"iceandfire:ash",
+				"iceandfire:sapphire_ore",
+				"iceandfire:chared_grass",
+				"iceandfire:chared_stone",
+				"iceandfire:frozen_grass_path",
+				"notenoughroofs:copper_ore",
+				"rustic:slate"
 		);
 
 		final ArrayList<String> finalStates = Lists.newArrayList();
