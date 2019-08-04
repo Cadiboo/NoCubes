@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.command;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.Config;
@@ -17,13 +17,12 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 public class SetTerrainCollisionsCommand {
 
-	public static void register(CommandDispatcher<CommandSource> dispatcher) {
-		dispatcher.register(Commands.literal("setTerrainCollisions")
+	public static LiteralArgumentBuilder<CommandSource> register() {
+		return Commands.literal("setTerrainCollisions")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL))
 				.then(Commands.argument("enabled", BoolArgumentType.bool())
 						.executes(SetTerrainCollisionsCommand::set)
-				)
-		);
+				);
 	}
 
 	public static int set(final CommandContext<CommandSource> ctx) {

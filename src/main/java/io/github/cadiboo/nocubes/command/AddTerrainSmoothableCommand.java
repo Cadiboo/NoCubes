@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.command;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
@@ -18,13 +18,12 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 public class AddTerrainSmoothableCommand {
 
-	public static void register(CommandDispatcher<CommandSource> dispatcher) {
-		dispatcher.register(Commands.literal("addTerrainSmoothable")
+	public static LiteralArgumentBuilder<CommandSource> register() {
+		return Commands.literal("addTerrainSmoothable")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL))
 				.then(Commands.argument("block", BlockStateArgument.blockState())
 						.executes(AddTerrainSmoothableCommand::addBlockState)
-				)
-		);
+				);
 	}
 
 	private static int addBlockState(final CommandContext<CommandSource> ctx) {

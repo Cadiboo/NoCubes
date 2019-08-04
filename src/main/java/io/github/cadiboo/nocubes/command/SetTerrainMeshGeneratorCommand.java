@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.command;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.Config;
@@ -16,7 +15,7 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 public class SetTerrainMeshGeneratorCommand {
 
-	public static void register(CommandDispatcher<CommandSource> dispatcher) {
+	public static LiteralArgumentBuilder<CommandSource> register() {
 		LiteralArgumentBuilder<CommandSource> setExtendFluidsRange = Commands.literal("setTerrainMeshGenerator")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL));
 		for (int i = 0; i < MeshGeneratorType.VALUES_LENGTH; i++) {
@@ -25,7 +24,7 @@ public class SetTerrainMeshGeneratorCommand {
 					.executes(ctx -> set(type))
 			);
 		}
-		dispatcher.register(setExtendFluidsRange);
+		return setExtendFluidsRange;
 	}
 
 	private static int set(final MeshGeneratorType newGenerator) {
