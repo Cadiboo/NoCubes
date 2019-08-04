@@ -358,7 +358,7 @@ public final class CollisionHandler {
 						if (ichunk != null) {
 							blockpos$mutableblockpos.setPos(j2, k2, l2);
 							BlockState blockstate = ichunk.getBlockState(blockpos$mutableblockpos);
-							if ((k1 != 1 || blockstate.func_215704_f()) && (k1 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
+							if ((k1 != 1 || blockstate.isCollisionShapeLargerThanFullBlock()) && (k1 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
 								VoxelShape voxelshape2 = blockstate.getCollisionShape(_this, blockpos$mutableblockpos, context);
 								voxelshape3 = voxelshape2.withOffset((double) j2, (double) k2, (double) l2);
 								if (VoxelShapes.compare(voxelshape, voxelshape3, IBooleanFunction.AND)) {

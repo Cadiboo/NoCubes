@@ -1139,13 +1139,13 @@ function injectFluidRenderBypass(instructions) {
 // 2) injects after first label
 function injectMarkForRerenderHook(instructions) {
 
-//	public void markForRerender(BlockPos pos, BlockState newState, BlockState oldState) {
-//		this.worldRenderer.markForRerender(pos, newState, oldState);
+//	public void markForRerender(BlockPos pos, BlockState oldState, BlockState newState) {
+//		this.worldRenderer.markForRerender(pos, oldState, newState);
 //	}
 
-//   public void markForRerender(BlockPos pos, BlockState newState, BlockState oldState) {
+//   public void markForRerender(BlockPos pos, BlockState oldState, BlockState newState) {
 //		// NoCubes Start
-//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, newState, oldState);
+//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, oldState, newState);
 //		// NoCubes End
 //	}
 
@@ -1203,8 +1203,8 @@ function injectMarkForRerenderHook(instructions) {
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
 	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", worldRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
 	toInject.add(new VarInsnNode(ALOAD, 1)); // pos
-	toInject.add(new VarInsnNode(ALOAD, 2)); // newState
-	toInject.add(new VarInsnNode(ALOAD, 3)); // oldState
+	toInject.add(new VarInsnNode(ALOAD, 2)); // oldState
+	toInject.add(new VarInsnNode(ALOAD, 3)); // newState
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -1576,12 +1576,12 @@ function injectIsSolidHook(instructions) {
 // 2) inject right after first label
 function injectCausesSuffocationHook(instructions) {
 
-//	return this.getBlock().causesSuffocation(this, reader, pos);
+//	return this.getBlock().causesSuffocation(this, worldIn, pos);
 
 //	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, reader, pos)) return false;
+//	if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, worldIn, pos)) return false;
 //	// NoCubes End
-//	return this.getBlock().causesSuffocation(this, reader, pos);
+//	return this.getBlock().causesSuffocation(this, worldIn, pos);
 
 
 //  public default causesSuffocation(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z

@@ -38,6 +38,7 @@ import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.floorAvg;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.util.math.MathHelper.clamp;
 import static net.minecraft.util.math.MathHelper.floor;
+import static net.minecraft.util.math.shapes.VoxelShapes.getDifferenceFloored;
 
 /**
  * @author Cadiboo
@@ -280,22 +281,21 @@ public final class VoxelShapesHandler {
 				}
 				for (int x = minXm1; x <= maxXp1; ++x) {
 					for (int y = minYm1; y <= maxYp1; ++y) {
-						int flag = 0;
+						int numBoundariesTouched = 0;
 						if (x == minXm1 || x == maxXp1) {
-							++flag;
+							++numBoundariesTouched;
 						}
 						if (y == minYm1 || y == maxYp1) {
-							++flag;
+							++numBoundariesTouched;
 						}
 						if (z == initialZ || z == diffFloored) {
-							++flag;
+							++numBoundariesTouched;
 						}
-						if (flag < 3) {
+						if (numBoundariesTouched < 3) {
 							pos.func_218295_a(reversedRotation, x, y, z);
 							BlockState blockstate = worldReader.getBlockState(pos);
-							// func_215704_f -> isCollisionShapeLargerThanFullBlock
-							if (flag != 1 || blockstate.func_215704_f()) {
-								if (flag != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
+							if (numBoundariesTouched != 1 || blockstate.isCollisionShapeLargerThanFullBlock()) {
+								if (numBoundariesTouched != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
 									desiredOffset = blockstate.getCollisionShape(worldReader, pos, selectionContext).getAllowedOffset(rotZ, collisionBox.offset(-pos.getX(), -pos.getY(), -pos.getZ()), desiredOffset);
 									if (Math.abs(desiredOffset) < 0.0000001) {
 										return 0.0D;
@@ -337,22 +337,21 @@ public final class VoxelShapesHandler {
 				}
 				for (int x = minXm1; x <= maxXp1; ++x) {
 					for (int y = minYm1; y <= maxYp1; ++y) {
-						int flag = 0;
+						int numBoundariesTouched = 0;
 						if (x == minXm1 || x == maxXp1) {
-							++flag;
+							++numBoundariesTouched;
 						}
 						if (y == minYm1 || y == maxYp1) {
-							++flag;
+							++numBoundariesTouched;
 						}
 						if (z == initialZ || z == diffFloored) {
-							++flag;
+							++numBoundariesTouched;
 						}
-						if (flag < 3) {
+						if (numBoundariesTouched < 3) {
 							pos.func_218295_a(reversedRotation, x, y, z);
 							BlockState blockstate = worldReader.getBlockState(pos);
-							// func_215704_f -> isCollisionShapeLargerThanFullBlock
-							if (flag != 1 || blockstate.func_215704_f()) {
-								if (flag != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
+							if (numBoundariesTouched != 1 || blockstate.isCollisionShapeLargerThanFullBlock()) {
+								if (numBoundariesTouched != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
 									final VoxelShape unOffsetCollisionShape;
 									if (blockstate.nocubes_isTerrainSmoothable) {
 										unOffsetCollisionShape = StolenReposeCode.getCollisionShape(blockstate, worldReader, pos, selectionContext);
@@ -375,18 +374,6 @@ public final class VoxelShapesHandler {
 		double[] adouble = new double[]{desiredOffset};
 		possibleHits.forEach((shape) -> adouble[0] = shape.getAllowedOffset(rotZ, collisionBox, adouble[0]));
 		return adouble[0];
-	}
-
-	/**
-	 * Copy of VoxelShapes.getDifferenceFloored
-	 * TODO: AT
-	 */
-	private static int getDifferenceFloored(final double desiredOffset, final double minZ, final double maxZ) {
-		if (desiredOffset > 0.0D) {
-			return floor(maxZ + desiredOffset) + 1;
-		} else {
-			return floor(minZ + desiredOffset) - 1;
-		}
 	}
 
 }

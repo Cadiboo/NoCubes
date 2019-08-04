@@ -191,64 +191,71 @@ public final class VoxelShapes {
          if (Math.abs(desiredOffset) < 0.0000001) {
             return 0.0D;
          } else {
-            AxisRotation reversedRotation = rotationAxis.reverse();
-            Direction.Axis rotX = reversedRotation.rotate(Direction.Axis.X);
-            Direction.Axis rotY = reversedRotation.rotate(Direction.Axis.Y);
-            Direction.Axis rotZ = reversedRotation.rotate(Direction.Axis.Z);
+            AxisRotation axisrotation = rotationAxis.reverse();
+            Direction.Axis direction$axis = axisrotation.rotate(Direction.Axis.X);
+            Direction.Axis direction$axis1 = axisrotation.rotate(Direction.Axis.Y);
+            Direction.Axis direction$axis2 = axisrotation.rotate(Direction.Axis.Z);
             // NoCubes Start
-            return io.github.cadiboo.nocubes.hooks.Hooks.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, reversedRotation, rotX, rotY, rotZ);
+            return io.github.cadiboo.nocubes.hooks.Hooks.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, axisrotation, direction$axis, direction$axis1, direction$axis2);
             // NoCubes End
-//            BlockPos.MutableBlockPos mbp = new BlockPos.MutableBlockPos();
-//            int minXm1 = MathHelper.floor(collisionBox.getMin(rotX) - 0.0000001) - 1;
-//            int maxXp1 = MathHelper.floor(collisionBox.getMax(rotX) + 0.0000001) + 1;
-//            int minYm1 = MathHelper.floor(collisionBox.getMin(rotY) - 0.0000001) - 1;
-//            int maxYp1 = MathHelper.floor(collisionBox.getMax(rotY) + 0.0000001) + 1;
-//            double minZ = collisionBox.getMin(rotZ) - 0.0000001;
-//            double maxZ = collisionBox.getMax(rotZ) + 0.0000001;
-//            boolean over0 = desiredOffset > 0.0D;
-//            int i1 = over0 ? MathHelper.floor(collisionBox.getMax(rotZ) - 0.0000001) - 1 : MathHelper.floor(collisionBox.getMin(rotZ) + 0.0000001) + 1;
-//            int diffF = getDifferenceFloored(desiredOffset, minZ, maxZ);
-//            int p1orm1 = over0 ? 1 : -1;
-//            int z = i1;
-//            while(false) {
-//               if (over0) {
-//                  if (z > diffF) {
+//            BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
+//            int i = MathHelper.floor(collisionBox.getMin(direction$axis) - 0.0000001) - 1;
+//            int j = MathHelper.floor(collisionBox.getMax(direction$axis) + 0.0000001) + 1;
+//            int k = MathHelper.floor(collisionBox.getMin(direction$axis1) - 0.0000001) - 1;
+//            int l = MathHelper.floor(collisionBox.getMax(direction$axis1) + 0.0000001) + 1;
+//            double d0 = collisionBox.getMin(direction$axis2) - 0.0000001;
+//            double d1 = collisionBox.getMax(direction$axis2) + 0.0000001;
+//            boolean flag = desiredOffset > 0.0D;
+//            int i1 = flag ? MathHelper.floor(collisionBox.getMax(direction$axis2) - 0.0000001) - 1 : MathHelper.floor(collisionBox.getMin(direction$axis2) + 0.0000001) + 1;
+//            int j1 = getDifferenceFloored(desiredOffset, d0, d1);
+//            int k1 = flag ? 1 : -1;
+//            int l1 = i1;
+//
+//            while(true) {
+//               if (flag) {
+//                  if (l1 > j1) {
 //                     break;
 //                  }
-//               } else if (z < diffF) {
+//               } else if (l1 < j1) {
 //                  break;
 //               }
-//               for(int x = minXm1; x <= maxXp1; ++x) {
-//                  for(int y = minYm1; y <= maxYp1; ++y) {
+//
+//               for(int i2 = i; i2 <= j; ++i2) {
+//                  for(int j2 = k; j2 <= l; ++j2) {
 //                     int k2 = 0;
-//                     if (x == minXm1 || x == maxXp1) {
+//                     if (i2 == i || i2 == j) {
 //                        ++k2;
 //                     }
-//                     if (y == minYm1 || y == maxYp1) {
+//
+//                     if (j2 == k || j2 == l) {
 //                        ++k2;
 //                     }
-//                     if (z == i1 || z == diffF) {
+//
+//                     if (l1 == i1 || l1 == j1) {
 //                        ++k2;
 //                     }
+//
 //                     if (k2 < 3) {
-//                        mbp.func_218295_a(reversedRotation, x, y, z);
-//                        BlockState blockstate = worldReader.getBlockState(mbp);
-//                        if (k2 != 1 || blockstate.isCollisionShapeLargerThanFullBlock())
-//                           if (k2 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON) {
-//                              desiredOffset = blockstate.getCollisionShape(worldReader, mbp, selectionContext).getAllowedOffset(rotZ, collisionBox.offset(-mbp.getX(), -mbp.getY(), -mbp.getZ()), desiredOffset);
-//                              if (Math.abs(desiredOffset) < 0.0000001) {
-//                                 return 0.0D;
-//                              }
-//                              diffF = getDifferenceFloored(desiredOffset, minZ, maxZ);
+//                        blockpos$mutableblockpos.func_218295_a(axisrotation, i2, j2, l1);
+//                        BlockState blockstate = worldReader.getBlockState(blockpos$mutableblockpos);
+//                        if ((k2 != 1 || blockstate.isCollisionShapeLargerThanFullBlock()) && (k2 != 2 || blockstate.getBlock() == Blocks.MOVING_PISTON)) {
+//                           desiredOffset = blockstate.getCollisionShape(worldReader, blockpos$mutableblockpos, selectionContext).getAllowedOffset(direction$axis2, collisionBox.offset((double)(-blockpos$mutableblockpos.getX()), (double)(-blockpos$mutableblockpos.getY()), (double)(-blockpos$mutableblockpos.getZ())), desiredOffset);
+//                           if (Math.abs(desiredOffset) < 0.0000001) {
+//                              return 0.0D;
 //                           }
+//
+//                           j1 = getDifferenceFloored(desiredOffset, d0, d1);
+//                        }
 //                     }
 //                  }
 //               }
-//               z += p1orm1;
+//
+//               l1 += k1;
 //            }
+//
 //            double[] adouble = new double[]{desiredOffset};
-//            possibleHits.forEach((shape) -> {
-//               adouble[0] = shape.getAllowedOffset(rotZ, collisionBox, adouble[0]);
+//            possibleHits.forEach((p_216388_3_) -> {
+//               adouble[0] = p_216388_3_.getAllowedOffset(direction$axis2, collisionBox, adouble[0]);
 //            });
 //            return adouble[0];
          }
@@ -257,7 +264,7 @@ public final class VoxelShapes {
       }
    }
 
-   private static int getDifferenceFloored(double p_216385_0_, double p_216385_2_, double p_216385_4_) {
+   public static int getDifferenceFloored(double p_216385_0_, double p_216385_2_, double p_216385_4_) {
       return p_216385_0_ > 0.0D ? MathHelper.floor(p_216385_4_ + p_216385_0_) + 1 : MathHelper.floor(p_216385_2_ + p_216385_0_) - 1;
    }
 

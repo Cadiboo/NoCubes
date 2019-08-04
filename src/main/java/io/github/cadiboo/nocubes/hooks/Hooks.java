@@ -142,8 +142,8 @@ public final class Hooks {
 	 * This fixes seams that appear when meshes along chunk borders change
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState newState, final BlockState oldState) {
-		if (minecraft.getModelManager().func_224742_a(newState, oldState)) {
+	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
+		if (minecraft.getModelManager().func_224742_a(oldState, newState)) {
 			final int posX = pos.getX();
 			final int posY = pos.getY();
 			final int posZ = pos.getZ();

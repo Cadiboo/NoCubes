@@ -542,11 +542,11 @@ public class ClientWorld extends World {
       this.worldRenderer.notifyBlockUpdate(this, pos, oldState, newState, flags);
    }
 
-   public void func_225319_b(BlockPos pos, BlockState newState, BlockState oldState) {
+   public void func_225319_b(BlockPos pos, BlockState oldState, BlockState newState) {
       // NoCubes Start
-      io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, newState, oldState);
+      io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, oldState, newState);
       // NoCubes End
-//      this.worldRenderer.func_224746_a(pos, newState, oldState);
+      this.worldRenderer.func_224746_a(pos, oldState, newState);
    }
 
    public void markSurroundingsForRerender(int sectionX, int sectionY, int sectionZ) {

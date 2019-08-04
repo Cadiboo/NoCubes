@@ -94,7 +94,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.cache != null && this.cache.renderShapes != null ? this.cache.renderShapes[directionIn.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), directionIn);
    }
 
-   public boolean func_215704_f() {
+   public boolean isCollisionShapeLargerThanFullBlock() {
       return this.cache == null || this.cache.isCollisionShapeLargerThanFullBlock;
    }
 
@@ -192,6 +192,10 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean isSolid() {
+      // NoCubes Start
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain && this.nocubes_isTerrainSmoothable) return false;
+      if (io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves && this.nocubes_isLeavesSmoothable) return false;
+      // NoCubes End
       return this.cache != null ? this.cache.solid : this.getBlock().isSolid(this);
    }
 
@@ -301,6 +305,9 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public boolean causesSuffocation(IBlockReader worldIn, BlockPos pos) {
+      // NoCubes Start
+      if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, worldIn, pos)) return false;
+      // NoCubes End
       return this.getBlock().causesSuffocation(this, worldIn, pos);
    }
 
