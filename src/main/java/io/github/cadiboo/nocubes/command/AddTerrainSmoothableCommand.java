@@ -5,14 +5,15 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
+import io.github.cadiboo.nocubes.network.S2CAddTerrainSmoothable;
 import io.github.cadiboo.nocubes.util.StateHolder;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.BlockStateArgument;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.fml.network.PacketDistributor;
 
-import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 public class AddTerrainSmoothableCommand {
@@ -33,7 +34,7 @@ public class AddTerrainSmoothableCommand {
 			return 0;
 		}
 		ConfigHelper.addTerrainSmoothable(blockState);
-		ctx.getSource().sendFeedback(new TranslationTextComponent(MOD_ID + ".addedTerrainSmoothable", blockState), true);
+		NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CAddTerrainSmoothable(Block.getStateId(blockState)));
 		return Command.SINGLE_SUCCESS;
 	}
 
