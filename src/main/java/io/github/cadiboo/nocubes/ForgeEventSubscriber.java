@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.command.AddTerrainSmoothableCommand;
+import io.github.cadiboo.nocubes.command.LogTerrainSmoothableCommand;
 import io.github.cadiboo.nocubes.command.RemoveTerrainSmoothableCommand;
 import io.github.cadiboo.nocubes.command.SetExtendFluidsRangeCommand;
 import io.github.cadiboo.nocubes.command.SetTerrainCollisionsCommand;
@@ -26,6 +27,7 @@ public final class ForgeEventSubscriber {
 				.then(SetExtendFluidsRangeCommand.register())
 				.then(SetTerrainCollisionsCommand.register())
 				.then(SetTerrainMeshGeneratorCommand.register())
+				.then(LogTerrainSmoothableCommand.register())
 		);
 	}
 

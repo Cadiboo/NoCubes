@@ -46,5 +46,7 @@
 	"nocubes.config.terrainSmoothable": "可平滑地形",
 	"nocubes.config.extendFluidsRange": "扩展液体范围",
 	"nocubes.config.terrainMeshGenerator": "地形网格生成器",
-	"nocubes.config.terrainCollisions": "地形碰撞"
+	"nocubes.config.terrainCollisions": "地形碰撞",
+
+	"nocubes.waitSeconds": "等%s秒钟"
 }

@@ -46,5 +46,7 @@
 	"nocubes.config.terrainSmoothable": "Terreno Suavizables",
 	"nocubes.config.extendFluidsRange": "Rango Extendido de Fluidos",
 	"nocubes.config.terrainMeshGenerator": "Terreno Estructura Fabricante",
-	"nocubes.config.terrainCollisions": "Terreno Movimiento"
+	"nocubes.config.terrainCollisions": "Terreno Movimiento",
+
+	"nocubes.waitSeconds": "Espera %s segundos"
 }
