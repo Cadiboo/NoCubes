@@ -5,6 +5,8 @@ import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -32,11 +34,11 @@ public final class S2CSetExtendFluidsRange {
 
 	public static void handle(final S2CSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
+		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
 			final ExtendFluidsRange newRange = msg.newRange;
 			Config.extendFluidsRange = newRange;
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".setExtendFluidsRange", newRange));
-		});
+		}));
 		context.setPacketHandled(true);
 	}
 

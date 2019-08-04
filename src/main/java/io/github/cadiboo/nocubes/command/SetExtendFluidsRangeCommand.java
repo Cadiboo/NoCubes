@@ -7,7 +7,6 @@ import com.mojang.brigadier.context.CommandContext;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.util.text.TranslationTextComponent;

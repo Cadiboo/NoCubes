@@ -1,26 +1,23 @@
 package io.github.cadiboo.nocubes;
 
-import io.github.cadiboo.nocubes.client.ClientEventSubscriber;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.TempClientConfigHacks;
 import io.github.cadiboo.nocubes.client.gui.config.NoCubesConfigGui;
-import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.C2SRequestSetExtendFluidsRange;
-import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.network.S2CAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.S2CSetExtendFluidsRange;
-import io.github.cadiboo.nocubes.network.S2CSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.network.S2CDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.S2CEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.S2CRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.S2CSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.S2CSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -74,13 +71,7 @@ public final class NoCubes {
 		modEventBus.addListener((FMLCommonSetupEvent event) ->
 				ModList.get().getModContainerById(MOD_ID).ifPresent(ModUtil::launchUpdateDaemon)
 		);
-		modEventBus.addListener((FMLLoadCompleteEvent event) -> {
-			LOGGER.debug("Replacing fluid renderer");
-			final BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-			final SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();
-			blockRendererDispatcher.fluidRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer = smoothLightingBlockFluidRenderer;
-			LOGGER.debug("Replaced fluid renderer");
-		});
+		modEventBus.addListener((FMLLoadCompleteEvent event) -> DistExecutor.runWhenOn(Dist.CLIENT, () -> ClientUtil::replaceFluidRenderer));
 		modEventBus.addListener((ModConfig.ModConfigEvent event) -> {
 			final ModConfig config = event.getConfig();
 			if (config.getSpec() == ConfigHolder.CLIENT_SPEC) {

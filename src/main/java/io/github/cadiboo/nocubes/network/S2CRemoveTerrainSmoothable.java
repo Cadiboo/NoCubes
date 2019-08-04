@@ -10,6 +10,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -35,20 +38,30 @@ public final class S2CRemoveTerrainSmoothable {
 
 	public static void handle(final S2CRemoveTerrainSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			final int blockStateId = msg.blockStateId;
-			final BlockState blockState = Block.getStateById(blockStateId);
-			if (blockState == StateHolder.AIR_DEFAULT) {
-				NoCubes.LOGGER.error("Trying to remove invalid terrain smoothable blockstate: " + blockStateId);
-				return;
-			}
-			blockState.nocubes_isTerrainSmoothable = false;
-			Minecraft.getInstance().getToastGui().add(new BlockStateToast.RemoveTerrain(blockState, BlockPos.ZERO));
-			if (Config.renderSmoothTerrain) {
-				ClientUtil.tryReloadRenderers();
-			}
-		});
+		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> handleOnClient(msg)));
 		context.setPacketHandled(true);
+	}
+
+	/**
+	 * This method is not inlined because of the way lambdas work.
+	 * If it were inlined it would be converted to a synthetic method in this class.
+	 * Even though it will only ever be *called* on the client,
+	 * because it is now a method in the class it will be checked when the class is loaded
+	 * and will crash because it references client-only code.
+	 */
+	@OnlyIn(Dist.CLIENT)
+	private static void handleOnClient(final S2CRemoveTerrainSmoothable msg) {
+		final int blockStateId = msg.blockStateId;
+		final BlockState blockState = Block.getStateById(blockStateId);
+		if (blockState == StateHolder.AIR_DEFAULT) {
+			NoCubes.LOGGER.error("Trying to remove invalid terrain smoothable blockstate: " + blockStateId);
+			return;
+		}
+		blockState.nocubes_isTerrainSmoothable = false;
+		Minecraft.getInstance().getToastGui().add(new BlockStateToast.RemoveTerrain(blockState, BlockPos.ZERO));
+		if (Config.renderSmoothTerrain) {
+			ClientUtil.tryReloadRenderers();
+		}
 	}
 
 }

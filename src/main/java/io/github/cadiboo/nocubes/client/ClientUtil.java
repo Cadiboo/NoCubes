@@ -1,7 +1,9 @@
 package io.github.cadiboo.nocubes.client;
 
 import cpw.mods.modlauncher.api.INameMappingService;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -382,6 +384,12 @@ public final class ClientUtil {
 			crashReport.makeCategory("Accessing Field");
 			throw new ReportedException(crashReport);
 		}
+	}
+
+	public static void replaceFluidRenderer() {
+		NoCubes.LOGGER.debug("Replacing fluid renderer");
+		Minecraft.getInstance().getBlockRendererDispatcher().fluidRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();
+		NoCubes.LOGGER.debug("Replaced fluid renderer");
 	}
 
 }

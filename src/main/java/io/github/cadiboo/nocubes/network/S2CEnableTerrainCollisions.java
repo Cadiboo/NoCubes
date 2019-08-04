@@ -5,6 +5,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -25,12 +27,12 @@ public final class S2CEnableTerrainCollisions {
 
 	public static void handle(final S2CEnableTerrainCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
+		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
 			Config.terrainCollisions = true;
 			final ClientPlayerEntity player = Minecraft.getInstance().player;
 			player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisions114"));
 			player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisionsEnabled"));
-		});
+		}));
 		context.setPacketHandled(true);
 	}
 
