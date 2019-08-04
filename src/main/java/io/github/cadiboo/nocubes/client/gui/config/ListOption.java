@@ -45,8 +45,8 @@ public final class ListOption extends Option {
 			}
 
 			@Override
-			public boolean keyReleased(final int p_223281_1_, final int p_223281_2_, final int p_223281_3_) {
-				if (super.keyReleased(p_223281_1_, p_223281_2_, p_223281_3_)) {
+			public boolean charTyped(char character, int p_charTyped_2_) {
+				if (super.charTyped(character, p_charTyped_2_)) {
 					ListOption.this.set(this.getText().split(", "));
 					return true;
 				} else {
@@ -55,8 +55,8 @@ public final class ListOption extends Option {
 			}
 
 			@Override
-			public boolean charTyped(char character, int p_charTyped_2_) {
-				if (super.charTyped(character, p_charTyped_2_)) {
+			public boolean keyReleased(final int p_223281_1_, final int p_223281_2_, final int p_223281_3_) {
+				if (super.keyReleased(p_223281_1_, p_223281_2_, p_223281_3_)) {
 					ListOption.this.set(this.getText().split(", "));
 					return true;
 				} else {

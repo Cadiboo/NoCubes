@@ -27,12 +27,6 @@ public final class NoCubesConfigGui extends Screen {
 	}
 
 	@Override
-	public void tick() {
-		this.configOptionsList.children().forEach(ConfigOptionsList.Entry::tick);
-		super.tick();
-	}
-
-	@Override
 	public void render(final int mouseX, final int mouseY, final float partialTicks) {
 		this.renderBackground();
 
@@ -110,6 +104,12 @@ public final class NoCubesConfigGui extends Screen {
 //		this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), (p_213124_1_) -> {
 //			this.minecraft.displayGuiScreen(this.parentScreen);
 //		}));
+	}
+
+	@Override
+	public void tick() {
+		this.configOptionsList.children().forEach(ConfigOptionsList.Entry::tick);
+		super.tick();
 	}
 
 	@Override

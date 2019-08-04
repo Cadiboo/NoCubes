@@ -311,7 +311,7 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 		@Override
 		void tick() {
 			super.tick();
-			((TextFieldWidget)this.widgetSupplier.getValue()).tick();
+			((TextFieldWidget) this.widgetSupplier.getValue()).tick();
 		}
 
 	}
