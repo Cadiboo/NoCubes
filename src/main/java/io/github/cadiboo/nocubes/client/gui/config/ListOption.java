@@ -35,8 +35,28 @@ public final class ListOption extends Option {
 	public Widget createWidget(int width) {
 		final TextFieldWidget textFieldWidget = new TextFieldWidget(Minecraft.getInstance().fontRenderer, 0, 0, width - 4, 16, I18n.format(this.getTranslationKey())) {
 			@Override
-			public boolean charTyped(char p_charTyped_1_, int p_charTyped_2_) {
-				if (super.charTyped(p_charTyped_1_, p_charTyped_2_)) {
+			public boolean keyPressed(final int keyCode, final int p_keyPressed_2_, final int p_keyPressed_3_) {
+				if (super.keyPressed(keyCode, p_keyPressed_2_, p_keyPressed_3_)) {
+					ListOption.this.set(this.getText().split(", "));
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+			@Override
+			public boolean keyReleased(final int p_223281_1_, final int p_223281_2_, final int p_223281_3_) {
+				if (super.keyReleased(p_223281_1_, p_223281_2_, p_223281_3_)) {
+					ListOption.this.set(this.getText().split(", "));
+					return true;
+				} else {
+					return false;
+				}
+			}
+
+			@Override
+			public boolean charTyped(char character, int p_charTyped_2_) {
+				if (super.charTyped(character, p_charTyped_2_)) {
 					ListOption.this.set(this.getText().split(", "));
 					return true;
 				} else {
@@ -44,7 +64,7 @@ public final class ListOption extends Option {
 				}
 			}
 		};
-		textFieldWidget.setMaxStringLength(9999999);
+		textFieldWidget.setMaxStringLength(Integer.MAX_VALUE);
 		textFieldWidget.setText(Strings.join(this.get(), ", "));
 		return textFieldWidget;
 	}
