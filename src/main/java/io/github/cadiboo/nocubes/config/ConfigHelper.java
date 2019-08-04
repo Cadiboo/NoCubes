@@ -16,7 +16,6 @@ import net.minecraft.block.RedstoneOreBlock;
 import net.minecraft.block.SnowyDirtBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.command.arguments.BlockStateArgument;
-import net.minecraft.state.IProperty;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
 import net.minecraftforge.fml.config.ModConfig;
@@ -29,7 +28,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -294,12 +292,8 @@ public final class ConfigHelper {
 	private static String getStringFromState(@Nonnull final BlockState state) {
 		Preconditions.checkNotNull(state, "State to serialise must not be null");
 		String stateString = Objects.requireNonNull(state.getBlock().getRegistryName(), "Block registry name cannot be null!").toString();
-		final ArrayList<String> properties = new ArrayList<>();
-		for (Map.Entry<IProperty<?>, Comparable<?>> entry : state.getValues().entrySet()) {
-			final IProperty<?> property = entry.getKey();
-			final Comparable<?> value = entry.getValue();
-			properties.add(property.getName() + "=" + Util.getValueName(property, value));
-		}
+		final List<String> properties = new ArrayList<>();
+		state.getValues().forEach((property, value) -> properties.add(property.getName() + "=" + Util.getValueName(property, value)));
 		if (!properties.isEmpty()) {
 			stateString += "[";
 			stateString += Strings.join(properties, ",");
@@ -309,7 +303,7 @@ public final class ConfigHelper {
 	}
 
 	@Nonnull
-	public static List<String> getDefaultTerrainSmoothable() {
+	static List<String> getDefaultTerrainSmoothable() {
 		final List<String> vanillaStates = Lists.newArrayList(
 
 				GRASS_BLOCK.getDefaultState().with(SnowyDirtBlock.SNOWY, false),
@@ -391,7 +385,7 @@ public final class ConfigHelper {
 	}
 
 	@Nonnull
-	public static List<String> getDefaultLeavesSmoothable() {
+	static List<String> getDefaultLeavesSmoothable() {
 		final List<String> vanillaStates = Lists.newArrayList(
 
 				OAK_LEAVES,
