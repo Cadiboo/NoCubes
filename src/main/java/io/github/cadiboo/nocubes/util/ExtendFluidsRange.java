@@ -10,6 +10,7 @@ public enum ExtendFluidsRange {
 	TwoBlocks(2);
 
 	public static final ExtendFluidsRange[] VALUES = values();
+	public static final int VALUES_LENGTH = VALUES.length;
 
 	private final int range;
 

@@ -7,14 +7,14 @@ import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.C2SRequestChangeExtendFluidsRange;
-import io.github.cadiboo.nocubes.network.C2SRequestChangeTerrainMeshGenerator;
+import io.github.cadiboo.nocubes.network.C2SRequestSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
 import io.github.cadiboo.nocubes.network.S2CAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.S2CChangeExtendFluidsRange;
-import io.github.cadiboo.nocubes.network.S2CChangeTerrainMeshGenerator;
+import io.github.cadiboo.nocubes.network.S2CSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.S2CSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.network.S2CDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.S2CEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.S2CRemoveTerrainSmoothable;
@@ -107,18 +107,6 @@ public final class NoCubes {
 				C2SRequestAddTerrainSmoothable::handle
 		);
 		CHANNEL.registerMessage(networkId++,
-				C2SRequestChangeExtendFluidsRange.class,
-				C2SRequestChangeExtendFluidsRange::encode,
-				C2SRequestChangeExtendFluidsRange::decode,
-				C2SRequestChangeExtendFluidsRange::handle
-		);
-		CHANNEL.registerMessage(networkId++,
-				C2SRequestChangeTerrainMeshGenerator.class,
-				C2SRequestChangeTerrainMeshGenerator::encode,
-				C2SRequestChangeTerrainMeshGenerator::decode,
-				C2SRequestChangeTerrainMeshGenerator::handle
-		);
-		CHANNEL.registerMessage(networkId++,
 				C2SRequestDisableTerrainCollisions.class,
 				C2SRequestDisableTerrainCollisions::encode,
 				C2SRequestDisableTerrainCollisions::decode,
@@ -137,22 +125,23 @@ public final class NoCubes {
 				C2SRequestRemoveTerrainSmoothable::handle
 		);
 		CHANNEL.registerMessage(networkId++,
+				C2SRequestSetExtendFluidsRange.class,
+				C2SRequestSetExtendFluidsRange::encode,
+				C2SRequestSetExtendFluidsRange::decode,
+				C2SRequestSetExtendFluidsRange::handle
+		);
+		CHANNEL.registerMessage(networkId++,
+				C2SRequestSetTerrainMeshGenerator.class,
+				C2SRequestSetTerrainMeshGenerator::encode,
+				C2SRequestSetTerrainMeshGenerator::decode,
+				C2SRequestSetTerrainMeshGenerator::handle
+		);
+
+		CHANNEL.registerMessage(networkId++,
 				S2CAddTerrainSmoothable.class,
 				S2CAddTerrainSmoothable::encode,
 				S2CAddTerrainSmoothable::decode,
 				S2CAddTerrainSmoothable::handle
-		);
-		CHANNEL.registerMessage(networkId++,
-				S2CChangeExtendFluidsRange.class,
-				S2CChangeExtendFluidsRange::encode,
-				S2CChangeExtendFluidsRange::decode,
-				S2CChangeExtendFluidsRange::handle
-		);
-		CHANNEL.registerMessage(networkId++,
-				S2CChangeTerrainMeshGenerator.class,
-				S2CChangeTerrainMeshGenerator::encode,
-				S2CChangeTerrainMeshGenerator::decode,
-				S2CChangeTerrainMeshGenerator::handle
 		);
 		CHANNEL.registerMessage(networkId++,
 				S2CDisableTerrainCollisions.class,
@@ -171,6 +160,18 @@ public final class NoCubes {
 				S2CRemoveTerrainSmoothable::encode,
 				S2CRemoveTerrainSmoothable::decode,
 				S2CRemoveTerrainSmoothable::handle
+		);
+		CHANNEL.registerMessage(networkId++,
+				S2CSetExtendFluidsRange.class,
+				S2CSetExtendFluidsRange::encode,
+				S2CSetExtendFluidsRange::decode,
+				S2CSetExtendFluidsRange::handle
+		);
+		CHANNEL.registerMessage(networkId++,
+				S2CSetTerrainMeshGenerator.class,
+				S2CSetTerrainMeshGenerator::encode,
+				S2CSetTerrainMeshGenerator::decode,
+				S2CSetTerrainMeshGenerator::handle
 		);
 
 	}

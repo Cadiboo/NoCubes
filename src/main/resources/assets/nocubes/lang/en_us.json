@@ -17,11 +17,16 @@
 	"nocubes.terrainCollisionsDisabled": "NoCubes Terrain Collisions disabled",
 
 	"nocubes.addTerrainSmoothableNoPermission": "You need to be an operator to add a Terrain Smoothable",
-	"nocubes.changeExtendFluidsRangeNoPermission": "You need to be an operator to change the Extend Fluids Range",
-	"nocubes.changeTerrainMeshGeneratorNoPermission": "You need to be an operator to change the Terrain Mesh Generator",
 	"nocubes.disableCollisionsNoPermission": "You need to be an operator to disable NoCubes Terrain Collisions",
 	"nocubes.enableCollisionsNoPermission": "You need to be an operator to enable NoCubes Terrain Collisions",
 	"nocubes.removeTerrainSmoothableNoPermission": "You need to be an operator to remove a Terrain Smoothable",
+	"nocubes.setExtendFluidsRangeNoPermission": "You need to be an operator to set the Extend Fluids Range",
+	"nocubes.setTerrainMeshGeneratorNoPermission": "You need to be an operator to set the Terrain Mesh Generator",
+
+	"nocubes.addedTerrainSmoothable": "Added Terrain Smoothable: %s",
+	"nocubes.removedTerrainSmoothable": "Removed Terrain Smoothable: %s",
+	"nocubes.setExtendFluidsRange": "Set Extend Fluids Range to %s",
+	"nocubes.setTerrainMeshGenerator": "Set Terrain Mesh Generator to %s",
 
 	"nocubes.config.title": "NoCubes Config Gui Beta (Changes aren't instant)",
 	"nocubes.config.client": "Client Config",

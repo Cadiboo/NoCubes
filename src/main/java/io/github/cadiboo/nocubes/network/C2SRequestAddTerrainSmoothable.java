@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -14,6 +15,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
@@ -41,7 +43,7 @@ public final class C2SRequestAddTerrainSmoothable {
 			if (sender == null) {
 				return;
 			}
-			if (sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
+			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final int blockStateId = msg.blockStateId;
 				final BlockState blockState = Block.getStateById(blockStateId);
 				if (blockState == StateHolder.AIR_DEFAULT) {

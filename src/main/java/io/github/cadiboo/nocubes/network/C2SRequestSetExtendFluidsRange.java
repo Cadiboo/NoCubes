@@ -13,39 +13,40 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
  */
-public final class C2SRequestChangeExtendFluidsRange {
+public final class C2SRequestSetExtendFluidsRange {
 
 	private final ExtendFluidsRange newRange;
 
-	public C2SRequestChangeExtendFluidsRange(final ExtendFluidsRange extendFluidsRange) {
+	public C2SRequestSetExtendFluidsRange(final ExtendFluidsRange extendFluidsRange) {
 		this.newRange = extendFluidsRange;
 	}
 
-	public static void encode(final C2SRequestChangeExtendFluidsRange msg, final PacketBuffer packetBuffer) {
+	public static void encode(final C2SRequestSetExtendFluidsRange msg, final PacketBuffer packetBuffer) {
 		packetBuffer.writeInt(msg.newRange.ordinal());
 	}
 
-	public static C2SRequestChangeExtendFluidsRange decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestChangeExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readInt()]);
+	public static C2SRequestSetExtendFluidsRange decode(final PacketBuffer packetBuffer) {
+		return new C2SRequestSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readInt()]);
 	}
 
-	public static void handle(final C2SRequestChangeExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(final C2SRequestSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
 			if (sender == null) {
 				return;
 			}
-			if (sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
+			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final ExtendFluidsRange newRange = msg.newRange;
 				// Config saving is async so set it now
 				Config.extendFluidsRange = newRange;
 				ConfigHelper.setExtendFluidsRange(newRange);
-				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CChangeExtendFluidsRange(newRange));
+				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetExtendFluidsRange(newRange));
 			} else {
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeExtendFluidsRangeNoPermission"));
 			}

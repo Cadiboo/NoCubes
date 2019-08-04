@@ -14,6 +14,7 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
@@ -41,7 +42,7 @@ public final class C2SRequestRemoveTerrainSmoothable {
 			if (sender == null) {
 				return;
 			}
-			if (sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
+			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final int blockStateId = msg.blockStateId;
 				final BlockState blockState = Block.getStateById(blockStateId);
 				if (blockState == StateHolder.AIR_DEFAULT) {

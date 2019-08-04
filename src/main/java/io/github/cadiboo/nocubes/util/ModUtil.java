@@ -39,6 +39,13 @@ public final class ModUtil {
 	public static final Direction[] DIRECTION_VALUES = Direction.values();
 	public static final int DIRECTION_VALUES_LENGTH = DIRECTION_VALUES.length;
 	public static final Random RANDOM = new Random();
+	/**
+	 * 1. Ops can bypass spawn protection.
+	 * 2. Ops can use /clear, /difficulty, /effect, /gamemode, /gamerule, /give, /summon, /setblock and /tp, and can edit command blocks.
+	 * 3. Ops can use /ban, /deop, /whitelist, /kick, and /op.
+	 * 4. Ops can use /stop.
+	 */
+	public static final int COMMAND_PERMISSION_LEVEL = 2;
 
 	/**
 	 * @return Negative density if the block is smoothable (inside the isosurface), positive if it isn't

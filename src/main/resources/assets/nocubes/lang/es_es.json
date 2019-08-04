@@ -17,11 +17,16 @@
 	"nocubes.terrainCollisionsDisabled": "NoCubes Terreno Movimiento desactivar",
 
 	"nocubes.addTerrainSmoothableNoPermission": "Necesitas ser un operador para hacer agregar una Terreno Suavizables",
-	"nocubes.changeExtendFluidsRangeNoPermission": "Necesitas ser un operador para hacer cambio el Rango Extendido de Fluidos",
-	"nocubes.changeTerrainMeshGeneratorNoPermission": "Necesitas ser un operador para hacer cambio el Terreno Mesh Generator",
 	"nocubes.disableCollisionsNoPermission": "Necesitas ser un operador para hacer desactivar NoCubes Terreno Movimiento",
 	"nocubes.enableCollisionsNoPermission": "Necesitas ser un operador para hacer habilitar el NoCubes Terreno Movimiento",
 	"nocubes.removeTerrainSmoothableNoPermission": "Necesitas ser un operador para hacer removidas una Terreno Suavizables",
+	"nocubes.setExtendFluidsRangeNoPermission": "Debe ser un operador para establecer el Rango de Extensión de Fluidos",
+	"nocubes.setTerrainMeshGeneratorNoPermission": "Debe ser un operador para establecer el Generador de Malla de Terreno",
+
+	"nocubes.addedTerrainSmoothable": "Terreno Añadidas Suavizables: %s",
+	"nocubes.removedTerrainSmoothable": "Terreno Removidas Suavizables: %s",
+	"nocubes.setExtendFluidsRange": "Establecer Extender el Dango de Fluido a %s",
+	"nocubes.setTerrainMeshGenerator": "Establecer el Generador de Malla de Terreno en %s",
 
 	"nocubes.config.title": "NoCubes Configuración Gui Beta (Los cambios no son instantáneos)",
 	"nocubes.config.client": "Configuración del Cliente",

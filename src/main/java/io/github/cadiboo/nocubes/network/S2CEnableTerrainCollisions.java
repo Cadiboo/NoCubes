@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -26,8 +27,9 @@ public final class S2CEnableTerrainCollisions {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			Config.terrainCollisions = true;
-			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisions114"));
-			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisionsEnabled"));
+			final ClientPlayerEntity player = Minecraft.getInstance().player;
+			player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisions114"));
+			player.sendMessage(new TranslationTextComponent(MOD_ID + ".terrainCollisionsEnabled"));
 		});
 		context.setPacketHandled(true);
 	}

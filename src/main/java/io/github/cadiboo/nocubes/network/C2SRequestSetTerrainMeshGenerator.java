@@ -13,41 +13,42 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
  */
-public final class C2SRequestChangeTerrainMeshGenerator {
+public final class C2SRequestSetTerrainMeshGenerator {
 
 	private final MeshGeneratorType newGenerator;
 
-	public C2SRequestChangeTerrainMeshGenerator(final MeshGeneratorType meshGeneratorType) {
+	public C2SRequestSetTerrainMeshGenerator(final MeshGeneratorType meshGeneratorType) {
 		this.newGenerator = meshGeneratorType;
 	}
 
-	public static void encode(final C2SRequestChangeTerrainMeshGenerator msg, final PacketBuffer packetBuffer) {
+	public static void encode(final C2SRequestSetTerrainMeshGenerator msg, final PacketBuffer packetBuffer) {
 		packetBuffer.writeInt(msg.newGenerator.ordinal());
 	}
 
-	public static C2SRequestChangeTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestChangeTerrainMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
+	public static C2SRequestSetTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
+		return new C2SRequestSetTerrainMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
 	}
 
-	public static void handle(final C2SRequestChangeTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(final C2SRequestSetTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
 			if (sender == null) {
 				return;
 			}
-			if (sender.server.getPlayerList().canSendCommands(sender.getGameProfile())) {
+			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final MeshGeneratorType newGenerator = msg.newGenerator;
 				// Config saving is async so set it now
 				Config.terrainMeshGenerator = newGenerator;
 				ConfigHelper.setTerrainMeshGenerator(newGenerator);
-				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CChangeTerrainMeshGenerator(newGenerator));
+				NoCubes.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetTerrainMeshGenerator(newGenerator));
 			} else {
-				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeTerrainMeshGeneratorNoPermission"));
+				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".setTerrainMeshGeneratorNoPermission"));
 			}
 		});
 		context.setPacketHandled(true);
