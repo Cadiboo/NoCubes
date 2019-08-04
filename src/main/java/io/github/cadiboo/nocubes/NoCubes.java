@@ -60,6 +60,7 @@ public final class NoCubes {
 
 	public NoCubes() {
 
+		LOGGER.debug("Preloading patched classes...");
 		ModUtil.preloadClass("net.minecraft.block.BlockState", "BlockState");
 		ModUtil.preloadClass("net.minecraft.world.IWorldReader", "IWorldReader");
 		ModUtil.preloadClass("net.minecraft.world.World", "World");
@@ -67,6 +68,7 @@ public final class NoCubes {
 			ModUtil.preloadClass("net.minecraft.client.renderer.chunk.ChunkRender", "ChunkRender");
 			ModUtil.preloadClass("net.minecraft.client.renderer.FluidBlockRenderer", "FluidBlockRenderer");
 		});
+		LOGGER.debug("Finished preloading patched classes");
 
 		final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener((FMLCommonSetupEvent event) ->
