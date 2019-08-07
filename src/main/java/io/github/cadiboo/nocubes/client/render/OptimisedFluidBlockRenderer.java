@@ -19,6 +19,8 @@ import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.fluid.EmptyFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.IFluidState;
@@ -83,6 +85,11 @@ public final class OptimisedFluidBlockRenderer {
 
 		final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer;
 		final FluidBlockRenderer fluidRenderer = blockRendererDispatcher.fluidRenderer;
+		if (smoothLightingFluidBlockRenderer == null || fluidRenderer == null) {
+			CrashReport crashReport = new CrashReport("Fluid Renderer is null!", new NullPointerException());
+			crashReport.makeCategory("Rendering chunk");
+			throw new ReportedException(crashReport);
+		}
 
 		// Use fluidRenderer sprites instead of smoothLightingFluidBlockRenderer sprites for compatibility
 		final TextureAtlasSprite atlasSpriteWaterOverlay = fluidRenderer.atlasSpriteWaterOverlay;
