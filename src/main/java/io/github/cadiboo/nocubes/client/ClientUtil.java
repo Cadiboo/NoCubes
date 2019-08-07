@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import cpw.mods.modlauncher.api.INameMappingService;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
@@ -8,7 +7,6 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -17,10 +15,6 @@ import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.ReportedException;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
@@ -28,12 +22,9 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
-import net.minecraftforge.registries.IRegistryDelegate;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Map;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
@@ -41,7 +32,6 @@ import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
-import static net.minecraftforge.fml.common.ObfuscationReflectionHelper.remapName;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -54,7 +44,6 @@ public final class ClientUtil {
 	public static final BlockRenderLayer[] BLOCK_RENDER_LAYER_VALUES = BlockRenderLayer.values();
 	public static final int BLOCK_RENDER_LAYER_VALUES_LENGTH = BLOCK_RENDER_LAYER_VALUES.length;
 	static final int[] NEGATIVE_1_8000 = new int[8000];
-	private static final Field BLOCK_COLORS_REGISTRY = findBlockColorsRegistryField();
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
@@ -359,31 +348,6 @@ public final class ClientUtil {
 
 		_this.blockStates = blockStates;
 		_this.fluidStates = fluidStates;
-	}
-
-	private static Field findBlockColorsRegistryField() {
-		final String fieldName = remapName(INameMappingService.Domain.FIELD, "field_186725_a");
-		try {
-			final Field field = BlockColors.class.getDeclaredField(fieldName);
-			field.setAccessible(true);
-			return field;
-		} catch (NoSuchFieldException e) {
-			final CrashReport crashReport = new CrashReport("Unable to find field \"" + fieldName + "\". Field does not exist!", e);
-			crashReport.makeCategory("Finding Field");
-			throw new ReportedException(crashReport);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsRegistry(final BlockColors blockColors) {
-//		return blockColors.colors;
-		try {
-			return (Map<IRegistryDelegate<Block>, IBlockColor>) BLOCK_COLORS_REGISTRY.get(blockColors);
-		} catch (IllegalAccessException e) {
-			final CrashReport crashReport = new CrashReport("Unable to access field!", e);
-			crashReport.makeCategory("Accessing Field");
-			throw new ReportedException(crashReport);
-		}
 	}
 
 	public static void replaceFluidRenderer() {

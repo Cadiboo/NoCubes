@@ -94,7 +94,7 @@ public final class MeshRenderer {
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
 
-			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = ClientUtil.getBlockColorsRegistry(Minecraft.getInstance().getBlockColors());
+			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = Minecraft.getInstance().getBlockColors().colors;
 
 			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
 				try (final Vec3b pos = entry.getKey()) {
