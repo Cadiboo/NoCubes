@@ -350,7 +350,7 @@ public final class CollisionHandler {
 					int j2 = cubecoordinateiterator.getX();
 					int k2 = cubecoordinateiterator.getY();
 					int l2 = cubecoordinateiterator.getZ();
-					int k1 = cubecoordinateiterator.func_223473_e();
+					int k1 = cubecoordinateiterator.numBoundariesTouched();
 					if (k1 != 3) {
 						int l1 = j2 >> 4;
 						int i2 = l2 >> 4;

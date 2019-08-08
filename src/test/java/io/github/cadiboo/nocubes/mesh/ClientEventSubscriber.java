@@ -13,9 +13,9 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import java.util.List;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static net.minecraftforge.api.distmarker.Dist.CLIENT;
-import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
+import static net.minecraftforge.event.TickEvent.Phase;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -40,7 +40,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
 
-		if (event.phase != TickEvent.Phase.END) {
+		if (event.phase != Phase.END) {
 			return;
 		}
 		final Minecraft minecraft = Minecraft.getInstance();

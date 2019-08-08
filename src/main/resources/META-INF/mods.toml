@@ -18,7 +18,7 @@ It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.
 [[dependencies.nocubes]]
 modId="forge"
 mandatory=true
-versionRange="[28,)"
+versionRange="[28.0.45,)"
 ordering="NONE"
 side="BOTH"
 
