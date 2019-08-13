@@ -58,8 +58,8 @@ public final class ModelHelper {
 		Object renderEnv = null;
 
 		if (OPTIFINE_INSTALLED) {
-//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(reader, state, pos);
-			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, reader, state, pos);
+//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(state, pos);
+			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
 
 			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 		}

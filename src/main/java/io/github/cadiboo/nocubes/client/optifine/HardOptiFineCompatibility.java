@@ -32,23 +32,28 @@ final class HardOptiFineCompatibility {
 		return ((ChunkCacheOF) reader).chunkCache;
 	}
 
-	static void pushShaderThing(@Nonnull final BlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IEnviromentBlockReader blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+	static void pushShaderThing(
+			@Nonnull final BlockState blockState,
+			@Nonnull final BlockPos pos,
+			@Nonnull final IEnviromentBlockReader reader,
+			@Nonnull final BufferBuilder bufferBuilder
+	) {
 		if (Config.isShaders()) {
-			SVertexBuilder.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+			SVertexBuilder.pushEntity(blockState, pos, reader, bufferBuilder);
 		}
 	}
 
-	static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
+	static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
 		if (Config.isShaders()) {
-			SVertexBuilder.popEntity(worldRendererIn);
+			SVertexBuilder.popEntity(bufferBuilder);
 		}
 	}
 
 	static final class BufferBuilderOF {
 
 		@Nonnull
-		static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IEnviromentBlockReader blockAccess, @Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-			return bufferBuilder.getRenderEnv(/*blockAccess,*/ state, pos);
+		static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final BlockState blockState, @Nonnull final BlockPos pos) {
+			return bufferBuilder.getRenderEnv(blockState, pos);
 		}
 
 	}
@@ -56,13 +61,26 @@ final class HardOptiFineCompatibility {
 	static final class BlockModelCustomizerOF {
 
 		@Nonnull
-		static IBakedModel getRenderModel(@Nonnull final IBakedModel model, @Nonnull final BlockState state, @Nonnull final Object renderEnv) {
-			return BlockModelCustomizer.getRenderModel(model, state, (RenderEnv) renderEnv);
+		static IBakedModel getRenderModel(
+				@Nonnull final IBakedModel model,
+				@Nonnull final BlockState blockState,
+				@Nonnull final Object renderEnv
+		) {
+			return BlockModelCustomizer.getRenderModel(model, blockState, (RenderEnv) renderEnv);
 		}
 
 		@Nonnull
-		static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IEnviromentBlockReader blockAccess, @Nonnull final BlockState state, @Nonnull final BlockPos pos, @Nonnull final Direction facing, @Nonnull final BlockRenderLayer blockRenderLayer, final long rand, @Nonnull final Object renderEnv) {
-			return BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, (RenderEnv) renderEnv);
+		static List<BakedQuad> getRenderQuads(
+				@Nonnull final List<BakedQuad> quads,
+				@Nonnull final IEnviromentBlockReader reader,
+				@Nonnull final BlockState blockState,
+				@Nonnull final BlockPos pos,
+				@Nonnull final Direction direction,
+				@Nonnull final BlockRenderLayer blockRenderLayer,
+				final long rand,
+				@Nonnull final Object renderEnv
+		) {
+			return BlockModelCustomizer.getRenderQuads(quads, reader, blockState, pos, direction, blockRenderLayer, rand, (RenderEnv) renderEnv);
 		}
 
 	}

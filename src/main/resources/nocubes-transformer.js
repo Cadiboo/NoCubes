@@ -136,6 +136,15 @@ function initializeCoreMod() {
 			},
 			"transformer": function(methodNode) {
 				var instructions = methodNode.instructions;
+				// Check if any instructions reference an OptiFine class.
+				for (var i = instructions.size() - 1; i >= 0; --i) {
+					var instruction = instructions.get(i);
+					if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
+						isOptiFinePresent = true;
+						print("Found OptiFine - ChunkCacheOF class");
+						break;
+					}
+				}
 				injectPreIterationHook(instructions);
 				injectBlockRenderHook(instructions);
 				injectFluidRenderBypass(instructions);
@@ -352,7 +361,7 @@ function injectInitChunkRenderCacheHook(instructions) {
 // 3) Find previous label
 // 4) Find previous INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween
 // 5) Find next ISTORE
-// 6) Fnject GOTO to label
+// 6) Inject GOTO to label after ISTORE
 function injectGenerateCacheHook(instructions) {
 
 //	for (int x = start.getX() >> 4; x <= end.getX() >> 4; ++x) {
@@ -795,16 +804,27 @@ function injectPreIterationHook(instructions) {
 //    ASTORE 16
 //   L34
 
-	var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // getAllInBoxMutable
+	var getAllInBoxMutable_owner;
+	var getAllInBoxMutable_name;
+	var getAllInBoxMutable_desc;
+	if (!isOptiFinePresent) {
+		getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
+		getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#getAllInBoxMutable
+		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
+	} else {
+		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
+		getAllInBoxMutable_name = "getAllInBoxMutable"; // BlockPosM#getAllInBoxMutable
+		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
+	}
 
 	var first_INVOKESTATIC_getAllInBoxMutable;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == INVOKESTATIC) {
-			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
+			if (instruction.owner == getAllInBoxMutable_owner) {
 				if (instruction.name == getAllInBoxMutable_name) {
-					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;") {
+					if (instruction.desc == getAllInBoxMutable_desc) {
 						if (instruction.itf == false) {
 							first_INVOKESTATIC_getAllInBoxMutable = instruction;
 							print("Found injection point \"first BlockPos.getAllInBoxMutable\" " + instruction);
@@ -849,10 +869,17 @@ function injectPreIterationHook(instructions) {
 	toInject.add(new VarInsnNode(ALOAD, 9)); // world
 	toInject.add(new VarInsnNode(ALOAD, 10)); // lvt_10_1_ - visGraph
 	toInject.add(new VarInsnNode(ALOAD, 11)); // lvt_11_1_ - hashSetTileEntitiesWithGlobalRenderers
-	toInject.add(new VarInsnNode(ALOAD, 12)); // lvt_12_1_ - chunkRenderCache
-	toInject.add(new VarInsnNode(ALOAD, 13)); // aboolean - usedRenderLayers
-	toInject.add(new VarInsnNode(ALOAD, 14)); // random
-	toInject.add(new VarInsnNode(ALOAD, 15)); // blockrendererdispatcher
+	if (!isOptiFinePresent) {
+		toInject.add(new VarInsnNode(ALOAD, 12)); // lvt_12_1_ - chunkRenderCache
+		toInject.add(new VarInsnNode(ALOAD, 13)); // aboolean - usedRenderLayers
+		toInject.add(new VarInsnNode(ALOAD, 14)); // random
+		toInject.add(new VarInsnNode(ALOAD, 15)); // blockrendererdispatcher
+	} else {
+		toInject.add(new VarInsnNode(ALOAD, 12)); // lvt_12_1_ - chunkCacheOF
+		toInject.add(new VarInsnNode(ALOAD, 15)); // aboolean - usedRenderLayers
+		toInject.add(new VarInsnNode(ALOAD, 16)); // random
+		toInject.add(new VarInsnNode(ALOAD, 17)); // blockrendererdispatcher
+	}
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -861,7 +888,7 @@ function injectPreIterationHook(instructions) {
 			//String name
 			"preIteration",
 			//String descriptor
-			"(Lnet/minecraft/client/renderer/chunk/ChunkRender;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
+			"(Lnet/minecraft/client/renderer/chunk/ChunkRender;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;Lnet/minecraft/world/IEnviromentBlockReader;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
 			//boolean isInterface
 			false
 	));
@@ -1009,11 +1036,17 @@ function injectBlockRenderHook(instructions) {
 // 3) Then removes the two previous instructions and then the instruction
 function injectFluidRenderBypass(instructions) {
 
+// Forge/Vanilla/Original
 //	}
 //
 //	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
 //	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
 
+// Forge/OptiFine/Original
+//	IFluidState ifluidstate = blockstate.getFluidState();
+//		if (!ifluidstate.isEmpty()) {
+
+// Forge/Vanilla/Patched
 //	}
 //
 //	// NoCubes Start
@@ -1022,6 +1055,15 @@ function injectFluidRenderBypass(instructions) {
 //	// NoCubes End
 //	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
 
+
+// Forge/OptiFine/Patched
+//	// NoCubes Start
+////	IFluidState ifluidstate = blockstate.getFluidState();
+//	IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
+//	// NoCubes End
+//		if (!ifluidstate.isEmpty()) {
+
+// Forge/Vanilla/Original
 //    ALOAD 5
 //    ALOAD 20
 //    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
@@ -1039,6 +1081,7 @@ function injectFluidRenderBypass(instructions) {
 //    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
 //    ASTORE 21
 
+// Forge/Vanilla/Patched
 //    ALOAD 5
 //    ALOAD 20
 //    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
@@ -1055,15 +1098,37 @@ function injectFluidRenderBypass(instructions) {
 //    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
 //    ASTORE 21
 
-	// Check if any instructions reference an OptiFine class.
-	for (var i = instructions.size() - 1; i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
-			isOptiFinePresent = true;
-			print("Found OptiFine - ChunkCacheOF class");
-			break;
-		}
-	}
+// Forge/OptiFine/Original
+//    ALOAD 5
+//    ALOAD 22
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
+//   L43
+//    LINENUMBER 307 L43
+//   FRAME CHOP 2
+//    ALOAD 20
+//    INVOKEVIRTUAL net/minecraft/block/BlockState.getFluidState ()Lnet/minecraft/fluid/IFluidState;
+//    ASTORE 22
+//   L51
+//    LINENUMBER 309 L51
+//    ALOAD 22
+//    INVOKEINTERFACE net/minecraft/fluid/IFluidState.isEmpty ()Z (itf)
+//    IFNE L52
+
+// Forge/OptiFine/Patched
+//    ALOAD 5
+//    ALOAD 22
+//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
+//   L43
+//    LINENUMBER 307 L43
+//   FRAME CHOP 2
+//    GETSTATIC net/minecraft/fluid/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
+//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
+//    ASTORE 22
+//   L51
+//    LINENUMBER 309 L51
+//    ALOAD 22
+//    INVOKEINTERFACE net/minecraft/fluid/IFluidState.isEmpty ()Z (itf)
+//    IFNE L52
 
 	var getFluidState_owner;
 	var getFluidState_name;
@@ -1128,10 +1193,20 @@ function injectFluidRenderBypass(instructions) {
 	// Inject instructions
 	instructions.insert(first_INVOKEVIRTUAL_getFluidState, toInject);
 
-	// Remove "ALOAD 12", "ALOAD 17", "INVOKEVIRTUAL getFluidState"
-	instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious().getPrevious());
-	instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
-	instructions.remove(first_INVOKEVIRTUAL_getFluidState);
+	// Remove old instructions
+	if (!isOptiFinePresent) {
+		// ALOAD 12 (ChunkRenderCache)
+		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious().getPrevious());
+		// ALOAD 17 (BlockPos)
+		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
+		// INVOKEVIRTUAL ChunkRenderCache#getFluidState
+		instructions.remove(first_INVOKEVIRTUAL_getFluidState);
+	} else {
+		// ALOAD 20 (BlockState)
+		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
+		// INVOKEVIRTUAL BlockState#getFluidState
+		instructions.remove(first_INVOKEVIRTUAL_getFluidState);
+	}
 
 }
 

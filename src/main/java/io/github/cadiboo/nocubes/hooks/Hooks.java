@@ -48,7 +48,7 @@ public final class Hooks {
 	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void preIteration(final ChunkRender renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final VisGraph lvt_10_1_, final HashSet lvt_11_1_, final ChunkRenderCache lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
+	public static void preIteration(final ChunkRender renderChunk, final float x, final float y, final float z, final ChunkRenderTask generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final VisGraph lvt_10_1_, final HashSet lvt_11_1_, final IEnviromentBlockReader lvt_12_1_, final boolean[] aboolean, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_12_1_, aboolean, random, blockrendererdispatcher);
 	}
 

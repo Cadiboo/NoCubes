@@ -42,11 +42,11 @@ package net.optifine;
 
 @SuppressWarnings("all")
 public class Config {
-//   public static final String OF_NAME = "OptiFine";
-//   public static final String MC_VERSION = "1.14.3";
-//   public static final String OF_EDITION = "HD_U";
-//   public static final String OF_RELEASE = "F1";
-//   public static final String VERSION = "OptiFine_1.14.3_HD_U_F1";
+   public static final String OF_NAME = "OptiFine";
+   public static final String MC_VERSION = "1.14.3";
+   public static final String OF_EDITION = "HD_U";
+   public static final String OF_RELEASE = "F1";
+   public static final String VERSION = "OptiFine_1.14.3_HD_U_F1";
 //   public static String build = null;
 //   public static String newRelease = null;
 //   public static boolean notify64BitJava = false;
