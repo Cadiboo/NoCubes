@@ -15,6 +15,8 @@ import net.minecraft.client.renderer.chunk.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderTask;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
@@ -284,7 +286,9 @@ public final class ClientUtil {
 			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
 			return renderChunkCache.chunks[x][z];
 		}
-		throw new IllegalStateException("Should Not Reach Here!");
+		final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(), "Invalid ChunkRenderCache: " + reader);
+		crashReport.makeCategory("NoCubes getting Chunk");
+		throw new ReportedException(crashReport);
 	}
 
 	public static void setupChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
