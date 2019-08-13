@@ -237,10 +237,8 @@ public final class RenderDispatcher {
 						meshGenerator, meshSizeX, meshSizeY, meshSizeZ
 				);
 			}
-		} catch (ReportedException e) {
-			throw e;
 		} catch (Exception e) {
-			CrashReport crashReport = new CrashReport("Error rendering NoCubes chunk!", e);
+			CrashReport crashReport = CrashReport.makeCrashReport(e, "Error rendering NoCubes chunk!");
 			crashReport.makeCategory("Rendering chunk");
 			throw new ReportedException(crashReport);
 		}

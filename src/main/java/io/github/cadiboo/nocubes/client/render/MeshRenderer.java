@@ -92,7 +92,7 @@ public final class MeshRenderer {
 			final boolean renderOppositeSides,
 			final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
 	) {
-		try (final ModProfiler ignored = ModProfiler.get().start("renderMesh")) {
+		try (final ModProfiler profiler = ModProfiler.get().start("renderMesh")) {
 
 			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = Minecraft.getInstance().getBlockColors().colors;
 
@@ -104,8 +104,8 @@ public final class MeshRenderer {
 							continue;
 						}
 
-						ModProfiler.get().end(); // HACKY
-						ModProfiler.get().start("prepareRenderFaces"); // HACKY
+						profiler.end(); // HACKY
+						profiler.start("prepareRenderFaces"); // HACKY
 
 						final int initialPosX = chunkRenderPosX + pos.x;
 						final int initialPosY = chunkRenderPosY + pos.y;
@@ -116,7 +116,7 @@ public final class MeshRenderer {
 						final byte relativePosY = ModUtil.getRelativePos(chunkRenderPosY, initialPosY);
 						final byte relativePosZ = ModUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
 
-						ModProfiler.get().end(); // HACKY (end here because getTexturePosAndState profiles itself)
+						profiler.end(); // HACKY (end here because getTexturePosAndState profiles itself)
 
 						final BlockState textureState = ClientUtil.getTexturePosAndState(
 								initialPosX, initialPosY, initialPosZ,
@@ -126,7 +126,7 @@ public final class MeshRenderer {
 								tryForBetterTexturesSnow, tryForBetterTexturesGrass
 						);
 
-						ModProfiler.get().start("renderMesh"); // HACKY
+						profiler.start("renderMesh"); // HACKY
 
 						try {
 							renderFaces(
@@ -142,7 +142,7 @@ public final class MeshRenderer {
 									renderOppositeSides
 							);
 						} catch (Exception e) {
-							final CrashReport crashReport = new CrashReport("Rendering faces for smooth block in world", e);
+							final CrashReport crashReport = CrashReport.makeCrashReport(e, "Rendering faces for smooth block in world");
 
 							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
 							final BlockPos blockPos = new BlockPos(chunkRenderPosX + pos.x, chunkRenderPosX + pos.y, chunkRenderPosX + pos.z);

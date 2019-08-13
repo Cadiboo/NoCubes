@@ -317,7 +317,7 @@ public final class ModUtil {
 			Class.forName(qualifiedName, true, classLoader);
 			LOGGER.info("Initialised \"" + simpleName + "\"");
 		} catch (final ClassNotFoundException e) {
-			final CrashReport crashReport = new CrashReport("Failed to load class \"" + simpleName + "\". This should not be possible!", e);
+			final CrashReport crashReport = CrashReport.makeCrashReport(e, "Failed to load class \"" + simpleName + "\". This should not be possible!");
 			crashReport.makeCategory("Loading class");
 			throw new ReportedException(crashReport);
 		}

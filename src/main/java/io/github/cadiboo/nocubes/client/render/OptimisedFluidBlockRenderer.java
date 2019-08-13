@@ -86,7 +86,8 @@ public final class OptimisedFluidBlockRenderer {
 		final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer;
 		final FluidBlockRenderer fluidRenderer = blockRendererDispatcher.fluidRenderer;
 		if (smoothLightingFluidBlockRenderer == null || fluidRenderer == null) {
-			CrashReport crashReport = new CrashReport("Fluid Renderer is null!", new NullPointerException());
+			final String renderer = fluidRenderer == null ? "Vanilla Fluid Renderer" : "Smooth Lighting Fluid Renderer";
+			final CrashReport crashReport = CrashReport.makeCrashReport(new NullPointerException(), renderer + " is null!");
 			crashReport.makeCategory("Rendering chunk");
 			throw new ReportedException(crashReport);
 		}
