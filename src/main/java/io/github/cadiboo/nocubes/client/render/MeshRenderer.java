@@ -401,7 +401,7 @@ public final class MeshRenderer {
 									final float blue3;
 
 									final boolean hasTintIndex = quad.hasTintIndex();
-									if (BlockColorInfo.RAINBOW || BlockColorInfo.BLACK) {
+									if (BlockColorInfo.rainbow || BlockColorInfo.black) {
 										if (!hasSetColors) {
 											profiler.end(); // HACKY
 											try (

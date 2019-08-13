@@ -36,6 +36,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -118,6 +119,12 @@ public final class ClientEventSubscriber {
 			Config.terrainCollisions = false;
 		}
 
+		final ClientWorld world = minecraft.world;
+		// Every minute
+		if (world != null && world.getGameTime() % 1200 == 0) {
+			BlockColorInfo.refresh();
+		}
+
 //		// TODO: Temp!
 //		{
 //			if (tempDiscoverSmoothables.isPressed()) {
@@ -177,7 +184,7 @@ public final class ClientEventSubscriber {
 			}
 
 			final BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
-			final BlockState state = minecraft.world.getBlockState(blockPos);
+			final BlockState state = world.getBlockState(blockPos);
 
 			if (terrainPressed) {
 				if (state.nocubes_isTerrainSmoothable) {
