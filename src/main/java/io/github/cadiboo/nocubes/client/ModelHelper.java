@@ -64,20 +64,20 @@ public final class ModelHelper {
 			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 		}
 
-		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
-			state = state.getBlock().getExtendedState(state, reader, pos);
-		}
+//		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
+//			state = state.getBlock().getExtendedState(state, reader, pos);
+//		}
 
-		for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
-			final Direction facing = DIRECTION_QUADS_ORDERED[facingIndex];
-			List<BakedQuad> quads = model.getQuads(state, facing, posRand, modelData);
+		for (int directionIndex = 0; directionIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++directionIndex) {
+			final Direction direction = DIRECTION_QUADS_ORDERED[directionIndex];
+			List<BakedQuad> quads = model.getQuads(state, direction, posRand, modelData);
 			if (quads.isEmpty()) {
 				continue;
 			}
 
 			if (OPTIFINE_INSTALLED) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, facing, blockRenderLayer, posRandLong, renderEnv);
+					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
 					if (quads.isEmpty()) {
 						continue;
 					}
