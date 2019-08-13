@@ -22,32 +22,32 @@ public final class OptiFineCompatibility {
 	public static final boolean OPTIFINE_INSTALLED = OptiFineLocator.isOptiFineInstalledAndCompatible();
 
 	public static void pushShaderThing(
-			@Nonnull final BlockState blockStateIn,
-			@Nonnull final BlockPos blockPosIn,
-			@Nonnull final IEnviromentBlockReader blockAccess,
-			@Nonnull final BufferBuilder worldRendererIn
+			@Nonnull final BlockState blockState,
+			@Nonnull final BlockPos pos,
+			@Nonnull final IEnviromentBlockReader reader,
+			@Nonnull final BufferBuilder bufferBuilder
 	) {
 		if (!OPTIFINE_INSTALLED) {
 			return;
 		} else {
-			HardOptiFineCompatibility.pushShaderThing(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+			HardOptiFineCompatibility.pushShaderThing(blockState, pos, reader, bufferBuilder);
 		}
 	}
 
 	public static void pushShaderThing(
-			@Nonnull final IFluidState iFluidState,
-			@Nonnull final BlockPos blockPosIn,
-			@Nonnull final IEnviromentBlockReader blockAccess,
-			@Nonnull final BufferBuilder worldRendererIn
+			@Nonnull final IFluidState fluidState,
+			@Nonnull final BlockPos pos,
+			@Nonnull final IEnviromentBlockReader reader,
+			@Nonnull final BufferBuilder bufferBuilder
 	) {
-		pushShaderThing(iFluidState.getBlockState(), blockPosIn, blockAccess, worldRendererIn);
+		pushShaderThing(fluidState.getBlockState(), pos, reader, bufferBuilder);
 	}
 
-	public static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
+	public static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
 		if (!OPTIFINE_INSTALLED) {
 			return;
 		} else {
-			HardOptiFineCompatibility.popShaderThing(worldRendererIn);
+			HardOptiFineCompatibility.popShaderThing(bufferBuilder);
 		}
 	}
 

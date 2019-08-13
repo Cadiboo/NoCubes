@@ -304,7 +304,7 @@ public final class ClientUtil {
 		int cz = (startZ >> 4) - chunkStartZ;
 		Chunk currentChunk = chunks[cx][cz];
 
-		try (BlockPos.PooledMutableBlockPos pooledMutableBlockPos = BlockPos.PooledMutableBlockPos.retain()) {
+		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {

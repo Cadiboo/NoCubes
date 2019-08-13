@@ -85,14 +85,16 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
-	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", GLFW_KEY_O, "key.categories." + MOD_ID);
-	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", GLFW_KEY_I, "key.categories." + MOD_ID);
-	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", GLFW_KEY_P, "key.categories." + MOD_ID);
-//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", GLFW_KEY_J, "key.categories." + MOD_ID);
+	private static final String CATEGORY = "key.categories." + MOD_ID;
 
-	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", GLFW_KEY_N, "key.categories." + MOD_ID);
-	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, "key.categories." + MOD_ID);
-	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", GLFW_KEY_C, "key.categories." + MOD_ID);
+	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", GLFW_KEY_O, CATEGORY);
+	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", GLFW_KEY_I, CATEGORY);
+	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", GLFW_KEY_P, CATEGORY);
+//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", GLFW_KEY_J, CATEGORY);
+
+	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", GLFW_KEY_N, CATEGORY);
+	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", GLFW_KEY_K, CATEGORY);
+	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", GLFW_KEY_C, CATEGORY);
 
 	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
 
@@ -264,10 +266,12 @@ public final class ClientEventSubscriber {
 				GlStateManager.matrixMode(5889);
 				GlStateManager.enableColorMaterial();
 				GlStateManager.loadIdentity();
-				GlStateManager.ortho(0.0D, (double) mc.mainWindow.getFramebufferWidth(), (double) mc.mainWindow.getFramebufferHeight(), 0.0D, 1000.0D, 3000.0D);
+				final int framebufferWidth = mc.mainWindow.getFramebufferWidth();
+				final int framebufferHeight = mc.mainWindow.getFramebufferHeight();
+				GlStateManager.ortho(0.0D, (double) framebufferWidth, (double) framebufferHeight, 0.0D, 1000.0D, 3000.0D);
 				GlStateManager.matrixMode(5888);
 				GlStateManager.loadIdentity();
-				GlStateManager.scalef(mc.mainWindow.getFramebufferWidth() / 1000F, mc.mainWindow.getFramebufferWidth() / 1000F, 1);
+				GlStateManager.scalef(framebufferWidth / 1000F, framebufferWidth / 1000F, 1);
 				GlStateManager.translatef(5F, 5F, 0F);
 				GlStateManager.translatef(0.0F, 0.0F, -2000.0F);
 				GlStateManager.lineWidth(1.0F);
@@ -364,11 +368,12 @@ public final class ClientEventSubscriber {
 					}
 
 					String s1 = stringbuilder.append(profilerName1).toString();
-					fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					final int color = profiler$result2.getColor();
+					fontRenderer.drawStringWithShadow(s1, (float) (cx - 160), (float) (cy + 80 + k2 * 8 + 20), color);
 					s1 = decimalformat.format(profiler$result2.usePercentage) + "%";
-					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - 50 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), color);
 					s1 = decimalformat.format(profiler$result2.totalUsePercentage) + "%";
-					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), profiler$result2.getColor());
+					fontRenderer.drawStringWithShadow(s1, (float) (cx + 160 - fontRenderer.getStringWidth(s1)), (float) (cy + 80 + k2 * 8 + 20), color);
 				}
 			}
 		}

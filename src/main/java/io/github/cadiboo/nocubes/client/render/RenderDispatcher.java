@@ -43,6 +43,7 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
@@ -54,6 +55,10 @@ import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
  * @author Cadiboo
  */
 public final class RenderDispatcher {
+
+	private static final Predicate<BlockState> IS_BLOCK_STATE_GRASS = blockState -> ModUtil.isMaterialGrass(blockState.getMaterial());
+	private static final Predicate<BlockState> IS_BLOCK_STATE_LEAVES = blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial());
+	private static final Predicate<BlockState> ALWAYS_TRUE = blockState -> true;
 
 	public static void renderChunk(
 			@Nonnull final ChunkRender chunkRender,
@@ -185,7 +190,7 @@ public final class RenderDispatcher {
 									// Fluid renderer needs +2 on all axis because reasons
 									chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 									2, 2, 2,
-									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
 							);
 							ModProfiler ignored = ModProfiler.get().start("OptimisedFluidBlockRenderer_renderChunkDensity")
 					) {
@@ -212,7 +217,7 @@ public final class RenderDispatcher {
 								// Fluid renderer needs +2 on all axis because reasons
 								chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 								2, 2, 2,
-								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
 						);
 						ModProfiler ignored = ModProfiler.get().start("OptimisedFluidBlockRenderer_renderChunk")
 				) {
@@ -259,7 +264,7 @@ public final class RenderDispatcher {
 						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 						2, 2, 2,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.GRASS_COLOR, blockState -> ModUtil.isMaterialGrass(blockState.getMaterial())
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.GRASS_COLOR, IS_BLOCK_STATE_GRASS
 				)
 		) {
 			final HashMap<Vec3b, FaceList> mesh;
@@ -310,7 +315,7 @@ public final class RenderDispatcher {
 						chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 						chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 						2, 2, 2,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.FOLIAGE_COLOR, blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial())
+						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.FOLIAGE_COLOR, IS_BLOCK_STATE_LEAVES
 				)
 		) {
 			switch (Config.smoothLeavesType) {

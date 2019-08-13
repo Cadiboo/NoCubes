@@ -41,7 +41,7 @@ public final class OptiFineLocator {
 		return version.contains("HD_U_F");
 	}
 
-	public static boolean isOptiFineInstalledAndCompatible() {
+	static boolean isOptiFineInstalledAndCompatible() {
 		return isOptiFineInstalled() && isOptiFineCompatible();
 	}
 
@@ -60,7 +60,7 @@ public final class OptiFineLocator {
 	}
 
 	@Nonnull
-	public static String getOptiFineVersion(final Class<?> configClass) {
+	private static String getOptiFineVersion(final Class<?> configClass) {
 		try {
 			final Field versionField = configClass.getField("VERSION");
 			versionField.setAccessible(true);
