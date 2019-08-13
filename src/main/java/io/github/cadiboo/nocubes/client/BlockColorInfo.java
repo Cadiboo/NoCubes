@@ -23,11 +23,12 @@ import static net.minecraft.util.math.MathHelper.floor;
  */
 public final class BlockColorInfo implements AutoCloseable {
 
-	public static final boolean RAINBOW = isWearItPurpleDay();
-	public static final boolean BLACK = isHalloween();
-
 	private static final ThreadLocal<BlockColorInfo> POOL = ThreadLocal.withInitial(() -> new BlockColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
-
+	public static boolean rainbow;
+	public static boolean black;
+	static {
+		refresh();
+	}
 	public float red0;
 	public float green0;
 	public float blue0;
@@ -64,25 +65,6 @@ public final class BlockColorInfo implements AutoCloseable {
 		this.inUse = false;
 	}
 
-	private static boolean isWearItPurpleDay() {
-		// "https://praveenlobo.com/blog/get-last-friday-of-the-month-in-java/"
-		Calendar lastFridayOfAugust = Calendar.getInstance();
-		// Wear it purple day is the last friday of august
-		lastFridayOfAugust.set(MONTH, AUGUST);
-		lastFridayOfAugust.add(MONTH, 1); // go to next month
-
-		// calculate the number of days to subtract to get the last desired day of the month
-		int lobosMagicNumber = (13 - FRIDAY) % 7;
-		lastFridayOfAugust.add(DAY_OF_MONTH, -(((lobosMagicNumber + lastFridayOfAugust.get(DAY_OF_WEEK)) % 7) + 1));
-
-		return lastFridayOfAugust.get(DAY_OF_YEAR) == Calendar.getInstance().get(DAY_OF_YEAR);
-	}
-
-	private static boolean isHalloween() {
-		Calendar calendar = Calendar.getInstance();
-		return calendar.get(MONTH) == OCTOBER && calendar.get(DAY_OF_MONTH) == 31;
-	}
-
 	public static BlockColorInfo generateBlockColorInfo(
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Vec3 v0,
@@ -101,7 +83,7 @@ public final class BlockColorInfo implements AutoCloseable {
 			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
-		if (BLACK) {
+		if (black) {
 			return retain(
 					0, 0, 0,
 					0, 0, 0,
@@ -192,7 +174,7 @@ public final class BlockColorInfo implements AutoCloseable {
 			blue3 += (color3 & 0x0000FF);
 		}
 
-		if (RAINBOW) {
+		if (rainbow) {
 			return retain(
 					red0, green0, blue0,
 					red1, green1, blue1,
@@ -258,6 +240,30 @@ public final class BlockColorInfo implements AutoCloseable {
 		pooled.blue3 = blue3;
 
 		return pooled;
+	}
+
+	public static void refresh() {
+		rainbow = isWearItPurpleDay();
+		black = isHalloween();
+	}
+
+	private static boolean isWearItPurpleDay() {
+		// "https://praveenlobo.com/blog/get-last-friday-of-the-month-in-java/"
+		Calendar lastFridayOfAugust = Calendar.getInstance();
+		// Wear it purple day is the last friday of august
+		lastFridayOfAugust.set(MONTH, AUGUST);
+		lastFridayOfAugust.add(MONTH, 1); // go to next month
+
+		// calculate the number of days to subtract to get the last desired day of the month
+		int lobosMagicNumber = (13 - FRIDAY) % 7;
+		lastFridayOfAugust.add(DAY_OF_MONTH, -(((lobosMagicNumber + lastFridayOfAugust.get(DAY_OF_WEEK)) % 7) + 1));
+
+		return lastFridayOfAugust.get(DAY_OF_YEAR) == Calendar.getInstance().get(DAY_OF_YEAR);
+	}
+
+	private static boolean isHalloween() {
+		Calendar calendar = Calendar.getInstance();
+		return calendar.get(MONTH) == OCTOBER && calendar.get(DAY_OF_MONTH) == 31;
 	}
 
 	@Override

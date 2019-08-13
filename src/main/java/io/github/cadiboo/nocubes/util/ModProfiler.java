@@ -1,13 +1,11 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.profiler.Profiler;
-
 import java.util.HashMap;
 
 /**
  * @author Cadiboo
  */
-public final class ModProfiler extends Profiler implements AutoCloseable {
+public final class ModProfiler extends Profiler1122 implements AutoCloseable {
 
 	public static final HashMap<Thread, ModProfiler> PROFILERS = new HashMap<>();
 
@@ -17,33 +15,15 @@ public final class ModProfiler extends Profiler implements AutoCloseable {
 		return profiler;
 	});
 
-	public static boolean profilersEnabled = false;
-
 	private int virtualSections = 0;
 	private int startedSections = 0;
 
-	public ModProfiler() {
-		if (profilersEnabled) {
-			this.profilingEnabled = true;
-		}
+	public synchronized static void enableProfiling() {
+		profilingEnabled = true;
 	}
 
-	public static void enableProfiling() {
-		profilersEnabled = true;
-		synchronized (PROFILERS) {
-			for (final ModProfiler profiler : PROFILERS.values()) {
-				profiler.profilingEnabled = true;
-			}
-		}
-	}
-
-	public static void disableProfiling() {
-		profilersEnabled = false;
-		synchronized (PROFILERS) {
-			for (final ModProfiler profiler : PROFILERS.values()) {
-				profiler.profilingEnabled = false;
-			}
-		}
+	public synchronized static void disableProfiling() {
+		profilingEnabled = false;
 	}
 
 	public static ModProfiler get() {
@@ -51,7 +31,7 @@ public final class ModProfiler extends Profiler implements AutoCloseable {
 	}
 
 	public ModProfiler start(final String name) {
-		if (startedSections == virtualSections++ && profilersEnabled) {
+		if (startedSections == virtualSections++ && profilingEnabled) {
 			++startedSections;
 			startSection(name);
 		}

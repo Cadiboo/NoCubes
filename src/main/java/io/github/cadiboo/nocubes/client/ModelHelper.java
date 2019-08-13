@@ -48,24 +48,16 @@ public final class ModelHelper {
 			final BlockRendererDispatcher blockRendererDispatcher,
 //			final IModelData modelData,
 //			final Random posRand,
-			final long posRand,
+			final long posRandLong,
 			final BlockRenderLayer blockRenderLayer
 	) {
-
-		try (final ModProfiler ignored = ModProfiler.get().start("getActualState")) {
-			try {
-				state = state.getActualState(reader, pos);
-			} catch (Exception ignored1) {
-			}
-		}
-
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
 		Object renderEnv = null;
 
 		if (OPTIFINE_INSTALLED) {
-//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(reader, state, pos);
-			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, reader, state, pos);
+//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(state, pos);
+			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
 
 			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
 		}
@@ -74,16 +66,16 @@ public final class ModelHelper {
 			state = state.getBlock().getExtendedState(state, reader, pos);
 		}
 
-		for (int facingIndex = 0; facingIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++facingIndex) {
-			final EnumFacing facing = DIRECTION_QUADS_ORDERED[facingIndex];
-			List<BakedQuad> quads = model.getQuads(state, facing, posRand/*, modelData*/);
+		for (int directionIndex = 0; directionIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++directionIndex) {
+			final EnumFacing direction = DIRECTION_QUADS_ORDERED[directionIndex];
+			List<BakedQuad> quads = model.getQuads(state, direction, posRandLong/*, modelData*/);
 			if (quads.isEmpty()) {
 				continue;
 			}
 
 			if (OPTIFINE_INSTALLED) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, facing, blockRenderLayer, posRand, renderEnv);
+					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
 					if (quads.isEmpty()) {
 						continue;
 					}

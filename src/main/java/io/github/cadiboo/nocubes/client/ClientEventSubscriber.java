@@ -1,16 +1,23 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -24,19 +31,19 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -55,6 +62,12 @@ import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
+import static org.lwjgl.input.Keyboard.KEY_C;
+import static org.lwjgl.input.Keyboard.KEY_I;
+import static org.lwjgl.input.Keyboard.KEY_K;
+import static org.lwjgl.input.Keyboard.KEY_N;
+import static org.lwjgl.input.Keyboard.KEY_O;
+import static org.lwjgl.input.Keyboard.KEY_P;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -63,6 +76,30 @@ import static net.minecraftforge.fml.relauncher.Side.CLIENT;
  */
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
+
+	private static final String CATEGORY = "key.categories." + MOD_ID;
+
+	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", KEY_O, CATEGORY);
+	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", KEY_I, CATEGORY);
+	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KEY_P, CATEGORY);
+//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", KEY_J, CATEGORY);
+
+	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, CATEGORY);
+	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", KEY_K, CATEGORY);
+	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", KEY_C, CATEGORY);
+
+	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
+
+	static {
+		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
+		ClientRegistry.registerKeyBinding(toggleRenderSmoothLeaves);
+		ClientRegistry.registerKeyBinding(toggleProfilers);
+//		ClientRegistry.registerKeyBinding(tempDiscoverSmoothables);
+
+		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
+		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
+		ClientRegistry.registerKeyBinding(toggleTerrainCollisions);
+	}
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
@@ -82,11 +119,15 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		final EntityPlayerSP player = minecraft.player;
+		final WorldClient world = minecraft.world;
+		// Every minute
+		if (world != null && world.getWorldTime() % 1200 == 0) {
+			BlockColorInfo.refresh();
+		}
 
 //		// TODO: Temp!
 //		{
-//			if (ClientProxy.tempDiscoverSmoothables.isPressed()) {
+//			if (tempDiscoverSmoothables.isPressed()) {
 ////				LOGGER.info("Discovering smoothables...");
 //				player.sendMessage(new TextComponentString("Discovering smoothables..."));
 //				final long startTime = System.nanoTime();
@@ -99,7 +140,7 @@ public final class ClientEventSubscriber {
 
 		// Rendering
 		{
-			if (ClientProxy.toggleRenderSmoothTerrain.isPressed()) {
+			if (toggleRenderSmoothTerrain.isPressed()) {
 				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
 				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
 				// Config saving is async so set it now
@@ -107,7 +148,7 @@ public final class ClientEventSubscriber {
 				ClientUtil.tryReloadRenderers();
 				return;
 			}
-			if (ClientProxy.toggleRenderSmoothLeaves.isPressed()) {
+			if (toggleRenderSmoothLeaves.isPressed()) {
 				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
 				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
 				// Config saving is async so set it now
@@ -119,30 +160,11 @@ public final class ClientEventSubscriber {
 
 		// Collisions
 		{
-			if (ClientProxy.tempToggleTerrainCollisions.isPressed()) {
-//				player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsBroken114"));
-				if (!minecraft.isSingleplayer()) {
-					// TODO: Send packet to server requesting enabling collisions?
-					player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotSingleplayer"));
+			if (toggleTerrainCollisions.isPressed()) {
+				if (Config.terrainCollisions) {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
 				} else {
-					final boolean setTo;
-					if (!Config.terrainCollisions) {
-						if (canEnableTerrainCollisions(minecraft, player)) {
-							ConfigHelper.setTerrainCollisions(true);
-							setTo = true;
-							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsEnabledWarning"));
-							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisablePress", new TextComponentTranslation(ClientProxy.tempToggleTerrainCollisions.getDisplayName())));
-						} else {
-							setTo = Config.terrainCollisions;
-							player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsNotOnFlat"));
-						}
-					} else {
-						ConfigHelper.setTerrainCollisions(false);
-						setTo = false;
-						player.sendMessage(new TextComponentTranslation(MOD_ID + ".collisionsDisabled"));
-					}
-					// Config saving is async so set it now
-					Config.terrainCollisions = setTo;
+					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableTerrainCollisions());
 				}
 			}
 		}
@@ -150,8 +172,8 @@ public final class ClientEventSubscriber {
 		// Smoothables
 		SMOOTHABLES:
 		{
-			final boolean terrainPressed = ClientProxy.toggleTerrainSmoothableBlockState.isPressed();
-			final boolean leavesPressed = ClientProxy.toggleLeavesSmoothableBlockState.isPressed();
+			final boolean terrainPressed = toggleTerrainSmoothableBlockState.isPressed();
+			final boolean leavesPressed = toggleLeavesSmoothableBlockState.isPressed();
 			if (!terrainPressed && !leavesPressed) {
 				break SMOOTHABLES;
 			}
@@ -166,25 +188,10 @@ public final class ClientEventSubscriber {
 			final IBlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
-				if (!minecraft.isSingleplayer()) {
-					// TODO: Send packet to server requesting adding terrain smoothable?
-					player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainSmoothableNotSingleplayer"));
-				}
-//				else // FIXME: Commented out to let people still do it, for the time being
-				{
-					final BlockStateToast toast;
-					if (!state.nocubes_isTerrainSmoothable()) {
-						ConfigHelper.addTerrainSmoothable(state);
-						toast = new BlockStateToast.AddTerrain(state, blockPos);
-					} else {
-						ConfigHelper.removeTerrainSmoothable(state);
-						toast = new BlockStateToast.RemoveTerrain(state, blockPos);
-					}
-					minecraft.getToastGui().add(toast);
-
-					if (Config.renderSmoothTerrain) {
-						ClientUtil.tryReloadRenderers();
-					}
+				if (state.nocubes_isTerrainSmoothable()) {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
+				} else {
+					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
 				}
 			}
 			if (leavesPressed) {
@@ -204,59 +211,19 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		if (ClientProxy.toggleProfilers.isPressed()) {
-			synchronized (ModProfiler.PROFILERS) {
-				if (ModProfiler.profilersEnabled) {
-					ModProfiler.disableProfiling();
-				} else {
-					ModProfiler.enableProfiling();
-				}
+		if (toggleProfilers.isPressed()) {
+			if (ModProfiler.isProfilingEnabled()) {
+				ModProfiler.disableProfiling();
+			} else {
+				ModProfiler.enableProfiling();
 			}
 		}
-	}
-
-	private static boolean canEnableTerrainCollisions(final Minecraft minecraft, final EntityPlayerSP player) {
-		boolean topAllSolid = true;
-		boolean topAllNonSolid = true;
-		boolean bottomAllSolid = true;
-		boolean bottomAllNonSolid = true;
-
-		final BlockPos playerPos = player.getPosition();
-		final int playerPosX = playerPos.getX();
-		final int playerPosY = playerPos.getY();
-		final int playerPosZ = playerPos.getZ();
-		final WorldClient world = minecraft.world;
-		final PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			for (int x = -2; x < 3; ++x) {
-				for (int z = -2; z < 3; ++z) {
-					{
-						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY, playerPosZ + z);
-						final boolean topIsSolid = world.getBlockState(pooledMutableBlockPos).getCollisionBoundingBox(world, pooledMutableBlockPos) != null;
-						topAllSolid &= topIsSolid;
-						topAllNonSolid &= (!topIsSolid);
-					}
-					{
-						pooledMutableBlockPos.setPos(playerPosX + x, playerPosY - 1, playerPosZ + z);
-						final boolean bottomIsSolid = world.getBlockState(pooledMutableBlockPos).getCollisionBoundingBox(world, pooledMutableBlockPos) != null;
-						bottomAllSolid &= bottomIsSolid;
-						bottomAllNonSolid &= (!bottomIsSolid);
-					}
-				}
-			}
-		} finally {
-			pooledMutableBlockPos.release();
-		}
-
-		if (topAllNonSolid && bottomAllSolid) {
-			return true;
-		} else return topAllNonSolid && bottomAllNonSolid;
 	}
 
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
 
-		if (!ModProfiler.profilersEnabled) {
+		if (!ModProfiler.isProfilingEnabled()) {
 			return;
 		}
 
@@ -265,7 +232,8 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		minecraft.profiler.startSection("debugNoCubes");
+		final Profiler profiler = minecraft.profiler;
+		profiler.startSection("debugNoCubes");
 		GlStateManager.pushMatrix();
 		try {
 			renderProfilers();
@@ -273,7 +241,7 @@ public final class ClientEventSubscriber {
 			LogManager.getLogger("NoCubes Profile Renderer").error("Error Rendering Profilers.", e);
 		}
 		GlStateManager.popMatrix();
-		minecraft.profiler.endSection();
+		profiler.endSection();
 	}
 
 	private static void renderProfilers() {
@@ -284,23 +252,25 @@ public final class ClientEventSubscriber {
 			for (Map.Entry<Thread, ModProfiler> entry : ModProfiler.PROFILERS.entrySet()) {
 				Thread thread = entry.getKey();
 				ModProfiler profiler = entry.getValue();
-				List<Profiler.Result> list = profiler.getProfilingData("");
+				List<ModProfiler.Result> list = profiler.getProfilingData("");
 				if (list.size() < 2) { // Continue of thread is idle
 					continue;
 				}
 				final int offset = visibleIndex++;
 
-				Profiler.Result profiler$result = list.remove(0);
+				ModProfiler.Result profiler$result = list.remove(0);
+				final int size = list.size();
+
 				GlStateManager.clear(256);
 				GlStateManager.matrixMode(5889);
 				GlStateManager.enableColorMaterial();
 				GlStateManager.loadIdentity();
-				final int displayWidth = mc.displayWidth;
-				final int displayHeight = mc.displayHeight;
-				GlStateManager.ortho(0.0D, (double) displayWidth, (double) displayHeight, 0.0D, 1000.0D, 3000.0D);
+				final int framebufferWidth = mc.displayWidth;
+				final int framebufferHeight = mc.displayHeight;
+				GlStateManager.ortho(0.0D, (double) framebufferWidth, (double) framebufferHeight, 0.0D, 1000.0D, 3000.0D);
 				GlStateManager.matrixMode(5888);
 				GlStateManager.loadIdentity();
-				GlStateManager.scale(displayWidth / 1000F, displayWidth / 1000F, 1);
+				GlStateManager.scale(framebufferWidth / 1000F, framebufferWidth / 1000F, 1);
 				GlStateManager.translate(5F, 5F, 0F);
 				GlStateManager.translate(0.0F, 0.0F, -2000.0F);
 				GlStateManager.glLineWidth(1.0F);
@@ -333,10 +303,10 @@ public final class ClientEventSubscriber {
 				GlStateManager.disableBlend();
 				double d0 = 0.0D;
 
-				for (int l = 0; l < list.size(); ++l) {
-					Profiler.Result profiler$result1 = list.get(l);
+				for (int i = 0; i < size; ++i) {
+					final ModProfiler.Result profiler$result1 = list.get(i);
 					final double usePercentage = profiler$result1.usePercentage;
-					int i1 = MathHelper.floor(usePercentage / 4.0D) + 1;
+					int i11 = MathHelper.floor(usePercentage / 4.0D) + 1;
 					bufferbuilder.begin(6, DefaultVertexFormats.POSITION_COLOR);
 					int j1 = profiler$result1.getColor();
 					int k1 = j1 >> 16 & 255;
@@ -344,8 +314,8 @@ public final class ClientEventSubscriber {
 					int i2 = j1 & 255;
 					bufferbuilder.pos((double) cx, (double) cy, 0.0D).color(k1, l1, i2, 255).endVertex();
 
-					for (int j2 = i1; j2 >= 0; --j2) {
-						float f = (float) ((d0 + usePercentage * (double) j2 / (double) i1) * (Math.PI * 2D) / 100.0D);
+					for (int j2 = i11; j2 >= 0; --j2) {
+						float f = (float) ((d0 + usePercentage * (double) j2 / (double) i11) * (Math.PI * 2D) / 100.0D);
 						float f1 = MathHelper.sin(f) * 160.0F;
 						float f2 = MathHelper.cos(f) * 160.0F * 0.5F;
 						bufferbuilder.pos((double) ((float) cx + f1), (double) ((float) cy - f2), 0.0D).color(k1, l1, i2, 255).endVertex();
@@ -354,8 +324,8 @@ public final class ClientEventSubscriber {
 					tessellator.draw();
 					bufferbuilder.begin(5, DefaultVertexFormats.POSITION_COLOR);
 
-					for (int i3 = i1; i3 >= 0; --i3) {
-						float f3 = (float) ((d0 + usePercentage * (double) i3 / (double) i1) * (Math.PI * 2D) / 100.0D);
+					for (int i3 = i11; i3 >= 0; --i3) {
+						float f3 = (float) ((d0 + usePercentage * (double) i3 / (double) i11) * (Math.PI * 2D) / 100.0D);
 						float f4 = MathHelper.sin(f3) * 160.0F;
 						float f5 = MathHelper.cos(f3) * 160.0F * 0.5F;
 						bufferbuilder.pos((double) ((float) cx + f4), (double) ((float) cy - f5), 0.0D).color(k1 >> 1, l1 >> 1, i2 >> 1, 255).endVertex();
@@ -368,26 +338,25 @@ public final class ClientEventSubscriber {
 
 				DecimalFormat decimalformat = new DecimalFormat("##0.00");
 				GlStateManager.enableTexture2D();
-				String s = "";
+				String str = "";
 
 				final String profilerName = profiler$result.profilerName;
 				if (!"unspecified".equals(profilerName)) {
-					s = s + "[0] ";
+					str = str + "[0] ";
 				}
 
 				if (profilerName.isEmpty()) {
-					s = s + "ROOT ";
+					str = str + "ROOT ";
 				} else {
-					s = s + profilerName + ' ';
+					str = str + profilerName + ' ';
 				}
 
-//				int l2 = 16777215;
-				fontRenderer.drawStringWithShadow(s, (float) (cx - 160), (float) (cy - 80 - 16), 0xFFFFFF);
-				s = decimalformat.format(profiler$result.totalUsePercentage) + "%";
-				fontRenderer.drawStringWithShadow(s, (float) (cx + 160 - fontRenderer.getStringWidth(s)), (float) (cy - 80 - 16), 0xFFFFFF);
+				fontRenderer.drawStringWithShadow(str, (float) (cx - 160), (float) (cy - 80 - 16), 0xFFFFFF);
+				str = decimalformat.format(profiler$result.totalUsePercentage) + "%";
+				fontRenderer.drawStringWithShadow(str, (float) (cx + 160 - fontRenderer.getStringWidth(str)), (float) (cy - 80 - 16), 0xFFFFFF);
 
-				for (int k2 = 0; k2 < list.size(); ++k2) {
-					Profiler.Result profiler$result2 = list.get(k2);
+				for (int k2 = 0; k2 < size; ++k2) {
+					ModProfiler.Result profiler$result2 = list.get(k2);
 					StringBuilder stringbuilder = new StringBuilder();
 
 					final String profilerName1 = profiler$result2.profilerName;
@@ -419,7 +388,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		final EntityPlayer player = minecraft.player;
+		final EntityPlayerSP player = minecraft.player;
 		if (player == null) {
 			return;
 		}

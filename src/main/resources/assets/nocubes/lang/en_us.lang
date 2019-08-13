@@ -7,22 +7,31 @@ key.categories.nocubes=NoCubes
 nocubes.key.toggleTerrainSmoothableBlockState=Toggle Terrain Smoothable BlockState
 nocubes.key.toggleLeavesSmoothableBlockState=Toggle Leaves Smoothable BlockState
 nocubes.key.toggleProfilers=Toggle Profilers
-nocubes.key.tempToggleTerrainCollisions=[TEMP] Toggle Terrain Collisions
+nocubes.key.toggleTerrainCollisions=Toggle Terrain Collisions
 nocubes.key.toggleRenderSmoothTerrain=Toggle Smooth Terrain Rendering
 nocubes.key.toggleRenderSmoothLeaves=Toggle Smooth Leaves Rendering
 
-nocubes.collisionsNotOnFlat=You are not on a flat surface! Please get on a flat surface before enabling collisions!
-nocubes.collisionsEnabledWarning=NoCubes terrain collisions enabled. These are highly experimental and unoptimsied!
-nocubes.collisionsDisabled=NoCubes terrain collisions disabled
-nocubes.collisionsDisablePress=To disable terrain collisions press %s
+nocubes.terrainCollisions114=NoCubes Terrain Collisions don't work properly in 1.14 yet. This is being worked on and will be fixed soon
+nocubes.terrainCollisionsEnabled=NoCubes Terrain Collisions enabled
+nocubes.terrainCollisionsDisabled=NoCubes Terrain Collisions disabled
 
-nocubes.collisionsNotSingleplayer=You're not in singleplayer! I haven't written the code to handle syncing collision changes on multiplayer servers yet. Glitches may happen!
-nocubes.terrainSmoothableNotSingleplayer=You're not in singleplayer! I haven't written the code to handle syncing terrain smoothable changes on multiplayer servers yet. Glitches may happen!
+nocubes.addTerrainSmoothableNoPermission=You need to be an operator to add a Terrain Smoothable
+nocubes.disableCollisionsNoPermission=You need to be an operator to disable NoCubes Terrain Collisions
+nocubes.enableCollisionsNoPermission=You need to be an operator to enable NoCubes Terrain Collisions
+nocubes.removeTerrainSmoothableNoPermission=You need to be an operator to remove a Terrain Smoothable
+nocubes.setExtendFluidsRangeNoPermission=You need to be an operator to set the Extend Fluids Range
+nocubes.setTerrainMeshGeneratorNoPermission=You need to be an operator to set the Terrain Mesh Generator
+
+nocubes.addedTerrainSmoothable=Added Terrain Smoothable: %s
+nocubes.removedTerrainSmoothable=Removed Terrain Smoothable: %s
+nocubes.setExtendFluidsRange=Set Extend Fluids Range to %s
+nocubes.setTerrainMeshGenerator=Set Terrain Mesh Generator to %s
 
 nocubes.config.title=NoCubes Config Gui Beta (Changes aren't instant)
 nocubes.config.client=Client Config
 nocubes.config.renderSmoothTerrain=Render Smooth Terrain
 nocubes.config.renderSmoothLeaves=Render Smooth Leaves
+nocubes.config.renderSmoothAndVanillaLeaves=Render both Smooth and Vanilla Leaves
 nocubes.config.leavesSmoothable=Leaves Smoothable
 nocubes.config.leavesMeshGenerator=Leaves Mesh Generator
 nocubes.config.smoothLeavesType=Smooth Leaves Type
@@ -37,3 +46,5 @@ nocubes.config.terrainSmoothable=Terrain Smoothable
 nocubes.config.extendFluidsRange=Extend Fluids Range
 nocubes.config.terrainMeshGenerator=Terrain Mesh Generator
 nocubes.config.terrainCollisions=Terrain Collisions
+
+nocubes.waitSeconds=Wait %s seconds

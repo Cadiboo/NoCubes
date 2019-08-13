@@ -18,13 +18,15 @@ import java.util.Set;
 public final class Config {
 
 	@Nonnull
-	static final Logger LOGGER = LogManager.getLogger();
+	public static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
+
 	@Nonnull
-	static final HashSet<Block> leavesSmoothableBlocks = new HashSet<>(); // Client
+	static final Logger LOGGER = LogManager.getLogger("NoCubes Config");
 
 	// Client
 	public static boolean renderSmoothTerrain;
 	public static boolean renderSmoothLeaves;
+	public static boolean renderSmoothAndVanillaLeaves;
 	public static MeshGeneratorType leavesMeshGenerator;
 	public static Set<String> leavesSmoothable;
 	public static SmoothLeavesType smoothLeavesType;
@@ -45,11 +47,5 @@ public final class Config {
 	public static MeshGeneratorType terrainMeshGenerator;
 	public static boolean terrainCollisions;
 	public static Set<String> terrainSmoothable;
-
-	// Client
-	@Nonnull
-	public static HashSet<Block> getLeavesSmoothableBlocks() {
-		return leavesSmoothableBlocks;
-	}
 
 }

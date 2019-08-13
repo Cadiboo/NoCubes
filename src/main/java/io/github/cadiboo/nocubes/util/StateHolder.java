@@ -10,6 +10,7 @@ import static net.minecraft.block.BlockDirt.SNOWY;
 import static net.minecraft.block.BlockDoublePlant.EnumBlockHalf.LOWER;
 import static net.minecraft.block.BlockDoublePlant.EnumPlantType;
 import static net.minecraft.block.BlockDoublePlant.HALF;
+import static net.minecraft.init.Blocks.AIR;
 import static net.minecraft.init.Blocks.DIRT;
 import static net.minecraft.init.Blocks.DOUBLE_PLANT;
 import static net.minecraft.init.Blocks.GRASS;
@@ -20,6 +21,8 @@ import static net.minecraft.init.Blocks.TALLGRASS;
  * @author Cadiboo
  */
 public final class StateHolder {
+
+	public static final IBlockState AIR_DEFAULT = AIR.getDefaultState();
 
 	public static final IBlockState SNOW_LAYER_DEFAULT = SNOW_LAYER.getDefaultState();
 	public static final IBlockState GRASS_BLOCK_SNOWY = GRASS.getDefaultState().withProperty(SNOWY, true);

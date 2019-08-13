@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.tempnetwork;
+package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.util.DistExecutor;
@@ -43,9 +43,9 @@ public final class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncCon
 	}
 
 	@Override
-	public IMessage onMessage(final S2CSyncConfig message, final MessageContext ctx) {
+	public IMessage onMessage(final S2CSyncConfig msg, final MessageContext context) {
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> Minecraft.getMinecraft().addScheduledTask(() -> {
-			ConfigTracker.INSTANCE.receiveSyncedConfig(message);
+			ConfigTracker.INSTANCE.receiveSyncedConfig(msg);
 		}));
 		return null;
 	}

@@ -7,7 +7,9 @@ import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.crash.CrashReport;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
@@ -15,6 +17,7 @@ import net.minecraftforge.fml.common.ModContainer;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 
@@ -30,6 +33,14 @@ public final class ModUtil {
 	public static final EnumFacing[] DIRECTION_VALUES = EnumFacing.VALUES;
 	public static final int DIRECTION_VALUES_LENGTH = DIRECTION_VALUES.length;
 	public static final Random RANDOM = new Random();
+	/**
+	 * 1. Ops can bypass spawn protection.
+	 * 2. Ops can use /clear, /difficulty, /effect, /gamemode, /gamerule, /give, /summon, /setblock and /tp, and can edit command blocks.
+	 * 3. Ops can use /ban, /deop, /whitelist, /kick, and /op.
+	 * 4. Ops can use /stop.
+	 */
+	public static final int COMMAND_PERMISSION_LEVEL = 2;
+	public static final String COMMAND_PERMISSION_NAME = "give";
 
 	/**
 	 * @return Negative density if the block is smoothable (inside the isosurface), positive if it isn't
@@ -288,6 +299,23 @@ public final class ModUtil {
 	 */
 	public static byte getRelativePos(final int blockPos) {
 		return (byte) (blockPos & 15);
+	}
+
+	public static void preloadClass(@Nonnull final String qualifiedName, @Nonnull final String simpleName) {
+		try {
+			LOGGER.info("Loading class \"" + simpleName + "\"...");
+			final ClassLoader classLoader = NoCubes.class.getClassLoader();
+			final long startTime = System.nanoTime();
+			Class.forName(qualifiedName, false, classLoader);
+			LOGGER.info("Loaded class \"" + simpleName + "\" in " + (System.nanoTime() - startTime) + " nano seconds");
+			LOGGER.info("Initialising class \"" + simpleName + "\"...");
+			Class.forName(qualifiedName, true, classLoader);
+			LOGGER.info("Initialised \"" + simpleName + "\"");
+		} catch (final ClassNotFoundException e) {
+			final CrashReport crashReport = CrashReport.makeCrashReport(e, "Failed to load class \"" + simpleName + "\". This should not be possible!");
+			crashReport.makeCategory("Loading class");
+			throw new ReportedException(crashReport);
+		}
 	}
 
 }

@@ -19,6 +19,8 @@ final class ClientConfig {
 	@Nonnull
 	final ForgeConfigSpec.BooleanValue renderSmoothLeaves;
 	@Nonnull
+	final ForgeConfigSpec.BooleanValue renderSmoothAndVanillaLeaves;
+	@Nonnull
 	final ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
@@ -51,7 +53,11 @@ final class ClientConfig {
 		renderSmoothLeaves = builder
 				.comment("If smooth leaves should be rendered")
 				.translation(MOD_ID + ".config.renderSmoothLeaves")
-				.define("renderSmoothLeaves", false);
+				.define("renderSmoothLeaves", true);
+		renderSmoothAndVanillaLeaves = builder
+				.comment("If both smooth and vanilla leaves should be rendered")
+				.translation(MOD_ID + ".config.renderSmoothAndVanillaLeaves")
+				.define("renderSmoothAndVanillaLeaves", true);
 		leavesSmoothable = builder
 				.comment("The list of leaves smoothable blocks")
 				.translation(MOD_ID + ".config.leavesSmoothable")

@@ -22,7 +22,7 @@ package io.github.cadiboo.nocubes.config;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
-import io.github.cadiboo.nocubes.tempnetwork.S2CSyncConfig;
+import io.github.cadiboo.nocubes.network.S2CSyncConfig;
 import net.minecraft.client.Minecraft;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;

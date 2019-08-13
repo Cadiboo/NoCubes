@@ -1,20 +1,22 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
+import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiErrorScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ReportedException;
@@ -23,14 +25,10 @@ import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraftforge.fml.relauncher.ReflectionHelper;
-import net.minecraftforge.fml.relauncher.ReflectionHelper.UnableToFindFieldException;
-import net.minecraftforge.registries.IRegistryDelegate;
+import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
 
 import javax.annotation.Nonnull;
-import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Map;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
@@ -50,7 +48,6 @@ public final class ClientUtil {
 	public static final BlockRenderLayer[] BLOCK_RENDER_LAYER_VALUES = BlockRenderLayer.values();
 	public static final int BLOCK_RENDER_LAYER_VALUES_LENGTH = BLOCK_RENDER_LAYER_VALUES.length;
 	static final int[] NEGATIVE_1_8000 = new int[8000];
-	private static final Field BLOCK_COLORS_REGISTRY = findBlockColorsRegistryField();
 	private static final int[][] OFFSETS_ORDERED = {
 			// check 6 immediate neighbours
 			{+0, -1, +0},
@@ -281,20 +278,22 @@ public final class ClientUtil {
 //			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
 //		} else
 		if (reader instanceof ChunkCache) {
-			ChunkCache renderChunkCache = (ChunkCache) reader;
+			final ChunkCache renderChunkCache = (ChunkCache) reader;
 			final int x = currentChunkPosX - renderChunkCache.chunkX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
 			return renderChunkCache.chunkArray[x][z];
 		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
-			ChunkCache region = OptiFineCompatibility.getChunkCache(reader);
-			final int x = currentChunkPosX - region.chunkX;
-			final int z = currentChunkPosZ - region.chunkZ;
-			return region.chunkArray[x][z];
+			final ChunkCache renderChunkCache = OptiFineCompatibility.getChunkRenderCache(reader);
+			final int x = currentChunkPosX - renderChunkCache.chunkX;
+			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
+			return renderChunkCache.chunkArray[x][z];
 		}
-		throw new IllegalStateException("Should Not Reach Here!");
+		final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(), "Invalid ChunkRenderCache: " + reader);
+		crashReport.makeCategory("NoCubes getting Chunk");
+		throw new ReportedException(crashReport);
 	}
 
-//	public static void setupChunkRenderCache(final ChunkCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
+//	public static void setupChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
 //		final int startX = start.getX();
 //		final int startY = start.getY();
 //		final int startZ = start.getZ();
@@ -304,15 +303,14 @@ public final class ClientUtil {
 //		final int cacheSizeZ = end.getZ() - startZ + 1;
 //
 //		final int size = cacheSizeX * cacheSizeY * cacheSizeZ;
-//		final IBlockState[] blockStates = new IBlockState[size];
-////		final IFluidState[] fluidStates = new IFluidState[size];
+//		final BlockState[] blockStates = new BlockState[size];
+//		final IFluidState[] fluidStates = new IFluidState[size];
 //
 //		int cx = (startX >> 4) - chunkStartX;
 //		int cz = (startZ >> 4) - chunkStartZ;
 //		Chunk currentChunk = chunks[cx][cz];
 //
-//		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-//		try {
+//		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
 //			int index = 0;
 //			for (int z = 0; z < cacheSizeZ; ++z) {
 //				for (int y = 0; y < cacheSizeY; ++y) {
@@ -342,14 +340,12 @@ public final class ClientUtil {
 //						pooledMutableBlockPos.setPos(posX, posY, posZ);
 ////						blockStates[index] = currentChunk.getBlockState(pooledMutableBlockPos);
 ////						fluidStates[index] = currentChunk.getFluidState(posX, posY, posZ);
-//						final IBlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
+//						final BlockState blockState = currentChunk.getBlockState(pooledMutableBlockPos);
 //						blockStates[index] = blockState;
-////						fluidStates[index] = blockState.getFluidState();
+//						fluidStates[index] = blockState.getFluidState();
 //					}
 //				}
 //			}
-//		} finally {
-//			pooledMutableBlockPos.release();
 //		}
 //
 //		_this.cacheSizeX = cacheSizeX;
@@ -357,31 +353,77 @@ public final class ClientUtil {
 //		_this.cacheSizeZ = cacheSizeZ;
 //
 //		_this.blockStates = blockStates;
-////		_this.fluidStates = fluidStates;
+//		_this.fluidStates = fluidStates;
 //	}
 
-	private static Field findBlockColorsRegistryField() {
-		try {
-//			return ObfuscationReflectionHelper.findField(BlockColors.class, "field_186725_a");
-			// Forge seems to do weird stuff and rename the field, so its always "blockColorMap" instead of "field_186725_a"/"mapBlockColors"
-			// I'm keeping all the names in for safety
-			return ReflectionHelper.findField(BlockColors.class, "blockColorMap", "field_186725_a", "mapBlockColors");
-		} catch (UnableToFindFieldException e) {
-			final CrashReport crashReport = new CrashReport("Unable to find field \"" + "field_186725_a" + "\". Field does not exist!", e);
-			crashReport.makeCategory("Finding Field");
-			throw new ReportedException(crashReport);
-		}
+	public static void replaceFluidRenderer() {
+		NoCubes.LOGGER.debug("Replacing fluid renderer");
+		Minecraft.getMinecraft().getBlockRendererDispatcher().fluidRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();
+		NoCubes.LOGGER.debug("Replaced fluid renderer");
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsRegistry(final BlockColors blockColors) {
-//		return blockColors.colors;
-		try {
-			return (Map<IRegistryDelegate<Block>, IBlockColor>) BLOCK_COLORS_REGISTRY.get(blockColors);
-		} catch (IllegalAccessException e) {
-			final CrashReport crashReport = new CrashReport("Unable to access field!", e);
-			crashReport.makeCategory("Accessing Field");
-			throw new ReportedException(crashReport);
+	public static void crashIfIncompatibleOptiFine() {
+		final String optiFineVersion = OptiFineLocator.getOptiFineVersion();
+		throw new CustomModLoadingErrorDisplayException("Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + optiFineVersion + ")", new IllegalStateException("Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + optiFineVersion + ")")) {
+
+			private final String[] lines = new String[]{
+					"Incompatible OptiFine version detected!",
+					"Please use the OptiFine_HD_U_F series",
+					"(Installed: " + optiFineVersion + ")"
+			};
+
+			@Override
+			public void initGui(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer) {
+			}
+
+			@Override
+			public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
+
+				final int x = errorScreen.width / 2;
+				final int y = errorScreen.height / 2 / 2;
+				final String[] lines = this.lines;
+				for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+					errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
+
+				}
+			}
+		};
+	}
+
+	public static void crashIfRCRCHInstalled() {
+		throw new CustomModLoadingErrorDisplayException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.")) {
+
+			private final String[] lines = new String[]{
+					"NoCubes Dependency Error!",
+					"",
+					"RenderChunk rebuildChunk Hooks CANNOT be installed!",
+					"",
+					"Remove RenderChunk rebuildChunk Hooks from",
+					"the mods folder and then restart the game."
+			};
+
+			@Override
+			public void initGui(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer) {
+			}
+
+			@Override
+			public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
+
+				final int x = errorScreen.width / 2;
+				final int y = errorScreen.height / 2 / 2;
+				final String[] lines = this.lines;
+				for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+					errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
+
+				}
+			}
+		};
+	}
+
+	public static void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
+		final RenderGlobal worldRenderer = Minecraft.getMinecraft().renderGlobal;
+		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
+			worldRenderer.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
 		}
 	}
 

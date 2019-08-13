@@ -42,6 +42,7 @@ import org.lwjgl.opengl.GL11;
 import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
@@ -53,6 +54,10 @@ import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
  * @author Cadiboo
  */
 public final class RenderDispatcher {
+
+	private static final Predicate<IBlockState> IS_BLOCK_STATE_GRASS = blockState -> ModUtil.isMaterialGrass(blockState.getMaterial());
+	private static final Predicate<IBlockState> IS_BLOCK_STATE_LEAVES = blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial());
+	private static final Predicate<IBlockState> ALWAYS_TRUE = blockState -> true;
 
 	public static void renderChunk(
 			@Nonnull final RenderChunk chunkRender,
@@ -72,12 +77,11 @@ public final class RenderDispatcher {
 		final int chunkRenderPosY = chunkRenderPos.getY();
 		final int chunkRenderPosZ = chunkRenderPos.getZ();
 
-		// Fluids Cache        | -1, 16   | 18
-		// Smoothable Cache    | -1, n+1 | n + 2
-		// Density Cache       | -1, n   | n + 1
-		// Vertices            | -1, 16  | 18
-		// Light Cache         | -2, 17  | 20
-		// Color Cache         | -2, 17  | 20
+		// Smoothable Cache    | -1, n + 1 | n + 2
+		// Density Cache       | -1, n     | n + 1
+		// Vertices            | -1, 16    | 18
+		// Light Cache         | -2, 17    | 20
+		// Color Cache         | -2, 17    | 20
 
 		int stateCachePaddingX = 0;
 		int stateCachePaddingY = 0;
@@ -89,14 +93,14 @@ public final class RenderDispatcher {
 
 //		// TODO: Test fluids cache stuff (State, Light & Colors)
 //		//  to see what their min required values actually are
-//		// Fluids Cache        | -2, 17   | 20
+//		// Fluids Cache        | -2, 18    | 21
 //		{
 //			stateCachePaddingX = 2;
 //			stateCachePaddingY = 2;
 //			stateCachePaddingZ = 2;
-//			stateCacheEndX = 17;
-//			stateCacheEndY = 17;
-//			stateCacheEndZ = 17;
+//			stateCacheEndX = 18;
+//			stateCacheEndY = 18;
+//			stateCacheEndZ = 18;
 //		}
 
 		if (Config.renderSmoothTerrain) {
@@ -199,7 +203,7 @@ public final class RenderDispatcher {
 //								// Fluid renderer needs +2 on all axis because reasons
 //								chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 //								2, 2, 2,
-//								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+//								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
 //						)) {
 //							OptimisedFluidBlockRenderer.renderChunk(
 //									chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
@@ -223,7 +227,7 @@ public final class RenderDispatcher {
 //							// Fluid renderer needs +2 on all axis because reasons
 //							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 //							2, 2, 2,
-//							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, $ -> true
+//							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
 //					)) {
 //						OptimisedFluidBlockRenderer.renderChunk(
 //								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
@@ -249,10 +253,8 @@ public final class RenderDispatcher {
 			} finally {
 				pooledMutableBlockPos.release();
 			}
-		} catch (ReportedException e) {
-			throw e;
 		} catch (Exception e) {
-			CrashReport crashReport = new CrashReport("Error rendering NoCubes chunk!", e);
+			CrashReport crashReport = CrashReport.makeCrashReport(e, "Error rendering NoCubes chunk!");
 			crashReport.makeCategory("Rendering chunk");
 			throw new ReportedException(crashReport);
 		}
@@ -273,7 +275,7 @@ public final class RenderDispatcher {
 					chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 					chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 					2, 2, 2,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.GRASS_COLOR, blockState -> ModUtil.isMaterialGrass(blockState.getMaterial())
+					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.GRASS_COLOR, IS_BLOCK_STATE_GRASS
 			)) {
 				final HashMap<Vec3b, FaceList> mesh;
 				if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
@@ -326,11 +328,11 @@ public final class RenderDispatcher {
 					chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
 					chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
 					2, 2, 2,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.FOLIAGE_COLOR, blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial())
+					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.FOLIAGE_COLOR, IS_BLOCK_STATE_LEAVES
 			)) {
 				switch (Config.smoothLeavesType) {
 					case SEPARATE:
-						for (final Block smoothableBlock : Config.getLeavesSmoothableBlocks()) {
+						for (final Block smoothableBlock : Config.leavesSmoothableBlocks) {
 							final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.apply(checkState) && checkState.getBlock() == smoothableBlock);
 							// FIXME: Why is it like this... why
 							try (

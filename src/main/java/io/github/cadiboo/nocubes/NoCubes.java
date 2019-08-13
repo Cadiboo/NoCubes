@@ -1,24 +1,39 @@
 package io.github.cadiboo.nocubes;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.config.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainMeshGenerator;
+import io.github.cadiboo.nocubes.network.S2CAddTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.S2CDisableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.S2CEnableTerrainCollisions;
+import io.github.cadiboo.nocubes.network.S2CRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.S2CSetExtendFluidsRange;
+import io.github.cadiboo.nocubes.network.S2CSetTerrainMeshGenerator;
+import io.github.cadiboo.nocubes.network.S2CSyncConfig;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
-import io.github.cadiboo.nocubes.tempnetwork.ModNetworkManager;
 import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.github.cadiboo.nocubes.util.FileUtils;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Proxy;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
+import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,9 +58,7 @@ public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-	public static final ModNetworkManager NETWORK_MANAGER = new ModNetworkManager();
-	@SidedProxy(serverSide = "io.github.cadiboo.nocubes.server.ServerProxy", clientSide = "io.github.cadiboo.nocubes.client.ClientProxy")
-	public static Proxy PROXY = null;
+	public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel(NoCubes.MOD_ID);
 	@Instance
 	public static NoCubes INSTANCE = null;
 	public final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
@@ -77,14 +90,102 @@ public final class NoCubes {
 			}
 		});
 
+		int networkId = 0;
+		CHANNEL.registerMessage(
+				C2SRequestAddTerrainSmoothable.class,
+				C2SRequestAddTerrainSmoothable.class,
+				networkId++,
+				Side.SERVER
+		);
+		CHANNEL.registerMessage(
+				C2SRequestDisableTerrainCollisions.class,
+				C2SRequestDisableTerrainCollisions.class,
+				networkId++,
+				Side.SERVER
+		);
+		CHANNEL.registerMessage(
+				C2SRequestEnableTerrainCollisions.class,
+				C2SRequestEnableTerrainCollisions.class,
+				networkId++,
+				Side.SERVER
+		);
+		CHANNEL.registerMessage(
+				C2SRequestRemoveTerrainSmoothable.class,
+				C2SRequestRemoveTerrainSmoothable.class,
+				networkId++,
+				Side.SERVER
+		);
+		CHANNEL.registerMessage(
+				C2SRequestSetExtendFluidsRange.class,
+				C2SRequestSetExtendFluidsRange.class,
+				networkId++,
+				Side.SERVER
+		);
+		CHANNEL.registerMessage(
+				C2SRequestSetTerrainMeshGenerator.class,
+				C2SRequestSetTerrainMeshGenerator.class,
+				networkId++,
+				Side.SERVER
+		);
+
+		/* Server -> Client */
+		CHANNEL.registerMessage(
+				S2CSyncConfig.class,
+				S2CSyncConfig.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CAddTerrainSmoothable.class,
+				S2CAddTerrainSmoothable.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CDisableTerrainCollisions.class,
+				S2CDisableTerrainCollisions.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CEnableTerrainCollisions.class,
+				S2CEnableTerrainCollisions.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CRemoveTerrainSmoothable.class,
+				S2CRemoveTerrainSmoothable.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CSetExtendFluidsRange.class,
+				S2CSetExtendFluidsRange.class,
+				networkId++,
+				Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+				S2CSetTerrainMeshGenerator.class,
+				S2CSetTerrainMeshGenerator.class,
+				networkId++,
+				Side.CLIENT
+		);
+
 	}
 
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
 
 		if (NoCubesLoadingPlugin.RCRCH_INSTALLED) {
-			PROXY.crashIfRCRCHInstalled();
+			DistExecutor.runWhenOn(Side.CLIENT, () -> ClientUtil::crashIfRCRCHInstalled);
+			DistExecutor.runWhenOn(Side.SERVER, () -> () -> FMLCommonHandler.instance().raiseException(new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game."), "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", true));
 		}
+		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
+			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineLocator.isOptiFineCompatible()) {
+				ClientUtil.crashIfIncompatibleOptiFine();
+			}
+		});
 
 		this.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
 		this.registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
@@ -92,13 +193,21 @@ public final class NoCubes {
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.CLIENT, Loader.instance().getConfigDir().toPath()));
 		ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.COMMON, Loader.instance().getConfigDir().toPath());
 
-		PROXY.preloadClasses();
+		LOGGER.debug("Preloading patched classes...");
+		ModUtil.preloadClass("net.minecraft.block.state.IBlockProperties", "IBlockProperties");
+		ModUtil.preloadClass("net.minecraft.block.state.BlockStateContainer$StateImplementation", "StateImplementation");
+		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
+			ModUtil.preloadClass("net.minecraft.client.renderer.chunk.RenderChunk", "RenderChunk");
+			ModUtil.preloadClass("net.minecraft.client.renderer.BlockFluidRenderer", "BlockFluidRenderer");
+		});
+		LOGGER.debug("Finished preloading patched classes");
+
 		ModUtil.launchUpdateDaemon(Loader.instance().getIndexedModList().get(MOD_ID));
 	}
 
 	@Mod.EventHandler
 	public void onPostInit(final FMLPostInitializationEvent event) {
-		PROXY.replaceFluidRenderer();
+		DistExecutor.runWhenOn(Side.CLIENT, () -> ClientUtil::replaceFluidRenderer);
 	}
 
 	@Mod.EventHandler
@@ -110,11 +219,11 @@ public final class NoCubes {
 	}
 
 	public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec) {
-		INSTANCE.addConfig(new ModConfig(type, spec, Loader.instance().activeModContainer()));
+		this.addConfig(new ModConfig(type, spec, Loader.instance().activeModContainer()));
 	}
 
 	public void registerConfig(ModConfig.Type type, ForgeConfigSpec spec, String fileName) {
-		INSTANCE.addConfig(new ModConfig(type, spec, Loader.instance().activeModContainer(), fileName));
+		this.addConfig(new ModConfig(type, spec, Loader.instance().activeModContainer(), fileName));
 	}
 
 	public void addConfig(final ModConfig modConfig) {

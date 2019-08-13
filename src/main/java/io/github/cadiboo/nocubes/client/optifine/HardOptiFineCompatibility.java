@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -28,39 +27,32 @@ final class HardOptiFineCompatibility {
 	}
 
 	@Nonnull
-	static ChunkCache getChunkCache(final IBlockAccess reader) {
+	static ChunkCache getChunkRenderCache(final IBlockAccess reader) {
 		return ((ChunkCacheOF) reader).chunkCache;
 	}
 
-	static void pushShaderThing(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
+	static void pushShaderThing(
+			@Nonnull final IBlockState blockState,
+			@Nonnull final BlockPos pos,
+			@Nonnull final IBlockAccess reader,
+			@Nonnull final BufferBuilder bufferBuilder
+	) {
 		if (Config.isShaders()) {
-			SVertexBuilderOF.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
+			SVertexBuilder.pushEntity(blockState, pos, reader, bufferBuilder);
 		}
 	}
 
-	static void popShaderThing(@Nonnull final BufferBuilder worldRendererIn) {
+	static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
 		if (Config.isShaders()) {
-			SVertexBuilderOF.popEntity(worldRendererIn);
+			SVertexBuilder.popEntity(bufferBuilder);
 		}
-	}
-
-	static final class SVertexBuilderOF {
-
-		static void pushEntity(@Nonnull final IBlockState blockStateIn, @Nonnull final BlockPos blockPosIn, @Nonnull final IBlockAccess blockAccess, @Nonnull final BufferBuilder worldRendererIn) {
-			SVertexBuilder.pushEntity(blockStateIn, blockPosIn, blockAccess, worldRendererIn);
-		}
-
-		static void popEntity(@Nonnull final BufferBuilder worldRendererIn) {
-			SVertexBuilder.popEntity(worldRendererIn);
-		}
-
 	}
 
 	static final class BufferBuilderOF {
 
 		@Nonnull
-		static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
-			return bufferBuilder.getRenderEnv(blockAccess, state, pos);
+		static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockState blockState, @Nonnull final BlockPos pos) {
+			return bufferBuilder.getRenderEnv(blockState, pos);
 		}
 
 	}
@@ -68,13 +60,26 @@ final class HardOptiFineCompatibility {
 	static final class BlockModelCustomizerOF {
 
 		@Nonnull
-		static IBakedModel getRenderModel(@Nonnull final IBakedModel model, @Nonnull final IBlockState state, @Nonnull final Object renderEnv) {
-			return BlockModelCustomizer.getRenderModel(model, state, (RenderEnv) renderEnv);
+		static IBakedModel getRenderModel(
+				@Nonnull final IBakedModel model,
+				@Nonnull final IBlockState blockState,
+				@Nonnull final Object renderEnv
+		) {
+			return BlockModelCustomizer.getRenderModel(model, blockState, (RenderEnv) renderEnv);
 		}
 
 		@Nonnull
-		static List<BakedQuad> getRenderQuads(@Nonnull final List<BakedQuad> quads, @Nonnull final IBlockAccess blockAccess, @Nonnull final IBlockState state, @Nonnull final BlockPos pos, @Nonnull final EnumFacing facing, @Nonnull final BlockRenderLayer blockRenderLayer, @Nonnull final long rand, @Nonnull final Object renderEnv) {
-			return BlockModelCustomizer.getRenderQuads(quads, blockAccess, state, pos, facing, blockRenderLayer, rand, (RenderEnv) renderEnv);
+		static List<BakedQuad> getRenderQuads(
+				@Nonnull final List<BakedQuad> quads,
+				@Nonnull final IBlockAccess reader,
+				@Nonnull final IBlockState blockState,
+				@Nonnull final BlockPos pos,
+				@Nonnull final EnumFacing direction,
+				@Nonnull final BlockRenderLayer blockRenderLayer,
+				final long rand,
+				@Nonnull final Object renderEnv
+		) {
+			return BlockModelCustomizer.getRenderQuads(quads, reader, blockState, pos, direction, blockRenderLayer, rand, (RenderEnv) renderEnv);
 		}
 
 	}

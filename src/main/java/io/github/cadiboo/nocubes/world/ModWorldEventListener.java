@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.world;
 
-import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.util.DistExecutor;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -9,6 +10,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nullable;
 
@@ -21,14 +23,16 @@ public final class ModWorldEventListener implements IWorldEventListener {
 
 	@Override
 	public void notifyBlockUpdate(final World worldIn, final BlockPos pos, final IBlockState oldState, final IBlockState newState, final int flags) {
-		final int posX = pos.getX();
-		final int posY = pos.getY();
-		final int posZ = pos.getZ();
-		NoCubes.PROXY.markBlocksForUpdate(
-				posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND,
-				posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND,
-				(flags & 8) != 0
-		);
+		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
+			final int posX = pos.getX();
+			final int posY = pos.getY();
+			final int posZ = pos.getZ();
+			ClientUtil.markBlocksForUpdate(
+					posX - BLOCK_UPDATE_EXTEND, posY - BLOCK_UPDATE_EXTEND, posZ - BLOCK_UPDATE_EXTEND,
+					posX + BLOCK_UPDATE_EXTEND, posY + BLOCK_UPDATE_EXTEND, posZ + BLOCK_UPDATE_EXTEND,
+					(flags & 8) != 0
+			);
+		});
 	}
 
 	@Override

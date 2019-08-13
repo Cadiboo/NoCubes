@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.ConfigTracker;
-import io.github.cadiboo.nocubes.tempnetwork.S2CSyncConfig;
+import io.github.cadiboo.nocubes.network.S2CSyncConfig;
 import io.github.cadiboo.nocubes.world.ModWorldEventListener;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -28,7 +28,7 @@ public final class ForgeEventSubscriber {
 	public static void onWorldLoadEvent(final WorldEvent.Load event) {
 		final World world = event.getWorld();
 		if (world instanceof World) {
-			((World) world).addEventListener(new ModWorldEventListener());
+			world.addEventListener(new ModWorldEventListener());
 		} else {
 			LOGGER.error("Failed to attach event listener to world. world is not a World!");
 		}
@@ -42,7 +42,7 @@ public final class ForgeEventSubscriber {
 			return;
 		}
 		final EntityPlayerMP playerMP = (EntityPlayerMP) player;
-		final SimpleNetworkWrapper network = NoCubes.NETWORK_MANAGER.NETWORK;
+		final SimpleNetworkWrapper network = NoCubes.CHANNEL;
 		for (final Pair<String, S2CSyncConfig> pair : ConfigTracker.INSTANCE.syncConfigs(false)) {
 			network.sendTo(pair.getValue(), playerMP);
 		}

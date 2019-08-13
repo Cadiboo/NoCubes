@@ -39,12 +39,16 @@ public final class CacheUtil {
 				startPaddingX, startPaddingY, startPaddingZ,
 				cacheSizeX, cacheSizeY, cacheSizeZ
 		);
-		try (ModProfiler ignored = ModProfiler.get().start("generate stateCache")) {
+		try {
 			final IBlockState[] blockStates = stateCache.getBlockStates();
 //			final IFluidState[] fluidStates = stateCache.getFluidStates();
 
-			fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates/*, fluidStates*/);
-//			calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
+			try (ModProfiler ignored = ModProfiler.get().start("fillStateCache")) {
+				fillStateCache(fromX, fromY, fromZ, cacheSizeX, cacheSizeY, cacheSizeZ, cache, pooledMutableBlockPos, blockStates/*, fluidStates*/);
+			}
+//			try (ModProfiler ignored = ModProfiler.get().start("calculateStateCacheExtendedFluids")) {
+//				calculateStateCacheExtendedFluids(cacheSizeX, cacheSizeY, cacheSizeZ, blockStates, fluidStates, stateCache, stateCache.sizeX, stateCache.sizeY);
+//			}
 
 			return stateCache;
 		} catch (final Exception e) {
@@ -87,7 +91,7 @@ public final class CacheUtil {
 //				for (int x = 0; x < cacheSizeX; ++x, ++index) {
 //
 //					// Do not extend if not terrain smoothable
-//					if (!TERRAIN_SMOOTHABLE.apply(blockStates[index])) {
+//					if (!blockStates[index].nocubes_isTerrainSmoothable) {
 //						continue;
 //					}
 //

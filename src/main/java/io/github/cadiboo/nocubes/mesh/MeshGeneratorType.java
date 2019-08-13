@@ -16,6 +16,9 @@ public enum MeshGeneratorType {
 
 	OldNoCubes(new OldNoCubes());
 
+	public static final MeshGeneratorType[] VALUES = values();
+	public static final int VALUES_LENGTH = VALUES.length;
+
 	private final MeshGenerator meshGenerator;
 
 	MeshGeneratorType(MeshGenerator meshGenerator) {

@@ -1,0 +1,50 @@
+nocubes.addedTerrainSmoothableBlockState=Terreno Añadidas Suavizables
+nocubes.removedTerrainSmoothableBlockState=Terreno Removidas Suavizables
+nocubes.addedLeavesSmoothableBlockState=Hojas Añadidas Suavizables
+nocubes.removedLeavesSmoothableBlockState=Hojas Removidas Suavizables
+
+key.categories.nocubes=NoCubes
+nocubes.key.toggleTerrainSmoothableBlockState=Cambiar Terreno Suavizables BlockState
+nocubes.key.toggleLeavesSmoothableBlockState=Cambiar Hojas Suavizables BlockState
+nocubes.key.toggleProfilers=Cambiar Perfilado
+nocubes.key.toggleTerrainCollisions=Cambiar Terreno Movimiento
+nocubes.key.toggleRenderSmoothTerrain=Cambiar Suavizables Terreno Dibujando
+nocubes.key.toggleRenderSmoothLeaves=Cambiar Suavizables Hojas Dibujando
+
+nocubes.terrainCollisions114=NoCubes Terreno Movimiento no funciona correctamente en 1.14 todavía. Esto está siendo trabajado y será arreglado pronto
+nocubes.terrainCollisionsEnabled=NoCubes Terreno Movimiento habilitado
+nocubes.terrainCollisionsDisabled=NoCubes Terreno Movimiento desactivar
+
+nocubes.addTerrainSmoothableNoPermission=Necesitas ser un operador para hacer agregar una Terreno Suavizables
+nocubes.disableCollisionsNoPermission=Necesitas ser un operador para hacer desactivar NoCubes Terreno Movimiento
+nocubes.enableCollisionsNoPermission=Necesitas ser un operador para hacer habilitar el NoCubes Terreno Movimiento
+nocubes.removeTerrainSmoothableNoPermission=Necesitas ser un operador para hacer removidas una Terreno Suavizables
+nocubes.setExtendFluidsRangeNoPermission=Debe ser un operador para establecer el Rango de Extensión de Fluidos
+nocubes.setTerrainMeshGeneratorNoPermission=Debe ser un operador para establecer el Generador de Malla de Terreno
+
+nocubes.addedTerrainSmoothable=Terreno Añadidas Suavizables: %s
+nocubes.removedTerrainSmoothable=Terreno Removidas Suavizables: %s
+nocubes.setExtendFluidsRange=Establecer Extender el Dango de Fluido a %s
+nocubes.setTerrainMeshGenerator=Establecer el Generador de Malla de Terreno en %s
+
+nocubes.config.title=NoCubes Configuración Gui Beta (Los cambios no son instantáneos)
+nocubes.config.client=Configuración del Cliente
+nocubes.config.renderSmoothTerrain=Dibuja Suavizables Terreno
+nocubes.config.renderSmoothLeaves=Dibuja Suavizables Hojas
+nocubes.config.renderSmoothAndVanillaLeaves=Dibuja Hojas Suavizables y de Vainilla
+nocubes.config.leavesSmoothable=Hojas Suavizables
+nocubes.config.leavesMeshGenerator=Hojas Estructura Fabricante
+nocubes.config.smoothLeavesType=Suave Hojas Tipo
+nocubes.config.applyDiffuseLighting=Aplicar Iluminación Difusa
+nocubes.config.betterTextures=Mejores Texturas
+nocubes.config.shortGrass=Hierba Corta
+nocubes.config.smoothFluidLighting=Iluminación Fluida Suave
+nocubes.config.smoothFluidColors=Colores Fluidos Suave
+nocubes.config.naturalFluidTextures=Texturas Fluidas Naturales
+nocubes.config.server=Configuración del Servidor
+nocubes.config.terrainSmoothable=Terreno Suavizables
+nocubes.config.extendFluidsRange=Rango Extendido de Fluidos
+nocubes.config.terrainMeshGenerator=Terreno Estructura Fabricante
+nocubes.config.terrainCollisions=Terreno Movimiento
+
+nocubes.waitSeconds=Espera %s segundos
