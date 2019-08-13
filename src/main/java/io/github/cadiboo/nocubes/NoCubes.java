@@ -3,6 +3,8 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.TempClientConfigHacks;
 import io.github.cadiboo.nocubes.client.gui.config.NoCubesConfigGui;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
@@ -18,13 +20,18 @@ import io.github.cadiboo.nocubes.network.S2CRemoveTerrainSmoothable;
 import io.github.cadiboo.nocubes.network.S2CSetExtendFluidsRange;
 import io.github.cadiboo.nocubes.network.S2CSetTerrainMeshGenerator;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.client.Minecraft;
+import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.ReportedException;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.ModLoader;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.EnhancedRuntimeException;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -66,6 +73,15 @@ public final class NoCubes {
 			ModUtil.preloadClass("net.minecraft.client.renderer.FluidBlockRenderer", "FluidBlockRenderer");
 		});
 		LOGGER.debug("Finished preloading patched classes");
+
+		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineLocator.isOptiFineCompatible()) {
+				final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(),
+						"Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + OptiFineLocator.getOptiFineVersion() + ")");
+				crashReport.makeCategory("OptiFineCompatibility: Detecting OptiFine");
+				throw new ReportedException(crashReport);
+			}
+		});
 
 		final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 		modEventBus.addListener((FMLCommonSetupEvent event) ->
