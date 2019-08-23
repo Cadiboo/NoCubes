@@ -9,7 +9,6 @@ import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -19,7 +18,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
@@ -38,15 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Spliterators.AbstractSpliterator;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.floorAvg;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
-import static net.minecraft.util.math.MathHelper.clamp;
 
 /**
  * @author Cadiboo
@@ -230,36 +227,11 @@ public final class CollisionHandler {
 						}
 					}
 
+					final Predicate<VoxelShape> predicate = checkShape -> VoxelShapes.compare(aabbShape, checkShape, IBooleanFunction.AND);
+
 					for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
-						try (
-								final Face face = finalFaces.get(i);
-								final Vec3 v0 = face.getVertex0();
-								final Vec3 v1 = face.getVertex1();
-								final Vec3 v2 = face.getVertex2();
-								final Vec3 v3 = face.getVertex3()
-						) {
-							final double maxY;
-							try (ModProfiler ignored = profiler.start("Snap collisions to original")) {
-								// Snap collision VoxelShapes max Y to max Y VoxelShapes of original block at pos if smaller than original
-								// To stop players falling down through the world when they enable collisions
-								// (Only works on flat or near-flat surfaces)
-								// TODO: remove
-								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
-								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
-								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
-								final BlockState state = blockStateArray[stateCache.getIndex(
-										approximateX - startPosX,
-										approximateY - startPosY,
-										approximateZ - startPosZ,
-										stateCacheSizeX, stateCacheSizeY
-								)];
-								final VoxelShape originalCollisionShape = state.getCollisionShape(_this, pooledMutableBlockPos.setPos(
-										approximateX, approximateY, approximateZ
-								), context);
-								maxY = approximateY + originalCollisionShape.getEnd(Axis.Y);
-							}
-//							MeshCollisionUtil.addIntersectingFaceShapesToList(collidingShapes, face, profiler, maxY, 0.15F, aabb::intersects, false);
-							MeshCollisionUtil.addIntersectingFaceShapesToList(collidingShapes, face, profiler, maxY, 0.15F, checkShape -> VoxelShapes.compare(aabbShape, checkShape, IBooleanFunction.AND), false);
+						try (final Face face = finalFaces.get(i)) {
+							MeshCollisionUtil.addIntersectingFaceShapesToList(collidingShapes, face, profiler, 0, predicate, true);
 						}
 					}
 					return collidingShapes.stream();

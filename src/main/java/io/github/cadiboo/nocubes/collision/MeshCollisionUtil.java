@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 
@@ -15,258 +14,146 @@ import java.util.function.Predicate;
  */
 public final class MeshCollisionUtil {
 
-	private static final VoxelShapeConsumer ADD_COLLISION_SHAPE_TO_LIST = new VoxelShapeConsumer() {
-		@Override
-		void accept(final List<VoxelShape> outShapes, final Vec3 v, final VoxelShape shape, final Predicate<VoxelShape> doesShapeIntersect, final boolean ignoreIntersects) {
-			addCollisionShapeToList(outShapes, shape, doesShapeIntersect, ignoreIntersects);
-		}
-	};
-
-	private static int roundAvg(double d0, double d1, double d2, double d3) {
-		return (int) ((Math.round(d0) + Math.round(d1) + Math.round(d2) + Math.round(d3)) / 4D);
-	}
-
-	//hmmm
-	static int floorAvg(double d0, double d1, double d2, double d3) {
-		return MathHelper.floor((d0 + d1 + d2 + d3) / 4D);
-	}
-
-	//hmmm
-	private static int average(final double d0, final double d1, final double d2, final double d3) {
-		return (int) ((d0 + d1 + d2 + d3) / 4);
-	}
-
+	/**
+	 * Closes the vertices of "face"
+	 */
 	static void addIntersectingFaceShapesToList(
 			final List<VoxelShape> outShapes,
 			final Face face,
 			final ModProfiler profiler,
 			final double maxYLevel,
-			final float shapeRadius,
 			final Predicate<VoxelShape> doesShapeIntersect,
-			final boolean ignoreIntersects
+			final boolean offsetShapes
 	) {
-		doWithEachCollisionShape(outShapes, face, profiler, maxYLevel, shapeRadius, doesShapeIntersect, ignoreIntersects, ADD_COLLISION_SHAPE_TO_LIST);
-	}
-
-	static void doWithEachCollisionShape(
-			final List<VoxelShape> outShapes,
-			final Face face,
-			final ModProfiler profiler,
-			final double maxYLevel,
-			final float shapeRadius,
-			final Predicate<VoxelShape> doesShapeIntersect,
-			final boolean ignoreIntersects,
-			final VoxelShapeConsumer consumer
-	) {
+		profiler.start("interpolate");
 
 		//0___3
 		//_____
 		//_____
 		//_____
 		//1___2
-		final Vec3 v0;
-		final Vec3 v1;
-		final Vec3 v2;
-		final Vec3 v3;
+		final Vec3 v0 = face.getVertex0();
+		final Vec3 v1 = face.getVertex1();
+		final Vec3 v2 = face.getVertex2();
+		final Vec3 v3 = face.getVertex3();
+
 		//0_*_3
 		//_____
 		//*___*
 		//_____
 		//1_*_2
-		final Vec3 v0v1;
-		final Vec3 v1v2;
-		final Vec3 v2v3;
-		final Vec3 v3v0;
+		final Vec3 v0v1 = interp(v0, v1, 0.5F);
+		final Vec3 v1v2 = interp(v1, v2, 0.5F);
+		final Vec3 v2v3 = interp(v2, v3, 0.5F);
+		final Vec3 v3v0 = interp(v3, v0, 0.5F);
+
 //		//0x*x3
 //		//x___x
 //		//*___*
 //		//x___x
 //		//1x*x2
-//		final Vec3 v0v1v0;
-//		final Vec3 v0v1v1;
-//		final Vec3 v1v2v1;
-//		final Vec3 v1v2v2;
-//		final Vec3 v2v3v2;
-//		final Vec3 v2v3v3;
-//		final Vec3 v3v0v3;
-//		final Vec3 v3v0v0;
+//		final Vec3 v0v1v0 = interp(v0v1, v0, 0.5F);
+//		final Vec3 v0v1v1 = interp(v0v1, v1, 0.5F);
+//		final Vec3 v1v2v1 = interp(v1v2, v1, 0.5F);
+//		final Vec3 v1v2v2 = interp(v1v2, v2, 0.5F);
+//		final Vec3 v2v3v2 = interp(v2v3, v2, 0.5F);
+//		final Vec3 v2v3v3 = interp(v2v3, v3, 0.5F);
+//		final Vec3 v3v0v3 = interp(v3v0, v3, 0.5F);
+//		final Vec3 v3v0v0 = interp(v3v0, v0, 0.5F);
+
 		//0x*x3
 		//xa_ax
 		//*___*
 		//xa_ax
 		//1x*x2
-		final Vec3 v0v1v1v2;
-		final Vec3 v1v2v2v3;
-		final Vec3 v2v3v3v0;
-		final Vec3 v3v0v0v1;
+		final Vec3 v0v1v1v2 = interp(v0v1, v1v2, 0.5F);
+		final Vec3 v1v2v2v3 = interp(v1v2, v2v3, 0.5F);
+		final Vec3 v2v3v3v0 = interp(v2v3, v3v0, 0.5F);
+		final Vec3 v3v0v0v1 = interp(v3v0, v0v1, 0.5F);
+
 //		//0x*x3
 //		//xabax
 //		//*b_b*
 //		//xabax
 //		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3;
-//		final Vec3 v1v2v2v3v2v3v3v0;
-//		final Vec3 v2v3v3v0v3v0v0v1;
-//		final Vec3 v3v0v0v1v0v1v1v2;
+//		final Vec3 v0v1v1v2v1v2v2v3 = interp(v0v1v1v2, v1v2v2v3, 0.5F);
+//		final Vec3 v1v2v2v3v2v3v3v0 = interp(v1v2v2v3, v2v3v3v0, 0.5F);
+//		final Vec3 v2v3v3v0v3v0v0v1 = interp(v2v3v3v0, v3v0v0v1, 0.5F);
+//		final Vec3 v3v0v0v1v0v1v1v2 = interp(v3v0v0v1, v0v1v1v2, 0.5F);
+
 //		//0x*x3
 //		//xabax
 //		//*bcb*
 //		//xabax
 //		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1;
-//		final Vec3 v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2;
+//		final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1 = interp(v0v1v1v2v1v2v2v3, v2v3v3v0v3v0v0v1, 0.5F);
+//		final Vec3 v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2 = interp(v1v2v2v3v2v3v3v0, v3v0v0v1v0v1v1v2, 0.5F);
 
-		try (ModProfiler ignored = profiler.start("interpolate")) {
-			v0 = face.getVertex0();
-			v1 = face.getVertex1();
-			v2 = face.getVertex2();
-			v3 = face.getVertex3();
-			v0v1 = interp(v0, v1, 0.5F);
-			v1v2 = interp(v1, v2, 0.5F);
-			v2v3 = interp(v2, v3, 0.5F);
-			v3v0 = interp(v3, v0, 0.5F);
-//			v0v1v0 = interp(v0v1, v0, 0.5F);
-//			v0v1v1 = interp(v0v1, v1, 0.5F);
-//			v1v2v1 = interp(v1v2, v1, 0.5F);
-//			v1v2v2 = interp(v1v2, v2, 0.5F);
-//			v2v3v2 = interp(v2v3, v2, 0.5F);
-//			v2v3v3 = interp(v2v3, v3, 0.5F);
-//			v3v0v3 = interp(v3v0, v3, 0.5F);
-//			v3v0v0 = interp(v3v0, v0, 0.5F);
-			v0v1v1v2 = interp(v0v1, v1v2, 0.5F);
-			v1v2v2v3 = interp(v1v2, v2v3, 0.5F);
-			v2v3v3v0 = interp(v2v3, v3v0, 0.5F);
-			v3v0v0v1 = interp(v3v0, v0v1, 0.5F);
-//			v0v1v1v2v1v2v2v3 = interp(v0v1v1v2, v1v2v2v3, 0.5F);
-//			v1v2v2v3v2v3v3v0 = interp(v1v2v2v3, v2v3v3v0, 0.5F);
-//			v2v3v3v0v3v0v0v1 = interp(v2v3v3v0, v3v0v0v1, 0.5F);
-//			v3v0v0v1v0v1v1v2 = interp(v3v0v0v1, v0v1v1v2, 0.5F);
-//			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1 = interp(v0v1v1v2v1v2v2v3, v2v3v3v0v3v0v0v1, 0.5F);
-//			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2 = interp(v1v2v2v3v2v3v3v0, v3v0v0v1v0v1v1v2, 0.5F);
-		}
+		profiler.endStartSection("createShapes");
 
-		//0___3
-		//_____
-		//_____
-		//_____
-		//1___2
-//		final VoxelShape v0shape;
-//		final VoxelShape v1shape;
-//		final VoxelShape v2shape;
-//		final VoxelShape v3shape;
-		//0_*_3
-		//_____
-		//*___*
-		//_____
-		//1_*_2
-		final VoxelShape v0v1shape;
-		final VoxelShape v1v2shape;
-		final VoxelShape v2v3shape;
-		final VoxelShape v3v0shape;
-//		//0x*x3
-//		//x___x
-//		//*___*
-//		//x___x
-//		//1x*x2
-//		final VoxelShape v0v1v0shape;
-//		final VoxelShape v0v1v1shape;
-//		final VoxelShape v1v2v1shape;
-//		final VoxelShape v1v2v2shape;
-//		final VoxelShape v2v3v2shape;
-//		final VoxelShape v2v3v3shape;
-//		final VoxelShape v3v0v3shape;
-//		final VoxelShape v3v0v0shape;
-		//0x*x3
-		//xa_ax
-		//*___*
-		//xa_ax
-		//1x*x2
-		final VoxelShape v0v1v1v2shape;
-		final VoxelShape v1v2v2v3shape;
-		final VoxelShape v2v3v3v0shape;
-		final VoxelShape v3v0v0v1shape;
-//		//0x*x3
-//		//xabax
-//		//*b_b*
-//		//xabax
-//		//1x*x2
-//		final VoxelShape v0v1v1v2v1v2v2v3shape;
-//		final VoxelShape v1v2v2v3v2v3v3v0shape;
-//		final VoxelShape v2v3v3v0v3v0v0v1shape;
-//		final VoxelShape v3v0v0v1v0v1v1v2shape;
-//		//0x*x3
-//		//xabax
-//		//*bcb*
-//		//xabax
-//		//1x*x2
-//		final VoxelShape v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape;
-//		final VoxelShape v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape;
+//		final VoxelShape v0shape = createShape(v0, maxYLevel, offsetShapes);
+//		final VoxelShape v1shape = createShape(v1, maxYLevel, offsetShapes);
+//		final VoxelShape v2shape = createShape(v2, maxYLevel, offsetShapes);
+//		final VoxelShape v3shape = createShape(v3, maxYLevel, offsetShapes);
+		final VoxelShape v0v1shape = createShape(v0v1, maxYLevel, offsetShapes);
+		final VoxelShape v1v2shape = createShape(v1v2, maxYLevel, offsetShapes);
+		final VoxelShape v2v3shape = createShape(v2v3, maxYLevel, offsetShapes);
+		final VoxelShape v3v0shape = createShape(v3v0, maxYLevel, offsetShapes);
+//		final VoxelShape v0v1v0shape = createShape(v0v1v0,maxYLevel, offsetShapes);
+//		final VoxelShape v0v1v1shape = createShape(v0v1v1,maxYLevel, offsetShapes);
+//		final VoxelShape v1v2v1shape = createShape(v1v2v1,maxYLevel, offsetShapes);
+//		final VoxelShape v1v2v2shape = createShape(v1v2v2,maxYLevel, offsetShapes);
+//		final VoxelShape v2v3v2shape = createShape(v2v3v2,maxYLevel, offsetShapes);
+//		final VoxelShape v2v3v3shape = createShape(v2v3v3,maxYLevel, offsetShapes);
+//		final VoxelShape v3v0v3shape = createShape(v3v0v3,maxYLevel, offsetShapes);
+//		final VoxelShape v3v0v0shape = createShape(v3v0v0,maxYLevel, offsetShapes);
+		final VoxelShape v0v1v1v2shape = createShape(v0v1v1v2, maxYLevel, offsetShapes);
+		final VoxelShape v1v2v2v3shape = createShape(v1v2v2v3, maxYLevel, offsetShapes);
+		final VoxelShape v2v3v3v0shape = createShape(v2v3v3v0, maxYLevel, offsetShapes);
+		final VoxelShape v3v0v0v1shape = createShape(v3v0v0v1, maxYLevel, offsetShapes);
+//		final VoxelShape v0v1v1v2v1v2v2v3shape = createShape(v0v1v1v2v1v2v2v3,maxYLevel, offsetShapes);
+//		final VoxelShape v1v2v2v3v2v3v3v0shape = createShape(v1v2v2v3v2v3v3v0,maxYLevel, offsetShapes);
+//		final VoxelShape v2v3v3v0v3v0v0v1shape = createShape(v2v3v3v0v3v0v0v1,maxYLevel, offsetShapes);
+//		final VoxelShape v3v0v0v1v0v1v1v2shape = createShape(v3v0v0v1v0v1v1v2,maxYLevel, offsetShapes);
+//		final VoxelShape v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape = createShape(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1,maxYLevel, offsetShapes);
+//		final VoxelShape v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape = createShape(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2,maxYLevel, offsetShapes);
 
-		try (ModProfiler ignored = profiler.start("createVoxelShapes")) {
-//			v0shape = createVoxelShapeForVertex(v0, shapeRadius, maxYLevel);
-//			v1shape = createVoxelShapeForVertex(v1, shapeRadius, maxYLevel);
-//			v2shape = createVoxelShapeForVertex(v2, shapeRadius, maxYLevel);
-//			v3shape = createVoxelShapeForVertex(v3, shapeRadius, maxYLevel);
-			v0v1shape = createVoxelShapeForVertex(v0v1, shapeRadius, maxYLevel);
-			v1v2shape = createVoxelShapeForVertex(v1v2, shapeRadius, maxYLevel);
-			v2v3shape = createVoxelShapeForVertex(v2v3, shapeRadius, maxYLevel);
-			v3v0shape = createVoxelShapeForVertex(v3v0, shapeRadius, maxYLevel);
-//			v0v1v0shape = createVoxelShapeForVertex(v0v1v0, shapeRadius, maxYLevel);
-//			v0v1v1shape = createVoxelShapeForVertex(v0v1v1, shapeRadius, maxYLevel);
-//			v1v2v1shape = createVoxelShapeForVertex(v1v2v1, shapeRadius, maxYLevel);
-//			v1v2v2shape = createVoxelShapeForVertex(v1v2v2, shapeRadius, maxYLevel);
-//			v2v3v2shape = createVoxelShapeForVertex(v2v3v2, shapeRadius, maxYLevel);
-//			v2v3v3shape = createVoxelShapeForVertex(v2v3v3, shapeRadius, maxYLevel);
-//			v3v0v3shape = createVoxelShapeForVertex(v3v0v3, shapeRadius, maxYLevel);
-//			v3v0v0shape = createVoxelShapeForVertex(v3v0v0, shapeRadius, maxYLevel);
-			v0v1v1v2shape = createVoxelShapeForVertex(v0v1v1v2, shapeRadius, maxYLevel);
-			v1v2v2v3shape = createVoxelShapeForVertex(v1v2v2v3, shapeRadius, maxYLevel);
-			v2v3v3v0shape = createVoxelShapeForVertex(v2v3v3v0, shapeRadius, maxYLevel);
-			v3v0v0v1shape = createVoxelShapeForVertex(v3v0v0v1, shapeRadius, maxYLevel);
-//			v0v1v1v2v1v2v2v3shape = createVoxelShapeForVertex(v0v1v1v2v1v2v2v3, shapeRadius, maxYLevel);
-//			v1v2v2v3v2v3v3v0shape = createVoxelShapeForVertex(v1v2v2v3v2v3v3v0, shapeRadius, maxYLevel);
-//			v2v3v3v0v3v0v0v1shape = createVoxelShapeForVertex(v2v3v3v0v3v0v0v1, shapeRadius, maxYLevel);
-//			v3v0v0v1v0v1v1v2shape = createVoxelShapeForVertex(v3v0v0v1v0v1v1v2, shapeRadius, maxYLevel);
-//			v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape = createVoxelShapeForVertex(v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, shapeRadius, maxYLevel);
-//			v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape = createVoxelShapeForVertex(v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, shapeRadius, maxYLevel);
-		}
+		profiler.endStartSection("addShapes");
 
-		try (ModProfiler ignored = profiler.start("consumeVoxelShapes")) {
-//			consumer.accept(outShapes, v0, v0shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v1, v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v2, v2shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v3, v3shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v0v1, v0v1shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v1v2, v1v2shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v2v3, v2v3shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v3v0, v3v0shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v0v1v0, v0v1v0shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v0v1v1, v0v1v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v1v2v1, v1v2v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v1v2v2, v1v2v2shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v2v3v2, v2v3v2shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v2v3v3, v2v3v3shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v3v0v3, v3v0v3shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v3v0v0, v3v0v0shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v0v1v1v2, v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v1v2v2v3, v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v2v3v3v0, v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
-			consumer.accept(outShapes, v3v0v0v1, v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v0v1v1v2v1v2v2v3, v0v1v1v2v1v2v2v3shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v1v2v2v3v2v3v3v0, v1v2v2v3v2v3v3v0shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v2v3v3v0v3v0v0v1, v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v3v0v0v1v0v1v1v2, v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape, doesShapeIntersect, ignoreIntersects);
-//			consumer.accept(outShapes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape, doesShapeIntersect, ignoreIntersects);
-		}
+//		addShape(outShapes, v0shape, doesShapeIntersect);
+//		addShape(outShapes, v1shape, doesShapeIntersect);
+//		addShape(outShapes, v2shape, doesShapeIntersect);
+//		addShape(outShapes, v3shape, doesShapeIntersect);
+		addShape(outShapes, v0v1shape, doesShapeIntersect);
+		addShape(outShapes, v1v2shape, doesShapeIntersect);
+		addShape(outShapes, v2v3shape, doesShapeIntersect);
+		addShape(outShapes, v3v0shape, doesShapeIntersect);
+//		addShape(outShapes, v0v1v0shape, doesShapeIntersect);
+//		addShape(outShapes, v0v1v1shape, doesShapeIntersect);
+//		addShape(outShapes, v1v2v1shape, doesShapeIntersect);
+//		addShape(outShapes, v1v2v2shape, doesShapeIntersect);
+//		addShape(outShapes, v2v3v2shape, doesShapeIntersect);
+//		addShape(outShapes, v2v3v3shape, doesShapeIntersect);
+//		addShape(outShapes, v3v0v3shape, doesShapeIntersect);
+//		addShape(outShapes, v3v0v0shape, doesShapeIntersect);
+		addShape(outShapes, v0v1v1v2shape, doesShapeIntersect);
+		addShape(outShapes, v1v2v2v3shape, doesShapeIntersect);
+		addShape(outShapes, v2v3v3v0shape, doesShapeIntersect);
+		addShape(outShapes, v3v0v0v1shape, doesShapeIntersect);
+//		addShape(outShapes, v0v1v1v2v1v2v2v3shape, doesShapeIntersect);
+//		addShape(outShapes, v1v2v2v3v2v3v3v0shape, doesShapeIntersect);
+//		addShape(outShapes, v2v3v3v0v3v0v0v1shape, doesShapeIntersect);
+//		addShape(outShapes, v3v0v0v1v0v1v1v2shape, doesShapeIntersect);
+//		addShape(outShapes, v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1shape, doesShapeIntersect);
+//		addShape(outShapes, v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2shape, doesShapeIntersect);
 
-		//DO NOT CLOSE original face vectors
-		{
-//			v0.close();
-//			v1.close();
-//			v2.close();
-//			v3.close();
-		}
+		profiler.endSection();
+
+		// Close the original face vectors even if we didn't generate shapes for them
+		v0.close();
+		v1.close();
+		v2.close();
+		v3.close();
 		v0v1.close();
 		v1v2.close();
 		v2v3.close();
@@ -292,13 +179,12 @@ public final class MeshCollisionUtil {
 
 	}
 
-	private static void addCollisionShapeToList(
+	private static void addShape(
 			final List<VoxelShape> collidingShapes,
 			final VoxelShape shape,
-			final Predicate<VoxelShape> doesShapeIntersect,
-			final boolean ignoreIntersects
+			final Predicate<VoxelShape> doesShapeIntersect
 	) {
-		if (ignoreIntersects || doesShapeIntersect.test(shape)) {
+		if (doesShapeIntersect.test(shape)) {
 			collidingShapes.add(shape);
 		}
 	}
@@ -311,32 +197,36 @@ public final class MeshCollisionUtil {
 		);
 	}
 
-	private static VoxelShape createVoxelShapeForVertex(
-			final Vec3 vec3,
-			final float boxRadius,
-			final double maxY
-	) {
+	private static VoxelShape createShape(final Vec3 vec3, final double maxY, final boolean offsetShape) {
+		final float boxRadius = 0.15F;
 		final double vy = vec3.y;
 		final double vx = vec3.x;
 		final double vz = vec3.z;
 
-		final boolean isOverMax = vy + boxRadius > maxY;
-		return VoxelShapes.create(
-				//min
-				vx - boxRadius,
-				isOverMax ? vy - boxRadius - boxRadius : vy - boxRadius,
-				vz - boxRadius,
-				//max
-				vx + boxRadius,
-				isOverMax ? vy : vy + boxRadius,
-				vz + boxRadius
-		);
-	}
-
-	abstract static class VoxelShapeConsumer {
-
-		abstract void accept(final List<VoxelShape> outShapes, final Vec3 v, final VoxelShape v1v2shape, final Predicate<VoxelShape> doesShapeIntersect, final boolean ignoreIntersects);
-
+		final boolean isYOverMax = vy + boxRadius > maxY;
+		if (offsetShape) {
+			return VoxelShapes.create(
+					//min
+					vx - boxRadius,
+					isYOverMax ? vy - boxRadius - boxRadius : vy - boxRadius,
+					vz - boxRadius,
+					//max
+					vx + boxRadius,
+					isYOverMax ? vy : vy + boxRadius,
+					vz + boxRadius
+			);
+		} else {
+			return VoxelShapes.create(
+					//min
+					-boxRadius,
+					isYOverMax ? -boxRadius - boxRadius : -boxRadius,
+					-boxRadius,
+					//max
+					+boxRadius,
+					isYOverMax ? 0 : +boxRadius,
+					+boxRadius
+			);
+		}
 	}
 
 }
