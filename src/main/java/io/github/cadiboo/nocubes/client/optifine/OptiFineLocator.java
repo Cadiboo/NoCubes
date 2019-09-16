@@ -16,9 +16,6 @@ public final class OptiFineLocator {
 
 	@Nullable
 	private static Class<?> findConfigClass() {
-		// I'm currently putting a copy of Config in my dev workspace to work on OptiFine compatibility
-		// TODO: Remove this when I get a copy of OptiFine working in my dev environment.
-		if (ModUtil.isDeveloperWorkspace()) return null;
 		// Config was moved around in HD_U_F
 		// 1. Try to find "net.optifine.Config"
 		// 2. Try to find "Config"

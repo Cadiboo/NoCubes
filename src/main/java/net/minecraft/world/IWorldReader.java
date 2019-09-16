@@ -173,7 +173,7 @@ public interface IWorldReader extends IEnviromentBlockReader {
 //               int j2 = cubecoordinateiterator.getX();
 //               int k2 = cubecoordinateiterator.getY();
 //               int l2 = cubecoordinateiterator.getZ();
-//               int k1 = cubecoordinateiterator.func_223473_e();
+//               int k1 = cubecoordinateiterator.numBoundariesTouched();
 //               if (k1 != 3) {
 //                  int l1 = j2 >> 4;
 //                  int i2 = l2 >> 4;
@@ -253,15 +253,15 @@ public interface IWorldReader extends IEnviromentBlockReader {
    }
 
    @Deprecated
-   default boolean isAreaLoaded(int p_217344_1_, int p_217344_2_, int p_217344_3_, int p_217344_4_, int p_217344_5_, int p_217344_6_) {
-      if (p_217344_5_ >= 0 && p_217344_2_ < 256) {
-         p_217344_1_ = p_217344_1_ >> 4;
-         p_217344_3_ = p_217344_3_ >> 4;
-         p_217344_4_ = p_217344_4_ >> 4;
-         p_217344_6_ = p_217344_6_ >> 4;
+   default boolean isAreaLoaded(int fromX, int fromY, int fromZ, int toX, int toY, int toZ) {
+      if (toY >= 0 && fromY < 256) {
+         fromX = fromX >> 4;
+         fromZ = fromZ >> 4;
+         toX = toX >> 4;
+         toZ = toZ >> 4;
 
-         for(int i = p_217344_1_; i <= p_217344_4_; ++i) {
-            for(int j = p_217344_3_; j <= p_217344_6_; ++j) {
+         for(int i = fromX; i <= toX; ++i) {
+            for(int j = fromZ; j <= toZ; ++j) {
                if (!this.chunkExists(i, j)) {
                   return false;
                }

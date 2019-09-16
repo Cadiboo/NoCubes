@@ -73,17 +73,17 @@ public class ClientWorld extends World {
    private final ClientPlayNetHandler connection;
    private final WorldRenderer worldRenderer;
    private final Minecraft mc = Minecraft.getInstance();
-   private final List<AbstractClientPlayerEntity> field_217431_w = Lists.newArrayList();
+   private final List<AbstractClientPlayerEntity> players = Lists.newArrayList();
    private int ambienceTicks = this.rand.nextInt(12000);
    private Scoreboard scoreboard = new Scoreboard();
-   private final Map<String, MapData> field_217432_z = Maps.newHashMap();
+   private final Map<String, MapData> maps = Maps.newHashMap();
 
-   public ClientWorld(ClientPlayNetHandler p_i51056_1_, WorldSettings p_i51056_2_, DimensionType dimType, int p_i51056_4_, IProfiler p_i51056_5_, WorldRenderer p_i51056_6_) {
-      super(new WorldInfo(p_i51056_2_, "MpServer"), dimType, (p_217422_1_, p_217422_2_) -> {
-         return new ClientChunkProvider((ClientWorld)p_217422_1_, p_i51056_4_);
-      }, p_i51056_5_, true);
-      this.connection = p_i51056_1_;
-      this.worldRenderer = p_i51056_6_;
+   public ClientWorld(ClientPlayNetHandler netHandler, WorldSettings worldSettingsIn, DimensionType dimType, int viewDistance, IProfiler profilerIn, WorldRenderer worldRendererIn) {
+      super(new WorldInfo(worldSettingsIn, "MpServer"), dimType, (p_217422_1_, p_217422_2_) -> {
+         return new ClientChunkProvider((ClientWorld)p_217422_1_, viewDistance);
+      }, profilerIn, true);
+      this.connection = netHandler;
+      this.worldRenderer = worldRendererIn;
       this.setSpawnPoint(new BlockPos(8, 64, 8));
       this.calculateInitialSkylight();
       this.calculateInitialWeather();
@@ -264,7 +264,7 @@ public class ClientWorld extends World {
 
    public void addPlayer(int p_217408_1_, AbstractClientPlayerEntity p_217408_2_) {
       this.addEntityImpl(p_217408_1_, p_217408_2_);
-      this.field_217431_w.add(p_217408_2_);
+      this.players.add(p_217408_2_);
    }
 
    public void addEntity(int p_217411_1_, Entity p_217411_2_) {
@@ -294,7 +294,7 @@ public class ClientWorld extends World {
          this.getChunk(p_217414_1_.chunkCoordX, p_217414_1_.chunkCoordZ).removeEntity(p_217414_1_);
       }
 
-      this.field_217431_w.remove(p_217414_1_);
+      this.players.remove(p_217414_1_);
       p_217414_1_.onRemovedFromWorld();
    }
 
@@ -515,12 +515,12 @@ public class ClientWorld extends World {
    }
 
    @Nullable
-   public MapData func_217406_a(String p_217406_1_) {
-      return this.field_217432_z.get(p_217406_1_);
+   public MapData getMapData(String mapName) {
+      return this.maps.get(mapName);
    }
 
-   public void func_217399_a(MapData p_217399_1_) {
-      this.field_217432_z.put(p_217399_1_.getName(), p_217399_1_);
+   public void registerMapData(MapData mapDataIn) {
+      this.maps.put(mapDataIn.getName(), mapDataIn);
    }
 
    public int getNextMapId() {
@@ -587,11 +587,11 @@ public class ClientWorld extends World {
       this.worldRenderer.addParticle(particleData, false, true, x, y, z, xSpeed, ySpeed, zSpeed);
    }
 
-   public void func_217404_b(IParticleData p_217404_1_, boolean p_217404_2_, double p_217404_3_, double p_217404_5_, double p_217404_7_, double p_217404_9_, double p_217404_11_, double p_217404_13_) {
-      this.worldRenderer.addParticle(p_217404_1_, p_217404_1_.getType().getAlwaysShow() || p_217404_2_, true, p_217404_3_, p_217404_5_, p_217404_7_, p_217404_9_, p_217404_11_, p_217404_13_);
+   public void addOptionalParticle(IParticleData particleData, boolean ignoreRange, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+      this.worldRenderer.addParticle(particleData, particleData.getType().getAlwaysShow() || ignoreRange, true, x, y, z, xSpeed, ySpeed, zSpeed);
    }
 
    public List<AbstractClientPlayerEntity> getPlayers() {
-      return this.field_217431_w;
+      return this.players;
    }
 }

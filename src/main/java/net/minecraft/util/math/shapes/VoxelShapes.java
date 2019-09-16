@@ -264,8 +264,8 @@ public final class VoxelShapes {
       }
    }
 
-   public static int getDifferenceFloored(double p_216385_0_, double p_216385_2_, double p_216385_4_) {
-      return p_216385_0_ > 0.0D ? MathHelper.floor(p_216385_4_ + p_216385_0_) + 1 : MathHelper.floor(p_216385_2_ + p_216385_0_) - 1;
+   public static int getDifferenceFloored(double desiredOffset, double min, double max) {
+      return desiredOffset > 0.0D ? MathHelper.floor(max + desiredOffset) + 1 : MathHelper.floor(min + desiredOffset) - 1;
    }
 
    @OnlyIn(Dist.CLIENT)

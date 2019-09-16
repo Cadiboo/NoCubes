@@ -376,7 +376,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
          t = opsIn.createMap(ImmutableMap.of(opsIn.createString("Name"), opsIn.createString(Registry.BLOCK.getKey(state.getBlock()).toString())));
       } else {
          t = opsIn.createMap(ImmutableMap.of(opsIn.createString("Name"), opsIn.createString(Registry.BLOCK.getKey(state.getBlock()).toString()), opsIn.createString("Properties"), opsIn.createMap(immutablemap.entrySet().stream().map((p_215683_1_) -> {
-            return Pair.of(opsIn.createString(p_215683_1_.getKey().getName()), opsIn.createString(IStateHolder.func_215670_b(p_215683_1_.getKey(), p_215683_1_.getValue())));
+            return Pair.of(opsIn.createString(p_215683_1_.getKey().getName()), opsIn.createString(IStateHolder.writePropertyValueToString(p_215683_1_.getKey(), p_215683_1_.getValue())));
          }).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)))));
       }
 

@@ -469,7 +469,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    public void addOptionalParticle(IParticleData particleData, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
    }
 
-   public void func_217404_b(IParticleData p_217404_1_, boolean p_217404_2_, double p_217404_3_, double p_217404_5_, double p_217404_7_, double p_217404_9_, double p_217404_11_, double p_217404_13_) {
+   public void addOptionalParticle(IParticleData particleData, boolean ignoreRange, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
    }
 
    /**
@@ -847,16 +847,16 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
       });
    }
 
-   public Explosion createExplosion(@Nullable Entity p_217385_1_, double p_217385_2_, double p_217385_4_, double p_217385_6_, float p_217385_8_, Explosion.Mode p_217385_9_) {
-      return this.createExplosion(p_217385_1_, (DamageSource)null, p_217385_2_, p_217385_4_, p_217385_6_, p_217385_8_, false, p_217385_9_);
+   public Explosion createExplosion(@Nullable Entity entityIn, double p_217385_2_, double p_217385_4_, double p_217385_6_, float explosionRadius, Explosion.Mode p_217385_9_) {
+      return this.createExplosion(entityIn, (DamageSource)null, p_217385_2_, p_217385_4_, p_217385_6_, explosionRadius, false, p_217385_9_);
    }
 
-   public Explosion createExplosion(@Nullable Entity p_217398_1_, double p_217398_2_, double p_217398_4_, double p_217398_6_, float p_217398_8_, boolean p_217398_9_, Explosion.Mode p_217398_10_) {
-      return this.createExplosion(p_217398_1_, (DamageSource)null, p_217398_2_, p_217398_4_, p_217398_6_, p_217398_8_, p_217398_9_, p_217398_10_);
+   public Explosion createExplosion(@Nullable Entity entityIn, double p_217398_2_, double p_217398_4_, double p_217398_6_, float explosionRadius, boolean causesFire, Explosion.Mode p_217398_10_) {
+      return this.createExplosion(entityIn, (DamageSource)null, p_217398_2_, p_217398_4_, p_217398_6_, explosionRadius, causesFire, p_217398_10_);
    }
 
-   public Explosion createExplosion(@Nullable Entity p_217401_1_, @Nullable DamageSource p_217401_2_, double p_217401_3_, double p_217401_5_, double p_217401_7_, float p_217401_9_, boolean p_217401_10_, Explosion.Mode p_217401_11_) {
-      Explosion explosion = new Explosion(this, p_217401_1_, p_217401_3_, p_217401_5_, p_217401_7_, p_217401_9_, p_217401_10_, p_217401_11_);
+   public Explosion createExplosion(@Nullable Entity entityIn, @Nullable DamageSource p_217401_2_, double p_217401_3_, double p_217401_5_, double p_217401_7_, float explosionRadius, boolean causesFire, Explosion.Mode p_217401_11_) {
+      Explosion explosion = new Explosion(this, entityIn, p_217401_3_, p_217401_5_, p_217401_7_, explosionRadius, causesFire, p_217401_11_);
       if (p_217401_2_ != null) {
          explosion.setDamageSource(p_217401_2_);
       }
@@ -1375,9 +1375,9 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
    }
 
    @Nullable
-   public abstract MapData func_217406_a(String p_217406_1_);
+   public abstract MapData getMapData(String mapName);
 
-   public abstract void func_217399_a(MapData p_217399_1_);
+   public abstract void registerMapData(MapData mapDataIn);
 
    public abstract int getNextMapId();
 

@@ -76,7 +76,9 @@ public class ChunkRenderCache implements IEnviromentBlockReader {
       this.chunkStartZ = chunkStartZIn;
       this.chunks = chunksIn;
       this.cacheStartPos = startPos;
+      // NoCubes Start
       io.github.cadiboo.nocubes.hooks.Hooks.initChunkRenderCache(this, chunkStartXIn, chunkStartZIn, chunksIn, startPos, endPos);
+      // NoCubes End
 //      this.cacheSizeX = endPos.getX() - startPos.getX() + 1;
 //      this.cacheSizeY = endPos.getY() - startPos.getY() + 1;
 //      this.cacheSizeZ = endPos.getZ() - startPos.getZ() + 1;

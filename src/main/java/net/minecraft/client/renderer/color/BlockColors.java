@@ -34,8 +34,8 @@ public class BlockColors {
 
    public static BlockColors init() {
       BlockColors blockcolors = new BlockColors();
-      blockcolors.register((state, reader, pos, p_210234_3_) -> {
-         return reader != null && pos != null ? BiomeColors.getGrassColor(reader, state.get(ShearableDoublePlantBlock.field_208063_b) == DoubleBlockHalf.UPPER ? pos.down() : pos) : -1;
+      blockcolors.register((p_210234_0_, p_210234_1_, p_210234_2_, p_210234_3_) -> {
+         return p_210234_1_ != null && p_210234_2_ != null ? BiomeColors.getGrassColor(p_210234_1_, p_210234_0_.get(ShearableDoublePlantBlock.field_208063_b) == DoubleBlockHalf.UPPER ? p_210234_2_.down() : p_210234_2_) : -1;
       }, Blocks.LARGE_FERN, Blocks.TALL_GRASS);
       blockcolors.func_225308_a(ShearableDoublePlantBlock.field_208063_b, Blocks.LARGE_FERN, Blocks.TALL_GRASS);
       blockcolors.register((p_210225_0_, p_210225_1_, p_210225_2_, p_210225_3_) -> {
