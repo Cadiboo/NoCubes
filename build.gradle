@@ -39,23 +39,15 @@ repositories {
 minecraft {
 
 	// The mappings can be changed at any time, and must be in the following format.
-	// snapshot_YYYYMMDD   snapshot are built nightly.
-	// stable_#            stables are built at the discretion of the MCP team.
+	// snapshot_YYYYMMDD   Snapshot are built nightly.
+	// stable_#            Stables are built at the discretion of the MCP team.
 	// Use non-default mappings at your own risk. they may not always work.
-	// simply re-run your setup task after changing the mappings to update your workspace.
+	// Simply re-run your setup task after changing the mappings to update your workspace.
 	mappings channel: modMcpMappingsChannel, version: modMcpMappingsVersion
 
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
-// TODO: reimplement this
-//	if (project.hasProperty('mc_username')) {
-//		clientRunArgs += ['--username', project.mc_username]
-//		if (project.hasProperty('mc_password')) {
-//			clientRunArgs += ['--password', project.mc_password]
-//		}
-//	}
 	
 	// Default run configurations.
 	// These can be tweaked, removed, or duplicated as needed.
@@ -94,6 +86,24 @@ minecraft {
 					source sourceSets.main
 					// Test sources (debugging, unit tests. From /src/test/)
 					source sourceSets.test
+				}
+			}
+		}
+
+		data {
+			workingDirectory project.file('run')
+
+			// Recommended logging data for a userdev environment
+			property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+			// Recommended logging level for the console
+			property 'forge.logging.console.level', 'debug'
+
+			args '--mod', 'nocubes', '--all', '--output', file('src/generated/resources/')
+
+			mods {
+				nocubes {
+					source sourceSets.main
 				}
 			}
 		}
