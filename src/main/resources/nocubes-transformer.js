@@ -660,9 +660,11 @@ function injectRenderBlockDamageHook(instructions) {
 //		if (state.getRenderType() == BlockRenderType.MODEL) {
 
 //	public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
+//		// NoCubes Start
 //		if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, sprite, reader)){
 //			return;
 //		}
+//		// NoCubes End
 //		if (state.getRenderType() == BlockRenderType.MODEL) {
 
 
