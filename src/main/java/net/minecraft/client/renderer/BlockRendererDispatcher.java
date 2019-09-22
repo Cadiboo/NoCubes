@@ -37,9 +37,11 @@ public class BlockRendererDispatcher implements IResourceManagerReloadListener {
    }
 
    public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
+      // NoCubes Start
       if (io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, sprite, reader)) {
          return;
       }
+      // NoCubes End
       if (state.getRenderType() == BlockRenderType.MODEL) {
          IBakedModel ibakedmodel = this.blockModelShapes.getModel(state);
          long i = state.getPositionRandom(pos);
