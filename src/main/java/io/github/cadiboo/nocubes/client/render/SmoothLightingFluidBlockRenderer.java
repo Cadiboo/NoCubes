@@ -460,7 +460,7 @@ public final class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
 
 				IFluidState ifluidstate = reader.getFluidState(pooledMutableBlockPos);
 				if (ifluidstate.getFluid().isEquivalentTo(fluidIn)) {
-					float fluidHeight = ifluidstate.func_215679_a(reader, pooledMutableBlockPos);
+					float fluidHeight = ifluidstate.getActualHeight(reader, pooledMutableBlockPos);
 					if (fluidHeight >= 0.8F) {
 						height += fluidHeight * 10.0F;
 						divisor += 10;

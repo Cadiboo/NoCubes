@@ -217,7 +217,7 @@ public abstract class World extends net.minecraftforge.common.capabilities.Capab
             return false;
          } else {
             BlockState blockstate1 = this.getBlockState(pos);
-            if (blockstate1 != blockstate && (blockstate1.getOpacity(this, pos) != oldOpacity || blockstate1.getLightValue() != oldLight || blockstate1.func_215691_g() || blockstate.func_215691_g())) {
+            if (blockstate1 != blockstate && (blockstate1.getOpacity(this, pos) != oldOpacity || blockstate1.getLightValue(this, pos) != oldLight || blockstate1.func_215691_g() || blockstate.func_215691_g())) {
                this.profiler.startSection("queueCheckLight");
                this.getChunkProvider().getLightManager().checkBlock(pos);
                this.profiler.endSection();
