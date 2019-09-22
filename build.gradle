@@ -57,6 +57,7 @@ minecraft {
 
 			// Recommended logging data for a userdev environment
 			property 'forge.logging.markers', 'XFORM'
+//			property 'ofdev.mcjar', '"/Users/Cadiboo/Library/Application Support/minecraft/versions/1.14.4/1.14.4.jar"'
 
 			// Recommended logging level for the console
 			property 'forge.logging.console.level', 'debug'
