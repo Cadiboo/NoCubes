@@ -1015,7 +1015,10 @@ function injectBlockRenderHook(instructions) {
 	var originalInstructionsLabel = new LabelNode();
 
 	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
+	if (!isOptiFinePresent)
+		toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
+	else
+		toInject.add(new VarInsnNode(ALOAD, 20)); // blockstate
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
