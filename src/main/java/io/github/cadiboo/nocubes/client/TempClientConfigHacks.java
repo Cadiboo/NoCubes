@@ -1,15 +1,21 @@
 package io.github.cadiboo.nocubes.client;
 
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.forgespi.language.IModInfo;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
@@ -47,13 +53,86 @@ public final class TempClientConfigHacks {
 
 	private static class ConfigModInfo extends ModInfo {
 
-		private ConfigModInfo(ModInfo modInfo) {
-			super(modInfo.getOwningFile(), modInfo.getModConfig());
+		private ModInfo delegate;
+
+		private ConfigModInfo(ModInfo delegate) {
+			super(delegate.getOwningFile(), delegate.getModConfig());
+			this.delegate = delegate;
+		}
+
+		@Override
+		public ModFileInfo getOwningFile() {
+			return delegate.getOwningFile();
+		}
+
+		@Override
+		public String getModId() {
+			return delegate.getModId();
+		}
+
+		@Override
+		public String getDisplayName() {
+			return delegate.getDisplayName();
+		}
+
+		@Override
+		public String getDescription() {
+			return delegate.getDescription();
+		}
+
+		@Override
+		public ArtifactVersion getVersion() {
+			return delegate.getVersion();
+		}
+
+		@Override
+		public List<ModVersion> getDependencies() {
+			return delegate.getDependencies();
+		}
+
+		@Override
+		public UnmodifiableConfig getModConfig() {
+			return delegate.getModConfig();
+		}
+
+		@Override
+		public String getNamespace() {
+			return delegate.getNamespace();
+		}
+
+		@Override
+		public Map<String, Object> getModProperties() {
+			return delegate.getModProperties();
+		}
+
+		@Override
+		public URL getUpdateURL() {
+			return delegate.getUpdateURL();
+		}
+
+		@Override
+		public Optional<String> getLogoFile() {
+			return delegate.getLogoFile();
 		}
 
 		@Override
 		public boolean hasConfigUI() {
 			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			return delegate.hashCode();
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			return delegate.equals(obj);
+		}
+
+		@Override
+		public String toString() {
+			return delegate.toString();
 		}
 
 	}
