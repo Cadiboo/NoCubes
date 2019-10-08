@@ -134,7 +134,7 @@ dependencies {
 	// These dependencies get remapped to your current MCP mappings
 	//deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-	compile files('libs/deobf_OptiFine_1.14.4_HD_U_F4_pre5_MOD.jar')
+	compile files('libs/OptiFine_1.14.4_HD_U_F4_pre7_MOD-deobf.jar')
 
 	// for more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
