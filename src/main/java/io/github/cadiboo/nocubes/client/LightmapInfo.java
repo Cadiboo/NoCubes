@@ -188,13 +188,20 @@ public final class LightmapInfo implements AutoCloseable {
 		final int diffX = stateCache.startPaddingX - startPaddingX;
 		final int diffY = stateCache.startPaddingY - startPaddingY;
 		final int diffZ = stateCache.startPaddingZ - startPaddingZ;
+		final int lightSizeX = lazyPackedLightCache.sizeX;
+		final int lightSizeY = lazyPackedLightCache.sizeY;
+		final int stateSizeX = stateCache.sizeX;
+		final int stateSizeY = stateCache.sizeY;
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
 		for (int zOffset = 0; zOffset < 3; ++zOffset) {
 			for (int yOffset = 0; yOffset < 3; ++yOffset) {
 				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					packedLight0[index] = lazyPackedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset), cache, stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ);
+					final int px = v0XOffset + xOffset;
+					final int py = v0YOffset + yOffset;
+					final int pz = v0ZOffset + zOffset;
+					packedLight0[index] = LazyPackedLightCache.get(px, py, pz, cache, lazyPackedLightCache.getIndex(px, py, pz, lightSizeX, lightSizeY), stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateSizeX, stateSizeY);
 				}
 			}
 		}
