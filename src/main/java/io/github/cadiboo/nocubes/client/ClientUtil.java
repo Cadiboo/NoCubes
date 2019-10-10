@@ -32,8 +32,6 @@ import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
-import static net.minecraft.util.BlockRenderLayer.CUTOUT;
-import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -240,18 +238,24 @@ public final class ClientUtil {
 		return getCorrectRenderLayer(state.getRenderLayer());
 	}
 
-	// TODO: Optimise `Minecraft.getInstance().gameSettings.mipmapLevels`? Store it in a field somewhere?
 	@Nonnull
 	public static BlockRenderLayer getCorrectRenderLayer(@Nonnull final BlockRenderLayer blockRenderLayer) {
-		switch (blockRenderLayer) {
+		return BLOCK_RENDER_LAYER_VALUES[getCorrectRenderLayer(blockRenderLayer.ordinal())];
+	}
+
+	// TODO: Optimise `Minecraft.getInstance().gameSettings.mipmapLevels`? Store it in a field somewhere?
+	public static int getCorrectRenderLayer(final int blockRenderLayerOrdinal) {
+		switch (blockRenderLayerOrdinal) {
 			default:
-			case SOLID:
-			case TRANSLUCENT:
-				return blockRenderLayer;
-			case CUTOUT_MIPPED:
-				return Minecraft.getInstance().gameSettings.mipmapLevels == 0 ? CUTOUT : CUTOUT_MIPPED;
-			case CUTOUT:
-				return Minecraft.getInstance().gameSettings.mipmapLevels != 0 ? CUTOUT_MIPPED : CUTOUT;
+			case 0: // SOLID
+			case 3: // TRANSLUCENT
+				return blockRenderLayerOrdinal;
+			case 1: // CUTOUT_MIPPED
+			case 2: // CUTOUT
+				if (Minecraft.getInstance().gameSettings.mipmapLevels == 0)
+					return 2; // CUTOUT
+				else
+					return 1; // CUTOUT_MIPPED
 		}
 	}
 
