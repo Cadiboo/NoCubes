@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 /**
  * @author Cadiboo
  */
-@SuppressWarnings("WeakerAccess") // Hooks are called with ASM
+@SuppressWarnings("unused") // Hooks are called with ASM
 public final class Hooks {
 
 	/**
