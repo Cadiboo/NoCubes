@@ -7,11 +7,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public final class OptionButton extends Button {
 
-	private final Option option;
-
-	public OptionButton(int x, int y, int width, int height, Option option, String text, Button.IPressable onPressedHandler) {
+	public OptionButton(int x, int y, int width, int height, String text, Button.IPressable onPressedHandler) {
 		super(x, y, width, height, text, onPressedHandler);
-		this.option = option;
 	}
 
 }

@@ -39,7 +39,6 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 	private static final Joiner DOT_JOINER = Joiner.on(".");
 
 	private final NoCubesConfigGui configGui;
-	private final int maxListLabelWidth;
 
 	public ConfigOptionsList(NoCubesConfigGui configGui, Minecraft mcIn) {
 		super(mcIn, configGui.width + 45, configGui.height, 43, configGui.height - 32, 20);
@@ -72,16 +71,6 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 				});
 			}
 		}
-
-		FontRenderer fontRenderer = mcIn.fontRenderer;
-		int maxListLabelWidth = 0;
-		for (final Entry entry : entries) {
-			int i = fontRenderer.getStringWidth(entry.getTranslatedText());
-			if (i > maxListLabelWidth) {
-				maxListLabelWidth = i;
-			}
-		}
-		this.maxListLabelWidth = maxListLabelWidth;
 
 	}
 
