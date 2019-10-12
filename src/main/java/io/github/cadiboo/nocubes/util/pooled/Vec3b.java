@@ -24,6 +24,11 @@ public final class Vec3b implements Cloneable, AutoCloseable {
 	}
 
 	@Nonnull
+	public static Vec3b retain(final int x, final int y, final int z) {
+		return retain((byte) x, (byte) y, (byte) z);
+	}
+
+	@Nonnull
 	public static Vec3b retain(final byte x, final byte y, final byte z) {
 		synchronized (POOL) {
 			if (!POOL.isEmpty()) {
