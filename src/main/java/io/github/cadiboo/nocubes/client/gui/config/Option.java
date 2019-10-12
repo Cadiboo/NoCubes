@@ -14,7 +14,7 @@ public abstract class Option {
 		this.translationKey = translationKeyIn;
 	}
 
-	public abstract Widget createWidget(int width);
+	public abstract Widget createWidget();
 
 	public String getDisplayString() {
 		return I18n.format(this.translationKey) + ": ";

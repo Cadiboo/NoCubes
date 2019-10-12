@@ -21,8 +21,8 @@ public final class EnumOption extends Option {
 	}
 
 	@Override
-	public Widget createWidget(int width) {
-		return new OptionButton(0, 0, width, 20, this, this.getTranslatedName(), widget -> {
+	public Widget createWidget() {
+		return new OptionButton(0, 0, 300, 20, this.getTranslatedName(), widget -> {
 			this.currentOrdinal = this.cyclerAndSaver.apply(this.currentOrdinal);
 			widget.setMessage(this.getTranslatedName());
 		});

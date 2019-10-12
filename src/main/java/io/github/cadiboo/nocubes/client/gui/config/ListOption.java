@@ -32,8 +32,8 @@ public final class ListOption extends Option {
 	}
 
 	@Override
-	public Widget createWidget(int width) {
-		final TextFieldWidget textFieldWidget = new TextFieldWidget(Minecraft.getInstance().fontRenderer, 0, 0, width - 4, 16, I18n.format(this.getTranslationKey())) {
+	public Widget createWidget() {
+		final TextFieldWidget textFieldWidget = new TextFieldWidget(Minecraft.getInstance().fontRenderer, 0, 0, 300 - 4, 16, I18n.format(this.getTranslationKey())) {
 			@Override
 			public boolean keyPressed(final int keyCode, final int p_keyPressed_2_, final int p_keyPressed_3_) {
 				if (super.keyPressed(keyCode, p_keyPressed_2_, p_keyPressed_3_)) {

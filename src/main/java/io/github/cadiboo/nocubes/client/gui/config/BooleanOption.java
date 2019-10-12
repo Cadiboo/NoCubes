@@ -33,8 +33,8 @@ public class BooleanOption extends Option {
 	}
 
 	@Override
-	public Widget createWidget(int width) {
-		return new OptionButton(0, 0, width, 20, this, this.getTranslatedName(), (widget) -> {
+	public Widget createWidget() {
+		return new OptionButton(0, 0, 300, 20, this.getTranslatedName(), (widget) -> {
 			this.save();
 			widget.setMessage(this.getTranslatedName());
 		});

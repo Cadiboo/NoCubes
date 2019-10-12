@@ -253,7 +253,7 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 		@Override
 		protected Widget makeWidget() {
 			return new BooleanOption(this.text, () -> this.currentValue, this::handleChanged)
-					.createWidget((configGui.width / 4) * 3);
+					.createWidget();
 		}
 
 	}
@@ -282,7 +282,7 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 		@Override
 		protected Widget makeWidget() {
 			return new EnumOption(this.text, this::cycleAndSave, this::getTranslatedText, this.currentValue.ordinal())
-					.createWidget((configGui.width / 4) * 3);
+					.createWidget();
 		}
 
 	}
@@ -297,7 +297,7 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 		@Override
 		protected Widget makeWidget() {
 			return new ListOption(this.text, () -> this.currentValue.stream().map(Object::toString).toArray(String[]::new), this::handleChanged)
-					.createWidget((configGui.width / 4) * 3);
+					.createWidget();
 		}
 
 		private void handleChanged(final String[] newValue) {
@@ -330,7 +330,7 @@ final class ConfigOptionsList extends AbstractOptionList<ConfigOptionsList.Entry
 					return this.getDisplayString() + I18n.format("argument.criteria.invalid", getTranslatedText());
 				}
 			}
-					.createWidget((configGui.width / 4) * 3);
+					.createWidget();
 			widget.setFGColor(0xFF0000);
 			return widget;
 		}
