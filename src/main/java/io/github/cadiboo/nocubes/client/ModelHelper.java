@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.proxy.OptiFine;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.BlockState;
@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.OPTIFINE_INSTALLED;
 import static net.minecraft.util.Direction.DOWN;
 import static net.minecraft.util.Direction.EAST;
 import static net.minecraft.util.Direction.NORTH;
@@ -55,14 +54,10 @@ public final class ModelHelper {
 	) {
 		IBakedModel model = getModel(state, blockRendererDispatcher);
 
-		Object renderEnv = null;
+		final OptiFine optiFine = OptiFineCompatibility.get();
 
-		if (OPTIFINE_INSTALLED) {
-//		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(state, pos);
-			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
-
-			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
-		}
+		Object renderEnv = optiFine.getRenderEnvironment(bufferBuilder, state, pos);
+		model = optiFine.getRenderModel(model, state, renderEnv);
 
 //		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
 //			state = state.getBlock().getExtendedState(state, reader, pos);
@@ -75,13 +70,9 @@ public final class ModelHelper {
 				continue;
 			}
 
-			if (OPTIFINE_INSTALLED) {
-				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
-					if (quads.isEmpty()) {
-						continue;
-					}
-				}
+			quads = optiFine.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
+			if (quads.isEmpty()) {
+				continue;
 			}
 
 			return quads;
@@ -94,7 +85,7 @@ public final class ModelHelper {
 	 * Returns the model or the missing model if there isn't one
 	 */
 	@Nonnull
-	public static IBakedModel getModel(final BlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
+	private static IBakedModel getModel(final BlockState state, final BlockRendererDispatcher blockRendererDispatcher) {
 		try (final ModProfiler ignored = ModProfiler.get().start("getModel")) {
 //			if (DynamicTreesCompatibility.isRootyBlock(state)) {
 //				return blockRendererDispatcher.getModelForState(StateHolder.GRASS_BLOCK_DEFAULT);

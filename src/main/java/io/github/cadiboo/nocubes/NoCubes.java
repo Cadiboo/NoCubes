@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.TempClientConfigHacks;
 import io.github.cadiboo.nocubes.client.gui.config.NoCubesConfigGui;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
@@ -71,9 +71,10 @@ public final class NoCubes {
 		LOGGER.debug("Finished preloading patched classes");
 
 		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
-			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineLocator.isOptiFineCompatible()) {
+			OptiFineCompatibility.init();
+			if (OptiFineCompatibility.isOptiFineInstalled() && !OptiFineCompatibility.isOptiFineCompatible()) {
 				final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(),
-						"Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + OptiFineLocator.getOptiFineVersion() + ")");
+						"Incompatible OptiFine version detected! Supported OptiFine series : "+OptiFineCompatibility.getSupportedVersions() + " (Installed: " + OptiFineCompatibility.getOptiFineVersion() + ")");
 				crashReport.makeCategory("OptiFineCompatibility: Detecting OptiFine");
 				throw new ReportedException(crashReport);
 			}

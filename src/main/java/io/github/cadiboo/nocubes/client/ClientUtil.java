@@ -287,8 +287,8 @@ public final class ClientUtil {
 			final int x = currentChunkPosX - renderChunkCache.chunkStartX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
 			return renderChunkCache.chunks[x][z];
-		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
-			final ChunkRenderCache renderChunkCache = OptiFineCompatibility.getChunkRenderCache(reader);
+		} else if (OptiFineCompatibility.get().isChunkCacheOF(reader)) {
+			final ChunkRenderCache renderChunkCache = OptiFineCompatibility.get().getChunkRenderCache(reader);
 			final int x = currentChunkPosX - renderChunkCache.chunkStartX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkStartZ;
 			return renderChunkCache.chunks[x][z];

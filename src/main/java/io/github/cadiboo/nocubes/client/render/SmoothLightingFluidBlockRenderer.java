@@ -45,7 +45,7 @@ public final class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
 	@Override
 	public boolean render(final IEnviromentBlockReader worldIn, final BlockPos pos, final BufferBuilder buffer, final IFluidState state) {
 		try (PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()) {
-			OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+			OptiFineCompatibility.get().pushShaderEntity(state, pos, worldIn, buffer);
 
 			final int x = pos.getX();
 			final int y = pos.getY();
@@ -421,7 +421,7 @@ public final class SmoothLightingFluidBlockRenderer extends FluidBlockRenderer {
 
 			return wasAnythingRendered;
 		} finally {
-			OptiFineCompatibility.popShaderThing(buffer);
+			OptiFineCompatibility.get().popShaderEntity(buffer);
 		}
 	}
 

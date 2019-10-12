@@ -148,7 +148,7 @@ public final class OptimisedFluidBlockRenderer {
 
 						final BufferBuilder bufferBuilder = ClientUtil.startOrContinueBufferBuilder(generator, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkRenderPos);
 
-						OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos, chunkRenderCache, bufferBuilder);
+						OptiFineCompatibility.get().pushShaderEntity(fluidState, pooledMutableBlockPos, chunkRenderCache, bufferBuilder);
 						try {
 							usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= renderBlock(
 									smoothLightingFluidBlockRenderer,
@@ -198,7 +198,7 @@ public final class OptimisedFluidBlockRenderer {
 									atlasSpriteWaterOverlay, atlasSpritesLava, atlasSpritesWater
 							);
 						} finally {
-							OptiFineCompatibility.popShaderThing(bufferBuilder);
+							OptiFineCompatibility.get().popShaderEntity(bufferBuilder);
 						}
 					}
 
