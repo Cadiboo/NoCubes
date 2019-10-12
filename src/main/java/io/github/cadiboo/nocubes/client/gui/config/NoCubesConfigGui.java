@@ -43,7 +43,7 @@ public final class NoCubesConfigGui extends Screen {
 //			}
 //		}
 //		this.field_146493_s.active = flag;
-		super.render(mouseX, mouseX, partialTicks);
+		super.render(mouseX, mouseY, partialTicks);
 	}
 
 	@Override
