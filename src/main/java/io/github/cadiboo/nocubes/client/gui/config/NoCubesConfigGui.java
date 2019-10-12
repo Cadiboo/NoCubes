@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.fml.client.config.GuiButtonExt;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
@@ -84,7 +85,7 @@ public final class NoCubesConfigGui extends Screen {
 		final int halfWidth = this.width / 2;
 		final int buttonsHeight = this.height - 29;
 
-		this.addButton(new Button(halfWidth - buttonWidthHalf, buttonsHeight, doneWidth, 20, doneText,
+		this.addButton(new GuiButtonExt(halfWidth - buttonWidthHalf, buttonsHeight, doneWidth, 20, doneText,
 				$ -> {
 					if (this.configOptionsList.saveChanged())
 						ClientUtil.tryReloadRenderers();
@@ -94,14 +95,14 @@ public final class NoCubesConfigGui extends Screen {
 
 		this.configOptionsList = new ConfigOptionsList(this, this.minecraft);
 		this.children.add(this.configOptionsList);
-//		this.field_146493_s = this.addButton(new Button(this.width / 2 - 155, this.height - 29, 150, 20, I18n.format("controls.resetAll"), (p_213125_1_) -> {
+//		this.field_146493_s = this.addButton(new GuiButtonExt(this.width / 2 - 155, this.height - 29, 150, 20, I18n.format("controls.resetAll"), (p_213125_1_) -> {
 //			for (KeyBinding keybinding : this.minecraft.gameSettings.keyBindings) {
 //				keybinding.setToDefault();
 //			}
 //
 //			KeyBinding.resetKeyBindingArrayAndHash();
 //		}));
-//		this.addButton(new Button(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), (p_213124_1_) -> {
+//		this.addButton(new GuiButtonExt(this.width / 2 - 155 + 160, this.height - 29, 150, 20, I18n.format("gui.done"), (p_213124_1_) -> {
 //			this.minecraft.displayGuiScreen(this.parentScreen);
 //		}));
 	}
