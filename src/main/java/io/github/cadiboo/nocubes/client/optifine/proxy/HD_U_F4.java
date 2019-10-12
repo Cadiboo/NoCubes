@@ -69,7 +69,8 @@ public class HD_U_F4 implements OptiFine {
 
 	@Override
 	public void popShaderEntity(final BufferBuilder buffer) {
-		SVertexBuilder.popEntity(buffer);
+		if (Config.isShaders())
+			SVertexBuilder.popEntity(buffer);
 	}
 
 	@Override
