@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.proxy.OptiFine;
 import io.github.cadiboo.nocubes.hooks.Hooks;
+import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -23,12 +24,15 @@ import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
 import static io.github.cadiboo.nocubes.mesh.generator.MarchingCubes.CUBE_VERTS;
+import static io.github.cadiboo.nocubes.mesh.generator.MarchingCubes.EDGE_INDEX;
 import static io.github.cadiboo.nocubes.mesh.generator.MarchingCubes.EDGE_TABLE;
+import static io.github.cadiboo.nocubes.mesh.generator.MarchingCubes.TRI_TABLE;
 
 /**
  * @author Cadiboo
@@ -97,7 +101,7 @@ public class MarchingCubesRenderer {
 								Object renderEnv = optiFine.preRenderBlock(bufferBuilder, layer, blockState, pos, builders, chunkRenderCache);
 								ClientUtil.startOrContinueBufferBuilder(compiledChunk, layer, chunkRender, chunkRenderPos, bufferBuilder);
 //								usedBlockRenderLayers[layerOrdinal] |= blockRendererDispatcher.renderBlock(blockState, pos, chunkRenderCache, bufferBuilder, random, modelData);
-								usedBlockRenderLayers[layerOrdinal] |= render(chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, world, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher, builders, pos, layer, bufferBuilder, modelData, renderEnv);
+								usedBlockRenderLayers[layerOrdinal] |= render(chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, world, chunkRenderCache, random, blockRendererDispatcher, builders, pos, layer, bufferBuilder, modelData, renderEnv);
 								optiFine.postRenderBlock(renderEnv, chunkRender, builders, compiledChunk, usedBlockRenderLayers);
 							}
 						}
@@ -109,79 +113,71 @@ public class MarchingCubesRenderer {
 		}
 	}
 
-	private static boolean render(final ChunkRender chunkRender, final BlockPos chunkRenderPos, final ChunkRenderTask chunkRenderTask, final CompiledChunk compiledChunk, final IWorld world, final IEnviromentBlockReader chunkRenderCache, final boolean[] usedBlockRenderLayers, final Random random, final BlockRendererDispatcher blockRendererDispatcher, final RegionRenderCacheBuilder builders, final PooledMutableBlockPos pos, final BlockRenderLayer layer, final BufferBuilder bufferBuilder, final IModelData modelData, final Object renderEnv) {
+	private static boolean render(final ChunkRender chunkRender, final BlockPos chunkRenderPos, final ChunkRenderTask chunkRenderTask, final CompiledChunk compiledChunk, final IWorld world, final IEnviromentBlockReader chunkRenderCache, final Random random, final BlockRendererDispatcher blockRendererDispatcher, final RegionRenderCacheBuilder builders, final PooledMutableBlockPos pos, final BlockRenderLayer layer, final BufferBuilder bufferBuilder, final IModelData modelData, final Object renderEnv) {
 		float isolevel = 0.5F;
-
-		Vec3[] grid_p = new Vec3[8];
 
 		float[] grid = new float[8];
 		for (int i = 0; i < CUBE_VERTS.length; i++) {
 			final byte[] offset = CUBE_VERTS[i];
-
-			final BlockPos pos1 = pos.add(offset[0], offset[1], offset[2]);
-
-			grid_p[i] = Vec3.retain(pos.getX(), pos.getY(), pos.getZ());
-
-			final BlockState state = chunkRenderCache.getBlockState(pos1);
+			final BlockState state = chunkRenderCache.getBlockState(pos.add(offset[0], offset[1], offset[2]));
 			grid[i] = state.nocubes_isTerrainSmoothable ? 0 : 1;
 		}
 
-		// Determine the index into the edge table which tells us which vertices are inside of the surface
-		int cubeindex = 0;
-		if (grid[0] < isolevel) cubeindex |= 1;
-		if (grid[1] < isolevel) cubeindex |= 2;
-		if (grid[2] < isolevel) cubeindex |= 4;
-		if (grid[3] < isolevel) cubeindex |= 8;
-		if (grid[4] < isolevel) cubeindex |= 16;
-		if (grid[5] < isolevel) cubeindex |= 32;
-		if (grid[6] < isolevel) cubeindex |= 64;
-		if (grid[7] < isolevel) cubeindex |= 128;
+		// Calculate the index into the edge table which tells us which vertices
+		// are inside of the surface as follows:
+		// Loop over each of the 8 corners of the cube, and set the corresponding
+		// bit to 1 if its value is below the surface level.
+		// This will result in a value between 0 and 255.
+		byte cubeIndex = 0;
+		for (int i = 0; i < 8; i++) {
+			if (grid[i] < isolevel)
+				cubeIndex |= 1 << i;
+		}
 
-		if (EDGE_TABLE[cubeindex] == 0)
-			return false; //Cube is entirely in/out of the surface
+		final short edgeIndex = EDGE_TABLE[cubeIndex];
+		if (edgeIndex == 0)
+			return false; // Cube is entirely in/out of the surface
 
-		Vec3[] vertlist = new Vec3[12];
+		int[] edges2vertices = new int[12]; // TODO: why 12?
 
-		// Find the vertices where the surface intersects the cube
-		if ((EDGE_TABLE[cubeindex] & 1) != 0)
-			vertlist[0] =
-					vertexInterp(isolevel, grid_p[0], grid_p[1], grid[0], grid[1]);
-		if ((EDGE_TABLE[cubeindex] & 2) != 0)
-			vertlist[1] =
-					vertexInterp(isolevel, grid_p[1], grid_p[2], grid[1], grid[2]);
-		if ((EDGE_TABLE[cubeindex] & 4) != 0)
-			vertlist[2] =
-					vertexInterp(isolevel, grid_p[2], grid_p[3], grid[2], grid[3]);
-		if ((EDGE_TABLE[cubeindex] & 8) != 0)
-			vertlist[3] =
-					vertexInterp(isolevel, grid_p[3], grid_p[0], grid[3], grid[0]);
-		if ((EDGE_TABLE[cubeindex] & 16) != 0)
-			vertlist[4] =
-					vertexInterp(isolevel, grid_p[4], grid_p[5], grid[4], grid[5]);
-		if ((EDGE_TABLE[cubeindex] & 32) != 0)
-			vertlist[5] =
-					vertexInterp(isolevel, grid_p[5], grid_p[6], grid[5], grid[6]);
-		if ((EDGE_TABLE[cubeindex] & 64) != 0)
-			vertlist[6] =
-					vertexInterp(isolevel, grid_p[6], grid_p[7], grid[6], grid[7]);
-		if ((EDGE_TABLE[cubeindex] & 128) != 0)
-			vertlist[7] =
-					vertexInterp(isolevel, grid_p[7], grid_p[4], grid[7], grid[4]);
-		if ((EDGE_TABLE[cubeindex] & 256) != 0)
-			vertlist[8] =
-					vertexInterp(isolevel, grid_p[0], grid_p[4], grid[0], grid[4]);
-		if ((EDGE_TABLE[cubeindex] & 512) != 0)
-			vertlist[9] =
-					vertexInterp(isolevel, grid_p[1], grid_p[5], grid[1], grid[5]);
-		if ((EDGE_TABLE[cubeindex] & 1024) != 0)
-			vertlist[10] =
-					vertexInterp(isolevel, grid_p[2], grid_p[6], grid[2], grid[6]);
-		if ((EDGE_TABLE[cubeindex] & 2048) != 0)
-			vertlist[11] =
-					vertexInterp(isolevel, grid_p[3], grid_p[7], grid[3], grid[7]);
+		ArrayList<float[]> vertices = new ArrayList<>();
 
-		// I don't know why I do this
-		// or what to do here
+		// Look up the triangulation for the current cubeIndex.
+		// Each entry is the index of an edge.
+		final byte[] triangulation = TRI_TABLE[cubeIndex];
+		for (final byte b : triangulation) {
+			// Lookup the indices of the corner points making up the current edge
+			byte[] pointsLookup = EDGE_INDEX[b];
+			final byte point0Index = pointsLookup[0];
+			final byte point1Index = pointsLookup[1];
+			byte[] cornerPoint0 = CUBE_VERTS[point0Index];
+			byte[] cornerPoint1 = CUBE_VERTS[point1Index];
+//			final float point0Density = grid[point0Index];
+//			final float point1Density = grid[point1Index];
+
+			// Find midpoint of edge
+			float[] newVertex = {
+					(cornerPoint0[0] + cornerPoint1[0]) / 2F,
+					(cornerPoint0[1] + cornerPoint1[1]) / 2F,
+					(cornerPoint0[2] + cornerPoint1[2]) / 2F,
+			};
+
+			// Add position to vertex list
+			vertices.add(newVertex);
+
+		}
+
+		// Instead of just iterating vertices we use the
+		byte[] f = TRI_TABLE[cubeIndex];
+		for (byte i = 0; i < f.length; i += 3) {
+			try (Face face = Face.retain(
+					Vec3.retain(vertices.get(edges2vertices[f[i]])),
+					Vec3.retain(vertices.get(edges2vertices[f[i + 1]])),
+					Vec3.retain(vertices.get(edges2vertices[f[i + 2]]))
+			)) {
+				// Render the face
+			}
+		}
 
 		return true;
 	}
