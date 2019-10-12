@@ -260,7 +260,10 @@ public final class ClientUtil {
 	}
 
 	public static BufferBuilder startOrContinueBufferBuilder(final ChunkRenderTask generator, final int blockRenderLayerOrdinal, final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, ChunkRender chunkRender, BlockPos renderChunkPosition) {
-		final BufferBuilder bufferBuilder = generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal);
+		return startOrContinueBufferBuilder(compiledChunk, blockRenderLayer, chunkRender, renderChunkPosition, generator.getRegionRenderCacheBuilder().getBuilder(blockRenderLayerOrdinal));
+	}
+
+	public static BufferBuilder startOrContinueBufferBuilder(final CompiledChunk compiledChunk, final BlockRenderLayer blockRenderLayer, final ChunkRender chunkRender, final BlockPos renderChunkPosition, final BufferBuilder bufferBuilder) {
 		if (!compiledChunk.isLayerStarted(blockRenderLayer)) {
 			compiledChunk.setLayerStarted(blockRenderLayer);
 			chunkRender.preRenderBlocks(bufferBuilder, renderChunkPosition);
