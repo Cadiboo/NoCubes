@@ -67,6 +67,9 @@ public final class OptiFineCompatibility {
 				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
 				return null;
 			}
+		} catch (Exception e) {
+			final CrashReport crashReport = CrashReport.makeCrashReport(e, "OptiFineCompatibility: Finding OptiFine Config class");
+			throw new ReportedException(crashReport);
 		}
 		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
 		return config;
