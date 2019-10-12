@@ -104,10 +104,6 @@ public final class OptiFineCompatibility {
 				.collect(Collectors.joining(", "));
 	}
 
-	public static void main(String... args) {
-		System.out.println(getSupportedVersions());
-	}
-
 	private static class OptiFineProxy {
 
 		private final String version;
