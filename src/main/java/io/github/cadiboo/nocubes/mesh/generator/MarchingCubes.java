@@ -18,7 +18,11 @@ import java.util.HashMap;
  */
 public final class MarchingCubes implements MeshGenerator {
 
-	private static final short[] EDGE_TABLE = {
+	/**
+	 * Maps the vertices under the isosurface to the intersecting edges.
+	 * An 8 bit index is formed where each bit corresponds to a vertex.
+	 */
+	public static final short[] EDGE_TABLE = {
 			0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 			0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
 			0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -52,7 +56,7 @@ public final class MarchingCubes implements MeshGenerator {
 			0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
 			0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0};
 
-	private static final byte[][] TRI_TABLE = {
+	public static final byte[][] TRI_TABLE = {
 			{},
 			{0, 8, 3},
 			{0, 1, 9},
@@ -310,7 +314,7 @@ public final class MarchingCubes implements MeshGenerator {
 			{0, 3, 8},
 			{}};
 
-	private static final byte[][] CUBE_VERTS = {
+	public static final byte[][] CUBE_VERTS = {
 			{0, 0, 0},
 			{1, 0, 0},
 			{1, 1, 0},
@@ -321,7 +325,7 @@ public final class MarchingCubes implements MeshGenerator {
 			{0, 1, 1}
 	};
 
-	private static final byte[][] EDGE_INDEX = {
+	public static final byte[][] EDGE_INDEX = {
 			{0, 1},
 			{1, 2},
 			{2, 3},
@@ -340,11 +344,6 @@ public final class MarchingCubes implements MeshGenerator {
 	@Nonnull
 	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
 
-		final byte[][] cubeVerts = CUBE_VERTS;
-		final short[] edgeTable = EDGE_TABLE;
-		final byte[][] edgeIndex = EDGE_INDEX;
-		final byte[][] triTable = TRI_TABLE;
-
 		final byte[] x = {0, 0, 0};
 		short n = 0;
 		final float[] grid = new float[8];
@@ -360,13 +359,13 @@ public final class MarchingCubes implements MeshGenerator {
 					//For each cell, compute cube mask
 					short cube_index = 0;
 					for (byte i = 0; i < 8; ++i) {
-						byte[] v = cubeVerts[i];
+						byte[] v = CUBE_VERTS[i];
 						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
 					}
 					//Compute vertices
-					short edge_mask = edgeTable[cube_index];
+					short edge_mask = EDGE_TABLE[cube_index];
 					if (edge_mask == 0) {
 						continue;
 					}
@@ -375,11 +374,11 @@ public final class MarchingCubes implements MeshGenerator {
 							continue;
 						}
 						edges[i] = vertices.size();
-						float[] nv = {0, 0, 0};
+						float[] nv = {0, 0, 0}; // new vertex
 
-						byte[] e = edgeIndex[i];
-						final byte[] p0 = cubeVerts[e[0]];
-						final byte[] p1 = cubeVerts[e[1]];
+						byte[] e = EDGE_INDEX[i];
+						final byte[] p0 = CUBE_VERTS[e[0]];
+						final byte[] p1 = CUBE_VERTS[e[1]];
 						final float a = grid[e[0]];
 						final float b = grid[e[1]];
 						final float d = a - b;
@@ -394,7 +393,7 @@ public final class MarchingCubes implements MeshGenerator {
 					}
 					final FaceList faces = FaceList.retain();
 					//Add faces
-					byte[] f = triTable[cube_index];
+					byte[] f = TRI_TABLE[cube_index];
 					for (byte i = 0; i < f.length; i += 3) {
 						faces.add(
 								Face.retain(
