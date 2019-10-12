@@ -485,7 +485,7 @@ public final class ClientEventSubscriber {
 		GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
 		GlStateManager.lineWidth(3.0F);
 		GlStateManager.disableTexture();
-		GlStateManager.depthMask(false);
+		GlStateManager.depthMask(true);
 
 		GlStateManager.color4f(0, 0, 0, 1);
 		GlStateManager.color4f(1, 1, 1, 1);
