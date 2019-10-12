@@ -74,7 +74,7 @@ public final class NoCubes {
 			OptiFineCompatibility.init();
 			if (OptiFineCompatibility.isOptiFineInstalled() && !OptiFineCompatibility.isOptiFineCompatible()) {
 				final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(),
-						"Incompatible OptiFine version detected! Supported OptiFine series : "+OptiFineCompatibility.getSupportedVersions() + " (Installed: " + OptiFineCompatibility.getOptiFineVersion() + ")");
+						"Incompatible OptiFine version detected! Supported OptiFine series : " + OptiFineCompatibility.getSupportedVersions() + " (Installed: " + OptiFineCompatibility.getOptiFineVersion() + ")");
 				crashReport.makeCategory("OptiFineCompatibility: Detecting OptiFine");
 				throw new ReportedException(crashReport);
 			}
