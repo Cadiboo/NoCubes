@@ -1,4 +1,3 @@
 {
-	"NoCubes Transformer": "nocubes-transformer.js",
-	"NoCubes Dev Transformer": "nocubes-new-transformer.js"
+	"NoCubes Transformer": "nocubes-transformer.js"
 }
