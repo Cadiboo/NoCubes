@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render;
+package io.github.cadiboo.nocubes.client.render.dev;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
