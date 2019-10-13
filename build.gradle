@@ -48,7 +48,7 @@ minecraft {
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-	
+
 	// Default run configurations.
 	// These can be tweaked, removed, or duplicated as needed.
 	runs {
@@ -236,16 +236,29 @@ task sourcesJar(type: Jar, dependsOn: classes) {
 	classifier = 'sources'
 	from sourceSets.main.allSource
 }
-build.dependsOn sourcesJar
+
+// TODO: Sign the dev jar
+// Create Dev Jar
+task devJar(type: Jar, dependsOn: jar) {
+	classifier = 'dev'
+	// For some reason using jar.source puts a copy of the jar's manifest
+	// in the root directory (But not in META-INF). So we add the manifest
+	// manually and then exclude the one in the root directory.
+	from jar.source
+	// No clue why "manifest jar.manifest" fails and "manifest = jar.manifest"
+	// works. The "=" shouldn't change anything, but it does.
+	manifest = jar.manifest
+	exclude jar.excludes + "/MANIFEST.MF"
+}
 
 //// Create Javadoc Jar
 //task javadocJar(type: Jar, dependsOn: javadoc) {
 //	classifier = 'javadoc'
 //	from javadoc.destinationDir
 //}
-//build.dependsOn javadocJar
 
 artifacts {
 	archives sourcesJar
+	archives devJar
 //	archives javadocJar
 }
