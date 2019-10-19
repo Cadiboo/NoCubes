@@ -77,7 +77,7 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
-		"ChunkRenderCache#generateCache": {
+		"ChunkRenderCache.generateCache": {
 			"target": {
 				"type": "METHOD",
 				"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
@@ -86,21 +86,26 @@ function initializeCoreMod() {
 			},
 			"transformer": function(methodNode) {
 				// OptiFine immediately calls another method.
-				// Vanilla returns null when the chunk is empty.
 				var instructions = methodNode.instructions;
 				for (var i = instructions.size() - 1; i >= 0; --i) {
-					if (instructions.get(i).getOpcode() == ACONST_NULL) {
-						print("Found lack of OptiFine - ChunkRenderCache#generateCache NULL");
-						isOptiFinePresent = false;
-						break;
-					}
+					var instruction = instructions.get(i)
+					if (instruction.getOpcode() == INVOKESTATIC)
+						if (instruction.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderCache"))
+							// OptiFine's methods aren't obfuscated and this one has an MCP name
+							if (instruction.name.equals("generateCache"))
+								// This method has an extra boolean parameter at the end
+								if (instruction.desc.equals("(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;")) {
+									print("Found OptiFine - ChunkRenderCache.generateCache (OptiFine Overload)");
+									isOptiFinePresent = true;
+									break;
+								}
 				}
 				if (!isOptiFinePresent)
 					injectGenerateCacheHook(instructions);
 				return methodNode;
 			}
 		},
-		"ChunkRenderCache#generateCache OptiFine": {
+		"ChunkRenderCache.generateCache OptiFine": {
 			"target": {
 				"type": "METHOD",
 				"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
@@ -236,7 +241,7 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		}
-	}
+	};
 }
 
 // 1) Find first INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
@@ -800,7 +805,7 @@ function injectPreIterationHook(instructions) {
 //    ALOAD 13
 //    ALOAD 14
 //    ALOAD 15
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/RenderChunk;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/RenderChunkCache;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/ChunkRender;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;Lnet/minecraft/world/IEnviromentBlockReader;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
 //   L33
 //    LINENUMBER 144 L33
 //    ALOAD 7
@@ -1899,7 +1904,6 @@ function removeBetweenInclusive(instructions, startInstruction, endInstruction) 
 }
 
 function printInstructions(instructions) {
-	return;
 	var arrayLength = instructions.size();
 	var labelNames = {
 		length: 0
