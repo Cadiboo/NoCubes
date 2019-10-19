@@ -53,7 +53,7 @@ function initializeCoreMod() {
 
 	isOptiFinePresent = false;
 
-	return {
+	return wrapMethodTransformers({
 		"ChunkRenderCache#<init>": {
 			"target": {
 				"type": "METHOD",
@@ -241,7 +241,7 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		}
-	};
+	});
 }
 
 // 1) Find first INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
@@ -1875,6 +1875,97 @@ function injectGetAllowedOffsetHook(instructions) {
 	// Inject instructions
 	instructions.insert(firstLabelBefore_first_NEW_MutableBlockPos, toInject);
 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function wrapMethodTransformers(transformersObj) {
+
+	var oldPrint = print;
+	currentPrintTransformer = null;
+	print = function(msg) {
+		if (currentPrintTransformer)
+			msg = "[" + currentPrintTransformer + "]: " + msg;
+		oldPrint(msg);
+	};
+
+	for (var transformerObjName in transformersObj){
+		var transformerObj = transformersObj[transformerObjName];
+
+		var target = transformerObj["target"];
+		if (!target)
+			continue;
+
+		var type = target["type"];
+		if (!type || !type.equals("METHOD"))
+			continue;
+
+		var clazz = target["class"];
+		if (!clazz)
+			continue;
+
+		var methodName = target["methodName"];
+		if (!methodName)
+			continue;
+
+		var mappedMethodName = ASMAPI.mapMethod(methodName);
+
+		var methodDesc = target["methodDesc"];
+		if (!methodDesc)
+			continue;
+
+		var transformer = transformerObj["transformer"];
+		if (!transformer)
+			continue;
+
+		var newTransformerObjName = "Method2Class4Compatibility - " + transformerObjName;
+		var newTransformerObj = {
+			"target": {
+				"type": "CLASS",
+				"name": clazz,
+			},
+			"transformer": makeTransformerFunction(transformerObjName, mappedMethodName, methodDesc, transformer)
+		};
+
+		transformersObj[newTransformerObjName] = newTransformerObj;
+		delete transformersObj[transformerObjName];
+	}
+	return transformersObj;
+}
+
+function makeTransformerFunction(transformerObjName, mappedMethodName, methodDesc, transformer) {
+	return function(classNode) {
+		var methods = classNode.methods;
+		for (var i in methods) {
+			var methodNode = methods[i];
+			if (!methodNode.name.equals(mappedMethodName))
+				continue;
+			if (!methodNode.desc.equals(methodDesc))
+				continue;
+			currentPrintTransformer = transformerObjName;
+			print("Starting Transform.");
+			methods[i] = transformer(methodNode);
+			currentPrintTransformer = null;
+			break;
+		}
+		return classNode;
+	};
 }
 
 
