@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.TempClientConfigHacks;
 import io.github.cadiboo.nocubes.client.gui.config.NoCubesConfigGui;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
@@ -30,7 +29,6 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -93,9 +91,6 @@ public final class NoCubes {
 				ConfigHelper.bakeServer(config);
 			}
 		});
-		modEventBus.addListener((FMLClientSetupEvent event) ->
-				TempClientConfigHacks.doConfigHacks()
-		);
 
 		final ModLoadingContext modLoadingContext = ModLoadingContext.get();
 		modLoadingContext.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
