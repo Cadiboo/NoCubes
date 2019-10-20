@@ -59,7 +59,7 @@ function initializeCoreMod() {
 
 	isOptiFinePresent = false;
 
-	return wrapMethodTransformers({
+	return wrapWithLogging(wrapMethodTransformers({
 		"ChunkRenderCache#<init>": {
 			"target": {
 				"type": "METHOD",
@@ -250,7 +250,7 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		}
-	});
+	}));
 }
 
 // 1) Find first INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
@@ -1903,10 +1903,16 @@ function injectGetAllowedOffsetHook(instructions) {
 
 
 
-
-function wrapMethodTransformers(transformersObj) {
+/**
+ * Utility function to wrap all transformers in transformers that have logging
+ *
+ * @param {object} transformersObj All the transformers of this coremod.
+ * @return {object} The transformersObj with all transformers wrapped.
+ */
+function wrapWithLogging(transformersObj) {
 
 	var oldPrint = print;
+	// Global variable because makeLoggingTransformerFunction is a separate function (thanks to scoping issues)
 	currentPrintTransformer = null;
 	print = function(msg) {
 		if (currentPrintTransformer)
@@ -1914,7 +1920,47 @@ function wrapMethodTransformers(transformersObj) {
 		oldPrint(msg);
 	};
 
-	for (var transformerObjName in transformersObj){
+	for (var transformerObjName in transformersObj) {
+		var transformerObj = transformersObj[transformerObjName];
+
+		var transformer = transformerObj["transformer"];
+		if (!transformer)
+			continue;
+
+		transformerObj["transformer"] = makeLoggingTransformerFunction(transformerObjName, transformer);
+	}
+	return transformersObj;
+}
+
+/**
+ * Utility function for making the wrapper transformer function with logging
+ * Not part of {@link #wrapWithLogging) because of scoping issues (Nashhorn
+ * doesn't support "let" which would fix the issues)
+ *
+ * @param {string} transformerObjName The name of the transformer
+ * @param {transformer} transformer The transformer function
+ * @return {function} A transformer that wraps the old transformer
+ */
+function makeLoggingTransformerFunction(transformerObjName, transformer) {
+	return function(obj) {
+		currentPrintTransformer = transformerObjName;
+		print("Starting Transform.");
+		obj = transformer(obj);
+		currentPrintTransformer = null;
+		return obj;
+	}
+}
+
+/**
+ * Utility function to wrap all method transformers in class transformers
+ * to make them run after OptiFine's class transformers
+ *
+ * @param {object} transformersObj All the transformers of this coremod.
+ * @return {object} The transformersObj with all method transformers wrapped.
+ */
+function wrapMethodTransformers(transformersObj) {
+
+	for (var transformerObjName in transformersObj) {
 		var transformerObj = transformersObj[transformerObjName];
 
 		var target = transformerObj["target"];
@@ -1939,17 +1985,17 @@ function wrapMethodTransformers(transformersObj) {
 		if (!methodDesc)
 			continue;
 
-		var transformer = transformerObj["transformer"];
-		if (!transformer)
+		var methodTransformer = transformerObj["transformer"];
+		if (!methodTransformer)
 			continue;
 
-		var newTransformerObjName = "Method2Class4Compatibility - " + transformerObjName;
+		var newTransformerObjName = "(Method2ClassTransformerWrapper) " + transformerObjName;
 		var newTransformerObj = {
 			"target": {
 				"type": "CLASS",
 				"name": clazz,
 			},
-			"transformer": makeTransformerFunction(transformerObjName, mappedMethodName, methodDesc, transformer)
+			"transformer": makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, methodTransformer)
 		};
 
 		transformersObj[newTransformerObjName] = newTransformerObj;
@@ -1958,7 +2004,17 @@ function wrapMethodTransformers(transformersObj) {
 	return transformersObj;
 }
 
-function makeTransformerFunction(transformerObjName, mappedMethodName, methodDesc, transformer) {
+/**
+ * Utility function for making the wrapper class transformer function
+ * Not part of {@link #wrapMethodTransformers) because of scoping issues (Nashhorn
+ * doesn't support "let" which would fix the issues)
+ *
+ * @param {string} mappedMethodName The (mapped) name of the target method
+ * @param {string} methodDesc The description of the target method
+ * @param {methodTransformer} transformer The method transformer function
+ * @return {function} A class transformer that wraps the methodTransformer
+ */
+function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, methodTransformer) {
 	return function(classNode) {
 		var methods = classNode.methods;
 		for (var i in methods) {
@@ -1967,10 +2023,7 @@ function makeTransformerFunction(transformerObjName, mappedMethodName, methodDes
 				continue;
 			if (!methodNode.desc.equals(methodDesc))
 				continue;
-			currentPrintTransformer = transformerObjName;
-			print("Starting Transform.");
-			methods[i] = transformer(methodNode);
-			currentPrintTransformer = null;
+			methods[i] = methodTransformer(methodNode);
 			break;
 		}
 		return classNode;
