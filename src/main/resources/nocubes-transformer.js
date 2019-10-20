@@ -1992,7 +1992,7 @@ function makeTransformerFunction(transformerObjName, mappedMethodName, methodDes
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
 	var end = instructions.indexOf(endInstruction);
-	for (var i = start; i < end; ++i) {
+	for (var i = start; i <= end; ++i) {
 		instructions.remove(instructions.get(start));
 	}
 }
