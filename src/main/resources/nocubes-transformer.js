@@ -2022,7 +2022,7 @@ function printInstructions(instructions) {
 	};
 	for (var i = 0; i < arrayLength; ++i) {
 		var text = getInstructionText(instructions.get(i), labelNames);
-		if (text.length > 0) // Some instructions like frames and lines are ignored
+		if (text.length > 0) // Some instructions are ignored
 			print(text);
 	}
 }
@@ -2035,7 +2035,9 @@ function printInstructions(instructions) {
  */
 function getInstructionText(instruction, labelNames) {
 	var out = "";
-	if (instruction.getOpcode() > 0)
+	if (instruction.getType() != 8) // LABEL
+		out += " "; // Nice formatting
+	if (instruction.getOpcode() > 0) // Labels, Frames and LineNumbers don't have opcodes
 		out += OPCODES[instruction.getOpcode()] + " ";
 	switch (instruction.getType()) {
 		default:
@@ -2060,17 +2062,10 @@ function getInstructionText(instruction, labelNames) {
 			out += instruction.name + " " + instruction.desc;
 		break;
 		case 7: // JUMP_INSN
-			out += getInstructionText(instruction.label, labelNames);
+			out += getLabelName(instruction.label, labelNames);
 		break;
 		case 8: // LABEL
-			var label = instruction.getLabel();
-			var labelName = labelNames[label.hashCode()];
-			if (labelName == undefined) {
-				labelName = "L" + labelNames.length;
-				labelNames[label.hashCode()] = labelName;
-				++labelNames.length;
-			}
-			out += labelName;
+			out += getLabelName(instruction.getLabel(), labelNames);
 		break;
 		case 9: // LDC_INSN
 			out += instruction.cst;
@@ -2078,9 +2073,58 @@ function getInstructionText(instruction, labelNames) {
 		case 10: // IINC_INSN
 			out += instruction.var + " " + instruction.incr;
 		break;
+		case 11: // TABLESWITCH_INSN
+			out += instruction.min + " " + instruction.max;
+			out += "\n";
+			for (var i = 0; i < instruction.labels.length; ++i) {
+			  out += "   " + (instruction.min + i) + ": ";
+			  out += getLabelName(instruction.labels[i], labelNames);
+			  out += "\n";
+			}
+			out += "   " + "default: " + getLabelName(instruction.dflt, labelNames);
+		break;
+		case 12: // LOOKUPSWITCH_INSN
+			for (var i = 0; i < instruction.labels.length; ++i) {
+			  out += "   " + instruction.keys[i] + ": ";
+			  out += getLabelName(instruction.labels[i], labelNames);
+			  out += "\n";
+			}
+			out += "   " + "default: " + getLabelName(instruction.dflt, labelNames);
+		break;
+		case 13: // MULTIANEWARRAY_INSN
+			out += instruction.desc + " " + instruction.dims;
+		break;
+		case 14: // FRAME
+			out += "FRAME";
+			// Frames don't work because Nashhorn calls AbstractInsnNode#getType()
+			// instead of accessing FrameNode#type for the code "instruction.type"
+			// so there is no way to get the frame type of the FrameNode
+		break;
+		case 15: // LINENUMBER
+			out += "LINENUMBER ";
+			out += instruction.line + " " + getLabelName(instruction.start.getLabel(), labelNames);
+		break;
 	}
 	return out;
 }
+
+/**
+ * Util function to get the name for a LabelNode "instruction"
+ *
+ * @param {LabelNode} label The label to generate a name for
+ * @param {Map<int, string>} labelNames The names of other labels in the format Map<LabelHashCode, LabelName>
+ */
+function getLabelName(label, labelNames) {
+	var labelHashCode = label.hashCode();
+	var labelName = labelNames[labelHashCode];
+	if (labelName == undefined) {
+		labelName = "L" + labelNames.length;
+		labelNames[labelHashCode] = labelName;
+		++labelNames.length;
+	}
+	return labelName;
+}
+
 /** The names of the Java Virtual Machine opcodes. */
 OPCODES = [
 	"NOP", // 0 (0x0)
