@@ -1,3 +1,9 @@
+/**
+ * This function is called by Forge before any minecraft classes are loaded to
+ * setup the coremod.
+ *
+ * @return {object} All the transformers of this coremod.
+ */
 function initializeCoreMod() {
 
 	/*Class/Interface*/ Opcodes = Java.type("org.objectweb.asm.Opcodes");
@@ -1989,6 +1995,13 @@ function makeTransformerFunction(transformerObjName, mappedMethodName, methodDes
 
 
 
+/**
+ * Utility function for removing multiple instructions
+ *
+ * @param {InsnList} instructions The list of instructions to modify
+ * @param {InsnList} startInstruction The first instruction of instructions to be removed
+ * @param {InsnList} endInstruction The last instruction of instructions to be removed
+ */
 function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
 	var start = instructions.indexOf(startInstruction);
 	var end = instructions.indexOf(endInstruction);
@@ -1997,6 +2010,11 @@ function removeBetweenInclusive(instructions, startInstruction, endInstruction) 
 	}
 }
 
+/**
+ * Util function to print a list of instructions for debugging
+ *
+ * @param {InsnList} instructions The list of instructions to print
+ */
 function printInstructions(instructions) {
 	var arrayLength = instructions.size();
 	var labelNames = {
@@ -2008,6 +2026,13 @@ function printInstructions(instructions) {
 			print(text);
 	}
 }
+
+/**
+ * Util function to get the text for an instruction
+ *
+ * @param {AbstractInsnNode} instruction The instruction to generate text for
+ * @param {Map<int, string>} labelNames The names of the labels in the format Map<LabelHashCode, LabelName>
+ */
 function getInstructionText(instruction, labelNames) {
 	var out = "";
 	if (instruction.getOpcode() > 0)
