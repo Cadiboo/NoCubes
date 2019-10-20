@@ -58,6 +58,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.network.ConnectionType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
+import org.lwjgl.opengl.GL11;
 
 import java.text.DecimalFormat;
 import java.util.List;
@@ -490,8 +491,6 @@ public final class ClientEventSubscriber {
 		GlStateManager.color4f(0, 0, 0, 1);
 		GlStateManager.color4f(1, 1, 1, 1);
 
-		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
-
 		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
 			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
 				try (Face face = faces.get(i)) {
@@ -501,22 +500,16 @@ public final class ClientEventSubscriber {
 							Vec3 v2 = face.getVertex2();
 							Vec3 v3 = face.getVertex3()
 					) {
-						final double v0x = v0.x;
-						final double v0y = v0.y;
-						final double v0z = v0.z;
-						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
+						bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
 						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						// End back at v0. Draw with alpha this time
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
+						tessellator.draw();
 					}
 				}
 			}
 		}
-
-		tessellator.draw();
 
 		GlStateManager.depthMask(true);
 		GlStateManager.enableTexture();
