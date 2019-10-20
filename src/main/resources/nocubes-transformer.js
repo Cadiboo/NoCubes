@@ -89,16 +89,19 @@ function initializeCoreMod() {
 				var instructions = methodNode.instructions;
 				for (var i = instructions.size() - 1; i >= 0; --i) {
 					var instruction = instructions.get(i)
-					if (instruction.getOpcode() == INVOKESTATIC)
-						if (instruction.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderCache"))
-							// OptiFine's methods aren't obfuscated and this one has an MCP name
-							if (instruction.name.equals("generateCache"))
-								// This method has an extra boolean parameter at the end
-								if (instruction.desc.equals("(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;")) {
-									print("Found OptiFine - ChunkRenderCache.generateCache (OptiFine Overload)");
-									isOptiFinePresent = true;
-									break;
-								}
+					if (instruction.getOpcode() != INVOKESTATIC)
+						continue;
+					if (!instruction.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderCache"))
+						continue;
+					// OptiFine's methods aren't obfuscated and this one has an MCP name
+					if (!instruction.name.equals("generateCache"))
+						continue;
+					// This method has an extra boolean parameter at the end
+					if (!instruction.desc.equals("(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;"))
+						continue;
+					print("Found OptiFine - ChunkRenderCache.generateCache (OptiFine Overload)");
+					isOptiFinePresent = true;
+					break;
 				}
 				if (!isOptiFinePresent)
 					injectGenerateCacheHook(instructions);
