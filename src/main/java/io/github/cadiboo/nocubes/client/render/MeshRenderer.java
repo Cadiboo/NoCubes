@@ -48,6 +48,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -349,8 +350,10 @@ public final class MeshRenderer {
 
 									wasAnythingRendered = true;
 
-									final int formatSize = quad.getFormat().getIntegerSize();
 									final int[] vertexData = quad.getVertexData();
+									final int initialFormatSize = quad.getFormat().getIntegerSize();
+									// Work around a bug in OptiFine when switching shaders
+									final int formatSize = initialFormatSize * 4 > vertexData.length ? initialFormatSize / 2 : initialFormatSize;
 
 									final float v0u;
 									final float v0v;
@@ -371,6 +374,13 @@ public final class MeshRenderer {
 										v2v = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
 										v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
 										v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
+									} catch (ArrayIndexOutOfBoundsException e) {
+										final String s = Arrays.toString(vertexData);
+										LOGGER.error("ArrayIndexOutOfBoundsException at getUVs in renderFaces:");
+										LOGGER.error("  vertexData: " + s);
+										LOGGER.error("  initialFormatSize: " + initialFormatSize);
+										LOGGER.error("  formatSize: " + formatSize);
+										throw e;
 									}
 
 									final int quadPackedLight0 = vertexData[6];
