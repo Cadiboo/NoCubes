@@ -25,11 +25,11 @@ public final class S2CSetExtendFluidsRange {
 	}
 
 	public static void encode(final S2CSetExtendFluidsRange msg, final PacketBuffer packetBuffer) {
-		packetBuffer.writeInt(msg.newRange.ordinal());
+		packetBuffer.writeVarInt(msg.newRange.ordinal());
 	}
 
 	public static S2CSetExtendFluidsRange decode(final PacketBuffer packetBuffer) {
-		return new S2CSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readInt()]);
+		return new S2CSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readVarInt()]);
 	}
 
 	public static void handle(final S2CSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {

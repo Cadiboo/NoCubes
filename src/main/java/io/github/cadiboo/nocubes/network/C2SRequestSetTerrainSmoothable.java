@@ -47,9 +47,8 @@ public final class C2SRequestSetTerrainSmoothable {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
-			if (sender == null) {
+			if (sender == null)
 				return;
-			}
 			final boolean newSmoothability = msg.newSmoothability;
 			final String type = newSmoothability ? "add" : "remove";
 			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
@@ -61,9 +60,8 @@ public final class C2SRequestSetTerrainSmoothable {
 				}
 				ConfigHelper.setTerrainSmoothable(blockState, newSmoothability);
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetTerrainSmoothable(blockStateId, newSmoothability));
-			} else {
+			} else
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + "." + type + "TerrainSmoothableNoPermission"));
-			}
 		});
 		context.setPacketHandled(true);
 	}

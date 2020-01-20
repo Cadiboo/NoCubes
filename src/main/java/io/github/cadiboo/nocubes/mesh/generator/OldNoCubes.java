@@ -1,10 +1,10 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.api.util.pooled.Face;
 import io.github.cadiboo.nocubes.api.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.api.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.Direction;
@@ -49,9 +49,8 @@ public final class OldNoCubes implements MeshGenerator {
 	@Nullable
 	public Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final BlockState state, @Nonnull final IBlockReader reader, @Nonnull final IsSmoothable isSmoothable, @Nonnull final BlockPos.PooledMutable pooledMutableBlockPos) {
 
-		if (!isSmoothable.apply(state)) {
+		if (!isSmoothable.apply(state))
 			return null;
-		}
 
 		// The 8 points that make the block.
 		// 1 point for each corner
@@ -77,17 +76,16 @@ public final class OldNoCubes implements MeshGenerator {
 			point.y += posY;
 			point.z += posZ;
 
-			if (!doesPointIntersectWithManufactured(reader, point, isSmoothable, pooledMutableBlockPos)) {
-				if ((pointIndex < 4) && (doesPointBottomIntersectWithAir(reader, point, pooledMutableBlockPos))) {
-					point.y = posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-				} else if ((pointIndex >= 4) && (doesPointTopIntersectWithAir(reader, point, pooledMutableBlockPos))) {
-					point.y = posY + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
-				}
-//				if (ModConfig.offsetVertices) {
-//					givePointRoughness(point);
-//				}
-			}
+			if (doesPointIntersectWithManufactured(reader, point, isSmoothable, pooledMutableBlockPos))
+				continue;
 
+			if ((pointIndex < 4) && (doesPointBottomIntersectWithAir(reader, point, pooledMutableBlockPos)))
+				point.y = posY + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
+			else if ((pointIndex >= 4) && (doesPointTopIntersectWithAir(reader, point, pooledMutableBlockPos)))
+				point.y = posY + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
+
+//			if (NoCubesConfig.Server.offsetVertices)
+//				givePointRoughness(point);
 		}
 
 		return points;
@@ -131,12 +129,10 @@ public final class OldNoCubes implements MeshGenerator {
 		for (int i = 0; i < 4; i++) {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1)))) {
+			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1))))
 				return false;
-			}
-			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1)))) {
+			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1))))
 				intersects = true;
-			}
 		}
 		return intersects;
 	}
@@ -155,15 +151,12 @@ public final class OldNoCubes implements MeshGenerator {
 		for (int i = 0; i < 4; i++) {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1)))) {
+			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1))))
 				return false;
-			}
-			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y + 1, z1)))) {
+			if (!isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y + 1, z1))))
 				notOnly = true;
-			}
-			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1)))) {
+			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1))))
 				intersects = true;
-			}
 		}
 		return (intersects) && (notOnly);
 	}
@@ -173,13 +166,11 @@ public final class OldNoCubes implements MeshGenerator {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			BlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if ((!isBlockAirOrPlant(state0)) && (!isSmoothable.apply(state0))) {
+			if ((!isBlockAirOrPlant(state0)) && (!isSmoothable.apply(state0)))
 				return true;
-			}
 			BlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if ((!isBlockAirOrPlant(state1)) && (!isSmoothable.apply(state1))) {
+			if ((!isBlockAirOrPlant(state1)) && (!isSmoothable.apply(state1)))
 				return true;
-			}
 		}
 		return false;
 	}
@@ -213,9 +204,8 @@ public final class OldNoCubes implements MeshGenerator {
 		if (points != null) {
 			for (int i = 0; i < DIRECTION_VALUES_LENGTH; ++i) {
 				final Direction direction = DIRECTION_VALUES[i];
-				if (isSmoothable.apply(reader.getBlockState(pooledMutableBlockPos.setPos(pos).move(direction)))) {
+				if (isSmoothable.apply(reader.getBlockState(pooledMutableBlockPos.setPos(pos).move(direction))))
 					continue;
-				}
 
 				final Vec3 vertex0;
 				final Vec3 vertex1;
@@ -274,9 +264,8 @@ public final class OldNoCubes implements MeshGenerator {
 				));
 			}
 
-			for (int i = 0, pointsLength = points.length; i < pointsLength; i++) {
+			for (int i = 0, pointsLength = points.length; i < pointsLength; i++)
 				points[i].close();
-			}
 
 		}
 		return faces;

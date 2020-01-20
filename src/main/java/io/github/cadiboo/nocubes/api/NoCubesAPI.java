@@ -1,7 +1,9 @@
 package io.github.cadiboo.nocubes.api;
 
 import com.google.common.collect.ImmutableSet;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -51,11 +53,10 @@ public final class NoCubesAPI {
 	}
 
 	/**
-	 * Called by NoCubes when it is too late to add MeshGenerators anymore.
-	 * Do not call this method.
+	 * @return If it is still possible to add a BlockState to NoCubes' smoothable list.
 	 */
-	public static void disableAddingMeshGenerators() {
-		NoCubesAPI.canAddMeshGenerators = false;
+	public static boolean canAddBlockState() {
+		return canAddBlocks;
 	}
 
 	/**
@@ -66,15 +67,6 @@ public final class NoCubesAPI {
 	public static Set<BlockState> getAddedTerrainSmoothableBlockStates() {
 		ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.removeIf(NoCubesAPI::isInvalidBlockState);
 		return ImmutableSet.<BlockState>builder().addAll(ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES).build();
-	}
-
-	private static boolean isInvalidBlockState(final BlockState state) {
-		return state == null || state == Blocks.AIR.getDefaultState();
-	}
-
-	private static void ensureCanAddBlockState() {
-		if (!canAddBlocks())
-			throw new IllegalStateException("Too late to register a BlockState as smoothable!");
 	}
 
 	/**
@@ -110,19 +102,41 @@ public final class NoCubesAPI {
 			ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.addAll(block.getStateContainer().getValidStates());
 	}
 
-	/**
-	 * @return If it is still possible to add a BlockState to NoCubes' smoothable list.
-	 */
-	public static boolean canAddBlocks() {
-		return canAddBlocks;
+	private static boolean isInvalidBlockState(final BlockState state) {
+		return state == null || state == Blocks.AIR.getDefaultState();
+	}
+
+	private static void ensureCanAddBlockState() {
+		if (!canAddBlockState())
+			throw new IllegalStateException("Too late to register a BlockState as smoothable!");
 	}
 
 	/**
 	 * Called by NoCubes when it is too late to add MeshGenerators anymore.
 	 * Do not call this method.
 	 */
-	public static void disableAddingBlocks() {
+	public static void disableAddingMeshGenerators() {
+		if (!canAddMeshGenerator())
+			return;
+		preDisableAddingMeshGenerators();
+		NoCubesAPI.canAddMeshGenerators = false;
+		NoCubes.LOGGER.info("Finalised API added MeshGenerators:");
+		for (final MeshGeneratorType type : MeshGeneratorType.getValues())
+			NoCubes.LOGGER.info(type.name() + ", " + type.toString() + ", " + type.getMeshGenerator());
+	}
+
+	/**
+	 * Called by NoCubes when it is too late to add MeshGenerators anymore.
+	 * Do not call this method.
+	 */
+	public static void disableAddingBlockStates() {
+		if (!canAddBlockState())
+			return;
+		preDisableAddingBlocks();
 		NoCubesAPI.canAddBlocks = false;
+		NoCubes.LOGGER.info("Finalised API added smoothables:");
+		for (final BlockState blockState : getAddedTerrainSmoothableBlockStates())
+			NoCubes.LOGGER.info(ConfigHelper.getStringFromBlockState(blockState));
 	}
 
 	public static void preDisableAddingMeshGenerators() {

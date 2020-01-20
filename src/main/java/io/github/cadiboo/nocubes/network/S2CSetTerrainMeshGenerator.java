@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.network;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
@@ -27,11 +26,11 @@ public final class S2CSetTerrainMeshGenerator {
 	}
 
 	public static void encode(final S2CSetTerrainMeshGenerator msg, final PacketBuffer packetBuffer) {
-		packetBuffer.writeInt(msg.newGenerator.ordinal());
+		packetBuffer.writeVarInt(msg.newGenerator.ordinal());
 	}
 
 	public static S2CSetTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
-		return new S2CSetTerrainMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
+		return new S2CSetTerrainMeshGenerator(MeshGeneratorType.getValues()[packetBuffer.readVarInt()]);
 	}
 
 	public static void handle(final S2CSetTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
@@ -40,9 +39,8 @@ public final class S2CSetTerrainMeshGenerator {
 			final MeshGeneratorType newGenerator = msg.newGenerator;
 			NoCubesConfig.Server.terrainMeshGenerator = newGenerator;
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(MOD_ID + ".setTerrainMeshGenerator", newGenerator));
-			if (NoCubesConfig.Client.renderSmoothTerrain) {
+			if (NoCubesConfig.Client.renderSmoothTerrain)
 				ClientUtil.tryReloadRenderers();
-			}
 		}));
 		context.setPacketHandled(true);
 	}

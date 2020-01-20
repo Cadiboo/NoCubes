@@ -25,27 +25,25 @@ public final class C2SRequestSetTerrainMeshGenerator {
 	}
 
 	public static void encode(final C2SRequestSetTerrainMeshGenerator msg, final PacketBuffer packetBuffer) {
-		packetBuffer.writeInt(msg.newGenerator.ordinal());
+		packetBuffer.writeVarInt(msg.newGenerator.ordinal());
 	}
 
 	public static C2SRequestSetTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestSetTerrainMeshGenerator(MeshGeneratorType.VALUES[packetBuffer.readInt()]);
+		return new C2SRequestSetTerrainMeshGenerator(MeshGeneratorType.values()[packetBuffer.readVarInt()]);
 	}
 
 	public static void handle(final C2SRequestSetTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
-			if (sender == null) {
+			if (sender == null)
 				return;
-			}
 			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final MeshGeneratorType newGenerator = msg.newGenerator;
 				ConfigHelper.setTerrainMeshGenerator(newGenerator);
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetTerrainMeshGenerator(newGenerator));
-			} else {
+			} else
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".setTerrainMeshGeneratorNoPermission"));
-			}
 		});
 		context.setPacketHandled(true);
 	}

@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.config;
 
 import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import net.minecraft.block.BlockState;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -133,7 +134,7 @@ public final class NoCubesConfig {
 //						.translation(MOD_ID + ".config.extendFluidsRange")
 //						.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 
-				NoCubes.disableApiAddingMeshGenerators();
+				NoCubesAPI.disableAddingMeshGenerators();
 				terrainMeshGenerator = builder
 						.comment("The mesh generator that generates the terrain")
 						.translation(MOD_ID + ".config.terrainMeshGenerator")

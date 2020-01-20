@@ -44,6 +44,13 @@ public final class Face implements AutoCloseable {
 		return retain(vertex0.copy(), vertex0, vertex1, vertex2);
 	}
 
+	/**
+	 * @return The maximum size of the pool
+	 */
+	public static int getMaxPoolSize() {
+		return 2_000;
+	}
+
 	public Vec3 getVertex0() {
 		return vertex0;
 	}
@@ -66,13 +73,6 @@ public final class Face implements AutoCloseable {
 			if (POOL.size() < getMaxPoolSize())
 				POOL.add(this);
 		}
-	}
-
-	/**
-	 * @return The maximum size of the pool
-	 */
-	public static int getMaxPoolSize() {
-		return 2_000;
 	}
 
 }

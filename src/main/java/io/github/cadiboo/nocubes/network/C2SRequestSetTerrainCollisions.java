@@ -35,17 +35,15 @@ public final class C2SRequestSetTerrainCollisions {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
-			if (sender == null) {
+			if (sender == null)
 				return;
-			}
 			final boolean newValue = msg.newValue;
 			final String type = newValue ? "enable" : "disable";
 			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				ConfigHelper.setTerrainCollisions(newValue);
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetTerrainCollisions(newValue));
-			} else {
+			} else
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + "." + type + "TerrainCollisionsNoPermission"));
-			}
 		});
 		context.setPacketHandled(true);
 	}

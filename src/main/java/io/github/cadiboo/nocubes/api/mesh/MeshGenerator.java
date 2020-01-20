@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.api.mesh;
 
-import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.api.util.pooled.Face;
 import io.github.cadiboo.nocubes.api.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 

@@ -104,9 +104,11 @@ public final class ConfigHelper {
 	private static final Marker CONFIG_MARKER = MarkerManager.getMarker("config");
 
 	public static void discoverDefaultTerrainSmoothable() {
+		// TODO: Get from world generators & ore generators
 	}
 
 	public static void discoverDefaultLeavesSmoothable() {
+		// TODO: Get from tree generators
 	}
 
 	// Only call from logical Server.

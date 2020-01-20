@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.ModProfiler;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -9,7 +8,6 @@ import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;

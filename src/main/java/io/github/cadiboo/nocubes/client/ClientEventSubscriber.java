@@ -103,12 +103,10 @@ public final class ClientEventSubscriber {
 			if (toggleRenderSmoothTerrain.isPressed()) {
 				ConfigHelper.setRenderSmoothTerrain(!NoCubesConfig.Client.renderSmoothTerrain);
 				ClientUtil.tryReloadRenderers();
-				return;
 			}
 //			if (toggleRenderSmoothLeaves.isPressed()) {
 //				ConfigHelper.setRenderSmoothLeaves(!NoCubesConfig.Client.renderSmoothLeaves);
 //				ClientUtil.tryReloadRenderers();
-//				return;
 //			}
 		}
 
@@ -133,21 +131,8 @@ public final class ClientEventSubscriber {
 
 			if (terrainPressed)
 				setTerrainSmoothable(state, !state.nocubes_isTerrainSmoothable);
-			if (leavesPressed) {
-//				final BlockStateToast toast;
-//				if (!state.nocubes_isLeavesSmoothable) {
-//					ConfigHelper.addLeavesSmoothable(state);
-//					toast = new BlockStateToast.AddLeaves(state, blockPos);
-//				} else {
-//					ConfigHelper.removeLeavesSmoothable(state);
-//					toast = new BlockStateToast.RemoveLeaves(state, blockPos);
-//				}
-//				minecraft.getToastGui().add(toast);
-//
-//				if (NoCubesConfig.Client.renderSmoothLeaves) {
-//					ClientUtil.tryReloadRenderers();
-//				}
-			}
+			if (leavesPressed)
+				setLeavesSmoothable(state, !state.nocubes_isTerrainSmoothable);
 		}
 
 		if (toggleProfilers.isPressed())
@@ -163,9 +148,15 @@ public final class ClientEventSubscriber {
 		NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestSetTerrainSmoothable(state, newSmoothability));
 	}
 
+	private static void setLeavesSmoothable(final BlockState state, final boolean newSmoothability) {
+//		ConfigHelper.setLeavesSmoothable(state, newSmoothability);
+//		minecraft.getToastGui().add((BlockStateToast) new BlockStateToast.Leaves(state, newSmoothability));
+//		if (NoCubesConfig.Client.renderSmoothLeaves)
+//			ClientUtil.tryReloadRenderers();
+	}
+
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
-
 		if (!ModProfiler.isProfilingEnabled())
 			return;
 
@@ -209,7 +200,7 @@ public final class ClientEventSubscriber {
 				final MainWindow mainWindow = mc.func_228018_at_();
 				final int framebufferWidth = mainWindow.getFramebufferWidth();
 				final int framebufferHeight = mainWindow.getFramebufferHeight();
-				RenderSystem.ortho(0.0D, (double) framebufferWidth, (double) framebufferHeight, 0.0D, 1000.0D, 3000.0D);
+				RenderSystem.ortho(0.0D, framebufferWidth, framebufferHeight, 0.0D, 1000.0D, 3000.0D);
 				RenderSystem.matrixMode(GL11.GL_MODELVIEW);
 				RenderSystem.loadIdentity();
 				RenderSystem.scalef(framebufferWidth / 1000F, framebufferWidth / 1000F, 1);
@@ -322,9 +313,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-
 		final Minecraft minecraft = Minecraft.getInstance();
-
 		final GameSettings gameSettings = minecraft.gameSettings;
 		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI)
 			return;
@@ -357,7 +346,7 @@ public final class ClientEventSubscriber {
 		{
 			Matrix4f matrix4f = event.getMatrixStack().func_227866_c_().func_227870_a_();
 			final IVertexBuilder bufferBuilder = minecraft.func_228019_au_().func_228487_b_().getBuffer(RenderType.func_228659_m_());
-				final BlockPos playerPos = new BlockPos(player);
+			final BlockPos playerPos = new BlockPos(player);
 			if (cache == null || !Objects.equals(lastPos, playerPos)) {
 				lastPos = playerPos;
 				VoxelShape shape = VoxelShapes.empty();
@@ -386,7 +375,6 @@ public final class ClientEventSubscriber {
 		RenderSystem.depthMask(true);
 		RenderSystem.enableTexture();
 		RenderSystem.disableBlend();
-
 	}
 
 	private static void drawShape(final Matrix4f matrix4f, final IVertexBuilder bufferBuilder, final VoxelShape shape, final float red, final float green, final float blue, final float alpha, final double x, final double y, final double z) {
@@ -398,7 +386,6 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawHighlightEvent event) {
-
 		if (!NoCubesConfig.Client.renderSmoothTerrain /*&& !NoCubesConfig.Client.renderSmoothLeaves*/)
 			return;
 
@@ -477,7 +464,6 @@ public final class ClientEventSubscriber {
 //		RenderSystem.disableBlend();
 //
 //		bufferbuilder.setTranslation(0, 0, 0);
-
 	}
 
 	@SubscribeEvent

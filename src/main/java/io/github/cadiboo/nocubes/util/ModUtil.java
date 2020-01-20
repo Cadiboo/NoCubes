@@ -8,7 +8,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.fluid.IFluidState;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.ModContainer;
@@ -17,7 +16,6 @@ import net.minecraftforge.fml.VersionChecker;
 import javax.annotation.Nonnull;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static net.minecraft.block.Blocks.BEDROCK;
 import static net.minecraft.block.Blocks.SNOW;
 
@@ -57,11 +55,10 @@ public final class ModUtil {
 				return state.getBlock() == BEDROCK ? -1.0005F : -1;
 			}
 //		} else if (state.isNormalCube() || state.isBlockNormalCube()) {
-		} else if (state.isSolid()) {
+		} else if (state.isSolid())
 			return 0F;
-		} else {
+		else
 			return 1;
-		}
 	}
 
 	/**
@@ -116,9 +113,8 @@ public final class ModUtil {
 
 	public static boolean isDeveloperWorkspace() {
 		final String target = System.getenv().get("target");
-		if (target == null) {
+		if (target == null)
 			return false;
-		}
 		return target.contains("userdev");
 	}
 
@@ -138,21 +134,18 @@ public final class ModUtil {
 //		final int extendRange = Config.extendFluidsRange.getRange();
 		final int extendRange = 0;
 
-		if (extendRange == 0) {
+		if (extendRange == 0)
 			return currentChunk.getFluidState(posX, posY, posZ);
-		}
 
 		final BlockState state = currentChunk.getBlockState(pos);
 
 		// Do not extend if not terrain smoothable
-		if (!state.nocubes_isTerrainSmoothable) {
+		if (!state.nocubes_isTerrainSmoothable)
 			return state.getFluidState();
-		}
 
 		final IFluidState fluidState = state.getFluidState();
-		if (!fluidState.isEmpty()) {
+		if (!fluidState.isEmpty())
 			return fluidState;
-		}
 
 		// For offset = -1 or -2 to offset = 1 or 2;
 		final int maxXOffset = extendRange;
@@ -161,18 +154,16 @@ public final class ModUtil {
 		// Check up
 		{
 			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
-			if (state1.isSource()) {
+			if (state1.isSource())
 				return state1;
-			}
 		}
 
 		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
 			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
 
 				// No point in checking myself
-				if (xOffset == 0 && zOffset == 0) {
+				if (xOffset == 0 && zOffset == 0)
 					continue;
-				}
 
 				final int checkX = posX + xOffset;
 				final int checkZ = posZ + zOffset;
@@ -184,60 +175,61 @@ public final class ModUtil {
 				}
 
 				final IFluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
-				if (state1.isSource()) {
+				if (state1.isSource())
 					return state1;
-				}
 
 			}
 		}
 		return fluidState;
 	}
 
+//	/**
+//	 * Mostly copied from StolenReposeCode.getDensity
+//	 * Called from {@link io.github.cadiboo.nocubes.hooks.Hooks#doesNotCauseSuffocation(BlockState, IBlockReader, BlockPos)}
+//	 */
+//	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
+//		float density = 0;
+//		try (
+//				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
+//				BlockPos.PooledMutable pooledMutableBlockPos = BlockPos.PooledMutable.retain()
+//		) {
+////			final WorldBorder worldBorder = reader.getWorldBorder();
+//
+//			final int startX = pos.getX();
+//			final int startY = pos.getY();
+//			final int startZ = pos.getZ();
+//
+//			for (int zOffset = 0; zOffset < 2; ++zOffset) {
+//				for (int yOffset = 0; yOffset < 2; ++yOffset) {
+//					for (int xOffset = 0; xOffset < 2; ++xOffset) {
+//
+//						pooledMutableBlockPos.setPos(
+//								startX - xOffset,
+//								startY - yOffset,
+//								startZ - zOffset
+//						);
+//
+////						// Return a fully solid cube if its not loaded
+////						if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
+////							density += 1;
+////							continue;
+////						}
+//
+//						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
+//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+//					}
+//				}
+//			}
+//		}
+//
+//		// > 0 means outside isosurface
+//		// > -4 means mostly outside isosurface
+//		return density > -4;
+//	}
+
 	/**
-	 * Mostly copied from StolenReposeCode.getDensity
-	 * Called from {@link io.github.cadiboo.nocubes.hooks.Hooks#doesNotCauseSuffocation(BlockState, IBlockReader, BlockPos)}
-	 */
-	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
-		float density = 0;
-		try (
-				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
-				BlockPos.PooledMutable pooledMutableBlockPos = BlockPos.PooledMutable.retain()
-		) {
-//			final WorldBorder worldBorder = reader.getWorldBorder();
-
-			final int startX = pos.getX();
-			final int startY = pos.getY();
-			final int startZ = pos.getZ();
-
-			for (int zOffset = 0; zOffset < 2; ++zOffset) {
-				for (int yOffset = 0; yOffset < 2; ++yOffset) {
-					for (int xOffset = 0; xOffset < 2; ++xOffset) {
-
-						pooledMutableBlockPos.setPos(
-								startX - xOffset,
-								startY - yOffset,
-								startZ - zOffset
-						);
-
-//						// Return a fully solid cube if its not loaded
-//						if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
-//							density += 1;
-//							continue;
-//						}
-
-						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
-						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
-					}
-				}
-			}
-		}
-
-		// > 0 means outside isosurface
-		// > -4 means mostly outside isosurface
-		return density > -4;
-	}
-
-	/**
+	 * TODO: Move to tag? Store as Set?
+	 *
 	 * @param material The {@link Material} to check
 	 * @return If the material is tallgrass/grass plant/grass block
 	 */
@@ -257,12 +249,10 @@ public final class ModUtil {
 	 */
 	public static byte getRelativePos(final int chunkPos, final int blockPos) {
 		final int blockPosChunkPos = (blockPos >> 4) << 4;
-		if (chunkPos == blockPosChunkPos) { // if blockpos is in chunkpos's chunk
+		if (chunkPos == blockPosChunkPos) // If blockpos is in chunkpos's chunk
 			return getRelativePos(blockPos);
-		} else {
-			// can be anything. usually between -1 and 16
+		else  // Can be anything. usually between -1 and 16
 			return (byte) (blockPos - chunkPos);
-		}
 	}
 
 	/**

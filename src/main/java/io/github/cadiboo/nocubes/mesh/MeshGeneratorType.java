@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import net.minecraftforge.common.IExtensibleEnum;
@@ -17,9 +18,6 @@ public enum MeshGeneratorType implements IExtensibleEnum {
 
 	OLD_NO_CUBES("Old NoCubes", new OldNoCubes());
 
-	public static final MeshGeneratorType[] VALUES = values();
-	public static final int VALUES_LENGTH = VALUES.length;
-
 	private final String name;
 	private final MeshGenerator meshGenerator;
 
@@ -32,6 +30,10 @@ public enum MeshGeneratorType implements IExtensibleEnum {
 		throw new IllegalStateException("Enum not extended");
 	}
 
+	public static MeshGeneratorType[] getValues() {
+		return ValuesHolder.VALUES;
+	}
+
 	@Override
 	public String toString() {
 		return name;
@@ -39,6 +41,15 @@ public enum MeshGeneratorType implements IExtensibleEnum {
 
 	public MeshGenerator getMeshGenerator() {
 		return meshGenerator;
+	}
+
+	private static class ValuesHolder {
+
+		public static final MeshGeneratorType[] VALUES = values();
+		static {
+			NoCubesAPI.disableAddingMeshGenerators();
+		}
+
 	}
 
 }

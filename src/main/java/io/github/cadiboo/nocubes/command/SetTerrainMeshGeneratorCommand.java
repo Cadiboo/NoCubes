@@ -17,12 +17,10 @@ public class SetTerrainMeshGeneratorCommand {
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		LiteralArgumentBuilder<CommandSource> setExtendFluidsRange = Commands.literal("setTerrainMeshGenerator")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL));
-		for (int i = 0; i < MeshGeneratorType.VALUES_LENGTH; i++) {
-			final MeshGeneratorType type = MeshGeneratorType.VALUES[i];
+		for (final MeshGeneratorType type : MeshGeneratorType.getValues())
 			setExtendFluidsRange.then(Commands.literal(type.name())
 					.executes(ctx -> set(type))
 			);
-		}
 		return setExtendFluidsRange;
 	}
 

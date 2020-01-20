@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes;
 
-import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -28,7 +27,6 @@ public final class NoCubes {
 
 	public NoCubes() {
 		preloadModifiedClasses();
-		disableApiAddingMeshGenerators();
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
 
@@ -36,13 +34,6 @@ public final class NoCubes {
 		modEventBus.addListener((FMLCommonSetupEvent event) -> ModList.get().getModContainerById(MOD_ID).ifPresent(ModUtil::launchUpdateDaemon));
 //		modEventBus.addListener((FMLLoadCompleteEvent event) -> DistExecutor.runWhenOn(Dist.CLIENT, () -> ClientUtil::replaceFluidRenderer));
 
-	}
-
-	public static void disableApiAddingMeshGenerators() {
-		if (NoCubesAPI.canAddMeshGenerator()) {
-			NoCubesAPI.preDisableAddingMeshGenerators();
-			NoCubesAPI.disableAddingMeshGenerators();
-		}
 	}
 
 	private void preloadModifiedClasses() {

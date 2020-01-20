@@ -25,27 +25,25 @@ public final class C2SRequestSetExtendFluidsRange {
 	}
 
 	public static void encode(final C2SRequestSetExtendFluidsRange msg, final PacketBuffer packetBuffer) {
-		packetBuffer.writeInt(msg.newRange.ordinal());
+		packetBuffer.writeVarInt(msg.newRange.ordinal());
 	}
 
 	public static C2SRequestSetExtendFluidsRange decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readInt()]);
+		return new C2SRequestSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readVarInt()]);
 	}
 
 	public static void handle(final C2SRequestSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {
 			final ServerPlayerEntity sender = context.getSender();
-			if (sender == null) {
+			if (sender == null)
 				return;
-			}
 			if (sender.hasPermissionLevel(COMMAND_PERMISSION_LEVEL)) {
 				final ExtendFluidsRange newRange = msg.newRange;
 				ConfigHelper.setExtendFluidsRange(newRange);
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetExtendFluidsRange(newRange));
-			} else {
+			} else
 				sender.sendMessage(new TranslationTextComponent(MOD_ID + ".changeExtendFluidsRangeNoPermission"));
-			}
 		});
 		context.setPacketHandled(true);
 	}

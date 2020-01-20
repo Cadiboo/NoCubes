@@ -60,11 +60,10 @@ public final class UVHelper {
 	public static float clampU(final float u, final TextureAtlasSprite sprite) {
 		float min = getMinU(sprite);
 		float max = getMaxU(sprite);
-		if (u < min) {
+		if (u < min)
 			return min;
-		} else {
-			return u > max ? max : u;
-		}
+		else
+			return Math.min(u, max);
 	}
 
 	/**
@@ -77,11 +76,10 @@ public final class UVHelper {
 	public static float clampV(final float v, final TextureAtlasSprite sprite) {
 		float min = getMinV(sprite);
 		float max = getMaxV(sprite);
-		if (v < min) {
+		if (v < min)
 			return min;
-		} else {
-			return v > max ? max : v;
-		}
+		else
+			return Math.min(v, max);
 	}
 
 }
