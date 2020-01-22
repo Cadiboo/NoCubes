@@ -2,8 +2,8 @@ package io.github.cadiboo.nocubes.config;
 
 import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.util.NoCubesAPIImpl;
 import net.minecraft.block.BlockState;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
@@ -21,11 +21,20 @@ import java.util.Set;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
+ * The Config for NoCubes.
+ * Contains the Client and Sever configs as inner classes.
+ * Handles registering and baking the configs.
+ *
  * @author Cadiboo
  */
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class NoCubesConfig {
 
+	/**
+	 * Called from inside the mod constructor.
+	 *
+	 * @param context The ModLoadingContext to register the configs to
+	 */
 	public static void register(final ModLoadingContext context) {
 		context.registerConfig(ModConfig.Type.CLIENT, Client.SPEC);
 		context.registerConfig(ModConfig.Type.SERVER, Server.SPEC);
@@ -134,7 +143,7 @@ public final class NoCubesConfig {
 //						.translation(MOD_ID + ".config.extendFluidsRange")
 //						.defineEnum("extendFluidsRange", ExtendFluidsRange.OneBlock);
 
-				NoCubesAPI.disableAddingMeshGenerators();
+				NoCubesAPIImpl.disableAddingMeshGenerators();
 				terrainMeshGenerator = builder
 						.comment("The mesh generator that generates the terrain")
 						.translation(MOD_ID + ".config.terrainMeshGenerator")

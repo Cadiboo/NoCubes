@@ -16,8 +16,16 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
+/**
+ * Command to set a BlockState as not being terrain smoothable.
+ *
+ * @author Cadiboo
+ */
 public class RemoveTerrainSmoothableCommand {
 
+	/**
+	 * Syntax is "removeTerrainSmoothable <BlockState>"
+	 */
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		return Commands.literal("removeTerrainSmoothable")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL))
@@ -26,6 +34,17 @@ public class RemoveTerrainSmoothableCommand {
 				);
 	}
 
+	/**
+	 * Called on the Server.
+	 * Sets the BlockState's smoothability to false,
+	 * adds it to the smoothable BlockStates blacklist,
+	 * removes it from the smoothable BlockStates whitelist
+	 * and sends a packet to all clients to set the BlockState's smoothablility to false.
+	 * <p>
+	 * Logs an error if the blockstate is AIR.
+	 *
+	 * @return The amount of successes the command had
+	 */
 	private static int removeBlockState(final CommandContext<CommandSource> ctx) {
 		final BlockState blockState = BlockStateArgument.getBlockState(ctx, "block").getState();
 		if (blockState == StateHolder.AIR_DEFAULT) {

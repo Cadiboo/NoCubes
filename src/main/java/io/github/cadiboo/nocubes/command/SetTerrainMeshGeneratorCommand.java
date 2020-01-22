@@ -12,8 +12,16 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
+/**
+ * Command to set the TerrainMeshGenerator.
+ *
+ * @author Cadiboo
+ */
 public class SetTerrainMeshGeneratorCommand {
 
+	/**
+	 * Syntax is "setTerrainMeshGenerator <MeshGeneratorType>"
+	 */
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		LiteralArgumentBuilder<CommandSource> setExtendFluidsRange = Commands.literal("setTerrainMeshGenerator")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL));
@@ -24,6 +32,13 @@ public class SetTerrainMeshGeneratorCommand {
 		return setExtendFluidsRange;
 	}
 
+	/**
+	 * Called on the Server.
+	 * Sets the TerrainMeshGenerator to the new value
+	 * and sends a packet to all clients to update their TerrainMeshGenerator.
+	 *
+	 * @return The amount of successes the command had
+	 */
 	private static int set(final MeshGeneratorType newGenerator) {
 		ConfigHelper.setTerrainMeshGenerator(newGenerator);
 		NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetTerrainMeshGenerator(newGenerator));

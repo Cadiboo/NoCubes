@@ -14,6 +14,11 @@ import java.util.function.Supplier;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
+ * Message from Server to Client to set the ExtendFluidsRange to a new value.
+ * <p>
+ * Sets the ExtendFluidsRange to the new value, notifies the player and
+ * reloads the renderers.
+ *
  * @author Cadiboo
  */
 public final class S2CSetExtendFluidsRange {
@@ -32,6 +37,9 @@ public final class S2CSetExtendFluidsRange {
 		return new S2CSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readVarInt()]);
 	}
 
+	/**
+	 * Called on the Client.
+	 */
 	public static void handle(final S2CSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {

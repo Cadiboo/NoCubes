@@ -3,12 +3,17 @@ package io.github.cadiboo.nocubes.client;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
+ * Utility class to help with sprite texture UVs.
+ * 1-pixel-wide transparent lines between textures occur when sprites are rendered
+ * next to each other. The methods in this class adds/subtracts a very small number
+ * from the U/V of the sprite to fix this problem.
+ *
  * @author Cadiboo
  */
 public final class UVHelper {
 
 	// Add or subtract from the sprites UV location to remove transparent lines in between textures
-	private static final float UV_CORRECT = 1 / 10000F;
+	public static final float UV_CORRECT = 1 / 10000F;
 
 	/**
 	 * Gets the corrected minimum U coordinate to use when rendering the sprite.

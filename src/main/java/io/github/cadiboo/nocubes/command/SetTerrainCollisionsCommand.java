@@ -13,8 +13,16 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
+/**
+ * Command to enable/disable TerrainCollisions.
+ *
+ * @author Cadiboo
+ */
 public class SetTerrainCollisionsCommand {
 
+	/**
+	 * Syntax is "setTerrainCollisions <true/false>"
+	 */
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		return Commands.literal("setTerrainCollisions")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL))
@@ -23,6 +31,13 @@ public class SetTerrainCollisionsCommand {
 				);
 	}
 
+	/**
+	 * Called on the Server.
+	 * Sets TerrainCollisions to the new value
+	 * and sends a packet to all clients to update their TerrainCollisions.
+	 *
+	 * @return The amount of successes the command had
+	 */
 	public static int set(final CommandContext<CommandSource> ctx) {
 		final boolean newEnabled = BoolArgumentType.getBool(ctx, "enabled");
 		ConfigHelper.setTerrainCollisions(newEnabled);

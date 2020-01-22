@@ -62,7 +62,8 @@ import static org.lwjgl.glfw.GLFW.GLFW_KEY_O;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
 
 /**
- * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
+ * Handles all the events that are fired on the FORGE event bus that should be handled
+ * on the Client distribution.
  *
  * @author Cadiboo
  */
@@ -352,7 +353,7 @@ public final class ClientEventSubscriber {
 				VoxelShape shape = VoxelShapes.empty();
 				for (final BlockPos blockPos : BlockPos.getAllInBoxMutable(playerPos.add(-8, -8, -8), playerPos.add(7, 7, 7))) {
 					final BlockState blockState = world.getBlockState(blockPos);
-					if (IsSmoothable.TERRAIN_SMOOTHABLE.apply(blockState))
+					if (IsSmoothable.TERRAIN_SMOOTHABLE.test(blockState))
 						shape = VoxelShapes.combine(shape, blockState.getShape(world, blockPos).withOffset(blockPos.getX(), blockPos.getY(), blockPos.getZ()), IBooleanFunction.OR);
 				}
 				cache = shape.simplify();

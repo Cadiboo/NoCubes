@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+/**
+ * Copy of 1.12.2's Profiler
+ */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Profiler1122 {
 
@@ -44,43 +47,6 @@ public class Profiler1122 {
 	public synchronized static boolean isProfilingEnabled() {
 		return profilingEnabled;
 	}
-
-	public static void main(String... args) throws IllegalAccessException {
-		printGlStateManager();
-	}
-
-	public static void printGlStateManager() throws IllegalAccessException {
-		final StringBuilder stringBuilder = new StringBuilder();
-		appendClassFields(stringBuilder, GlStateManager.class, null, 15, 0);
-		System.out.println(stringBuilder.toString());
-	}
-
-	static void appendClassFields(StringBuilder stringBuilder, Class<?> clazz, Object instance, int maxIterations, int currentIteration) throws IllegalAccessException {
-		if (maxIterations <= currentIteration) {
-			return;
-		}
-		for (final Field field : clazz.getDeclaredFields()) {
-			field.setAccessible(true);
-			for (int i = 0; i < currentIteration; ++i) {
-				stringBuilder.append("  ");
-			}
-			if (field.getType().isPrimitive())
-				stringBuilder
-						.append(field.getName())
-						.append(": ")
-						.append(field.get(instance))
-						.append("\n");
-			else {
-				stringBuilder
-						.append(field.getName())
-						.append(": ")
-						.append(field.getType().getSimpleName())
-						.append("\n");
-				appendClassFields(stringBuilder, field.getType(), field.get(instance), maxIterations, currentIteration + 1);
-			}
-		}
-	}
-
 	/**
 	 * Clear profiling.
 	 */

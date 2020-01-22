@@ -2,21 +2,27 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.BlockState;
 
+import java.util.function.Predicate;
+
 /**
- * Removes boxing cost of using generic functions with Boolean
+ * Interface defining a function to determine if a {@link BlockState} is smoothable or not.
  *
  * @author Cadiboo
  */
-public interface IsSmoothable {
+@FunctionalInterface
+public interface IsSmoothable extends Predicate<BlockState> {
 
 	IsSmoothable TERRAIN_SMOOTHABLE = blockState -> blockState.nocubes_isTerrainSmoothable;
 
 //	IsSmoothable LEAVES_SMOOTHABLE = blockState -> blockState.nocubes_isLeavesSmoothable;
 
 	/**
-	 * @param state the state to be tested
-	 * @return If the state should be smoothed
+	 * Tests if the blockState is smoothable.
+	 *
+	 * @param blockState the blockState to be tested
+	 * @return If the blockState should be smoothed
 	 */
-	boolean apply(final BlockState state);
+	@Override
+	boolean test(final BlockState blockState);
 
 }

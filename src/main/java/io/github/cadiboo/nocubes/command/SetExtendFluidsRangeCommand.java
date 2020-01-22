@@ -12,8 +12,16 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
+/**
+ * Command to set the ExtendFluidsRange.
+ *
+ * @author Cadiboo
+ */
 public class SetExtendFluidsRangeCommand {
 
+	/**
+	 * Syntax is "setExtendFluidsRange <ExtendFluidsRange>"
+	 */
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		LiteralArgumentBuilder<CommandSource> setExtendFluidsRange = Commands.literal("setExtendFluidsRange")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL));
@@ -26,6 +34,13 @@ public class SetExtendFluidsRangeCommand {
 		return setExtendFluidsRange;
 	}
 
+	/**
+	 * Called on the Server.
+	 * Sets the ExtendFluidsRange to the new value
+	 * and sends a packet to all clients to update their ExtendFluidsRange.
+	 *
+	 * @return The amount of successes the command had
+	 */
 	private static int set(final ExtendFluidsRange newRange) {
 		ConfigHelper.setExtendFluidsRange(newRange);
 		NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CSetExtendFluidsRange(newRange));

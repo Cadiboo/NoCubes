@@ -17,6 +17,14 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
+ * Message from Client to Server to request setting the smoothability of a BlockState
+ * to a new value.
+ * <p>
+ * Validates that the sender has the permission to perform this action and that the
+ * BlockState is valid (not air). If they do and the BlockState is valid sets the
+ * smoothability of the BlockState to the new value and notifies all clients
+ * (including the one that sent this packet) of the new value.
+ *
  * @author Cadiboo
  */
 public final class C2SRequestSetTerrainSmoothable {
@@ -43,6 +51,9 @@ public final class C2SRequestSetTerrainSmoothable {
 		return new C2SRequestSetTerrainSmoothable(packetBuffer.readVarInt(), packetBuffer.readBoolean());
 	}
 
+	/**
+	 * Called on the Server.
+	 */
 	public static void handle(final C2SRequestSetTerrainSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {

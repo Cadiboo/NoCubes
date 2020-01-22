@@ -1,12 +1,16 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
+import io.github.cadiboo.nocubes.util.NoCubesAPIImpl;
 import net.minecraftforge.common.IExtensibleEnum;
 
 /**
- * Would be nice not to use the IExtensibleEnum hack but I need it to be an enum for the config.
+ * The different types of MeshGenerators.
+ * Used in the Server config to determine the {@link MeshGenerator} that
+ * should be used for mesh generation.
+ * <p>
+ * Would be nice not to use the IExtensibleEnum hack and use a registry but I need it to be an enum for the config.
  *
  * @author Cadiboo
  */
@@ -47,7 +51,7 @@ public enum MeshGeneratorType implements IExtensibleEnum {
 
 		public static final MeshGeneratorType[] VALUES = values();
 		static {
-			NoCubesAPI.disableAddingMeshGenerators();
+			NoCubesAPIImpl.disableAddingMeshGenerators();
 		}
 
 	}

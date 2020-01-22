@@ -14,6 +14,12 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
+ * Message from Client to Server to request setting the TerrainMeshGenerator to a new value.
+ *
+ * Validates that the sender has the permission to perform this action and if they do
+ * sets the TerrainMeshGenerator to the new value and notifies all clients (including the
+ * one that sent this packet) of the new value.
+ *
  * @author Cadiboo
  */
 public final class C2SRequestSetTerrainMeshGenerator {
@@ -29,9 +35,12 @@ public final class C2SRequestSetTerrainMeshGenerator {
 	}
 
 	public static C2SRequestSetTerrainMeshGenerator decode(final PacketBuffer packetBuffer) {
-		return new C2SRequestSetTerrainMeshGenerator(MeshGeneratorType.values()[packetBuffer.readVarInt()]);
+		return new C2SRequestSetTerrainMeshGenerator(MeshGeneratorType.getValues()[packetBuffer.readVarInt()]);
 	}
 
+	/**
+	 * Called on the Server.
+	 */
 	public static void handle(final C2SRequestSetTerrainMeshGenerator msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {

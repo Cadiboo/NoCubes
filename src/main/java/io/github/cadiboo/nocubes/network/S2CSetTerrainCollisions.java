@@ -14,6 +14,10 @@ import java.util.function.Supplier;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
+ * Message from Server to Client to enable/disable TerrainCollisions.
+ * <p>
+ * Sets the TerrainCollisions to the new value and notifies the player.
+ *
  * @author Cadiboo
  */
 public final class S2CSetTerrainCollisions {
@@ -32,6 +36,9 @@ public final class S2CSetTerrainCollisions {
 		return new S2CSetTerrainCollisions(packetBuffer.readBoolean());
 	}
 
+	/**
+	 * Called on the Client.
+	 */
 	public static void handle(final S2CSetTerrainCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {

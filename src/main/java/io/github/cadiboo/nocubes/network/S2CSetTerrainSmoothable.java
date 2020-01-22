@@ -2,10 +2,12 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -15,6 +17,13 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import java.util.function.Supplier;
 
 /**
+ * Message from Server to Client to set the smoothability of a BlockState
+ * to a new value.
+ * <p>
+ * Validates that the BlockState is valid (not air). If so, sets the
+ * smoothability of the BlockState to the new value and notifies the
+ * player via a Toast.
+ *
  * @author Cadiboo
  */
 public final class S2CSetTerrainSmoothable {
@@ -41,6 +50,9 @@ public final class S2CSetTerrainSmoothable {
 		return new S2CSetTerrainSmoothable(packetBuffer.readVarInt(), packetBuffer.readBoolean());
 	}
 
+	/**
+	 * Called on the Client.
+	 */
 	public static void handle(final S2CSetTerrainSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> handleOnClient(msg)));
@@ -65,7 +77,7 @@ public final class S2CSetTerrainSmoothable {
 			return;
 		}
 		blockState.nocubes_isTerrainSmoothable = newSmoothability;
-//		Minecraft.getInstance().getToastGui().add(new BlockStateToast.SetTerrain(blockState, newSmoothability));
+		Minecraft.getInstance().getToastGui().add(new BlockStateToast(blockState, newSmoothability));
 		if (NoCubesConfig.Client.renderSmoothTerrain)
 			ClientUtil.tryReloadRenderers();
 	}

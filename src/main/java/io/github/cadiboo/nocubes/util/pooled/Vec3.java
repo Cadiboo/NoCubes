@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.api.util.pooled;
+package io.github.cadiboo.nocubes.util.pooled;
 
 import java.util.ArrayList;
 

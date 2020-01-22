@@ -7,6 +7,9 @@ import net.minecraftforge.fml.network.simple.SimpleChannel;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
+ * Network handler.
+ * Stores the mod's channel and registers the messages.
+ *
  * @author Cadiboo
  */
 public final class NoCubesNetwork {
@@ -19,6 +22,9 @@ public final class NoCubesNetwork {
 			NETWORK_PROTOCOL_VERSION::equals
 	);
 
+	/**
+	 * Called from inside the mod constructor.
+	 */
 	public static void register() {
 		int networkId = 0;
 		// Client -> Server

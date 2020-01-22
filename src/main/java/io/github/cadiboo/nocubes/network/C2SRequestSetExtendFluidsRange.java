@@ -14,6 +14,12 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
+ * Message from Client to Server to request setting the ExtendFluidsRange to a new value.
+ *
+ * Validates that the sender has the permission to perform this action and if they do
+ * sets the ExtendFluidsRange to the new value and notifies all clients (including the
+ * one that sent this packet) of the new value.
+ *
  * @author Cadiboo
  */
 public final class C2SRequestSetExtendFluidsRange {
@@ -32,6 +38,9 @@ public final class C2SRequestSetExtendFluidsRange {
 		return new C2SRequestSetExtendFluidsRange(ExtendFluidsRange.VALUES[packetBuffer.readVarInt()]);
 	}
 
+	/**
+	 * Called on the Server.
+	 */
 	public static void handle(final C2SRequestSetExtendFluidsRange msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		final NetworkEvent.Context context = contextSupplier.get();
 		context.enqueueWork(() -> {

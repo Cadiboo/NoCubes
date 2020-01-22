@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.api.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.block.material.Material;
@@ -20,7 +20,7 @@ import static net.minecraft.block.Blocks.BEDROCK;
 import static net.minecraft.block.Blocks.SNOW;
 
 /**
- * Util that is used on BOTH physical sides
+ * Utility code that is used on both distributions.
  *
  * @author Cadiboo
  */

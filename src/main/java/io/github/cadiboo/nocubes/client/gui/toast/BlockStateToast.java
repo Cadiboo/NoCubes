@@ -1,265 +1,241 @@
-//package io.github.cadiboo.nocubes.client.gui.toast;
-//
-//import com.mojang.blaze3d.platform.GlStateManager;
-//import io.github.cadiboo.nocubes.NoCubes;
-//import io.github.cadiboo.nocubes.client.render.BufferBuilderCache;
-//import net.minecraft.block.BlockRenderType;
-//import net.minecraft.block.BlockState;
-//import net.minecraft.client.Minecraft;
-//import net.minecraft.client.gui.toasts.IToast;
-//import net.minecraft.client.gui.toasts.ToastGui;
-//import net.minecraft.client.renderer.BlockModelRenderer;
-//import net.minecraft.client.renderer.BlockRendererDispatcher;
-//import net.minecraft.client.renderer.BufferBuilder;
-//import net.minecraft.client.renderer.RenderHelper;
-//import net.minecraft.client.renderer.Vector3f;
-//import net.minecraft.client.renderer.model.ItemTransformVec3f;
-//import net.minecraft.client.renderer.texture.AtlasTexture;
-//import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-//import net.minecraft.client.renderer.vertex.VertexFormat;
-//import net.minecraft.client.renderer.vertex.VertexFormatElement;
-//import net.minecraft.client.resources.I18n;
-//import net.minecraft.entity.Entity;
-//import net.minecraft.util.BlockRenderLayer;
-//import net.minecraft.util.math.BlockPos;
-//import net.minecraft.world.IWorldReader;
-//import net.minecraftforge.client.ForgeHooksClient;
-//import net.minecraftforge.common.model.TRSRTransformation;
-//import org.lwjgl.opengl.GL11;
-//
-//import javax.annotation.Nonnull;
-//import javax.vecmath.Matrix4f;
-//import java.nio.ByteBuffer;
-//import java.util.List;
-//import java.util.Random;
-//
-//import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
-//import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
-//
-///**
-// * @author Cadiboo
-// */
-//public abstract class BlockStateToast implements IToast {
-//
-//	private static final Matrix4f ITEM_CAMERA_TRANSFORM_MATRIX = TRSRTransformation.from(
-//			new ItemTransformVec3f(
-//					new Vector3f(-30, 225, 0), new Vector3f(0, 0, 0), new Vector3f(0.625F, 0.625F, 0.625F)
-//			)
-//	).getMatrixVec();
-//
-//	@Nonnull
-//	private final BufferBuilderCache bufferCache = new BufferBuilderCache(0x200, 0x200, 0x200, 0x200);
-//	@Nonnull
-//	private final boolean[] usedBlockRenderLayers = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
-//	@Nonnull
-//	private final String name;
-//
-//	BlockStateToast(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-//		final Minecraft minecraft = Minecraft.getInstance();
-//		this.name = state.getBlock().getNameTextComponent().getFormattedText();
-//
-//		this.build(state, pos, minecraft.world, minecraft.getBlockRendererDispatcher(), new Random());
-//	}
-//
-//	/**
-//	 * Copied from the Tessellator's vboUploader - Draw everything but don't reset the buffer
-//	 */
-//	private static void drawBuffer(@Nonnull final BufferBuilder bufferBuilderIn) {
-//		if (bufferBuilderIn.getVertexCount() > 0) {
-//			VertexFormat vertexformat = bufferBuilderIn.getVertexFormat();
-//			int i = vertexformat.getSize();
-//			ByteBuffer bytebuffer = bufferBuilderIn.getByteBuffer();
-//			List<VertexFormatElement> list = vertexformat.getElements();
-//
-//			for (int j = 0; j < list.size(); ++j) {
-//				VertexFormatElement vertexformatelement = list.get(j);
-////				VertexFormatElement.EnumUsage vertexformatelement$enumusage = vertexformatelement.getUsage();
-////				int k = vertexformatelement.getType().getGlConstant();
-////				int l = vertexformatelement.getIndex();
-//				bytebuffer.position(vertexformat.getOffset(j));
-//
-//				// moved to VertexFormatElement.preDraw
-//				vertexformatelement.getUsage().preDraw(vertexformat, j, i, bytebuffer);
-//			}
-//
-//			GlStateManager.drawArrays(bufferBuilderIn.getDrawMode(), 0, bufferBuilderIn.getVertexCount());
-//			int i1 = 0;
-//
-//			for (int j1 = list.size(); i1 < j1; ++i1) {
-//				VertexFormatElement vertexformatelement1 = list.get(i1);
-////				VertexFormatElement.EnumUsage vertexformatelement$enumusage1 = vertexformatelement1.getUsage();
-////				int k1 = vertexformatelement1.getIndex();
-//
-//				// moved to VertexFormatElement.postDraw
-//				vertexformatelement1.getUsage().postDraw(vertexformat, i1, i, bytebuffer);
-//			}
-//		}
-//
-//		// Do not reset buffer
-////		bufferBuilderIn.reset();
-//	}
-//
-//	private void build(
-//			@Nonnull final BlockState state,
-//			@Nonnull final BlockPos pos,
-//			@Nonnull final IWorldReader reader,
-//			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-//			@Nonnull final Random random
-//	) {
-//		if (state.getRenderType() != BlockRenderType.MODEL) {
-//			return;
-//		}
-//
-//		final boolean[] startedBufferBuilders = new boolean[BLOCK_RENDER_LAYER_VALUES_LENGTH];
-//		final BlockModelRenderer blockModelRenderer = blockRendererDispatcher.getBlockModelRenderer();
-//		{
-//			for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; i++) {
-//				final BlockRenderLayer blockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
-//				if (!state.getBlock().canRenderInLayer(state, blockRenderLayer)) {
-//					continue;
-//				}
-//				ForgeHooksClient.setRenderLayer(blockRenderLayer);
-//				final int blockRenderLayerId = blockRenderLayer.ordinal();
-//				final BufferBuilder bufferBuilder = bufferCache.get(blockRenderLayerId);
-//				if (!startedBufferBuilders[blockRenderLayerId]) {
-//					startedBufferBuilders[blockRenderLayerId] = true;
-//					// Copied from RenderChunk#preRenderBlocks
-//					{
-//						bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-//						bufferBuilder.setTranslation((-pos.getX()), (-pos.getY()), (-pos.getZ()));
-//					}
-//				}
-//				// OptiFine Shaders compatibility
-////				OptiFineCompatibility.pushShaderThing(state, pos, reader, bufferBuilder);
-//				usedBlockRenderLayers[blockRenderLayerId] |= blockModelRenderer.renderModel(reader, blockRendererDispatcher.getModelForState(state), state, pos, bufferBuilder, false, random, state.getPositionRandom(pos));
-////				OptiFineCompatibility.popShaderThing(bufferBuilder);
-//			}
-//			ForgeHooksClient.setRenderLayer(null);
-//		}
-//
-//		// finishDrawing
-//		for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {
-//			if (!startedBufferBuilders[blockRenderLayerId]) {
-//				continue;
-//			}
-//			bufferCache.get(blockRenderLayerId).finishDrawing();
-//		}
-//	}
-//
-//	public abstract String getUpdateType();
-//
-//	@Nonnull
-//	@Override
-//	public Visibility draw(@Nonnull final ToastGui toastGui, final long delta) {
-//		final Minecraft minecraft = toastGui.getMinecraft();
-//		minecraft.getTextureManager().bindTexture(TEXTURE_TOASTS);
-//		GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-//		toastGui.blit(0, 0, 0, 0, 160, 32);
-//
-//		minecraft.fontRenderer.drawString(I18n.format(getUpdateType()) + ":", 30, 7, 0xFFFFFFFF);
-//		minecraft.fontRenderer.drawString(name, 30, 18, 0xFFFFFFFF);
-//
-//		// Code to draw the buffer
-//		RENDER:
-//		{
-//			final Entity entity = minecraft.getRenderViewEntity();
-//			if (entity == null) {
-//				break RENDER;
-//			}
-//			{
-//				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-//				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-//
-//				GlStateManager.pushMatrix();
-//				GlStateManager.translatef(0, 0, 100);
-//				GlStateManager.enableRescaleNormal();
-//				GlStateManager.enableAlphaTest();
-//				GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
-//				GlStateManager.enableBlend();
-//				GlStateManager.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-//				GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-//				{
-//					GlStateManager.translatef(7, 21, 0);
-//					GlStateManager.scalef(-1, -1, 1);
-//					GlStateManager.scalef(20, 20, 20);
-//				}
-//				{
+package io.github.cadiboo.nocubes.client.gui.toast;
+
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.toasts.IToast;
+import net.minecraft.client.gui.toasts.ToastGui;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
+import net.minecraft.client.renderer.RenderHelper;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.client.renderer.TransformationMatrix;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.model.ItemTransformVec3f;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.common.model.TransformationHelper;
+import org.lwjgl.opengl.GL11;
+
+import javax.annotation.Nonnull;
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * Toast for rendering a BlockState (All other toasts render an ItemStack).
+ * Many hacks and lots of copy pasta code reside here.
+ * Dragons abound.
+ *
+ * @author Cadiboo
+ */
+public class BlockStateToast implements IToast {
+
+	// Copied from ForgeHooksClient#handlePerspective
+	@SuppressWarnings("deprecation")
+	private static final TransformationMatrix ITEM_CAMERA_TRANSFORMATION_MATRIX = TransformationHelper.toTransformation(
+			new ItemTransformVec3f(
+					// From the item/generated.json
+					new Vector3f(-30, 225, 0),
+					new Vector3f(0, 0, 0),
+					new Vector3f(0.625F, 0.625F, 0.625F)
+			)
+	);
+
+	private final SingleBlockBufferCache cache = new SingleBlockBufferCache();
+	private final String message;
+	private final String blockName;
+
+	public BlockStateToast(final BlockState state, final boolean smoothability) {
+		this(state, BlockPos.ZERO, smoothability);
+	}
+
+	public BlockStateToast(final BlockState state, final BlockPos pos, final boolean smoothability) {
+		this(state, pos, smoothability, "TerrainSmoothableBlockState");
+	}
+
+	public BlockStateToast(final BlockState state, final BlockPos pos, final boolean smoothability, final String translationKeySuffix) {
+		this(state, pos, (smoothability ? "added" : "removed") + translationKeySuffix);
+	}
+
+	public BlockStateToast(final BlockState state, final BlockPos pos, final String translationKey) {
+		this.message = I18n.format(translationKey);
+		this.blockName = state.getBlock().getNameTextComponent().getFormattedText();
+		this.build(state, pos);
+	}
+
+	/**
+	 * Draws a BufferBuilder without resetting its internal data.
+	 *
+	 * @param bufferBuilder The BufferBuilder to draw (but not reset)
+	 */
+	private static void drawBufferWithoutResetting(final BufferBuilder bufferBuilder) {
+		// Get the internal data from the BufferBuilder (This resets the BufferBuilder's own copy of this data)
+		final Pair<BufferBuilder.DrawState, ByteBuffer> pair = bufferBuilder.func_227832_f_();
+		final ByteBuffer byteBuffer = pair.getSecond();
+
+		// func_227832_f_ = getAndResetData
+		// func_227840_c_ = getDrawMode
+
+		// Set the BufferBuilder's internal data to the original data (it was reset by getAndResetData)
+		bufferBuilder.putBulkData(byteBuffer);
+		// getAndResetData clears the list of DrawStates. We need to repopulate this list.
+		// finishDrawing repopulates the list. It throws an exception if the buffer hasn't been started so we start it.
+		bufferBuilder.begin(pair.getFirst().func_227840_c_(), bufferBuilder.getVertexFormat());
+		bufferBuilder.finishDrawing();
+
+		// Draw the BufferBuilder
+		WorldVertexBufferUploader.draw(bufferBuilder);
+
+		// Set the BufferBuilder's internal data back to the original data (it was reset by WorldVertexBufferUploader.draw)
+		bufferBuilder.putBulkData(byteBuffer);
+		// WorldVertexBufferUploader.draw clears the list of DrawStates. We need to repopulate this list.
+		// finishDrawing repopulates the list. It throws an exception if the buffer hasn't been started so we start it.
+		bufferBuilder.begin(pair.getFirst().func_227840_c_(), bufferBuilder.getVertexFormat());
+		bufferBuilder.finishDrawing();
+	}
+
+	private void build(final BlockState blockState, final BlockPos pos) {
+		if (blockState.getRenderType() == BlockRenderType.INVISIBLE)
+			return;
+
+		final Minecraft minecraft = Minecraft.getInstance();
+		final ClientWorld world = minecraft.world;
+		// Coppied from net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask.func_228940_a_
+		// (Previously ChunkRender#rebuildChunk)
+		final MatrixStack matrixStack = new MatrixStack();
+		final Random random = new Random();
+		final BlockRendererDispatcher blockRendererDispatcher = minecraft.getBlockRendererDispatcher();
+
+		for (final RenderType renderType : RenderType.func_228661_n_()) {
+			ForgeHooksClient.setRenderLayer(renderType);
+			if (RenderTypeLookup.canRenderInLayer(blockState, renderType)) {
+				BufferBuilder bufferBuilder = cache.getBuffer(renderType);
+				cache.startBuffer(renderType);
+				bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+
+				matrixStack.func_227860_a_();
+				if (blockRendererDispatcher.func_228793_a_(blockState, pos, world, matrixStack, bufferBuilder, false, random)) {
+					cache.empty = false;
+					cache.useBuffer(renderType);
+				}
+				matrixStack.func_227865_b_();
+			}
+		}
+		ForgeHooksClient.setRenderLayer(null);
+		for (RenderType renderType : cache.getStartedTypes())
+			cache.getBuffer(renderType).finishDrawing();
+	}
+
+	@Nonnull
+	@Override
+	public Visibility draw(@Nonnull final ToastGui toastGui, final long delta) {
+		final Minecraft minecraft = toastGui.getMinecraft();
+		minecraft.getTextureManager().bindTexture(TEXTURE_TOASTS);
+		RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+		toastGui.blit(0, 0, 0, 0, 160, 32);
+
+		minecraft.fontRenderer.drawString(message, 30, 7, 0xFFFFFFFF);
+		minecraft.fontRenderer.drawString(blockName, 30, 18, 0xFFFFFFFF);
+
+		// Code to draw the buffer
+		{
+			// Setup - Mostly copied from ItemRenderer.renderItemAndEffectIntoGUI
+			{
+				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
+//				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmapDirect(false, false);
+				minecraft.getTextureManager().func_229267_b_(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmapDirect(false, false);
+
+				RenderSystem.pushMatrix();
+				RenderSystem.translatef(0, 0, 100);
+				RenderSystem.enableRescaleNormal();
+				RenderSystem.enableAlphaTest();
+				RenderSystem.alphaFunc(GL11.GL_GREATER, 0.1F);
+				RenderSystem.enableBlend();
+				RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+				RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+				{
+					RenderSystem.translatef(7, 21, 0);
+					RenderSystem.scalef(-1, -1, 1);
+					RenderSystem.scalef(20, 20, 20);
+				}
+				{
 //					RenderHelper.enableGUIStandardItemLighting();
-//				}
-//				{
-//					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORM_MATRIX);
-//				}
-//			}
-//			for (int blockRenderLayerId = 0; blockRenderLayerId < usedBlockRenderLayers.length; blockRenderLayerId++) {
-//				if (!usedBlockRenderLayers[blockRenderLayerId]) {
-//					continue;
-//				}
-//				drawBuffer(bufferCache.get(blockRenderLayerId));
-//			}
-//			{
-//				RenderHelper.disableStandardItemLighting();
-//				GlStateManager.disableAlphaTest();
-//				GlStateManager.disableRescaleNormal();
-//				GlStateManager.popMatrix();
-//
-//				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
+					RenderHelper.func_227780_a_();
+				}
+				{
+					// TODO:
+//					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORMATION_MATRIX);
+				}
+			}
+
+			for (RenderType renderType : cache.getUsedTypes())
+				drawBufferWithoutResetting(cache.getBuffer(renderType));
+
+			// Cleanup - Mostly copied from ItemRenderer.renderItemAndEffectIntoGUI
+			{
+				RenderHelper.disableStandardItemLighting();
+				RenderSystem.disableAlphaTest();
+				RenderSystem.disableRescaleNormal();
+				RenderSystem.popMatrix();
+
+				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
 //				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
-//			}
-//		}
-//
-//		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
-//	}
-//
-//	public static final class AddTerrain extends BlockStateToast {
-//
-//		public AddTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-//			super(state, pos);
-//		}
-//
-//		@Override
-//		public String getUpdateType() {
-//			return NoCubes.MOD_ID + ".addedTerrainSmoothableBlockState";
-//		}
-//
-//	}
-//
-//	public static final class RemoveTerrain extends BlockStateToast {
-//
-//		public RemoveTerrain(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-//			super(state, pos);
-//		}
-//
-//		@Override
-//		public String getUpdateType() {
-//			return NoCubes.MOD_ID + ".removedTerrainSmoothableBlockState";
-//		}
-//
-//	}
-//
-//	public static final class AddLeaves extends BlockStateToast {
-//
-//		public AddLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-//			super(state, pos);
-//		}
-//
-//		@Override
-//		public String getUpdateType() {
-//			return NoCubes.MOD_ID + ".addedLeavesSmoothableBlockState";
-//		}
-//
-//	}
-//
-//	public static final class RemoveLeaves extends BlockStateToast {
-//
-//		public RemoveLeaves(@Nonnull final BlockState state, @Nonnull final BlockPos pos) {
-//			super(state, pos);
-//		}
-//
-//		@Override
-//		public String getUpdateType() {
-//			return NoCubes.MOD_ID + ".removedLeavesSmoothableBlockState";
-//		}
-//
-//	}
-//
-//}
+				minecraft.getTextureManager().func_229267_b_(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+			}
+		}
+
+		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
+	}
+
+	/**
+	 * Copy and combination of {@link RegionRenderCacheBuilder} and {@link ChunkRenderDispatcher.CompiledChunk}
+	 */
+	public static class SingleBlockBufferCache {
+
+		private final Set<RenderType> usedTypes = new ObjectArraySet<>();
+		private final Set<RenderType> startedTypes = new ObjectArraySet<>();
+		// Smallest default size because we're rendering one block and it won't render in most layers
+		private final Map<RenderType, BufferBuilder> builders = RenderType.func_228661_n_().stream()
+				.collect(Collectors.toMap(Function.identity(), (renderType) -> new BufferBuilder(DefaultVertexFormats.BLOCK.getSize())));
+		public boolean empty = true;
+
+		public Set<RenderType> getUsedTypes() {
+			return usedTypes;
+		}
+
+		public Set<RenderType> getStartedTypes() {
+			return startedTypes;
+		}
+
+		public BufferBuilder getBuffer(RenderType renderType) {
+			return this.builders.get(renderType);
+		}
+
+		public void useBuffer(RenderType renderType) {
+			this.usedTypes.add(renderType);
+		}
+
+		public void startBuffer(final RenderType renderType) {
+			this.startedTypes.add(renderType);
+		}
+
+	}
+
+}

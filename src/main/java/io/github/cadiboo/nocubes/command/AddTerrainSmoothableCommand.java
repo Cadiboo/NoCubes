@@ -17,12 +17,15 @@ import net.minecraftforge.fml.network.PacketDistributor;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
- * Command to add a terrain smoothable.
+ * Command to set a BlockState as being terrain smoothable.
  *
  * @author Cadiboo
  */
 public class AddTerrainSmoothableCommand {
 
+	/**
+	 * Syntax is "addTerrainSmoothable <BlockState>"
+	 */
 	public static LiteralArgumentBuilder<CommandSource> register() {
 		return Commands.literal("addTerrainSmoothable")
 				.requires((source) -> source.hasPermissionLevel(COMMAND_PERMISSION_LEVEL))
@@ -32,13 +35,13 @@ public class AddTerrainSmoothableCommand {
 	}
 
 	/**
-	 * Called on the server.
-	 * Sets the block states's smoothability to true,
-	 * adds it to the smoothable blockstates whitelist,
-	 * removes it from the smoothable blockstates blacklist
-	 * and sends a packet to all clients to set the block state's smoothablility to true.
+	 * Called on the Server.
+	 * Sets the BlockState's smoothability to true,
+	 * adds it to the smoothable BlockStates whitelist,
+	 * removes it from the smoothable BlockStates blacklist
+	 * and sends a packet to all clients to set the BlockState's smoothablility to true.
 	 * <p>
-	 * Logs an error if the blockstate is AIR
+	 * Logs an error if the blockstate is AIR.
 	 *
 	 * @return The amount of successes the command had
 	 */

@@ -14,6 +14,9 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 
 /**
+ * Handles all the events that are fired on the FORGE event bus that should be handled
+ * on both physical distributions.
+ *
  * @author Cadiboo
  */
 @EventBusSubscriber(modid = MOD_ID)

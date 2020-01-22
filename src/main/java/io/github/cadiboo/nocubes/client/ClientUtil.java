@@ -16,7 +16,8 @@ import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
 
 /**
- * Util that is only used on the Physical Client i.e. Rendering code
+ * Utility code that is only used on the Client distribution.
+ * i.e. Rendering code.
  *
  * @author Cadiboo
  */

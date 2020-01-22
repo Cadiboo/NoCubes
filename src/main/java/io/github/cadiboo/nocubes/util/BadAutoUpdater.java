@@ -14,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * A bad auto-updater until I implement delta-patching
+ * A bad auto-updater until I implement delta-patching.
  *
  * @author Cadiboo
  */

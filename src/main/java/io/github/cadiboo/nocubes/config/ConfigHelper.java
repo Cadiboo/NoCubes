@@ -155,7 +155,7 @@ public final class ConfigHelper {
 		try {
 			return new BlockStateArgument().parse(new StringReader(stateString)).getState();
 		} catch (final CommandSyntaxException e) {
-			LOGGER.error(CONFIG_MARKER, "Failed to parse blockstate \"" + stateString + "\"!", e);
+			LOGGER.warn(CONFIG_MARKER, "Failed to parse blockstate \"{}\": {}", stateString, e.getMessage());
 			return null;
 		}
 	}
@@ -259,29 +259,49 @@ public final class ConfigHelper {
 				.map(ConfigHelper::getStringFromBlockState)
 				.collect(Collectors.toList());
 
-		final List<String> moddedStates = Lists.newArrayList(
-				"biomesoplenty:grass[snowy=false,variant=sandy]",
-				"biomesoplenty:dirt[coarse=false,variant=sandy]",
-				"biomesoplenty:white_sand",
-				"biomesoplenty:grass[snowy=false,variant=silty]",
-				"biomesoplenty:dirt[coarse=false,variant=loamy]",
-				"biomesoplenty:grass[snowy=false,variant=loamy]",
-				"biomesoplenty:dried_sand",
-				"biomesoplenty:hard_ice",
-				"biomesoplenty:mud[variant=mud]",
-				"biomesoplenty:dirt[coarse=false,variant=silty]",
-				"chisel:marble2[variation=7]",
-				"chisel:limestone2[variation=7]",
-				"dynamictrees:rootydirtspecies[life=0]",
-				"dynamictrees:rootysand[life=0]",
-				"iceandfire:ash",
-				"iceandfire:sapphire_ore",
-				"iceandfire:chared_grass",
-				"iceandfire:chared_stone",
-				"iceandfire:frozen_grass_path",
-				"notenoughroofs:copper_ore",
-				"rustic:slate"
-		);
+		// Some BlockStates from other mods that should be smoothable by default.
+		// Mods can also add their own blocks via the API.
+		final List<String> moddedStates = Lists.newArrayList();
+		final ModList modList = ModList.get();
+		if (modList.isLoaded("biomesoplenty"))
+			Collections.addAll(moddedStates,
+					"biomesoplenty:grass[snowy=false,variant=sandy]",
+					"biomesoplenty:dirt[coarse=false,variant=sandy]",
+					"biomesoplenty:white_sand",
+					"biomesoplenty:grass[snowy=false,variant=silty]",
+					"biomesoplenty:dirt[coarse=false,variant=loamy]",
+					"biomesoplenty:grass[snowy=false,variant=loamy]",
+					"biomesoplenty:dried_sand",
+					"biomesoplenty:hard_ice",
+					"biomesoplenty:mud[variant=mud]",
+					"biomesoplenty:dirt[coarse=false,variant=silty]"
+			);
+		if (modList.isLoaded("chisel"))
+			Collections.addAll(moddedStates,
+					"chisel:marble2[variation=7]",
+					"chisel:limestone2[variation=7]"
+			);
+		if (modList.isLoaded("dynamictrees"))
+			Collections.addAll(moddedStates,
+					"dynamictrees:rootydirtspecies[life=0]",
+					"dynamictrees:rootysand[life=0]"
+			);
+		if (modList.isLoaded("iceandfire"))
+			Collections.addAll(moddedStates,
+					"iceandfire:ash",
+					"iceandfire:sapphire_ore",
+					"iceandfire:chared_grass",
+					"iceandfire:chared_stone",
+					"iceandfire:frozen_grass_path"
+			);
+		if (modList.isLoaded("notenoughroofs"))
+			Collections.addAll(moddedStates,
+					"notenoughroofs:copper_ore"
+			);
+		if (modList.isLoaded("rustic"))
+			Collections.addAll(moddedStates,
+					"rustic:slate"
+			);
 
 		final ArrayList<String> finalStates = Lists.newArrayList();
 		finalStates.addAll(vanillaStates);
@@ -305,9 +325,9 @@ public final class ConfigHelper {
 				.map(ResourceLocation::toString)
 				.collect(Collectors.toList());
 
-		final List<String> moddedStates = Lists.newArrayList(
-
-		);
+		// Some BlockStates from other mods that should be smoothable by default.
+		// Mods can also add their own blocks via the API.
+		final List<String> moddedStates = Lists.newArrayList();
 
 		final ArrayList<String> finalStates = Lists.newArrayList();
 		finalStates.addAll(vanillaStates);
@@ -350,7 +370,7 @@ public final class ConfigHelper {
 		ConfigTracker_getConfig(NoCubes.MOD_ID, type).ifPresent(modConfig -> {
 			modConfig.save();
 			((CommentedFileConfig) modConfig.getConfigData()).load();
-//			modConfig.fireEvent(new ModConfig.ReLoading(modConfig));
+//			modConfig.fireEvent(new ModConfig.Reloading(modConfig));
 			fireReloadEvent(modConfig);
 		});
 	}
@@ -393,7 +413,7 @@ public final class ConfigHelper {
 	}
 
 	public static void addApiAddedBlockStates() {
-		NoCubesConfig.Server.terrainSmoothableWhitelist.addAll(NoCubesAPI.getAddedTerrainSmoothableBlockStates());
+		NoCubesConfig.Server.terrainSmoothableWhitelist.addAll(NoCubesAPI.instance().getAddedTerrainSmoothableBlockStates());
 	}
 
 }
