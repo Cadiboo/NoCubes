@@ -1927,6 +1927,7 @@ function wrapWithLogging(transformersObj) {
 	print = function(msg) {
 		if (currentPrintTransformer)
 			msg = "[" + currentPrintTransformer + "]: " + msg;
+		msg = "[NoCubes] " + msg;
 		oldPrint(msg);
 	};
 
