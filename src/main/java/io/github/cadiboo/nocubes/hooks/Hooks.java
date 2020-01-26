@@ -42,15 +42,15 @@ public final class Hooks {
 //		return true;
 //	}
 
-	/**
-	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
-	 * Calls: ModUtil.getFluidState to handle extended fluids
-	 *
-	 * @return An IFluidState
-	 */
-	public static IFluidState getFluidState(final World world, final BlockPos pos) {
-		return ModUtil.getFluidState(world, pos);
-	}
+//	/**
+//	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
+//	 * Calls: ModUtil.getFluidState to handle extended fluids
+//	 *
+//	 * @return An IFluidState
+//	 */
+//	public static IFluidState getFluidState(final World world, final BlockPos pos) {
+//		return ModUtil.getFluidState(world, pos);
+//	}
 
 //	/**
 //	 * Called from: IWorldReader#getCollisionShapes(Entity, AxisAlignedBB) after the ISelectionContext is generated
@@ -62,40 +62,40 @@ public final class Hooks {
 //		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, i, j, k, l, i1, j1, iselectioncontext);
 //	}
 
-	/**
-	 * Called from: ChunkRender#rebuildChunk right before BlockState#getRenderType is called
-	 * Calls: Nothing
-	 * Disables vanilla rendering for smoothable BlockStates
-	 *
-	 * @return If the state can render
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static boolean canBlockStateRender(final BlockState blockstate) {
-//		if (blockstate.nocubes_isTerrainSmoothable && Config.renderSmoothTerrain) return false;
-//		if (blockstate.nocubes_isLeavesSmoothable) {
-//			if (Config.renderSmoothLeaves)
-//				return Config.renderSmoothAndVanillaLeaves;
-//			return true;
-//		}
-		return true;
-	}
+//	/**
+//	 * Called from: ChunkRender#rebuildChunk right before BlockState#getRenderType is called
+//	 * Calls: Nothing
+//	 * Disables vanilla rendering for smoothable BlockStates
+//	 *
+//	 * @return If the state can render
+//	 */
+//	@OnlyIn(Dist.CLIENT)
+//	public static boolean canBlockStateRender(final BlockState blockstate) {
+////		if (blockstate.nocubes_isTerrainSmoothable && Config.renderSmoothTerrain) return false;
+////		if (blockstate.nocubes_isLeavesSmoothable) {
+////			if (Config.renderSmoothLeaves)
+////				return Config.renderSmoothAndVanillaLeaves;
+////			return true;
+////		}
+//		return true;
+//	}
 
-	/**
-	 * Called from: BlockState#causesSuffocation before any other logic
-	 * Calls: ModUtil.doesTerrainCauseSuffocation
-	 *
-	 * @return If the state does NOT cause suffocation (If normal suffocation checks should be bypassed and false returned)
-	 */
-	public static boolean doesNotCauseSuffocation(final BlockState blockState, final IBlockReader reader, final BlockPos pos) {
-//		if (Config.terrainCollisions) {
-//			if (!blockState.nocubes_isTerrainSmoothable) {
-//				return false; // Let vanilla handle suffocation normally
-//			} else {
-//				return ModUtil.doesTerrainCauseSuffocation(reader, pos);
-//			}
-//		}
-		return false;
-	}
+//	/**
+//	 * Called from: BlockState#causesSuffocation before any other logic
+//	 * Calls: ModUtil.doesTerrainCauseSuffocation
+//	 *
+//	 * @return If the state does NOT cause suffocation (If normal suffocation checks should be bypassed and false returned)
+//	 */
+//	public static boolean doesNotCauseSuffocation(final BlockState blockState, final IBlockReader reader, final BlockPos pos) {
+////		if (Config.terrainCollisions) {
+////			if (!blockState.nocubes_isTerrainSmoothable) {
+////				return false; // Let vanilla handle suffocation normally
+////			} else {
+////				return ModUtil.doesTerrainCauseSuffocation(reader, pos);
+////			}
+////		}
+//		return false;
+//	}
 
 //	/**
 //	 * Called from: ChunkRenderCache#<init> right after ChunkRenderCache#cacheStartPos is set
