@@ -140,7 +140,7 @@ public final class ModUtil {
 		final BlockState state = currentChunk.getBlockState(pos);
 
 		// Do not extend if not terrain smoothable
-		if (!state.nocubes_isTerrainSmoothable)
+		if (!IsSmoothable.TERRAIN_SMOOTHABLE.test(state))
 			return state.getFluidState();
 
 		final IFluidState fluidState = state.getFluidState();
