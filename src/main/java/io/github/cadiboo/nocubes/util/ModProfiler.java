@@ -33,18 +33,28 @@ public final class ModProfiler extends Profiler1122 implements AutoCloseable {
 	}
 
 	public ModProfiler start(final String name) {
-		if (startedSections == virtualSections++ && profilingEnabled) {
-			++startedSections;
-			startSection(name);
-		}
+		startSection(name);
 		return this; // return this to allow use in try-with-resources blocks
 	}
 
-	public void end() {
+	@Override
+	public void startSection(final String name) {
+		if (startedSections == virtualSections++ && profilingEnabled) {
+			++startedSections;
+			super.startSection(name);
+		}
+	}
+
+	@Override
+	public void endSection() {
 		if (startedSections == virtualSections--) {
 			--startedSections;
-			endSection();
+			super.endSection();
 		}
+	}
+
+	public void end() {
+		endSection();
 	}
 
 	@Override
