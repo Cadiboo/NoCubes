@@ -175,8 +175,8 @@ public class BlockStateToast implements IToast {
 					RenderHelper.enableStandardItemLighting();
 				}
 				{
-					// TODO:
 //					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORMATION_MATRIX);
+					RenderSystem.multMatrix(ITEM_CAMERA_TRANSFORMATION_MATRIX.getMatrix());
 				}
 			}
 
@@ -195,7 +195,7 @@ public class BlockStateToast implements IToast {
 			}
 		}
 
-		return delta >= 10000L ? Visibility.HIDE : Visibility.SHOW;
+		return delta >= 10_000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
 	/**
