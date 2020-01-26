@@ -1,8 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
+import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
-import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
@@ -14,19 +13,22 @@ import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.GameSettings;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Matrix4f;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
@@ -315,11 +317,10 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-		final Minecraft minecraft = Minecraft.getInstance();
-		final GameSettings gameSettings = minecraft.gameSettings;
-		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI)
+		if (!Screen.hasAltDown())
 			return;
 
+		final Minecraft minecraft = Minecraft.getInstance();
 		final ClientPlayerEntity player = minecraft.player;
 		if (player == null)
 			return;
@@ -328,62 +329,53 @@ public final class ClientEventSubscriber {
 		if (world == null)
 			return;
 
+		// TODO: temp
+		{
+			final BlockPos playerPos = new BlockPos(player);
+			if (cache == null || !Objects.equals(lastPos, playerPos)) {
+				lastPos = playerPos;
+				VoxelShape shape = VoxelShapes.empty();
+				for (final BlockPos blockPos : BlockPos.getAllInBoxMutable(playerPos.add(-5, -5, -5), playerPos.add(4, 4, 4))) {
+					final BlockState blockState = world.getBlockState(blockPos);
+					if (IsSmoothable.TERRAIN_SMOOTHABLE.test(blockState))
+						shape = VoxelShapes.combine(shape, blockState.getShape(world, blockPos).withOffset(blockPos.getX(), blockPos.getY(), blockPos.getZ()), IBooleanFunction.OR);
+				}
+				cache = shape.simplify();
+				cache = shape;
+			}
+		}
+
+//		final ActiveRenderInfo activeRenderInfo = TileEntityRendererDispatcher.instance.renderInfo;
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getActiveRenderInfo();
 
-		RenderSystem.enableBlend();
-		RenderSystem.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
-		final MainWindow mainWindow = minecraft.getMainWindow();
-		RenderSystem.lineWidth(Math.max(2.5F, (float) mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
-		RenderSystem.disableTexture();
-		RenderSystem.depthMask(false);
-		RenderSystem.matrixMode(GL11.GL_PROJECTION);
-		RenderSystem.pushMatrix();
-		RenderSystem.scalef(1.0F, 1.0F, 0.999F);
 		final Vec3d projectedView = activeRenderInfo.getProjectedView();
 		double d0 = projectedView.getX();
 		double d1 = projectedView.getY();
 		double d2 = projectedView.getZ();
 		final MatrixStack matrixStack = event.getMatrixStack();
 
-		// FIXME TEMP
-		{
-			Matrix4f matrix4f = matrixStack.getLast().getPositionMatrix();
-			final IVertexBuilder bufferBuilder = minecraft.getRenderTypeBuffers().getBufferSource().getBuffer(RenderType.lines());
-			final BlockPos playerPos = new BlockPos(player);
-			if (cache == null || !Objects.equals(lastPos, playerPos)) {
-				lastPos = playerPos;
-				VoxelShape shape = VoxelShapes.empty();
-				for (final BlockPos blockPos : BlockPos.getAllInBoxMutable(playerPos.add(-8, -8, -8), playerPos.add(7, 7, 7))) {
-					final BlockState blockState = world.getBlockState(blockPos);
-					if (IsSmoothable.TERRAIN_SMOOTHABLE.test(blockState))
-						shape = VoxelShapes.combine(shape, blockState.getShape(world, blockPos).withOffset(blockPos.getX(), blockPos.getY(), blockPos.getZ()), IBooleanFunction.OR);
-				}
-				cache = shape.simplify();
-			}
-			RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-//	        WorldRenderer.drawShape(matrixStack, bufferBuilder, cache, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
-			drawShape(matrix4f, bufferBuilder, cache, 0.0F, 1.0F, 1.0F, 1.0F, -d0, -d1, -d2);
-		}
+		final IRenderTypeBuffer.Impl bufferSource = minecraft.getRenderTypeBuffers().getBufferSource();
+		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
+		// FIXME TEMP
+		drawShape(matrixStack, bufferBuilder, cache, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 1.0F);
 		// Draw nearby collisions
-//		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(3)).collect(Collectors.toList())) {
-//			WorldRenderer.drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
-//		}
+		world.getEmptyCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(3), ImmutableSet.of()).forEach(voxelShape -> {
+			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
+		});
 		// Draw player intersecting collisions
-//		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition())).collect(Collectors.toList())) {
-//			WorldRenderer.drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
-//		}
-		RenderSystem.popMatrix();
-		RenderSystem.matrixMode(GL11.GL_MODELVIEW);
-		RenderSystem.depthMask(true);
-		RenderSystem.enableTexture();
-		RenderSystem.disableBlend();
+		world.getEmptyCollisionShapes(player, new AxisAlignedBB(player.getPosition()), ImmutableSet.of()).forEach(voxelShape -> {
+			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
+		});
+
+		bufferSource.finish(RenderType.lines());
 	}
 
-	private static void drawShape(final Matrix4f matrix4f, final IVertexBuilder bufferBuilder, final VoxelShape shape, final float red, final float green, final float blue, final float alpha, final double x, final double y, final double z) {
-		shape.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
-			bufferBuilder.pos(matrix4f, (float) (x0 + x), (float) (y0 + y), (float) (z0 + z)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z)).color(red, green, blue, alpha).endVertex();
+	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
+		Matrix4f matrix4f = matrixStackIn.getLast().getPositionMatrix();
+		shapeIn.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
+			bufferIn.pos(matrix4f, (float) (x0 + xIn), (float) (y0 + yIn), (float) (z0 + zIn)).color(red, green, blue, alpha).endVertex();
+			bufferIn.pos(matrix4f, (float) (x1 + xIn), (float) (y1 + yIn), (float) (z1 + zIn)).color(red, green, blue, alpha).endVertex();
 		});
 	}
 
