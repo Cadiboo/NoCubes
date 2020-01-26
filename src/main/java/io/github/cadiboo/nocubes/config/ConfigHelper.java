@@ -131,9 +131,9 @@ public final class ConfigHelper {
 		saveAndLoad(ModConfig.Type.CLIENT);
 	}
 
-	private static void setBlockState(final BlockState state, final boolean newState, final Set<BlockState> whiteListBaked, final Set<BlockState> blackListBaked, final List<String> whiteListRaw, final List<String> blackListRaw) {
+	private static void setBlockState(final BlockState state, final boolean newSmoothability, final Set<BlockState> whiteListBaked, final Set<BlockState> blackListBaked, final List<String> whiteListRaw, final List<String> blackListRaw) {
 		final String stateString = getStringFromBlockState(state);
-		if (newState) {
+		if (newSmoothability) {
 			blackListBaked.remove(state);
 			whiteListBaked.add(state);
 			blackListRaw.remove(stateString);
