@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
+import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainCollisions;
@@ -11,6 +12,9 @@ import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.MainWindow;
@@ -26,7 +30,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.profiler.IProfiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -51,6 +54,7 @@ import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL11;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -154,7 +158,7 @@ public final class ClientEventSubscriber {
 
 	private static void setLeavesSmoothable(final BlockState state, final boolean newSmoothability) {
 //		ConfigHelper.setLeavesSmoothable(state, newSmoothability);
-//		minecraft.getToastGui().add((BlockStateToast) new BlockStateToast.Leaves(state, newSmoothability));
+//		Minecraft.getInstance().getToastGui().add(new BlockStateToast.Leaves(state, newSmoothability));
 //		if (NoCubesConfig.Client.renderSmoothLeaves)
 //			ClientUtil.tryReloadRenderers();
 	}
@@ -189,9 +193,9 @@ public final class ClientEventSubscriber {
 				Thread thread = entry.getKey();
 				ModProfiler profiler = entry.getValue();
 				List<ModProfiler.Result> list = profiler.getProfilingData("");
-				if (list.size() < 2) { // Continue of thread is idle
+				if (list.size() < 2) // Thread is idle
 					continue;
-				}
+
 				final int offset = visibleIndex++;
 
 				ModProfiler.Result profileResult = list.remove(0);
@@ -341,11 +345,9 @@ public final class ClientEventSubscriber {
 						shape = VoxelShapes.combine(shape, blockState.getShape(world, blockPos).withOffset(blockPos.getX(), blockPos.getY(), blockPos.getZ()), IBooleanFunction.OR);
 				}
 				cache = shape.simplify();
-				cache = shape;
 			}
 		}
 
-//		final ActiveRenderInfo activeRenderInfo = TileEntityRendererDispatcher.instance.renderInfo;
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getActiveRenderInfo();
 
 		final Vec3d projectedView = activeRenderInfo.getProjectedView();
@@ -384,7 +386,8 @@ public final class ClientEventSubscriber {
 		if (!NoCubesConfig.Client.renderSmoothTerrain /*&& !NoCubesConfig.Client.renderSmoothLeaves*/)
 			return;
 
-		final ClientPlayerEntity player = Minecraft.getInstance().player;
+		final Minecraft minecraft = Minecraft.getInstance();
+		final ClientPlayerEntity player = minecraft.player;
 		if (player == null)
 			return;
 
@@ -393,7 +396,7 @@ public final class ClientEventSubscriber {
 			return;
 
 		final RayTraceResult rayTraceResult = event.getTarget();
-		if (rayTraceResult == null || rayTraceResult.getType() != RayTraceResult.Type.BLOCK)
+		if (rayTraceResult == null || rayTraceResult.getType() != BLOCK)
 			return;
 
 		BlockRayTraceResult blockRayTraceResult = (BlockRayTraceResult) rayTraceResult;
@@ -403,62 +406,53 @@ public final class ClientEventSubscriber {
 		if (blockState.getMaterial() == Material.AIR || !world.getWorldBorder().contains(pos))
 			return;
 
-//		final IsSmoothable isSmoothable;
-//		final MeshGeneratorType meshGeneratorType;
-//		if (Config.renderSmoothTerrain && blockState.nocubes_isTerrainSmoothable) {
-//			isSmoothable = TERRAIN_SMOOTHABLE;
-//			meshGeneratorType = Config.terrainMeshGenerator;
-//			event.setCanceled(true);
-//		} else if (Config.renderSmoothLeaves && blockState.nocubes_isLeavesSmoothable) {
-//			isSmoothable = LEAVES_SMOOTHABLE;
-//			meshGeneratorType = Config.leavesMeshGenerator;
-//			event.setCanceled(true);
-//		} else
-//			return;
-//
-//		final Tessellator tessellator = Tessellator.getInstance();
-//		final BufferBuilder bufferbuilder = tessellator.getBuffer();
-//
-//		bufferbuilder.setTranslation(
-//				-TileEntityRendererDispatcher.staticPlayerX,
-//				-TileEntityRendererDispatcher.staticPlayerY,
-//				-TileEntityRendererDispatcher.staticPlayerZ
-//		);
-//
-//		RenderSystem.enableBlend();
-//		RenderSystem.blendFuncSeparate(RenderSystem.SourceFactor.SRC_ALPHA, RenderSystem.DestFactor.ONE_MINUS_SRC_ALPHA, RenderSystem.SourceFactor.ONE, RenderSystem.DestFactor.ZERO);
-//		RenderSystem.lineWidth(3.0F);
-//		RenderSystem.disableTexture();
-//		RenderSystem.depthMask(true);
-//
-//		RenderSystem.color4f(0, 0, 0, 1);
-//		RenderSystem.color4f(1, 1, 1, 1);
-//
-//		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
-//			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
-//				try (Face face = faces.get(i)) {
-//					try (
-//							Vec3 v0 = face.getVertex0();
-//							Vec3 v1 = face.getVertex1();
-//							Vec3 v2 = face.getVertex2();
-//							Vec3 v3 = face.getVertex3()
-//					) {
-//						bufferbuilder.begin(GL11.GL_LINE_STRIP, DefaultVertexFormats.POSITION_COLOR);
-//						bufferbuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.4F).endVertex();
-//						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
-//						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
-//						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-//						tessellator.draw();
-//					}
-//				}
-//			}
-//		}
-//
-//		RenderSystem.depthMask(true);
-//		RenderSystem.enableTexture();
-//		RenderSystem.disableBlend();
-//
-//		bufferbuilder.setTranslation(0, 0, 0);
+		List<FaceList> list = new ArrayList<>();
+
+		try (BlockPos.PooledMutable pooled = BlockPos.PooledMutable.retain()) {
+			final MeshGenerator meshGenerator = NoCubesConfig.Server.terrainMeshGenerator.getMeshGenerator();
+			list.add(meshGenerator.generateBlock(pos, world, IsSmoothable.TERRAIN_SMOOTHABLE, pooled));
+//			list.add(meshGenerator.generateBlock(pos, world, IsSmoothable.LEAVES_SMOOTHABLE, pooled));
+		}
+
+		boolean anythingRendered = false;
+
+		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getActiveRenderInfo();
+		final Vec3d projectedView = activeRenderInfo.getProjectedView();
+		double d0 = projectedView.getX();
+		double d1 = projectedView.getY();
+		double d2 = projectedView.getZ();
+//		final MatrixStack matrixStack = event.getMatrixStack();
+		final MatrixStack matrixStack = new MatrixStack();
+
+		final IRenderTypeBuffer.Impl bufferSource = minecraft.getRenderTypeBuffers().getBufferSource();
+		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
+
+		final float red = 0.0F;
+		final float green = 0.0F;
+		final float blue = 0.0F;
+		final float alpha = 0.4F;
+
+		for (final FaceList faces : list) {
+			try (FaceList ignored = faces) {
+				for (final Face face : faces) {
+					try (
+							Vec3 v0 = face.getVertex0();
+							Vec3 v1 = face.getVertex1();
+							Vec3 v2 = face.getVertex2();
+							Vec3 v3 = face.getVertex3()
+					) {
+						anythingRendered = true;
+						Matrix4f matrix4f = matrixStack.getLast().getPositionMatrix();
+						bufferBuilder.pos(matrix4f, (float) (v0.x + d0), (float) (v0.y + d1), (float) (v0.z + d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v1.x + d0), (float) (v1.y + d1), (float) (v1.z + d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v2.x + d0), (float) (v2.y + d1), (float) (v2.z + d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v3.x + d0), (float) (v3.y + d1), (float) (v3.z + d2)).color(red, green, blue, alpha).endVertex();
+					}
+				}
+			}
+		}
+
+		event.setCanceled(anythingRendered);
 	}
 
 	@SubscribeEvent

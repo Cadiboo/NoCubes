@@ -79,7 +79,7 @@ public final class S2CSetTerrainSmoothable {
 			return;
 		}
 		blockState.nocubes_isTerrainSmoothable = newSmoothability;
-		Minecraft.getInstance().getToastGui().add(new BlockStateToast(blockState, newSmoothability));
+		Minecraft.getInstance().getToastGui().add(new BlockStateToast.Terrain(blockState, newSmoothability));
 		if (NoCubesConfig.Client.renderSmoothTerrain)
 			ClientUtil.tryReloadRenderers();
 	}

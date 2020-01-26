@@ -62,14 +62,6 @@ public class BlockStateToast implements IToast {
 	private final String message;
 	private final String blockName;
 
-	public BlockStateToast(final BlockState state, final boolean smoothability) {
-		this(state, BlockPos.ZERO, smoothability);
-	}
-
-	public BlockStateToast(final BlockState state, final BlockPos pos, final boolean smoothability) {
-		this(state, pos, smoothability, "TerrainSmoothableBlockState");
-	}
-
 	public BlockStateToast(final BlockState state, final BlockPos pos, final boolean smoothability, final String translationKeySuffix) {
 		this(state, pos, (smoothability ? "added" : "removed") + translationKeySuffix);
 	}
@@ -167,9 +159,10 @@ public class BlockStateToast implements IToast {
 				RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 				RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
 				{
-					RenderSystem.translatef(7, 21, 0);
-					RenderSystem.scalef(-1, -1, 1);
-					RenderSystem.scalef(20, 20, 20);
+//					RenderSystem.translatef(7, 21, 0);
+//					RenderSystem.scalef(-1.0F, -1.0F, 1.0F);
+//					RenderSystem.scalef(20, 20, 20);
+//					RenderSystem.rotatef(180, 0, 1, 0);
 				}
 				{
 					RenderHelper.enableStandardItemLighting();
@@ -195,7 +188,7 @@ public class BlockStateToast implements IToast {
 			}
 		}
 
-		return delta >= 10_000L ? Visibility.HIDE : Visibility.SHOW;
+		return delta >= 100_000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
 	/**
@@ -228,6 +221,30 @@ public class BlockStateToast implements IToast {
 
 		public void startBuffer(final RenderType renderType) {
 			this.startedTypes.add(renderType);
+		}
+
+	}
+
+	public static class Terrain extends BlockStateToast {
+
+		public Terrain(final BlockState state, final boolean smoothability) {
+			this(state, BlockPos.ZERO, smoothability);
+		}
+
+		public Terrain(final BlockState state, final BlockPos pos, final boolean smoothability) {
+			super(state, pos, smoothability, "TerrainSmoothableBlockState");
+		}
+
+	}
+
+	public static class Leaves extends BlockStateToast {
+
+		public Leaves(final BlockState state, final boolean smoothability) {
+			this(state, BlockPos.ZERO, smoothability);
+		}
+
+		public Leaves(final BlockState state, final BlockPos pos, final boolean smoothability) {
+			super(state, pos, smoothability, "LeavesSmoothableBlockState");
 		}
 
 	}
