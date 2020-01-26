@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import com.google.common.annotations.Beta;
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
@@ -10,6 +9,8 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +26,7 @@ import java.util.Set;
 @Beta
 public class NoCubesAPIImpl implements NoCubesAPI {
 
+	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Set<BlockState> ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES = new HashSet<>();
 	private static final Set<BlockState> ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES_VIEW = Collections.unmodifiableSet(ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES);
 	private static boolean canAddMeshGenerators = true;
@@ -48,9 +50,9 @@ public class NoCubesAPIImpl implements NoCubesAPI {
 			return;
 		NoCubesAPI.instance().preDisableAddingMeshGenerators();
 		canAddMeshGenerators = false;
-		NoCubes.LOGGER.debug("Finalised API added MeshGenerators:");
+		LOGGER.debug("Finalised API added MeshGenerators:");
 		for (final MeshGeneratorType type : MeshGeneratorType.getValues())
-			NoCubes.LOGGER.debug(type.name() + ", " + type.toString() + ", " + type.getMeshGenerator());
+			LOGGER.debug("{}, {}, {}", type.name(), type, type.getMeshGenerator());
 	}
 
 	/**
@@ -62,9 +64,9 @@ public class NoCubesAPIImpl implements NoCubesAPI {
 			return;
 		NoCubesAPI.instance().preDisableAddingBlockStates();
 		canAddBlocks = false;
-		NoCubes.LOGGER.info("Finalised API added smoothables:");
+		LOGGER.info("Finalised API added smoothables:");
 		for (final BlockState blockState : NoCubesAPI.instance().getAddedTerrainSmoothableBlockStates())
-			NoCubes.LOGGER.info(ConfigHelper.getStringFromBlockState(blockState));
+			LOGGER.info(ConfigHelper.getStringFromBlockState(blockState));
 	}
 
 	private void ensureCanAddMeshGenerator() {

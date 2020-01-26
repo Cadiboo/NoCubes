@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.network;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -13,6 +12,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.network.NetworkEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.function.Supplier;
 
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
  */
 public final class S2CSetTerrainSmoothable {
 
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final int blockStateId;
 	private final boolean newSmoothability;
 
@@ -73,7 +75,7 @@ public final class S2CSetTerrainSmoothable {
 		final BlockState blockState = Block.getStateById(blockStateId);
 		if (blockState == StateHolder.AIR_DEFAULT) {
 			final String type = newSmoothability ? "add" : "remove";
-			NoCubes.LOGGER.error("Trying to " + type + " invalid terrain smoothable blockstate: " + blockStateId);
+			LOGGER.error("Trying to {} invalid terrain smoothable blockstate: {}", type, blockStateId);
 			return;
 		}
 		blockState.nocubes_isTerrainSmoothable = newSmoothability;

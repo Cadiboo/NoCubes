@@ -22,7 +22,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
 /**
  * The Config for NoCubes.
- * Contains the Client and Sever configs as inner classes.
+ * Contains the Common, Client and Sever configs as inner classes.
  * Handles registering and baking the configs.
  *
  * @author Cadiboo
@@ -36,6 +36,7 @@ public final class NoCubesConfig {
 	 * @param context The ModLoadingContext to register the configs to
 	 */
 	public static void register(final ModLoadingContext context) {
+		context.registerConfig(ModConfig.Type.COMMON, Common.SPEC);
 		context.registerConfig(ModConfig.Type.CLIENT, Client.SPEC);
 		context.registerConfig(ModConfig.Type.SERVER, Server.SPEC);
 	}
@@ -43,10 +44,43 @@ public final class NoCubesConfig {
 	@SubscribeEvent
 	public static void onModConfigEvent(final ModConfig.ModConfigEvent configEvent) {
 		final ForgeConfigSpec spec = configEvent.getConfig().getSpec();
-		if (spec == Client.SPEC)
+		if (spec == Common.SPEC)
+			Common.bake();
+		else if (spec == Client.SPEC)
 			Client.bake();
 		else if (spec == Server.SPEC)
 			Server.bake();
+
+	}
+
+	public static class Common {
+
+		public static final ConfigImpl INSTANCE;
+		public static final ForgeConfigSpec SPEC;
+		public static boolean enableAutoUpdater;
+		static {
+			final Pair<ConfigImpl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(ConfigImpl::new);
+			SPEC = specPair.getRight();
+			INSTANCE = specPair.getLeft();
+		}
+
+		public static void bake() {
+			enableAutoUpdater = INSTANCE.enableAutoUpdater.get();
+		}
+
+		static class ConfigImpl {
+
+			final BooleanValue enableAutoUpdater;
+
+			private ConfigImpl(final ForgeConfigSpec.Builder builder) {
+				enableAutoUpdater = builder
+						.comment("If the mod auto updater should check for updates when the game starts and install any new updates")
+						.translation(MOD_ID + ".config.enableAutoUpdater")
+						.define("enableAutoUpdater", true);
+			}
+
+		}
+
 	}
 
 	public static class Client {

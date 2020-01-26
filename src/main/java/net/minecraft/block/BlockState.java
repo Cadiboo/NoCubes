@@ -55,12 +55,12 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    @Nullable
    private BlockState.Cache cache;
    private final int lightLevel;
-   private final boolean field_215709_e;
+   private final boolean transparent;
 
    public BlockState(Block blockIn, ImmutableMap<IProperty<?>, Comparable<?>> properties) {
       super(blockIn, properties);
       this.lightLevel = blockIn.getLightValue(this);
-      this.field_215709_e = blockIn.func_220074_n(this);
+      this.transparent = blockIn.isTransparent(this);
    }
 
    public void cacheState() {
@@ -90,16 +90,16 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.cache != null ? this.cache.opacity : this.getBlock().getOpacity(this, worldIn, pos);
    }
 
-   public VoxelShape func_215702_a(IBlockReader worldIn, BlockPos pos, Direction directionIn) {
-      return this.cache != null && this.cache.renderShapes != null ? this.cache.renderShapes[directionIn.ordinal()] : VoxelShapes.func_216387_a(this.getRenderShape(worldIn, pos), directionIn);
+   public VoxelShape getFaceOcclusionShape(IBlockReader worldIn, BlockPos pos, Direction directionIn) {
+      return this.cache != null && this.cache.renderShapes != null ? this.cache.renderShapes[directionIn.ordinal()] : VoxelShapes.getFaceShape(this.getRenderShape(worldIn, pos), directionIn);
    }
 
    public boolean isCollisionShapeLargerThanFullBlock() {
       return this.cache == null || this.cache.isCollisionShapeLargerThanFullBlock;
    }
 
-   public boolean func_215691_g() {
-      return this.field_215709_e;
+   public boolean isTransparent() {
+      return this.transparent;
    }
 
    public int getLightValue() {
@@ -137,8 +137,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    @OnlyIn(Dist.CLIENT)
-   public boolean func_227035_k_() {
-      return this.getBlock().func_225543_m_(this);
+   public boolean isEmissiveRendering() {
+      return this.getBlock().isEmissiveRendering(this);
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -204,7 +204,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
-      return this.cache != null ? this.cache.field_230026_g : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
+      return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
@@ -240,8 +240,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().eventReceived(this, worldIn, pos, id, param);
    }
 
-   public void neighborChanged(World worldIn, BlockPos p_215697_2_, Block blockIn, BlockPos p_215697_4_, boolean isMoving) {
-      this.getBlock().neighborChanged(this, worldIn, p_215697_2_, blockIn, p_215697_4_, isMoving);
+   public void neighborChanged(World worldIn, BlockPos posIn, Block blockIn, BlockPos fromPosIn, boolean isMoving) {
+      this.getBlock().neighborChanged(this, worldIn, posIn, blockIn, fromPosIn, isMoving);
    }
 
    /**
@@ -270,12 +270,12 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onReplaced(this, worldIn, pos, newState, isMoving);
    }
 
-   public void func_227033_a_(ServerWorld p_227033_1_, BlockPos p_227033_2_, Random p_227033_3_) {
-      this.getBlock().func_225534_a_(this, p_227033_1_, p_227033_2_, p_227033_3_);
+   public void tick(ServerWorld worldIn, BlockPos posIn, Random randomIn) {
+      this.getBlock().tick(this, worldIn, posIn, randomIn);
    }
 
-   public void func_227034_b_(ServerWorld p_227034_1_, BlockPos p_227034_2_, Random p_227034_3_) {
-      this.getBlock().func_225542_b_(this, p_227034_1_, p_227034_2_, p_227034_3_);
+   public void randomTick(ServerWorld worldIn, BlockPos posIn, Random randomIn) {
+      this.getBlock().randomTick(this, worldIn, posIn, randomIn);
    }
 
    public void onEntityCollision(World worldIn, BlockPos pos, Entity entityIn) {
@@ -290,21 +290,21 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().getDrops(this, builder);
    }
 
-   public ActionResultType func_227031_a_(World p_227031_1_, PlayerEntity p_227031_2_, Hand p_227031_3_, BlockRayTraceResult p_227031_4_) {
-      return this.getBlock().func_225533_a_(this, p_227031_1_, p_227031_4_.getPos(), p_227031_2_, p_227031_3_, p_227031_4_);
+   public ActionResultType onBlockActivated(World worldIn, PlayerEntity player, Hand handIn, BlockRayTraceResult resultIn) {
+      return this.getBlock().onBlockActivated(this, worldIn, resultIn.getPos(), player, handIn, resultIn);
    }
 
    public void onBlockClicked(World worldIn, BlockPos pos, PlayerEntity player) {
       this.getBlock().onBlockClicked(this, worldIn, pos, player);
    }
 
-   public boolean func_229980_m_(IBlockReader p_229980_1_, BlockPos p_229980_2_) {
-      return this.getBlock().func_229869_c_(this, p_229980_1_, p_229980_2_);
+   public boolean isSuffocating(IBlockReader blockReaderIn, BlockPos blockPosIn) {
+      return this.getBlock().causesSuffocation(this, blockReaderIn, blockPosIn);
    }
 
    @OnlyIn(Dist.CLIENT)
    public boolean causesSuffocation(IBlockReader worldIn, BlockPos pos) {
-      return this.getBlock().func_229870_f_(this, worldIn, pos);
+      return this.getBlock().isViewBlocking(this, worldIn, pos);
    }
 
    public BlockState updatePostPlacement(Direction face, BlockState queried, IWorld worldIn, BlockPos currentPos, BlockPos offsetPos) {
@@ -319,8 +319,8 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       return this.getBlock().isReplaceable(this, useContext);
    }
 
-   public boolean func_227032_a_(Fluid p_227032_1_) {
-      return this.getBlock().func_225541_a_(this, p_227032_1_);
+   public boolean isReplaceable(Fluid fluidIn) {
+      return this.getBlock().isReplaceable(this, fluidIn);
    }
 
    public boolean isValidPosition(IWorldReader worldIn, BlockPos pos) {
@@ -361,12 +361,12 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       this.getBlock().onProjectileCollision(worldIn, state, hit, projectile);
    }
 
-   public boolean func_224755_d(IBlockReader p_224755_1_, BlockPos p_224755_2_, Direction p_224755_3_) {
-      return this.cache != null ? this.cache.field_225493_i[p_224755_3_.ordinal()] : Block.hasSolidSide(this, p_224755_1_, p_224755_2_, p_224755_3_);
+   public boolean isSolidSide(IBlockReader blockReaderIn, BlockPos blockPosIn, Direction directionIn) {
+      return this.cache != null ? this.cache.solidSides[directionIn.ordinal()] : Block.hasSolidSide(this, blockReaderIn, blockPosIn, directionIn);
    }
 
-   public boolean func_224756_o(IBlockReader p_224756_1_, BlockPos p_224756_2_) {
-      return this.cache != null ? this.cache.field_225494_j : Block.isOpaque(this.getCollisionShape(p_224756_1_, p_224756_2_));
+   public boolean isCollisionShapeOpaque(IBlockReader blockReaderIn, BlockPos blockPosIn) {
+      return this.cache != null ? this.cache.opaqueCollisionShape : Block.isOpaque(this.getCollisionShape(blockReaderIn, blockPosIn));
    }
 
    public static <T> Dynamic<T> serialize(DynamicOps<T> opsIn, BlockState state) {
@@ -397,7 +397,7 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
          String s = entry.getKey();
          IProperty<?> iproperty = statecontainer.getProperty(s);
          if (iproperty != null) {
-            blockstate = IStateHolder.func_215671_a(blockstate, iproperty, s, dynamic.toString(), entry.getValue());
+            blockstate = IStateHolder.withString(blockstate, iproperty, s, dynamic.toString(), entry.getValue());
          }
       }
 
@@ -411,10 +411,10 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
       private final boolean propagatesSkylightDown;
       private final int opacity;
       private final VoxelShape[] renderShapes;
-      private final VoxelShape field_230026_g;
+      private final VoxelShape collisionShape;
       private final boolean isCollisionShapeLargerThanFullBlock;
-      private final boolean[] field_225493_i;
-      private final boolean field_225494_j;
+      private final boolean[] solidSides;
+      private final boolean opaqueCollisionShape;
 
       private Cache(BlockState stateIn) {
          Block block = stateIn.getBlock();
@@ -429,21 +429,21 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
             VoxelShape voxelshape = block.getRenderShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO);
 
             for(Direction direction : DIRECTIONS) {
-               this.renderShapes[direction.ordinal()] = VoxelShapes.func_216387_a(voxelshape, direction);
+               this.renderShapes[direction.ordinal()] = VoxelShapes.getFaceShape(voxelshape, direction);
             }
          }
 
-         this.field_230026_g = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
+         this.collisionShape = block.getCollisionShape(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, ISelectionContext.dummy());
          this.isCollisionShapeLargerThanFullBlock = Arrays.stream(Direction.Axis.values()).anyMatch((p_222491_1_) -> {
-            return this.field_230026_g.getStart(p_222491_1_) < 0.0D || this.field_230026_g.getEnd(p_222491_1_) > 1.0D;
+            return this.collisionShape.getStart(p_222491_1_) < 0.0D || this.collisionShape.getEnd(p_222491_1_) > 1.0D;
          });
-         this.field_225493_i = new boolean[6];
+         this.solidSides = new boolean[6];
 
          for(Direction direction1 : DIRECTIONS) {
-            this.field_225493_i[direction1.ordinal()] = Block.hasSolidSide(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, direction1);
+            this.solidSides[direction1.ordinal()] = Block.hasSolidSide(stateIn, EmptyBlockReader.INSTANCE, BlockPos.ZERO, direction1);
          }
 
-         this.field_225494_j = Block.isOpaque(stateIn.getCollisionShape(EmptyBlockReader.INSTANCE, BlockPos.ZERO));
+         this.opaqueCollisionShape = Block.isOpaque(stateIn.getCollisionShape(EmptyBlockReader.INSTANCE, BlockPos.ZERO));
       }
    }
 

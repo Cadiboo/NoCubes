@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlStateManager;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
@@ -9,7 +8,6 @@ import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +45,7 @@ public class Profiler1122 {
 	public synchronized static boolean isProfilingEnabled() {
 		return profilingEnabled;
 	}
+
 	/**
 	 * Clear profiling.
 	 */

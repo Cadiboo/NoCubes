@@ -87,17 +87,14 @@ public class BlockStateToast implements IToast {
 	 */
 	private static void drawBufferWithoutResetting(final BufferBuilder bufferBuilder) {
 		// Get the internal data from the BufferBuilder (This resets the BufferBuilder's own copy of this data)
-		final Pair<BufferBuilder.DrawState, ByteBuffer> pair = bufferBuilder.func_227832_f_();
+		final Pair<BufferBuilder.DrawState, ByteBuffer> pair = bufferBuilder.getAndResetData();
 		final ByteBuffer byteBuffer = pair.getSecond();
-
-		// func_227832_f_ = getAndResetData
-		// func_227840_c_ = getDrawMode
 
 		// Set the BufferBuilder's internal data to the original data (it was reset by getAndResetData)
 		bufferBuilder.putBulkData(byteBuffer);
 		// getAndResetData clears the list of DrawStates. We need to repopulate this list.
 		// finishDrawing repopulates the list. It throws an exception if the buffer hasn't been started so we start it.
-		bufferBuilder.begin(pair.getFirst().func_227840_c_(), bufferBuilder.getVertexFormat());
+		bufferBuilder.begin(pair.getFirst().getDrawMode(), bufferBuilder.getVertexFormat());
 		bufferBuilder.finishDrawing();
 
 		// Draw the BufferBuilder
@@ -107,7 +104,7 @@ public class BlockStateToast implements IToast {
 		bufferBuilder.putBulkData(byteBuffer);
 		// WorldVertexBufferUploader.draw clears the list of DrawStates. We need to repopulate this list.
 		// finishDrawing repopulates the list. It throws an exception if the buffer hasn't been started so we start it.
-		bufferBuilder.begin(pair.getFirst().func_227840_c_(), bufferBuilder.getVertexFormat());
+		bufferBuilder.begin(pair.getFirst().getDrawMode(), bufferBuilder.getVertexFormat());
 		bufferBuilder.finishDrawing();
 	}
 
@@ -123,19 +120,19 @@ public class BlockStateToast implements IToast {
 		final Random random = new Random();
 		final BlockRendererDispatcher blockRendererDispatcher = minecraft.getBlockRendererDispatcher();
 
-		for (final RenderType renderType : RenderType.func_228661_n_()) {
+		for (final RenderType renderType : RenderType.getBlockRenderTypes()) {
 			ForgeHooksClient.setRenderLayer(renderType);
 			if (RenderTypeLookup.canRenderInLayer(blockState, renderType)) {
 				BufferBuilder bufferBuilder = cache.getBuffer(renderType);
 				cache.startBuffer(renderType);
 				bufferBuilder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 
-				matrixStack.func_227860_a_();
-				if (blockRendererDispatcher.func_228793_a_(blockState, pos, world, matrixStack, bufferBuilder, false, random)) {
+				matrixStack.push();
+				if (blockRendererDispatcher.renderModel(blockState, pos, world, matrixStack, bufferBuilder, false, random)) {
 					cache.empty = false;
 					cache.useBuffer(renderType);
 				}
-				matrixStack.func_227865_b_();
+				matrixStack.pop();
 			}
 		}
 		ForgeHooksClient.setRenderLayer(null);
@@ -159,8 +156,7 @@ public class BlockStateToast implements IToast {
 			// Setup - Mostly copied from ItemRenderer.renderItemAndEffectIntoGUI
 			{
 				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-//				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmapDirect(false, false);
-				minecraft.getTextureManager().func_229267_b_(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmapDirect(false, false);
+				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).setBlurMipmapDirect(false, false);
 
 				RenderSystem.pushMatrix();
 				RenderSystem.translatef(0, 0, 100);
@@ -176,8 +172,7 @@ public class BlockStateToast implements IToast {
 					RenderSystem.scalef(20, 20, 20);
 				}
 				{
-//					RenderHelper.enableGUIStandardItemLighting();
-					RenderHelper.func_227780_a_();
+					RenderHelper.enableStandardItemLighting();
 				}
 				{
 					// TODO:
@@ -196,8 +191,7 @@ public class BlockStateToast implements IToast {
 				RenderSystem.popMatrix();
 
 				minecraft.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
-//				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
-				minecraft.getTextureManager().func_229267_b_(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+				minecraft.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
 			}
 		}
 
@@ -212,8 +206,8 @@ public class BlockStateToast implements IToast {
 		private final Set<RenderType> usedTypes = new ObjectArraySet<>();
 		private final Set<RenderType> startedTypes = new ObjectArraySet<>();
 		// Smallest default size because we're rendering one block and it won't render in most layers
-		private final Map<RenderType, BufferBuilder> builders = RenderType.func_228661_n_().stream()
-				.collect(Collectors.toMap(Function.identity(), (renderType) -> new BufferBuilder(DefaultVertexFormats.BLOCK.getSize())));
+		private final Map<RenderType, BufferBuilder> builders = RenderType.getBlockRenderTypes().stream()
+				.collect(Collectors.toMap(Function.identity(), $ -> new BufferBuilder(DefaultVertexFormats.BLOCK.getSize())));
 		public boolean empty = true;
 
 		public Set<RenderType> getUsedTypes() {

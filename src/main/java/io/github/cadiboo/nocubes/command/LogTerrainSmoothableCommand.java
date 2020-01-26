@@ -3,12 +3,13 @@ package io.github.cadiboo.nocubes.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.util.text.TranslationTextComponent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
@@ -21,6 +22,7 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
  */
 public class LogTerrainSmoothableCommand {
 
+	private static final Logger LOGGER = LogManager.getLogger();
 	private static long lastUseTime = 0;
 
 	/**
@@ -47,10 +49,10 @@ public class LogTerrainSmoothableCommand {
 			return 0;
 		}
 		lastUseTime = System.currentTimeMillis();
-		NoCubes.LOGGER.info("Terrain Smoothable White List:");
-		NoCubes.LOGGER.info(String.join(", ", ConfigHelper.blockStatesToStrings(NoCubesConfig.Server.terrainSmoothableWhitelist)));
-		NoCubes.LOGGER.info("Terrain Smoothable Black List:");
-		NoCubes.LOGGER.info(String.join(", ", ConfigHelper.blockStatesToStrings(NoCubesConfig.Server.terrainSmoothableBlacklist)));
+		LOGGER.info("Terrain Smoothable White List:");
+		LOGGER.info(String.join(", ", ConfigHelper.blockStatesToStrings(NoCubesConfig.Server.terrainSmoothableWhitelist)));
+		LOGGER.info("Terrain Smoothable Black List:");
+		LOGGER.info(String.join(", ", ConfigHelper.blockStatesToStrings(NoCubesConfig.Server.terrainSmoothableBlacklist)));
 		ctx.getSource().sendFeedback(new TranslationTextComponent("gui.done"), true);
 		return Command.SINGLE_SUCCESS;
 	}

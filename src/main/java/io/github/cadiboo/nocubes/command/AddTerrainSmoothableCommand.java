@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.command;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CSetTerrainSmoothable;
@@ -13,6 +12,8 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraftforge.fml.network.PacketDistributor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
@@ -22,6 +23,8 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
  * @author Cadiboo
  */
 public class AddTerrainSmoothableCommand {
+
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	/**
 	 * Syntax is "addTerrainSmoothable <BlockState>"
@@ -48,7 +51,7 @@ public class AddTerrainSmoothableCommand {
 	private static int addBlockState(final CommandContext<CommandSource> ctx) throws IllegalArgumentException {
 		final BlockState blockState = BlockStateArgument.getBlockState(ctx, "block").getState();
 		if (blockState == StateHolder.AIR_DEFAULT) {
-			NoCubes.LOGGER.error("Trying to add invalid terrain smoothable blockstate: " + blockState);
+			LOGGER.error("Trying to add invalid terrain smoothable blockstate: {}", blockState);
 			return 0;
 		}
 		final boolean newSmoothability = true;

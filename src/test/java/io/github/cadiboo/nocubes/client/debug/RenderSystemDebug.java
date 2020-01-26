@@ -13,8 +13,12 @@ import java.lang.reflect.Field;
 public final class RenderSystemDebug {
 
 	public static void printGlStateManager() throws IllegalAccessException {
+		printClassFields(GlStateManager.class, null, 15, 0);
+	}
+
+	private static void printClassFields(final Class<GlStateManager> clazz, final Object instance, final int maxIterations, final int currentIteration) throws IllegalAccessException {
 		final StringBuilder stringBuilder = new StringBuilder();
-		appendClassFields(stringBuilder, GlStateManager.class, null, 15, 0);
+		appendClassFields(stringBuilder, clazz, instance, maxIterations, currentIteration);
 		System.out.println(stringBuilder.toString());
 	}
 

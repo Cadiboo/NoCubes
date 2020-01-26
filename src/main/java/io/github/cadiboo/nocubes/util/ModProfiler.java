@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 /**
  * Profiler
+ *
  * @author Cadiboo
  */
 public final class ModProfiler extends Profiler1122 implements AutoCloseable {

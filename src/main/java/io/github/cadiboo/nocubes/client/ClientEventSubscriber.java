@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager.DestFactor;
 import com.mojang.blaze3d.platform.GlStateManager.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -131,9 +132,9 @@ public final class ClientEventSubscriber {
 			final BlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed)
-				setTerrainSmoothable(state, !state.nocubes_isTerrainSmoothable);
-			if (leavesPressed)
-				setLeavesSmoothable(state, !state.nocubes_isTerrainSmoothable);
+				setTerrainSmoothable(state, !IsSmoothable.TERRAIN_SMOOTHABLE.test(state));
+//			if (leavesPressed)
+//				setLeavesSmoothable(state, !IsSmoothable.LEAVES_SMOOTHABLE.test(state));
 		}
 
 		if (toggleProfilers.isPressed())
@@ -198,7 +199,7 @@ public final class ClientEventSubscriber {
 				RenderSystem.matrixMode(GL11.GL_PROJECTION);
 				RenderSystem.enableColorMaterial();
 				RenderSystem.loadIdentity();
-				final MainWindow mainWindow = mc.func_228018_at_();
+				final MainWindow mainWindow = mc.getMainWindow();
 				final int framebufferWidth = mainWindow.getFramebufferWidth();
 				final int framebufferHeight = mainWindow.getFramebufferHeight();
 				RenderSystem.ortho(0.0D, framebufferWidth, framebufferHeight, 0.0D, 1000.0D, 3000.0D);
@@ -331,7 +332,7 @@ public final class ClientEventSubscriber {
 
 		RenderSystem.enableBlend();
 		RenderSystem.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
-		final MainWindow mainWindow = minecraft.func_228018_at_();
+		final MainWindow mainWindow = minecraft.getMainWindow();
 		RenderSystem.lineWidth(Math.max(2.5F, (float) mainWindow.getFramebufferWidth() / 1920.0F * 2.5F));
 		RenderSystem.disableTexture();
 		RenderSystem.depthMask(false);
@@ -342,11 +343,12 @@ public final class ClientEventSubscriber {
 		double d0 = projectedView.getX();
 		double d1 = projectedView.getY();
 		double d2 = projectedView.getZ();
+		final MatrixStack matrixStack = event.getMatrixStack();
 
 		// FIXME TEMP
 		{
-			Matrix4f matrix4f = event.getMatrixStack().func_227866_c_().func_227870_a_();
-			final IVertexBuilder bufferBuilder = minecraft.func_228019_au_().func_228487_b_().getBuffer(RenderType.func_228659_m_());
+			Matrix4f matrix4f = matrixStack.getLast().getPositionMatrix();
+			final IVertexBuilder bufferBuilder = minecraft.getRenderTypeBuffers().getBufferSource().getBuffer(RenderType.lines());
 			final BlockPos playerPos = new BlockPos(player);
 			if (cache == null || !Objects.equals(lastPos, playerPos)) {
 				lastPos = playerPos;
@@ -359,17 +361,17 @@ public final class ClientEventSubscriber {
 				cache = shape.simplify();
 			}
 			RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-//	        WorldRenderer.func_228445_b_(event.getMatrixStack(), bufferBuilder, shape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
+//	        WorldRenderer.drawShape(matrixStack, bufferBuilder, cache, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
 			drawShape(matrix4f, bufferBuilder, cache, 0.0F, 1.0F, 1.0F, 1.0F, -d0, -d1, -d2);
 		}
 
 		// Draw nearby collisions
 //		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(3)).collect(Collectors.toList())) {
-//			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 0, 1, 1, 0.4F);
+//			WorldRenderer.drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
 //		}
 		// Draw player intersecting collisions
 //		for (final VoxelShape voxelShape : world.getCollisionShapes(player, new AxisAlignedBB(player.getPosition())).collect(Collectors.toList())) {
-//			WorldRenderer.drawShape(voxelShape, -d0, -d1, -d2, 1, 0, 0, 0.4F);
+//			WorldRenderer.drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
 //		}
 		RenderSystem.popMatrix();
 		RenderSystem.matrixMode(GL11.GL_MODELVIEW);
@@ -380,8 +382,8 @@ public final class ClientEventSubscriber {
 
 	private static void drawShape(final Matrix4f matrix4f, final IVertexBuilder bufferBuilder, final VoxelShape shape, final float red, final float green, final float blue, final float alpha, final double x, final double y, final double z) {
 		shape.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
-			bufferBuilder.func_227888_a_(matrix4f, (float) (x0 + x), (float) (y0 + y), (float) (z0 + z)).func_227885_a_(red, green, blue, alpha).endVertex();
-			bufferBuilder.func_227888_a_(matrix4f, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z)).func_227885_a_(red, green, blue, alpha).endVertex();
+			bufferBuilder.pos(matrix4f, (float) (x0 + x), (float) (y0 + y), (float) (z0 + z)).color(red, green, blue, alpha).endVertex();
+			bufferBuilder.pos(matrix4f, (float) (x1 + x), (float) (y1 + y), (float) (z1 + z)).color(red, green, blue, alpha).endVertex();
 		});
 	}
 

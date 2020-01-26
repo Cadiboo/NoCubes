@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.network;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.Block;
@@ -10,6 +9,8 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.function.Supplier;
 
@@ -29,6 +30,7 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
  */
 public final class C2SRequestSetTerrainSmoothable {
 
+	private static final Logger LOGGER = LogManager.getLogger();
 	private final int blockStateId;
 	private final boolean newSmoothability;
 
@@ -66,7 +68,7 @@ public final class C2SRequestSetTerrainSmoothable {
 				final int blockStateId = msg.blockStateId;
 				final BlockState blockState = Block.getStateById(blockStateId);
 				if (blockState == StateHolder.AIR_DEFAULT) {
-					NoCubes.LOGGER.error("Trying to " + type + " invalid terrain smoothable blockstate: " + blockState);
+					LOGGER.error("Trying to {} invalid terrain smoothable blockstate: {}", type, blockState);
 					return;
 				}
 				ConfigHelper.setTerrainSmoothable(blockState, newSmoothability);

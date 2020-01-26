@@ -15,7 +15,7 @@ import static io.github.cadiboo.nocubes.util.ModUtil.COMMAND_PERMISSION_LEVEL;
 
 /**
  * Message from Client to Server to request setting the TerrainMeshGenerator to a new value.
- *
+ * <p>
  * Validates that the sender has the permission to perform this action and if they do
  * sets the TerrainMeshGenerator to the new value and notifies all clients (including the
  * one that sent this packet) of the new value.

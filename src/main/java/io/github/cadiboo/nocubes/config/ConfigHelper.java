@@ -31,8 +31,8 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.network.ConnectionType;
 import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,7 +47,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static net.minecraft.block.Blocks.ACACIA_LEAVES;
 import static net.minecraft.block.Blocks.ANDESITE;
 import static net.minecraft.block.Blocks.BEDROCK;
@@ -101,7 +100,7 @@ import static net.minecraft.block.Blocks.YELLOW_TERRACOTTA;
  */
 public final class ConfigHelper {
 
-	private static final Marker CONFIG_MARKER = MarkerManager.getMarker("config");
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public static void discoverDefaultTerrainSmoothable() {
 		// TODO: Get from world generators & ore generators
@@ -113,18 +112,20 @@ public final class ConfigHelper {
 
 	// Only call from logical Server.
 	public static void setTerrainSmoothable(final BlockState state, final boolean newSmoothability) {
-		final String type = newSmoothability ? "Adding" : "Removing";
-		LOGGER.debug(CONFIG_MARKER, type + " terrain smoothable: " + state);
+		LOGGER.debug("{} terrain smoothable: {}", getNewSmoothabilityString(newSmoothability), state);
 		state.nocubes_isTerrainSmoothable = newSmoothability;
 		final NoCubesConfig.Server.ConfigImpl cfg = NoCubesConfig.Server.INSTANCE;
 		setBlockState(state, newSmoothability, NoCubesConfig.Server.terrainSmoothableWhitelist, NoCubesConfig.Server.terrainSmoothableBlacklist, cfg.terrainSmoothableWhitelist.get(), cfg.terrainSmoothableBlacklist.get());
 		saveAndLoad(ModConfig.Type.SERVER);
 	}
 
+	private static String getNewSmoothabilityString(final boolean newSmoothability) {
+		return newSmoothability ? "Adding" : "Removing";
+	}
+
 	// Only call from logical Client.
 	public static void setTerrainSmoothablePreference(final BlockState state, final boolean newSmoothability) {
-		final String type = newSmoothability ? "Adding" : "Removing";
-		LOGGER.debug(CONFIG_MARKER, type + " terrain smoothable preference: " + state);
+		LOGGER.debug("{} terrain smoothable preference: {}", getNewSmoothabilityString(newSmoothability), state);
 		state.nocubes_isTerrainSmoothable = newSmoothability;
 		final NoCubesConfig.Client.ConfigImpl cfg = NoCubesConfig.Client.INSTANCE;
 		setBlockState(state, newSmoothability, NoCubesConfig.Client.terrainSmoothableWhitelistPreference, NoCubesConfig.Client.terrainSmoothableBlacklistPreference, cfg.terrainSmoothableWhitelistPreference.get(), cfg.terrainSmoothableBlacklistPreference.get());
@@ -155,7 +156,7 @@ public final class ConfigHelper {
 		try {
 			return new BlockStateArgument().parse(new StringReader(stateString)).getState();
 		} catch (final CommandSyntaxException e) {
-			LOGGER.warn(CONFIG_MARKER, "Failed to parse blockstate \"{}\": {}", stateString, e.getMessage());
+			LOGGER.warn("Failed to parse blockstate \"{}\": {}", stateString, e.getMessage());
 			return null;
 		}
 	}
@@ -382,9 +383,9 @@ public final class ConfigHelper {
 
 	private static void fireReloadEvent(final ModConfig modConfig) {
 		final ModContainer modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
-		final ModConfig.ConfigReloading event;
+		final ModConfig.Reloading event;
 		try {
-			event = ObfuscationReflectionHelper.findConstructor(ModConfig.ConfigReloading.class, ModConfig.class).newInstance(modConfig);
+			event = ObfuscationReflectionHelper.findConstructor(ModConfig.Reloading.class, ModConfig.class).newInstance(modConfig);
 		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
 			throw new RuntimeException(e);
 		}

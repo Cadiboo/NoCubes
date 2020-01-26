@@ -23,7 +23,7 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	public NoCubes() {
 		preloadModifiedClasses();
@@ -45,14 +45,15 @@ public final class NoCubes {
 
 	private void preloadClass(final String qualifiedName, final String simpleName) {
 		try {
-			LOGGER.info("Loading class \"" + simpleName + "\"...");
+			LOGGER.info("Loading class \"{}\"...", simpleName);
 			final ClassLoader classLoader = this.getClass().getClassLoader();
 			final long startTime = System.nanoTime();
 			Class.forName(qualifiedName, false, classLoader);
-			LOGGER.info("Loaded class \"" + simpleName + "\" in " + (System.nanoTime() - startTime) + " nano seconds");
-			LOGGER.info("Initialising class \"" + simpleName + "\"...");
+			final long timeElapsed = System.nanoTime() - startTime;
+			LOGGER.info("Loaded class \"{}\" in {} nano seconds", simpleName, timeElapsed);
+			LOGGER.info("Initialising class \"{}\"...", simpleName);
 			Class.forName(qualifiedName, true, classLoader);
-			LOGGER.info("Initialised \"" + simpleName + "\"");
+			LOGGER.info("Initialised \"{}\"", simpleName);
 		} catch (final ClassNotFoundException e) {
 			final CrashReport crashReport = CrashReport.makeCrashReport(e, "Failed to load class \"" + simpleName + "\". This should not be possible!");
 			crashReport.makeCategory("Loading class");

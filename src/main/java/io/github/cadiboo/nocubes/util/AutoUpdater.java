@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.commons.lang3.StringUtils;
@@ -18,8 +19,7 @@ import java.nio.file.Path;
  *
  * @author Cadiboo
  */
-@Deprecated
-public final class BadAutoUpdater {
+public final class AutoUpdater {
 
 	public static boolean update(final ModContainer modContainer, final String updateVersion, final String githubUsername) throws IOException, URISyntaxException {
 		if (ModUtil.isDeveloperWorkspace())
@@ -42,6 +42,36 @@ public final class BadAutoUpdater {
 
 		Files.delete(currentJar.toPath());
 		return true;
+	}
+
+	public static Thread makeUpdateDaemon(final ModContainer modContainer, final String githubUsername) {
+		return new Thread(() -> {
+			while (true) {
+				final VersionChecker.CheckResult checkResult = VersionChecker.getResult(modContainer.getModInfo());
+				switch (checkResult.status) {
+					default:
+					case PENDING:
+						try {
+							Thread.sleep(500L);
+						} catch (InterruptedException ignored) {
+							Thread.currentThread().interrupt();
+						}
+						break;
+					case OUTDATED:
+						try {
+							AutoUpdater.update(modContainer, checkResult.target.toString(), githubUsername);
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+					case FAILED:
+					case UP_TO_DATE:
+					case AHEAD:
+					case BETA:
+					case BETA_OUTDATED:
+						return;
+				}
+			}
+		}, modContainer.getModInfo().getDisplayName() + " Update Daemon");
 	}
 
 }
