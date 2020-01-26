@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
 import com.google.common.annotations.Beta;
-import com.google.common.collect.ImmutableSet;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.api.NoCubesAPI;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
@@ -13,6 +12,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +26,7 @@ import java.util.Set;
 public class NoCubesAPIImpl implements NoCubesAPI {
 
 	private static final Set<BlockState> ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES = new HashSet<>();
+	private static final Set<BlockState> ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES_VIEW = Collections.unmodifiableSet(ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES);
 	private static boolean canAddMeshGenerators = true;
 	private static boolean canAddBlocks = true;
 
@@ -71,55 +72,35 @@ public class NoCubesAPIImpl implements NoCubesAPI {
 			throw new IllegalStateException("Too late to add MeshGenerator!");
 	}
 
-	/**
-	 * @return If it is still possible to add a BlockState to NoCubes' smoothable list.
-	 */
 	@Override
 	public boolean canAddBlockState() {
 		return canAddBlocks;
 	}
 
-	/**
-	 * Validates and copies the list of addedTerrainSmoothableBlockStates.
-	 *
-	 * @return An immutable copy of the addedTerrainSmoothableBlockStates
-	 */
 	@Override
 	public Set<BlockState> getAddedTerrainSmoothableBlockStates() {
 		ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.removeIf(NoCubesAPIImpl::isInvalidBlockState);
-		return ImmutableSet.<BlockState>builder().addAll(ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES).build();
+		return ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES_VIEW;
 	}
 
-	/**
-	 * Registers a {@link BlockState} as being terrain smoothable.
-	 */
 	@Override
 	public void addTerrainSmoothableBlockState(final BlockState state) {
 		ensureCanAddBlockState();
 		ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.add(state);
 	}
 
-	/**
-	 * Registers multiple {@link BlockState}s as being terrain smoothable.
-	 */
 	@Override
 	public void addTerrainSmoothableBlockStates(final BlockState... states) {
 		ensureCanAddBlockState();
 		ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.addAll(Arrays.asList(states));
 	}
 
-	/**
-	 * Registers all the states for a {@link Block} as being terrain smoothable.
-	 */
 	@Override
 	public void addTerrainSmoothableBlock(final Block block) {
 		ensureCanAddBlockState();
 		ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.addAll(block.getStateContainer().getValidStates());
 	}
 
-	/**
-	 * Registers all the states for multiple {@link Block}s as being terrain smoothable.
-	 */
 	@Override
 	public void addTerrainSmoothableBlocks(final Block... blocks) {
 		ensureCanAddBlockState();
@@ -127,21 +108,11 @@ public class NoCubesAPIImpl implements NoCubesAPI {
 			ADDED_TERRAIN_SMOOTHABLE_BLOCK_STATES.addAll(block.getStateContainer().getValidStates());
 	}
 
-	/**
-	 * @return If it is still possible to add a MeshGenerator to NoCubes.
-	 */
 	@Override
 	public boolean canAddMeshGenerator() {
 		return canAddMeshGenerators;
 	}
 
-	/**
-	 * Adds a MeshGenerator to NoCubes. Must be called before the config is loaded.
-	 *
-	 * @param registryName  The registry name of the MeshGenerator to add. Should contain your ModId as the namespace
-	 * @param name          The human readable name of the MeshGenerator to add
-	 * @param meshGenerator the MeshGenerator to add
-	 */
 	@Override
 	public void addMeshGenerator(final ResourceLocation registryName, final String name, final MeshGenerator meshGenerator) {
 		ensureCanAddMeshGenerator();

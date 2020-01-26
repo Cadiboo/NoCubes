@@ -25,7 +25,7 @@ public interface NoCubesAPI {
 	boolean canAddBlockState();
 
 	/**
-	 * Validates and copies the list of addedTerrainSmoothableBlockStates.
+	 * Validates the list of addedTerrainSmoothableBlockStates and returns an immutable view of it.
 	 *
 	 * @return An immutable copy of the addedTerrainSmoothableBlockStates
 	 */
