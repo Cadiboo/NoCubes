@@ -4,6 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.datafixers.util.Pair;
+import io.github.cadiboo.nocubes.NoCubes;
 import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -51,8 +52,8 @@ public class BlockStateToast implements IToast {
 	@SuppressWarnings("deprecation")
 	private static final TransformationMatrix ITEM_CAMERA_TRANSFORMATION_MATRIX = TransformationHelper.toTransformation(
 			new ItemTransformVec3f(
-					// From the item/generated.json
-					new Vector3f(-30, 225, 0),
+					// From block/block.json (gui display)
+					new Vector3f(30, 225, 0),
 					new Vector3f(0, 0, 0),
 					new Vector3f(0.625F, 0.625F, 0.625F)
 			)
@@ -61,10 +62,6 @@ public class BlockStateToast implements IToast {
 	private final SingleBlockBufferCache cache = new SingleBlockBufferCache();
 	private final String message;
 	private final String blockName;
-
-	public BlockStateToast(final BlockState state, final BlockPos pos, final boolean smoothability, final String translationKeySuffix) {
-		this(state, pos, (smoothability ? "added" : "removed") + translationKeySuffix);
-	}
 
 	public BlockStateToast(final BlockState state, final BlockPos pos, final String translationKey) {
 		this.message = I18n.format(translationKey);
@@ -158,18 +155,16 @@ public class BlockStateToast implements IToast {
 				RenderSystem.enableBlend();
 				RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
 				RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-				{
-//					RenderSystem.translatef(7, 21, 0);
-//					RenderSystem.scalef(-1.0F, -1.0F, 1.0F);
-//					RenderSystem.scalef(20, 20, 20);
-//					RenderSystem.rotatef(180, 0, 1, 0);
-				}
-				{
-					RenderHelper.enableStandardItemLighting();
-				}
+				//TODO: FIXME
+//				RenderSystem.translatef((float)x, (float)y, 100.0F + this.zLevel);
+				RenderSystem.translatef(8.0F, 8.0F, 0.0F);
+				RenderSystem.scalef(1.0F, -1.0F, 1.0F);
+				RenderSystem.scalef(16.0F, 16.0F, 16.0F);
+				RenderHelper.enableStandardItemLighting();
 				{
 //					ForgeHooksClient.multiplyCurrentGlMatrix(ITEM_CAMERA_TRANSFORMATION_MATRIX);
 					RenderSystem.multMatrix(ITEM_CAMERA_TRANSFORMATION_MATRIX.getMatrix());
+//					matrixStack.getLast().getPositionMatrix().multiply(ITEM_CAMERA_TRANSFORMATION_MATRIX.getMatrix());
 				}
 			}
 
@@ -188,7 +183,7 @@ public class BlockStateToast implements IToast {
 			}
 		}
 
-		return delta >= 100_000L ? Visibility.HIDE : Visibility.SHOW;
+		return delta >= 10_000L ? Visibility.HIDE : Visibility.SHOW;
 	}
 
 	/**
@@ -227,24 +222,26 @@ public class BlockStateToast implements IToast {
 
 	public static class Terrain extends BlockStateToast {
 
+		private static final String ADDED = NoCubes.MOD_ID + "." + "addedTerrainSmoothableBlockState";
+		private static final String REMOVED = NoCubes.MOD_ID + "." + "removedTerrainSmoothableBlockState";
+
 		public Terrain(final BlockState state, final boolean smoothability) {
 			this(state, BlockPos.ZERO, smoothability);
 		}
 
 		public Terrain(final BlockState state, final BlockPos pos, final boolean smoothability) {
-			super(state, pos, smoothability, "TerrainSmoothableBlockState");
+			super(state, pos, (smoothability ? ADDED : REMOVED));
 		}
 
 	}
 
 	public static class Leaves extends BlockStateToast {
 
-		public Leaves(final BlockState state, final boolean smoothability) {
-			this(state, BlockPos.ZERO, smoothability);
-		}
+		private static final String ADDED = NoCubes.MOD_ID + "." + "addedLeavesSmoothableBlockState";
+		private static final String REMOVED = NoCubes.MOD_ID + "." + "removedLeavesSmoothableBlockState";
 
 		public Leaves(final BlockState state, final BlockPos pos, final boolean smoothability) {
-			super(state, pos, smoothability, "LeavesSmoothableBlockState");
+			super(state, pos, (smoothability ? ADDED : REMOVED));
 		}
 
 	}

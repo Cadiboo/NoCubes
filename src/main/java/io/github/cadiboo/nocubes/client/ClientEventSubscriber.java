@@ -5,6 +5,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainCollisions;
@@ -16,7 +17,6 @@ import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.Matrix4f;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.profiler.IProfiler;
@@ -88,8 +89,10 @@ public final class ClientEventSubscriber {
 	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", GLFW_KEY_C, CATEGORY);
 
 	//	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
+	// TODO: TEMP
 	private static VoxelShape cache = null;
 	private static BlockPos lastPos = null;
+
 	static {
 		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
 //		ClientRegistry.registerKeyBinding(toggleRenderSmoothLeaves);
@@ -403,7 +406,7 @@ public final class ClientEventSubscriber {
 
 		final BlockPos pos = blockRayTraceResult.getPos();
 		final BlockState blockState = world.getBlockState(pos);
-		if (blockState.getMaterial() == Material.AIR || !world.getWorldBorder().contains(pos))
+		if (blockState.isAir(world, pos) || !world.getWorldBorder().contains(pos))
 			return;
 
 		List<FaceList> list = new ArrayList<>();
@@ -422,7 +425,16 @@ public final class ClientEventSubscriber {
 		double d1 = projectedView.getY();
 		double d2 = projectedView.getZ();
 //		final MatrixStack matrixStack = event.getMatrixStack();
+		// FIXME: TEMP (Copied from GameRenderer#renderWorld)
 		final MatrixStack matrixStack = new MatrixStack();
+		{
+			net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(minecraft.gameRenderer, activeRenderInfo, event.getPartialTicks());
+			activeRenderInfo.setAnglesInternal(cameraSetup.getYaw(), cameraSetup.getPitch());
+			matrixStack.rotate(Vector3f.ZP.rotationDegrees(cameraSetup.getRoll()));
+
+			matrixStack.rotate(Vector3f.XP.rotationDegrees(activeRenderInfo.getPitch()));
+			matrixStack.rotate(Vector3f.YP.rotationDegrees(activeRenderInfo.getYaw() + 180.0F));
+		}
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.getRenderTypeBuffers().getBufferSource();
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
@@ -442,11 +454,25 @@ public final class ClientEventSubscriber {
 							Vec3 v3 = face.getVertex3()
 					) {
 						anythingRendered = true;
+
+						v0.addOffset(-d0, -d1, -d2);
+						v1.addOffset(-d0, -d1, -d2);
+						v2.addOffset(-d0, -d1, -d2);
+						v3.addOffset(-d0, -d1, -d2);
+
 						Matrix4f matrix4f = matrixStack.getLast().getPositionMatrix();
-						bufferBuilder.pos(matrix4f, (float) (v0.x + d0), (float) (v0.y + d1), (float) (v0.z + d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v1.x + d0), (float) (v1.y + d1), (float) (v1.z + d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v2.x + d0), (float) (v2.y + d1), (float) (v2.z + d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v3.x + d0), (float) (v3.y + d1), (float) (v3.z + d2)).color(red, green, blue, alpha).endVertex();
+
+						bufferBuilder.pos(matrix4f, (float) v0.x, (float) v0.y, (float) v0.z).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) v1.x, (float) v1.y, (float) v1.z).color(red, green, blue, alpha).endVertex();
+
+						bufferBuilder.pos(matrix4f, (float) v1.x, (float) v1.y, (float) v1.z).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) v2.x, (float) v2.y, (float) v2.z).color(red, green, blue, alpha).endVertex();
+
+						bufferBuilder.pos(matrix4f, (float) v2.x, (float) v2.y, (float) v2.z).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) v3.x, (float) v3.y, (float) v3.z).color(red, green, blue, alpha).endVertex();
+
+						bufferBuilder.pos(matrix4f, (float) v0.x, (float) v0.y, (float) v0.z).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) v3.x, (float) v3.y, (float) v3.z).color(red, green, blue, alpha).endVertex();
 					}
 				}
 			}
