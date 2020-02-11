@@ -15,21 +15,15 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.MyceliumBlock;
 import net.minecraft.block.RedstoneOreBlock;
 import net.minecraft.block.SnowyDirtBlock;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.state.StateContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Util;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.network.ConnectionType;
-import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -400,17 +394,6 @@ public final class ConfigHelper {
 				.forEach(stateStream -> stateStream.forEach(state -> {
 					state.nocubes_isTerrainSmoothable = NoCubesConfig.Server.terrainSmoothableWhitelist.contains(state) && !NoCubesConfig.Server.terrainSmoothableBlacklist.contains(state);
 				}));
-	}
-
-	/**
-	 * Disables collisions if we are connected to a vanilla server.
-	 */
-	public static void performServerConnectionStatusValidation() {
-		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
-			final ClientPlayNetHandler connection = Minecraft.getInstance().getConnection();
-			if (connection == null || NetworkHooks.getConnectionType(connection::getNetworkManager) != ConnectionType.MODDED)
-				NoCubesConfig.Server.terrainCollisions = false;
-		});
 	}
 
 	public static void addApiAddedBlockStates() {

@@ -1,5 +1,19 @@
 package io.github.cadiboo.nocubes.hooks;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.chunk.ChunkRenderCache;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
 /**
  * @author Cadiboo
  */
@@ -43,15 +57,31 @@ public final class Hooks {
 //		return ModUtil.getFluidState(world, pos);
 //	}
 
-//	/**
-//	 * Called from: IWorldReader#getCollisionShapes(Entity, AxisAlignedBB) after the ISelectionContext is generated
-//	 * Calls: CollisionHandler.getCollisionShapes to handle mesh, repose and vanilla collisions
-//	 *
-//	 * @return The collisions for the entity
-//	 */
-//	public static Stream<VoxelShape> getCollisionShapes(final IWorldReader _this, final Entity p_217352_1_, final AxisAlignedBB p_217352_2_, final int i, final int j, final int k, final int l, final int i1, final int j1, final ISelectionContext iselectioncontext) {
-//		return CollisionHandler.getCollisionShapes(_this, p_217352_1_, p_217352_2_, i, j, k, l, i1, j1, iselectioncontext);
-//	}
+	/**
+	 * Called from: BlockState#getCollisionShape(IBlockReader, BlockPos, ISelectionContext) before any other logic
+	 * Calls: CollisionHandler.getCollisionShape to handle mesh collisions
+	 *
+	 * @return The collision shape for the BlockState or null if vanilla should handle it
+	 */
+	public static VoxelShape getCollisionShape(final BlockState _this, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+		if (NoCubesConfig.Server.terrainCollisions && IsSmoothable.TERRAIN_SMOOTHABLE.test(_this))
+			return CollisionHandler.getCollisionShape(_this, worldIn, pos);
+		else
+			return null;
+	}
+
+	/**
+	 * Called from: BlockState#getCollisionShape(IBlockReader, BlockPos) before any other logic
+	 * Calls: CollisionHandler.getCollisionShape to handle mesh collisions
+	 *
+	 * @return The collision shape for the BlockState or null if vanilla should handle it
+	 */
+	public static VoxelShape getCollisionShape(final BlockState _this, IBlockReader worldIn, BlockPos pos) {
+		if (NoCubesConfig.Server.terrainCollisions && IsSmoothable.TERRAIN_SMOOTHABLE.test(_this))
+			return CollisionHandler.getCollisionShape(_this, worldIn, pos);
+		else
+			return null;
+	}
 
 //	/**
 //	 * Called from: ChunkRender#rebuildChunk right before BlockState#getRenderType is called
@@ -88,14 +118,14 @@ public final class Hooks {
 //		return false;
 //	}
 
-//	/**
-//	 * Called from: ChunkRenderCache#<init> right after ChunkRenderCache#cacheStartPos is set
-//	 * Calls: ClientUtil.setupChunkRenderCache to set up the cache in an optimised way
-//	 */
-//	@OnlyIn(Dist.CLIENT)
-//	public static void initChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
-//		ClientUtil.setupChunkRenderCache(_this, chunkStartX, chunkStartZ, chunks, start, end);
-//	}
+	/**
+	 * Called from: ChunkRenderCache#<init> right after ChunkRenderCache#cacheStartPos is set
+	 * Calls: ClientUtil.setupChunkRenderCache to set up the cache in an optimised way
+	 */
+	@OnlyIn(Dist.CLIENT)
+	public static void initChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
+		ClientUtil.setupChunkRenderCache(_this, chunkStartX, chunkStartZ, chunks, start, end);
+	}
 
 //	/**
 //	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender)
@@ -121,14 +151,6 @@ public final class Hooks {
 //				}
 //			}
 //		}
-//	}
-
-//	/**
-//	 * Called from: VoxelShapes.getAllowedOffset(AxisAlignedBB, IWorldReader, double, ISelectionContext, AxisRotation, Stream) before the MutableBlockPos is created
-//	 * Calls: VoxelShapesHandler.getAllowedOffset to handle mesh, repose and vanilla collisions offsets
-//	 */
-//	public static double getAllowedOffset(final AxisAlignedBB collisionBox, final IWorldReader worldReader, final double desiredOffset, final ISelectionContext selectionContext, final AxisRotation rotationAxis, final Stream<VoxelShape> possibleHits, final AxisRotation reversedRotation, final Direction.Axis rotX, final Direction.Axis rotY, final Direction.Axis rotZ) {
-//		return VoxelShapesHandler.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, reversedRotation, rotX, rotY, rotZ);
 //	}
 
 }

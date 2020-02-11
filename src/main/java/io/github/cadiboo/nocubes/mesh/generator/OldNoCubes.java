@@ -10,6 +10,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import org.apache.logging.log4j.util.PerformanceSensitive;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -156,7 +157,7 @@ public final class OldNoCubes implements MeshGenerator {
 			if (isBlockAirOrPlant(world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1))))
 				intersects = true;
 		}
-		return (intersects) && (notOnly);
+		return intersects && notOnly;
 	}
 
 	public boolean doesPointIntersectWithManufactured(@Nonnull final IBlockReader world, @Nonnull final Vec3 point, @Nonnull final IsSmoothable isSmoothable, @Nonnull final BlockPos.PooledMutable pooledMutableBlockPos) {

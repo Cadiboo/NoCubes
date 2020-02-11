@@ -160,7 +160,6 @@ public final class NoCubesConfig {
 			terrainSmoothableBlacklist = ConfigHelper.stringsToBlockStates(INSTANCE.terrainSmoothableBlacklist.get());
 			ConfigHelper.addApiAddedBlockStates();
 			ConfigHelper.refreshTerrainSmoothableBlockStateFields();
-			ConfigHelper.performServerConnectionStatusValidation();
 		}
 
 		static class ConfigImpl {

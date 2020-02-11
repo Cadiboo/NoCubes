@@ -1,11 +1,9 @@
 package io.github.cadiboo.nocubes.client;
 
-import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.api.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainCollisions;
@@ -17,11 +15,13 @@ import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
@@ -31,8 +31,8 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.Entity;
 import net.minecraft.profiler.IProfiler;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.MathHelper;
@@ -42,20 +42,25 @@ import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.BiomeColors;
+import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.client.event.DrawHighlightEvent;
-import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.TickEvent.ClientTickEvent;
 import net.minecraftforge.event.TickEvent.RenderTickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.network.ConnectionType;
+import net.minecraftforge.fml.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
 import org.lwjgl.opengl.GL11;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -364,12 +369,13 @@ public final class ClientEventSubscriber {
 
 		// FIXME TEMP
 		drawShape(matrixStack, bufferBuilder, cache, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 1.0F);
+		Entity entity = minecraft.gameRenderer.getActiveRenderInfo().getRenderViewEntity();
 		// Draw nearby collisions
-		world.getEmptyCollisionShapes(player, new AxisAlignedBB(player.getPosition()).grow(3), ImmutableSet.of()).forEach(voxelShape -> {
+		entity.world.func_226667_c_(entity, entity.getBoundingBox().grow(5.0D), Collections.emptySet()).forEach(voxelShape -> {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
 		});
 		// Draw player intersecting collisions
-		world.getEmptyCollisionShapes(player, new AxisAlignedBB(player.getPosition()), ImmutableSet.of()).forEach(voxelShape -> {
+		entity.world.func_226667_c_(entity, entity.getBoundingBox(), Collections.emptySet()).forEach(voxelShape -> {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
 		});
 
@@ -481,12 +487,29 @@ public final class ClientEventSubscriber {
 		event.setCanceled(anythingRendered);
 	}
 
+	/**
+	 * Disables collisions if we are connected to a vanilla server.
+	 * <p>
+	 * Unfortunately there isn't an event that fires exactly when we want
+	 * (ClientPlayerNetworkEvent.LoggedInEvent fires 1 line too late) so
+	 * we use the AttachCapabilitiesEvent event. Due to this our code will be
+	 * not only each time we join but also each time we die and respawn.
+	 */
 	@SubscribeEvent
-	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
-		// TODO: Do this better (Do the same thing as StolenReposeCode.getDensity)
-//		if (NoCubesConfig.Server.terrainCollisions) {
-//			event.setCanceled(true);
-//		}
+	public static void onEntityConstructing(final AttachCapabilitiesEvent<Entity> event) {
+		if (!(event.getObject() instanceof ClientPlayerEntity))
+			return;
+		final ClientPlayNetHandler connection = Minecraft.getInstance().getConnection();
+		if (connection == null || NetworkHooks.getConnectionType(connection::getNetworkManager) != ConnectionType.MODDED)
+			NoCubesConfig.Server.terrainCollisions = false;
 	}
+
+@SubscribeEvent
+public static void onBlockColorHandlerEvent(final ColorHandlerEvent.Block event) {
+	event.getBlockColors().register(
+			(blockState, iLightReader, blockPos, i) -> iLightReader == null || blockPos == null ? -1 : BiomeColors.getWaterColor(iLightReader, blockPos),
+			Blocks.ACACIA_LOG
+	);
+}
 
 }

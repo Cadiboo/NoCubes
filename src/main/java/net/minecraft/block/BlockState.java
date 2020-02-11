@@ -204,10 +204,16 @@ public class BlockState extends StateHolder<Block, BlockState> implements IState
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos) {
+      final VoxelShape hooked = io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShape(this, worldIn, pos);
+      if (hooked != null)
+         return hooked;
       return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
    }
 
    public VoxelShape getCollisionShape(IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+      final VoxelShape hooked = io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShape(this, worldIn, pos, context);
+      if (hooked != null)
+         return hooked;
       return this.getBlock().getCollisionShape(this, worldIn, pos, context);
    }
 

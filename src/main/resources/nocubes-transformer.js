@@ -33,6 +33,7 @@ function initializeCoreMod() {
 	FLOAD = Opcodes.FLOAD;
 	DLOAD = Opcodes.DLOAD;
 
+	ASTORE = Opcodes.ASTORE;
 	ISTORE = Opcodes.ISTORE;
 
 	RETURN = Opcodes.RETURN;
@@ -48,6 +49,7 @@ function initializeCoreMod() {
 	IFEQ = Opcodes.IFEQ;
 	IFNE = Opcodes.IFNE;
 	IF_ACMPEQ = Opcodes.IF_ACMPEQ;
+	IFNULL = Opcodes.IFNULL;
 
 	GETFIELD = Opcodes.GETFIELD;
 	GETSTATIC = Opcodes.GETSTATIC;
@@ -56,21 +58,22 @@ function initializeCoreMod() {
 
 	LABEL = AbstractInsnNode.LABEL;
 	METHOD_INSN = AbstractInsnNode.METHOD_INSN;
+	VAR_INSN = AbstractInsnNode.VAR_INSN;
 
 	isOptiFinePresent = false;
 
 	return wrapWithLogging(wrapMethodTransformers({
-//		 "ChunkRenderCache#<init>": {
-//		 	"target": {
-//		 		"type": "METHOD",
-//		 		"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
-//		 		"methodName": "<init>",
-//		 		"methodDesc": "(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V"
-//		 	},
-//		 	"transformer": function(methodNode) {
+		 "ChunkRenderCache#<init>": {
+		 	"target": {
+		 		"type": "METHOD",
+		 		"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
+		 		"methodName": "<init>",
+		 		"methodDesc": "(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V"
+		 	},
+		 	"transformer": function(methodNode) {
 //		 		// OptiFine makes the BlockState[] and IFluidState[] null.
 //		 		// Vanilla doesn't use null anywhere in the method.
-//		 		var instructions = methodNode.instructions;
+		 		var instructions = methodNode.instructions;
 //		 		for (var i = instructions.size() - 1; i >= 0; --i) {
 //		 			if (instructions.get(i).getOpcode() == ACONST_NULL) {
 //		 				isOptiFinePresent = true;
@@ -79,20 +82,20 @@ function initializeCoreMod() {
 //		 			}
 //		 		}
 //		 		if (!isOptiFinePresent)
-//		 			injectInitChunkRenderCacheHook(instructions);
-//		 		return methodNode;
-//		 	}
-//		 },
-//		 "ChunkRenderCache.generateCache": {
-//		 	"target": {
-//		 		"type": "METHOD",
-//		 		"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
-//		 		"methodName": "func_212397_a",
-//		 		"methodDesc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;I)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;"
-//		 	},
-//		 	"transformer": function(methodNode) {
+		 			injectInitChunkRenderCacheHook(instructions);
+		 		return methodNode;
+		 	}
+		 },
+		 "ChunkRenderCache.generateCache": {
+		 	"target": {
+		 		"type": "METHOD",
+		 		"class": "net.minecraft.client.renderer.chunk.ChunkRenderCache",
+		 		"methodName": "func_212397_a",
+		 		"methodDesc": "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;I)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;"
+		 	},
+		 	"transformer": function(methodNode) {
 //		 		// OptiFine immediately calls another method.
-//		 		var instructions = methodNode.instructions;
+		 		var instructions = methodNode.instructions;
 //		 		for (var i = instructions.size() - 1; i >= 0; --i) {
 //		 			var instruction = instructions.get(i)
 //		 			if (instruction.getOpcode() != INVOKESTATIC)
@@ -110,10 +113,10 @@ function initializeCoreMod() {
 //		 			break;
 //		 		}
 //		 		if (!isOptiFinePresent)
-//		 			injectGenerateCacheHook(instructions);
-//		 		return methodNode;
-//		 	}
-//		 },
+		 			injectGenerateCacheHook(instructions);
+		 		return methodNode;
+		 	}
+		 },
 //		 "ChunkRenderCache.generateCache OptiFine": {
 //		 	"target": {
 //		 		"type": "METHOD",
@@ -225,6 +228,30 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
+		"BlockState#getCollisionShape(IBlockReader, BlockPos)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.BlockState",
+				"methodName": "func_196952_d",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				injectGetCollisionShapeHook(methodNode.instructions, false);
+				return methodNode;
+			}
+		},
+		"BlockState#getCollisionShape(IBlockReader, BlockPos, ISelectionContext)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.BlockState",
+				"methodName": "func_215685_b",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				injectGetCollisionShapeHook(methodNode.instructions, true);
+				return methodNode;
+			}
+		},
 		"BlockState": {
 			"target": {
 				"type": "CLASS",
@@ -238,19 +265,6 @@ function initializeCoreMod() {
 				return classNode;
 			}
 		}
-//		 ,
-//		 "VoxelShapes#getAllowedOffset": {
-//		 	"target": {
-//		 		"type": "METHOD",
-//		 		"class": "net.minecraft.util.math.shapes.VoxelShapes",
-//		 		"methodName": "func_216386_a",
-//		 		"methodDesc": "(Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;)D"
-//		 	},
-//		 	"transformer": function(methodNode) {
-//		 		injectGetAllowedOffsetHook(methodNode.instructions);
-//		 		return methodNode;
-//		 	}
-//		 }
 	}));
 }
 
@@ -324,9 +338,8 @@ function injectInitChunkRenderCacheHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKEVIRTUAL_getX) {
+	if (!first_INVOKEVIRTUAL_getX)
 		throw "Error: Couldn't find injection point \"Vec3i.getX\"!";
-	}
 
 	var firstLabelBefore_first_INVOKEVIRTUAL_getX;
 	for (i = instructions.indexOf(first_INVOKEVIRTUAL_getX); i >= 0; --i) {
@@ -337,9 +350,8 @@ function injectInitChunkRenderCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_INVOKEVIRTUAL_getX) {
+	if (!firstLabelBefore_first_INVOKEVIRTUAL_getX)
 		throw "Error: Couldn't find label \"firstLabelBefore_first_INVOKEVIRTUAL_getX\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -574,9 +586,8 @@ function injectGenerateCacheHook(instructions) {
 	for (var i = arrayLength - 1; i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == ACONST_NULL) {
-			if (!previousInsn) {
+			if (!previousInsn)
 				continue;
-			}
 			if (previousInsn.getOpcode() == ARETURN) {
 				firstACONST_NULL_then_ARETURN = instruction;
 				print("Found ACONST_NULL & ARETURN");
@@ -585,9 +596,8 @@ function injectGenerateCacheHook(instructions) {
 		}
 		previousInsn = instruction;
 	}
-	if (!firstACONST_NULL_then_ARETURN) {
+	if (!firstACONST_NULL_then_ARETURN)
 		throw "Error: Couldn't find ACONST_NULL & ARETURN!";
-	}
 
 	// 2) Find previous IFEQ
 	var firstIFEQBefore_firstACONST_NULL_then_ARETURN;
@@ -599,9 +609,8 @@ function injectGenerateCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
+	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN)
 		throw "Error: Couldn't find IFEQ!";
-	}
 
 	// 3) Find previous Label
 	var firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
@@ -613,9 +622,8 @@ function injectGenerateCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
+	if (!firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN)
 		throw "Error: Couldn't find label \"previous Label\"!";
-	}
 
 	// 4) Find previous INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween
 	var isEmptyBetween_name = ASMAPI.mapMethod("func_76606_c"); // isEmptyBetween
@@ -637,9 +645,8 @@ function injectGenerateCacheHook(instructions) {
 			}
 		}
 	}
-	if (!firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
+	if (!firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN)
 		throw "Error: Couldn't find injection point \"Previous INVOKEVIRTUAL Chunk.isEmptyBetween\"!";
-	}
 
 	// 5) Find next ISTORE
 	var firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
@@ -651,9 +658,8 @@ function injectGenerateCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
+	if (!firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN)
 		throw "Error: Couldn't find injection point \"next ISTORE\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -725,9 +731,8 @@ function injectRenderBlockDamageHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabel) {
+	if (!firstLabel)
 		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -856,9 +861,8 @@ function injectPreIterationHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKESTATIC_getAllInBoxMutable) {
+	if (!first_INVOKESTATIC_getAllInBoxMutable)
 		throw "Error: Couldn't find injection point \"first BlockPos.getAllInBoxMutable\"!";
-	}
 
 	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
 	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >= 0; --i) {
@@ -869,9 +873,8 @@ function injectPreIterationHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable) {
+	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable)
 		throw "Error: Couldn't find label \"next Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -993,9 +996,8 @@ function injectBlockRenderHook(instructions) {
 			}
 		}
 	}
-	if (!BlockState_getRenderType) {
+	if (!BlockState_getRenderType)
 		throw "Error: Couldn't find injection point \"first BlockState.getRenderType\"!";
-	}
 
 	var firstLabelBefore_BlockState_getRenderType;
 	for (i = instructions.indexOf(BlockState_getRenderType); i >= 0; --i) {
@@ -1006,9 +1008,8 @@ function injectBlockRenderHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_BlockState_getRenderType) {
+	if (!firstLabelBefore_BlockState_getRenderType)
 		throw "Error: Couldn't find label \"next Label\"!";
-	}
 
 	var lookStart = instructions.indexOf(BlockState_getRenderType);
 	var lookMax = lookStart + 10;
@@ -1020,9 +1021,8 @@ function injectBlockRenderHook(instructions) {
 			break;
 		}
 	}
-	if (!blockCannotRenderLabel) {
+	if (!blockCannotRenderLabel)
 		throw "Error: Couldn't find blockCannotRenderLabel!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1185,9 +1185,8 @@ function injectFluidRenderBypass(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKEVIRTUAL_getFluidState) {
+	if (!first_INVOKEVIRTUAL_getFluidState)
 		throw "Error: Couldn't find injection point \"first_INVOKEVIRTUAL_getFluidState\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1286,9 +1285,8 @@ function injectMarkForRerenderHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabel) {
+	if (!firstLabel)
 		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1388,9 +1386,8 @@ function injectGetCollisionShapesHook(instructions) {
 			}
 		}
 	}
-	if (!first_NEW_CubeCoordinateIterator) {
+	if (!first_NEW_CubeCoordinateIterator)
 		throw "Error: Couldn't find injection point \"first_NEW_CubeCoordinateIterator\"!";
-	}
 
 	var firstLabelBefore_first_NEW_CubeCoordinateIterator;
 	for (i = instructions.indexOf(first_NEW_CubeCoordinateIterator); i > 0; --i) {
@@ -1401,9 +1398,8 @@ function injectGetCollisionShapesHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_NEW_CubeCoordinateIterator) {
+	if (!firstLabelBefore_first_NEW_CubeCoordinateIterator)
 		throw "Error: Couldn't find label \"next Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1531,9 +1527,8 @@ function injectGetFluidStateHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKEVIRTUAL_World_getChunkAt) {
+	if (!first_INVOKEVIRTUAL_World_getChunkAt)
 		throw "Error: Couldn't find injection point \"first getChunkAt\"!";
-	}
 
 	var next_ARETURN;
 //	var arrayLength = instructions.size();
@@ -1545,9 +1540,8 @@ function injectGetFluidStateHook(instructions) {
 			break;
 		}
 	}
-	if (!next_ARETURN) {
+	if (!next_ARETURN)
 		throw "Error: Couldn't find injection point \"next ARETURN\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1646,9 +1640,8 @@ function injectIsSolidHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabel) {
+	if (!firstLabel)
 		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1735,9 +1728,8 @@ function injectCausesSuffocationHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabel) {
+	if (!firstLabel)
 		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1771,128 +1763,155 @@ function injectCausesSuffocationHook(instructions) {
 
 }
 
-// 1) Finds the first instruction NEW World.getChunk
-// 2) Finds the next instruction ARETURN
-// 3) Inserts before World.getChunk
-// 4) Removes everything between World.getChunk and ARETURN
-function injectGetAllowedOffsetHook(instructions) {
+// 1) Finds the first label
+// 2) Injects right after the first label
+// Works for both the method with a ISelectionContext and the one without.
+function injectGetCollisionShapeHook(instructions, hasSelectionContext) {
 
-//	Direction.Axis rotZ = rot.rotate(Direction.Axis.Z);
-//	BlockPos.MutableBlockPos mbp = new BlockPos.MutableBlockPos();
+//	return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
 
-//	Direction.Axis rotZ = rot.rotate(Direction.Axis.Z);
 //	// NoCubes Start
-//	return io.github.cadiboo.nocubes.hooks.Hooks.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, rot, rotX, rotY, rotZ);
+//	final VoxelShape hooked = io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShape(this, worldIn, pos);
+//	if (hooked != null)
+//		return hooked;
 //	// NoCubes End
-////	BlockPos.MutableBlockPos mbp = new BlockPos.MutableBlockPos();
+//	return this.cache != null ? this.cache.collisionShape : this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
 
 
-//   L7
-//    LINENUMBER 197 L7
-//    ALOAD 7
-//    GETSTATIC net/minecraft/util/Direction$Axis.Z : Lnet/minecraft/util/Direction$Axis;
-//    INVOKEVIRTUAL net/minecraft/util/AxisRotation.rotate (Lnet/minecraft/util/Direction$Axis;)Lnet/minecraft/util/Direction$Axis;
-//    ASTORE 10
-//   L8
-//    LINENUMBER 198 L8
-//    NEW net/minecraft/util/math/BlockPos$MutableBlockPos
-//    DUP
-//    INVOKESPECIAL net/minecraft/util/math/BlockPos$MutableBlockPos.<init> ()V
-//    ASTORE 11
-//   L9
-//    LINENUMBER 199 L9
+//   L0
+//    LINENUMBER * L0
 //    ALOAD 0
-//    ALOAD 8
-//    INVOKEVIRTUAL net/minecraft/util/math/AxisAlignedBB.getMin (Lnet/minecraft/util/Direction$Axis;)D
-//    LDC 1.0E-7
-//    DSUB
-//    INVOKESTATIC net/minecraft/util/math/MathHelper.floor (D)I
-//    ICONST_1
-//    ISUB
-//    ISTORE 12
-
-//   L7
-//    LINENUMBER 197 L7
-//    ALOAD 7
-//    GETSTATIC net/minecraft/util/Direction$Axis.Z : Lnet/minecraft/util/Direction$Axis;
-//    INVOKEVIRTUAL net/minecraft/util/AxisRotation.rotate (Lnet/minecraft/util/Direction$Axis;)Lnet/minecraft/util/Direction$Axis;
-//    ASTORE 10
-//   L8
-//    LINENUMBER 199 L8
+//    GETFIELD net/minecraft/block/BlockState.cache : Lnet/minecraft/block/BlockState$Cache;
+//    IFNULL L1
+//    ALOAD 0
+//    GETFIELD net/minecraft/block/BlockState.cache : Lnet/minecraft/block/BlockState$Cache;
+//    INVOKESTATIC net/minecraft/block/BlockState$Cache.access$700 (Lnet/minecraft/block/BlockState$Cache;)Lnet/minecraft/util/math/shapes/VoxelShape;
+//    GOTO L2
+//   L1
+//   FRAME SAME
 //    ALOAD 0
 //    ALOAD 1
-//    DLOAD 2
-//    ALOAD 4
-//    ALOAD 5
-//    ALOAD 6
-//    ALOAD 7
-//    ALOAD 8
-//    ALOAD 9
-//    ALOAD 10
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getAllowedOffset (Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;Lnet/minecraft/util/AxisRotation;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;)D
-//    DRETURN
+//    ALOAD 2
+//    INVOKESTATIC net/minecraft/util/math/shapes/ISelectionContext.dummy ()Lnet/minecraft/util/math/shapes/ISelectionContext; (itf)
+//    INVOKEVIRTUAL net/minecraft/block/BlockState.getCollisionShape (Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;
+//   L2
+//   FRAME SAME1 net/minecraft/util/math/shapes/VoxelShape
+//    ARETURN
+
+//   L0
+//    LINENUMBER * L0
+//    ALOAD 0
+//    ALOAD 1
+//    ALOAD 2
+//    (ALOAD 3)
+//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.getCollisionShape (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;
+//    ASTORE 3 (4)
+//   L1
+//    LINENUMBER * L1
+//    ALOAD 3 (4)
+//    IFNULL L2
+//   L3
+//    LINENUMBER * L3
+//    ALOAD 3 (4)
+//    ARETURN
+//   L2
+//    LINENUMBER * L2
+//   FRAME APPEND [net/minecraft/util/math/shapes/VoxelShape]
+//    ALOAD 0
+//    GETFIELD net/minecraft/block/BlockState.cache : Lnet/minecraft/block/BlockState$Cache;
+//    IFNULL L4
+//    ALOAD 0
+//    GETFIELD net/minecraft/block/BlockState.cache : Lnet/minecraft/block/BlockState$Cache;
+//    INVOKESTATIC net/minecraft/block/BlockState$Cache.access$700 (Lnet/minecraft/block/BlockState$Cache;)Lnet/minecraft/util/math/shapes/VoxelShape;
+//    GOTO L3
+//   L3
+//   FRAME SAME
+//    ALOAD 0
+//    ALOAD 1
+//    ALOAD 2
+//    INVOKESTATIC net/minecraft/util/math/shapes/ISelectionContext.dummy ()Lnet/minecraft/util/math/shapes/ISelectionContext; (itf)
+//    INVOKEVIRTUAL net/minecraft/block/BlockState.getCollisionShape (Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;
+//   L4
+//   FRAME SAME1 net/minecraft/util/math/shapes/VoxelShape
+//    ARETURN
 
 
-	var first_NEW_MutableBlockPos;
+	var firstLabel;
 	var arrayLength = instructions.size();
 	for (var i = 0; i < arrayLength; ++i) {
 		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == NEW) {
-			if (instruction.desc == "net/minecraft/util/math/BlockPos$MutableBlockPos") {
-				first_NEW_MutableBlockPos = instruction;
-				print("Found injection point \"first_NEW_MutableBlockPos\" " + instruction);
-				break;
-			}
-		}
-	}
-	if (!first_NEW_MutableBlockPos) {
-		throw "Error: Couldn't find injection point \"first_NEW_MutableBlockPos\"!";
-	}
-
-	var firstLabelBefore_first_NEW_MutableBlockPos;
-	for (i = instructions.indexOf(first_NEW_MutableBlockPos); i >= 0; --i) {
-		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
-			firstLabelBefore_first_NEW_MutableBlockPos = instruction;
-			print("Found label \"firstLabelBefore_first_NEW_MutableBlockPos\" " + instruction);
+			firstLabel = instruction;
+			print("Found injection point \"first Label\" " + instruction);
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_NEW_MutableBlockPos) {
-		throw "Error: Couldn't find label \"firstLabelBefore_first_NEW_MutableBlockPos\"!";
+	if (!firstLabel)
+		throw "Error: Couldn't find injection point \"first Label\"!";
+
+	var highestLocalVariableIndex = 0;
+	for (var i = arrayLength - 1; i >= 0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == VAR_INSN) {
+			var index = instruction.var;
+			if (index > highestLocalVariableIndex)
+				highestLocalVariableIndex = index;
+		}
 	}
+
+	var varIndex = highestLocalVariableIndex + 1;
 
 	var toInject = new InsnList();
 
 	// Labels n stuff
+	var originalInstructionsLabel = new LabelNode();
 
 	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // collisionBox
-	toInject.add(new VarInsnNode(ALOAD, 1)); // worldReader
-	toInject.add(new VarInsnNode(DLOAD, 2)); // desiredOffset
-	toInject.add(new VarInsnNode(ALOAD, 4)); // selectionContext
-	toInject.add(new VarInsnNode(ALOAD, 5)); // rotationAxis
-	toInject.add(new VarInsnNode(ALOAD, 6)); // possibleHits
-	toInject.add(new VarInsnNode(ALOAD, 7)); // reversedRotation
-	toInject.add(new VarInsnNode(ALOAD, 8)); // rotX
-	toInject.add(new VarInsnNode(ALOAD, 9)); // rotY
-	toInject.add(new VarInsnNode(ALOAD, 10)); // rotZ
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"getAllowedOffset",
-			//String descriptor
-			"(Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;Lnet/minecraft/util/AxisRotation;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;Lnet/minecraft/util/Direction$Axis;)D",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new InsnNode(DRETURN));
+	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+	toInject.add(new VarInsnNode(ALOAD, 1)); // worldIn
+	toInject.add(new VarInsnNode(ALOAD, 2)); // pos
+	if (hasSelectionContext)
+		toInject.add(new VarInsnNode(ALOAD, 3)); // context
+	if (hasSelectionContext)
+		toInject.add(new MethodInsnNode(
+				//int opcode
+				INVOKESTATIC,
+				//String owner
+				"io/github/cadiboo/nocubes/hooks/Hooks",
+				//String name
+				"getCollisionShape",
+				//String descriptor
+				"(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;",
+				//boolean isInterface
+				false
+		));
+	else
+		toInject.add(new MethodInsnNode(
+				//int opcode
+				INVOKESTATIC,
+				//String owner
+				"io/github/cadiboo/nocubes/hooks/Hooks",
+				//String name
+				"getCollisionShape",
+				//String descriptor
+				"(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;",
+				//boolean isInterface
+				false
+		));
+	toInject.add(new VarInsnNode(ASTORE, varIndex)); // hooked
+
+	toInject.add(new LabelNode());
+	toInject.add(new VarInsnNode(ALOAD, varIndex)); // hooked
+	toInject.add(new JumpInsnNode(IFNULL, originalInstructionsLabel));
+
+	toInject.add(new LabelNode());
+	toInject.add(new VarInsnNode(ALOAD, varIndex)); // hooked
+	toInject.add(new InsnNode(ARETURN));
+
+	toInject.add(originalInstructionsLabel);
 
 	// Inject instructions
-	instructions.insert(firstLabelBefore_first_NEW_MutableBlockPos, toInject);
+	instructions.insert(firstLabel, toInject);
 
 }
 
