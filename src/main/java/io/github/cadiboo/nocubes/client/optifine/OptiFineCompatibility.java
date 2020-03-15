@@ -6,6 +6,8 @@ import io.github.cadiboo.nocubes.client.optifine.proxy.HD_U_F4;
 import io.github.cadiboo.nocubes.client.optifine.proxy.OptiFine;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.ReportedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -18,9 +20,15 @@ import java.util.stream.Collectors;
  */
 public final class OptiFineCompatibility {
 
+	// TODO: Sort proxies like
+	//  HD_U_MAJOR -> MINOR
+	//  If no supported MINOR version could be found, fall back to the latest support on the same major version
+	//  Store the proxies as bytecode in resources, load them on demand.
+
 	private static final OptiFineProxy[] proxies = {
 			new OptiFineProxy("HD_U_F4", () -> HD_U_F4::new)
 	};
+	private static final Logger LOGGER = LogManager.getLogger();
 
 	private static Class<?> configClass;
 
@@ -35,7 +43,8 @@ public final class OptiFineCompatibility {
 	}
 
 	public static void init() {
-		if (initialised) return;
+		if (initialised)
+			return;
 		configClass = findConfigClass();
 		initialised = true;
 
@@ -50,6 +59,8 @@ public final class OptiFineCompatibility {
 				return;
 			}
 		}
+		LOGGER.warn("OptiFine compatibility for your version of OptiFine (" + optiFineVersion + ") has not been implemented.");
+		optiFine = new Dummy();
 	}
 
 	@Nullable
