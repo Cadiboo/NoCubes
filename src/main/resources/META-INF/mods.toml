@@ -1,0 +1,30 @@
+modLoader="javafml"
+loaderVersion="[28,)"
+issueTrackerURL="https://github.com/Cadiboo/NoCubes/issues"
+[[mods]]
+modId="nocubes"
+version="${version}"
+displayName="NoCubes"
+updateJSONURL="https://cadiboo.github.io/projects/nocubes/update.json"
+displayURL="https://cadiboo.github.io/projects/nocubes"
+logoFile="nocubes.png"
+credits="Thanks to Click_Me for the original mod, ComsicDan for reverse-engineering it and Cadiboo for making & maintaining the mod for 1.12.2+"
+authors="Cadiboo"
+description='''
+NoCubes is a mod by Cadiboo for 1.12.2+ that creates smooth terrain in Minecraft.
+It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.
+'''
+
+[[dependencies.nocubes]]
+modId="forge"
+mandatory=true
+versionRange="[28.0.45,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.nocubes]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.14.4]"
+ordering="NONE"
+side="BOTH"

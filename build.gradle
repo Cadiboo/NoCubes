@@ -1,0 +1,281 @@
+// Forge buildscript
+// Necessary for Forge to be setup
+buildscript {
+	repositories {
+		// Forge Maven
+		maven { url = 'https://files.minecraftforge.net/maven' }
+		// Other useful Mavens
+		jcenter()
+		mavenCentral()
+	}
+	// Buildscript dependency on Forge Gradle
+	dependencies {
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+	}
+}
+
+plugins {
+	// SpotBugs uses static analysis to look for bugs in Java code
+	id 'com.github.spotbugs' version '1.6.9'
+	// Gradle plugin to upload Minecraft mods to CurseForge
+	id 'com.matthewprenger.cursegradle' version '1.4.0'
+	// Static code analysis
+	id 'org.sonarqube' version '2.8'
+	// Code style
+	id 'checkstyle'
+//	// Minify coremod javascript
+//	id "org.padler.gradle.minify" version "1.3.0"
+}
+
+// Necessary for Forge to be setup
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+
+// We use the version format MCVERSION-MAJOR.MINOR.PATCH
+version = modMinecraftVersion + "-" + modVersion
+group = modGroup
+archivesBaseName = modFileName
+
+if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
+	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
+
+sourceCompatibility = JavaVersion.VERSION_11
+// Thanks Jabel
+targetCompatibility = JavaVersion.VERSION_1_8
+compileJava {
+	options.compilerArgs = [
+		"--release", "8" // Avoid using Java 8+ APIs
+	]
+}
+repositories {
+	// Put remote maven repositories here
+	maven { url 'https://jitpack.io' }
+}
+
+minecraft {
+	// The mappings can be changed at any time, and must be in the following format.
+	// snapshot_YYYYMMDD   Snapshot are built nightly.
+	// stable_#            Stables are built at the discretion of the MCP team.
+	// Use non-default mappings at your own risk. they may not always work.
+	// Simply re-run your setup task after changing the mappings to update your workspace.
+	mappings channel: modMcpMappingsChannel, version: modMcpMappingsVersion
+
+	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+
+	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+	// Default run configurations.
+	// These can be tweaked, removed, or duplicated as needed.
+	runs {
+		client {
+			workingDirectory project.file('run')
+
+			// Recommended logging data for a userdev environment
+			property 'forge.logging.markers', 'XFORM'
+
+			// Recommended logging level for the console
+			property 'forge.logging.console.level', 'debug'
+
+			mods {
+				nocubes {
+					// Main sources (everything that goes in your final compiled mod. From /src/main/)
+					source sourceSets.main
+					// Test sources (debugging, unit tests. From /src/test/)
+					source sourceSets.test
+				}
+			}
+		}
+
+		server {
+			workingDirectory project.file('run/server')
+
+			// Recommended logging data for a userdev environment
+			property 'forge.logging.markers', 'XFORM'
+
+			// Recommended logging level for the console
+			property 'forge.logging.console.level', 'debug'
+
+			mods {
+				nocubes {
+					// Main sources (everything that goes in your final compiled mod. From /src/main/)
+					source sourceSets.main
+					// Test sources (debugging, unit tests. From /src/test/)
+					source sourceSets.test
+				}
+			}
+		}
+
+		data {
+			workingDirectory project.file('run')
+
+			// Recommended logging data for a userdev environment
+			property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
+
+			// Recommended logging level for the console
+			property 'forge.logging.console.level', 'debug'
+
+			args '--mod', modId, '--all', '--output', file('src/generated/resources/')
+
+			mods {
+				nocubes {
+					// Main sources (everything that goes in your final compiled mod. From /src/main/)
+					source sourceSets.main
+					// Test sources (debugging, unit tests. From /src/test/)
+					source sourceSets.test
+				}
+			}
+		}
+	}
+}
+
+dependencies {
+	// Jabel - use Javac 12+ syntax when targeting Java 8
+	annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
+
+	// Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
+	// that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
+	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
+	minecraft "net.minecraftforge:forge:" + modMinecraftVersion + "-" + modForgeVersion
+
+	// You may put jars on which you depend on in ./libs or you may define them like so..
+	// compile "some.group:artifact:version:classifier"
+	// compile "some.group:artifact:version"
+
+	// Real examples
+	// compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
+	// compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
+
+	// The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
+	// provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+	// These dependencies get remapped to your current MCP mappings
+	// deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
+
+	// Add a compile dependency on all .jar files in ./libs
+	compile fileTree(include: ['*.jar'], dir: 'libs')
+
+	// For more info...
+	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
+	// http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+}
+
+jar {
+	// Don't put the modified minecraft/optifine files in final jar (but compile them and everything)
+	exclude '**/net/minecraft/**'
+	exclude '**/net/optifine/**'
+
+	manifest {
+		attributes([
+			'Specification-Title'     : modId,
+			'Specification-Vendor'    : modGroup,
+			'Specification-Version'   : '1.0', // We are version 1 of ourselves
+			'Implementation-Title'    : project.name,
+			'Implementation-Version'  : project.version,
+			'Implementation-Vendor'   : modGroup,
+			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+			'Signing-Fingerprint'     : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : "unsigned",
+			'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+			'Built-On'                : "${project.modMinecraftVersion}-${project.modForgeVersion}"
+		])
+	}
+}
+
+// Example configuration to allow publishing using the maven-publish task
+// we define a custom artifact that is sourced from the reobfJar output task
+// and then declare that to be published
+// Note you'll need to add a repository here
+def reobfFile = file("$buildDir/reobfJar/output.jar")
+def reobfArtifact = artifacts.add('default', reobfFile) {
+	type 'jar'
+	builtBy 'reobfJar'
+}
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			artifact reobfArtifact
+		}
+	}
+	repositories {
+		maven {
+			url "file:///${project.projectDir}/mcmodsrepo"
+		}
+	}
+}
+
+//minification {
+//	jsSrcDir = "${rootDir}/src/main/resources"
+//	jsDstDir = "$buildDir"
+//}
+
+// Jar signing
+import net.minecraftforge.gradle.common.task.SignJar
+
+task signJar(type: SignJar, dependsOn: jar) {
+	// Skips if the keyStore property is missing.
+	onlyIf {
+		project.hasProperty('keyStore')
+	}
+	// findProperty allows us to reference the property without it existing.
+	// Using project.propName would cause the script to fail validation if the property did not exist.
+	keyStore = project.findProperty('keyStore')
+	alias = project.findProperty('keyStoreAlias')
+	storePass = project.findProperty('keyStorePass')
+	keyPass = project.findProperty('keyStoreKeyPass')
+	inputFile = jar.archivePath
+	outputFile = jar.archivePath
+}
+
+// Runs the signJar task automatically when build is run.
+build.dependsOn signJar
+
+// Create Sources Jar
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+// TODO: Sign the dev jar
+// Create Dev Jar
+task devJar(type: Jar, dependsOn: jar) {
+	classifier = 'dev'
+	// For some reason using jar.source puts a copy of the jar's manifest
+	// in the root directory (But not in META-INF). So we add the manifest
+	// manually and then exclude the one in the root directory.
+	from jar.source
+	// No clue why "manifest jar.manifest" fails and "manifest = jar.manifest"
+	// works. The "=" shouldn't change anything, but it does.
+	manifest = jar.manifest
+	exclude jar.excludes + '/MANIFEST.MF'
+}
+
+task signDevJar(type: SignJar) {
+	onlyIf {
+		project.hasProperty('keyStore')
+	}
+
+	description = 'Sign the dev JAR'
+	keyStore = project.findProperty('keyStore')
+	alias = project.findProperty('keyStoreAlias')
+	storePass = project.findProperty('keyStorePass')
+	keyPass = project.findProperty('keyStoreKeyPass')
+
+	inputFile = devJar.archivePath
+	outputFile = devJar.archivePath
+}
+
+// Runs the signDevJar task automatically when build is run.
+build.dependsOn signDevJar
+
+//// Create Javadoc Jar
+//task javadocJar(type: Jar, dependsOn: javadoc) {
+//	classifier = 'javadoc'
+//	from javadoc.destinationDir
+//}
+
+artifacts {
+	archives sourcesJar
+	archives devJar
+//	archives javadocJar
+}

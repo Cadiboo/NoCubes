@@ -1,0 +1,20 @@
+# Tweaked from https://github.com/StrikerRockers-Mods/VanillaTweaks/blob/1.15/.github/workflows/gradle.yml
+name: Java CI
+
+on: [push,pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: 11
+    - name: Setup Build
+      run: chmod 777 gradlew
+    - name: Build with Gradle
+      run: ./gradlew check --stacktrace
