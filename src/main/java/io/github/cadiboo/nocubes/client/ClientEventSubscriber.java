@@ -158,13 +158,13 @@ public final class ClientEventSubscriber {
 				ModProfiler.enableProfiling();
 	}
 
-	private static void setTerrainSmoothable(final BlockState state, final boolean newSmoothability) {
+	static void setTerrainSmoothable(final BlockState state, final boolean newSmoothability) {
 		ConfigHelper.setTerrainSmoothablePreference(state, newSmoothability);
 		// TODO: Handle what to do if we're on a vanilla server.
 		NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestSetTerrainSmoothable(state, newSmoothability));
 	}
 
-	private static void setLeavesSmoothable(final BlockState state, final boolean newSmoothability) {
+	static void setLeavesSmoothable(final BlockState state, final boolean newSmoothability) {
 //		ConfigHelper.setLeavesSmoothable(state, newSmoothability);
 //		Minecraft.getInstance().getToastGui().add(new BlockStateToast.Leaves(state, newSmoothability));
 //		if (NoCubesConfig.Client.renderSmoothLeaves)
@@ -365,7 +365,7 @@ public final class ClientEventSubscriber {
 		final MatrixStack matrixStack = event.getMatrixStack();
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.getRenderTypeBuffers().getBufferSource();
-		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
+		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.getLines());
 
 		// FIXME TEMP
 		drawShape(matrixStack, bufferBuilder, cache, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 1.0F);
@@ -379,7 +379,8 @@ public final class ClientEventSubscriber {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
 		});
 
-		bufferSource.finish(RenderType.lines());
+		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
+		bufferSource.finish(RenderType.getLines());
 	}
 
 	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
@@ -430,17 +431,7 @@ public final class ClientEventSubscriber {
 		double d0 = projectedView.getX();
 		double d1 = projectedView.getY();
 		double d2 = projectedView.getZ();
-//		final MatrixStack matrixStack = event.getMatrixStack();
-		// FIXME: TEMP (Copied from GameRenderer#renderWorld)
-		final MatrixStack matrixStack = new MatrixStack();
-		{
-			net.minecraftforge.client.event.EntityViewRenderEvent.CameraSetup cameraSetup = net.minecraftforge.client.ForgeHooksClient.onCameraSetup(minecraft.gameRenderer, activeRenderInfo, event.getPartialTicks());
-			activeRenderInfo.setAnglesInternal(cameraSetup.getYaw(), cameraSetup.getPitch());
-			matrixStack.rotate(Vector3f.ZP.rotationDegrees(cameraSetup.getRoll()));
-
-			matrixStack.rotate(Vector3f.XP.rotationDegrees(activeRenderInfo.getPitch()));
-			matrixStack.rotate(Vector3f.YP.rotationDegrees(activeRenderInfo.getYaw() + 180.0F));
-		}
+		final MatrixStack matrixStack = event.getMatrixStack();
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.getRenderTypeBuffers().getBufferSource();
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
@@ -503,13 +494,5 @@ public final class ClientEventSubscriber {
 		if (connection == null || NetworkHooks.getConnectionType(connection::getNetworkManager) != ConnectionType.MODDED)
 			NoCubesConfig.Server.terrainCollisions = false;
 	}
-
-@SubscribeEvent
-public static void onBlockColorHandlerEvent(final ColorHandlerEvent.Block event) {
-	event.getBlockColors().register(
-			(blockState, iLightReader, blockPos, i) -> iLightReader == null || blockPos == null ? -1 : BiomeColors.getWaterColor(iLightReader, blockPos),
-			Blocks.ACACIA_LOG
-	);
-}
 
 }
