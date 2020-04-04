@@ -16,7 +16,7 @@ jobs:
         java-version: 1.8
     - name: Setup Build
       run: chmod 777 gradlew
-    - name: Build with Gradle
+    - name: Build and Check
       run: ./gradlew check --stacktrace
     - name: Launch Client
       run: ./gradlew runClient --stacktrace
