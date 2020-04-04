@@ -1,70 +1,27 @@
 package io.github.cadiboo.nocubes;
 
-import com.google.common.base.Preconditions;
+import io.github.cadiboo.nocubes.test.Test;
 import net.minecraft.block.Blocks;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
+import java.util.Collections;
+import java.util.List;
+
+import static io.github.cadiboo.nocubes.test.TestUtil.assertFalse;
+import static io.github.cadiboo.nocubes.test.TestUtil.assertTrue;
 
 /**
  * TODO: Fix this up
  *
  * @author Cadiboo
  */
-@Mod.EventBusSubscriber
 public class NoCubesTest {
 
-	static final Stream<Test> TESTS = Stream.of(
-		makeTest("stone should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.STONE.getDefaultState()))),
-		makeTest("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState()))),
-		makeTest("air should not be smoothable", () -> assertFalse(NoCubes.isStateSmoothable(Blocks.AIR.getDefaultState())))
-	);
-
-	private static void assertFalse(final boolean b) {
-		assertTrue(!b);
-	}
-
-	private static void assertTrue(final boolean b) {
-		Preconditions.checkArgument(b);
-	}
-
-	private static Test makeTest(final String name, final Runnable action) {
-		return new Test(name, action);
-	}
-
-	@SubscribeEvent
-	public static void test(FMLServerStartedEvent event) {
-		final AtomicBoolean hadFails = new AtomicBoolean(false);
-		TESTS.forEach(test -> {
-			try {
-				test.action.run();
-			} catch (Exception e) {
-				event.getServer().sendMessage(new StringTextComponent("TEST FAILED: " + test.name).applyTextStyle(TextFormatting.RED));
-				e.printStackTrace();
-				hadFails.set(true);
-			}
-		});
-		if (hadFails.get())
-			throw new RuntimeException("had failed tests");
-		// Assuming CI
-		event.getServer().close();
-	}
-
-	static class Test {
-
-		final String name;
-		final Runnable action;
-
-		Test(final String name, final Runnable action) {
-			this.name = name;
-			this.action = action;
-		}
-
+	public static void addTests(final List<Test> tests) {
+		Collections.addAll(tests,
+			new Test("stone should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.STONE.getDefaultState()))),
+			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState()))),
+			new Test("air should not be smoothable", () -> assertFalse(NoCubes.isStateSmoothable(Blocks.AIR.getDefaultState())))
+		);
 	}
 
 }
