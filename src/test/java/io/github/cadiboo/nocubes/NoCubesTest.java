@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import com.google.common.base.Preconditions;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -45,10 +44,10 @@ public class NoCubesTest {
 				hadFails.set(true);
 			}
 		});
-		if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
+		if (hadFails.get())
 			throw new RuntimeException("had failed tests");
 		// Assuming CI
-		System.exit(0);
+		event.getServer().close();
 	}
 
 	static class Test {
