@@ -18,7 +18,7 @@ jobs:
       run: chmod 777 gradlew
     - name: Build and Check
       run: ./gradlew check --stacktrace
-    # - name: Launch Client
+    # - name: Launch Client # Doesn't work because LWJGL
     #   run: ./gradlew runClient --stacktrace
     - name: Launch Server
       run: mkdir -p run/server && echo "eula=true" > run/server/eula.txt && ./gradlew runServer --stacktrace
