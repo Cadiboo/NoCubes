@@ -40,14 +40,8 @@ archivesBaseName = modFileName
 if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
 	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
 
-sourceCompatibility = JavaVersion.VERSION_11
-// Thanks Jabel
-targetCompatibility = JavaVersion.VERSION_1_8
-compileJava {
-	options.compilerArgs = [
-		"--release", "8" // Avoid using Java 8+ APIs
-	]
-}
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+
 repositories {
 	// Put remote maven repositories here
 	maven { url 'https://jitpack.io' }
@@ -130,9 +124,6 @@ minecraft {
 }
 
 dependencies {
-	// Jabel - use Javac 12+ syntax when targeting Java 8
-	annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:0.2.0'
-
 	// Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
 	// that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
 	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
