@@ -5,7 +5,7 @@
 ![Curseforge Versions](http://cf.way2muchnoise.eu/versions/nocubes.svg)
 ](https://www.curseforge.com/minecraft/mc-mods/nocubes)
 [
-![Discord](https://img.shields.io/discord/493715189338734595?label=Discord)
+![Discord](https://img.shields.io/discord/493715188843937793?label=Discord)
 ](https://discordapp.com/invite/zKP8EgY)  
 A mod for 1.12.2+ by [Cadiboo](https://github.com/Cadiboo) that creates smooth terrain in Minecraft.  
 [Website](https://Cadiboo.github.io/projects/nocubes/)  
