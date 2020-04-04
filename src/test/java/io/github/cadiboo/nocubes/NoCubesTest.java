@@ -1,10 +1,10 @@
 package io.github.cadiboo.nocubes;
 
 import com.google.common.base.Preconditions;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.common.util.Lazy;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -19,13 +19,7 @@ import java.util.stream.Stream;
 @Mod.EventBusSubscriber
 public class NoCubesTest {
 
-	static final Lazy<Boolean> isDeveloperWorkspace = Lazy.of(() -> {
-		final String target = System.getenv().get("target");
-		if (target == null)
-			return false;
-		return target.contains("userdev");
-	});
-	static final Stream<Test> tests = Stream.of(
+	static final Stream<Test> TESTS = Stream.of(
 		makeTest("stone should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.STONE.getDefaultState()))),
 		makeTest("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState())))
 	);
@@ -40,13 +34,13 @@ public class NoCubesTest {
 
 	@SubscribeEvent
 	public static void test(PlayerEvent.PlayerLoggedInEvent event) {
-		tests.forEach(test -> {
+		TESTS.forEach(test -> {
 			try {
 				test.action.run();
 			} catch (Exception e) {
 				event.getPlayer().sendMessage(new StringTextComponent("TEST FAILED: " + test.name).applyTextStyle(TextFormatting.RED));
 				e.printStackTrace();
-				if (!isDeveloperWorkspace.get())
+				if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 					throw new RuntimeException(e);
 			}
 		});
