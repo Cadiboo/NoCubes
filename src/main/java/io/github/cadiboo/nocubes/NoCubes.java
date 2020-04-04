@@ -14,7 +14,6 @@ public final class NoCubes {
 	public static final String MOD_ID = "nocubes";
 
 	public NoCubes() {
-		var example_var_syntax = "local variable type inference";
 	}
 
 	public static boolean isStateSmoothable(@Nonnull BlockState state) {
