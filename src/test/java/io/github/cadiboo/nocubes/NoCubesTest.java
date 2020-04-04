@@ -21,8 +21,13 @@ public class NoCubesTest {
 
 	static final Stream<Test> TESTS = Stream.of(
 		makeTest("stone should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.STONE.getDefaultState()))),
-		makeTest("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState())))
+		makeTest("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState()))),
+		makeTest("air should not be smoothable", () -> assertFalse(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState())))
 	);
+
+	private static void assertFalse(final boolean b) {
+		assertTrue(!b);
+	}
 
 	private static void assertTrue(final boolean b) {
 		Preconditions.checkArgument(b);
