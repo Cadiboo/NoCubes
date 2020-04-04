@@ -21,6 +21,4 @@ jobs:
     - name: Launch Client
       run: ./gradlew runClient --stacktrace
     - name: Launch Server
-      run: mkdir -p run/server
-      run: echo "eula=true" > run/server/eula.txt
-      run: ./gradlew runServer --stacktrace
+      run: mkdir -p run/server && echo "eula=true" > run/server/eula.txt && ./gradlew runServer --stacktrace
