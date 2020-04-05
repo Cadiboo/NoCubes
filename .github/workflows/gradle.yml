@@ -21,4 +21,4 @@ jobs:
     # - name: Launch Client # Doesn't work because LWJGL
     #   run: ./gradlew runClient --stacktrace
     - name: Launch Server
-      run: mkdir -p run/server && echo "eula=true" > run/server/eula.txt && ./gradlew runServer --stacktrace --no-daemon
+      run: mkdir -p run/server && echo "eula=true" > run/server/eula.txt && ./gradlew --stacktrace --no-daemon runServer
