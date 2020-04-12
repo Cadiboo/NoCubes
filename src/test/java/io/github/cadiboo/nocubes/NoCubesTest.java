@@ -20,7 +20,11 @@ public class NoCubesTest {
 		Collections.addAll(tests,
 			new Test("stone should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.STONE.getDefaultState()))),
 			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState()))),
-			new Test("air should not be smoothable", () -> assertFalse(NoCubes.isStateSmoothable(Blocks.AIR.getDefaultState())))
+			new Test("air should not be smoothable", () -> assertFalse(NoCubes.isStateSmoothable(Blocks.AIR.getDefaultState()))),
+			new Test("setting smoothable should work", () -> {
+				NoCubes.setStateSmoothable(Blocks.DIRT.getDefaultState(), false);
+				assertFalse(NoCubes.isStateSmoothable(Blocks.DIRT.getDefaultState()));
+			})
 		);
 	}
 
