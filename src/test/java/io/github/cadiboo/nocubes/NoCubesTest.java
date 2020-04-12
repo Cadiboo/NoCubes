@@ -10,8 +10,6 @@ import static io.github.cadiboo.nocubes.test.TestUtil.assertFalse;
 import static io.github.cadiboo.nocubes.test.TestUtil.assertTrue;
 
 /**
- * TODO: Fix this up
- *
  * @author Cadiboo
  */
 public class NoCubesTest {
