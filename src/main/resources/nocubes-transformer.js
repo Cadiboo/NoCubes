@@ -144,9 +144,9 @@ function initializeCoreMod() {
 //		"ChunkRender#rebuildChunk": {
 //			"target": {
 //				"type": "METHOD",
-//				"class": "net.minecraft.client.renderer.chunk.ChunkRender",
-//				"methodName": "func_178581_b",
-//				"methodDesc": "(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;)V"
+//				"class": "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask",
+//				"methodName": "func_228940_a_", // "compile"
+//				"methodDesc": "compile(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)Ljava/util/Set;"
 //			},
 //			"transformer": function(methodNode) {
 //				var instructions = methodNode.instructions;
