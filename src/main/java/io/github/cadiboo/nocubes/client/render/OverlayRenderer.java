@@ -25,10 +25,8 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
 
-import static io.github.cadiboo.nocubes.client.render.MarchingCubes.CUBE_VERTS;
-import static io.github.cadiboo.nocubes.client.render.MarchingCubes.EDGE_INDEX;
-import static io.github.cadiboo.nocubes.client.render.MarchingCubes.EDGE_TABLE;
 import static io.github.cadiboo.nocubes.client.render.MarchingCubes.TRI_TABLE;
+import static io.github.cadiboo.nocubes.client.render.SurfaceNets.*;
 
 /**
  * @author Cadiboo
@@ -124,9 +122,9 @@ public final class OverlayRenderer {
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.getPosition();
 
-		final int maxX = 64;
-		final int maxY = 64;
-		final int maxZ = 64;
+		final int maxX = 92;
+		final int maxY = 92;
+		final int maxZ = 92;
 
 		// Make this mesh centred around the base
 		final int worldXStart = base.getX() - maxX / 2;
@@ -167,73 +165,137 @@ public final class OverlayRenderer {
 		final int cellsMaxY = maxY - 1;
 		final int cellsMaxZ = maxZ - 1;
 
-		final ArrayList<Vec> vertices = new ArrayList<>();
+		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
+		int n = 0;
+		final int[] R = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
 		final float[] grid = new float[8];
-		final int[] edges2vertices = new int[12];
-		{
-//			int i = 0;
-			for (int z = 0; z < cellsMaxZ; z++) {
-				for (int y = 0; y < cellsMaxY; y++) {
-					for (int x = 0; x < cellsMaxX; x++/*, i++*/) {
-						for (int i = vertices.size() - 1; i >= 0; i--)
-							vertices.get(i).close();
-						vertices.clear();
-						//For each cell, compute cube mask
-						short cube_index = 0;
-						for (byte i = 0; i < 8; ++i) {
-							byte[] v = CUBE_VERTS[i];
-							final boolean s = binaryField[z + v[2]][y + v[1]][x + v[0]];
-							grid[i] = s ? -1 : 1;
-							cube_index |= (s) ? 1 << i : 0;
-						}
-						//Compute vertices
-						short edge_mask = EDGE_TABLE[cube_index];
-						if (edge_mask == 0) {
+		int buf_no = 1;
+
+		final int[] buffer = new int[R[2] * 2];
+
+		//March over the voxel grid
+		for (int z = 0; z < cellsMaxZ; ++z, n += maxX, buf_no ^= 1, R[2] = -R[2]) {
+
+			//m is the pointer into the buffer we are going to use.
+			//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
+			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
+			int m = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
+
+			for (int y = 0; y < cellsMaxY; ++y, ++n, m += 2)
+				for (int x = 0; x < cellsMaxX; ++x, ++n, ++m) {
+
+					//Read in 8 field values around this vertex and store them in an array
+					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
+					int mask = 0, g = 0, idx = n;
+					for (int z0 = 0; z0 < 2; ++z0, idx += maxX * (maxY - 2))
+						for (int y0 = 0; y0 < 2; ++y0, idx += maxX - 2)
+							for (byte x0 = 0; x0 < 2; ++x0, ++g, ++idx) {
+								float p = binaryField[z + z0][y + y0][x + x0] ? 1 : -1;
+								grid[g] = p;
+								mask |= (p < 0) ? (1 << g) : 0;
+							}
+
+					//Check for early termination if cell does not intersect boundary
+					if (mask == 0 || mask == 0xff) {
+						continue;
+					}
+
+					//Sum up edge intersections
+					int edge_mask = EDGE_TABLE[mask];
+					final double[] v = {0, 0, 0};
+					int e_count = 0;
+
+					//For every edge of the cube...
+					for (int i = 0; i < 12; ++i) {
+
+						//Use edge mask to check if it is crossed
+						if ((edge_mask & (1 << i)) == 0) {
 							continue;
 						}
-						for (byte i = 0; i < 12; ++i) {
-							if ((edge_mask & (1 << i)) == 0) {
-								continue;
-							}
-							edges2vertices[i] = vertices.size();
 
-							byte[] e = EDGE_INDEX[i];
-							final byte[] p0 = CUBE_VERTS[e[0]];
-							final byte[] p1 = CUBE_VERTS[e[1]];
-							final float a = grid[e[0]];
-							final float b = grid[e[1]];
-							final float d = a - b;
-							float t = 0;
-							if (Math.abs(d) > 0.000001) {
-								t = a / d;
-							}
-							double wx = worldXStart + x + 0.5;
-							double wy = worldYStart + y + 0.5;
-							double wz = worldZStart + z + 0.5;
+						//If it did, increment number of edge crossings
+						++e_count;
 
-							vertices.add(Vec.of(
-								(wx + p0[0]) + t * (p1[0] - p0[0]),
-								(wy + p0[1]) + t * (p1[1] - p0[1]),
-								(wz + p0[2]) + t * (p1[2] - p0[2])
-							));
+						//Now find the point of intersection
+						//Unpack vertices
+						final int e0 = CUBE_EDGES[i << 1];
+						final int e1 = CUBE_EDGES[(i << 1) + 1];
+						//Unpack grid values
+						final float g0 = grid[e0];
+						final float g1 = grid[e1];
+						//Compute point of intersection
+						float t = g0 - g1;
+						if (Math.abs(t) > 1e-6) {
+							t = g0 / t;
+						} else {
+							continue;
 						}
-						//Add faces
-						byte[] trianglePoints = TRI_TABLE[cube_index];
-						// Loop over all points, add 3 each time cause a triangle has 3 points
-						for (byte i = 0; i < trianglePoints.length; i += 3) {
+
+						//Interpolate vertices and add up intersections (this can be done without multiplying)
+						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
+							final int a = e0 & k;
+							final int b = e1 & k;
+							if (a != b) {
+								v[j] += a != 0 ? 1F - t : t;
+							} else {
+								v[j] += a != 0 ? 1F : 0;
+							}
+						}
+					}
+
+					//Now we just average the edge intersections and add them to coordinate
+					// 1.0F = isosurfaceLevel
+					float s = 1.0F / e_count;
+					v[0] = 0.5 + worldXStart + x + s * v[0];
+					v[1] = 0.5 + worldYStart + y + s * v[1];
+					v[2] = 0.5 + worldZStart + z + s * v[2];
+
+					//Add vertex to buffer, store pointer to vertex index in buffer
+					buffer[m] = vertices.size();
+					vertices.add(v);
+
+					//Now we need to add faces together, to do this we just loop over 3 basis components
+					for (int i = 0; i < 3; ++i) {
+						//The first three entries of the edge_mask count the crossings along the edge
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+
+						// i = axes we are point along.  iu, iv = orthogonal axes
+						final int iu = (i + 1) % 3;
+						final int iv = (i + 2) % 3;
+
+						//If we are on a boundary, skip it
+						if (((iu == 0 && x == 0) || (iu == 1 && y == 0)|| (iu == 2 && z == 0)) || ((iv == 0 && x == 0) || (iv == 1 && y == 0)|| (iv == 2 && z == 0))) {
+							continue;
+						}
+
+						//Otherwise, look up adjacent edges in buffer
+						final int du = R[iu];
+						final int dv = R[iv];
+
+						//Remember to flip orientation depending on the sign of the corner.
+						if ((mask & 1) != 0) {
 							mesh.faces.add(
 								Face.of(
-									Vec.of(vertices.get(edges2vertices[trianglePoints[i]])),
-									Vec.of(vertices.get(edges2vertices[trianglePoints[i + 1]])),
-									Vec.of(vertices.get(edges2vertices[trianglePoints[i + 2]])),
-									Vec.of(vertices.get(edges2vertices[trianglePoints[i]]))
+									Vec.of(vertices.get(buffer[m])),
+									Vec.of(vertices.get(buffer[m - du])),
+									Vec.of(vertices.get(buffer[m - du - dv])),
+									Vec.of(vertices.get(buffer[m - dv]))
+								)
+							);
+						} else {
+							mesh.faces.add(
+								Face.of(
+									Vec.of(vertices.get(buffer[m])),
+									Vec.of(vertices.get(buffer[m - dv])),
+									Vec.of(vertices.get(buffer[m - du - dv])),
+									Vec.of(vertices.get(buffer[m - du]))
 								)
 							);
 						}
 					}
 				}
-			}
-
 		}
 
 //		BlockPos.getAllInBoxMutable(base.add(-8, -8, -8), base.add(7, 7, 7)).forEach(blockPos -> {
