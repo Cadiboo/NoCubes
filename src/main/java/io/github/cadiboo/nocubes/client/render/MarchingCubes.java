@@ -60,6 +60,17 @@ public class MarchingCubes {
 		{3, 7}
 	};
 
+	public static final byte[][] CUBE_VERTS = {
+		{0, 0, 0},
+		{1, 0, 0},
+		{1, 1, 0},
+		{0, 1, 0},
+		{0, 0, 1},
+		{1, 0, 1},
+		{1, 1, 1},
+		{0, 1, 1}
+	};
+
 	public static final byte[][] TRI_TABLE = {
 		{},
 		{0, 8, 3},

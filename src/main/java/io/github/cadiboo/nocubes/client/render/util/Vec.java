@@ -7,7 +7,7 @@ import java.io.Closeable;
  */
 public class Vec implements Closeable {
 
-	static final Pool<Vec> POOL = new Pool<>(100);
+	static final Pool<Vec> POOL = new Pool<>(30_000);
 	public double x;
 	public double y;
 	public double z;
@@ -20,6 +20,10 @@ public class Vec implements Closeable {
 
 	public static Vec of(Vec v) {
 		return of(v.x, v.y, v.z);
+	}
+
+	public static Vec of(double[] v) {
+		return of(v[0], v[1], v[2]);
 	}
 
 	public static Vec of(double x, double y, double z) {

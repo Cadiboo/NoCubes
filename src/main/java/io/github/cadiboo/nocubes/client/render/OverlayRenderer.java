@@ -23,6 +23,13 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
+
+import static io.github.cadiboo.nocubes.client.render.MarchingCubes.CUBE_VERTS;
+import static io.github.cadiboo.nocubes.client.render.MarchingCubes.EDGE_INDEX;
+import static io.github.cadiboo.nocubes.client.render.MarchingCubes.EDGE_TABLE;
+import static io.github.cadiboo.nocubes.client.render.MarchingCubes.TRI_TABLE;
+
 /**
  * @author Cadiboo
  */
@@ -129,134 +136,99 @@ public final class OverlayRenderer {
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
 		final SmoothableHandler handler = NoCubes.smoothableHandler;
 
-		// Declare up here to save memory
-		boolean[][] binaryField = new boolean[maxZ][maxX];
 
-		for (int y = 0; y < maxY; y++) {
-
-			/*
-			 * From Wikipedia:
-			 * Apply a threshold to the 2D field to make a binary image containing:
-			 * - 1 where the data value is above the isovalue
-			 * - 0 where the data value is below the isovalue
-			 */
-			// The area, converted from a BlockState[] to an isSmoothable[]
-			// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-			{
-				int i = 0;
-				for (int z = 0; z < maxZ; z++) {
+		/*
+		 * From Wikipedia:
+		 * Apply a threshold to the 2D field to make a binary image containing:
+		 * - 1 where the data value is above the isovalue
+		 * - 0 where the data value is below the isovalue
+		 */
+		// The area, converted from a BlockState[] to an isSmoothable[]
+		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
+		boolean[][][] binaryField = new boolean[maxZ][maxY][maxX];
+		{
+			int i = 0;
+			for (int z = 0; z < maxZ; z++) {
+				for (int y = 0; y < maxY; y++) {
 					for (int x = 0; x < maxX; x++, i++) {
 						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
-						binaryField[z][x] = handler.isSmoothable(world.getBlockState(pos));
+						binaryField[z][y][x] = handler.isSmoothable(world.getBlockState(pos));
 					}
 				}
 			}
+		}
 
-			/*
-			 * From Wikipedia:
-			 * Every 2x2 block of pixels in the binary image forms a contouring cell, so the whole image is represented by a grid of such cells (shown in green in the picture below).
-			 * Note that this contouring grid is one cell smaller in each direction than the original 2D field.
-			 */
-			final int cellsMaxX = maxX - 1;
-			final int cellsMaxZ = maxZ - 1;
-			{
-				int i = 0;
-				for (int z = 0; z < cellsMaxZ; z++) {
-					for (int x = 0; x < cellsMaxX; x++, i++) {
-						byte maskNeighborsSmoothable = 0;
-						// For each cell in the contouring grid:
-						// Compose the 4 bits at the corners of the cell to build a binary index: walk around the cell in a clockwise direction appending the bit to the index, using bitwise OR and left-shift, from most significant bit at the top left, to least significant bit at the bottom left.
-						// The resulting 4-bit index can have 16 possible values in the range 0–15.
-						// (0, 0)
-						if (binaryField[z + 0][x + 0])
-							maskNeighborsSmoothable |= 1 << 0;
-						// (0, 1)
-						if (binaryField[z + 0][x + 1])
-							maskNeighborsSmoothable |= 1 << 1;
-						// (1, 1)
-						if (binaryField[z + 1][x + 1])
-							maskNeighborsSmoothable |= 1 << 2;
-						// (1, 0)
-						if (binaryField[z + 1][x + 0])
-							maskNeighborsSmoothable |= 1 << 3;
+		/*
+		 * From Wikipedia:
+		 * Every 2x2 block of pixels in the binary image forms a contouring cell, so the whole image is represented by a grid of such cells (shown in green in the picture below).
+		 * Note that this contouring grid is one cell smaller in each direction than the original 2D field.
+		 */
+		final int cellsMaxX = maxX - 1;
+		final int cellsMaxY = maxY - 1;
+		final int cellsMaxZ = maxZ - 1;
 
-						double wx = worldXStart + x + 0.5;
-						double wy = worldYStart + y;
-						double wz = worldZStart + z + 0.5;
-						switch (maskNeighborsSmoothable) {
-							case 0:
-							case 15:
-								break;
-							case 1:
-							case 14: {
-								Vec v1 = Vec.of(wx, wy, wz + 0.5);
-								Vec v0 = Vec.of(wx + 0.5, wy, wz);
-								mesh.faces.add(toFace(v0, v1));
-								break;
+		final ArrayList<Vec> vertices = new ArrayList<>();
+		final float[] grid = new float[8];
+		final int[] edges2vertices = new int[12];
+		{
+//			int i = 0;
+			for (int z = 0; z < cellsMaxZ; z++) {
+				for (int y = 0; y < cellsMaxY; y++) {
+					for (int x = 0; x < cellsMaxX; x++/*, i++*/) {
+						for (int i = vertices.size() - 1; i >= 0; i--)
+							vertices.get(i).close();
+						vertices.clear();
+						//For each cell, compute cube mask
+						short cube_index = 0;
+						for (byte i = 0; i < 8; ++i) {
+							byte[] v = CUBE_VERTS[i];
+							final boolean s = binaryField[z + v[2]][y + v[1]][x + v[0]];
+							grid[i] = s ? -1 : 1;
+							cube_index |= (s) ? 1 << i : 0;
+						}
+						//Compute vertices
+						short edge_mask = EDGE_TABLE[cube_index];
+						if (edge_mask == 0) {
+							continue;
+						}
+						for (byte i = 0; i < 12; ++i) {
+							if ((edge_mask & (1 << i)) == 0) {
+								continue;
 							}
-							case 2:
-							case 13: {
-								Vec v0 = Vec.of(wx + 0.5, wy, wz);
-								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								mesh.faces.add(toFace(v0, v1));
-								break;
+							edges2vertices[i] = vertices.size();
+
+							byte[] e = EDGE_INDEX[i];
+							final byte[] p0 = CUBE_VERTS[e[0]];
+							final byte[] p1 = CUBE_VERTS[e[1]];
+							final float a = grid[e[0]];
+							final float b = grid[e[1]];
+							final float d = a - b;
+							float t = 0;
+							if (Math.abs(d) > 0.000001) {
+								t = a / d;
 							}
-							case 3:
-							case 12: {
-								Vec v0 = Vec.of(wx, wy, wz + 0.5);
-								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								mesh.faces.add(toFace(v0, v1));
-								break;
-							}
-							case 4:
-							case 11: {
-								Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
-								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								mesh.faces.add(toFace(v0, v1));
-								break;
-							}
-							case 5: {
-								{
-									Vec v0 = Vec.of(wx, wy, wz + 0.5);
-									Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-									mesh.faces.add(toFace(v0, v1));
-								}
-								{
-									Vec v0 = Vec.of(wx + 0.5, wy, wz);
-									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-									mesh.faces.add(toFace(v0, v1));
-								}
-								break;
-							}
-							case 6:
-							case 9: {
-								Vec v0 = Vec.of(wx + 0.5, wy, wz);
-								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-								mesh.faces.add(toFace(v0, v1));
-								break;
-							}
-							case 7:
-							case 8: {
-								Vec v0 = Vec.of(wx, wy, wz + 0.5);
-								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-								mesh.faces.add(toFace(v0, v1));
-								break;
-							}
-							case 10: {
-								{
-									Vec v1 = Vec.of(wx, wy, wz + 0.5);
-									Vec v0 = Vec.of(wx + 0.5, wy, wz);
-									mesh.faces.add(toFace(v0, v1));
-								}
-								{
-									Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
-									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-									Vec v2 = Vec.of(wx + 1, wy + 1, wz + 0.5);
-									Vec v3 = Vec.of(wx + 0.5, wy + 1, wz + 1);
-									mesh.faces.add(Face.of(v0, v1, v2, v3));
-								}
-								break;
-							}
+							double wx = worldXStart + x + 0.5;
+							double wy = worldYStart + y + 0.5;
+							double wz = worldZStart + z + 0.5;
+
+							vertices.add(Vec.of(
+								(wx + p0[0]) + t * (p1[0] - p0[0]),
+								(wy + p0[1]) + t * (p1[1] - p0[1]),
+								(wz + p0[2]) + t * (p1[2] - p0[2])
+							));
+						}
+						//Add faces
+						byte[] trianglePoints = TRI_TABLE[cube_index];
+						// Loop over all points, add 3 each time cause a triangle has 3 points
+						for (byte i = 0; i < trianglePoints.length; i += 3) {
+							mesh.faces.add(
+								Face.of(
+									Vec.of(vertices.get(edges2vertices[trianglePoints[i]])),
+									Vec.of(vertices.get(edges2vertices[trianglePoints[i + 1]])),
+									Vec.of(vertices.get(edges2vertices[trianglePoints[i + 2]])),
+									Vec.of(vertices.get(edges2vertices[trianglePoints[i]]))
+								)
+							);
 						}
 					}
 				}
