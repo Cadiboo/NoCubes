@@ -1,14 +1,13 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
-import java.util.LinkedList;
-import java.util.Queue;
+import java.io.Closeable;
 
 /**
  * @author Cadiboo
  */
-public class Vec implements AutoCloseable {
+public class Vec implements Closeable {
 
-	static final Queue<Vec> POOL = new LinkedList<>();
+	static final Pool<Vec> POOL = new Pool<>(100);
 	public double x;
 	public double y;
 	public double z;
@@ -19,28 +18,24 @@ public class Vec implements AutoCloseable {
 		this.z = z;
 	}
 
+	public static Vec of(Vec v) {
+		return of(v.x, v.y, v.z);
+	}
+
 	public static Vec of(double x, double y, double z) {
-		if (!POOL.isEmpty()) {
-			Vec pooled = null;
-			synchronized (POOL) {
-				if (!POOL.isEmpty())
-					pooled = POOL.poll();
-			}
-			if (pooled != null) {
-				pooled.x = x;
-				pooled.y = y;
-				pooled.z = z;
-				return pooled;
-			}
+		Vec pooled = POOL.get();
+		if (pooled != null) {
+			pooled.x = x;
+			pooled.y = y;
+			pooled.z = z;
+			return pooled;
 		}
 		return new Vec(x, y, z);
 	}
 
 	@Override
 	public void close() {
-		synchronized (POOL) {
-			POOL.offer(this);
-		}
+		POOL.offer(this);
 	}
 
 }

@@ -13,7 +13,7 @@ public class BlockState extends AbstractBlock.AbstractBlockState implements net.
 		super(p_i231876_1_, p_i231876_2_, p_i231876_3_);
 	}
 
-	protected BlockState func_230340_p_() {
+	protected BlockState getSelf() {
 		return this;
 	}
 

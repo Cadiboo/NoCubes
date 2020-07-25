@@ -7,7 +7,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Cadiboo
  */
-public class FaceTest {
+public class FaceTests {
 
 	Vec v0 = new Vec(0, 0, 0);
 	Vec v1 = new Vec(1, 1, 1);
@@ -22,12 +22,19 @@ public class FaceTest {
 		assertEquals(v2, unpooled.v2);
 		assertEquals(v3, unpooled.v3);
 
-		Face.POOL.add(new Face(null, null, null, null));
+		final Face face = new Face(null, null, null, null);
+		Face.POOL.offer(face);
 		Face pooled = Face.of(v0, v1, v2, v3);
+		assertEquals(face, pooled);
 		assertEquals(v0, pooled.v0);
 		assertEquals(v1, pooled.v1);
 		assertEquals(v2, pooled.v2);
 		assertEquals(v3, pooled.v3);
+	}
+
+	@Test(timeout = 1000)
+	public void iteratorShouldNotBeInfinite() {
+		for (final Vec vertex : new Face(v0, v1, v2, v3).getVertices());
 	}
 
 }

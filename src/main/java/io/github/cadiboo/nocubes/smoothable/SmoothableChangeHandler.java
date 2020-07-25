@@ -1,6 +1,8 @@
 package io.github.cadiboo.nocubes.smoothable;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.BlockState;
+
 
 /**
  * Adding/removing a smoothable needs to send a packet to the server.
@@ -43,42 +45,36 @@ import net.minecraft.block.BlockState;
  */
 public interface SmoothableChangeHandler {
 
-	boolean isSmoothable(BlockState state);
-
-	boolean serverHasNoCubes();
-
-	default void playerRequestedToggleSmoothable(BlockState state) {
-		if (serverHasNoCubes()) {
-			if (isSmoothable(state))
-				sendAddSmoothableRequestToServer(state);
-			else
-				sendRemoveSmoothableRequestToServer(state);
-		} else {
-			// Server doesn't have NoCubes, allow the player to have visuals anyway
-			updateClientSmoothablePreference(state, !isSmoothable(state));
-		}
+	default void addSmoothable(final BlockState state) {
+		NoCubes.smoothableHandler.addSmoothable(state);
 	}
 
-	void sendRemoveSmoothableRequestToServer(BlockState state);
+	default void removeSmoothable(final BlockState state) {
+		NoCubes.smoothableHandler.removeSmoothable(state);
+	}
 
-	void sendAddSmoothableRequestToServer(BlockState state);
+	default boolean isSmoothable(final BlockState state) {
+		return NoCubes.smoothableHandler.isSmoothable(state);
+	}
 
-	default void updateClientSmoothablePreference(BlockState state, boolean newValue) {
+	default void updateSmoothable(BlockState state, boolean newValue) {
 		if (newValue) {
-			addStateToClientWhitelist(state);
-			removeStateFromClientBlacklist(state);
+			addStateToWhitelist(state);
+			removeStateFromBlacklist(state);
+			addSmoothable(state);
 		} else {
-			removeStateFromClientWhitelist(state);
-			addStateToClientBlacklist(state);
+			removeStateFromWhitelist(state);
+			addStateToBlacklist(state);
+			removeSmoothable(state);
 		}
 	}
 
-	void addStateToClientBlacklist(BlockState state);
+	void addStateToBlacklist(BlockState state);
 
-	void removeStateFromClientWhitelist(BlockState state);
+	void removeStateFromWhitelist(BlockState state);
 
-	void removeStateFromClientBlacklist(BlockState state);
+	void removeStateFromBlacklist(BlockState state);
 
-	void addStateToClientWhitelist(BlockState state);
+	void addStateToWhitelist(BlockState state);
 
 }

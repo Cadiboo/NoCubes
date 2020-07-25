@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.smoothable;
 
 import net.minecraft.block.BlockState;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -8,7 +9,7 @@ import java.util.IdentityHashMap;
 /**
  * The in-memory list of smoothables.
  * Shared between client & server in singleplayer.
- * ASM with a hash set fallback.
+ * Uses ASM-added fields with a hash set fallback.
  *
  * @author Cadiboo
  */
@@ -20,6 +21,7 @@ public interface SmoothableHandler {
 			asm.isSmoothable(test);
 			return asm;
 		} catch (Exception e) {
+			LogManager.getLogger().error("Failed to create optimised ASM based handler, falling back to Set implementation", e);
 			return new Set();
 		}
 	}

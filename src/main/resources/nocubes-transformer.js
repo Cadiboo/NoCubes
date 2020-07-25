@@ -1918,7 +1918,7 @@ function wrapWithLogging(transformersObj) {
 	print = function(msg) {
 		if (currentPrintTransformer)
 			msg = "[" + currentPrintTransformer + "]: " + msg;
-		oldPrint(msg);
+		oldPrint("[NoCubes Transformer] " + msg);
 	};
 
 	for (var transformerObjName in transformersObj) {
