@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.FaceList;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
+import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
@@ -116,162 +117,169 @@ public final class OverlayRenderer {
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.getPosition();
 
-		final int maxX = 16;
-		final int maxZ = 16;
+		final int maxX = 32;
+		final int maxY = 32;
+		final int maxZ = 32;
 
 		// Make this mesh centred around the base
 		final int worldXStart = base.getX() - maxX / 2;
+		final int worldYStart = base.getY() - maxY / 2;
 		final int worldZStart = base.getZ() - maxZ / 2;
-		final int y = 3;
 
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
+		final SmoothableHandler handler = NoCubes.smoothableHandler;
 
-		/*
-		 * From Wikipedia:
-		 * Apply a threshold to the 2D field to make a binary image containing:
-		 * - 1 where the data value is above the isovalue
-		 * - 0 where the data value is below the isovalue
-		 */
-		// The area, converted from a BlockState[] to an isSmoothable[]
-		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
+		// Declare up here to save memory
 		boolean[][] binaryField = new boolean[maxZ][maxX];
-		{
-			int i = 0;
-			for (int z = 0; z < maxZ; z++) {
-				for (int x = 0; x < maxX; x++, i++) {
-					pos.setPos(worldXStart + x, y, worldZStart + z);
-					binaryField[z][x] = NoCubes.smoothableHandler.isSmoothable(world.getBlockState(pos));
+
+		for (int y = 0; y < maxY; y++) {
+
+			/*
+			 * From Wikipedia:
+			 * Apply a threshold to the 2D field to make a binary image containing:
+			 * - 1 where the data value is above the isovalue
+			 * - 0 where the data value is below the isovalue
+			 */
+			// The area, converted from a BlockState[] to an isSmoothable[]
+			// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
+			{
+				int i = 0;
+				for (int z = 0; z < maxZ; z++) {
+					for (int x = 0; x < maxX; x++, i++) {
+						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+						binaryField[z][x] = handler.isSmoothable(world.getBlockState(pos));
+					}
 				}
 			}
-		}
 
-		/*
-		 * From Wikipedia:
-		 * Every 2x2 block of pixels in the binary image forms a contouring cell, so the whole image is represented by a grid of such cells (shown in green in the picture below).
-		 * Note that this contouring grid is one cell smaller in each direction than the original 2D field.
-		 */
-		final int cellsMaxX = maxX - 1;
-		final int cellsMaxZ = maxZ - 1;
-		{
-			int i = 0;
-			for (int z = 0; z < cellsMaxZ; z++) {
-				for (int x = 0; x < cellsMaxX; x++, i++) {
-					byte maskNeighborsSmoothable = 0;
-					// For each cell in the contouring grid:
-					// Compose the 4 bits at the corners of the cell to build a binary index: walk around the cell in a clockwise direction appending the bit to the index, using bitwise OR and left-shift, from most significant bit at the top left, to least significant bit at the bottom left.
-					// The resulting 4-bit index can have 16 possible values in the range 0–15.
-					// (0, 0)
-					if (binaryField[z + 0][x + 0])
-						maskNeighborsSmoothable |= 1 << 0;
-					// (0, 1)
-					if (binaryField[z + 0][x + 1])
-						maskNeighborsSmoothable |= 1 << 1;
-					// (1, 1)
-					if (binaryField[z + 1][x + 1])
-						maskNeighborsSmoothable |= 1 << 2;
-					// (1, 0)
-					if (binaryField[z + 1][x + 0])
-						maskNeighborsSmoothable |= 1 << 3;
+			/*
+			 * From Wikipedia:
+			 * Every 2x2 block of pixels in the binary image forms a contouring cell, so the whole image is represented by a grid of such cells (shown in green in the picture below).
+			 * Note that this contouring grid is one cell smaller in each direction than the original 2D field.
+			 */
+			final int cellsMaxX = maxX - 1;
+			final int cellsMaxZ = maxZ - 1;
+			{
+				int i = 0;
+				for (int z = 0; z < cellsMaxZ; z++) {
+					for (int x = 0; x < cellsMaxX; x++, i++) {
+						byte maskNeighborsSmoothable = 0;
+						// For each cell in the contouring grid:
+						// Compose the 4 bits at the corners of the cell to build a binary index: walk around the cell in a clockwise direction appending the bit to the index, using bitwise OR and left-shift, from most significant bit at the top left, to least significant bit at the bottom left.
+						// The resulting 4-bit index can have 16 possible values in the range 0–15.
+						// (0, 0)
+						if (binaryField[z + 0][x + 0])
+							maskNeighborsSmoothable |= 1 << 0;
+						// (0, 1)
+						if (binaryField[z + 0][x + 1])
+							maskNeighborsSmoothable |= 1 << 1;
+						// (1, 1)
+						if (binaryField[z + 1][x + 1])
+							maskNeighborsSmoothable |= 1 << 2;
+						// (1, 0)
+						if (binaryField[z + 1][x + 0])
+							maskNeighborsSmoothable |= 1 << 3;
 
-
-					int wx = worldXStart + x;
-					int wz = worldZStart + z;
-					int wy = y + 1;
-					switch (maskNeighborsSmoothable) {
-						case 0:
-						case 15:
-							break;
-						case 1:
-						case 14: {
-							Vec v1 = Vec.of(wx, wy, wz + 0.5);
-							Vec v0 = Vec.of(wx + 0.5, wy, wz);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 2:
-						case 13: {
-							Vec v0 = Vec.of(wx + 0.5, wy, wz);
-							Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 3:
-						case 12: {
-							Vec v0 = Vec.of(wx, wy, wz + 0.5);
-							Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 4:
-						case 11: {
-							Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
-							Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 5: {
-							{
-								Vec v0 = Vec.of(wx, wy, wz + 0.5);
-								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
-							}
-							{
-								Vec v0 = Vec.of(wx + 0.5, wy, wz);
-								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
-							}
-							break;
-						}
-						case 6:
-						case 9: {
-							Vec v0 = Vec.of(wx + 0.5, wy, wz);
-							Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 7:
-						case 8: {
-							Vec v0 = Vec.of(wx, wy, wz + 0.5);
-							Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-							Vec v2 = Vec.of(v0);
-							Vec v3 = Vec.of(v1);
-							mesh.faces.add(Face.of(v0, v1, v2, v3));
-							break;
-						}
-						case 10: {
-							{
+						double wx = worldXStart + x + 0.5;
+						double wy = worldYStart + y + 1;
+						double wz = worldZStart + z + 0.5;
+						switch (maskNeighborsSmoothable) {
+							case 0:
+							case 15:
+								break;
+							case 1:
+							case 14: {
 								Vec v1 = Vec.of(wx, wy, wz + 0.5);
 								Vec v0 = Vec.of(wx + 0.5, wy, wz);
 								Vec v2 = Vec.of(v0);
 								Vec v3 = Vec.of(v1);
 								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
 							}
-							{
+							case 2:
+							case 13: {
+								Vec v0 = Vec.of(wx + 0.5, wy, wz);
+								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
+								Vec v2 = Vec.of(v0);
+								Vec v3 = Vec.of(v1);
+								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
+							}
+							case 3:
+							case 12: {
+								Vec v0 = Vec.of(wx, wy, wz + 0.5);
+								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
+								Vec v2 = Vec.of(v0);
+								Vec v3 = Vec.of(v1);
+								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
+							}
+							case 4:
+							case 11: {
 								Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
 								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
 								Vec v2 = Vec.of(v0);
 								Vec v3 = Vec.of(v1);
 								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
 							}
-							break;
+							case 5: {
+								{
+									Vec v0 = Vec.of(wx, wy, wz + 0.5);
+									Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
+									Vec v2 = Vec.of(v0);
+									Vec v3 = Vec.of(v1);
+									mesh.faces.add(Face.of(v0, v1, v2, v3));
+								}
+								{
+									Vec v0 = Vec.of(wx + 0.5, wy, wz);
+									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
+									Vec v2 = Vec.of(v0);
+									Vec v3 = Vec.of(v1);
+									mesh.faces.add(Face.of(v0, v1, v2, v3));
+								}
+								break;
+							}
+							case 6:
+							case 9: {
+								Vec v0 = Vec.of(wx + 0.5, wy, wz);
+								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
+								Vec v2 = Vec.of(v0);
+								Vec v3 = Vec.of(v1);
+								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
+							}
+							case 7:
+							case 8: {
+								Vec v0 = Vec.of(wx, wy, wz + 0.5);
+								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
+								Vec v2 = Vec.of(v0);
+								Vec v3 = Vec.of(v1);
+								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								break;
+							}
+							case 10: {
+								{
+									Vec v1 = Vec.of(wx, wy, wz + 0.5);
+									Vec v0 = Vec.of(wx + 0.5, wy, wz);
+									Vec v2 = Vec.of(v0);
+									Vec v3 = Vec.of(v1);
+									mesh.faces.add(Face.of(v0, v1, v2, v3));
+								}
+								{
+									Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
+									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
+									Vec v2 = Vec.of(v0);
+									Vec v3 = Vec.of(v1);
+									mesh.faces.add(Face.of(v0, v1, v2, v3));
+								}
+								break;
+							}
 						}
 					}
 				}
 			}
+
 		}
 
 //		BlockPos.getAllInBoxMutable(base.add(-8, -8, -8), base.add(7, 7, 7)).forEach(blockPos -> {
