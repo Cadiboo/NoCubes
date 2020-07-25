@@ -117,9 +117,9 @@ public final class OverlayRenderer {
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.getPosition();
 
-		final int maxX = 32;
-		final int maxY = 32;
-		final int maxZ = 32;
+		final int maxX = 64;
+		final int maxY = 64;
+		final int maxZ = 64;
 
 		// Make this mesh centred around the base
 		final int worldXStart = base.getX() - maxX / 2;
@@ -181,7 +181,7 @@ public final class OverlayRenderer {
 							maskNeighborsSmoothable |= 1 << 3;
 
 						double wx = worldXStart + x + 0.5;
-						double wy = worldYStart + y + 1;
+						double wy = worldYStart + y;
 						double wz = worldZStart + z + 0.5;
 						switch (maskNeighborsSmoothable) {
 							case 0:
@@ -191,52 +191,40 @@ public final class OverlayRenderer {
 							case 14: {
 								Vec v1 = Vec.of(wx, wy, wz + 0.5);
 								Vec v0 = Vec.of(wx + 0.5, wy, wz);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 2:
 							case 13: {
 								Vec v0 = Vec.of(wx + 0.5, wy, wz);
 								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 3:
 							case 12: {
 								Vec v0 = Vec.of(wx, wy, wz + 0.5);
 								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 4:
 							case 11: {
 								Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
 								Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 5: {
 								{
 									Vec v0 = Vec.of(wx, wy, wz + 0.5);
 									Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-									Vec v2 = Vec.of(v0);
-									Vec v3 = Vec.of(v1);
-									mesh.faces.add(Face.of(v0, v1, v2, v3));
+									mesh.faces.add(toFace(v0, v1));
 								}
 								{
 									Vec v0 = Vec.of(wx + 0.5, wy, wz);
 									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-									Vec v2 = Vec.of(v0);
-									Vec v3 = Vec.of(v1);
-									mesh.faces.add(Face.of(v0, v1, v2, v3));
+									mesh.faces.add(toFace(v0, v1));
 								}
 								break;
 							}
@@ -244,33 +232,27 @@ public final class OverlayRenderer {
 							case 9: {
 								Vec v0 = Vec.of(wx + 0.5, wy, wz);
 								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 7:
 							case 8: {
 								Vec v0 = Vec.of(wx, wy, wz + 0.5);
 								Vec v1 = Vec.of(wx + 0.5, wy, wz + 1);
-								Vec v2 = Vec.of(v0);
-								Vec v3 = Vec.of(v1);
-								mesh.faces.add(Face.of(v0, v1, v2, v3));
+								mesh.faces.add(toFace(v0, v1));
 								break;
 							}
 							case 10: {
 								{
 									Vec v1 = Vec.of(wx, wy, wz + 0.5);
 									Vec v0 = Vec.of(wx + 0.5, wy, wz);
-									Vec v2 = Vec.of(v0);
-									Vec v3 = Vec.of(v1);
-									mesh.faces.add(Face.of(v0, v1, v2, v3));
+									mesh.faces.add(toFace(v0, v1));
 								}
 								{
 									Vec v0 = Vec.of(wx + 0.5, wy, wz + 1);
 									Vec v1 = Vec.of(wx + 1, wy, wz + 0.5);
-									Vec v2 = Vec.of(v0);
-									Vec v3 = Vec.of(v1);
+									Vec v2 = Vec.of(wx + 1, wy + 1, wz + 0.5);
+									Vec v3 = Vec.of(wx + 0.5, wy + 1, wz + 1);
 									mesh.faces.add(Face.of(v0, v1, v2, v3));
 								}
 								break;
@@ -356,6 +338,14 @@ public final class OverlayRenderer {
 //		mesh.faces.add(Face.of(v0, v1, v2, v3));
 
 		return mesh;
+	}
+
+	private static Face toFace(final Vec v0, final Vec v1) {
+		Vec v2 = Vec.of(v1);
+		v2.y += 1;
+		Vec v3 = Vec.of(v0);
+		v3.y += 1;
+		return Face.of(v0, v1, v2, v3);
 	}
 
 }
