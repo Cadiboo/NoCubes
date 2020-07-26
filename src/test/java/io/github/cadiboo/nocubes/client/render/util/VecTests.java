@@ -28,7 +28,7 @@ public class VecTests {
 	}
 
 	@Test
-	public void t2() {
+	public void poolSanityCheck() {
 		int max = 3000;
 		for (int i = 0; i < max; i++) {
 			int x = 0;
@@ -57,6 +57,24 @@ public class VecTests {
 			assertNotEquals(v0.z, v2.z, 0);
 			assertNotEquals(v0.z, v3.z, 0);
 		}
+	}
+
+	@Test
+	public void offsetSanityCheck() {
+		final int x = -1;
+		final int y = -2;
+		final int z = -3;
+		final Vec vec = new Vec(x, y, z);
+		assertEquals(vec.x, x, 0);
+		assertEquals(vec.y, y, 0);
+		assertEquals(vec.z, z, 0);
+		final int offsetX = 3;
+		final int offsetY = 11;
+		final int offsetZ = 23;
+		vec.addOffset(offsetX, offsetY, offsetZ);
+		assertEquals(vec.x, x + offsetX, 0);
+		assertEquals(vec.y, y + offsetY, 0);
+		assertEquals(vec.z, z + offsetZ, 0);
 	}
 
 }

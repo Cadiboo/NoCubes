@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.KeybindHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.Hooks;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import net.minecraft.block.Block;
@@ -15,6 +16,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLLoader;
 
 /**
  * @author Cadiboo
@@ -33,6 +35,7 @@ public final class NoCubes {
 		FMLJavaModLoadingContext.get().getModEventBus().register(this);
 //		ModLoadingContext.get().getActiveContainer().
 //		MinecraftForge.EVENT_BUS.register(this);
+		Hooks.loadClasses(FMLLoader.getDist());
 	}
 
 	/**

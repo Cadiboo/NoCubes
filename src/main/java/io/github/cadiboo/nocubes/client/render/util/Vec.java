@@ -37,6 +37,13 @@ public class Vec implements Closeable {
 		return new Vec(x, y, z);
 	}
 
+	public Vec addOffset(double x, double y, double z) {
+		this.x += x;
+		this.y += y;
+		this.z += z;
+		return this;
+	}
+
 	@Override
 	public void close() {
 		POOL.offer(this);

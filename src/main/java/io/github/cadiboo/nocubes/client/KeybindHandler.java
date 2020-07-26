@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import javafx.util.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -32,9 +33,15 @@ public class KeybindHandler {
 		keybinds.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, this::toggleVisuals));
 	}
 
+	private static void reloadAllChunks(Minecraft minecraft) {
+		WorldRenderer worldRenderer = minecraft.worldRenderer;
+		if (worldRenderer != null)
+			worldRenderer.loadRenderers();
+	}
+
 	private void toggleVisuals() {
-//		NoCubesConfig.
-		System.out.println("toggleVisuals");
+		NoCubesConfig.Client.render = !NoCubesConfig.Client.render;
+		reloadAllChunks(Minecraft.getInstance());
 	}
 
 	private Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
@@ -51,14 +58,15 @@ public class KeybindHandler {
 		BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
 		BlockState state = world.getBlockState(lookingAtBlock.getPos());
 		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
-		System.out.println("toggleLookedAtSmoothable to " + newValue + " for " +BlockStateConverter.toString(state));
+		System.out.println("toggleLookedAtSmoothable to " + newValue + " for " + BlockStateConverter.toString(state));
 		boolean singleplayer = minecraft.isSingleplayer() && !minecraft.getIntegratedServer().getPublic();
 		if (singleplayer || !NoCubesNetwork.currentServerHasNoCubes) {
 			// Either we're in singleplayer or the server doesn't have NoCubes
 			// Allow the player to have visuals
 			NoCubesConfig.Client.updateSmoothablePreference(newValue, state);
+			reloadAllChunks(minecraft);
 		}
-		if (singleplayer || NoCubesNetwork.currentServerHasNoCubes){
+		if (singleplayer || NoCubesNetwork.currentServerHasNoCubes) {
 			// We're on a server with NoCubes installed
 			if (!minecraft.player.hasPermissionLevel(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL))
 				// Not enough permission, don't send packet that will be denied
