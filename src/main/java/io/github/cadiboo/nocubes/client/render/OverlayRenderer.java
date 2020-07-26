@@ -6,13 +6,19 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.FaceList;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
@@ -101,6 +107,42 @@ public final class OverlayRenderer {
 			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
 			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
 			bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+		}
+
+		RayTraceResult lookingAt = minecraft.objectMouseOver;
+		if (NoCubesConfig.Client.render && lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK) {
+			BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
+			BlockPos lookingAtPos = lookingAtBlock.getPos();
+			BlockState state = world.getBlockState(lookingAtPos);
+			if (NoCubes.smoothableHandler.isSmoothable(state)) {
+				final int x = lookingAtPos.getX();
+				final int y = lookingAtPos.getY();
+				final int z = lookingAtPos.getZ();
+				SurfaceNets.generate(
+					x, y, z,
+					1, 1, 1,
+					world, NoCubes.smoothableHandler::isSmoothable,
+					(pos, face) -> {
+						Vec v0 = face.v0.addOffset(x, y, z);
+						Vec v1 = face.v1.addOffset(x, y, z);
+						Vec v2 = face.v2.addOffset(x, y, z);
+						Vec v3 = face.v3.addOffset(x, y, z);
+						final float red = 1F;
+						final float blue = 1F;
+						final float green = 1F;
+						final float alpha = 1F;
+						bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
+						bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+						return true;
+					}
+				);
+			}
 		}
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
