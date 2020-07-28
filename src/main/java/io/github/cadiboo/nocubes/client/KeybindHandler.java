@@ -13,8 +13,10 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
 
@@ -24,13 +26,14 @@ import java.util.List;
 /**
  * @author Cadiboo
  */
+@Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = Dist.CLIENT)
 public class KeybindHandler {
 
-	private final List<Pair<KeyBinding, Runnable>> keybinds = new LinkedList<>();
+	private static final List<Pair<KeyBinding, Runnable>> keybinds = new LinkedList<>();
 
-	public KeybindHandler() {
-		keybinds.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, this::toggleLookedAtSmoothable));
-		keybinds.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, this::toggleVisuals));
+	static {
+		keybinds.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
+		keybinds.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
 	}
 
 	private static void reloadAllChunks(Minecraft minecraft) {
@@ -39,17 +42,17 @@ public class KeybindHandler {
 			worldRenderer.loadRenderers();
 	}
 
-	private void toggleVisuals() {
+	private static void toggleVisuals() {
 		NoCubesConfig.Client.render = !NoCubesConfig.Client.render;
 		reloadAllChunks(Minecraft.getInstance());
 	}
 
-	private Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
+	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
 		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
 		return Pair.of(keyBinding, action);
 	}
 
-	private void toggleLookedAtSmoothable() {
+	private static void toggleLookedAtSmoothable() {
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientWorld world = minecraft.world;
 		RayTraceResult lookingAt = minecraft.objectMouseOver;
@@ -77,7 +80,7 @@ public class KeybindHandler {
 	}
 
 	@SubscribeEvent
-	public void onClientTickEvent(TickEvent.ClientTickEvent event) {
+	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
 		if (event.phase != TickEvent.Phase.END)
 			return;
 		for (Pair<KeyBinding, Runnable> keybind : keybinds)
