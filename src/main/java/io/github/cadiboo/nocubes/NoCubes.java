@@ -57,18 +57,4 @@ public final class NoCubes {
 //			smoothableHandler.addSmoothable(state);
 	}
 
-	@SubscribeEvent
-	public void onFMLServerStoppedEvent(FMLServerStoppedEvent event) {
-//		ServerSmoothableChangeHandler.IN = null;
-	}
-
-	@SubscribeEvent
-	public void onFMLServerAboutToStartEvent(FMLServerAboutToStartEvent event) {
-	}
-
-	@SubscribeEvent
-	public void onFMLClientSetupEvent(FMLClientSetupEvent event) {
-		MinecraftForge.EVENT_BUS.register(new KeybindHandler());
-	}
-
 }
