@@ -6,7 +6,6 @@ import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.ServerSmoothableChangeHandler;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import javafx.util.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -16,6 +15,7 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.LinkedList;
@@ -46,7 +46,7 @@ public class KeybindHandler {
 
 	private Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
 		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
-		return new Pair<>(keyBinding, action);
+		return Pair.of(keyBinding, action);
 	}
 
 	private void toggleLookedAtSmoothable() {

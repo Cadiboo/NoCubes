@@ -20,6 +20,7 @@ public interface BlockStateConverter {
 	BlockStateArgument PARSER = new BlockStateArgument();
 
 	static BlockState fromId(int id) {
+		@SuppressWarnings("deprecation")
 		BlockState state = Block.BLOCK_STATE_IDS.getByValue(id);
 		if (state == null)
 			throw new IllegalStateException("Unknown blockstate id" + id);
@@ -27,6 +28,7 @@ public interface BlockStateConverter {
 	}
 
 	static int toId(BlockState state) {
+		@SuppressWarnings("deprecation")
 		int id = Block.BLOCK_STATE_IDS.get(state);
 		if (id == -1)
 			throw new IllegalStateException("Unknown blockstate " + state);
