@@ -26,7 +26,7 @@ public final class NoCubes {
 		smoothableHandler = SmoothableHandler.create(Blocks.STONE.getDefaultState());
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
-		FMLJavaModLoadingContext.get().getModEventBus().register(this);
+		TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
 //		ModLoadingContext.get().getActiveContainer().
 //		MinecraftForge.EVENT_BUS.register(this);
 		Hooks.loadClasses(FMLLoader.getDist());
