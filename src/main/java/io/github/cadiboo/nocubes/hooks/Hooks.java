@@ -26,7 +26,7 @@ import static net.minecraft.block.AbstractBlock.AbstractBlockState;
 public final class Hooks {
 
 	/**
-	 * Called from: {@link RebuildTask} right before the BlockPos.getAllInBoxMutable iteration
+	 * Called from: {@link RebuildTask#compile} right before the BlockPos.getAllInBoxMutable iteration
 //	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
 	 * Calls: MeshRenderer.renderChunk to render smooth terrain
 	 */
@@ -36,7 +36,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: ChunkRender#rebuildChunk right before BlockState#getRenderType is called
+	 * Called from: {@link RebuildTask#compile} right before BlockState#getRenderType is called
 	 * Calls: Nothing
 	 * Disables vanilla rendering for smoothable BlockStates
 	 *
@@ -56,7 +56,7 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link AbstractBlockState#isSolid()} before any other logic.
-	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
+//	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
 	 */
 //	@OnlyIn(Dist.CLIENT)
 	public static boolean isSolidCheck(BlockState state) {
