@@ -171,18 +171,22 @@ public class SurfaceNets {
 						final Face face;
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0)
+							// Traditionally ([m], [m - dv], [m - du - dv], [m - du])
+							// but minecraft to expects a different orientation
 							face = Face.of(
-								Vec.of(vertices.get(buffer[m])),
-								Vec.of(vertices.get(buffer[m - dv])),
 								Vec.of(vertices.get(buffer[m - du - dv])),
-								Vec.of(vertices.get(buffer[m - du]))
+								Vec.of(vertices.get(buffer[m - du])),
+								Vec.of(vertices.get(buffer[m])),
+								Vec.of(vertices.get(buffer[m - dv]))
 							);
 						else
+							// Traditionally ([m], [m - du], [m - du - dv], [m - dv])
+							// but minecraft to expects a different orientation
 							face = Face.of(
-								Vec.of(vertices.get(buffer[m])),
-								Vec.of(vertices.get(buffer[m - du])),
 								Vec.of(vertices.get(buffer[m - du - dv])),
-								Vec.of(vertices.get(buffer[m - dv]))
+								Vec.of(vertices.get(buffer[m - dv])),
+								Vec.of(vertices.get(buffer[m])),
+								Vec.of(vertices.get(buffer[m - du]))
 							);
 						pos.setPos(worldXStart, worldYStart, worldZStart);
 						pos.move(x, y, z);
