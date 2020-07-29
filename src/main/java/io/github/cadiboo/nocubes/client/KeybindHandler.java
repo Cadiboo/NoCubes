@@ -29,11 +29,11 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = Dist.CLIENT)
 public class KeybindHandler {
 
-	private static final List<Pair<KeyBinding, Runnable>> keybinds = new LinkedList<>();
+	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
 
 	static {
-		keybinds.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
-		keybinds.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
+		KEYBINDS.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
+		KEYBINDS.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
 	}
 
 	private static void reloadAllChunks(Minecraft minecraft) {
@@ -83,7 +83,7 @@ public class KeybindHandler {
 	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
 		if (event.phase != TickEvent.Phase.END)
 			return;
-		for (Pair<KeyBinding, Runnable> keybind : keybinds)
+		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
 			if (keybind.getKey().isPressed())
 				keybind.getValue().run();
 	}

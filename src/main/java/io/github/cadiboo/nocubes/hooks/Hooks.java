@@ -86,7 +86,7 @@ public final class Hooks {
 		loadClass("net.minecraft.block.BlockState");
 		if (dist.isClient()) {
 			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
-		} else {
+//		} else {
 
 		}
 	}
