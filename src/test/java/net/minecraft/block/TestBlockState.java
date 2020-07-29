@@ -3,9 +3,7 @@ package net.minecraft.block;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.state.Property;
-import sun.misc.Unsafe;
-
-import java.lang.reflect.Field;
+import org.mockito.Mockito;
 
 /**
  * Just until I get a mocking library.
@@ -19,14 +17,7 @@ public class TestBlockState extends BlockState {
 	}
 
 	public static TestBlockState create() {
-		try {
-			final Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-			theUnsafe.setAccessible(true);
-			Unsafe unsafe = (Unsafe) theUnsafe.get(null);
-			return (TestBlockState) unsafe.allocateInstance(TestBlockState.class);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+		return Mockito.mock(TestBlockState.class);
 	}
 
 }
