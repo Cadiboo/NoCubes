@@ -14,7 +14,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -50,7 +49,7 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		if (cache == null || world.getGameTime() % 20 == 0) {
+		if (cache == null || world.getGameTime() % 5 == 0) {
 			if (cache != null) {
 				final FaceList faces = cache.faces;
 				for (final Face face : faces) {
@@ -107,6 +106,53 @@ public final class OverlayRenderer {
 			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
 			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
 			bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+
+			// Normals
+			Vec n0 = Vec.normal(v3, v0, v1);
+			Vec n1 = Vec.normal(v0, v1, v2);
+			Vec n2 = Vec.normal(v1, v2, v3);
+			Vec n3 = Vec.normal(v2, v3, v0);
+			final float mul = -0.25F;
+			{
+				Vec n = n0;
+				Vec v = v0;
+				float nx = (float) (n.x) * mul;
+				float ny = (float) (n.y) * mul;
+				float nz = (float) (n.z) * mul;
+				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				n.close();
+			}
+			{
+				Vec n = n1;
+				Vec v = v1;
+				float nx = (float) (n.x) * mul;
+				float ny = (float) (n.y) * mul;
+				float nz = (float) (n.z) * mul;
+				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				n.close();
+			}
+			{
+				Vec n = n2;
+				Vec v = v2;
+				float nx = (float) (n.x) * mul;
+				float ny = (float) (n.y) * mul;
+				float nz = (float) (n.z) * mul;
+				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				n.close();
+			}
+			{
+				Vec n = n3;
+				Vec v = v3;
+				float nx = (float) (n.x) * mul;
+				float ny = (float) (n.y) * mul;
+				float nz = (float) (n.z) * mul;
+				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+				n.close();
+			}
 		}
 
 		RayTraceResult lookingAt = minecraft.objectMouseOver;
@@ -123,10 +169,10 @@ public final class OverlayRenderer {
 					1, 1, 1,
 					world, NoCubes.smoothableHandler::isSmoothable,
 					(pos, face) -> {
-						Vec v0 = face.v0.addOffset(x, y, z);
-						Vec v1 = face.v1.addOffset(x, y, z);
-						Vec v2 = face.v2.addOffset(x, y, z);
-						Vec v3 = face.v3.addOffset(x, y, z);
+						Vec v0 = face.v0.add(x, y, z);
+						Vec v1 = face.v1.add(x, y, z);
+						Vec v2 = face.v2.add(x, y, z);
+						Vec v3 = face.v3.add(x, y, z);
 						final float red = 1F;
 						final float blue = 1F;
 						final float green = 1F;
@@ -160,11 +206,11 @@ public final class OverlayRenderer {
 	private static Mesh makeMesh(final World world, final Entity viewer) {
 		final Mesh mesh = new Mesh();
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
-		BlockPos base = viewer.getPosition();
+		BlockPos base = viewer.getPosition().add(0, 2, 0);
 
-		final int meshSizeX = 4;
-		final int meshSizeY = 4;
-		final int meshSizeZ = 4;
+		final int meshSizeX = 16;
+		final int meshSizeY = 16;
+		final int meshSizeZ = 16;
 
 		// Make this mesh centred around the base
 		final int startX = base.getX() - meshSizeX / 2;
@@ -176,10 +222,10 @@ public final class OverlayRenderer {
 			meshSizeX, meshSizeY, meshSizeZ,
 			viewer.world, NoCubes.smoothableHandler::isSmoothable,
 			(pos, face) -> mesh.faces.add(Face.of(
-				Vec.of(face.v0.addOffset(startX, startY, startZ)),
-				Vec.of(face.v1.addOffset(startX, startY, startZ)),
-				Vec.of(face.v2.addOffset(startX, startY, startZ)),
-				Vec.of(face.v3.addOffset(startX, startY, startZ))
+				Vec.of(face.v0.add(startX, startY, startZ)),
+				Vec.of(face.v1.add(startX, startY, startZ)),
+				Vec.of(face.v2.add(startX, startY, startZ)),
+				Vec.of(face.v3.add(startX, startY, startZ))
 			))
 		);
 

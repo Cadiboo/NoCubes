@@ -71,7 +71,7 @@ public class VecTests {
 		final int offsetX = 3;
 		final int offsetY = 11;
 		final int offsetZ = 23;
-		vec.addOffset(offsetX, offsetY, offsetZ);
+		vec.add(offsetX, offsetY, offsetZ);
 		assertEquals(vec.x, x + offsetX, 0);
 		assertEquals(vec.y, y + offsetY, 0);
 		assertEquals(vec.z, z + offsetZ, 0);

@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
@@ -36,32 +37,60 @@ public class MeshRenderer {
 				blockpos.getX(), blockpos.getY(), blockpos.getZ(),
 				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable,
 				(pos, face) -> {
+					final Vec v0 = face.v0;
+					final Vec v1 = face.v1;
+					final Vec v2 = face.v2;
+					final Vec v3 = face.v3;
 					final SmoothableHandler handler = NoCubes.smoothableHandler;
-					float nx = (float) (face.v0.y * face.v1.z - face.v0.z * face.v1.y);
-					float ny = (float) (face.v0.z * face.v1.x - face.v0.x * face.v1.z);
-					float nz = (float) (face.v0.x * face.v1.y - face.v0.y * face.v1.x);
+					// V0's normal
+					final Vec n0 = Vec.normal(v3, v0, v1);
+					float nx = 1F - (float) n0.x;
+					float ny = 1F - (float) n0.y;
+					float nz = 1F - (float) n0.z;
+					n0.close();
 
-//					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
-//						net.minecraftforge.client.model.data.IModelData modelData = getModelData(pos);
-//						BlockState bs = Blocks.SCAFFOLDING.getDefaultState();
-//						if (bs.getRenderType() != BlockRenderType.INVISIBLE && RenderTypeLookup.canRenderInLayer(bs, rendertype)) {
-//							RenderType rendertype1 = rendertype;
-//							BufferBuilder bufferbuilder2 = builderIn.getBuilder(rendertype1);
-//							if (compiledChunkIn.layersStarted.add(rendertype1)) {
-//								ChunkRender.this.beginLayer(bufferbuilder2);
-//							}
-//
-//							matrixstack.push();
-//							matrixstack.translate((double) (pos.getX() & 15), (double) (pos.getY() & 15), (double) (pos.getZ() & 15));
-//							if (blockrendererdispatcher.renderModel(bs, pos, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
-//								compiledChunkIn.empty = false;
-//								compiledChunkIn.layersUsed.add(rendertype1);
-//							}
-//
-//							matrixstack.pop();
-//						}
-//					}
-//					net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+					final Direction direction;
+					// North: negative Z
+					// East: positive X
+					// South: positive Z
+					// West: negative X
+					float nm = Math.max(Math.max(Math.abs(nx), Math.abs(ny)), Math.abs(nz));
+					if (nm == Math.abs(nx))
+						direction = nm > 0 ? Direction.EAST : Direction.WEST;
+					else if (nm == Math.abs(ny))
+						direction = nm > 0 ? Direction.UP : Direction.DOWN;
+					else if (nm == Math.abs(nz))
+						direction = nm > 0 ? Direction.SOUTH : Direction.NORTH;
+					else
+						throw new IllegalStateException("Could not find a direction from the normal, wtf???");
+
+					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
+						if (pos.getX() > blockpos.getX() - 2 || pos.getX() > blockpos.getX() + 17)
+							continue;
+						if (pos.getY() > blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
+							continue;
+						if (pos.getY() > blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
+							continue;
+						net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
+						BlockState bs = Blocks.SCAFFOLDING.getDefaultState();
+						if (bs.getRenderType() != BlockRenderType.INVISIBLE && RenderTypeLookup.canRenderInLayer(bs, rendertype)) {
+							RenderType rendertype1 = rendertype;
+							BufferBuilder bufferbuilder2 = builderIn.getBuilder(rendertype1);
+							if (compiledChunkIn.layersStarted.add(rendertype1)) {
+								chunkRender.beginLayer(bufferbuilder2);
+							}
+
+							matrixstack.push();
+							matrixstack.translate((double) (pos.getX() & 15), (double) (pos.getY() & 15), (double) (pos.getZ() & 15));
+							if (blockrendererdispatcher.renderModel(bs, pos, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
+								compiledChunkIn.empty = false;
+								compiledChunkIn.layersUsed.add(rendertype1);
+							}
+
+							matrixstack.pop();
+						}
+					}
+					net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 
 					BlockState blockstate = chunkrendercache.getBlockState(pos);
 					// Vertices can generate at positions different to the position of the block they are for
@@ -72,11 +101,11 @@ public class MeshRenderer {
 						int x = pos.getX();
 						int y = pos.getY();
 						int z = pos.getZ();
-						blockstate = chunkrendercache.getBlockState(pos.setPos(x, y + 1,  z)); // UP
+						blockstate = chunkrendercache.getBlockState(pos.setPos(x, y + 1, z)); // UP
 						if (!handler.isSmoothable(blockstate) || blockstate.isAir(chunkrendercache, pos))
 							blockstate = chunkrendercache.getBlockState(pos.setPos(x + 1, y, z)); // EAST
 						if (!handler.isSmoothable(blockstate) || blockstate.isAir(chunkrendercache, pos))
-							blockstate = chunkrendercache.getBlockState(pos.setPos(x , y, z+ 1)); // SOUTH
+							blockstate = chunkrendercache.getBlockState(pos.setPos(x, y, z + 1)); // SOUTH
 						if (!handler.isSmoothable(blockstate) || blockstate.isAir(chunkrendercache, pos)) {
 							// Give up
 							blockstate = Blocks.SCAFFOLDING.getDefaultState();
@@ -99,7 +128,6 @@ public class MeshRenderer {
 						matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
 
 						IBakedModel modelIn = blockrendererdispatcher.getModelForState(blockstate);
-						Direction direction = Direction.UP;
 						int light = WorldRenderer.getPackedLightmapCoords(chunkrendercache, blockstate, pos.offset(direction));
 						random.setSeed(rand);
 						List<BakedQuad> quads = modelIn.getQuads(blockstate, direction, random, modelData);
@@ -119,10 +147,10 @@ public class MeshRenderer {
 							final float v2v = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
 							final float v3u = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
 							final float v3v = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
-							bufferbuilder.pos(face.v0.x, face.v0.y, face.v0.z).color(1.0F, 1, 1, 1).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(face.v1.x, face.v1.y, face.v1.z).color(1.0F, 1, 1, 1).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(face.v2.x, face.v2.y, face.v2.z).color(1.0F, 1, 1, 1).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(face.v3.x, face.v3.y, face.v3.z).color(1.0F, 1, 1, 1).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1.0F, 1, 1, 1).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1.0F, 1, 1, 1).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1.0F, 1, 1, 1).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1.0F, 1, 1, 1).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
 						}
 
 						if (true) {

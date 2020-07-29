@@ -37,11 +37,42 @@ public class Vec implements Closeable {
 		return new Vec(x, y, z);
 	}
 
-	public Vec addOffset(double x, double y, double z) {
+	public Vec add(double x, double y, double z) {
 		this.x += x;
 		this.y += y;
 		this.z += z;
 		return this;
+	}
+
+	public Vec add(Vec vec) {
+		return add(vec.x, vec.y, vec.z);
+	}
+
+	public Vec subtract(double x, double y, double z) {
+		this.x -= x;
+		this.y -= y;
+		this.z -= z;
+		return this;
+	}
+
+	public Vec subtract(Vec vec) {
+		return subtract(vec.x, vec.y, vec.z);
+	}
+
+	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace) {
+		Vec first = of(prevVecInFace).subtract(vec);
+		Vec second = of(nextVecInFace).subtract(vec);
+		Vec res = first.cross(second);
+		second.close();
+		return res;
+	}
+
+	public Vec cross(Vec vec) {
+		return of(
+			this.y * vec.z - this.z * vec.y,
+			this.z * vec.x - this.x * vec.z,
+			this.x * vec.y - this.y * vec.x
+		);
 	}
 
 	@Override
