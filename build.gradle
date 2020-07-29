@@ -100,6 +100,26 @@ minecraft {
 			}
 		}
 
+		integrationTestingServer {
+			workingDirectory project.file('run/server')
+			setForceExit(false)
+
+			// Recommended logging data for a userdev environment
+			property 'forge.logging.markers', 'XFORM'
+
+			// Recommended logging level for the console
+			property 'forge.logging.console.level', 'debug'
+
+			mods {
+				nocubes {
+					// Main sources (everything that goes in your final compiled mod. From /src/main/)
+					source sourceSets.main
+					// Test sources (debugging, unit tests. From /src/test/)
+					source sourceSets.test
+				}
+			}
+		}
+
 		data {
 			workingDirectory project.file('run')
 
