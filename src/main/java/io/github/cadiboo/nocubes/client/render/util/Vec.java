@@ -1,5 +1,8 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Vector3d;
+
 import java.io.Closeable;
 
 /**
@@ -59,12 +62,38 @@ public class Vec implements Closeable {
 		return subtract(vec.x, vec.y, vec.z);
 	}
 
+	public Vec multiply(double x, double y, double z) {
+		this.x *= x;
+		this.y *= y;
+		this.z *= z;
+		return this;
+	}
+
+	public Vec multiply(double d) {
+		return multiply(d, d, d);
+	}
+
+	public Vec multiply(Vec vec) {
+		return multiply(vec.x, vec.y, vec.z);
+	}
+
+	public Vec normalise() {
+		double length = MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+		if (length < 0.0001)
+			// Zero vector, everything is already zero
+			return this;
+		this.x /= length;
+		this.y /= length;
+		this.z /= length;
+		return this;
+	}
+
 	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace) {
 		Vec first = of(prevVecInFace).subtract(vec);
 		Vec second = of(nextVecInFace).subtract(vec);
 		Vec res = first.cross(second);
 		second.close();
-		return res;
+		return res.normalise();
 	}
 
 	public Vec cross(Vec vec) {

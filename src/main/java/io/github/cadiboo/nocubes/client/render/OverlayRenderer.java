@@ -14,7 +14,9 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -23,6 +25,7 @@ import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.DrawHighlightEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -34,6 +37,60 @@ import net.minecraftforge.fml.common.Mod;
 public final class OverlayRenderer {
 
 	static Mesh cache;
+
+	@SubscribeEvent
+	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
+		if (!NoCubesConfig.Client.render)
+			return;
+		final ClientWorld world = Minecraft.getInstance().world;
+		if (world == null)
+			return;
+		final BlockPos lookingAtPos = event.getTarget().getPos();
+		final BlockState state = world.getBlockState(lookingAtPos);
+		if (!NoCubes.smoothableHandler.isSmoothable(state))
+			return;
+
+		event.setCanceled(true);
+
+		final Vector3d projectedView = event.getInfo().getProjectedView();
+		final double d0 = projectedView.getX();
+		final double d1 = projectedView.getY();
+		final double d2 = projectedView.getZ();
+		final Matrix4f matrix4f = event.getMatrix().getLast().getMatrix();
+		final IVertexBuilder bufferBuilder = event.getBuffers().getBuffer(RenderType.getLines());
+
+		final int x = lookingAtPos.getX();
+		final int y = lookingAtPos.getY();
+		final int z = lookingAtPos.getZ();
+		SurfaceNets.generate(
+			x, y, z,
+			1, 1, 1,
+			world, NoCubes.smoothableHandler::isSmoothable,
+			(pos, face) -> {
+				Vec v0 = face.v0.add(x, y, z);
+				Vec v1 = face.v1.add(x, y, z);
+				Vec v2 = face.v2.add(x, y, z);
+				Vec v3 = face.v3.add(x, y, z);
+//				final float red = 1F;
+//				final float blue = 1F;
+//				final float green = 1F;
+//				final float alpha = 1F;
+				final float red = 0F;
+				final float blue = 0F;
+				final float green = 0F;
+				final float alpha = 0.4F;
+				bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+				return true;
+			}
+		);
+	}
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
@@ -108,17 +165,38 @@ public final class OverlayRenderer {
 			bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
 
 			// Normals
-			Vec n0 = Vec.normal(v3, v0, v1);
-			Vec n1 = Vec.normal(v0, v1, v2);
-			Vec n2 = Vec.normal(v1, v2, v3);
-			Vec n3 = Vec.normal(v2, v3, v0);
-			final float mul = -0.25F;
+			Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
+			Vec n1 = Vec.normal(v0, v1, v2).multiply(-1);
+			Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
+			Vec n3 = Vec.normal(v2, v3, v0).multiply(-1);
+
+			final Vec nAverage = Vec.of(
+				(n0.x + n2.x) / 2,
+				(n0.y + n2.y) / 2,
+				(n0.z + n2.z) / 2
+			);
+
+			final Direction direction = MeshRenderer.getDirectionFromNormal(nAverage);
+			nAverage.close();
+
+			Vec centre = Vec.of(
+				(v0.x + v1.x + v2.x + v3.x) / 4,
+				(v0.y + v1.y + v2.y + v3.y) / 4,
+				(v0.z + v1.z + v2.z + v3.z) / 4
+			);
+			bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+			final float dirMul = 0.125F;
+			bufferBuilder.pos(matrix4f, (float) (centre.x + direction.getXOffset() * dirMul + -d0), (float) (centre.y + direction.getYOffset() * dirMul + -d1), (float) (centre.z + direction.getZOffset() * dirMul + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+			centre.close();
+
+
+			final float normMul = 0.0625F;
 			{
 				Vec n = n0;
 				Vec v = v0;
-				float nx = (float) (n.x) * mul;
-				float ny = (float) (n.y) * mul;
-				float nz = (float) (n.z) * mul;
+				float nx = (float) (n.x) * normMul;
+				float ny = (float) (n.y) * normMul;
+				float nz = (float) (n.z) * normMul;
 				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				n.close();
@@ -126,9 +204,9 @@ public final class OverlayRenderer {
 			{
 				Vec n = n1;
 				Vec v = v1;
-				float nx = (float) (n.x) * mul;
-				float ny = (float) (n.y) * mul;
-				float nz = (float) (n.z) * mul;
+				float nx = (float) (n.x) * normMul;
+				float ny = (float) (n.y) * normMul;
+				float nz = (float) (n.z) * normMul;
 				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				n.close();
@@ -136,9 +214,9 @@ public final class OverlayRenderer {
 			{
 				Vec n = n2;
 				Vec v = v2;
-				float nx = (float) (n.x) * mul;
-				float ny = (float) (n.y) * mul;
-				float nz = (float) (n.z) * mul;
+				float nx = (float) (n.x) * normMul;
+				float ny = (float) (n.y) * normMul;
+				float nz = (float) (n.z) * normMul;
 				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				n.close();
@@ -146,48 +224,12 @@ public final class OverlayRenderer {
 			{
 				Vec n = n3;
 				Vec v = v3;
-				float nx = (float) (n.x) * mul;
-				float ny = (float) (n.y) * mul;
-				float nz = (float) (n.z) * mul;
+				float nx = (float) (n.x) * normMul;
+				float ny = (float) (n.y) * normMul;
+				float nz = (float) (n.z) * normMul;
 				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				n.close();
-			}
-		}
-
-		RayTraceResult lookingAt = minecraft.objectMouseOver;
-		if (NoCubesConfig.Client.render && lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK) {
-			BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
-			BlockPos lookingAtPos = lookingAtBlock.getPos();
-			BlockState state = world.getBlockState(lookingAtPos);
-			if (NoCubes.smoothableHandler.isSmoothable(state)) {
-				final int x = lookingAtPos.getX();
-				final int y = lookingAtPos.getY();
-				final int z = lookingAtPos.getZ();
-				SurfaceNets.generate(
-					x, y, z,
-					1, 1, 1,
-					world, NoCubes.smoothableHandler::isSmoothable,
-					(pos, face) -> {
-						Vec v0 = face.v0.add(x, y, z);
-						Vec v1 = face.v1.add(x, y, z);
-						Vec v2 = face.v2.add(x, y, z);
-						Vec v3 = face.v3.add(x, y, z);
-						final float red = 1F;
-						final float blue = 1F;
-						final float green = 1F;
-						final float alpha = 1F;
-						bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-						bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-						return true;
-					}
-				);
 			}
 		}
 
