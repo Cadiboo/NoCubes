@@ -101,23 +101,10 @@ minecraft {
 		}
 
 		integrationTestingServer {
-			workingDirectory project.file('run/server')
+			parent server
+			main 'net.minecraftforge.userdev.LaunchTesting'
+			property 'nocubes.testing.integration', 'true'
 			setForceExit(false)
-
-			// Recommended logging data for a userdev environment
-			property 'forge.logging.markers', 'XFORM'
-
-			// Recommended logging level for the console
-			property 'forge.logging.console.level', 'debug'
-
-			mods {
-				nocubes {
-					// Main sources (everything that goes in your final compiled mod. From /src/main/)
-					source sourceSets.main
-					// Test sources (debugging, unit tests. From /src/test/)
-					source sourceSets.test
-				}
-			}
 		}
 
 		data {
