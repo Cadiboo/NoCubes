@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 
 import java.io.Closeable;
@@ -94,6 +95,21 @@ public class Vec implements Closeable {
 		Vec res = first.cross(second);
 		second.close();
 		return res.normalise();
+	}
+
+	/**
+	 * Copied from {@link net.minecraft.util.math.vector.Vector4f#transform(Matrix4f)}
+	 */
+	public void transform(Matrix4f matrixIn) {
+		double x = this.x;
+		double y = this.y;
+		double z = this.z;
+//		double w = this.w;
+		double w = 1F;
+		this.x = matrixIn.m00 * x + matrixIn.m01 * y + matrixIn.m02 * z + matrixIn.m03 * w;
+		this.y = matrixIn.m10 * x + matrixIn.m11 * y + matrixIn.m12 * z + matrixIn.m13 * w;
+		this.z = matrixIn.m20 * x + matrixIn.m21 * y + matrixIn.m22 * z + matrixIn.m23 * w;
+//		this.w = matrixIn.m30 * x + matrixIn.m31 * y + matrixIn.m32 * z + matrixIn.m33 * w;
 	}
 
 	public Vec cross(Vec vec) {

@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -11,13 +12,12 @@ import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.client.model.data.IModelData;
 
 import java.util.Random;
-
-import static net.minecraft.block.AbstractBlock.AbstractBlockState;
 
 /**
  * @author Cadiboo
@@ -55,27 +55,17 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link AbstractBlockState#isSolid()} before any other logic.
-//	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
-	 */
-//	@OnlyIn(Dist.CLIENT)
-	public static boolean isSolidCheck(BlockState state) {
-		// TODO: Check this, might want to use this for lighting.
-		if (FMLEnvironment.dist.isDedicatedServer())
-			return false;
-		return io.github.cadiboo.nocubes.config.NoCubesConfig.Client.render;
-	}
-
-	/**
-	 * Called from: {@link AbstractBlockState#isSolid()} if {@link #isSolidCheck(BlockState)} returns true.
+	 * Called from: {@link BlockRendererDispatcher#renderBlockDamage(BlockState, BlockPos, IBlockDisplayReader, MatrixStack, IVertexBuilder, IModelData)} before any other logic
+	 * Calls: RenderDispatcher.renderSmoothBlockDamage if the blockstate is smoothable
 	 *
-	 * @return If the blockstate is solid.
+	 * @return If normal rendering should be cancelled (i.e. normal rendering should NOT happen)
 	 */
-//	@OnlyIn(Dist.CLIENT)
-	public static boolean isSolidResult(BlockState state) {
-		if (FMLEnvironment.dist.isDedicatedServer())
-			throw new IllegalStateException("This should only be called on the client! See #isSolidCheck!");
-		return !NoCubes.smoothableHandler.isSmoothable(state);
+	@OnlyIn(Dist.CLIENT)
+	public static boolean renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
+		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(blockStateIn))
+			return false;
+		MeshRenderer.renderBlockDamage(blockRendererDispatcher, blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData);
+		return true;
 	}
 
 	/**
@@ -85,6 +75,7 @@ public final class Hooks {
 		loadClass("net.minecraft.block.AbstractBlock$AbstractBlockState");
 		loadClass("net.minecraft.block.BlockState");
 		if (dist.isClient()) {
+			loadClass("net.minecraft.client.renderer.BlockRendererDispatcher");
 			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
 //		} else {
 
@@ -105,24 +96,6 @@ public final class Hooks {
 		}
 	}
 
-//	/**
-//	 * Called from: BlockRendererDispatcher#renderBlockDamage before any other logic
-//	 * Calls: RenderDispatcher.renderSmoothBlockDamage if the blockstate is smoothable
-//	 *
-//	 * @return If normal rendering should be cancelled (i.e. normal rendering should NOT happen)
-//	 */
-//	@OnlyIn(Dist.CLIENT)
-//	public static boolean renderBlockDamage(final BlockRendererDispatcher blockrendererdispatcher, final BlockState iblockstate, final BlockPos blockpos, final TextureAtlasSprite textureatlassprite, final IEnviromentBlockReader world) {
-//		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable) {
-//			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable) {
-//				return false;
-//			}
-//		}
-//		final Tessellator tessellator = Tessellator.getInstance();
-//		RenderDispatcher.renderSmoothBlockDamage(tessellator, tessellator.getBuffer(), blockpos, iblockstate, world, textureatlassprite);
-//		return true;
-//	}
-//
 //	/**
 //	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
 //	 * Calls: ModUtil.getFluidState to handle extended fluids

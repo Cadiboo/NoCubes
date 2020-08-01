@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -9,6 +10,7 @@ import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -17,11 +19,16 @@ import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.world.IBlockDisplayReader;
+import net.minecraftforge.client.model.data.IModelData;
 
 import java.util.List;
 import java.util.Random;
@@ -51,6 +58,7 @@ public class MeshRenderer {
 						(n0.z + n2.z) / 2
 					);
 					final Direction direction = getDirectionFromNormal(nAverage);
+					// TODO: Need to use all 4 normals
 					float nx = (float) n0.x;
 					float ny = (float) n0.y;
 					float nz = (float) n0.z;
@@ -190,10 +198,15 @@ public class MeshRenderer {
 								default:
 									throw new IllegalStateException("Unexpected value: " + direction);
 							}
-							bufferbuilder.pos(v0.x, v0.y, v0.z).color(1.0F, 1, 1, 1).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v1.x, v1.y, v1.z).color(1.0F, 1, 1, 1).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v2.x, v2.y, v2.z).color(1.0F, 1, 1, 1).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v3.x, v3.y, v3.z).color(1.0F, 1, 1, 1).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
+							final float shading = chunkrendercache.func_230487_a_(direction, false);
+							final float red = 1.0F * shading;
+							final float green = 1.0F * shading;
+							final float blue = 1.0F * shading;
+							final float alpha = 1.0F;
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
 						}
 
 						if (true) {
@@ -224,4 +237,217 @@ public class MeshRenderer {
 			throw new IllegalStateException("Could not find a direction from the normal, wtf???");
 	}
 
+	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
+		if (NoCubesConfig.Client.render) {
+			long rand = blockStateIn.getPositionRandom(posIn);
+			Random random = blockRendererDispatcher.random;
+			IBakedModel model = blockRendererDispatcher.getBlockModelShapes().getModel(blockStateIn);
+			BlockColors blockColors = Minecraft.getInstance().getBlockColors();
+//			blockRendererDispatcher.getBlockModelRenderer().renderModel(lightReaderIn, model, blockStateIn, posIn, matrixStackIn, vertexBuilderIn, true, random, rand, OverlayTexture.NO_OVERLAY, modelData);
+//			{
+//				boolean flag = Minecraft.isAmbientOcclusionEnabled() && blockStateIn.getLightValue(lightReaderIn, posIn) == 0 && model.isAmbientOcclusion();
+//				Vector3d vector3d = blockStateIn.getOffset(lightReaderIn, posIn);
+//				matrixStackIn.translate(vector3d.x, vector3d.y, vector3d.z);
+//				modelData = model.getModelData(lightReaderIn, posIn, blockStateIn, modelData);
+//
+//				boolean flag1 = false;
+//				BitSet bitset = new BitSet(3);
+//
+//				for (Direction direction1 : Direction.values()) {
+//					random.setSeed(rand);
+//					List<BakedQuad> list = model.getQuads(blockStateIn, direction1, random, modelData);
+//					if (!list.isEmpty() && Block.shouldSideBeRendered(blockStateIn, lightReaderIn, posIn, direction1)) {
+//						int i = WorldRenderer.getPackedLightmapCoords(lightReaderIn, blockStateIn, posIn.offset(direction1));
+//						for (BakedQuad bakedquad : list) {
+//
+//							float f = lightReaderIn.func_230487_a_(bakedquad.getFace(), bakedquad.func_239287_f_());
+//							float f11;
+//							float f1;
+//							float f2;
+//							if (bakedquad.hasTintIndex()) {
+//								int i1 = blockColors.getColor(blockStateIn, lightReaderIn, posIn, bakedquad.getTintIndex());
+//								f11 = (float) (i1 >> 16 & 255) / 255.0F;
+//								f1 = (float) (i1 >> 8 & 255) / 255.0F;
+//								f2 = (float) (i1 & 255) / 255.0F;
+//							} else {
+//								f11 = 1.0F;
+//								f1 = 1.0F;
+//								f2 = 1.0F;
+//							}
+//
+//							MatrixStack.Entry matrixEntryIn = matrixStackIn.getLast();
+//							float[] colorMuls = new float[]{f, f, f, f};
+//							int[] aint = bakedquad.getVertexData();
+//							Vector3i vector3i = bakedquad.getFace().getDirectionVec();
+//							Vector3f vector3f = new Vector3f((float) vector3i.getX(), (float) vector3i.getY(), (float) vector3i.getZ());
+//							Matrix4f matrix4f = matrixEntryIn.getMatrix();
+//							vector3f.transform(matrixEntryIn.getNormal());
+//							int i1 = 8;
+//							int j = aint.length / 8;
+//
+//							try (MemoryStack memorystack = MemoryStack.stackPush()) {
+//								ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormats.BLOCK.getSize());
+//								IntBuffer intbuffer = bytebuffer.asIntBuffer();
+//
+//								for (int k = 0; k < j; ++k) {
+//									((Buffer) intbuffer).clear();
+//									intbuffer.put(aint, k * 8, 8);
+//									float f31 = bytebuffer.getFloat(0);
+//									float f12 = bytebuffer.getFloat(4);
+//									float f21 = bytebuffer.getFloat(8);
+//									float f3;
+//									float f4;
+//									float f5;
+//									float f6 = (float) (bytebuffer.get(12) & 255) / 255.0F;
+//									float f7 = (float) (bytebuffer.get(13) & 255) / 255.0F;
+//									float f8 = (float) (bytebuffer.get(14) & 255) / 255.0F;
+//									f3 = f6 * colorMuls[k] * f11;
+//									f4 = f7 * colorMuls[k] * f1;
+//									f5 = f8 * colorMuls[k] * f2;
+//
+//									int l = vertexBuilderIn.applyBakedLighting(new int[]{i, i, i, i}[k], bytebuffer);
+//									float f9 = bytebuffer.getFloat(16);
+//									float f10 = bytebuffer.getFloat(20);
+//									Vector4f vector4f = new Vector4f(f31, f12, f21, 1.0F);
+//									vector4f.transform(matrix4f);
+////									vertexBuilderIn.applyBakedNormals(vector3f, bytebuffer, matrixEntryIn.getNormal());
+////									vertexBuilderIn.addVertex(vector4f.getX(), vector4f.getY(), vector4f.getZ(), f3, f4, f5, 1.0F, f9, f10, OverlayTexture.NO_OVERLAY, l, vector3f.getX(), vector3f.getY(), vector3f.getZ());
+//									vertexBuilderIn.addVertex(vector4f.getX(), vector4f.getY(), vector4f.getZ(), f3, f4, f5, 1.0F, f9, f10, OverlayTexture.NO_OVERLAY, l, vector3f.getX(), vector3f.getY(), vector3f.getZ());
+//								}
+//							}
+//
+//						}
+//						flag1 = true;
+//					}
+//				}
+//			}
+
+//			// TODO: This seems suspicious, keep synced with {@link net.minecraft.client.renderer.BlockModelRenderer.renderModel(net.minecraft.world.IBlockDisplayReader, net.minecraft.client.renderer.model.IBakedModel, net.minecraft.block.BlockState, net.minecraft.util.math.BlockPos, com.mojang.blaze3d.matrix.MatrixStack, com.mojang.blaze3d.vertex.IVertexBuilder, boolean, java.util.Random, long, int, net.minecraftforge.client.model.data.IModelData)}
+			modelData = model.getModelData(lightReaderIn, posIn, blockStateIn, modelData);
+			final IModelData modelDataFinal = modelData;
+
+			Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
+
+			SurfaceNets.generate(
+				posIn.getX(), posIn.getY(), posIn.getZ(),
+				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable,
+				(pos, face) -> {
+					final Vec v0 = face.v0;
+					final Vec v1 = face.v1;
+					final Vec v2 = face.v2;
+					final Vec v3 = face.v3;
+					// Normals TODO: Optimise
+					final Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
+					final Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
+					final Vec nAverage = Vec.of(
+						(n0.x + n2.x) / 2,
+						(n0.y + n2.y) / 2,
+						(n0.z + n2.z) / 2
+					);
+					final Direction direction = getDirectionFromNormal(nAverage);
+					// TODO: Need to use all 4 normals
+					float nx = (float) n0.x;
+					float ny = (float) n0.y;
+					float nz = (float) n0.z;
+					n0.close();
+					n2.close();
+					nAverage.close();
+
+					v0.transform(matrix4f);
+					v1.transform(matrix4f);
+					v2.transform(matrix4f);
+					v3.transform(matrix4f);
+
+					int light = WorldRenderer.getPackedLightmapCoords(lightReaderIn, blockStateIn, pos.offset(direction));
+					random.setSeed(rand);
+					List<BakedQuad> dirQuads = model.getQuads(blockStateIn, direction, random, modelDataFinal);
+					random.setSeed(rand);
+					List<BakedQuad> nullQuads = model.getQuads(blockStateIn, null, random, modelDataFinal);
+					if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
+						dirQuads = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(blockStateIn, direction, random, modelDataFinal);
+					int dirQuadsSize = dirQuads.size();
+
+//					Vector3i vector3i = quadIn.getFace().getDirectionVec();
+//					Vector3f vector3f = new Vector3f((float)vector3i.getX(), (float)vector3i.getY(), (float)vector3i.getZ());
+//					Matrix4f matrix4f = matrixEntryIn.getMatrix();
+//					vector3f.transform(matrixEntryIn.getNormal());
+
+					for (int i1 = 0; i1 < dirQuadsSize + nullQuads.size(); i1++) {
+						final BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
+
+//						Vector4f vector4f = new Vector4f(f, f1, f2, 1.0F);
+//						vector4f.transform(matrix4f);
+
+						final int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+						final int[] vertexData = quad.getVertexData();
+						// Quads are packed xyz|argb|u|v|ts
+						final float texu0 = Float.intBitsToFloat(vertexData[4]);
+						final float texv0 = Float.intBitsToFloat(vertexData[5]);
+						final float texu1 = Float.intBitsToFloat(vertexData[formatSize + 4]);
+						final float texv1 = Float.intBitsToFloat(vertexData[formatSize + 5]);
+						final float texu2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
+						final float texv2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
+						final float texu3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
+						final float texv3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
+						final float v0u;
+						final float v0v;
+						final float v1u;
+						final float v1v;
+						final float v2u;
+						final float v2v;
+						final float v3u;
+						final float v3v;
+						switch (direction) {
+							case DOWN:
+							case SOUTH:
+							case WEST:
+								v0u = texu3;
+								v0v = texv3;
+								v1u = texu0;
+								v1v = texv0;
+								v2u = texu1;
+								v2v = texv1;
+								v3u = texu2;
+								v3v = texv2;
+								break;
+							case UP:
+								v0u = texu2;
+								v0v = texv2;
+								v1u = texu3;
+								v1v = texv3;
+								v2u = texu0;
+								v2v = texv0;
+								v3u = texu1;
+								v3v = texv1;
+								break;
+							case NORTH:
+							case EAST:
+								v0u = texu0;
+								v0v = texv0;
+								v1u = texu1;
+								v1v = texv1;
+								v2u = texu2;
+								v2v = texv2;
+								v3u = texu3;
+								v3v = texv3;
+								break;
+							default:
+								throw new IllegalStateException("Unexpected value: " + direction);
+						}
+
+						final float shading = lightReaderIn.func_230487_a_(direction, false);
+						final float red = 1.0F * shading;
+						final float green = 1.0F * shading;
+						final float blue = 1.0F * shading;
+						final float alpha = 1.0F;
+						vertexBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+					}
+					return true;
+				}
+			);
+		}
+	}
 }

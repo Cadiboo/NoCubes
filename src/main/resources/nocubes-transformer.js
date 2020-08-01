@@ -131,18 +131,19 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
-//		"BlockRendererDispatcher#renderBlockDamage": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.client.renderer.BlockRendererDispatcher",
-//				"methodName": "func_215329_a",
-//				"methodDesc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IEnviromentBlockReader;)V"
-//			},
-//			"transformer": function(methodNode) {
-//				injectRenderBlockDamageHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		},
+		"BlockRendererDispatcher#renderBlockDamage": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.client.renderer.BlockRendererDispatcher",
+				// Forge-added overload
+				"methodName": "renderBlockDamage",
+				"methodDesc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V"
+			},
+			"transformer": function(methodNode) {
+				injectRenderBlockDamageHook(methodNode.instructions);
+				return methodNode;
+			}
+		},
 		"ChunkRender#rebuildChunk": {
 			"target": {
 				"type": "METHOD",
@@ -738,13 +739,14 @@ function injectRenderBlockDamageHook(instructions) {
 
 	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
 	toInject.add(new VarInsnNode(ALOAD, 1)); // state
 	toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-	toInject.add(new VarInsnNode(ALOAD, 3)); // sprite
-	toInject.add(new VarInsnNode(ALOAD, 4)); // reader
+	toInject.add(new VarInsnNode(ALOAD, 3)); // lightReaderIn
+	toInject.add(new VarInsnNode(ALOAD, 4)); // matrixStackIn
+	toInject.add(new VarInsnNode(ALOAD, 5)); // vertexBuilderIn
+	toInject.add(new VarInsnNode(ALOAD, 6)); // modelData
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -753,7 +755,7 @@ function injectRenderBlockDamageHook(instructions) {
 			//String name
 			"renderBlockDamage",
 			//String descriptor
-			"(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IEnviromentBlockReader;)Z",
+			"(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z",
 			//boolean isInterface
 			false
 	));
@@ -1615,6 +1617,7 @@ function injectGetFluidStateHook(instructions) {
 
 }
 
+// TODO: Check this, might want to use this for lighting.
 // 1) Find first label
 // 2) inject right after first label
 function injectIsSolidHook(instructions) {
