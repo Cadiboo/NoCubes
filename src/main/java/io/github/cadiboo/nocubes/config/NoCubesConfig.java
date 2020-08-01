@@ -143,6 +143,12 @@ public final class NoCubesConfig {
 			saveAndLoad(ModConfig.Type.CLIENT);
 		}
 
+		public static void updateRender(final boolean newValue) {
+			System.out.println("Client.updateRender");
+			Client.INSTANCE.render.set(newValue);
+			saveAndLoad(ModConfig.Type.CLIENT);
+		}
+
 		static class Impl {
 
 			final BooleanValue render;
@@ -179,18 +185,6 @@ public final class NoCubesConfig {
 		}
 
 		public static void bake() {
-		}
-
-		public static void addToWhitelist(final BlockState state) {
-		}
-
-		public static void removeFromBlacklist(final BlockState state) {
-		}
-
-		public static void removeFromWhitelist(final BlockState state) {
-		}
-
-		public static void addToBlacklist(final BlockState state) {
 		}
 
 		static class Impl {

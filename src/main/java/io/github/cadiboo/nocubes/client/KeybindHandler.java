@@ -43,7 +43,7 @@ public class KeybindHandler {
 	}
 
 	private static void toggleVisuals() {
-		NoCubesConfig.Client.render = !NoCubesConfig.Client.render;
+		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
 		reloadAllChunks(Minecraft.getInstance());
 	}
 
