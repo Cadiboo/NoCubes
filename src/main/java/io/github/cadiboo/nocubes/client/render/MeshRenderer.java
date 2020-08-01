@@ -124,6 +124,7 @@ public class MeshRenderer {
 
 						IBakedModel modelIn = blockrendererdispatcher.getModelForState(blockstate);
 						int light = WorldRenderer.getPackedLightmapCoords(chunkrendercache, blockstate, pos.offset(direction));
+						random.setSeed(rand);
 						List<BakedQuad> dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
 						random.setSeed(rand);
 						List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
