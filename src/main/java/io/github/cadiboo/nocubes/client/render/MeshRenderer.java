@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
@@ -38,11 +39,14 @@ import java.util.Random;
  */
 public class MeshRenderer {
 
+	private static final ReusableCache<boolean[][][]> CHUNKS = new ReusableCache.Local<>();
+	private static final ReusableCache<boolean[][][]> CRACKING = new ReusableCache.Global<>();
+
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final ChunkRenderCache chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubesConfig.Client.render) {
 			SurfaceNets.generate(
 				blockpos.getX(), blockpos.getY(), blockpos.getZ(),
-				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable,
+				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable, CHUNKS,
 				(pos, face) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;
@@ -330,7 +334,7 @@ public class MeshRenderer {
 
 			SurfaceNets.generate(
 				posIn.getX(), posIn.getY(), posIn.getZ(),
-				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable,
+				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
 				(pos, face) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;

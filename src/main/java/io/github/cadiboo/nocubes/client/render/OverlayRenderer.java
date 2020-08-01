@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.FaceList;
+import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
@@ -36,6 +37,8 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public final class OverlayRenderer {
 
+	private static final ReusableCache<boolean[][][]> DEBUGGING = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[][][]> HIGHLIGHT = new ReusableCache.Global<>();
 	static Mesh cache;
 
 	@SubscribeEvent
@@ -65,7 +68,7 @@ public final class OverlayRenderer {
 		SurfaceNets.generate(
 			x, y, z,
 			1, 1, 1,
-			world, NoCubes.smoothableHandler::isSmoothable,
+			world, NoCubes.smoothableHandler::isSmoothable, HIGHLIGHT,
 			(pos, face) -> {
 				Vec v0 = face.v0.add(x, y, z);
 				Vec v1 = face.v1.add(x, y, z);
@@ -262,7 +265,7 @@ public final class OverlayRenderer {
 		io.github.cadiboo.nocubes.mesh.SurfaceNets.generate(
 			startX, startY, startZ,
 			meshSizeX, meshSizeY, meshSizeZ,
-			viewer.world, NoCubes.smoothableHandler::isSmoothable,
+			viewer.world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
 			(pos, face) -> mesh.faces.add(Face.of(
 				Vec.of(face.v0.add(startX, startY, startZ)),
 				Vec.of(face.v1.add(startX, startY, startZ)),

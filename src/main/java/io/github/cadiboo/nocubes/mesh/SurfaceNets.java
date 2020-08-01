@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import net.minecraft.block.BlockState;
@@ -83,7 +84,8 @@ public class SurfaceNets {
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockDisplayReader world, Predicate<BlockState> isSmoothable, MeshAction action
+		IBlockDisplayReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
+		MeshAction action
 	) {
 		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
 		meshSizeX += 1;
@@ -108,7 +110,7 @@ public class SurfaceNets {
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		boolean[][][] binaryField = new boolean[maxZ][maxY][maxX];
+		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[maxZ][maxY][maxX]);
 		{
 			int i = 0;
 			for (int z = 0; z < maxZ; z++) {
