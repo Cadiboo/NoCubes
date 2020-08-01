@@ -58,33 +58,33 @@ public class MeshRenderer {
 					n2.close();
 					nAverage.close();
 
-					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
-						if (pos.getX() > blockpos.getX() - 2 || pos.getX() > blockpos.getX() + 17)
-							continue;
-						if (pos.getY() > blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
-							continue;
-						if (pos.getY() > blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
-							continue;
-						net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
-						BlockState bs = Blocks.SCAFFOLDING.getDefaultState();
-						if (bs.getRenderType() != BlockRenderType.INVISIBLE && RenderTypeLookup.canRenderInLayer(bs, rendertype)) {
-							RenderType rendertype1 = rendertype;
-							BufferBuilder bufferbuilder2 = builderIn.getBuilder(rendertype1);
-							if (compiledChunkIn.layersStarted.add(rendertype1)) {
-								chunkRender.beginLayer(bufferbuilder2);
-							}
-
-							matrixstack.push();
-							matrixstack.translate((double) (pos.getX() & 15), (double) (pos.getY() & 15), (double) (pos.getZ() & 15));
-							if (blockrendererdispatcher.renderModel(bs, pos, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
-								compiledChunkIn.empty = false;
-								compiledChunkIn.layersUsed.add(rendertype1);
-							}
-
-							matrixstack.pop();
-						}
-					}
-					net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+//					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
+//						if (pos.getX() < blockpos.getX() - 2 || pos.getX() > blockpos.getX() + 17)
+//							continue;
+//						if (pos.getY() < blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
+//							continue;
+//						if (pos.getY() < blockpos.getZ() - 2 || pos.getY() > blockpos.getZ() + 17)
+//							continue;
+//						net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
+//						BlockState bs = Blocks.SCAFFOLDING.getDefaultState();
+//						if (bs.getRenderType() != BlockRenderType.INVISIBLE && RenderTypeLookup.canRenderInLayer(bs, rendertype)) {
+//							RenderType rendertype1 = rendertype;
+//							BufferBuilder bufferbuilder2 = builderIn.getBuilder(rendertype1);
+//							if (compiledChunkIn.layersStarted.add(rendertype1)) {
+//								chunkRender.beginLayer(bufferbuilder2);
+//							}
+//
+//							matrixstack.push();
+//							matrixstack.translate((double) (pos.getX() & 15), (double) (pos.getY() & 15), (double) (pos.getZ() & 15));
+//							if (blockrendererdispatcher.renderModel(bs, pos, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
+//								compiledChunkIn.empty = false;
+//								compiledChunkIn.layersUsed.add(rendertype1);
+//							}
+//
+//							matrixstack.pop();
+//						}
+//					}
+//					net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
 
 					BlockState blockstate = chunkrendercache.getBlockState(pos);
 					// Vertices can generate at positions different to the position of the block they are for
