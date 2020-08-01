@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render;
+package io.github.cadiboo.nocubes.mesh;
 
 /**
  * @author Cadiboo
