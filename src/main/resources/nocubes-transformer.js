@@ -219,6 +219,109 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
+		"Block#getCollisionShape": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock",
+				"methodName": "func_220071_b",
+				"methodDesc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				var instructions = methodNode.instructions;
+				var firstLabel;
+            	var arrayLength = instructions.size();
+            	for (var i = 0; i < arrayLength; ++i) {
+            		var instruction = instructions.get(i);
+            		if (instruction.getType() == LABEL) {
+            			firstLabel = instruction;
+            			print("Found injection point \"first Label\" " + instruction);
+            			break;
+            		}
+            	}
+            	if (!firstLabel) {
+            		throw "Error: Couldn't find injection point \"first Label\"!";
+            	}
+
+            	var toInject = new InsnList();
+
+            	// Labels n stuff
+            	var originalInstructionsLabel = new LabelNode();
+
+            	// Make list of instructions to inject
+            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+				toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/block/AbstractBlock", ASMAPI.mapField("field_235688_at_"), "Z")); // canCollide
+				toInject.add(new VarInsnNode(ALOAD, 1)); // state
+				toInject.add(new VarInsnNode(ALOAD, 2)); // reader
+				toInject.add(new VarInsnNode(ALOAD, 3)); // pos
+				toInject.add(new VarInsnNode(ALOAD, 4)); // context
+				toInject.add(new MethodInsnNode(
+						//int opcode
+						INVOKESTATIC,
+						//String owner
+						"io/github/cadiboo/nocubes/hooks/Hooks",
+						//String name
+						"getCollisionShape",
+						//String descriptor
+						"(ZLnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;",
+						//boolean isInterface
+						false
+				));
+				toInject.add(new InsnNode(ARETURN));
+
+            	toInject.add(originalInstructionsLabel);
+
+            	// Inject instructions
+            	instructions.insert(firstLabel, toInject);
+				return methodNode;
+			}
+		},
+		"BlockState#isCollisionShapeLargerThanFullBlock": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_215704_f",
+				"methodDesc": "()Z"
+			},
+			"transformer": function(methodNode) {
+				// TODO: Do I even need this?
+				var instructions = methodNode.instructions;
+				var firstIRETURN;
+            	var arrayLength = instructions.size();
+            	for (var i = 0; i < arrayLength; ++i) {
+            		var instruction = instructions.get(i);
+            		if (instruction.getOpcode() == IRETURN) {
+            			firstIRETURN = instruction;
+            			print("Found injection point \"first IRETURN\" " + instruction);
+            			break;
+            		}
+            	}
+            	if (!firstIRETURN) {
+            		throw "Error: Couldn't find injection point \"first IRETURN\"!";
+            	}
+
+            	var toInject = new InsnList();
+
+            	// Make list of instructions to inject
+            	toInject.add(new InsnNode(Opcodes.DUP)); // ret
+            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+				toInject.add(new MethodInsnNode(
+						//int opcode
+						INVOKESTATIC,
+						//String owner
+						"io/github/cadiboo/nocubes/hooks/Hooks",
+						//String name
+						"isCollisionShapeLargerThanFullBlock",
+						//String descriptor
+						"(ZLnet/minecraft/block/AbstractBlock$AbstractBlockState;)Z",
+						//boolean isInterface
+						false
+				));
+
+            	// Inject instructions
+            	instructions.insertBefore(firstIRETURN, toInject);
+				return methodNode;
+			}
+		},
 //		"BlockState#causesSuffocation": {
 //			"target": {
 //				"type": "METHOD",

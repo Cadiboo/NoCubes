@@ -4,7 +4,9 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -12,7 +14,10 @@ import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.world.IBlockReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
@@ -66,6 +71,16 @@ public final class Hooks {
 			return false;
 		MeshRenderer.renderBlockDamage(blockRendererDispatcher, blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData);
 		return true;
+	}
+
+	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlock.AbstractBlockState blockState) {
+		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
+			return ret;
+		return true;
+	}
+
+	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
+		return CollisionHandler.getCollisionShape(canCollide, state, reader, blockPos, context);
 	}
 
 	/**
