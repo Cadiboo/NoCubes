@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.client.render.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.world.IBlockReader;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
@@ -84,7 +85,7 @@ public class SurfaceNets {
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockDisplayReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
 		MeshAction action
 	) {
 		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
