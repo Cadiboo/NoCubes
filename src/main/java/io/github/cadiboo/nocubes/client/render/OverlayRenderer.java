@@ -322,8 +322,14 @@ public final class OverlayRenderer {
 	public static VoxelShape makeShape(int currX, int currY, int currZ, Vec centre, Vec nAverage, Vec v) {
 //		v.add(nAverage);
 		double w = centre.x - v.x;
+		if (-0.01 < w && w < 0.01)
+			w = 0.01;
 		double h = centre.y - v.y;
+		if (-0.01 < h && h < 0.01)
+			h = 0.01;
 		double l = centre.z - v.z;
+		if (-0.01 < l && l < 0.01)
+			l = 0.01;
 		v.add(currX, currY, currZ);
 		return VoxelShapes.create(
 			v.x, v.y, v.z,
