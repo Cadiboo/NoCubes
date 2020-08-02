@@ -78,7 +78,7 @@ public final class OverlayRenderer {
 				Vec v1 = face.v1.add(x, y, z);
 				Vec v2 = face.v2.add(x, y, z);
 				Vec v3 = face.v3.add(x, y, z);
-				final ColorParser.Color color = NoCubesConfig.Client.highlightColor;
+				final ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
 				final int red = color.red;
 				final int blue = color.blue;
 				final int green = color.green;

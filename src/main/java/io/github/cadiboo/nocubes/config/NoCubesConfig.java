@@ -125,7 +125,7 @@ public final class NoCubesConfig {
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
-		public static ColorParser.Color highlightColor;
+		public static ColorParser.Color selectionBoxColor;
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -135,7 +135,7 @@ public final class NoCubesConfig {
 
 		public static void bake() {
 			render = INSTANCE.render.get();
-			highlightColor = ColorParser.parse(INSTANCE.highlightColor.get());
+			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 		}
 
 		public static void updateSmoothablePreference(final boolean newValue, final BlockState... states) {
@@ -154,7 +154,7 @@ public final class NoCubesConfig {
 		static class Impl {
 
 			final BooleanValue render;
-			final ConfigValue<String> highlightColor;
+			final ConfigValue<String> selectionBoxColor;
 			final ConfigValue<List<? extends String>> smoothableWhitelistPreference;
 			final ConfigValue<List<? extends String>> smoothableBlacklistPreference;
 
@@ -163,9 +163,26 @@ public final class NoCubesConfig {
 					.translation(NoCubes.MOD_ID + ".config.render")
 					.define("render", true);
 
-				highlightColor = builder
-					.translation(NoCubes.MOD_ID + ".config.highlightColor")
-					.define("highlightColor", "#0006");
+				// Stable, doesn't need refactoring
+				selectionBoxColor = builder
+					.translation(NoCubes.MOD_ID + ".config.selectionBoxColor")
+					.comment(
+						"The color of the outline (selection box) over a smoothed block.",
+						"Supports pretty much any format you can imagine.",
+						"Some examples of ways to define colors:",
+						"By name: \"red\"",
+						"By name: \"firebrick\" (a red-orangeish color)",
+						"By name: \"gainsboro\" (a light gray color)",
+						"With RGB (red, green, blue) integers (0-255): \"rgb(255, 0, 0)\" (pure red)",
+						"With RGB (red, green, blue) floats (0.0-1.0): \"rgb(1.0, 0, 0)\" (also pure red)",
+						"With RGBA (red, green, blue, alpha) integers (0-255): \"rgba(255, 0, 0, 0.5)\" (partially transparent pure red)",
+						"With RGBA (red, green, blue, alpha) integers (0-255): \"rgba(1.0, 0, 0, 1.0)\" (also partially transparent pure red)",
+						"With hexadecimal (case insensitive) RGB (red, green, blue) integers (00-FF): \"0x0ff\" (aqua)",
+						"With hexadecimal (case insensitive) RGBA (red, green, blue, alpha) integers (00-FF): \"#0FF6\" (partially transparent aqua)",
+						"With HSL (hue, saturation, lightness): \"hsl(270, 100%, 100%)\" (a dark purple)",
+						"With HSLA (hue, saturation, lightness, alpha): \"hsl(270, 100%, 100%, 50%)\" (a partially transparent dark purple)"
+					)
+					.define("selectionBoxColor", "#0006");
 
 				smoothableWhitelistPreference = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelistPreference")
