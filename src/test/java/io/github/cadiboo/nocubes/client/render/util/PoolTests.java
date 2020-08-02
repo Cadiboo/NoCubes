@@ -37,7 +37,7 @@ public class PoolTests {
 	}
 
 	@Test
-	public void multithreadedAddingShouldCreateNoDuplciates() {
+	public void multithreadedAddingShouldCreateNoDuplicates() {
 		final int maxSize = 100000;
 		Pool<Object> pool = new Pool<>(maxSize);
 		IntStream.range(0, maxSize).parallel()
