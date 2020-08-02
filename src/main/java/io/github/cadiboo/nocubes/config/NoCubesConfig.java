@@ -125,6 +125,7 @@ public final class NoCubesConfig {
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
+		public static ColorParser.Color highlightColor;
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -134,6 +135,7 @@ public final class NoCubesConfig {
 
 		public static void bake() {
 			render = INSTANCE.render.get();
+			highlightColor = ColorParser.parse(INSTANCE.highlightColor.get());
 		}
 
 		public static void updateSmoothablePreference(final boolean newValue, final BlockState... states) {
@@ -152,6 +154,7 @@ public final class NoCubesConfig {
 		static class Impl {
 
 			final BooleanValue render;
+			final ConfigValue<String> highlightColor;
 			final ConfigValue<List<? extends String>> smoothableWhitelistPreference;
 			final ConfigValue<List<? extends String>> smoothableBlacklistPreference;
 
@@ -159,6 +162,10 @@ public final class NoCubesConfig {
 				render = builder
 					.translation(NoCubes.MOD_ID + ".config.render")
 					.define("render", true);
+
+				highlightColor = builder
+					.translation(NoCubes.MOD_ID + ".config.highlightColor")
+					.define("highlightColor", "#0006");
 
 				smoothableWhitelistPreference = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelistPreference")

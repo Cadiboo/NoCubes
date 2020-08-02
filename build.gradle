@@ -150,8 +150,11 @@ dependencies {
 	// These dependencies get remapped to your current MCP mappings
 	// deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
-	// Add a compile dependency on all .jar files in ./libs
-	compile fileTree(include: ['*.jar'], dir: 'libs')
+	// Add a compile/implementation dependency on all .jar files in ./libs
+	implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+	// For the config color picker
+	implementation 'org.beryx:awt-color-factory:1.0.1'
 
 	// For more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
