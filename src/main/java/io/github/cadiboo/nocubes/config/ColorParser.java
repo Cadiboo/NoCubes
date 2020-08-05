@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.config;
 
+import org.beryx.awt.color.ColorFactory;
+
 public final class ColorParser {
 
 	public static Color parse(String color) {
