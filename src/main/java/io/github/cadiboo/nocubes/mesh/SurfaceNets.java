@@ -1,14 +1,18 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Face;
+import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IBlockReader;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -18,6 +22,8 @@ public class SurfaceNets {
 
 	public static final int[] CUBE_EDGES = new int[24];
 	public static final int[] EDGE_TABLE = new int[256];
+	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
+	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
 
 	// because the tables are so big we compute them in a static {} instead of hardcoding them (I think)
 	static {
@@ -263,10 +269,260 @@ public class SurfaceNets {
 		}
 	}
 
+	public static void generateCollisions(
+		int startX, int startY, int startZ,
+		int meshSizeX, int meshSizeY, int meshSizeZ,
+		IBlockReader world, Predicate<BlockState> isSmoothable,
+		ReusableCache<BlockState[]> blockStatesCache, ReusableCache<boolean[]> binaryFieldCache,
+		CollisionMeshAction action
+	) {
+		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
+		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
+		meshSizeY += MESH_SIZE_POSITIVE_EXTENSION;
+		meshSizeZ += MESH_SIZE_POSITIVE_EXTENSION;
+		// Surface needs data for n+1 to generate n
+		// Need an extra block on each axis because surface nets
+		final int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
+		final int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
+		final int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
+		final int maxX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int maxY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int maxZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
+
+		final BlockPos.Mutable pos = new BlockPos.Mutable();
+
+		final int arraySize = maxZ * maxY * maxX;
+		final BlockState[] blockStates = ReusableCache.getOrCreate(blockStatesCache, a -> a.length == arraySize, () -> new BlockState[arraySize]);
+		/*
+		 * From Wikipedia:
+		 * Apply a threshold to the 2D field to make a binary image containing:
+		 * - 1 where the data value is above the isovalue
+		 * - 0 where the data value is below the isovalue
+		 */
+		// The area, converted from a BlockState[] to an isSmoothable[]
+		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
+		final boolean[] binaryField = ReusableCache.getOrCreate(binaryFieldCache, a -> a.length == arraySize, () -> new boolean[arraySize]);
+		{
+			int i = 0;
+			for (int z = 0; z < maxZ; z++) {
+				for (int y = 0; y < maxY; y++) {
+					for (int x = 0; x < maxX; x++, i++) {
+						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+						final BlockState state = world.getBlockState(pos);
+						blockStates[i] = state;
+						binaryField[i] = isSmoothable.test(state);
+					}
+				}
+			}
+		}
+
+		int n = 0;
+		final int[] R = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
+		final float[] grid = new float[8];
+		int buf_no = 1;
+
+		final Vec[] buffer = new Vec[R[2] * 2];
+
+		final Face face = new Face();
+		final double[] v = {0, 0, 0};
+
+		//March over the voxel grid
+		for (int z = 0; z < meshSizeZ; ++z, n += maxX, buf_no ^= 1, R[2] = -R[2]) {
+
+			//m is the pointer into the buffer we are going to use.
+			//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
+			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
+			int m = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
+
+			for (int y = 0; y < meshSizeY; ++y, ++n, m += 2) {
+				for (int x = 0; x < meshSizeX; ++x, ++n, ++m) {
+
+					//Read in 8 field values around this vertex and store them in an array
+					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
+					int mask = 0, g = 0, idx = n;
+					for (int z0 = 0; z0 < 2; ++z0, idx += maxX * (maxY - 2))
+						for (int y0 = 0; y0 < 2; ++y0, idx += maxX - 2)
+							for (byte x0 = 0; x0 < 2; ++x0, ++g, ++idx) {
+								float p = binaryField[idx] ? 1 : -1;
+								grid[g] = p;
+								mask |= (p < 0) ? (1 << g) : 0;
+							}
+
+					// 0 entirely inside surface, just generate a full cube
+					if (mask == 0 && !action.apply(blockStates[n], pos, face)) {
+						close(buffer, face);
+						return;
+					}
+
+					//Check for early termination if cell does not intersect boundary
+					if (mask == 0 || mask == 0xff) {
+						continue;
+					}
+
+					//Sum up edge intersections
+					int edge_mask = EDGE_TABLE[mask];
+					int e_count = 0;
+
+					//For every edge of the cube...
+					for (int i = 0; i < 12; ++i) {
+
+						//Use edge mask to check if it is crossed
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+
+						//If it did, increment number of edge crossings
+						++e_count;
+
+						//Now find the point of intersection
+						//Unpack vertices
+						final int e0 = CUBE_EDGES[i << 1];
+						final int e1 = CUBE_EDGES[(i << 1) + 1];
+						//Unpack grid values
+						final float g0 = grid[e0];
+						final float g1 = grid[e1];
+						//Compute point of intersection
+						float t = g0 - g1;
+						if (Math.abs(t) > 1e-6) {
+							t = g0 / t;
+						} else {
+							continue;
+						}
+
+						//Interpolate vertices and add up intersections (this can be done without multiplying)
+						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
+							final int a = e0 & k;
+							final int b = e1 & k;
+							if (a != b) {
+								v[j] += a != 0 ? 1F - t : t;
+							} else {
+								v[j] += a != 0 ? 1F : 0;
+							}
+						}
+					}
+
+					//Now we just average the edge intersections and add them to coordinate
+					// 1.0F = isosurfaceLevel
+					float s = 1.0F / e_count;
+					v[0] = -0.5 + 0 + x + s * v[0];
+					v[1] = -0.5 + 0 + y + s * v[1];
+					v[2] = -0.5 + 0 + z + s * v[2];
+
+					//Add vertex to buffer, store pointer to vertex index in buffer
+					buffer[m] = Vec.of(v);
+
+					//Now we need to add faces together, to do this we just loop over 3 basis components
+					for (int i = 0; i < 3; ++i) {
+						//The first three entries of the edge_mask count the crossings along the edge
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+
+						// i = axes we are point along.  iu, iv = orthogonal axes
+						final int iu = (i + 1) % 3;
+						final int iv = (i + 2) % 3;
+
+						//If we are on a boundary, skip it
+						if (((iu == 0 && x == 0) || (iu == 1 && y == 0) || (iu == 2 && z == 0)) || ((iv == 0 && x == 0) || (iv == 1 && y == 0) || (iv == 2 && z == 0))) {
+							continue;
+						}
+
+						//Otherwise, look up adjacent edges in buffer
+						final int du = R[iu];
+						final int dv = R[iv];
+
+						//Remember to flip orientation depending on the sign of the corner.
+						face.v0 = buffer[m];
+						if ((mask & 1) != 0) {
+							face.v1 = buffer[m - dv];
+							face.v2 = buffer[m - du - dv];
+							face.v3 = buffer[m - du];
+						} else {
+							face.v3 = buffer[m - du];
+							face.v2 = buffer[m - du - dv];
+							face.v1 = buffer[m - dv];
+						}
+
+						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+						if (!action.apply(blockStates[n], pos, face)) {
+							close(buffer, face);
+							return;
+						}
+					}
+				}
+			}
+		}
+		close(buffer, face);
+	}
+
+	private static void close(final Vec[] vertices, final Face face) {
+		for (int i = vertices.length - 1; i >= 0; --i)
+			vertices[i].close();
+		face.close();
+	}
+
 	public interface MeshAction {
 
 		boolean apply(BlockPos.Mutable pos, Face face);
 
+	}
+
+	public interface CollisionMeshAction {
+
+		boolean apply(BlockState state, BlockPos.Mutable pos, @Nullable Face face);
+
+	}
+
+	private static class MeshData {
+
+	}
+
+	public static class MeshSpliterator extends Spliterators.AbstractSpliterator<MeshData> {
+
+		protected MeshSpliterator() {
+			super(Long.MAX_VALUE, Spliterator.NONNULL | Spliterator.IMMUTABLE);
+		}
+
+		@Override
+		public boolean tryAdvance(final Consumer<? super MeshData> action) {
+			return false;
+		}
+
+	}
+
+	public abstract static class ThisIsDisgusting<T> implements Iterator<T> {
+		private final Thread disgusting = new Thread(this::generate);
+		private T next;
+		{
+			disgusting.setDaemon(true);
+			disgusting.start();
+		}
+
+		protected abstract void generate();
+
+		@Override
+		public boolean hasNext() {
+			return next != null;
+		}
+		@Override
+		public T next() {
+			T next = this.next;
+			this.next = null;
+			disgusting.resume();
+			if (next == null)
+				next = this.next;
+			return next;
+		}
+		protected void yield(T obj) {
+			next = obj;
+			disgusting.suspend();
+		}
+		@Override
+		protected void finalize() throws Throwable {
+			disgusting.stop();
+			disgusting.join();
+			super.finalize();
+		}
 	}
 
 }

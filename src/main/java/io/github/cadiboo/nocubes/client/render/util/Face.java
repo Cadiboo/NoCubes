@@ -14,7 +14,10 @@ public class Face implements Closeable {
 	public Vec v2;
 	public Vec v3;
 
-	Face(final Vec v0, final Vec v1, final Vec v2, final Vec v3) {
+	public Face() {
+	}
+
+	public Face(final Vec v0, final Vec v1, final Vec v2, final Vec v3) {
 		this.v0 = v0;
 		this.v1 = v1;
 		this.v2 = v2;
