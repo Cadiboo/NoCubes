@@ -5,7 +5,6 @@ import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IBlockReader;
 
 import java.util.ArrayList;
@@ -258,8 +257,6 @@ public class SurfaceNets {
 						pos.setPos(worldXStart, worldYStart, worldZStart);
 						pos.move(x, y, z);
 						boolean done = !action.apply(pos, face);
-						for (final Vec vertex : face.getVertices())
-							vertex.close();
 						face.close();
 						if (done)
 							return;

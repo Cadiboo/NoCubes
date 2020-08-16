@@ -16,11 +16,8 @@ public class FaceListTests {
 		FaceList faces = null;
 		for (int i = 0; i < 10; i++) {
 			if (faces != null) {
-				for (final Face face : faces) {
-					for (final Vec vertex : face.getVertices())
-						vertex.close();
+				for (final Face face : faces)
 					face.close();
-				}
 				faces.close();
 			}
 			faces = FaceList.of();

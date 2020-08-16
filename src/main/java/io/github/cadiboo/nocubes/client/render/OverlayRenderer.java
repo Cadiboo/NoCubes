@@ -113,11 +113,8 @@ public final class OverlayRenderer {
 		if (cache == null || world.getGameTime() % 5 == 0) {
 			if (cache != null) {
 				final FaceList faces = cache.faces;
-				for (final Face face : faces) {
-					for (final Vec vertex : face.getVertices())
-						vertex.close();
+				for (Face face : faces)
 					face.close();
-				}
 				faces.close();
 			}
 			cache = makeMesh(world, viewer);
