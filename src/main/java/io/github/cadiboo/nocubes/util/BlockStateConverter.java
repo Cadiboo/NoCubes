@@ -29,7 +29,7 @@ public interface BlockStateConverter {
 
 	static int toId(BlockState state) {
 		@SuppressWarnings("deprecation")
-		int id = Block.BLOCK_STATE_IDS.get(state);
+		int id = Block.BLOCK_STATE_IDS.getId(state);
 		if (id == -1)
 			throw new IllegalStateException("Unknown blockstate " + state);
 		return id;
