@@ -132,8 +132,14 @@ public class SurfaceNets {
 
 		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
+		// Appears to contain the multiplier for an axis.
+		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
+		// (x, y, z) -> [z * maxX * maxY + y * maxX + x]
+		// So the multiplier for X is 1, the multiplier for Y is maxX and the multiplier for z is maxX * maxY
+		// Still no clue why the z axis gets inverted each pass, or how m and buff_no work
 		final int[] R = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
 		final float[] grid = new float[8];
+		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
 
 		final int[] buffer = new int[R[2] * 2];
