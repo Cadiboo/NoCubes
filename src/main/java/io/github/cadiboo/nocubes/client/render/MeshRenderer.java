@@ -38,15 +38,15 @@ import java.util.Random;
  */
 public class MeshRenderer {
 
-	private static final ReusableCache<boolean[][][]> CHUNKS = new ReusableCache.Local<>();
-	private static final ReusableCache<boolean[][][]> CRACKING = new ReusableCache.Global<>();
+	private static final ReusableCache<float[]> CHUNKS = new ReusableCache.Local<>();
+	private static final ReusableCache<float[]> CRACKING = new ReusableCache.Global<>();
 
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final ChunkRenderCache chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubesConfig.Client.render) {
 			SurfaceNets.generate(
 				blockpos.getX(), blockpos.getY(), blockpos.getZ(),
 				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable, CHUNKS,
-				(pos, face, normal, averageNormal, direction) -> {
+				(pos, face, normal, direction) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;
 					final Vec v2 = face.v2;
@@ -133,10 +133,8 @@ public class MeshRenderer {
 							final int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
 							final int[] vertexData = quad.getVertexData();
 							// Quads are packed xyz|argb|u|v|ts
-//							final float uTransform = -0.0625F * 1;
-//							final float vTransform = -0.0625F * 2;
-							final float uTransform = 0;
-							final float vTransform = 0;
+							final float uTransform = -0.0625F * 1;
+							final float vTransform = -0.0625F * 2;
 							final float texu0 = Float.intBitsToFloat(vertexData[4]) + uTransform;
 							final float texv0 = Float.intBitsToFloat(vertexData[5]) + vTransform;
 							final float texu1 = Float.intBitsToFloat(vertexData[formatSize + 4]) + uTransform;
@@ -323,7 +321,7 @@ public class MeshRenderer {
 			SurfaceNets.generate(
 				posIn.getX(), posIn.getY(), posIn.getZ(),
 				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
-				(pos, face, normal, averageNormal, direction) -> {
+				(pos, face, normal, direction) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;
 					final Vec v2 = face.v2;

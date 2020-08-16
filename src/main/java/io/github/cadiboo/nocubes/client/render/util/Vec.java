@@ -121,34 +121,17 @@ public class Vec implements Closeable {
 		return normal(prevVecInFace, vec, nextVecInFace, Vec.of());
 	}
 
-	/**
-	 * @return toUse
-	 */
 	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace, Vec toUse) {
-//		normal = crossProduct(prev - vec, next - vec).normalise();
-		final double x = vec.x;
-		final double y = vec.y;
-		final double z = vec.z;
-		return cross(
-			prevVecInFace.x - x, prevVecInFace.y - y, prevVecInFace.z - z,
-			nextVecInFace.x - x, nextVecInFace.y - y, nextVecInFace.z - z,
+		toUse.x = prevVecInFace.x - vec.x;
+		toUse.x = prevVecInFace.y - vec.y;
+		toUse.x = prevVecInFace.z - vec.z;
+		toUse.cross(
+			nextVecInFace.x - vec.x,
+			nextVecInFace.y - vec.y,
+			nextVecInFace.z - vec.z,
 			toUse
-//		).normalise();
-		).normalise().multiply(-1);
-	}
-
-	/**
-	 * @return toUse
-	 */
-	public static Vec cross(
-		double x0, double y0, double z0,
-		double x1, double y1, double z1,
-		Vec toUse
-	) {
-		toUse.x = y0 * z1 - z0 * y1;
-		toUse.y = z0 * x1 - x0 * z1;
-		toUse.z = x0 * y1 - y0 * x1;
-		return toUse;
+		);
+		return toUse.normalise();
 	}
 
 	/**
@@ -164,6 +147,24 @@ public class Vec implements Closeable {
 		this.y = matrixIn.m10 * x + matrixIn.m11 * y + matrixIn.m12 * z + matrixIn.m13 * w;
 		this.z = matrixIn.m20 * x + matrixIn.m21 * y + matrixIn.m22 * z + matrixIn.m23 * w;
 //		this.w = matrixIn.m30 * x + matrixIn.m31 * y + matrixIn.m32 * z + matrixIn.m33 * w;
+	}
+
+	public Vec cross(Vec vec) {
+		return cross(vec, Vec.of());
+	}
+
+	public Vec cross(Vec vec, Vec toUse) {
+		return cross(vec.x, vec.y, vec.z, toUse);
+	}
+
+	public Vec cross(double ox, double oz, double oy, Vec toUse) {
+		final double tx = this.x;
+		final double ty = this.y;
+		final double tz = this.z;
+		toUse.x = ty * oz - tz * oy;
+		toUse.y = tz * ox - tx * oz;
+		toUse.z = tx * oy - ty * ox;
+		return toUse;
 	}
 
 	@Override
