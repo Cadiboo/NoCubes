@@ -40,9 +40,9 @@ import java.util.List;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public final class OverlayRenderer {
 
-	private static final ReusableCache<float[]> DEBUGGING = new ReusableCache.Global<>();
-	private static final ReusableCache<float[]> HIGHLIGHT = new ReusableCache.Global<>();
-	private static final ReusableCache<float[]> COLLISIONS = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[][][]> DEBUGGING = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[][][]> HIGHLIGHT = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[][][]> COLLISIONS = new ReusableCache.Global<>();
 	static Mesh cache;
 
 	@SubscribeEvent
@@ -73,7 +73,7 @@ public final class OverlayRenderer {
 			x, y, z,
 			1, 1, 1,
 			world, NoCubes.smoothableHandler::isSmoothable, HIGHLIGHT,
-			(pos, face, normals, direction) -> {
+			(pos, face, normals, averageNormal, direction) -> {
 				Vec v0 = face.v0.add(x, y, z);
 				Vec v1 = face.v1.add(x, y, z);
 				Vec v2 = face.v2.add(x, y, z);
@@ -152,91 +152,48 @@ public final class OverlayRenderer {
 		});
 
 		Matrix4f matrix4f = matrixStack.getLast().getMatrix();
-		final Face normals = Face.of(Vec.of(), Vec.of(), Vec.of(), Vec.of());
-		final Vec normalsAverage = Vec.of();
-		for (final Face face : cache.faces) {
-			Vec v0 = face.v0;
-			Vec v1 = face.v1;
-			Vec v2 = face.v2;
-			Vec v3 = face.v3;
-			final float red = 0F;
-			final float blue = 1F;
-			final float green = 1F;
-			final float alpha = 1F;
-			bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-			bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+		{
+			final Face normal = Face.of(Vec.of(), Vec.of(), Vec.of(), Vec.of());
+			final Vec averageNormal = Vec.of();
+			final Vec centre = Vec.of();
+			for (final Face face : cache.faces) {
+				Vec v0 = face.v0;
+				Vec v1 = face.v1;
+				Vec v2 = face.v2;
+				Vec v3 = face.v3;
+				final float red = 0F;
+				final float blue = 1F;
+				final float green = 1F;
+				final float alpha = 1F;
+				line(bufferBuilder, matrix4f, red, blue, green, alpha, -d0, -d1, -d2, v0.x, v0.y, v0.z, v1.x, v1.y, v1.z);
+				line(bufferBuilder, matrix4f, red, blue, green, alpha, -d0, -d1, -d2, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+				line(bufferBuilder, matrix4f, red, blue, green, alpha, -d0, -d1, -d2, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+				line(bufferBuilder, matrix4f, red, blue, green, alpha, -d0, -d1, -d2, v3.x, v3.y, v3.z, v0.x, v0.y, v0.z);
 
-			// Normals
-			Vec.normal(face.v3, face.v0, face.v1, normals.v0).multiply(-1);
-			Vec.normal(face.v0, face.v1, face.v2, normals.v1).multiply(-1);
-			Vec.normal(face.v1, face.v2, face.v3, normals.v2).multiply(-1);
-			Vec.normal(face.v2, face.v3, face.v0, normals.v3).multiply(-1);
-			normalsAverage.x = (normals.v0.x + normals.v1.x + normals.v2.x + normals.v3.x) / 4;
-			normalsAverage.y = (normals.v0.y + normals.v1.y + normals.v2.y + normals.v3.y) / 4;
-			normalsAverage.z = (normals.v0.z + normals.v1.z + normals.v2.z + normals.v3.z) / 4;
-			final Direction direction = Vec.getDirectionFromNormal(normalsAverage);
+				Face.normal(face, normal);
+				Face.average(normal, averageNormal);
+				final Direction direction = Vec.getDirectionFromNormal(averageNormal);
+				Face.average(face, centre);
+				final float dirMul = 0.2F;
+				bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (centre.x + direction.getXOffset() * dirMul + -d0), (float) (centre.y + direction.getYOffset() * dirMul + -d1), (float) (centre.z + direction.getZOffset() * dirMul + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(0F, 1F, 0F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (centre.x + averageNormal.x * dirMul + -d0), (float) (centre.y + averageNormal.y * dirMul + -d1), (float) (centre.z + averageNormal.z * dirMul + -d2)).color(0F, 1F, 0F, 1F).endVertex();
 
-			Vec centre = Vec.of(
-				(v0.x + v1.x + v2.x + v3.x) / 4,
-				(v0.y + v1.y + v2.y + v3.y) / 4,
-				(v0.z + v1.z + v2.z + v3.z) / 4
-			);
-			bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
-			final float dirMul = 0.2F;
-			bufferBuilder.pos(matrix4f, (float) (centre.x + direction.getXOffset() * dirMul + -d0), (float) (centre.y + direction.getYOffset() * dirMul + -d1), (float) (centre.z + direction.getZOffset() * dirMul + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+				final float normMul = 0.1F;
+				normalLine(d0, d1, d2, bufferBuilder, matrix4f, v0, normMul, normal.v0);
+				normalLine(d0, d1, d2, bufferBuilder, matrix4f, v1, normMul, normal.v1);
+				normalLine(d0, d1, d2, bufferBuilder, matrix4f, v2, normMul, normal.v2);
+				normalLine(d0, d1, d2, bufferBuilder, matrix4f, v3, normMul, normal.v3);
+			}
+			normal.v0.close();
+			normal.v1.close();
+			normal.v2.close();
+			normal.v3.close();
+			normal.close();
+			averageNormal.close();
 			centre.close();
-
-
-			final float normMul = 0.1F;
-			{
-				Vec n = normals.v0;
-				Vec v = v0;
-				float nx = (float) (n.x) * normMul;
-				float ny = (float) (n.y) * normMul;
-				float nz = (float) (n.z) * normMul;
-				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-			}
-			{
-				Vec n = normals.v1;
-				Vec v = v1;
-				float nx = (float) (n.x) * normMul;
-				float ny = (float) (n.y) * normMul;
-				float nz = (float) (n.z) * normMul;
-				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-			}
-			{
-				Vec n = normals.v2;
-				Vec v = v2;
-				float nx = (float) (n.x) * normMul;
-				float ny = (float) (n.y) * normMul;
-				float nz = (float) (n.z) * normMul;
-				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-			}
-			{
-				Vec n = normals.v3;
-				Vec v = v3;
-				float nx = (float) (n.x) * normMul;
-				float ny = (float) (n.y) * normMul;
-				float nz = (float) (n.z) * normMul;
-				bufferBuilder.pos(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-			}
 		}
-		normals.v0.close();
-		normals.v1.close();
-		normals.v2.close();
-		normals.v3.close();
-		normals.close();
-		normalsAverage.close();
 
 		List<VoxelShape> shapes = new ArrayList<>();
 		if (false) {
@@ -260,39 +217,21 @@ public final class OverlayRenderer {
 							currX, currY, currZ,
 							1, 1, 1,
 							viewer.world, NoCubes.smoothableHandler::isSmoothable, COLLISIONS,
-							(pos, face, normal, direction) -> {
+							(pos, face, normal, averageNormal, direction) -> {
 								Vec v0 = face.v0;
 								Vec v1 = face.v1;
 								Vec v2 = face.v2;
 								Vec v3 = face.v3;
-								// Normals
-								Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
-								Vec n1 = Vec.normal(v0, v1, v2).multiply(-1);
-								Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
-								Vec n3 = Vec.normal(v2, v3, v0).multiply(-1);
 
-								Vec centre = Vec.of(
-									(v0.x + v1.x + v2.x + v3.x) / 4,
-									(v0.y + v1.y + v2.y + v3.y) / 4,
-									(v0.z + v1.z + v2.z + v3.z) / 4
-								);
+								Vec centre = Vec.of();
+								Face.average(face, centre);
 
-								final Vec nAverage = Vec.of(
-									(n0.x + n2.x) / 2,
-									(n0.y + n2.y) / 2,
-									(n0.z + n2.z) / 2
-								);
-								nAverage.normalise().multiply(-0.125d);
+								averageNormal.multiply(-0.125d);
 
-								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, nAverage, v0));
-								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, nAverage, v1));
-								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, nAverage, v2));
-								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, nAverage, v3));
-								n0.close();
-								n1.close();
-								n2.close();
-								n3.close();
-								nAverage.close();
+								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, averageNormal, v0));
+								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, averageNormal, v1));
+								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, averageNormal, v2));
+								shapes.add(CollisionHandler.makeShape(currX, currY, currZ, centre, averageNormal, v3));
 								centre.close();
 
 //								for (Vec v : face.getVertices()) {
@@ -318,15 +257,27 @@ public final class OverlayRenderer {
 		bufferSource.finish(RenderType.getLines());
 	}
 
-	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
+	public static void line(IVertexBuilder bufferBuilder, Matrix4f matrix4f, float red, float blue, float green, float alpha, double renderX, double renderY, double renderZ, double x0, double y0, double z0, double x1, double y1, double z1) {
+		bufferBuilder.pos(matrix4f, (float) (x0 + renderX), (float) (y0 + renderY), (float) (z0 + renderZ)).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.pos(matrix4f, (float) (x1 + renderX), (float) (y1 + renderY), (float) (z1 + renderZ)).color(red, green, blue, alpha).endVertex();
+	}
+
+	public static void normalLine(double d0, double d1, double d2, IVertexBuilder bufferBuilder, Matrix4f matrix4f, Vec vertex, float normMul, Vec vertexNormal) {
+		float nx = (float) (vertexNormal.x) * normMul;
+		float ny = (float) (vertexNormal.y) * normMul;
+		float nz = (float) (vertexNormal.z) * normMul;
+		bufferBuilder.pos(matrix4f, (float) (vertex.x + -d0), (float) (vertex.y + -d1), (float) (vertex.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+		bufferBuilder.pos(matrix4f, (float) (vertex.x + nx + -d0), (float) (vertex.y + ny + -d1), (float) (vertex.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
+	}
+
+	public static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
 		Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
 		shapeIn.forEachEdge((x0, y0, z0, x1, y1, z1) -> {
-			bufferIn.pos(matrix4f, (float) (x0 + xIn), (float) (y0 + yIn), (float) (z0 + zIn)).color(red, green, blue, alpha).endVertex();
-			bufferIn.pos(matrix4f, (float) (x1 + xIn), (float) (y1 + yIn), (float) (z1 + zIn)).color(red, green, blue, alpha).endVertex();
+			line(bufferIn, matrix4f, red, blue, green, alpha, xIn, yIn, zIn, x0, y0, z0, x1, y1, z1);
 		});
 	}
 
-	private static Mesh makeMesh(final World world, final Entity viewer) {
+	public static Mesh makeMesh(final World world, final Entity viewer) {
 		final Mesh mesh = new Mesh();
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.getPosition().add(0, 2, 0);
@@ -344,7 +295,7 @@ public final class OverlayRenderer {
 			startX, startY, startZ,
 			meshSizeX, meshSizeY, meshSizeZ,
 			viewer.world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
-			(pos, face, normal, direction) -> mesh.faces.add(Face.of(
+			(pos, face, normal, averageNormal, direction) -> mesh.faces.add(Face.of(
 				Vec.of(face.v0.add(startX, startY, startZ)),
 				Vec.of(face.v1.add(startX, startY, startZ)),
 				Vec.of(face.v2.add(startX, startY, startZ)),
@@ -428,7 +379,7 @@ public final class OverlayRenderer {
 		return mesh;
 	}
 
-	private static Face toFace(final Vec v0, final Vec v1) {
+	public static Face toFace(final Vec v0, final Vec v1) {
 		Vec v2 = Vec.of(v1);
 		v2.y += 1;
 		Vec v3 = Vec.of(v0);
