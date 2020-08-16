@@ -32,4 +32,9 @@ public class FaceTests {
 		assertEquals(v3, pooled.v3);
 	}
 
+	@Test(timeout = 1000)
+	public void iteratorShouldNotBeInfinite() {
+		for (final Vec vertex : new Face(v0, v1, v2, v3).getVertices());
+	}
+
 }

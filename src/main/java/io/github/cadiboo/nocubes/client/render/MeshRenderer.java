@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.world.IBlockDisplayReader;
@@ -38,24 +39,36 @@ import java.util.Random;
  */
 public class MeshRenderer {
 
-	private static final ReusableCache<float[]> CHUNKS = new ReusableCache.Local<>();
-	private static final ReusableCache<float[]> CRACKING = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[][][]> CHUNKS = new ReusableCache.Local<>();
+	private static final ReusableCache<boolean[][][]> CRACKING = new ReusableCache.Global<>();
 
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final ChunkRenderCache chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubesConfig.Client.render) {
 			SurfaceNets.generate(
 				blockpos.getX(), blockpos.getY(), blockpos.getZ(),
 				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable, CHUNKS,
-				(pos, face, normal, direction) -> {
+				(pos, face) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;
 					final Vec v2 = face.v2;
 					final Vec v3 = face.v3;
-					final Vec n0 = normal.v0;
-					final Vec n1 = normal.v1;
-					final Vec n2 = normal.v2;
-					final Vec n3 = normal.v3;
 					final SmoothableHandler handler = NoCubes.smoothableHandler;
+					// Normals TODO: Optimise
+					final Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
+					final Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
+					final Vec nAverage = Vec.of(
+						(n0.x + n2.x) / 2,
+						(n0.y + n2.y) / 2,
+						(n0.z + n2.z) / 2
+					);
+					final Direction direction = getDirectionFromNormal(nAverage);
+					// TODO: Need to use all 4 normals
+					float nx = (float) n0.x;
+					float ny = (float) n0.y;
+					float nz = (float) n0.z;
+					n0.close();
+					n2.close();
+					nAverage.close();
 
 //					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
 //						if (pos.getX() < blockpos.getX() - 2 || pos.getX() > blockpos.getX() + 17)
@@ -95,6 +108,11 @@ public class MeshRenderer {
 						int y = pos.getY();
 						int z = pos.getZ();
 						blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
+//						blockstate = chunkrendercache.getBlockState(pos.setPos(x, y + 1, z)); // UP
+//						if (!handler.isSmoothable(blockstate))
+//							blockstate = chunkrendercache.getBlockState(pos.setPos(x + 1, y, z)); // EAST
+//						if (!handler.isSmoothable(blockstate))
+//							blockstate = chunkrendercache.getBlockState(pos.setPos(x, y, z + 1)); // SOUTH
 						if (!handler.isSmoothable(blockstate)) {
 							// Give up
 							blockstate = Blocks.SCAFFOLDING.getDefaultState();
@@ -103,8 +121,6 @@ public class MeshRenderer {
 					}
 
 					long rand = blockstate.getPositionRandom(pos);
-
-					final BlockColors blockColors = Minecraft.getInstance().getBlockColors();
 
 					net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
 					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
@@ -188,30 +204,15 @@ public class MeshRenderer {
 								default:
 									throw new IllegalStateException("Unexpected value: " + direction);
 							}
-
-							float red;
-							float green;
-							float blue;
-							float alpha = 1.0F;
-							if (quad.hasTintIndex()) {
-								int i = blockColors.getColor(blockstate, chunkrendercache, pos, quad.getTintIndex());
-								red = (float) (i >> 16 & 255) / 255.0F;
-								green = (float) (i >> 8 & 255) / 255.0F;
-								blue = (float) (i & 255) / 255.0F;
-							} else {
-								red = 1.0F;
-								green = 1.0F;
-								blue = 1.0F;
-							}
-
 							final float shading = chunkrendercache.func_230487_a_(direction, false);
-							red *= shading;
-							green *= shading;
-							blue *= shading;
-							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal((float) n0.x, (float) n0.y, (float) n0.z).endVertex();
-							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal((float) n1.x, (float) n1.y, (float) n1.z).endVertex();
-							bufferbuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(light).normal((float) n2.x, (float) n2.y, (float) n2.z).endVertex();
-							bufferbuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(light).normal((float) n3.x, (float) n3.y, (float) n3.z).endVertex();
+							final float red = 1.0F * shading;
+							final float green = 1.0F * shading;
+							final float blue = 1.0F * shading;
+							final float alpha = 1.0F;
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
 						}
 
 						if (true) {
@@ -225,6 +226,21 @@ public class MeshRenderer {
 				}
 			);
 		}
+	}
+
+	public static Direction getDirectionFromNormal(Vec normal) {
+		double x = normal.x;
+		double y = normal.y;
+		double z = normal.z;
+		double max = Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z));
+		if (max == Math.abs(x))
+			return x > 0 ? Direction.EAST : Direction.WEST;
+		else if (max == Math.abs(y))
+			return y > 0 ? Direction.UP : Direction.DOWN;
+		else if (max == Math.abs(z))
+			return z > 0 ? Direction.SOUTH : Direction.NORTH;
+		else
+			throw new IllegalStateException("Could not find a direction from the normal, wtf???");
 	}
 
 	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
@@ -321,15 +337,27 @@ public class MeshRenderer {
 			SurfaceNets.generate(
 				posIn.getX(), posIn.getY(), posIn.getZ(),
 				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
-				(pos, face, normal, direction) -> {
+				(pos, face) -> {
 					final Vec v0 = face.v0;
 					final Vec v1 = face.v1;
 					final Vec v2 = face.v2;
 					final Vec v3 = face.v3;
-					final Vec n0 = normal.v0;
-					final Vec n1 = normal.v1;
-					final Vec n2 = normal.v2;
-					final Vec n3 = normal.v3;
+					// Normals TODO: Optimise
+					final Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
+					final Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
+					final Vec nAverage = Vec.of(
+						(n0.x + n2.x) / 2,
+						(n0.y + n2.y) / 2,
+						(n0.z + n2.z) / 2
+					);
+					final Direction direction = getDirectionFromNormal(nAverage);
+					// TODO: Need to use all 4 normals
+					float nx = (float) n0.x;
+					float ny = (float) n0.y;
+					float nz = (float) n0.z;
+					n0.close();
+					n2.close();
+					nAverage.close();
 
 					v0.transform(matrix4f);
 					v1.transform(matrix4f);
@@ -420,10 +448,10 @@ public class MeshRenderer {
 						final float green = 1.0F * shading;
 						final float blue = 1.0F * shading;
 						final float alpha = 1.0F;
-						vertexBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n0.x, (float) n0.y, (float) n0.z).endVertex();
-						vertexBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n1.x, (float) n1.y, (float) n1.z).endVertex();
-						vertexBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n2.x, (float) n2.y, (float) n2.z).endVertex();
-						vertexBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n3.x, (float) n3.y, (float) n3.z).endVertex();
+						vertexBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
 					}
 					return true;
 				}

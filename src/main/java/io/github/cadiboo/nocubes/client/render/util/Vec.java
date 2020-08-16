@@ -1,11 +1,9 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 
-import javax.annotation.Nullable;
 import java.io.Closeable;
 
 /**
@@ -13,7 +11,7 @@ import java.io.Closeable;
  */
 public class Vec implements Closeable {
 
-	static final Pool<Vec> POOL = new Pool<>(100);
+	static final Pool<Vec> POOL = new Pool<>(30_000);
 	public double x;
 	public double y;
 	public double z;
@@ -22,10 +20,6 @@ public class Vec implements Closeable {
 		this.x = x;
 		this.y = y;
 		this.z = z;
-	}
-
-	public static Vec of() {
-		return of(0, 0, 0);
 	}
 
 	public static Vec of(Vec v) {
@@ -47,24 +41,6 @@ public class Vec implements Closeable {
 		return new Vec(x, y, z);
 	}
 
-	public static Direction getDirectionFromNormal(Vec normal) {
-		double x = normal.x;
-		double y = normal.y;
-		double z = normal.z;
-		final double ax = Math.abs(x);
-		final double ay = Math.abs(y);
-		final double az = Math.abs(z);
-		double max = Math.max(Math.max(ax, ay), az);
-		if (max == ax)
-			return x > 0 ? Direction.EAST : Direction.WEST;
-		else if (max == ay)
-			return y > 0 ? Direction.UP : Direction.DOWN;
-		else if (max == az)
-			return z > 0 ? Direction.SOUTH : Direction.NORTH;
-		else
-			throw new IllegalStateException("Could not find a direction from the normal, wtf???");
-	}
-
 	public Vec add(double x, double y, double z) {
 		this.x += x;
 		this.y += y;
@@ -81,10 +57,6 @@ public class Vec implements Closeable {
 		this.y -= y;
 		this.z -= z;
 		return this;
-	}
-
-	public Vec subtract(double d) {
-		return subtract(d, d, d);
 	}
 
 	public Vec subtract(Vec vec) {
@@ -118,20 +90,11 @@ public class Vec implements Closeable {
 	}
 
 	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace) {
-		return normal(prevVecInFace, vec, nextVecInFace, Vec.of());
-	}
-
-	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace, Vec toUse) {
-		toUse.x = prevVecInFace.x - vec.x;
-		toUse.x = prevVecInFace.y - vec.y;
-		toUse.x = prevVecInFace.z - vec.z;
-		toUse.cross(
-			nextVecInFace.x - vec.x,
-			nextVecInFace.y - vec.y,
-			nextVecInFace.z - vec.z,
-			toUse
-		);
-		return toUse.normalise();
+		Vec first = of(prevVecInFace).subtract(vec);
+		Vec second = of(nextVecInFace).subtract(vec);
+		Vec res = first.cross(second);
+		second.close();
+		return res.normalise();
 	}
 
 	/**
@@ -150,21 +113,11 @@ public class Vec implements Closeable {
 	}
 
 	public Vec cross(Vec vec) {
-		return cross(vec, Vec.of());
-	}
-
-	public Vec cross(Vec vec, Vec toUse) {
-		return cross(vec.x, vec.y, vec.z, toUse);
-	}
-
-	public Vec cross(double ox, double oz, double oy, Vec toUse) {
-		final double tx = this.x;
-		final double ty = this.y;
-		final double tz = this.z;
-		toUse.x = ty * oz - tz * oy;
-		toUse.y = tz * ox - tx * oz;
-		toUse.z = tx * oy - ty * ox;
-		return toUse;
+		return of(
+			this.y * vec.z - this.z * vec.y,
+			this.z * vec.x - this.x * vec.z,
+			this.x * vec.y - this.y * vec.x
+		);
 	}
 
 	@Override
