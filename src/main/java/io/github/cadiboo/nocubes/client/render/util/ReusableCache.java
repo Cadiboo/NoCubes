@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
 import javax.annotation.Nullable;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public interface ReusableCache<T> {
@@ -44,17 +43,6 @@ public interface ReusableCache<T> {
 			cache.set(value);
 			return value;
 		}
-	}
-
-	static <T> T getOrCreate(@Nullable ReusableCache<T> cache, Predicate<T> isUsable, Supplier<T> creator) {
-		if (cache == null)
-			return creator.get();
-		final T cachedValue = cache.get();
-		if (cachedValue != null && isUsable.test(cachedValue))
-			return cachedValue;
-		T value = creator.get();
-		cache.set(value);
-		return value;
 	}
 
 	class Local<T> implements ReusableCache<T> {

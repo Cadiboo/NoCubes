@@ -79,9 +79,9 @@ public final class Hooks {
 		return true;
 	}
 
-//	public static VoxelShape getCollisionShape(BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
-//		return CollisionHandler.getCollisionShape(state, reader, blockPos, context);
-//	}
+	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
+		return CollisionHandler.getCollisionShape(canCollide, state, reader, blockPos, context);
+	}
 
 	/**
 	 * Load classes that we modify to get errors sooner.
