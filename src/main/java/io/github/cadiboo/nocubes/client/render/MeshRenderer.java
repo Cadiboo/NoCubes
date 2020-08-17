@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -44,6 +45,8 @@ public class MeshRenderer {
 
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final ChunkRenderCache chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubesConfig.Client.render) {
+			Face normal = Face.of(Vec.of(), Vec.of(), Vec.of(), Vec.of());
+			Vec averageNormal = Vec.of();
 			SurfaceNets.generate(
 				blockpos.getX(), blockpos.getY(), blockpos.getZ(),
 				16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable, CHUNKS,
@@ -52,51 +55,14 @@ public class MeshRenderer {
 					final Vec v1 = face.v1;
 					final Vec v2 = face.v2;
 					final Vec v3 = face.v3;
+					Face.normal(face, normal);
+					final Vec n0 = normal.v0.multiply(-1);
+					final Vec n1 = normal.v1.multiply(-1);
+					final Vec n2 = normal.v2.multiply(-1);
+					final Vec n3 = normal.v3.multiply(-1);
+					Face.average(normal, averageNormal);
 					final SmoothableHandler handler = NoCubes.smoothableHandler;
-					// Normals TODO: Optimise
-					final Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
-					final Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
-					final Vec nAverage = Vec.of(
-						(n0.x + n2.x) / 2,
-						(n0.y + n2.y) / 2,
-						(n0.z + n2.z) / 2
-					);
-					final Direction direction = getDirectionFromNormal(nAverage);
-					// TODO: Need to use all 4 normals
-					float nx = (float) n0.x;
-					float ny = (float) n0.y;
-					float nz = (float) n0.z;
-					n0.close();
-					n2.close();
-					nAverage.close();
-
-//					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
-//						if (pos.getX() < blockpos.getX() - 2 || pos.getX() > blockpos.getX() + 17)
-//							continue;
-//						if (pos.getY() < blockpos.getY() - 2 || pos.getY() > blockpos.getY() + 17)
-//							continue;
-//						if (pos.getY() < blockpos.getZ() - 2 || pos.getY() > blockpos.getZ() + 17)
-//							continue;
-//						net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
-//						BlockState bs = Blocks.SCAFFOLDING.getDefaultState();
-//						if (bs.getRenderType() != BlockRenderType.INVISIBLE && RenderTypeLookup.canRenderInLayer(bs, rendertype)) {
-//							RenderType rendertype1 = rendertype;
-//							BufferBuilder bufferbuilder2 = builderIn.getBuilder(rendertype1);
-//							if (compiledChunkIn.layersStarted.add(rendertype1)) {
-//								chunkRender.beginLayer(bufferbuilder2);
-//							}
-//
-//							matrixstack.push();
-//							matrixstack.translate((double) (pos.getX() & 15), (double) (pos.getY() & 15), (double) (pos.getZ() & 15));
-//							if (blockrendererdispatcher.renderModel(bs, pos, chunkrendercache, matrixstack, bufferbuilder2, true, random, modelData)) {
-//								compiledChunkIn.empty = false;
-//								compiledChunkIn.layersUsed.add(rendertype1);
-//							}
-//
-//							matrixstack.pop();
-//						}
-//					}
-//					net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+					final Direction direction = getDirectionFromNormal(averageNormal);
 
 					BlockState blockstate = chunkrendercache.getBlockState(pos);
 					// Vertices can generate at positions different to the position of the block they are for
@@ -108,11 +74,6 @@ public class MeshRenderer {
 						int y = pos.getY();
 						int z = pos.getZ();
 						blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
-//						blockstate = chunkrendercache.getBlockState(pos.setPos(x, y + 1, z)); // UP
-//						if (!handler.isSmoothable(blockstate))
-//							blockstate = chunkrendercache.getBlockState(pos.setPos(x + 1, y, z)); // EAST
-//						if (!handler.isSmoothable(blockstate))
-//							blockstate = chunkrendercache.getBlockState(pos.setPos(x, y, z + 1)); // SOUTH
 						if (!handler.isSmoothable(blockstate)) {
 							// Give up
 							blockstate = Blocks.SCAFFOLDING.getDefaultState();
@@ -207,10 +168,10 @@ public class MeshRenderer {
 							final float green = 1.0F * shading;
 							final float blue = 1.0F * shading;
 							final float alpha = 1.0F;
-							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(light).normal(nx, ny, nz).endVertex();
-							bufferbuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(light).normal(nx, ny, nz).endVertex();
+							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal((float) n0.x, (float) n0.y, (float) n0.z).endVertex();
+							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal((float) n1.x, (float) n1.y, (float) n1.z).endVertex();
+							bufferbuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).lightmap(light).normal((float) n2.x, (float) n2.y, (float) n2.z).endVertex();
+							bufferbuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).lightmap(light).normal((float) n3.x, (float) n3.y, (float) n3.z).endVertex();
 						}
 
 						if (true) {
@@ -223,6 +184,8 @@ public class MeshRenderer {
 					return true;
 				}
 			);
+			normal.close();
+			averageNormal.close();
 		}
 	}
 
@@ -233,10 +196,10 @@ public class MeshRenderer {
 		double max = Math.max(Math.max(Math.abs(x), Math.abs(y)), Math.abs(z));
 		if (max == Math.abs(x))
 			return x > 0 ? Direction.EAST : Direction.WEST;
-		else if (max == Math.abs(y))
-			return y > 0 ? Direction.UP : Direction.DOWN;
 		else if (max == Math.abs(z))
 			return z > 0 ? Direction.SOUTH : Direction.NORTH;
+		else if (max == Math.abs(y))
+			return y > 0 ? Direction.UP : Direction.DOWN;
 		else
 			throw new IllegalStateException("Could not find a direction from the normal, wtf???");
 	}
