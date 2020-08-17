@@ -98,11 +98,6 @@ minecraft {
 					source sourceSets.test
 				}
 			}
-		}
-
-		integrationTestingServer {
-			parent server
-			main 'net.minecraftforge.userdev.LaunchTesting'
 			property 'nocubes.testing.integration', 'true'
 			setForceExit(false)
 		}

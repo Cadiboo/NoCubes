@@ -21,8 +21,6 @@ public final class TestRunner {
 
 	@SubscribeEvent
 	public static void runTests(FMLServerStartedEvent event) {
-		if (!TestUtil.IS_CI_ENVIRONMENT.get())
-			return;
 		final TestRepository testRepository = new TestRepository();
 		final MinecraftServer server = event.getServer();
 		final long fails = testRepository.tests.parallelStream()
@@ -32,6 +30,8 @@ public final class TestRunner {
 			log(server, new StringTextComponent(fails + " TESTS FAILED").mergeStyle(TextFormatting.RED));
 		else
 			log(server, new StringTextComponent("ALL TESTS PASSED").mergeStyle(TextFormatting.GREEN));
+		if (!TestUtil.IS_CI_ENVIRONMENT.get())
+			return;
 		if (fails > 0)
 			throw new RuntimeException("Had failed tests");
 		else

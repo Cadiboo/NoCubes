@@ -24,7 +24,7 @@ jobs:
     - name: "Run Integration Tests on Server"
       uses: eskatos/gradle-command-action@v1
       with:
-        arguments: --stacktrace --debug runIntegrationTestingServer
+        arguments: --stacktrace --debug runServer
         wrapper-cache-enabled: true
         dependencies-cache-enabled: true
         configuration-cache-enabled: true
