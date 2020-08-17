@@ -105,10 +105,10 @@ public class MeshRenderer {
 						if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
 							dirQuads = blockrendererdispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
 						int dirQuadsSize = dirQuads.size();
+						final int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
 						for (int i1 = 0; i1 < dirQuadsSize + nullQuads.size(); i1++) {
 							final BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
 
-							final int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
 							final int[] vertexData = quad.getVertexData();
 							// Quads are packed xyz|argb|u|v|ts
 							final float texu0 = Float.intBitsToFloat(vertexData[4]);
@@ -325,7 +325,6 @@ public class MeshRenderer {
 					final Vec n2 = normal.v2.multiply(-1);
 					final Vec n3 = normal.v3.multiply(-1);
 					Face.average(normal, averageNormal);
-					final SmoothableHandler handler = NoCubes.smoothableHandler;
 					final Direction direction = getDirectionFromNormal(averageNormal);
 
 					v0.transform(matrix4f);
