@@ -82,6 +82,7 @@ public class MeshRenderer {
 					}
 
 					long rand = blockstate.getPositionRandom(pos);
+					BlockColors blockColors = Minecraft.getInstance().getBlockColors();
 
 					net.minecraftforge.client.model.data.IModelData modelData = rebuildTask.getModelData(pos);
 					for (RenderType rendertype : RenderType.getBlockRenderTypes()) {
@@ -164,9 +165,22 @@ public class MeshRenderer {
 									throw new IllegalStateException("Unexpected value: " + direction);
 							}
 							final float shading = chunkrendercache.func_230487_a_(direction, false);
-							final float red = 1.0F * shading;
-							final float green = 1.0F * shading;
-							final float blue = 1.0F * shading;
+							float red;
+							float blue;
+							float green;
+							if (quad.hasTintIndex()) {
+								int packedColor = blockColors.getColor(blockstate, chunkrendercache, pos, quad.getTintIndex());
+								red = (float)(packedColor >> 16 & 255) / 255.0F;
+								green = (float)(packedColor >> 8 & 255) / 255.0F;
+								blue = (float)(packedColor & 255) / 255.0F;
+							} else {
+								red = 1.0F;
+								green = 1.0F;
+								blue = 1.0F;
+							}
+							red *= shading;
+							green *= shading;
+							blue *= shading;
 							final float alpha = 1.0F;
 							bufferbuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).lightmap(light).normal((float) n0.x, (float) n0.y, (float) n0.z).endVertex();
 							bufferbuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).lightmap(light).normal((float) n1.x, (float) n1.y, (float) n1.z).endVertex();
@@ -206,6 +220,8 @@ public class MeshRenderer {
 
 	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
 		if (NoCubesConfig.Client.render) {
+			Face normal = Face.of(Vec.of(), Vec.of(), Vec.of(), Vec.of());
+			Vec averageNormal = Vec.of();
 			long rand = blockStateIn.getPositionRandom(posIn);
 			Random random = blockRendererDispatcher.random;
 			IBakedModel model = blockRendererDispatcher.getBlockModelShapes().getModel(blockStateIn);
@@ -299,26 +315,18 @@ public class MeshRenderer {
 				posIn.getX(), posIn.getY(), posIn.getZ(),
 				1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
 				(pos, face) -> {
-					final Vec v0 = face.v0;
-					final Vec v1 = face.v1;
-					final Vec v2 = face.v2;
-					final Vec v3 = face.v3;
-					// Normals TODO: Optimise
-					final Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
-					final Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
-					final Vec nAverage = Vec.of(
-						(n0.x + n2.x) / 2,
-						(n0.y + n2.y) / 2,
-						(n0.z + n2.z) / 2
-					);
-					final Direction direction = getDirectionFromNormal(nAverage);
-					// TODO: Need to use all 4 normals
-					float nx = (float) n0.x;
-					float ny = (float) n0.y;
-					float nz = (float) n0.z;
-					n0.close();
-					n2.close();
-					nAverage.close();
+					final Vec v0 = Vec.of(face.v0);
+					final Vec v1 = Vec.of(face.v1);
+					final Vec v2 = Vec.of(face.v2);
+					final Vec v3 = Vec.of(face.v3);
+					Face.normal(face, normal);
+					final Vec n0 = normal.v0.multiply(-1);
+					final Vec n1 = normal.v1.multiply(-1);
+					final Vec n2 = normal.v2.multiply(-1);
+					final Vec n3 = normal.v3.multiply(-1);
+					Face.average(normal, averageNormal);
+					final SmoothableHandler handler = NoCubes.smoothableHandler;
+					final Direction direction = getDirectionFromNormal(averageNormal);
 
 					v0.transform(matrix4f);
 					v1.transform(matrix4f);
@@ -407,11 +415,15 @@ public class MeshRenderer {
 						final float green = 1.0F * shading;
 						final float blue = 1.0F * shading;
 						final float alpha = 1.0F;
-						vertexBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
-						vertexBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
-						vertexBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
-						vertexBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal(nx, ny, nz).endVertex();
+						vertexBuilderIn.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).tex(v0u, v0v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n0.x, (float) n0.y, (float) n0.z).endVertex();
+						vertexBuilderIn.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).tex(v1u, v1v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n1.x, (float) n1.y, (float) n1.z).endVertex();
+						vertexBuilderIn.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).tex(v2u, v2v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n2.x, (float) n2.y, (float) n2.z).endVertex();
+						vertexBuilderIn.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).tex(v3u, v3v).overlay(OverlayTexture.NO_OVERLAY).lightmap(light).normal((float) n3.x, (float) n3.y, (float) n3.z).endVertex();
 					}
+					v0.close();
+					v1.close();
+					v2.close();
+					v3.close();
 					return true;
 				}
 			);
