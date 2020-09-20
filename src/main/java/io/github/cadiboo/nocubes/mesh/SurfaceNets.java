@@ -1,11 +1,12 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Face;
+import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.gen.WorldGenRegion;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
@@ -117,7 +118,10 @@ public class SurfaceNets {
 				for (int y = 0; y < maxY; y++) {
 					for (int x = 0; x < maxX; x++, i++) {
 						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
-						binaryField[z][y][x] = isSmoothable.test(world.getBlockState(pos));
+						if (world instanceof WorldGenRegion && !((WorldGenRegion) world).chunkExists(x << 16, z << 16))
+							binaryField[z][y][x] = false;
+						else
+							binaryField[z][y][x] = isSmoothable.test(world.getBlockState(pos));
 					}
 				}
 			}
