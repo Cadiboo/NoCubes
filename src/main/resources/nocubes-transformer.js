@@ -937,22 +937,29 @@ function injectPreIterationHook(instructions) {
 //    ASTORE 16
 //   L34
 
-//	var getAllInBoxMutable_owner;
-//	var getAllInBoxMutable_name;
-//	var getAllInBoxMutable_desc;
-//	if (!isOptiFinePresent) {
-//		getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
-//		getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#getAllInBoxMutable
-//		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
-//	} else {
-//		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
-//		getAllInBoxMutable_name = "getAllInBoxMutable"; // BlockPosM#getAllInBoxMutable
-//		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
-//	}
+	isOptiFinePresent = false
+	var arrayLength = instructions.size();
+	for (var i = 0; i < arrayLength; ++i) {
+		if (instructions.get(i).owner == "net/optifine/BlockPosM") {
+			isOptiFinePresent = true;
+			break;
+		}
+	}
 
-	var getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
-	var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#getAllInBoxMutable
-	var getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
+	var getAllInBoxMutable_owner;
+	var getAllInBoxMutable_name;
+	var getAllInBoxMutable_desc;
+	if (!isOptiFinePresent) {
+		var getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
+		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#getAllInBoxMutable
+		var getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
+	} else {
+		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
+		getAllInBoxMutable_name = "getAllInBoxMutable"; // BlockPosM#getAllInBoxMutable
+		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
+	}
+
+	print("isOptiFinePresent: " + isOptiFinePresent)
 
 	var first_INVOKESTATIC_getAllInBoxMutable;
 	var arrayLength = instructions.size();
@@ -1001,10 +1008,17 @@ function injectPreIterationHook(instructions) {
 	toInject.add(new VarInsnNode(ALOAD, 4)); // compiledChunkIn
 	toInject.add(new VarInsnNode(ALOAD, 5)); // builderIn
 	toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos - startPosition
-	toInject.add(new VarInsnNode(ALOAD, 11)); // chunkrendercache
-	toInject.add(new VarInsnNode(ALOAD, 12)); // matrixstack
-	toInject.add(new VarInsnNode(ALOAD, 13)); // random
-	toInject.add(new VarInsnNode(ALOAD, 14)); // blockrendererdispatcher
+	if (!isOptiFinePresent) {
+		toInject.add(new VarInsnNode(ALOAD, 11)); // chunkrendercache
+		toInject.add(new VarInsnNode(ALOAD, 12)); // matrixstack
+		toInject.add(new VarInsnNode(ALOAD, 13)); // random
+		toInject.add(new VarInsnNode(ALOAD, 14)); // blockrendererdispatcher
+	} else {
+		toInject.add(new VarInsnNode(ALOAD, 12)); // chunkrendercache
+		toInject.add(new VarInsnNode(ALOAD, 11)); // matrixstack
+		toInject.add(new VarInsnNode(ALOAD, 14)); // random
+		toInject.add(new VarInsnNode(ALOAD, 15)); // blockrendererdispatcher
+	}
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
@@ -1013,7 +1027,7 @@ function injectPreIterationHook(instructions) {
 			//String name
 			"preIteration",
 			//String descriptor
-			"(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;Lcom/mojang/blaze3d/matrix/MatrixStack;Ljava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
+			"(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Ljava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
 			//boolean isInterface
 			false
 	));
@@ -1174,11 +1188,10 @@ function injectBlockRenderHook(instructions) {
 	var originalInstructionsLabel = new LabelNode();
 
 	// Make list of instructions to inject
-//	if (!isOptiFinePresent)
-//		toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
-//	else
-//		toInject.add(new VarInsnNode(ALOAD, 20)); // blockstate
-	toInject.add(new VarInsnNode(ALOAD, 17)); // blockstate
+	if (!isOptiFinePresent)
+		toInject.add(new VarInsnNode(ALOAD, 17)); // blockstate
+	else
+		toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
 	toInject.add(new MethodInsnNode(
 			//int opcode
 			INVOKESTATIC,
