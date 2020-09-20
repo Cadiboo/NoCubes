@@ -25,6 +25,7 @@ plugins {
 	id 'checkstyle'
 //	// Minify coremod javascript
 //	id "com.leobia.gradle.jsgradlecompiler" version "0.3.0"
+	id 'com.github.johnrengelman.shadow' version '2.0.4'
 }
 
 // Necessary for Forge to be setup
@@ -150,6 +151,7 @@ dependencies {
 
 	// For the config color picker
 	implementation 'org.beryx:awt-color-factory:1.0.2'
+	shadow 'org.beryx:awt-color-factory:1.0.2'
 
 	// For more info...
 	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -199,6 +201,24 @@ publishing {
 			url "file:///${project.projectDir}/mcmodsrepo"
 		}
 	}
+}
+
+// Copy pasta shadow jar code
+// https://github.com/ldtteam/ChatChainMC/blob/9de4a32b0bdf3586b2b09e4d489ab98cc6606122/build.gradle#L104-L116
+// https://github.com/ldtteam/ChatChainMC/blob/9de4a32b0bdf3586b2b09e4d489ab98cc6606122/build.gradle#L61
+// (Forge Discord) https://discordapp.com/channels/313125603924639766/725850371834118214/756852152185520158
+shadowJar {
+	configurations = [project.configurations.shadow]
+
+	exclude 'dummyThing'
+	// Don't put the modified minecraft/optifine files in final jar (but compile them and everything)
+	exclude '**/net/minecraft/**'
+	exclude '**/net/optifine/**'
+
+	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
+}
+reobf {
+	shadowJar {}
 }
 
 // Coremod minification
