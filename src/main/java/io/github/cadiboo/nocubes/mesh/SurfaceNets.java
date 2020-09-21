@@ -12,10 +12,22 @@ import java.util.ArrayList;
 import java.util.function.Predicate;
 
 /**
- * @author Cadiboo
+ * Written by Mikola Lysenko (C) 2012
+ * Ported from JavaScript to Java and modified for NoCubes by Cadiboo.
  */
 public class SurfaceNets {
 
+
+	// Surface needs data for n+1 to generate n
+	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
+	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
+	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
+
+	/**
+	 * A list of vertices where x/y/z are represented as bits (either 0 or 1)
+	 * E.g. (1, 0, 1) -> 101
+	 * I think it also has some extra info
+	 */
 	public static final int[] CUBE_EDGES = new int[24];
 	public static final int[] EDGE_TABLE = new int[256];
 
@@ -43,7 +55,6 @@ public class SurfaceNets {
 	 * </pre>
 	 */
 	private static void generateCubeEdgesTable() {
-
 		//Initialize the cube_edges table
 		// This is just the vertex number (number of corners) of each cube
 		int cubeEdgesIndex = 0;
@@ -88,18 +99,16 @@ public class SurfaceNets {
 		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
 		MeshAction action
 	) {
-		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
-		meshSizeX += 1;
-		meshSizeY += 1;
-		meshSizeZ += 1;
-		// Surface needs data for n+1 to generate n
-		// Need an extra block on each axis because surface nets
-		final int worldXStart = startX - 1;
-		final int worldYStart = startY - 1;
-		final int worldZStart = startZ - 1;
-		final int maxX = meshSizeX + 1;
-		final int maxY = meshSizeY + 1;
-		final int maxZ = meshSizeZ + 1;
+		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
+		meshSizeY += MESH_SIZE_POSITIVE_EXTENSION;
+		meshSizeZ += MESH_SIZE_POSITIVE_EXTENSION;
+		final int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
+		final int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
+		final int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
+		// Need to add that extra block on each axis
+		final int maxX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int maxY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int maxZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
 
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
 
@@ -133,130 +142,156 @@ public class SurfaceNets {
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
 		// (x, y, z) -> [z * maxX * maxY + y * maxX + x]
 		// So the multiplier for X is 1, the multiplier for Y is maxX and the multiplier for z is maxX * maxY
-		// Still no clue why the z axis gets inverted each pass, or how m and buff_no work
-		final int[] R = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
+		final int[] axisMultipliers = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
 		final float[] grid = new float[8];
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
 
-		final int[] buffer = new int[R[2] * 2];
+		// Contains all the vertices of the previous slice + space for vertices on the current slice
+		// When we go to the next slice, we start reading from the side we were previously
+		// writing to and start writing to the side we were previously reading from
+		// It behaves similarly to how a pixel buffer on a screen works: You write colors to one half
+		// of the buffer, while displaying the other half and flip sides each frame (so you're not
+		// visibly writing pixels each frame, causing a wipe-down effect as the new data is written
+		// the way that happens in old CRT (cathode-ray tube) monitors/TVs)
+		final int[] verticesBuffer = new int[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
-		for (int z = 0; z < meshSizeZ; ++z, n += maxX, buf_no ^= 1, R[2] = -R[2]) {
+		for (int z = 0; z < meshSizeZ; ++z, n += maxX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
 
-			//m is the pointer into the buffer we are going to use.
-			//This is slightly obtuse because javascript does not have good support for packed data structures, so we must use typed arrays :(
+			//bufferPointer is the pointer into the buffer we are going to use.
 			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
-			int m = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
+			int bufferPointer = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
 
-			for (int y = 0; y < meshSizeY; ++y, ++n, m += 2) {
-				for (int x = 0; x < meshSizeX; ++x, ++n, ++m) {
+			for (int y = 0; y < meshSizeY; ++y, ++n, bufferPointer += 2) {
+				for (int x = 0; x < meshSizeX; ++x, ++n, ++bufferPointer) {
 
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-					int mask = 0, g = 0, idx = n;
-					for (int z0 = 0; z0 < 2; ++z0, idx += maxX * (maxY - 2))
-						for (int y0 = 0; y0 < 2; ++y0, idx += maxX - 2)
-							for (byte x0 = 0; x0 < 2; ++x0, ++g, ++idx) {
-								float p = binaryField[z + z0][y + y0][x + x0] ? 1 : -1;
-								grid[g] = p;
-								mask |= (p < 0) ? (1 << g) : 0;
+					int mask = 0, corner = 0, idx = n;
+					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += maxX * (maxY - 2))
+						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += maxX - 2)
+							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
+								float p = binaryField[z + cornerZ][y + cornerY][x + cornerX] ? 1 : -1;
+								grid[corner] = p;
+								mask |= (p < 0) ? (1 << corner) : 0;
 							}
 
-					//Check for early termination if cell does not intersect boundary
+					// Check for early termination if cell does not intersect boundary
+					// This cell is either entirely inside or entirely outside the isosurface
 					if (mask == 0 || mask == 0xff) {
 						continue;
 					}
 
-					//Sum up edge intersections
+					// Sum up edge intersections
 					int edge_mask = EDGE_TABLE[mask];
-					final double[] v = {0, 0, 0};
-					int e_count = 0;
+					final double[] vertex = {0, 0, 0};
+					int edgeCrossings = 0;
 
-					//For every edge of the cube...
-					for (int i = 0; i < 12; ++i) {
+					// For every edge of the cube...
+					for (int edge = 0; edge < 12; ++edge) {
 
 						//Use edge mask to check if it is crossed
-						if ((edge_mask & (1 << i)) == 0) {
+						if ((edge_mask & (1 << edge)) == 0)
 							continue;
-						}
 
 						//If it did, increment number of edge crossings
-						++e_count;
+						++edgeCrossings;
 
 						//Now find the point of intersection
 						//Unpack vertices
-						final int e0 = CUBE_EDGES[i << 1];
-						final int e1 = CUBE_EDGES[(i << 1) + 1];
+						// These are vertices packed (x, y, z) -> zyx
+						// They are also the indices of which corner the vertex is for
+						final int edgeStart = CUBE_EDGES[edge << 1];
+						final int edgeEnd = CUBE_EDGES[(edge << 1) + 1];
 						//Unpack grid values
-						final float g0 = grid[e0];
-						final float g1 = grid[e1];
+						final float edgeStartValue = grid[edgeStart];
+						final float edgeEndValue = grid[edgeEnd];
+//						//Compute point of intersection (the point where the isosurface is and the vertex is)
+//						float t = edgeStartValue - edgeEndValue;
+//						vertex.add(
+//							(edgeStart & 0b001) * (1.0 - t) + (edgeEnd & 0b001) * t,
+//							(edgeStart & 0b010) * (1.0 - t) + (edgeEnd & 0b010) * t,
+//							(edgeStart & 0b100) * (1.0 - t) + (edgeEnd & 0b100) * t
+//						);
 						//Compute point of intersection
-						float t = g0 - g1;
+						float t = edgeStartValue - edgeEndValue;
 						if (Math.abs(t) > 1e-6) {
-							t = g0 / t;
+							t = edgeStartValue / t;
 						} else {
 							continue;
 						}
 
 						//Interpolate vertices and add up intersections (this can be done without multiplying)
 						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
-							final int a = e0 & k;
-							final int b = e1 & k;
+							final int a = edgeStart & k;
+							final int b = edgeEnd & k;
 							if (a != b) {
-								v[j] += a != 0 ? 1F - t : t;
+								vertex[j] += a != 0 ? 1F - t : t;
 							} else {
-								v[j] += a != 0 ? 1F : 0;
+								vertex[j] += a != 0 ? 1F : 0;
 							}
 						}
 					}
 
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
-					float s = 1.0F / e_count;
-					v[0] = -0.5 + 0 + x + s * v[0];
-					v[1] = -0.5 + 0 + y + s * v[1];
-					v[2] = -0.5 + 0 + z + s * v[2];
+					float s = 1.0F / edgeCrossings;
+					vertex[0] = -0.5 + 0 + x + s * vertex[0];
+					vertex[1] = -0.5 + 0 + y + s * vertex[1];
+					vertex[2] = -0.5 + 0 + z + s * vertex[2];
+//					vertex.multiply(s);
+//					vertex.add(
+//						x + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,
+//						y + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,
+//						z + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION
+//					);
 
-					//Add vertex to buffer, store pointer to vertex index in buffer
-					buffer[m] = vertices.size();
-					vertices.add(v);
+//					Vec fromPreviousPreviousSlice = verticesBuffer[bufferPointer];
+//					if (fromPreviousPreviousSlice != null)
+//						fromPreviousPreviousSlice.close();
+//					//Add vertex to buffer
+//					verticesBuffer[bufferPointer] = vertex;
+					verticesBuffer[bufferPointer] = vertices.size();
+					vertices.add(vertex);
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
-					for (int i = 0; i < 3; ++i) {
+					for (int axis = 0; axis < 3; ++axis) {
 						//The first three entries of the edge_mask count the crossings along the edge
-						if ((edge_mask & (1 << i)) == 0) {
+						if ((edge_mask & (1 << axis)) == 0) {
 							continue;
 						}
 
-						// i = axes we are point along.  iu, iv = orthogonal axes
-						final int iu = (i + 1) % 3;
-						final int iv = (i + 2) % 3;
+						// axis = axes we are point along.  nextAxis, nextNextAxis = orthogonal axes
+						final int nextAxis = (axis + 1) % 3;
+						final int nextNextAxis = (axis + 2) % 3;
 
-						//If we are on a boundary, skip it
-						if (((iu == 0 && x == 0) || (iu == 1 && y == 0) || (iu == 2 && z == 0)) || ((iv == 0 && x == 0) || (iv == 1 && y == 0) || (iv == 2 && z == 0))) {
+						// If we are on a boundary, skip it
+						if ((nextAxis == 0 && x == 0) || (nextAxis == 1 && y == 0) || (nextAxis == 2 && z == 0))
 							continue;
-						}
+						else if ((nextNextAxis == 0 && x == 0) || (nextNextAxis == 1 && y == 0) || (nextNextAxis == 2 && z == 0))
+							continue;
 
 						//Otherwise, look up adjacent edges in buffer
-						final int du = R[iu];
-						final int dv = R[iv];
+						final int du = axisMultipliers[nextAxis];
+						final int dv = axisMultipliers[nextNextAxis];
 
 						final Face face;
 						//Remember to flip orientation depending on the sign of the corner.
+						// TODO: Fix this so I'm using a single Face object and not copying each vertex multiple times
 						if ((mask & 1) != 0)
 							face = Face.of(
-								Vec.of(vertices.get(buffer[m])),
-								Vec.of(vertices.get(buffer[m - dv])),
-								Vec.of(vertices.get(buffer[m - du - dv])),
-								Vec.of(vertices.get(buffer[m - du]))
+								Vec.of(vertices.get(verticesBuffer[bufferPointer])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - dv])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - du - dv])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - du]))
 							);
 						else
 							face = Face.of(
-								Vec.of(vertices.get(buffer[m])),
-								Vec.of(vertices.get(buffer[m - du])),
-								Vec.of(vertices.get(buffer[m - du - dv])),
-								Vec.of(vertices.get(buffer[m - dv]))
+								Vec.of(vertices.get(verticesBuffer[bufferPointer])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - du])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - du - dv])),
+								Vec.of(vertices.get(verticesBuffer[bufferPointer - dv]))
 							);
 						pos.setPos(worldXStart, worldYStart, worldZStart);
 						pos.move(x, y, z);
