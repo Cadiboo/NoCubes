@@ -123,6 +123,7 @@ public class SurfaceNets {
 		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[maxZ][maxY][maxX]);
 		{
 			int i = 0;
+			// TODO: Use optimised chunk aware loop from discord
 			for (int z = 0; z < maxZ; z++) {
 				for (int y = 0; y < maxY; y++) {
 					for (int x = 0; x < maxX; x++, i++) {
