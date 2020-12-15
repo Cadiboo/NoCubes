@@ -3,7 +3,9 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.client.render.util.Face;
 import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.gen.WorldGenRegion;
@@ -121,21 +123,12 @@ public class SurfaceNets {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[maxZ][maxY][maxX]);
-		{
-			int i = 0;
-			// TODO: Use optimised chunk aware loop from discord
-			for (int z = 0; z < maxZ; z++) {
-				for (int y = 0; y < maxY; y++) {
-					for (int x = 0; x < maxX; x++, i++) {
-						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
-						if (world instanceof WorldGenRegion && !((WorldGenRegion) world).chunkExists(x << 16, z << 16))
-							binaryField[z][y][x] = false;
-						else
-							binaryField[z][y][x] = isSmoothable.test(world.getBlockState(pos));
-					}
-				}
-			}
-		}
+		ModUtil.traverseArea(
+			startX, startY, startZ,
+			maxX, maxY, maxZ,
+			pos, Minecraft.getInstance().world,
+			(state, blockPos) -> binaryField[blockPos.getX() - startX][blockPos.getY() - startY][blockPos.getZ() - startZ] = isSmoothable.test(state)
+		);
 
 		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
