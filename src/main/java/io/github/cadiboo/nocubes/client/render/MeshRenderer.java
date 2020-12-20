@@ -40,8 +40,8 @@ import java.util.Random;
  */
 public class MeshRenderer {
 
-	private static final ReusableCache<boolean[][][]> CHUNKS = new ReusableCache.Local<>();
-	private static final ReusableCache<boolean[][][]> CRACKING = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[]> CHUNKS = new ReusableCache.Local<>();
+	private static final ReusableCache<boolean[]> CRACKING = new ReusableCache.Global<>();
 
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final IBlockDisplayReader chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (NoCubesConfig.Client.render) {

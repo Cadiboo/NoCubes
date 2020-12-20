@@ -29,7 +29,7 @@ public class SurfaceNets {
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[]> cache,
 		MeshAction action
 	) {
 		try {
@@ -44,7 +44,7 @@ public class SurfaceNets {
 	private static void generateOrThrow(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[]> cache,
 		MeshAction action
 	) {
 		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
@@ -68,7 +68,7 @@ public class SurfaceNets {
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[fieldSizeZ][fieldSizeY][fieldSizeX]);
+		final boolean[] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[fieldSizeZ * fieldSizeY * fieldSizeX]);
 		ModUtil.traverseArea(
 			worldXStart, worldYStart, worldZStart,
 			worldXStart + meshSizeX, worldYStart + meshSizeY, worldZStart + meshSizeZ,
@@ -76,7 +76,9 @@ public class SurfaceNets {
 				int x = blockPos.getX() - worldXStart;
 				int y = blockPos.getY() - worldYStart;
 				int z = blockPos.getZ() - worldZStart;
-				binaryField[z][y][x] = isSmoothable.test(blockState);
+				boolean isStateSmoothable = isSmoothable.test(blockState);
+				int index = ModUtil.get3dIndexInto1dArray(x, y, z, fieldSizeX, fieldSizeY);
+				binaryField[index] = isStateSmoothable;
 			}
 		);
 		// Old code from before 'traverseArea' was used, kept around because it might be useful for CubicChunks compat
@@ -132,7 +134,8 @@ public class SurfaceNets {
 					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += fieldSizeX * (fieldSizeY - 2))
 						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += fieldSizeX - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
-								float p = binaryField[z + cornerZ][y + cornerY][x + cornerX] ? 1 : -1;
+								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, fieldSizeX, fieldSizeY);
+								float p = binaryField[index] ? 1 : -1;
 								grid[corner] = p;
 								mask |= (p < 0) ? (1 << corner) : 0;
 							}

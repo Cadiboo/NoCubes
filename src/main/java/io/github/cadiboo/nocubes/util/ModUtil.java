@@ -86,4 +86,11 @@ public class ModUtil {
 		}
 	}
 
+	/**
+	 * Assumes the array is indexed [z][y][x].
+	 */
+	public static int get3dIndexInto1dArray(int x, int y, int z, int xSize, int ySize) {
+		return (xSize * ySize * z) + (xSize * y) + x;
+	}
+
 }
