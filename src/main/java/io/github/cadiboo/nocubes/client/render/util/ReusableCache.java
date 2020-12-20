@@ -33,12 +33,12 @@ public interface ReusableCache<T> {
 		}
 	}
 
-	static <T> T getOrCreate(ReusableCache<T> cache, Supplier<T> creator) {
-		T cached = cache.get();
+	default T getOrCreate(Supplier<T> creator) {
+		T cached = get();
 		if (cached != null)
 			return cached;
 		T value = creator.get();
-		cache.set(value);
+		set(value);
 		return value;
 	}
 

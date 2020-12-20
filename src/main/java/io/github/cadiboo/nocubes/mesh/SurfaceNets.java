@@ -68,7 +68,7 @@ public class SurfaceNets {
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final boolean[] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[fieldSizeZ * fieldSizeY * fieldSizeX]);
+		final boolean[] binaryField = cache.getOrCreate(() -> new boolean[fieldSizeZ * fieldSizeY * fieldSizeX]);
 		ModUtil.traverseArea(
 			worldXStart, worldYStart, worldZStart,
 			worldXStart + meshSizeX, worldYStart + meshSizeY, worldZStart + meshSizeZ,

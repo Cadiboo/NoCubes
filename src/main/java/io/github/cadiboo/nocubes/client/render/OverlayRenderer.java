@@ -130,11 +130,11 @@ public final class OverlayRenderer {
 //				drawShape(matrixStack, bufferBuilder, VoxelShapes.fullCube(), -d0 + blockPos.getX(), -d1 + blockPos.getY(), -d2 + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
 //		});
 //
-		// Draw nearby collisions
+		// Draw nearby collisions in green
 		viewer.world.getCollisionShapes(viewer, viewer.getBoundingBox().grow(5.0D)).forEach(voxelShape -> {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 1.0F, 0.4F);
 		});
-		// Draw player intersecting collisions
+		// Draw player intersecting collisions in red
 		viewer.world.getCollisionShapes(viewer, viewer.getBoundingBox()).forEach(voxelShape -> {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
 		});
@@ -297,24 +297,6 @@ public final class OverlayRenderer {
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
 		bufferSource.finish(RenderType.getLines());
-	}
-
-	public static VoxelShape makeShape(int currX, int currY, int currZ, Vec centre, Vec nAverage, Vec v) {
-//		v.add(nAverage);
-		double w = centre.x - v.x;
-		if (-0.01 < w && w < 0.01)
-			w = 0.0625 * nAverage.x;
-		double h = centre.y - v.y;
-		if (-0.01 < h && h < 0.01)
-			h = 0.0625 * nAverage.y;
-		double l = centre.z - v.z;
-		if (-0.01 < l && l < 0.01)
-			l = 0.0625 * nAverage.z;
-		v.add(currX, currY, currZ);
-		return VoxelShapes.create(
-			v.x, v.y, v.z,
-			v.x + w, v.y + h, v.z + l
-		);
 	}
 
 	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
