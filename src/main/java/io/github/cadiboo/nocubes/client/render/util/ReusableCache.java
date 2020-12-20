@@ -12,6 +12,33 @@ public interface ReusableCache<T> {
 
 	void clear();
 
+	/**
+	 * Thread safe.
+	 */
+	class Local<T> implements ReusableCache<T> {
+
+		private final ThreadLocal<T> threadLocal = new ThreadLocal<>();
+
+		@Nullable
+		@Override
+		public T get() {
+			return threadLocal.get();
+		}
+
+		@Override
+		public void set(T value) {
+			threadLocal.set(value);
+		}
+
+		@Override
+		public void clear() {
+			threadLocal.set(null);
+		}
+	}
+
+	/**
+	 * Not thread safe.
+	 */
 	class Global<T> implements ReusableCache<T> {
 
 		private T value;
@@ -42,27 +69,6 @@ public interface ReusableCache<T> {
 			T value = creator.get();
 			cache.set(value);
 			return value;
-		}
-	}
-
-	class Local<T> implements ReusableCache<T> {
-
-		private final ThreadLocal<T> threadLocal = new ThreadLocal<>();
-
-		@Nullable
-		@Override
-		public T get() {
-			return threadLocal.get();
-		}
-
-		@Override
-		public void set(T value) {
-			threadLocal.set(value);
-		}
-
-		@Override
-		public void clear() {
-			threadLocal.set(null);
 		}
 	}
 

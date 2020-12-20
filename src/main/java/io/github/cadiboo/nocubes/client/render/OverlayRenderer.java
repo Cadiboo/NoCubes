@@ -40,9 +40,9 @@ import java.util.List;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public final class OverlayRenderer {
 
-	private static final ReusableCache<boolean[][][]> DEBUGGING = new ReusableCache.Global<>();
-	private static final ReusableCache<boolean[][][]> HIGHLIGHT = new ReusableCache.Global<>();
-	private static final ReusableCache<boolean[][][]> COLLISIONS = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[]> DEBUGGING = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[]> HIGHLIGHT = new ReusableCache.Global<>();
+	private static final ReusableCache<boolean[]> COLLISIONS = new ReusableCache.Global<>();
 	static Mesh cache;
 
 	@SubscribeEvent

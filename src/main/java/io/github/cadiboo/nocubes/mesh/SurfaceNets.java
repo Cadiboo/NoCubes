@@ -7,136 +7,87 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.gen.WorldGenRegion;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
+import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
+import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
+
 /**
- * Written by Mikola Lysenko (C) 2012
+ * Written by Mikola Lysenko (C) 2012.
  * Ported from JavaScript to Java and modified for NoCubes by Cadiboo.
  */
-public class SurfaceNets {
-
+public final class SurfaceNets implements Mesher {
 
 	// Surface needs data for n+1 to generate n
-	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
-	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
-	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
+	private static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
+	// Otherwise seams appear in the meshes - surface nets generates a mesh 1 smaller than it "should"
+	private static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
+	private static final Extension MESH_SIZE_EXTENSION = new Extension(
+		MESH_SIZE_POSITIVE_EXTENSION, MESH_SIZE_POSITIVE_EXTENSION, MESH_SIZE_POSITIVE_EXTENSION,
+		MESH_SIZE_NEGATIVE_EXTENSION, MESH_SIZE_NEGATIVE_EXTENSION, MESH_SIZE_NEGATIVE_EXTENSION
+	);
 
-	/**
-	 * A list of vertices where x/y/z are represented as bits (either 0 or 1)
-	 * E.g. (1, 0, 1) -> 101
-	 * I think it also has some extra info
-	 */
-	public static final int[] CUBE_EDGES = new int[24];
-	public static final int[] EDGE_TABLE = new int[256];
+	private static final SurfaceNets INSTANCE = new SurfaceNets();
 
-	// because the tables are so big we compute them in a static {} instead of hardcoding them (I think)
-	static {
-		generateCubeEdgesTable();
-		generateIntersectionTable();
-	}
-
-	/**
-	 * Utility function to build a table of possible edges for a cube with each
-	 * pair of points representing one edge i.e. [0,1,0,2,0,4,...] would be the
-	 * edges from points 0 to 1, 0 to 2, and 0 to 4 respectively:
-	 *
-	 * <pre>
-	 *  y         z
-	 *  ^        /
-	 *  |
-	 *    6----7
-	 *   /|   /|
-	 *  4----5 |
-	 *  | 2--|-3
-	 *  |/   |/
-	 *  0----1   --> x
-	 * </pre>
-	 */
-	private static void generateCubeEdgesTable() {
-		//Initialize the cube_edges table
-		// This is just the vertex number (number of corners) of each cube
-		int cubeEdgesIndex = 0;
-		// 8 is the number of corners for a cube
-		for (byte cubeCornerIndex = 0; cubeCornerIndex < 8; ++cubeCornerIndex) {
-			for (int em = 1; em <= 4; em <<= 1) {
-				int j = cubeCornerIndex ^ em;
-				if (cubeCornerIndex <= j) {
-					CUBE_EDGES[cubeEdgesIndex++] = cubeCornerIndex;
-					CUBE_EDGES[cubeEdgesIndex++] = j;
-				}
-			}
-		}
-	}
-
-	/**
-	 * Build an intersection table. This is a 2^(cube config) -> 2^(edge config) map
-	 * There is only one entry for each possible cube configuration
-	 * and the output is a 12-bit vector enumerating all edges
-	 * crossing the 0-level
-	 */
-	private static void generateIntersectionTable() {
-		// nope, I don't understand this either
-		// yay, Lookup Tables...
-		// Initialize the intersection table.
-		// This is a 2^(cube configuration) ->  2^(edge configuration) map
-		// There is one entry for each possible cube configuration, and the output is a 12-bit vector enumerating all edges crossing the 0-level.
-		for (short edgeTableIndex = 0; edgeTableIndex < 256; ++edgeTableIndex) {
-			short em = 0;
-			for (int cubeEdgesIndex = 0; cubeEdgesIndex < 24; cubeEdgesIndex += 2) {
-				final boolean a = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex])) != 0;
-				final boolean b = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex + 1])) != 0;
-				em |= a != b ? 1 << (cubeEdgesIndex >> 1) : 0;
-			}
-			EDGE_TABLE[edgeTableIndex] = em;
-		}
+	@Override
+	public Extension requiredExtension() {
+		return MESH_SIZE_EXTENSION;
 	}
 
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
-		MeshAction action
+		IBlockReader worldIgnored, Predicate<BlockState> isSmoothable, ReusableCache<boolean[]> cache,
+		Mesher.Action action
 	) {
-		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
-		meshSizeY += MESH_SIZE_POSITIVE_EXTENSION;
-		meshSizeZ += MESH_SIZE_POSITIVE_EXTENSION;
-		final int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
-		final int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
-		final int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
-		// Need to add that extra block on each axis
-		final int maxX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int maxY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int maxZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
+		BlockPos meshStart = new BlockPos(startX, startY, startZ);
+		BlockPos meshEnd = meshStart.add(meshSizeX, meshSizeY, meshSizeZ);
+		World world = Minecraft.getInstance().world;
+		BlockPos.Mutable mutablePos = new BlockPos.Mutable();
 
-		final BlockPos.Mutable pos = new BlockPos.Mutable();
+		Extension extension = INSTANCE.requiredExtension();
+		BlockPos areaStart = meshStart.add(-extension.negativeX, -extension.negativeY, -extension.negativeZ);
+		BlockPos areaEnd = meshEnd.add(extension.positiveX, extension.positiveY, extension.positiveZ);
+		try {
+			AreaView area = new AreaView(world, areaStart, areaEnd, mutablePos);
 
-		/*
-		 * From Wikipedia:
-		 * Apply a threshold to the 2D field to make a binary image containing:
-		 * - 1 where the data value is above the isovalue
-		 * - 0 where the data value is below the isovalue
-		 */
-		// The area, converted from a BlockState[] to an isSmoothable[]
+			INSTANCE.mesh(world, meshStart, meshEnd, mutablePos, cache, area, isSmoothable, action);
+		} catch (Throwable t) {
+			t.getCause();
+		}
+	}
+
+	public void mesh(World world, Vector3i meshStart, Vector3i meshEnd, BlockPos.Mutable mutablePos, ReusableCache<boolean[]> cache, AreaView area, Predicate<BlockState> isSmoothable, Mesher.Action action) {
+		int meshSizeX = meshEnd.getX() - meshStart.getX();
+		int meshSizeY = meshEnd.getY() - meshStart.getY();
+		int meshSizeZ = meshEnd.getZ() - meshStart.getZ();
+
+		Extension meshExtension = requiredExtension();
+		int fieldSizeX = meshExtension.negativeX + meshSizeX + meshExtension.positiveX;
+		int fieldSizeY = meshExtension.negativeY + meshSizeY + meshExtension.positiveY;
+		int fieldSizeZ = meshExtension.negativeZ + meshSizeZ + meshExtension.positiveZ;
+
+		// This is the area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[maxZ][maxY][maxX]);
-		ModUtil.traverseArea(
-			startX, startY, startZ,
-			maxX, maxY, maxZ,
-			pos, Minecraft.getInstance().world,
-			(state, blockPos) -> binaryField[blockPos.getX() - startX][blockPos.getY() - startY][blockPos.getZ() - startZ] = isSmoothable.test(state)
+		boolean[] binaryField = createBinaryField(
+			meshSizeX, meshSizeY, meshSizeZ,
+			fieldSizeX, fieldSizeY, fieldSizeZ,
+			area, cache, isSmoothable
 		);
 
+		// TODO cleanup and make redundant
 		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
-		// (x, y, z) -> [z * maxX * maxY + y * maxX + x]
-		// So the multiplier for X is 1, the multiplier for Y is maxX and the multiplier for z is maxX * maxY
-		final int[] axisMultipliers = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
+		// (x, y, z) -> [z * fieldSizeX * fieldSizeY + y * fieldSizeX + x]
+		// So the multiplier for X is 1, the multiplier for Y is fieldSizeX and the multiplier for z is fieldSizeX * fieldSizeY
+		final int[] axisMultipliers = {1, (fieldSizeX + 1), (fieldSizeX + 1) * (fieldSizeY + 1)};
 		final float[] grid = new float[8];
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
@@ -151,11 +102,11 @@ public class SurfaceNets {
 		final int[] verticesBuffer = new int[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
-		for (int z = 0; z < meshSizeZ; ++z, n += maxX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
+		for (int z = 0; z < meshSizeZ; ++z, n += fieldSizeX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
 
 			//bufferPointer is the pointer into the buffer we are going to use.
 			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
-			int bufferPointer = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
+			int bufferPointer = 1 + (fieldSizeX + 1) * (1 + buf_no * (fieldSizeY + 1));
 
 			for (int y = 0; y < meshSizeY; ++y, ++n, bufferPointer += 2) {
 				for (int x = 0; x < meshSizeX; ++x, ++n, ++bufferPointer) {
@@ -163,19 +114,19 @@ public class SurfaceNets {
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
 					int mask = 0, corner = 0, idx = n;
-					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += maxX * (maxY - 2))
-						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += maxX - 2)
+					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += fieldSizeX * (fieldSizeY - 2))
+						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += fieldSizeX - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
-								float p = binaryField[z + cornerZ][y + cornerY][x + cornerX] ? 1 : -1;
+								int binaryFieldIndex = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, fieldSizeX, fieldSizeY);
+								float p = binaryField[binaryFieldIndex] ? 1 : -1;
 								grid[corner] = p;
 								mask |= (p < 0) ? (1 << corner) : 0;
 							}
 
 					// Check for early termination if cell does not intersect boundary
 					// This cell is either entirely inside or entirely outside the isosurface
-					if (mask == 0 || mask == 0xff) {
+					if (mask == 0 || mask == 0xff)
 						continue;
-					}
 
 					// Sum up edge intersections
 					int edge_mask = EDGE_TABLE[mask];
@@ -287,9 +238,9 @@ public class SurfaceNets {
 								Vec.of(vertices.get(verticesBuffer[bufferPointer - du - dv])),
 								Vec.of(vertices.get(verticesBuffer[bufferPointer - dv]))
 							);
-						pos.setPos(worldXStart, worldYStart, worldZStart);
-						pos.move(x, y, z);
-						boolean done = !action.apply(pos, face);
+						mutablePos.setPos(meshStart);
+						mutablePos.move(x, y, z);
+						boolean done = !action.apply(mutablePos, face);
 						face.close();
 						if (done)
 							return;
@@ -297,12 +248,113 @@ public class SurfaceNets {
 				}
 			}
 		}
+
 	}
 
-	public interface MeshAction {
+	/*
+	 * From Wikipedia:
+	 * Apply a threshold to the 2D field to make a binary image containing:
+	 * - 1 where the data value is above the isovalue
+	 * - 0 where the data value is below the isovalue
+	 */
+	private boolean[] createBinaryField(
+		int meshSizeX, int meshSizeY, int meshSizeZ,
+		int fieldSizeX, int fieldSizeY, int fieldSizeZ,
+		AreaView area, ReusableCache<boolean[]> cache, Predicate<BlockState> isSmoothable
+	) {
+		boolean[] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[fieldSizeX * fieldSizeY * fieldSizeZ]);
 
-		boolean apply(BlockPos.Mutable pos, Face face);
+		BlockState[] blockStates = area.getBlockStates();
+		int areaSizeX = area.xSize;
+		int areaSizeY = area.ySize;
+		Extension meshExtension = requiredExtension();
+		int fieldMaxX = meshSizeX + meshExtension.positiveX;
+		int fieldMaxY = meshSizeY + meshExtension.positiveY;
+		int fieldMaxZ = meshSizeZ + meshExtension.positiveZ;
 
+		int index = 0;
+		for (int z = meshExtension.negativeZ; z < fieldMaxZ; ++z) {
+			for (int y = meshExtension.negativeY; y < fieldMaxY; ++y) {
+				for (int x = meshExtension.negativeX; x < fieldMaxX; ++x, ++index) {
+					int blockStatesIndex = ModUtil.get3dIndexInto1dArray(x, y, z, areaSizeX, areaSizeY);
+					BlockState state = blockStates[blockStatesIndex];
+					binaryField[index] = isSmoothable.test(state);
+				}
+			}
+		}
+		return binaryField;
+	}
+
+	static final class Lookup {
+		/**
+		 * A list of vertices where x/y/z are represented as bits (either 0 or 1).
+		 * E.g. (1, 0, 1) -> 101.
+		 * I think it also has some extra info...
+		 */
+		static final int[] CUBE_EDGES = new int[24];
+		static final int[] EDGE_TABLE = new int[256];
+
+		// Because the tables are so big we compute them in a static {} instead of hardcoding them (I think)
+		static {
+			generateCubeEdgesTable();
+			generateIntersectionTable();
+		}
+
+		/**
+		 * Utility function to build a table of possible edges for a cube with each
+		 * pair of points representing one edge i.e. [0,1,0,2,0,4,...] would be the
+		 * edges from points 0 to 1, 0 to 2, and 0 to 4 respectively:
+		 *
+		 * <pre>
+		 *  y         z
+		 *  ^        /
+		 *  |
+		 *    6----7
+		 *   /|   /|
+		 *  4----5 |
+		 *  | 2--|-3
+		 *  |/   |/
+		 *  0----1   --> x
+		 * </pre>
+		 */
+		private static void generateCubeEdgesTable() {
+			//Initialize the cube_edges table
+			// This is just the vertex number (number of corners) of each cube
+			int cubeEdgesIndex = 0;
+			// 8 is the number of corners for a cube
+			for (byte cubeCornerIndex = 0; cubeCornerIndex < 8; ++cubeCornerIndex) {
+				for (int em = 1; em <= 4; em <<= 1) {
+					int j = cubeCornerIndex ^ em;
+					if (cubeCornerIndex <= j) {
+						CUBE_EDGES[cubeEdgesIndex++] = cubeCornerIndex;
+						CUBE_EDGES[cubeEdgesIndex++] = j;
+					}
+				}
+			}
+		}
+
+		/**
+		 * Build an intersection table. This is a 2^(cube config) -> 2^(edge config) map
+		 * There is only one entry for each possible cube configuration
+		 * and the output is a 12-bit vector enumerating all edges
+		 * crossing the 0-level
+		 */
+		private static void generateIntersectionTable() {
+			// nope, I don't understand this either
+			// yay, Lookup Tables...
+			// Initialize the intersection table.
+			// This is a 2^(cube configuration) ->  2^(edge configuration) map
+			// There is one entry for each possible cube configuration, and the output is a 12-bit vector enumerating all edges crossing the 0-level.
+			for (short edgeTableIndex = 0; edgeTableIndex < 256; ++edgeTableIndex) {
+				short em = 0;
+				for (int cubeEdgesIndex = 0; cubeEdgesIndex < 24; cubeEdgesIndex += 2) {
+					final boolean a = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex])) != 0;
+					final boolean b = (edgeTableIndex & (1 << CUBE_EDGES[cubeEdgesIndex + 1])) != 0;
+					em |= a != b ? 1 << (cubeEdgesIndex >> 1) : 0;
+				}
+				EDGE_TABLE[edgeTableIndex] = em;
+			}
+		}
 	}
 
 }
