@@ -12,6 +12,7 @@ import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.GrassBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -26,6 +27,7 @@ import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix4f;
@@ -103,7 +105,19 @@ public class MeshRenderer {
 					IBakedModel modelIn = blockrendererdispatcher.getModelForState(blockstate);
 					int light = WorldRenderer.getPackedLightmapCoords(chunkrendercache, blockstate, pos.offset(direction));
 					random.setSeed(rand);
-					List<BakedQuad> dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+					List<BakedQuad> dirQuads;
+					if (blockstate.hasProperty(BlockStateProperties.SNOWY))
+						// Make grass/snow/mycilium side faces be rendered with their top texture
+						// Equivalent to OptiFine's Better Grass feature
+						if (!blockstate.get(BlockStateProperties.SNOWY))
+							dirQuads = modelIn.getQuads(blockstate, Direction.UP, random, modelData);
+						else {
+							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+							BlockState snow = Blocks.SNOW.getDefaultState();
+							dirQuads = blockrendererdispatcher.getModelForState(snow).getQuads(snow, null, random, modelData);
+						}
+					else
+						dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
 					random.setSeed(rand);
 					List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
 					if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block

@@ -32,7 +32,7 @@ public class CollisionHandler {
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
-			return VoxelShapes.empty();
+			return canCollide ? VoxelShapes.fullCube() : VoxelShapes.empty();
 		}
 	}
 
@@ -43,6 +43,9 @@ public class CollisionHandler {
 			return state.getShape(reader, blockPos);
 		if (context.getEntity() instanceof FallingBlockEntity)
 			// Stop sand etc. breaking when it falls
+			return state.getShape(reader, blockPos);
+		if (reader.getBlockState(blockPos) != state)
+			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			return state.getShape(reader, blockPos);
 		final int x = blockPos.getX();
 		final int y = blockPos.getY();
