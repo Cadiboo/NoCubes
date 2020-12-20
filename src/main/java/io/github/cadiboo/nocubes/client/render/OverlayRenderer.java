@@ -4,7 +4,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.util.Face;
-import io.github.cadiboo.nocubes.client.render.util.FaceList;
 import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
 import io.github.cadiboo.nocubes.client.render.util.Vec;
 import io.github.cadiboo.nocubes.config.ColorParser;
@@ -32,6 +31,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -43,7 +43,7 @@ public final class OverlayRenderer {
 	private static final ReusableCache<boolean[]> DEBUGGING = new ReusableCache.Global<>();
 	private static final ReusableCache<boolean[]> HIGHLIGHT = new ReusableCache.Global<>();
 	private static final ReusableCache<boolean[]> COLLISIONS = new ReusableCache.Global<>();
-	static Mesh cache;
+	static List<Face> cache;
 
 	@SubscribeEvent
 	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
@@ -110,15 +110,8 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		if (cache == null || world.getGameTime() % 5 == 0) {
-			if (cache != null) {
-				final FaceList faces = cache.faces;
-				for (Face face : faces)
-					face.close();
-				faces.close();
-			}
+		if (cache == null || world.getGameTime() % 5 == 0)
 			cache = makeMesh(world, viewer);
-		}
 
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getActiveRenderInfo();
 
@@ -148,10 +141,10 @@ public final class OverlayRenderer {
 
 		Matrix4f matrix4f = matrixStack.getLast().getMatrix();
 		{
-			Face normal = Face.of(Vec.of(), Vec.of(), Vec.of(), Vec.of());
-			Vec averageNormal = Vec.of();
-			Vec centre = Vec.of();
-			for (final Face face : cache.faces) {
+			final Face normal = new Face(new Vec(), new Vec(), new Vec(), new Vec());
+			final Vec averageOfNormal = new Vec();
+			final Vec centre = new Vec();
+			for (Face face : cache) {
 				Vec v0 = face.v0;
 				Vec v1 = face.v1;
 				Vec v2 = face.v2;
@@ -170,19 +163,19 @@ public final class OverlayRenderer {
 				bufferBuilder.pos(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
 
 				// Normals
-				Face.normal(face, normal);
+				face.assignNormalTo(normal);
 				normal.v0.multiply(-1);
 				normal.v1.multiply(-1);
 				normal.v2.multiply(-1);
 				normal.v3.multiply(-1);
 
-				Face.average(normal, averageNormal);
-				Direction direction = MeshRenderer.getDirectionFromNormal(averageNormal);
-				Face.average(face, centre);
+				normal.assignAverageTo(averageOfNormal);
+				Direction direction = averageOfNormal.getDirectionFromNormal();
+				face.assignAverageTo(centre);
 
 				final float dirMul = 0.2F;
 				bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
-				bufferBuilder.pos(matrix4f, (float) (centre.x + averageNormal.x * dirMul + -d0), (float) (centre.y + averageNormal.y * dirMul + -d1), (float) (centre.z + averageNormal.z * dirMul + -d2)).color(0F, 1F, 0F, 1F).endVertex();
+				bufferBuilder.pos(matrix4f, (float) (centre.x + averageOfNormal.x * dirMul + -d0), (float) (centre.y + averageOfNormal.y * dirMul + -d1), (float) (centre.z + averageOfNormal.z * dirMul + -d2)).color(0F, 1F, 0F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
 				bufferBuilder.pos(matrix4f, (float) (centre.x + direction.getXOffset() * dirMul + -d0), (float) (centre.y + direction.getYOffset() * dirMul + -d1), (float) (centre.z + direction.getZOffset() * dirMul + -d2)).color(1F, 0F, 0F, 1F).endVertex();
 
@@ -224,86 +217,83 @@ public final class OverlayRenderer {
 					bufferBuilder.pos(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
 				}
 			}
-			normal.close();
-			averageNormal.close();
-			centre.close();
 		}
 
-		List<VoxelShape> shapes = new ArrayList<>();
-		if (false) {
-			BlockPos base = viewer.getPosition().add(0, 2, 0);
-			final int collisionSizeX = 16;
-			final int collisionSizeY = 16;
-			final int collisionSizeZ = 16;
-
-			// Make this mesh centred around the base
-			final int startX = base.getX() - collisionSizeX / 2;
-			final int startY = base.getY() - collisionSizeY / 2;
-			final int startZ = base.getZ() - collisionSizeZ / 2;
-
-			for (int z = 0; z < collisionSizeX; z++) {
-				for (int y = 0; y < collisionSizeY; y++) {
-					for (int x = 0; x < collisionSizeZ; x++) {
-						final int currX = startX + x;
-						final int currY = startY + y;
-						final int currZ = startZ + z;
-						SurfaceNets.generate(
-							currX, currY, currZ,
-							1, 1, 1,
-							viewer.world, NoCubes.smoothableHandler::isSmoothable, COLLISIONS,
-							(pos, face) -> {
-								Vec v0 = face.v0;
-								Vec v1 = face.v1;
-								Vec v2 = face.v2;
-								Vec v3 = face.v3;
-								// Normals
-								Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
-								Vec n1 = Vec.normal(v0, v1, v2).multiply(-1);
-								Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
-								Vec n3 = Vec.normal(v2, v3, v0).multiply(-1);
-
-								Vec centre = Vec.of(
-									(v0.x + v1.x + v2.x + v3.x) / 4,
-									(v0.y + v1.y + v2.y + v3.y) / 4,
-									(v0.z + v1.z + v2.z + v3.z) / 4
-								);
-
-								final Vec nAverage = Vec.of(
-									(n0.x + n2.x) / 2,
-									(n0.y + n2.y) / 2,
-									(n0.z + n2.z) / 2
-								);
-								nAverage.normalise().multiply(-0.125d);
-
-								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v0));
-								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v1));
-								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v2));
-								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v3));
-								n0.close();
-								n1.close();
-								n2.close();
-								n3.close();
-								nAverage.close();
-								centre.close();
-
-//								for (Vec v : face.getVertices()) {
-//									v.add(currX, currY, currZ);
-//									shapes.add(VoxelShapes.create(
-//										v.x - 0.125, v.y - 0.125, v.z - 0.125,
-//										v.x + 0.125, v.y + 0.125, v.z + 0.125
-//									));
-//								}
-								return true;
-							}
-						);
-					}
-				}
-			}
-		}
-
-		shapes.forEach(voxelShape -> {
-			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 1.0F, 0.0F, 0.8F);
-		});
+//		List<VoxelShape> shapes = new ArrayList<>();
+//		if (false) {
+//			BlockPos base = viewer.getPosition().add(0, 2, 0);
+//			final int collisionSizeX = 16;
+//			final int collisionSizeY = 16;
+//			final int collisionSizeZ = 16;
+//
+//			// Make this mesh centred around the base
+//			final int startX = base.getX() - collisionSizeX / 2;
+//			final int startY = base.getY() - collisionSizeY / 2;
+//			final int startZ = base.getZ() - collisionSizeZ / 2;
+//
+//			for (int z = 0; z < collisionSizeX; z++) {
+//				for (int y = 0; y < collisionSizeY; y++) {
+//					for (int x = 0; x < collisionSizeZ; x++) {
+//						final int currX = startX + x;
+//						final int currY = startY + y;
+//						final int currZ = startZ + z;
+//						SurfaceNets.generate(
+//							currX, currY, currZ,
+//							1, 1, 1,
+//							viewer.world, NoCubes.smoothableHandler::isSmoothable, COLLISIONS,
+//							(pos, face) -> {
+//								Vec v0 = face.v0;
+//								Vec v1 = face.v1;
+//								Vec v2 = face.v2;
+//								Vec v3 = face.v3;
+//								// Normals
+//								Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
+//								Vec n1 = Vec.normal(v0, v1, v2).multiply(-1);
+//								Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
+//								Vec n3 = Vec.normal(v2, v3, v0).multiply(-1);
+//
+//								Vec centre = Vec.of(
+//									(v0.x + v1.x + v2.x + v3.x) / 4,
+//									(v0.y + v1.y + v2.y + v3.y) / 4,
+//									(v0.z + v1.z + v2.z + v3.z) / 4
+//								);
+//
+//								final Vec nAverage = Vec.of(
+//									(n0.x + n2.x) / 2,
+//									(n0.y + n2.y) / 2,
+//									(n0.z + n2.z) / 2
+//								);
+//								nAverage.normalise().multiply(-0.125d);
+//
+//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v0));
+//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v1));
+//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v2));
+//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v3));
+//								n0.close();
+//								n1.close();
+//								n2.close();
+//								n3.close();
+//								nAverage.close();
+//								centre.close();
+//
+////								for (Vec v : face.getVertices()) {
+////									v.add(currX, currY, currZ);
+////									shapes.add(VoxelShapes.create(
+////										v.x - 0.125, v.y - 0.125, v.z - 0.125,
+////										v.x + 0.125, v.y + 0.125, v.z + 0.125
+////									));
+////								}
+//								return true;
+//							}
+//						);
+//					}
+//				}
+//			}
+//		}
+//
+//		shapes.forEach(voxelShape -> {
+//			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 1.0F, 0.0F, 0.8F);
+//		});
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
 		bufferSource.finish(RenderType.getLines());
@@ -335,8 +325,8 @@ public final class OverlayRenderer {
 		});
 	}
 
-	private static Mesh makeMesh(final World world, final Entity viewer) {
-		final Mesh mesh = new Mesh();
+	private static List<Face> makeMesh(final World world, final Entity viewer) {
+		final List<Face> meshFaces = new LinkedList<>();
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.getPosition().add(0, 2, 0);
 
@@ -353,11 +343,11 @@ public final class OverlayRenderer {
 			startX, startY, startZ,
 			meshSizeX, meshSizeY, meshSizeZ,
 			viewer.world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
-			(pos, face) -> mesh.faces.add(Face.of(
-				Vec.of(face.v0.add(startX, startY, startZ)),
-				Vec.of(face.v1.add(startX, startY, startZ)),
-				Vec.of(face.v2.add(startX, startY, startZ)),
-				Vec.of(face.v3.add(startX, startY, startZ))
+			(pos, face) -> meshFaces.add(new Face(
+				face.v0.add(startX, startY, startZ).copy(),
+				face.v1.add(startX, startY, startZ).copy(),
+				face.v2.add(startX, startY, startZ).copy(),
+				face.v3.add(startX, startY, startZ).copy()
 			))
 		);
 
@@ -432,17 +422,17 @@ public final class OverlayRenderer {
 //		Vec v2 = Vec.of(x - 0.5, y - 1, z - 0.5);
 //		Vec v3 = Vec.of(x + 0.5, y - 1, z - 0.5);
 //
-//		mesh.faces.add(Face.of(v0, v1, v2, v3));
+//		meshFaces.add(Face.of(v0, v1, v2, v3));
 
-		return mesh;
+		return meshFaces;
 	}
 
-	private static Face toFace(final Vec v0, final Vec v1) {
-		Vec v2 = Vec.of(v1);
-		v2.y += 1;
-		Vec v3 = Vec.of(v0);
-		v3.y += 1;
-		return Face.of(v0, v1, v2, v3);
-	}
+//	private static Face toFace(final Vec v0, final Vec v1) {
+//		Vec v2 = Vec.of(v1);
+//		v2.y += 1;
+//		Vec v3 = Vec.of(v0);
+//		v3.y += 1;
+//		return Face.of(v0, v1, v2, v3);
+//	}
 
 }

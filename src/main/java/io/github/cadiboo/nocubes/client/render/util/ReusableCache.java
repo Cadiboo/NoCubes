@@ -33,16 +33,13 @@ public interface ReusableCache<T> {
 		}
 	}
 
-	static <T> T getOrCreate(@Nullable ReusableCache<T> cache, Supplier<T> creator) {
-		if (cache == null)
-			return creator.get();
-		else if (cache.get() != null)
-			return cache.get();
-		else {
-			T value = creator.get();
-			cache.set(value);
-			return value;
-		}
+	static <T> T getOrCreate(ReusableCache<T> cache, Supplier<T> creator) {
+		T cached = cache.get();
+		if (cached != null)
+			return cached;
+		T value = creator.get();
+		cache.set(value);
+		return value;
 	}
 
 	class Local<T> implements ReusableCache<T> {

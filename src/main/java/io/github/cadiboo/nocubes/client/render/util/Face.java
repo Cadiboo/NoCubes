@@ -1,21 +1,14 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
-import java.io.Closeable;
-import java.util.Iterator;
-
 /**
  * @author Cadiboo
  */
-public class Face implements Closeable {
+public class Face {
 
-	static final Pool<Face> POOL = new Pool<>(100);
 	public Vec v0;
 	public Vec v1;
 	public Vec v2;
 	public Vec v3;
-
-	Face() {
-	}
 
 	public Face(final Vec v0, final Vec v1, final Vec v2, final Vec v3) {
 		this.v0 = v0;
@@ -24,65 +17,33 @@ public class Face implements Closeable {
 		this.v3 = v3;
 	}
 
-	public static Face of() {
-		Face pooled = POOL.get();
-		if (pooled != null)
-			return pooled;
-		return new Face();
-	}
-
-	public static Face of(Vec v0, Vec v1, Vec v2, Vec v3) {
-		Face pooled = POOL.get();
-		if (pooled != null) {
-			pooled.v0 = v0;
-			pooled.v1 = v1;
-			pooled.v2 = v2;
-			pooled.v3 = v3;
-			return pooled;
-		}
-		return new Face(v0, v1, v2, v3);
-	}
-
-	/**
-	 * @return toUse
-	 */
-	public static Face normal(Face face, Face toUse) {
-		final Vec v0 = face.v0;
-		final Vec v1 = face.v1;
-		final Vec v2 = face.v2;
-		final Vec v3 = face.v3;
+	public void assignNormalTo(Face toUse) {
+		final Vec v0 = this.v0;
+		final Vec v1 = this.v1;
+		final Vec v2 = this.v2;
+		final Vec v3 = this.v3;
 		// mul -1
 		Vec.normal(v3, v0, v1, toUse.v0);
 		Vec.normal(v0, v1, v2, toUse.v1);
 		Vec.normal(v1, v2, v3, toUse.v2);
 		Vec.normal(v2, v3, v0, toUse.v3);
-		return toUse;
 	}
 
-	/**
-	 * @return toUse
-	 */
-	public static Vec average(Face face, Vec toUse) {
-		return average(face.v0, face.v1, face.v2, face.v3, toUse);
-	}
-
-	/**
-	 * @return toUse
-	 */
-	public static Vec average(Vec v0, Vec v1, Vec v2, Vec v3, Vec toUse) {
+	public void assignAverageTo(Vec toUse) {
+		Vec v0 = this.v0;
+		Vec v1 = this.v1;
+		Vec v2 = this.v2;
+		Vec v3 = this.v3;
 		toUse.x = (v0.x + v1.x + v2.x + v3.x) / 4;
 		toUse.y = (v0.y + v1.y + v2.y + v3.y) / 4;
 		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
-		return toUse;
 	}
 
-	@Override
-	public void close() {
-		v0.close();
-		v1.close();
-		v2.close();
-		v3.close();
-		POOL.offer(this);
+	public void multiply(double d) {
+		v0.multiply(d);
+		v1.multiply(d);
+		v2.multiply(d);
+		v3.multiply(d);
 	}
 
 }

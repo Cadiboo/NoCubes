@@ -84,7 +84,6 @@ public class SurfaceNets {
 		// Old code from before 'traverseArea' was used, kept around because it might be useful for CubicChunks compat
 //		{
 //			int i = 0;
-//			// TODO: Use optimised chunk aware loop from discord
 //			for (int z = 0; z < fieldSizeZ; z++) {
 //				for (int y = 0; y < fieldSizeY; y++) {
 //					for (int x = 0; x < fieldSizeX; x++, i++) {
@@ -98,6 +97,7 @@ public class SurfaceNets {
 //			}
 //		}
 
+		final Face face = new Face(new Vec(), new Vec(), new Vec(), new Vec());
 		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
@@ -239,28 +239,21 @@ public class SurfaceNets {
 						final int du = axisMultipliers[nextAxis];
 						final int dv = axisMultipliers[nextNextAxis];
 
-						final Face face;
 						//Remember to flip orientation depending on the sign of the corner.
-						// TODO: Fix this so I'm using a single Face object and not copying each vertex multiple times
-						if ((mask & 1) != 0)
-							face = Face.of(
-								Vec.of(vertices.get(verticesBuffer[bufferPointer])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - dv])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - du - dv])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - du]))
-							);
-						else
-							face = Face.of(
-								Vec.of(vertices.get(verticesBuffer[bufferPointer])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - du])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - du - dv])),
-								Vec.of(vertices.get(verticesBuffer[bufferPointer - dv]))
-							);
+						if ((mask & 1) != 0) {
+							face.v0.copyFrom(vertices.get(verticesBuffer[bufferPointer]));
+							face.v1.copyFrom(vertices.get(verticesBuffer[bufferPointer - dv]));
+							face.v2.copyFrom(vertices.get(verticesBuffer[bufferPointer - du - dv]));
+							face.v3.copyFrom(vertices.get(verticesBuffer[bufferPointer - du]));
+						} else {
+							face.v0.copyFrom(vertices.get(verticesBuffer[bufferPointer]));
+							face.v1.copyFrom(vertices.get(verticesBuffer[bufferPointer - du]));
+							face.v2.copyFrom(vertices.get(verticesBuffer[bufferPointer - du - dv]));
+							face.v3.copyFrom(vertices.get(verticesBuffer[bufferPointer - dv]));
+						}
 						pos.setPos(worldXStart, worldYStart, worldZStart);
 						pos.move(x, y, z);
-						boolean done = !action.apply(pos, face);
-						face.close();
-						if (done)
+						if (!action.apply(pos, face))
 							return;
 					}
 				}

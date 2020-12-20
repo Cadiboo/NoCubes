@@ -16,20 +16,11 @@ public class FaceTests {
 
 	@Test
 	public void vertexOrderShouldBeCorrect() {
-		Face unpooled = new Face(v0, v1, v2, v3);
-		assertEquals(v0, unpooled.v0);
-		assertEquals(v1, unpooled.v1);
-		assertEquals(v2, unpooled.v2);
-		assertEquals(v3, unpooled.v3);
-
-		final Face face = new Face(null, null, null, null);
-		Face.POOL.offer(face);
-		Face pooled = Face.of(v0, v1, v2, v3);
-		assertEquals(face, pooled);
-		assertEquals(v0, pooled.v0);
-		assertEquals(v1, pooled.v1);
-		assertEquals(v2, pooled.v2);
-		assertEquals(v3, pooled.v3);
+		Face face = new Face(v0, v1, v2, v3);
+		assertEquals(v0, face.v0);
+		assertEquals(v1, face.v1);
+		assertEquals(v2, face.v2);
+		assertEquals(v3, face.v3);
 	}
 
 }
