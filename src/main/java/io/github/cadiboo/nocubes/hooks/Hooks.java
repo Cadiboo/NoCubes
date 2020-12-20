@@ -67,11 +67,10 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
-		return false;
-//		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(blockStateIn))
-//			return false;
-//		MeshRenderer.renderBlockDamage(blockRendererDispatcher, blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData);
-//		return true;
+		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(blockStateIn))
+			return false;
+		MeshRenderer.renderBlockDamage(blockRendererDispatcher, blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData);
+		return true;
 	}
 
 	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlock.AbstractBlockState blockState) {

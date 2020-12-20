@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.client.render.util;
 
+import net.minecraft.util.math.vector.Matrix4f;
+
 /**
  * @author Cadiboo
  */
@@ -44,6 +46,13 @@ public class Face {
 		v1.multiply(d);
 		v2.multiply(d);
 		v3.multiply(d);
+	}
+
+	public void transform(Matrix4f matrix) {
+		v0.transform(matrix);
+		v1.transform(matrix);
+		v2.transform(matrix);
+		v3.transform(matrix);
 	}
 
 }
