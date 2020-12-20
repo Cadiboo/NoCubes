@@ -34,6 +34,9 @@ public class CollisionHandler {
 		}
 	}
 
+	// TODO: Why is the 'cache' of every blockstate storing an empty VoxelShape... this is causing issues like
+	// grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
+	// and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
 	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		if (!canCollide)
 			return VoxelShapes.empty();
