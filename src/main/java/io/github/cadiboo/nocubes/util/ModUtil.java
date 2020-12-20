@@ -5,7 +5,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
@@ -26,27 +25,27 @@ public class ModUtil {
 		return target.contains("userdev");
 	});
 
-	public static void traverseArea(Vector3i start, Vector3i end, BlockPos.Mutable currentPosition, World world, BiConsumer<BlockState, BlockPos.Mutable> func) {
-		traverseArea(start.getX(), start.getY(), start.getZ(), end.getX(), end.getY(), end.getZ(), currentPosition, world, func);
+	public static void traverseArea(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, World world, BiConsumer<BlockState, BlockPos.Mutable> func) {
+		traverseArea(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
 	/** Copied and tweaked from "https://github.com/Cadiboo/BiggerReactors/blob/1f0e0c48cdd16b8ecc0d2bc5f6c41db272dd8b7c/Phosphophyllite/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L76-L104". */
 	public static void traverseArea(
-		int startX, int startY, int startZ,
-		int endX, int endY, int endZ,
+		int startXInclusive, int startYInclusive, int startZInclusive,
+		int endXInclusive, int endYInclusive, int endZInclusive,
 		BlockPos.Mutable currentPosition, World world, BiConsumer<BlockState, BlockPos.Mutable> func
 	) {
 		final BlockState air = Blocks.AIR.getDefaultState();
-		int endXPlus1 = endX + 1;
-		int endYPlus1 = endY + 1;
-		int endZPlus1 = endZ + 1;
-		int maxX = (endX + 16) & 0xFFFFFFF0;
-		int maxY = (endY + 16) & 0xFFFFFFF0;
-		int maxZ = (endZ + 16) & 0xFFFFFFF0;
-		for (int blockChunkX = startX; blockChunkX < maxX; blockChunkX += 16) {
+		int endXPlus1 = endXInclusive + 1;
+		int endYPlus1 = endYInclusive + 1;
+		int endZPlus1 = endZInclusive + 1;
+		int maxX = (endXInclusive + 16) & 0xFFFFFFF0;
+		int maxY = (endYInclusive + 16) & 0xFFFFFFF0;
+		int maxZ = (endZInclusive + 16) & 0xFFFFFFF0;
+		for (int blockChunkX = startXInclusive; blockChunkX < maxX; blockChunkX += 16) {
 			int maskedBlockChunkX = blockChunkX & 0xFFFFFFF0;
 			int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
-			for (int blockChunkZ = startZ; blockChunkZ < maxZ; blockChunkZ += 16) {
+			for (int blockChunkZ = startZInclusive; blockChunkZ < maxZ; blockChunkZ += 16) {
 				int maskedBlockChunkZ = blockChunkZ & 0xFFFFFFF0;
 				int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
 				int chunkX = blockChunkX >> 4;
@@ -55,15 +54,19 @@ public class ModUtil {
 				IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
 				@Nullable
 				ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
-				for (int blockChunkY = startY; blockChunkY < maxY; blockChunkY += 16) {
+				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
 					int chunkSectionIndex = blockChunkY >> 4;
+//					@Nullable
+//					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
+					// If chunkSectionIndex is out of range we want to continue supplying air to the func
+					// No clue how this will work with cubic chunks...
 					@Nullable
-					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
-					int sectionMinX = Math.max(maskedBlockChunkX, startX);
-					int sectionMinY = Math.max(maskedBlockChunkY, startY);
-					int sectionMinZ = Math.max(maskedBlockChunkZ, startZ);
+					ChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
+					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
+					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);
 					int sectionMaxX = Math.min(maskedNextBlockChunkX, endXPlus1);
 					int sectionMaxY = Math.min(maskedNextBlockChunkY, endYPlus1);
 					int sectionMaxZ = Math.min(maskedNextBlockChunkZ, endZPlus1);

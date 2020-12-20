@@ -21,13 +21,27 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  */
 public class SurfaceNets {
 
-
 	// Surface needs data for n+1 to generate n
 	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
 	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
 	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
 
 	public static void generate(
+		int startX, int startY, int startZ,
+		int meshSizeX, int meshSizeY, int meshSizeZ,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
+		MeshAction action
+	) {
+		try {
+			generateOrThrow(startX, startY, startZ, meshSizeX, meshSizeY, meshSizeZ, world, isSmoothable, cache, action);
+		} catch (Throwable t) {
+			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
+				throw t;
+			t.getCause();
+		}
+	}
+
+	private static void generateOrThrow(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
 		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[][][]> cache,
@@ -40,9 +54,9 @@ public class SurfaceNets {
 		final int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
 		final int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
 		// Need to add that extra block on each axis
-		final int maxX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int maxY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int maxZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int fieldSizeX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int fieldSizeY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
+		final int fieldSizeZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
 
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
 
@@ -54,21 +68,41 @@ public class SurfaceNets {
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[maxZ][maxY][maxX]);
+		final boolean[][][] binaryField = ReusableCache.getOrCreate(cache, () -> new boolean[fieldSizeZ][fieldSizeY][fieldSizeX]);
 		ModUtil.traverseArea(
-			startX, startY, startZ,
-			maxX, maxY, maxZ,
-			pos, Minecraft.getInstance().world,
-			(state, blockPos) -> binaryField[blockPos.getX() - startX][blockPos.getY() - startY][blockPos.getZ() - startZ] = isSmoothable.test(state)
+			worldXStart, worldYStart, worldZStart,
+			worldXStart + meshSizeX, worldYStart + meshSizeY, worldZStart + meshSizeZ,
+			pos, Minecraft.getInstance().world, (blockState, blockPos) -> {
+				int x = blockPos.getX() - worldXStart;
+				int y = blockPos.getY() - worldYStart;
+				int z = blockPos.getZ() - worldZStart;
+				binaryField[z][y][x] = isSmoothable.test(blockState);
+			}
 		);
+		// Old code from before 'traverseArea' was used, kept around because it might be useful for CubicChunks compat
+//		{
+//			int i = 0;
+//			// TODO: Use optimised chunk aware loop from discord
+//			for (int z = 0; z < fieldSizeZ; z++) {
+//				for (int y = 0; y < fieldSizeY; y++) {
+//					for (int x = 0; x < fieldSizeX; x++, i++) {
+//						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+//						if (world instanceof WorldGenRegion && !((WorldGenRegion) world).chunkExists(x << 16, z << 16))
+//							binaryField[z][y][x] = false;
+//						else
+//							binaryField[z][y][x] = isSmoothable.test(world.getBlockState(pos));
+//					}
+//				}
+//			}
+//		}
 
 		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
-		// (x, y, z) -> [z * maxX * maxY + y * maxX + x]
-		// So the multiplier for X is 1, the multiplier for Y is maxX and the multiplier for z is maxX * maxY
-		final int[] axisMultipliers = {1, (maxX + 1), (maxX + 1) * (maxY + 1)};
+		// (x, y, z) -> [z * fieldSizeX * fieldSizeY + y * fieldSizeX + x]
+		// So the multiplier for X is 1, the multiplier for Y is fieldSizeX and the multiplier for z is fieldSizeX * fieldSizeY
+		final int[] axisMultipliers = {1, (fieldSizeX + 1), (fieldSizeX + 1) * (fieldSizeY + 1)};
 		final float[] grid = new float[8];
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
@@ -83,11 +117,11 @@ public class SurfaceNets {
 		final int[] verticesBuffer = new int[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
-		for (int z = 0; z < meshSizeZ; ++z, n += maxX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
+		for (int z = 0; z < meshSizeZ; ++z, n += fieldSizeX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
 
 			//bufferPointer is the pointer into the buffer we are going to use.
 			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
-			int bufferPointer = 1 + (maxX + 1) * (1 + buf_no * (maxY + 1));
+			int bufferPointer = 1 + (fieldSizeX + 1) * (1 + buf_no * (fieldSizeY + 1));
 
 			for (int y = 0; y < meshSizeY; ++y, ++n, bufferPointer += 2) {
 				for (int x = 0; x < meshSizeX; ++x, ++n, ++bufferPointer) {
@@ -95,8 +129,8 @@ public class SurfaceNets {
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
 					int mask = 0, corner = 0, idx = n;
-					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += maxX * (maxY - 2))
-						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += maxX - 2)
+					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += fieldSizeX * (fieldSizeY - 2))
+						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += fieldSizeX - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
 								float p = binaryField[z + cornerZ][y + cornerY][x + cornerX] ? 1 : -1;
 								grid[corner] = p;
