@@ -24,8 +24,3 @@ run
 !LICENSE
 !README.*
 !.gitignore
-
-# Installed mods (For OptiFine and CTM compatibility)
-!/run/
-/run/*
-!/run/mods/
