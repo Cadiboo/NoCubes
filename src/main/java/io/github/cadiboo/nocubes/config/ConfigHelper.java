@@ -473,6 +473,7 @@ public final class ConfigHelper {
 	public static void setValueAndSave(final ModConfig modConfig, final String path, final Object newValue) {
 		modConfig.getConfigData().set(path, newValue);
 		modConfig.save();
+		modConfig.fireEvent(new ModConfig.ConfigReloading(modConfig));
 	}
 
 }
