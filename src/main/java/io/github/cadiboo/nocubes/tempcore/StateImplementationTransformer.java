@@ -316,7 +316,7 @@ final class StateImplementationTransformer implements Opcodes {
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
 //    IFEQ L1
 //    ALOAD 0
-//    INVOKEINTERFACE io/github/cadiboo/nocubes/util/INoCubesBlockState.nocubes_isTerrainSmoothable ()Z (itf)
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isTerrainSmoothable ()Z (itf)
 //    IFEQ L1
 //    ICONST_0
 //    IRETURN
@@ -326,7 +326,7 @@ final class StateImplementationTransformer implements Opcodes {
 //    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
 //    IFEQ L2
 //    ALOAD 0
-//    INVOKEINTERFACE io/github/cadiboo/nocubes/util/INoCubesBlockState.nocubes_isLeavesSmoothable ()Z (itf)
+//    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isLeavesSmoothable ()Z (itf)
 //    IFEQ L2
 //    ICONST_0
 //    IRETURN
@@ -367,7 +367,7 @@ final class StateImplementationTransformer implements Opcodes {
 				//int opcode
 				INVOKEINTERFACE,
 				//String owner
-				"io/github/cadiboo/nocubes/util/INoCubesBlockState",
+				"net/minecraft/block/state/IBlockProperties",
 				//String name
 				"nocubes_isTerrainSmoothable",
 				//String descriptor
@@ -386,7 +386,7 @@ final class StateImplementationTransformer implements Opcodes {
 				//int opcode
 				INVOKEINTERFACE,
 				//String owner
-				"io/github/cadiboo/nocubes/util/INoCubesBlockState",
+				"net/minecraft/block/state/IBlockProperties",
 				//String name
 				"nocubes_isLeavesSmoothable",
 				//String descriptor
@@ -471,7 +471,7 @@ final class StateImplementationTransformer implements Opcodes {
 				//int opcode
 				INVOKEINTERFACE,
 				//String owner
-				"io/github/cadiboo/nocubes/util/INoCubesBlockState",
+				"net/minecraft/block/state/IBlockProperties",
 				//String name
 				"nocubes_isTerrainSmoothable",
 				//String descriptor
