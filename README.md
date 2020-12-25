@@ -22,12 +22,5 @@ Steps:
 6. Download OptiFine from [here](https://optifine.net/downloads) (I used the latest non-prerelease version - HD U F5 at the time)
 7. Run OptiFine by double clicking it (MAC: if you get a dialog about it being from an unidentified developer open System Preferences and go to Security & Privacy, there should be a button at the bottom saying "Open Anyway")
 8. Click Extract and put the resulting file in './run/mods'
-9. 
-  5. Open BON2 (do the same thing as with OptiFine if it says it's from an unidentified developer)
-  6. Select the extracted OptiFine jar (it has the `_MOD` suffix) as the Input Jar
-  7. Set the mappings to the same ones as are in `gradle.properties` in the NoCubes project folder (they were `stable_39` when I did it)
-  8. Click 'Go!' and put the resulting jar in `./libs/`
-  9. In IntelliJ right click it and select 'Add as Library'
-  10. Now you should be able to view the classes inside it
-  11. Put the non-deobfuscated OptiFine jar (the one still in your downloads folder that has the suffix `_MOD`) into `./run/mods/`
-  12. Download OptiFineDevTweaker from [here](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases) and put it into `./run/mods/`
+9. Download OptiFineDevTweaker from [here](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases) and put it into `./run/mods/`
+10. Thats as far as I got before I spent hours fruitlessly debugging graphics driver issues when trying to run OptiFine.
