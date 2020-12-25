@@ -28,6 +28,27 @@ public final class MeshCollisionUtil {
 		return (int) ((d0 + d1 + d2 + d3) / 4);
 	}
 
+	public static AxisAlignedBB makeShape(Vec3 centre, Vec3 averageOfNormal, Vec3 v) {
+		double w = centre.x - v.x;
+		if (-0.01 < w && w < 0.01)
+			w = 0.0625 * averageOfNormal.x;
+		double h = centre.y - v.y;
+		if (-0.01 < h && h < 0.01)
+			h = 0.0625 * averageOfNormal.y;
+		double l = centre.z - v.z;
+		if (-0.01 < l && l < 0.01)
+			l = 0.0625 * averageOfNormal.z;
+		return new AxisAlignedBB(
+				v.x, v.y, v.z,
+				v.x + w, v.y + h, v.z + l
+		);
+	}
+
+	static void addShapeToListIfIntersects(List<AxisAlignedBB> outShapes, AxisAlignedBB shape, AxisAlignedBB checkIntersects){
+		if (shape.intersects(checkIntersects))
+			outShapes.add(shape);
+	}
+
 	static void addIntersectingFaceShapesToList(
 			final List<AxisAlignedBB> outShapes,
 			final Face face,

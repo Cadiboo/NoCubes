@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.addShapeToListIfIntersects;
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.floorAvg;
+import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.makeShape;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
@@ -325,35 +327,34 @@ public final class CollisionHandler {
 						}
 					}
 
-					for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
-						try (
-								final Face face = finalFaces.get(i);
-								final Vec3 v0 = face.getVertex0();
-								final Vec3 v1 = face.getVertex1();
-								final Vec3 v2 = face.getVertex2();
-								final Vec3 v3 = face.getVertex3()
-						) {
-							final double maxY;
-							try (final ModProfiler ignored = profiler.start("Snap collisions to original")) {
-								// Snap collision AxisAlignedBBs max Y to max Y AxisAlignedBBs of original block at pos if smaller than original
-								// To stop players falling down through the world when they enable collisions
-								// (Only works on flat or near-flat surfaces)
-								// TODO: remove
-								final int approximateX = clamp(floorAvg(v0.x, v1.x, v2.x, v3.x), startPosX, endPosX);
-								final int approximateY = clamp(floorAvg(v0.y - 0.5, v1.y - 0.5, v2.y - 0.5, v3.y - 0.5), startPosY, endPosY);
-								final int approximateZ = clamp(floorAvg(v0.z, v1.z, v2.z, v3.z), startPosZ, endPosZ);
-								final IBlockState state = blockStateArray[stateCache.getIndex(
-										approximateX - startPosX,
-										approximateY - startPosY,
-										approximateZ - startPosZ,
-										stateCacheSizeX, stateCacheSizeY
-								)];
-								final AxisAlignedBB originalCollisionShape = state.getCollisionBoundingBox(_this, pooledMutableBlockPos.setPos(
-										approximateX, approximateY, approximateZ
-								));
-								maxY = originalCollisionShape == null ? approximateY : approximateY + originalCollisionShape.maxY;
+					try(
+							Vec3 n0 = Vec3.retain(0, 0, 0);
+							Vec3 n1 = Vec3.retain(0, 0, 0);
+							Vec3 n2 = Vec3.retain(0, 0, 0);
+							Vec3 n3 = Vec3.retain(0, 0, 0);
+							Face normal = Face.retain(n0, n1, n2, n3);
+							Vec3 centre = Vec3.retain(0, 0, 0);
+							Vec3 averageOfNormal = Vec3.retain(0, 0, 0);
+					) {
+						for (int i = 0, finalFacesSize = finalFaces.size(); i < finalFacesSize; ++i) {
+							try (
+									Face face = finalFaces.get(i);
+									Vec3 v0 = face.getVertex0();
+									Vec3 v1 = face.getVertex1();
+									Vec3 v2 = face.getVertex2();
+									Vec3 v3 = face.getVertex3()
+							) {
+								face.assignNormalTo(normal);
+								face.assignAverageTo(centre);
+
+								normal.assignAverageTo(averageOfNormal);
+								averageOfNormal.normalise().multiply(0.125d);
+
+								addShapeToListIfIntersects(collidingShapes, makeShape(centre, averageOfNormal, v0), aabb);
+								addShapeToListIfIntersects(collidingShapes, makeShape(centre, averageOfNormal, v1), aabb);
+								addShapeToListIfIntersects(collidingShapes, makeShape(centre, averageOfNormal, v2), aabb);
+								addShapeToListIfIntersects(collidingShapes, makeShape(centre, averageOfNormal, v3), aabb);
 							}
-							MeshCollisionUtil.addIntersectingFaceShapesToList(collidingShapes, face, profiler, maxY, 0.15F, aabb::intersects, false);
 						}
 					}
 

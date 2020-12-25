@@ -77,4 +77,26 @@ public final class Face implements AutoCloseable {
 		}
 	}
 
+	public void assignNormalTo(Face toUse) {
+		Vec3 v0 = this.vertex0;
+		Vec3 v1 = this.vertex1;
+		Vec3 v2 = this.vertex2;
+		Vec3 v3 = this.vertex3;
+		// mul -1
+		Vec3.normal(v3, v0, v1, toUse.vertex0);
+		Vec3.normal(v0, v1, v2, toUse.vertex1);
+		Vec3.normal(v1, v2, v3, toUse.vertex2);
+		Vec3.normal(v2, v3, v0, toUse.vertex3);
+	}
+
+	public void assignAverageTo(Vec3 toUse) {
+		Vec3 v0 = this.vertex0;
+		Vec3 v1 = this.vertex1;
+		Vec3 v2 = this.vertex2;
+		Vec3 v3 = this.vertex3;
+		toUse.x = (v0.x + v1.x + v2.x + v3.x) / 4;
+		toUse.y = (v0.y + v1.y + v2.y + v3.y) / 4;
+		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
+	}
+
 }
