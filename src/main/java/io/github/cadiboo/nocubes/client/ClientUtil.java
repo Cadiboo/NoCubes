@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -17,6 +18,8 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ReportedException;
@@ -26,9 +29,13 @@ import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.registries.IRegistryDelegate;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Map;
 
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
@@ -83,6 +90,9 @@ public final class ClientUtil {
 	static {
 		Arrays.fill(ClientUtil.NEGATIVE_1_8000, -1);
 	}
+
+	// Added by Forge, no SRG name
+	private static final Field BLOCK_COLOR_MAP = ObfuscationReflectionHelper.findField(BlockColors.class, "blockColorMap");
 
 	/**
 	 * Returns a state and sets the texturePooledMutablePos to the pos it found
@@ -427,4 +437,11 @@ public final class ClientUtil {
 		}
 	}
 
+    public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsMap() {
+		try {
+			return (Map<IRegistryDelegate<Block>, IBlockColor>) BLOCK_COLOR_MAP.get(Minecraft.getMinecraft().getBlockColors());
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("IllegalAccessException while getting the BlockColorsMap... how? It should have been made accessible", e);
+		}
+	}
 }
