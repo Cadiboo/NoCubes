@@ -269,6 +269,7 @@ public final class CacheUtil {
 			final DensityCache densityCache = DensityCache.retain(startPaddingX, startPaddingY, startPaddingZ, cacheSizeX, cacheSizeY, cacheSizeZ);
 			final float[] densityCacheArray = densityCache.getDensityCache();
 
+			// Keep in sync with MeshDispatcher.generateBlockMeshUnOffset
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
@@ -307,28 +308,44 @@ public final class CacheUtil {
 		final int smoothableCacheSizeY = smoothableCache.sizeY;
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
-		float density = 0;
-		for (int zOffset = 0; zOffset < 2; ++zOffset) {
-			for (int yOffset = 0; yOffset < 2; ++yOffset) {
-				for (int xOffset = 0; xOffset < 2; ++xOffset) {
-					density += ModUtil.getIndividualBlockDensity(
-							smoothableCacheArray[smoothableCache.getIndex(
-									posX + xOffset,
-									posY + yOffset,
-									posZ + zOffset,
-									smoothableCacheSizeX, smoothableCacheSizeY
-							)],
-							stateCacheArray[stateCache.getIndex(
-									posX + xOffset + stateCacheDiffX,
-									posY + yOffset + stateCacheDiffY,
-									posZ + zOffset + stateCacheDiffZ,
-									stateCacheSizeX, stateCacheSizeY
-							)]
-					);
-				}
-			}
-		}
-		return density;
+		// Keep in sync with MeshDispatcher.generateBlockMeshUnOffset
+		return 4 * ModUtil.getIndividualBlockDensity(
+				smoothableCacheArray[smoothableCache.getIndex(
+						posX + 0,
+						posY + 0,
+						posZ + 0,
+						smoothableCacheSizeX, smoothableCacheSizeY
+				)],
+				stateCacheArray[stateCache.getIndex(
+						posX + 0 + stateCacheDiffX,
+						posY + 0 + stateCacheDiffY,
+						posZ + 0 + stateCacheDiffZ,
+						stateCacheSizeX, stateCacheSizeY
+				)]
+		);
+
+//		float density = 0;
+//		for (int zOffset = 0; zOffset < 2; ++zOffset) {
+//			for (int yOffset = 0; yOffset < 2; ++yOffset) {
+//				for (int xOffset = 0; xOffset < 2; ++xOffset) {
+//					density += ModUtil.getIndividualBlockDensity(
+//							smoothableCacheArray[smoothableCache.getIndex(
+//									posX + xOffset,
+//									posY + yOffset,
+//									posZ + zOffset,
+//									smoothableCacheSizeX, smoothableCacheSizeY
+//							)],
+//							stateCacheArray[stateCache.getIndex(
+//									posX + xOffset + stateCacheDiffX,
+//									posY + yOffset + stateCacheDiffY,
+//									posZ + zOffset + stateCacheDiffZ,
+//									stateCacheSizeX, stateCacheSizeY
+//							)]
+//					);
+//				}
+//			}
+//		}
+//		return density;
 	}
 
 }

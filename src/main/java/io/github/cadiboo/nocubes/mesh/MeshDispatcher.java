@@ -104,9 +104,9 @@ public final class MeshDispatcher {
 				addX = 1;
 				addY = 1;
 				addZ = 1;
-				subX = 0;
-				subY = 0;
-				subZ = 0;
+				subX = 1;
+				subY = 1;
+				subZ = 1;
 			} else if (meshGeneratorType == MeshGeneratorType.MarchingTetrahedra) {
 				addX = 1;
 				addY = 1;
@@ -132,9 +132,9 @@ public final class MeshDispatcher {
 
 			final MeshGenerator meshGenerator = meshGeneratorType.getMeshGenerator();
 
-			final byte meshSizeX = (byte) (2 + addX + subX + meshGenerator.getSizeXExtension());
-			final byte meshSizeY = (byte) (2 + addY + subY + meshGenerator.getSizeYExtension());
-			final byte meshSizeZ = (byte) (2 + addZ + subZ + meshGenerator.getSizeZExtension());
+			final byte meshSizeX = (byte) (1 + subX + addX + meshGenerator.getSizeXExtension());
+			final byte meshSizeY = (byte) (1 + subY + addY + meshGenerator.getSizeYExtension());
+			final byte meshSizeZ = (byte) (1 + subZ + addZ + meshGenerator.getSizeZExtension());
 
 			final float[] densityData = new float[meshSizeX * meshSizeY * meshSizeZ];
 
@@ -143,22 +143,28 @@ public final class MeshDispatcher {
 			final int startPosZ = posZ - subZ;
 
 			int index = 0;
+			// Keep in sync with CacheUtil.generateDensityCache
 			for (int z = 0; z < meshSizeX; ++z) {
 				for (int y = 0; y < meshSizeY; ++y) {
 					for (int x = 0; x < meshSizeZ; ++x, ++index) {
 
-						float density = 0;
-						for (int zOffset = 0; zOffset < 2; ++zOffset) {
-							for (int yOffset = 0; yOffset < 2; ++yOffset) {
-								for (int xOffset = 0; xOffset < 2; ++xOffset) {
+						pooledMutableBlockPos.setPos(startPosX + x - 0, startPosY + y - 0, startPosZ + z - 0);
+						final IBlockState state = reader.getBlockState(pooledMutableBlockPos);
+						densityData[index] = 8 * ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
 
-									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
-									final IBlockState state = reader.getBlockState(pooledMutableBlockPos);
-									density += ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
-								}
-							}
-						}
-						densityData[index] = density;
+						// Keep in sync with CacheUtil.getBlockDensity
+//						float density = 0;
+//						for (int zOffset = 0; zOffset < 2; ++zOffset) {
+//							for (int yOffset = 0; yOffset < 2; ++yOffset) {
+//								for (int xOffset = 0; xOffset < 2; ++xOffset) {
+//
+//									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
+//									final IBlockState state = reader.getBlockState(pooledMutableBlockPos);
+//									density += ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
+//								}
+//							}
+//						}
+//						densityData[index] = density;
 
 					}
 				}
@@ -189,6 +195,11 @@ public final class MeshDispatcher {
 				vertex1.addOffset(-subX, -subY, -subZ);
 				vertex2.addOffset(-subX, -subY, -subZ);
 				vertex3.addOffset(-subX, -subY, -subZ);
+
+				vertex0.addOffset(0.5, 0.5, 0.5);
+				vertex1.addOffset(0.5, 0.5, 0.5);
+				vertex2.addOffset(0.5, 0.5, 0.5);
+				vertex3.addOffset(0.5, 0.5, 0.5);
 
 			}
 

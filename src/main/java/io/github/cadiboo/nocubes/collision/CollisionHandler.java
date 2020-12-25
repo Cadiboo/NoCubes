@@ -281,17 +281,17 @@ public final class CollisionHandler {
 										stateOffsetZ + z,
 										stateCacheSizeX, stateCacheSizeY
 								)];
-								if (!TERRAIN_SMOOTHABLE.test(blockState)
-										||
-										densityCacheArray[densityCache.getIndex(
-												densityOffsetX + x,
-												densityOffsetY + y,
-												densityOffsetZ + z,
-												densityCacheSizeX, densityCacheSizeY
-										)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely inside)
-								) {
+								final boolean smoothable = TERRAIN_SMOOTHABLE.test(blockState);
+								if (!smoothable)
 									blockState.addCollisionBoxToList(_this, pooledMutableBlockPos.setPos(minXm1 + x, minYm1 + y, minZm1 + z), aabb, collidingShapes, entityIn, false);
-								}
+								if (smoothable && densityCacheArray[densityCache.getIndex(
+											densityOffsetX + x,
+											densityOffsetY + y,
+											densityOffsetZ + z,
+											densityCacheSizeX, densityCacheSizeY
+									)] < -6 // -6 is very likely to be inside the isosurface (-8 is entirely inside)
+								)
+									blockState.addCollisionBoxToList(_this, pooledMutableBlockPos.setPos(minXm1 + x, minYm1 + y, minZm1 + z), aabb, collidingShapes, entityIn, false);
 							}
 						}
 					}
@@ -307,7 +307,11 @@ public final class CollisionHandler {
 								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN_SMOOTHABLE, pooledMutableBlockPos)
 						);
 					} else {
-						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+						byte[] dims = {meshSizeX, meshSizeY, meshSizeZ};
+						if (Config.terrainMeshGenerator != MeshGeneratorType.SurfaceNets)
+							for (int i = 0; i < dims.length; ++i)
+								dims[i] += 1;
+						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), dims);
 					}
 				}
 
@@ -344,6 +348,12 @@ public final class CollisionHandler {
 									Vec3 v2 = face.getVertex2();
 									Vec3 v3 = face.getVertex3()
 							) {
+								if (Config.terrainMeshGenerator == MeshGeneratorType.SurfaceNets) {
+									v0.addOffset(-0.5, -0.5, -0.5);
+									v1.addOffset(-0.5, -0.5, -0.5);
+									v2.addOffset(-0.5, -0.5, -0.5);
+									v3.addOffset(-0.5, -0.5, -0.5);
+								}
 								face.assignNormalTo(normal);
 								face.assignAverageTo(centre);
 
