@@ -31,18 +31,16 @@ public final class DensityCache extends XYZCache implements AutoCloseable {
 
 		final DensityCache pooled = POOL.get();
 
-		if (pooled.inUse) {
+		if (pooled.inUse)
 			throw new IllegalStateException("DensityCache is already in use!");
-		}
 		pooled.inUse = true;
 
 		pooled.startPaddingX = startPaddingX;
 		pooled.startPaddingY = startPaddingY;
 		pooled.startPaddingZ = startPaddingZ;
 
-		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
+		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ)
 			return pooled;
-		}
 
 		pooled.sizeX = sizeX;
 		pooled.sizeY = sizeY;
@@ -50,9 +48,8 @@ public final class DensityCache extends XYZCache implements AutoCloseable {
 
 		final int size = sizeX * sizeY * sizeZ;
 
-		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
+		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F)
 			pooled.cache = new float[size];
-		}
 
 		return pooled;
 	}
