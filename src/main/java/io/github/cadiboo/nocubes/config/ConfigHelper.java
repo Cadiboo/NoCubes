@@ -242,7 +242,7 @@ public final class ConfigHelper {
 
 		for (final Block block : ForgeRegistries.BLOCKS.getValues()) {
 			for (final IBlockState state : block.getBlockState().getValidStates()) {
-				((INoCubesBlockState) state).nocubes_setLeavesSmoothable(smoothableStates.contains(state));
+				((INoCubesBlockState) state).nocubes_setTerrainSmoothable(smoothableStates.contains(state));
 			}
 		}
 	}
