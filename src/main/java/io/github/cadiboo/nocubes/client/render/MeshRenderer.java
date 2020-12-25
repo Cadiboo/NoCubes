@@ -329,7 +329,7 @@ public final class MeshRenderer {
 
 							boolean wasAnythingRendered = false;
 
-							OptiFineCompatibility.pushShaderThing(textureState, texturePos, reader, bufferBuilder);
+							OptiFineCompatibility.PROXY.pushShaderThing(textureState, texturePos, reader, bufferBuilder);
 							try {
 
 								List<BakedQuad> quads;
@@ -551,7 +551,7 @@ public final class MeshRenderer {
 									}
 								}
 							} finally {
-								OptiFineCompatibility.popShaderThing(bufferBuilder);
+								OptiFineCompatibility.PROXY.popShaderThing(bufferBuilder);
 							}
 							usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= wasAnythingRendered;
 						}
@@ -645,7 +645,7 @@ public final class MeshRenderer {
 
 			boolean wasAnythingRendered = false;
 
-			OptiFineCompatibility.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
+			OptiFineCompatibility.PROXY.pushShaderThing(grassPlantState, texturePos, reader, bufferBuilder);
 			try {
 
 				for (int directionIndex = 0; directionIndex < DIRECTION_QUADS_ORDERED_LENGTH; ++directionIndex) {
@@ -923,7 +923,7 @@ public final class MeshRenderer {
 				}
 
 			} finally {
-				OptiFineCompatibility.popShaderThing(bufferBuilder);
+				OptiFineCompatibility.PROXY.popShaderThing(bufferBuilder);
 			}
 			usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] |= wasAnythingRendered;
 		}

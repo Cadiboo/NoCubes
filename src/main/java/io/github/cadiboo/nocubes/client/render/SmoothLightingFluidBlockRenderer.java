@@ -36,7 +36,7 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 
 	@Override
 	public boolean renderFluid(final IBlockAccess worldIn, final IBlockState state, final BlockPos pos, final BufferBuilder buffer) {
-		OptiFineCompatibility.pushShaderThing(state, pos, worldIn, buffer);
+		OptiFineCompatibility.PROXY.pushShaderThing(state, pos, worldIn, buffer);
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 
@@ -419,7 +419,7 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 			return wasAnythingRendered;
 		} finally {
 			pooledMutableBlockPos.release();
-			OptiFineCompatibility.popShaderThing(buffer);
+			OptiFineCompatibility.PROXY.popShaderThing(buffer);
 		}
 	}
 

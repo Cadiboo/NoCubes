@@ -50,9 +50,8 @@ public final class S2CAddTerrainSmoothable implements IMessage, IMessageHandler<
 		}
 		((INoCubesBlockState) blockState).nocubes_setTerrainSmoothable(true);
 		Minecraft.getMinecraft().getToastGui().add(new BlockStateToast.AddTerrain(blockState, BlockPos.ORIGIN));
-		if (Config.renderSmoothTerrain) {
+		if (Config.renderSmoothTerrain)
 			ClientUtil.tryReloadRenderers();
-		}
 	}
 
 	@Override

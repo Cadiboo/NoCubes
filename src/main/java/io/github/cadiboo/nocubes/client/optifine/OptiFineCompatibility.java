@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -10,7 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -18,87 +19,65 @@ import java.util.List;
  */
 public final class OptiFineCompatibility {
 
-	public static final boolean OPTIFINE_INSTALLED = OptiFineLocator.isOptiFineInstalledAndCompatible();
-
-	public static void pushShaderThing(
-			@Nonnull final IBlockState blockState,
-			@Nonnull final BlockPos pos,
-			@Nonnull final IBlockAccess reader,
-			@Nonnull final BufferBuilder bufferBuilder
-	) {
-		if (!OPTIFINE_INSTALLED)
-			return;
-//		HardOptiFineCompatibility.pushShaderThing(blockState, pos, reader, bufferBuilder);
-	}
-
-//	public static void pushShaderThing(
-//			@Nonnull final IFluidState fluidState,
-//			@Nonnull final BlockPos pos,
-//			@Nonnull final IBlockAccess reader,
-//			@Nonnull final BufferBuilder bufferBuilder
-//	) {
-//		pushShaderThing(fluidState.getIBlockState(), pos, reader, bufferBuilder);
-//	}
-
-	public static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
-//		if (!OPTIFINE_INSTALLED)
-		return;
-//		HardOptiFineCompatibility.popShaderThing(bufferBuilder);
-	}
-
-	public static boolean isChunkCacheOF(@Nonnull final IBlockAccess reader) {
-//		if (!OPTIFINE_INSTALLED)
-		return false;
-//		return HardOptiFineCompatibility.isChunkCacheOF(reader);
-	}
-
-	@Nonnull
-	public static ChunkCache getChunkRenderCache(@Nonnull final IBlockAccess reader) {
-//		if (!OPTIFINE_INSTALLED)
-		throw new OptiFineNotPresentException();
-//		return HardOptiFineCompatibility.getChunkRenderCache(reader);
-	}
-
-	public static final class BufferBuilderOF {
-
-		@Nonnull
-		public static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
-//			if (!OPTIFINE_INSTALLED)
-			throw new OptiFineNotPresentException();
-//			return HardOptiFineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
+	public static final boolean ENABLED;
+	public static final OptiFineProxy PROXY;
+	static {
+		OptiFineProxy proxy = makeProxy();
+		if (proxy == null) {
+			ENABLED = false;
+			PROXY = dummyProxy();
+		} else {
+			ENABLED = true;
+			PROXY = proxy;
 		}
-
+		NoCubes.LOGGER.info("OptiFineCompatibility: Compatibility enabled = " + ENABLED);
 	}
 
-	public static final class BlockModelCustomizer {
-
-		@Nonnull
-		public static IBakedModel getRenderModel(
-				@Nonnull final IBakedModel model,
-				@Nonnull final IBlockState blockState,
-				@Nonnull final Object renderEnv
-		) {
-//			if (!OPTIFINE_INSTALLED)
-			throw new OptiFineNotPresentException();
-//			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderModel(model, blockState, renderEnv);
+	private static OptiFineProxy makeProxy() {
+		try {
+			return new HD_U_F5();
+		} catch (OutOfMemoryError oom) {
+			throw oom;
+		} catch (Throwable t) {
+			return null;
 		}
+	}
 
-		@Nonnull
-		public static List<BakedQuad> getRenderQuads(
-				@Nonnull final List<BakedQuad> quads,
-				@Nonnull final IBlockAccess reader,
-				@Nonnull final IBlockState blockState,
-				@Nonnull final BlockPos pos,
-				@Nonnull final EnumFacing direction,
-				@Nonnull final BlockRenderLayer blockRenderLayer,
-				final long rand,
-				@Nonnull final Object renderEnv
-		) {
-//			if (!OPTIFINE_INSTALLED)
-			throw new OptiFineNotPresentException();
-//			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, reader, blockState, pos, direction, blockRenderLayer, rand, renderEnv);
-		}
+	private static OptiFineProxy dummyProxy() {
+		return new OptiFineProxy() {
+			@Override
+			public boolean isChunkCacheOF(@Nullable Object obj) {
+				return false;
+			}
 
+			@Override
+			public ChunkCache getChunkRenderCache(IBlockAccess reader) {
+				throw new RuntimeException();
+			}
+
+			@Override
+			public void pushShaderThing(final IBlockState blockState, final BlockPos pos, final IBlockAccess reader, final BufferBuilder bufferBuilder) {
+			}
+
+			@Override
+			public void popShaderThing(final BufferBuilder bufferBuilder) {
+			}
+
+			@Override
+			public Object getRenderEnv(final BufferBuilder bufferBuilder, final IBlockState blockState, final BlockPos pos) {
+				return null;
+			}
+
+			@Override
+			public IBakedModel getRenderModel(final IBakedModel modelIn, final IBlockState stateIn, final Object renderEnv) {
+				return modelIn;
+			}
+
+			@Override
+			public List<BakedQuad> getRenderQuads(final List<BakedQuad> quads, final IBlockAccess worldIn, final IBlockState stateIn, final BlockPos posIn, final EnumFacing enumfacing, final BlockRenderLayer layer, final long rand, final Object renderEnv) {
+				return quads;
+			}
+		};
 	}
 
 }

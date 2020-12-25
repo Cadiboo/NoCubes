@@ -37,6 +37,7 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineLocator.SUPPORTED_SERIES;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
 import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
 import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
@@ -292,8 +293,8 @@ public final class ClientUtil {
 			final int x = currentChunkPosX - renderChunkCache.chunkX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
 			return renderChunkCache.chunkArray[x][z];
-		} else if (OptiFineCompatibility.isChunkCacheOF(reader)) {
-			final ChunkCache renderChunkCache = OptiFineCompatibility.getChunkRenderCache(reader);
+		} else if (OptiFineCompatibility.PROXY.isChunkCacheOF(reader)) {
+			final ChunkCache renderChunkCache = OptiFineCompatibility.PROXY.getChunkRenderCache(reader);
 			final int x = currentChunkPosX - renderChunkCache.chunkX;
 			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
 			return renderChunkCache.chunkArray[x][z];
@@ -373,12 +374,13 @@ public final class ClientUtil {
 	}
 
 	public static void crashIfIncompatibleOptiFine() {
-		final String optiFineVersion = OptiFineLocator.getOptiFineVersion();
-		throw new CustomModLoadingErrorDisplayException("Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + optiFineVersion + ")", new IllegalStateException("Incompatible OptiFine version detected! Please use the OptiFine_HD_U_F series (Installed: " + optiFineVersion + ")")) {
+		String optiFineVersion = OptiFineLocator.getOptiFineVersion();
+		final String message = "Incompatible OptiFine version detected! Please use the " + SUPPORTED_SERIES + " series (Installed: " + optiFineVersion + ")";
+		throw new CustomModLoadingErrorDisplayException(message, new IllegalStateException(message)) {
 
 			private final String[] lines = new String[]{
 					"Incompatible OptiFine version detected!",
-					"Please use the OptiFine_HD_U_F series",
+					"Please use the " + SUPPORTED_SERIES + " series",
 					"(Installed: " + optiFineVersion + ")"
 			};
 
@@ -388,20 +390,18 @@ public final class ClientUtil {
 
 			@Override
 			public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
-
 				final int x = errorScreen.width / 2;
 				final int y = errorScreen.height / 2 / 2;
 				final String[] lines = this.lines;
-				for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+				for (int i = 0, linesLength = lines.length; i < linesLength; i++)
 					errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
-
-				}
 			}
 		};
 	}
 
 	public static void crashIfRCRCHInstalled() {
-		throw new CustomModLoadingErrorDisplayException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.")) {
+		final String message = "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.";
+		throw new CustomModLoadingErrorDisplayException(message, new IllegalStateException(message)) {
 
 			private final String[] lines = new String[]{
 					"NoCubes Dependency Error!",
@@ -418,23 +418,19 @@ public final class ClientUtil {
 
 			@Override
 			public void drawScreen(final GuiErrorScreen errorScreen, final FontRenderer fontRenderer, final int mouseRelX, final int mouseRelY, final float tickTime) {
-
 				final int x = errorScreen.width / 2;
 				final int y = errorScreen.height / 2 / 2;
 				final String[] lines = this.lines;
-				for (int i = 0, linesLength = lines.length; i < linesLength; i++) {
+				for (int i = 0, linesLength = lines.length; i < linesLength; i++)
 					errorScreen.drawCenteredString(fontRenderer, lines[i], x, y + i * 10, 0xFFFFFF);
-
-				}
 			}
 		};
 	}
 
 	public static void markBlocksForUpdate(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean updateImmediately) {
 		final RenderGlobal worldRenderer = Minecraft.getMinecraft().renderGlobal;
-		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null) {
+		if (worldRenderer != null && worldRenderer.world != null && worldRenderer.viewFrustum != null)
 			worldRenderer.markBlocksForUpdate(minX, minY, minZ, maxX, maxY, maxZ, updateImmediately);
-		}
 	}
 
     public static Map<IRegistryDelegate<Block>, IBlockColor> getBlockColorsMap() {

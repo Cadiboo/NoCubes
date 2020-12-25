@@ -45,7 +45,7 @@ public final class ExtendedFluidBlockRenderer {
 
 		PooledMutableBlockPos renderPos = PooledMutableBlockPos.retain(renderX, renderY, renderZ);
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		OptiFineCompatibility.pushShaderThing(state, renderPos, worldIn, buffer);
+		OptiFineCompatibility.PROXY.pushShaderThing(state, renderPos, worldIn, buffer);
 		try {
 
 			final SmoothLightingFluidBlockRenderer smoothLightingFluidBlockRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer;
@@ -444,7 +444,7 @@ public final class ExtendedFluidBlockRenderer {
 
 			return wasAnythingRendered;
 		} finally {
-			OptiFineCompatibility.popShaderThing(buffer);
+			OptiFineCompatibility.PROXY.popShaderThing(buffer);
 			pooledMutableBlockPos.release();
 			renderPos.release();
 		}

@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BlockModelCustomizer;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.BufferBuilderOF;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import net.minecraft.block.state.IBlockState;
@@ -18,7 +17,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.OPTIFINE_INSTALLED;
+import static io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility.ENABLED;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -55,11 +54,11 @@ public final class ModelHelper {
 
 		Object renderEnv = null;
 
-		if (OPTIFINE_INSTALLED) {
+		if (ENABLED) {
 //		    RenderEnv renderEnv = bufferBuilder.getRenderEnv(state, pos);
-			renderEnv = BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
+			renderEnv = OptiFineCompatibility.PROXY.getRenderEnv(bufferBuilder, state, pos);
 
-			model = BlockModelCustomizer.getRenderModel(model, state, renderEnv);
+			model = OptiFineCompatibility.PROXY.getRenderModel(model, state, renderEnv);
 		}
 
 		try (final ModProfiler ignored = ModProfiler.get().start("getExtendedState")) {
@@ -73,9 +72,9 @@ public final class ModelHelper {
 				continue;
 			}
 
-			if (OPTIFINE_INSTALLED) {
+			if (ENABLED) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getRenderQuads")) {
-					quads = BlockModelCustomizer.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
+					quads = OptiFineCompatibility.PROXY.getRenderQuads(quads, reader, state, pos, direction, blockRenderLayer, posRandLong, renderEnv);
 					if (quads.isEmpty()) {
 						continue;
 					}

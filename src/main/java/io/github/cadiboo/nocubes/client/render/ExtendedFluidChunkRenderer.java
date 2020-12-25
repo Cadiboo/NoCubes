@@ -145,7 +145,7 @@ public final class ExtendedFluidChunkRenderer {
 								final int worldX = renderChunkPositionX + x;
 								final int worldY = renderChunkPositionY + y;
 								final int worldZ = renderChunkPositionZ + z;
-								OptiFineCompatibility.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
+								OptiFineCompatibility.PROXY.pushShaderThing(fluidState, pooledMutableBlockPos.setPos(
 										worldX,
 										worldY,
 										worldZ
@@ -167,7 +167,7 @@ public final class ExtendedFluidChunkRenderer {
 											lazyPackedLightCache
 									);
 								} finally {
-									OptiFineCompatibility.popShaderThing(bufferBuilder);
+									OptiFineCompatibility.PROXY.popShaderThing(bufferBuilder);
 								}
 
 								break OFFSET;

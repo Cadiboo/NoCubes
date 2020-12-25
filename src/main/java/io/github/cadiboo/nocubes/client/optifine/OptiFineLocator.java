@@ -13,40 +13,26 @@ import java.lang.reflect.Field;
  */
 public final class OptiFineLocator {
 
+	public static final String SUPPORTED_SERIES = "HD_U_F";
+
 	@Nullable
 	static Class<?> findConfigClass() {
 		// Config was moved around in HD_U_F
 		// 1. Try to find "net.optifine.Config"
 		// 2. Try to find "Config"
-		Class<?> config = null;
-//		try {
-//			config = Class.forName("net.optifine.Config");
-//		} catch (ClassNotFoundException failedToFindModernConfigClass) {
-//			try {
-//				config = Class.forName("Config");
-//			} catch (ClassNotFoundException failedToFindLegacyConfigClass) {
-//				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
-//				return null;
-//			}
-//		}
-//		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
-		return config;
-	}
-
-	private static boolean isCompatibleOptiFineVersion(final String version) {
-		return version.contains("HD_U_F");
-	}
-
-	static boolean isOptiFineInstalledAndCompatible() {
-		return isOptiFineInstalled() && isOptiFineCompatible();
-	}
-
-	public static boolean isOptiFineCompatible() {
-		final Class<?> configClass = findConfigClass();
-		if (configClass == null) {
-			return false;
+		Class<?> config;
+		try {
+			config = Class.forName("net.optifine.Config");
+		} catch (ClassNotFoundException failedToFindModernConfigClass) {
+			try {
+				config = Class.forName("Config");
+			} catch (ClassNotFoundException failedToFindLegacyConfigClass) {
+				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
+				return null;
+			}
 		}
-		return isCompatibleOptiFineVersion(getOptiFineVersion(configClass));
+		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
+		return config;
 	}
 
 	@Nullable

@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
@@ -182,9 +183,8 @@ public final class NoCubes {
 			DistExecutor.runWhenOn(Side.SERVER, () -> () -> FMLCommonHandler.instance().raiseException(new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game."), "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", true));
 		}
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
-			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineLocator.isOptiFineCompatible()) {
+			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineCompatibility.ENABLED)
 				ClientUtil.crashIfIncompatibleOptiFine();
-			}
 		});
 
 		this.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
