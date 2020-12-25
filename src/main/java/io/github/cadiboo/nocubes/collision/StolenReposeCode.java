@@ -73,7 +73,7 @@ final class StolenReposeCode {
 							}
 
 							final IBlockState testState = reader.getBlockState(pooledMutableBlockPos);
-							density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+							density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
 						}
 					}
 				}
@@ -85,7 +85,7 @@ final class StolenReposeCode {
 	}
 
 	private static boolean canSlope(final IBlockState state) {
-		return TERRAIN_SMOOTHABLE.apply(state);
+		return TERRAIN_SMOOTHABLE.test(state);
 	}
 
 	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos, final AxisAlignedBB collisionBoundingBox) {

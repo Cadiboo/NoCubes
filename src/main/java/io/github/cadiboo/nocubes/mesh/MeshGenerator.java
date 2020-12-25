@@ -83,7 +83,7 @@ public interface MeshGenerator {
 								);
 
 								final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
-								density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
+								density += ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
 							}
 						}
 					}

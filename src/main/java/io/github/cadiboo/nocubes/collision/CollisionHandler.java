@@ -156,7 +156,7 @@ public final class CollisionHandler {
 									state = _this.getBlockState(pooledMutableBlockPos);
 								}
 
-								if (TERRAIN_SMOOTHABLE.apply(state)) {
+								if (TERRAIN_SMOOTHABLE.test(state)) {
 									StolenReposeCode.addCollisionBoxToList(state, _this, pooledMutableBlockPos, aabb, outList, entityIn, false);
 								} else {
 									state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
@@ -279,7 +279,7 @@ public final class CollisionHandler {
 										stateOffsetZ + z,
 										stateCacheSizeX, stateCacheSizeY
 								)];
-								if (!blockState.nocubes_isTerrainSmoothable()
+								if (!TERRAIN_SMOOTHABLE.test(blockState)
 										||
 										densityCacheArray[densityCache.getIndex(
 												densityOffsetX + x,
@@ -386,9 +386,8 @@ public final class CollisionHandler {
 											state = _this.getBlockState(pooledMutableBlockPos);
 										}
 
-										if (!state.nocubes_isTerrainSmoothable()) {
+										if (!TERRAIN_SMOOTHABLE.test(state))
 											state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
-										}
 
 										if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList)) {
 											return true;

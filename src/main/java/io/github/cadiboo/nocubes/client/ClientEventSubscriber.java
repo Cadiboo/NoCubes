@@ -188,15 +188,14 @@ public final class ClientEventSubscriber {
 			final IBlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
-				if (state.nocubes_isTerrainSmoothable()) {
+				if (TERRAIN_SMOOTHABLE.test(state))
 					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
-				} else {
+				else
 					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
-				}
 			}
 			if (leavesPressed) {
 				final BlockStateToast toast;
-				if (!state.nocubes_isLeavesSmoothable()) {
+				if (!LEAVES_SMOOTHABLE.test(state)) {
 					ConfigHelper.addLeavesSmoothable(state);
 					toast = new BlockStateToast.AddLeaves(state, blockPos);
 				} else {
@@ -458,11 +457,11 @@ public final class ClientEventSubscriber {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && blockState.nocubes_isTerrainSmoothable()) {
+		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(blockState)) {
 			isSmoothable = TERRAIN_SMOOTHABLE;
 			meshGeneratorType = Config.terrainMeshGenerator;
 			event.setCanceled(true);
-		} else if (Config.renderSmoothLeaves && blockState.nocubes_isLeavesSmoothable()) {
+		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(blockState)) {
 			isSmoothable = LEAVES_SMOOTHABLE;
 			meshGeneratorType = Config.leavesMeshGenerator;
 			event.setCanceled(true);

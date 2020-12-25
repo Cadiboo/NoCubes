@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.DistExecutor;
+import io.github.cadiboo.nocubes.util.INoCubesBlockState;
 import io.github.cadiboo.nocubes.util.StateHolder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
@@ -47,7 +48,7 @@ public final class S2CRemoveTerrainSmoothable implements IMessage, IMessageHandl
 			NoCubes.LOGGER.error("Trying to remove invalid terrain smoothable blockstate: " + blockStateId);
 			return;
 		}
-		blockState.nocubes_setTerrainSmoothable(false);
+		((INoCubesBlockState) blockState).nocubes_setTerrainSmoothable(false);
 		Minecraft.getMinecraft().getToastGui().add(new BlockStateToast.RemoveTerrain(blockState, BlockPos.ORIGIN));
 		if (Config.renderSmoothTerrain) {
 			ClientUtil.tryReloadRenderers();

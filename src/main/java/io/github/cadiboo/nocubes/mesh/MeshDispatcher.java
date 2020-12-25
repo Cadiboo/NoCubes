@@ -154,7 +154,7 @@ public final class MeshDispatcher {
 
 									pooledMutableBlockPos.setPos(startPosX + x - xOffset, startPosY + y - yOffset, startPosZ + z - zOffset);
 									final IBlockState state = reader.getBlockState(pooledMutableBlockPos);
-									density += ModUtil.getIndividualBlockDensity(isSmoothable.apply(state), state);
+									density += ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
 								}
 							}
 						}

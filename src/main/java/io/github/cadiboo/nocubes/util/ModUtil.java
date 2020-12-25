@@ -252,7 +252,7 @@ public final class ModUtil {
 ////						}
 //
 //						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
-//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.apply(testState), testState);
+//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
 //					}
 //				}
 //			}

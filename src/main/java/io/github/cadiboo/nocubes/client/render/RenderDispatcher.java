@@ -333,7 +333,7 @@ public final class RenderDispatcher {
 				switch (Config.smoothLeavesType) {
 					case SEPARATE:
 						for (final Block smoothableBlock : Config.leavesSmoothableBlocks) {
-							final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.apply(checkState) && checkState.getBlock() == smoothableBlock);
+							final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.test(checkState) && checkState.getBlock() == smoothableBlock);
 							// FIXME: Why is it like this... why
 							try (
 //								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
@@ -457,10 +457,10 @@ public final class RenderDispatcher {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && iblockstate.nocubes_isTerrainSmoothable()) {
+		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(iblockstate)) {
 			isSmoothable = TERRAIN_SMOOTHABLE;
 			meshGeneratorType = Config.terrainMeshGenerator;
-		} else if (Config.renderSmoothLeaves && iblockstate.nocubes_isLeavesSmoothable()) {
+		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(iblockstate)) {
 			isSmoothable = LEAVES_SMOOTHABLE;
 			meshGeneratorType = Config.leavesMeshGenerator;
 		} else {

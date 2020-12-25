@@ -231,7 +231,7 @@ public final class CacheUtil {
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++smoothableIndex) {
-						smoothableCacheArray[smoothableIndex] = isStateSmoothable.apply(
+						smoothableCacheArray[smoothableIndex] = isStateSmoothable.test(
 								blockStateArray[stateCache.getIndex(
 										x + diffX,
 										y + diffY,

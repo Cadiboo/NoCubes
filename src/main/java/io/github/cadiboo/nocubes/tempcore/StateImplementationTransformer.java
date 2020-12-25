@@ -118,6 +118,7 @@ final class StateImplementationTransformer implements Opcodes {
 			}
 		}
 
+		classNode.interfaces.add("io/github/cadiboo/nocubes/util/INoCubesBlockState");
 		log("Adding methods...");
 		{
 			start("Adding make_nocubes_isTerrainSmoothable");

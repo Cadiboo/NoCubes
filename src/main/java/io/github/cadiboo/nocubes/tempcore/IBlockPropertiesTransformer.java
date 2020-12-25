@@ -23,6 +23,7 @@ final class IBlockPropertiesTransformer implements Opcodes {
 
 		final List<MethodNode> methods = classNode.methods;
 
+		classNode.interfaces.add("io/github/cadiboo/nocubes/util/INoCubesBlockState");
 		log("Adding methods...");
 		{
 			start("Adding make_nocubes_isTerrainSmoothable");

@@ -26,6 +26,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+
 /**
  * @author Cadiboo
  */
@@ -49,8 +52,8 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean renderBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite, final BlockRendererDispatcher blockrendererdispatcher) {
-		if (!Config.renderSmoothTerrain || !iblockstate.nocubes_isTerrainSmoothable()) {
-			if (!Config.renderSmoothLeaves || !iblockstate.nocubes_isLeavesSmoothable()) {
+		if (!Config.renderSmoothTerrain || !TERRAIN_SMOOTHABLE.test(iblockstate)) {
+			if (!Config.renderSmoothLeaves || !LEAVES_SMOOTHABLE.test(iblockstate)) {
 				return true;
 			}
 		}
@@ -77,8 +80,8 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean canBlockStateRender(final IBlockState blockstate) {
-		if (blockstate.nocubes_isTerrainSmoothable() && Config.renderSmoothTerrain) return false;
-		if (blockstate.nocubes_isLeavesSmoothable()) {
+		if (TERRAIN_SMOOTHABLE.test(blockstate) && Config.renderSmoothTerrain) return false;
+		if (LEAVES_SMOOTHABLE.test(blockstate)) {
 			if (Config.renderSmoothLeaves)
 				return Config.renderSmoothAndVanillaLeaves;
 			return true;

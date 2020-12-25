@@ -89,7 +89,7 @@ public final class OldNoCubes implements MeshGenerator {
 		if (points != null) {
 			for (int i = 0; i < DIRECTION_VALUES_LENGTH; ++i) {
 				final EnumFacing direction = DIRECTION_VALUES[i];
-				if (isSmoothable.apply(reader.getBlockState(pooledMutableBlockPos.setPos(pos).move(direction)))) {
+				if (isSmoothable.test(reader.getBlockState(pooledMutableBlockPos.setPos(pos).move(direction)))) {
 					continue;
 				}
 
@@ -174,7 +174,7 @@ public final class OldNoCubes implements MeshGenerator {
 	@Nullable
 	public static Vec3[] getPoints(final int posX, final int posY, final int posZ, int relativePosX, int relativePosY, int relativePosZ, @Nonnull final IBlockState state, @Nonnull final IBlockAccess reader, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos) {
 
-		if (!isSmoothable.apply(state)) {
+		if (!isSmoothable.test(state)) {
 			return null;
 		}
 
@@ -298,11 +298,11 @@ public final class OldNoCubes implements MeshGenerator {
 			int x1 = (int) (point.x - (i & 0x1));
 			int z1 = (int) (point.z - (i >> 1 & 0x1));
 			IBlockState state0 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y, z1));
-			if ((!isBlockAirOrPlant(state0)) && (!isSmoothable.apply(state0))) {
+			if ((!isBlockAirOrPlant(state0)) && (!isSmoothable.test(state0))) {
 				return true;
 			}
 			IBlockState state1 = world.getBlockState(pooledMutableBlockPos.setPos(x1, (int) point.y - 1, z1));
-			if ((!isBlockAirOrPlant(state1)) && (!isSmoothable.apply(state1))) {
+			if ((!isBlockAirOrPlant(state1)) && (!isSmoothable.test(state1))) {
 				return true;
 			}
 		}
