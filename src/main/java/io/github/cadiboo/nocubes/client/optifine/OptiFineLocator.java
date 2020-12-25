@@ -18,18 +18,18 @@ public final class OptiFineLocator {
 		// Config was moved around in HD_U_F
 		// 1. Try to find "net.optifine.Config"
 		// 2. Try to find "Config"
-		Class<?> config;
-		try {
-			config = Class.forName("net.optifine.Config");
-		} catch (ClassNotFoundException failedToFindModernConfigClass) {
-			try {
-				config = Class.forName("Config");
-			} catch (ClassNotFoundException failedToFindLegacyConfigClass) {
-				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
-				return null;
-			}
-		}
-		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
+		Class<?> config = null;
+//		try {
+//			config = Class.forName("net.optifine.Config");
+//		} catch (ClassNotFoundException failedToFindModernConfigClass) {
+//			try {
+//				config = Class.forName("Config");
+//			} catch (ClassNotFoundException failedToFindLegacyConfigClass) {
+//				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
+//				return null;
+//			}
+//		}
+//		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
 		return config;
 	}
 

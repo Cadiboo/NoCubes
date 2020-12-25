@@ -26,11 +26,9 @@ public final class OptiFineCompatibility {
 			@Nonnull final IBlockAccess reader,
 			@Nonnull final BufferBuilder bufferBuilder
 	) {
-		if (!OPTIFINE_INSTALLED) {
+		if (!OPTIFINE_INSTALLED)
 			return;
-		} else {
-			HardOptiFineCompatibility.pushShaderThing(blockState, pos, reader, bufferBuilder);
-		}
+//		HardOptiFineCompatibility.pushShaderThing(blockState, pos, reader, bufferBuilder);
 	}
 
 //	public static void pushShaderThing(
@@ -43,38 +41,31 @@ public final class OptiFineCompatibility {
 //	}
 
 	public static void popShaderThing(@Nonnull final BufferBuilder bufferBuilder) {
-		if (!OPTIFINE_INSTALLED) {
-			return;
-		} else {
-			HardOptiFineCompatibility.popShaderThing(bufferBuilder);
-		}
+//		if (!OPTIFINE_INSTALLED)
+		return;
+//		HardOptiFineCompatibility.popShaderThing(bufferBuilder);
 	}
 
 	public static boolean isChunkCacheOF(@Nonnull final IBlockAccess reader) {
-		if (!OPTIFINE_INSTALLED) {
-			return false;
-		} else {
-			return HardOptiFineCompatibility.isChunkCacheOF(reader);
-		}
+//		if (!OPTIFINE_INSTALLED)
+		return false;
+//		return HardOptiFineCompatibility.isChunkCacheOF(reader);
 	}
 
 	@Nonnull
 	public static ChunkCache getChunkRenderCache(@Nonnull final IBlockAccess reader) {
-		if (!OPTIFINE_INSTALLED) {
-			throw new OptiFineNotPresentException();
-		} else {
-			return HardOptiFineCompatibility.getChunkRenderCache(reader);
-		}
+//		if (!OPTIFINE_INSTALLED)
+		throw new OptiFineNotPresentException();
+//		return HardOptiFineCompatibility.getChunkRenderCache(reader);
 	}
 
 	public static final class BufferBuilderOF {
 
 		@Nonnull
 		public static Object getRenderEnv(@Nonnull final BufferBuilder bufferBuilder, @Nonnull final IBlockState state, @Nonnull final BlockPos pos) {
-			if (!OPTIFINE_INSTALLED) {
-				throw new OptiFineNotPresentException();
-			}
-			return HardOptiFineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
+//			if (!OPTIFINE_INSTALLED)
+			throw new OptiFineNotPresentException();
+//			return HardOptiFineCompatibility.BufferBuilderOF.getRenderEnv(bufferBuilder, state, pos);
 		}
 
 	}
@@ -87,10 +78,9 @@ public final class OptiFineCompatibility {
 				@Nonnull final IBlockState blockState,
 				@Nonnull final Object renderEnv
 		) {
-			if (!OPTIFINE_INSTALLED) {
-				throw new OptiFineNotPresentException();
-			}
-			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderModel(model, blockState, renderEnv);
+//			if (!OPTIFINE_INSTALLED)
+			throw new OptiFineNotPresentException();
+//			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderModel(model, blockState, renderEnv);
 		}
 
 		@Nonnull
@@ -104,10 +94,9 @@ public final class OptiFineCompatibility {
 				final long rand,
 				@Nonnull final Object renderEnv
 		) {
-			if (!OPTIFINE_INSTALLED) {
-				throw new OptiFineNotPresentException();
-			}
-			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, reader, blockState, pos, direction, blockRenderLayer, rand, renderEnv);
+//			if (!OPTIFINE_INSTALLED)
+			throw new OptiFineNotPresentException();
+//			return HardOptiFineCompatibility.BlockModelCustomizerOF.getRenderQuads(quads, reader, blockState, pos, direction, blockRenderLayer, rand, renderEnv);
 		}
 
 	}
