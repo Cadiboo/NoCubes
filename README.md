@@ -19,8 +19,8 @@ Steps:
   - This has to download, deobfuscate, decompile and recompile Minecraft. It can take up to 20 minutes (but it only has to be done once) so go outside and run around or something.
 4. Uncomment the OptiFine line in the Access Transformer file
 5. Open the build.gradle file in IntelliJ (make sure you're using an older IntelliJ version that supports Gradle 2.14, I downloaded a 2018 version)
-6. Download OptiFine from [here](https://optifine.net/downloads) (I used the latest non-prerelease version - HD U F5 at the time)
-7. Run OptiFine by double clicking it (MAC: if you get a dialog about it being from an unidentified developer open System Preferences and go to Security & Privacy, there should be a button at the bottom saying "Open Anyway")
-8. Click Extract and put the resulting file in './run/mods'
+6. Download OptiFine from [here](https://optifine.net/downloads) (I used the latest non-prerelease version - `HD U F5` at the time)
+7. Run OptiFine by double clicking it (Mac: if you get a dialog about it being from an unidentified developer open System Preferences and go to Security & Privacy, there should be a button at the bottom saying 'Open Anyway')
+8. Click 'Extract' and put the resulting file in `./run/mods`
 9. Download OptiFineDevTweaker from [here](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases) and put it into `./run/mods/`
 10. Thats as far as I got before I spent hours fruitlessly debugging graphics driver issues when trying to run OptiFine.
