@@ -20,10 +20,10 @@ public class Face {
 	}
 
 	public void assignNormalTo(Face toUse) {
-		final Vec v0 = this.v0;
-		final Vec v1 = this.v1;
-		final Vec v2 = this.v2;
-		final Vec v3 = this.v3;
+		Vec v0 = this.v0;
+		Vec v1 = this.v1;
+		Vec v2 = this.v2;
+		Vec v3 = this.v3;
 		// mul -1
 		Vec.normal(v3, v0, v1, toUse.v0);
 		Vec.normal(v0, v1, v2, toUse.v1);
