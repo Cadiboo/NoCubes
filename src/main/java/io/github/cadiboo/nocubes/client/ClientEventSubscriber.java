@@ -464,10 +464,9 @@ public final class ClientEventSubscriber {
 		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(blockState)) {
 			isSmoothable = LEAVES_SMOOTHABLE;
 			meshGeneratorType = Config.leavesMeshGenerator;
-			event.setCanceled(true);
-		} else {
+			event.setCanceled(!Config.renderSmoothAndVanillaLeaves);
+		} else
 			return;
-		}
 
 		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
 		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
