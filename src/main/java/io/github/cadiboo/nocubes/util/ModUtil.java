@@ -3,23 +3,24 @@ package io.github.cadiboo.nocubes.util;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 /**
  * Util that is used on BOTH physical sides
@@ -39,8 +40,12 @@ public final class ModUtil {
 	 * 3. Ops can use /ban, /deop, /whitelist, /kick, and /op.
 	 * 4. Ops can use /stop.
 	 */
-	public static final int COMMAND_PERMISSION_LEVEL = 2;
-	public static final String COMMAND_PERMISSION_NAME = "give";
+	private static final int COMMAND_PERMISSION_LEVEL = 2;
+	private static final String COMMAND_PERMISSION_NAME = "give";
+
+	public static boolean doesPlayerHavePermission(EntityPlayer player) {
+		return player.canUseCommand(COMMAND_PERMISSION_LEVEL, COMMAND_PERMISSION_NAME);
+	}
 
 	/**
 	 * @return Negative density if the block is smoothable (inside the isosurface), positive if it isn't
@@ -66,18 +71,16 @@ public final class ModUtil {
 	}
 
 	/**
-	 * Give the vec3 some (pseudo) random offset based on its location.
-	 * This code is from {link MathHelper#getCoordinateRandom} and Block#getOffset
-	 *
-	 * @param vec3 the vec3
+	 * Give the vec some (pseudo) random offset based on its location.
+	 * This code is from {@link net.minecraft.util.math.MathHelper#getCoordinateRandom} and {@link net.minecraft.block.Block#getOffset}
 	 */
-	public static Vec3 offsetVertex(final Vec3 vec3) {
-		long rand = (long) (vec3.x * 3129871.0D) ^ (long) vec3.z * 116129781L ^ (long) vec3.y;
+	public static Vec offsetVertex(final Vec vec) {
+		long rand = (long) (vec.x * 3129871.0D) ^ (long) vec.z * 116129781L ^ (long) vec.y;
 		rand = rand * rand * 42317861L + rand * 11;
-		vec3.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
-		vec3.y += ((double) ((float) (rand >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D;
-		vec3.z += ((double) ((float) (rand >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D;
-		return vec3;
+		vec.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		vec.y += ((double) ((float) (rand >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D;
+		vec.z += ((double) ((float) (rand >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		return vec;
 	}
 
 	/**
@@ -252,7 +255,7 @@ public final class ModUtil {
 ////						}
 //
 //						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
-//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
+//						density += ModUtil.getIndividualBlockDensity(TERRAIN.test(testState), testState);
 //					}
 //				}
 //			}
@@ -302,15 +305,16 @@ public final class ModUtil {
 	}
 
 	public static void preloadClass(@Nonnull final String qualifiedName, @Nonnull final String simpleName) {
+		Logger logger = getLogger();
 		try {
-			LOGGER.info("Loading class \"" + simpleName + "\"...");
+			logger.debug("Loading class \"" + simpleName + "\"...");
 			final ClassLoader classLoader = NoCubes.class.getClassLoader();
 			final long startTime = System.nanoTime();
 			Class.forName(qualifiedName, false, classLoader);
-			LOGGER.info("Loaded class \"" + simpleName + "\" in " + (System.nanoTime() - startTime) + " nano seconds");
-			LOGGER.info("Initialising class \"" + simpleName + "\"...");
+			logger.debug("Loaded class \"" + simpleName + "\" in " + (System.nanoTime() - startTime) + " nano seconds");
+			logger.debug("Initialising class \"" + simpleName + "\"...");
 			Class.forName(qualifiedName, true, classLoader);
-			LOGGER.info("Initialised \"" + simpleName + "\"");
+			logger.debug("Initialised \"" + simpleName + "\"");
 		} catch (final ClassNotFoundException e) {
 			final CrashReport crashReport = CrashReport.makeCrashReport(e, "Failed to load class \"" + simpleName + "\". This should not be possible!");
 			crashReport.makeCategory("Loading class");

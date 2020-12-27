@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.hooks;
 
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
-import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -26,8 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 
 /**
  * @author Cadiboo
@@ -52,8 +51,8 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean renderBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite, final BlockRendererDispatcher blockrendererdispatcher) {
-		if (!Config.renderSmoothTerrain || !TERRAIN_SMOOTHABLE.test(iblockstate)) {
-			if (!Config.renderSmoothLeaves || !LEAVES_SMOOTHABLE.test(iblockstate)) {
+		if (!Config.renderSmoothTerrain || !TERRAIN.test(iblockstate)) {
+			if (!Config.renderSmoothLeaves || !LEAVES.test(iblockstate)) {
 				return true;
 			}
 		}
@@ -80,8 +79,8 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean canBlockStateRender(final IBlockState blockstate) {
-		if (TERRAIN_SMOOTHABLE.test(blockstate) && Config.renderSmoothTerrain) return false;
-		if (LEAVES_SMOOTHABLE.test(blockstate)) {
+		if (TERRAIN.test(blockstate) && Config.renderSmoothTerrain) return false;
+		if (LEAVES.test(blockstate)) {
 			if (Config.renderSmoothLeaves)
 				return Config.renderSmoothAndVanillaLeaves;
 			return true;

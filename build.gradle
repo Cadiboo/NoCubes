@@ -101,6 +101,13 @@ dependencies {
 	compile 'com.electronwill.night-config:core:3.6.0'
 	compile 'com.electronwill.night-config:toml:3.6.0'
 
+	// For the config color picker
+	compile 'org.beryx:awt-color-factory:1.0.2'
+
+	// https://mvnrepository.com/artifact/org.mockito/mockito-all
+	testCompile group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+	testCompile 'junit:junit:4.13'
+
 }
 
 jar {

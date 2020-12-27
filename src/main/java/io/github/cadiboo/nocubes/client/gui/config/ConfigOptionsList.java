@@ -1,12 +1,10 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
 import com.google.common.base.Joiner;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.config.ConfigHolder;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.BooleanValue;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.ConfigValue;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.EnumValue;
-import io.github.cadiboo.nocubes.config.ModConfig;
+import io.github.cadiboo.nocubes.future.ForgeConfigSpec.BooleanValue;
+import io.github.cadiboo.nocubes.future.ForgeConfigSpec.ConfigValue;
+import io.github.cadiboo.nocubes.future.ForgeConfigSpec.EnumValue;
+import io.github.cadiboo.nocubes.future.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;

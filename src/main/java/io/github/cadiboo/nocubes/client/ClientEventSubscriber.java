@@ -3,15 +3,10 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.config.ConfigTracker;
+import io.github.cadiboo.nocubes.future.ConfigTracker;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
-import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainCollisions;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -31,7 +26,6 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
@@ -43,7 +37,6 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -56,18 +49,12 @@ import java.util.List;
 import java.util.Map;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
-import static org.lwjgl.input.Keyboard.KEY_C;
-import static org.lwjgl.input.Keyboard.KEY_I;
-import static org.lwjgl.input.Keyboard.KEY_K;
-import static org.lwjgl.input.Keyboard.KEY_N;
-import static org.lwjgl.input.Keyboard.KEY_O;
-import static org.lwjgl.input.Keyboard.KEY_P;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -77,29 +64,7 @@ import static org.lwjgl.input.Keyboard.KEY_P;
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
-	private static final String CATEGORY = "key.categories." + MOD_ID;
-
-	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", KEY_O, CATEGORY);
-	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", KEY_I, CATEGORY);
-	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KEY_P, CATEGORY);
-//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", KEY_J, CATEGORY);
-
-	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, CATEGORY);
-	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", KEY_K, CATEGORY);
-	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", KEY_C, CATEGORY);
-
 	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
-
-	static {
-		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
-		ClientRegistry.registerKeyBinding(toggleRenderSmoothLeaves);
-		ClientRegistry.registerKeyBinding(toggleProfilers);
-//		ClientRegistry.registerKeyBinding(tempDiscoverSmoothables);
-
-		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
-		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
-		ClientRegistry.registerKeyBinding(toggleTerrainCollisions);
-	}
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
@@ -164,7 +129,7 @@ public final class ClientEventSubscriber {
 				if (Config.terrainCollisions) {
 					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
 				} else {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableTerrainCollisions());
+					NoCubes.CHANNEL.sendToServer(new C2SRequestSetTerrainCollisions());
 				}
 			}
 		}
@@ -188,14 +153,14 @@ public final class ClientEventSubscriber {
 			final IBlockState state = minecraft.world.getBlockState(blockPos);
 
 			if (terrainPressed) {
-				if (TERRAIN_SMOOTHABLE.test(state))
+				if (TERRAIN.test(state))
 					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
 				else
 					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
 			}
 			if (leavesPressed) {
 				final BlockStateToast toast;
-				if (!LEAVES_SMOOTHABLE.test(state)) {
+				if (!LEAVES.test(state)) {
 					ConfigHelper.addLeavesSmoothable(state);
 					toast = new BlockStateToast.AddLeaves(state, blockPos);
 				} else {
@@ -457,12 +422,12 @@ public final class ClientEventSubscriber {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(blockState)) {
-			isSmoothable = TERRAIN_SMOOTHABLE;
+		if (Config.renderSmoothTerrain && TERRAIN.test(blockState)) {
+			isSmoothable = TERRAIN;
 			meshGeneratorType = Config.terrainMeshGenerator;
 			event.setCanceled(true);
-		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(blockState)) {
-			isSmoothable = LEAVES_SMOOTHABLE;
+		} else if (Config.renderSmoothLeaves && LEAVES.test(blockState)) {
+			isSmoothable = LEAVES;
 			meshGeneratorType = Config.leavesMeshGenerator;
 			event.setCanceled(!Config.renderSmoothAndVanillaLeaves);
 		} else

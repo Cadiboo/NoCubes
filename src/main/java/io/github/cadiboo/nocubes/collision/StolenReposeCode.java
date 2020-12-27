@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 import static java.lang.Math.max;
 
 /**
@@ -73,7 +73,7 @@ final class StolenReposeCode {
 							}
 
 							final IBlockState testState = reader.getBlockState(pooledMutableBlockPos);
-							density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
+							density += ModUtil.getIndividualBlockDensity(TERRAIN.test(testState), testState);
 						}
 					}
 				}
@@ -85,7 +85,7 @@ final class StolenReposeCode {
 	}
 
 	private static boolean canSlope(final IBlockState state) {
-		return TERRAIN_SMOOTHABLE.test(state);
+		return TERRAIN.test(state);
 	}
 
 	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos, final AxisAlignedBB collisionBoundingBox) {

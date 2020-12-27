@@ -1,15 +1,12 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
-import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -44,8 +41,8 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
@@ -172,7 +169,7 @@ public final class RenderDispatcher {
 									// Density Cache uses 1 extra from the smoothable cache on each positive axis
 									chunkRenderPosX + meshSizeX, chunkRenderPosY + meshSizeY, chunkRenderPosZ + meshSizeZ,
 									1, 1, 1,
-									stateCache, TERRAIN_SMOOTHABLE
+									stateCache, TERRAIN
 							);
 							DensityCache densityCache = CacheUtil.generateDensityCache(
 									// Density Cache needs 1 extra on each negative axis
@@ -280,7 +277,7 @@ public final class RenderDispatcher {
 				final HashMap<Vec3b, FaceList> mesh;
 				if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
 					// TODO: Remove
-					mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, TERRAIN_SMOOTHABLE, pooledMutableBlockPos);
+					mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, TERRAIN, pooledMutableBlockPos);
 				} else {
 					mesh = MeshDispatcher.offsetChunkMesh(
 							chunkRenderPos,
@@ -333,7 +330,7 @@ public final class RenderDispatcher {
 				switch (Config.smoothLeavesType) {
 					case SEPARATE:
 						for (final Block smoothableBlock : Config.leavesSmoothableBlocks) {
-							final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.test(checkState) && checkState.getBlock() == smoothableBlock);
+							final IsSmoothable isSmoothable = (checkState) -> (LEAVES.test(checkState) && checkState.getBlock() == smoothableBlock);
 							// FIXME: Why is it like this... why
 							try (
 //								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
@@ -389,7 +386,7 @@ public final class RenderDispatcher {
 						}
 						break;
 					case TOGETHER:
-						final IsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
+						final IsSmoothable isSmoothable = LEAVES;
 						// FIXME: Why is it like this... why
 						try (
 //							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
@@ -457,11 +454,11 @@ public final class RenderDispatcher {
 
 		final IsSmoothable isSmoothable;
 		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(iblockstate)) {
-			isSmoothable = TERRAIN_SMOOTHABLE;
+		if (Config.renderSmoothTerrain && TERRAIN.test(iblockstate)) {
+			isSmoothable = TERRAIN;
 			meshGeneratorType = Config.terrainMeshGenerator;
-		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(iblockstate)) {
-			isSmoothable = LEAVES_SMOOTHABLE;
+		} else if (Config.renderSmoothLeaves && LEAVES.test(iblockstate)) {
+			isSmoothable = LEAVES;
 			meshGeneratorType = Config.leavesMeshGenerator;
 		} else {
 			return;

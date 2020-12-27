@@ -1,11 +1,9 @@
 package io.github.cadiboo.nocubes.collision;
 
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
-import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
@@ -33,9 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.addShapeToListIfIntersects;
-import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.floorAvg;
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.makeShape;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
+import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
@@ -158,7 +155,7 @@ public final class CollisionHandler {
 									state = _this.getBlockState(pooledMutableBlockPos);
 								}
 
-								if (TERRAIN_SMOOTHABLE.test(state)) {
+								if (TERRAIN.test(state)) {
 									StolenReposeCode.addCollisionBoxToList(state, _this, pooledMutableBlockPos, aabb, outList, entityIn, false);
 								} else {
 									state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
@@ -235,7 +232,7 @@ public final class CollisionHandler {
 							// StateCache needs +1 on each POSITIVE axis
 							endPosX, endPosY, endPosZ,
 							1, 1, 1,
-							stateCache, TERRAIN_SMOOTHABLE
+							stateCache, TERRAIN
 					);
 					DensityCache densityCache = CacheUtil.generateDensityCache(
 							startPosX, startPosY, startPosZ,
@@ -281,7 +278,7 @@ public final class CollisionHandler {
 										stateOffsetZ + z,
 										stateCacheSizeX, stateCacheSizeY
 								)];
-								if (!TERRAIN_SMOOTHABLE.test(blockState)
+								if (!TERRAIN.test(blockState)
 										||
 										densityCacheArray[densityCache.getIndex(
 												densityOffsetX + x,
@@ -304,7 +301,7 @@ public final class CollisionHandler {
 						meshData = new HashMap<>();
 						meshData.put(
 								Vec3b.retain((byte) 0, (byte) 0, (byte) 0),
-								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN_SMOOTHABLE, pooledMutableBlockPos)
+								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN, pooledMutableBlockPos)
 						);
 					} else {
 						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
@@ -387,7 +384,7 @@ public final class CollisionHandler {
 											state = _this.getBlockState(pooledMutableBlockPos);
 										}
 
-										if (!TERRAIN_SMOOTHABLE.test(state))
+										if (!TERRAIN.test(state))
 											state.addCollisionBoxToList(_this, pooledMutableBlockPos, aabb, outList, entityIn, false);
 
 										if (p_191504_3_ && !net.minecraftforge.event.ForgeEventFactory.gatherCollisionBoxes(_this, entityIn, aabb, outList)) {

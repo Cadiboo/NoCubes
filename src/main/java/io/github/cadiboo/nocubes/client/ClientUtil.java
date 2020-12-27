@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -440,4 +439,9 @@ public final class ClientUtil {
 			throw new RuntimeException("IllegalAccessException while getting the BlockColorsMap... how? It should have been made accessible", e);
 		}
 	}
+
+	public static Minecraft getMinecraft() {
+		return Minecraft.getMinecraft();
+	}
+
 }

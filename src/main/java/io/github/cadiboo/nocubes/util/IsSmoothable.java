@@ -11,15 +11,48 @@ import java.util.function.Predicate;
  */
 public interface IsSmoothable extends Predicate<IBlockState> {
 
-	IsSmoothable TERRAIN_SMOOTHABLE = state -> ((INoCubesBlockState) state).nocubes_isTerrainSmoothable();
+	IsSmoothable TERRAIN = new IsSmoothable() {
+		@Override
+		public String name() {
+			return "terrain";
+		}
 
-	IsSmoothable LEAVES_SMOOTHABLE = state -> ((INoCubesBlockState) state).nocubes_isLeavesSmoothable();
+		@Override
+		public boolean test(IBlockState state) {
+			return ((INoCubesBlockState) state).nocubes_isTerrainSmoothable();
+		}
+
+		@Override
+		public void set(IBlockState state, boolean smoothable) {
+			((INoCubesBlockState) state).nocubes_setTerrainSmoothable(smoothable);
+		}
+	};
+	IsSmoothable LEAVES = new IsSmoothable() {
+		@Override
+		public String name() {
+			return "leaves";
+		}
+
+		@Override
+		public boolean test(IBlockState state) {
+			return ((INoCubesBlockState) state).nocubes_isLeavesSmoothable();
+		}
+
+		@Override
+		public void set(IBlockState state, boolean smoothable) {
+			((INoCubesBlockState) state).nocubes_setLeavesSmoothable(smoothable);
+		}
+	};
+
+	String name();
 
 	/**
 	 * @param state the state to be tested
 	 * @return If the state should be smoothed
 	 */
 	@Override
-	boolean test(final IBlockState state);
+	boolean test(IBlockState state);
+
+	void set(IBlockState state, boolean smoothable);
 
 }

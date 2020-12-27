@@ -35,9 +35,8 @@ public final class StateHolder {
 
 	static {
 		// Some really basic prevention against premature access. Probably doesn't take modded blocks into account
-		if (!Bootstrap.isRegistered()) {
+		if (!Bootstrap.isRegistered())
 			throw new IllegalStateException("StateHolder accessed before Bootstrap registered!");
-		}
 	}
 
 }
