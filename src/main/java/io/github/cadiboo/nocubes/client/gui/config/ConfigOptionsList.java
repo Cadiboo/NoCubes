@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
 import com.google.common.base.Joiner;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.future.ForgeConfigSpec.BooleanValue;
 import io.github.cadiboo.nocubes.future.ForgeConfigSpec.ConfigValue;
 import io.github.cadiboo.nocubes.future.ForgeConfigSpec.EnumValue;
@@ -22,6 +23,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.config.NoCubesConfig.ConfigTracker_getConfig;
 
 /**
  * @author Cadiboo
@@ -42,21 +44,13 @@ final class ConfigOptionsList extends GuiListExtended {
 		// Client
 		{
 			entries.add(new CategoryEntry(MOD_ID + ".config.client"));
-			getConfigValues(ConfigHolder.CLIENT).forEach((configValue, name) -> {
-				final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.clientConfig);
-				entries.add(e);
-			});
+			getConfigValues(NoCubesConfig.Client.INSTANCE).forEach((configValue, name) -> entries.add(createValueEntry(configValue, name, ModConfig.Type.CLIENT)));
 		}
 
 		// Server
-		if (this.mc.world != null) {
-			if (this.mc.getIntegratedServer() != null) {
-				entries.add(new CategoryEntry(MOD_ID + ".config.server"));
-				getConfigValues(ConfigHolder.SERVER).forEach((configValue, name) -> {
-					final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.serverConfig);
-					entries.add(e);
-				});
-			}
+		if (this.mc.world != null && this.mc.getIntegratedServer() != null) {
+			entries.add(new CategoryEntry(MOD_ID + ".config.server"));
+			getConfigValues(NoCubesConfig.Server.INSTANCE).forEach((configValue, name) -> entries.add(createValueEntry(configValue, name, ModConfig.Type.SERVER)));
 		}
 
 		FontRenderer fontRenderer = mcIn.fontRenderer;
@@ -72,11 +66,15 @@ final class ConfigOptionsList extends GuiListExtended {
 	}
 
 	private static void saveValue(final ConfigValue<?> configValue, final Supplier<ModConfig> configSupplier, final Object newValue) {
-		ConfigHelper.setValueAndSave(configSupplier.get(), DOT_JOINER.join(configValue.getPath()), newValue);
+		String path = DOT_JOINER.join(configValue.getPath());
+		ModConfig modConfig = configSupplier.get();
+		modConfig.getConfigData().set(path, newValue);
+		NoCubesConfig.saveAndLoad(modConfig.getType());
 	}
 
 	@Nonnull
-	private ValueEntry<?> createValueEntry(final ConfigValue<?> configValue, final String name, Supplier<ModConfig> configSupplier) {
+	private ValueEntry<?> createValueEntry(final ConfigValue<?> configValue, final String name, ModConfig.Type type) {
+		Supplier<ModConfig> configSupplier = () -> ConfigTracker_getConfig(MOD_ID, type).get();
 		if (configValue instanceof BooleanValue) {
 			return new BooleanValueEntry((BooleanValue) configValue, name, configSupplier);
 		} else if (configValue instanceof EnumValue<?>) {

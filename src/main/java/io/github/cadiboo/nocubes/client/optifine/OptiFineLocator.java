@@ -8,6 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
+import static org.apache.logging.log4j.LogManager.getLogger;
+
 /**
  * @author Cadiboo
  */
@@ -27,11 +29,11 @@ public final class OptiFineLocator {
 			try {
 				config = Class.forName("Config");
 			} catch (ClassNotFoundException failedToFindLegacyConfigClass) {
-				NoCubes.LOGGER.info("OptiFineCompatibility: OptiFine not detected.");
+				getLogger().info("OptiFineCompatibility: OptiFine not detected.");
 				return null;
 			}
 		}
-		NoCubes.LOGGER.info("OptiFineCompatibility: Found OptiFine!");
+		getLogger().info("OptiFineCompatibility: Found OptiFine!");
 		return config;
 	}
 

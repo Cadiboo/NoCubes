@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
@@ -63,17 +64,17 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 			}
 
 			boolean shouldRenderDown = state.shouldSideBeRendered(worldIn, pos, EnumFacing.DOWN);
-			shouldRenderDown &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y - 1, z))));
+			shouldRenderDown &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y - 1, z))));
 			boolean shouldRenderUp = state.shouldSideBeRendered(worldIn, pos, EnumFacing.UP);
-			shouldRenderUp &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y + 1, z))));
+			shouldRenderUp &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y + 1, z))));
 			boolean shouldRenderNorth = state.shouldSideBeRendered(worldIn, pos, EnumFacing.NORTH);
-			shouldRenderNorth &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z - 1))));
+			shouldRenderNorth &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z - 1))));
 			boolean shouldRenderSouth = state.shouldSideBeRendered(worldIn, pos, EnumFacing.SOUTH);
-			shouldRenderSouth &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z + 1))));
+			shouldRenderSouth &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x, y, z + 1))));
 			boolean shouldRenderWest = state.shouldSideBeRendered(worldIn, pos, EnumFacing.WEST);
-			shouldRenderWest &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x - 1, y, z))));
+			shouldRenderWest &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x - 1, y, z))));
 			boolean shouldRenderEast = state.shouldSideBeRendered(worldIn, pos, EnumFacing.EAST);
-			shouldRenderEast &= !(Config.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x + 1, y, z))));
+			shouldRenderEast &= !(NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(worldIn.getBlockState(pooledMutableBlockPos.setPos(x + 1, y, z))));
 
 			if (!shouldRenderUp && !shouldRenderDown && !shouldRenderEast && !shouldRenderWest && !shouldRenderNorth && !shouldRenderSouth) {
 				return false;
@@ -767,15 +768,15 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 	}
 
 	public boolean smoothLighting() {
-		return Config.smoothFluidLighting;
+		return NoCubesConfig.Client.smoothFluidLighting;
 	}
 
 	public boolean colors() {
-		return Config.smoothFluidColors;
+		return NoCubesConfig.Client.smoothFluidColors;
 	}
 
 	public boolean textures() {
-		return Config.naturalFluidTextures;
+		return NoCubesConfig.Client.naturalFluidTextures;
 	}
 
 }

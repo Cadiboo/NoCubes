@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.hooks;
 
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
+import static io.github.cadiboo.nocubes.config.NoCubesConfig.Client.*;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
 
@@ -40,7 +42,7 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkCompileTaskGenerator generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final IBlockAccess lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final BlockRendererDispatcher blockrendererdispatcher) {
-		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, new Random(), blockrendererdispatcher);
+//		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, new Random(), blockrendererdispatcher);
 	}
 
 	/**
@@ -51,13 +53,11 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean renderBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite, final BlockRendererDispatcher blockrendererdispatcher) {
-		if (!Config.renderSmoothTerrain || !TERRAIN.test(iblockstate)) {
-			if (!Config.renderSmoothLeaves || !LEAVES.test(iblockstate)) {
-				return true;
-			}
-		}
-		RenderDispatcher.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
-		return false;
+//		if ((renderSmoothTerrain && TERRAIN.test(iblockstate)) || (renderSmoothLeaves && LEAVES.test(iblockstate))) {
+//			RenderDispatcher.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
+//			return false;
+//		}
+		return true;
 	}
 
 	/**
@@ -79,10 +79,10 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static boolean canBlockStateRender(final IBlockState blockstate) {
-		if (TERRAIN.test(blockstate) && Config.renderSmoothTerrain) return false;
+		if (TERRAIN.test(blockstate) && renderSmoothTerrain) return false;
 		if (LEAVES.test(blockstate)) {
-			if (Config.renderSmoothLeaves)
-				return Config.renderSmoothAndVanillaLeaves;
+			if (renderSmoothLeaves)
+				return renderSmoothAndVanillaLeaves;
 			return true;
 		}
 		return true;

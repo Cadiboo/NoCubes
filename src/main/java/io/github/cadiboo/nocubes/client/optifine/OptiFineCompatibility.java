@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -13,6 +12,8 @@ import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
 import java.util.List;
+
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 /**
  * @author Cadiboo
@@ -30,7 +31,7 @@ public final class OptiFineCompatibility {
 			ENABLED = true;
 			PROXY = proxy;
 		}
-		NoCubes.LOGGER.info("OptiFineCompatibility: Compatibility enabled = " + ENABLED);
+		getLogger().info("OptiFineCompatibility: Compatibility enabled = " + ENABLED);
 	}
 
 	private static OptiFineProxy makeProxy() {

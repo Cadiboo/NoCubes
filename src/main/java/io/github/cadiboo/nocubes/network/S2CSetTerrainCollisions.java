@@ -28,10 +28,11 @@ public final class S2CSetTerrainCollisions implements IMessage, IMessageHandler<
 		@Override
 	public IMessage onMessage(S2CSetTerrainCollisions msg, MessageContext context) {
 		Minecraft.getMinecraft().addScheduledTask(() -> {
-			NoCubesConfig.Server.terrainCollisions = msg.newValue;
-//			final EntityPlayerSP player = Minecraft.getMinecraft().player;
-////			player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainCollisions114"));
-//			player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainCollisionsEnabled"));
+			boolean newValue = msg.newValue;
+			NoCubesConfig.Server.terrainCollisionsEnabled = newValue;
+			EntityPlayerSP player = Minecraft.getMinecraft().player;
+//			player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainCollisions114"));
+			player.sendMessage(new TextComponentTranslation(MOD_ID + ".terrainCollisionsEnabled" + newValue));
 		});
 		return null;
 	}

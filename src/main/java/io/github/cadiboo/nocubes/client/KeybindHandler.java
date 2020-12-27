@@ -5,11 +5,11 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestSetSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
+import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.common.Mod;
@@ -32,11 +32,20 @@ public class KeybindHandler {
 	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
 
 	static {
-		KEYBINDS.add(makeKeybind("toggleVisuals", KEY_O, KeybindHandler::toggleVisuals));
+		KEYBINDS.add(makeKeybind("toggleRenderSmoothTerrain", KEY_O, () -> toggleRender(IsSmoothable.TERRAIN)));
+		KEYBINDS.add(makeKeybind("toggleRenderSmoothLeaves", KEY_I, () -> toggleRender(IsSmoothable.LEAVES)));
 
 		KEYBINDS.add(makeKeybind("toggleTerrainSmoothable", KEY_N, () -> toggleLookedAtSmoothable(IsSmoothable.TERRAIN)));
 		KEYBINDS.add(makeKeybind("toggleLeavesSmoothable", KEY_K, () -> toggleLookedAtSmoothable(IsSmoothable.LEAVES)));
 		KEYBINDS.add(makeKeybind("toggleTerrainCollisions", KEY_C, () -> { }));
+		KEYBINDS.add(makeKeybind("toggleProfilers", KEY_LMENU, KeybindHandler::toggleProfilersVisible));
+	}
+
+	private static void toggleProfilersVisible() {
+		if (ModProfiler.isProfilingEnabled())
+			ModProfiler.disableProfiling();
+		else
+			ModProfiler.enableProfiling();
 	}
 
 	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
@@ -54,16 +63,14 @@ public class KeybindHandler {
 	}
 
 
-	private static void reloadAllChunks(Minecraft minecraft) {
-//		WorldRenderer worldRenderer = minecraft.worldRenderer;
-		RenderGlobal worldRenderer = minecraft.renderGlobal;
-		if (worldRenderer != null)
-			worldRenderer.loadRenderers();
-	}
-
-	private static void toggleVisuals() {
-		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
-		reloadAllChunks(ClientUtil.getMinecraft());
+	private static void toggleRender(IsSmoothable isSmoothable) {
+		if (isSmoothable == IsSmoothable.TERRAIN)
+			NoCubesConfig.Client.updateRenderSmoothTerrain(!NoCubesConfig.Client.renderSmoothTerrain);
+		else if (isSmoothable == IsSmoothable.LEAVES)
+			NoCubesConfig.Client.updateRenderSmoothLeaves(!NoCubesConfig.Client.renderSmoothLeaves);
+		else
+			throw new NotImplementedException("New IsSmoothable");
+		ClientUtil.tryReloadRenderers();
 	}
 
 	private static void toggleLookedAtSmoothable(IsSmoothable isSmoothable) {
@@ -81,7 +88,7 @@ public class KeybindHandler {
 			if (isSmoothable != IsSmoothable.TERRAIN)
 				throw new NotImplementedException("lazy");
 			NoCubesConfig.Client.updateTerrainSmoothable(newValue, state);
-			reloadAllChunks(minecraft);
+			ClientUtil.tryReloadRenderers();
 		}
 
 		if (singleplayer || NoCubesNetwork.currentServerHasNoCubes) {

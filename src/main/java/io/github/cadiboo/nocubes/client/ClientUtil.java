@@ -1,12 +1,8 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -23,7 +19,6 @@ import net.minecraft.crash.CrashReport;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.chunk.Chunk;
@@ -37,12 +32,10 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static io.github.cadiboo.nocubes.client.optifine.OptiFineLocator.SUPPORTED_SERIES;
-import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_DEFAULT;
-import static io.github.cadiboo.nocubes.util.StateHolder.GRASS_BLOCK_SNOWY;
-import static io.github.cadiboo.nocubes.util.StateHolder.PODZOL_SNOWY;
-import static io.github.cadiboo.nocubes.util.StateHolder.SNOW_LAYER_DEFAULT;
+import static io.github.cadiboo.nocubes.util.StateHolder.*;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT;
 import static net.minecraft.util.BlockRenderLayer.CUTOUT_MIPPED;
+import static org.apache.logging.log4j.LogManager.getLogger;
 
 /**
  * Util that is only used on the Physical Client i.e. Rendering code
@@ -94,141 +87,6 @@ public final class ClientUtil {
 	// Added by Forge, no SRG name
 	private static final Field BLOCK_COLOR_MAP = ObfuscationReflectionHelper.findField(BlockColors.class, "blockColorMap");
 
-	/**
-	 * Returns a state and sets the texturePooledMutablePos to the pos it found
-	 *
-	 * @return a state
-	 */
-	@Nonnull
-	public static IBlockState getTexturePosAndState(
-			final int posX, final int posY, final int posZ,
-			@Nonnull final PooledMutableBlockPos texturePooledMutablePos,
-			@Nonnull final StateCache stateCache,
-			@Nonnull final SmoothableCache smoothableCache,
-			final byte relativePosX, final byte relativePosY, final byte relativePosZ,
-			final boolean tryForBetterTexturesSnow, final boolean tryForBetterTexturesGrass
-	) {
-
-		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
-		final IBlockState[] blockCacheArray = stateCache.getBlockStates();
-
-		final int stateCacheStartPaddingX = stateCache.startPaddingX;
-		final int stateCacheStartPaddingY = stateCache.startPaddingY;
-		final int stateCacheStartPaddingZ = stateCache.startPaddingZ;
-
-		final int stateCacheSizeX = stateCache.sizeX;
-		final int stateCacheSizeY = stateCache.sizeY;
-
-		if (Config.betterTextures) {
-			if (tryForBetterTexturesSnow) {
-				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-snow")) {
-					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							relativePosX + stateCacheStartPaddingX,
-							relativePosY + stateCacheStartPaddingY,
-							relativePosZ + stateCacheStartPaddingZ,
-							stateCacheSizeX, stateCacheSizeY
-					)];
-
-					if (isStateSnow(betterTextureState)) {
-						texturePooledMutablePos.setPos(posX, posY, posZ);
-						return betterTextureState;
-					}
-					for (int[] offset : OFFSETS_ORDERED) {
-						betterTextureState = blockCacheArray[stateCache.getIndex(
-								relativePosX + offset[0] + stateCacheStartPaddingX,
-								relativePosY + offset[1] + stateCacheStartPaddingY,
-								relativePosZ + offset[2] + stateCacheStartPaddingZ,
-								stateCacheSizeX, stateCacheSizeY
-						)];
-						if (isStateSnow(betterTextureState)) {
-							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
-							return betterTextureState;
-						}
-					}
-				}
-			}
-			if (tryForBetterTexturesGrass) {
-				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-grass")) {
-					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-							relativePosX + stateCacheStartPaddingX,
-							relativePosY + stateCacheStartPaddingY,
-							relativePosZ + stateCacheStartPaddingZ,
-							stateCacheSizeX, stateCacheSizeY
-					)];
-
-					if (isStateGrass(betterTextureState)) {
-						texturePooledMutablePos.setPos(posX, posY, posZ);
-						return betterTextureState;
-					}
-					for (int[] offset : OFFSETS_ORDERED) {
-						betterTextureState = blockCacheArray[stateCache.getIndex(
-								relativePosX + offset[0] + stateCacheStartPaddingX,
-								relativePosY + offset[1] + stateCacheStartPaddingY,
-								relativePosZ + offset[2] + stateCacheStartPaddingZ,
-								stateCacheSizeX, stateCacheSizeY
-						)];
-						if (isStateGrass(betterTextureState)) {
-							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
-							return betterTextureState;
-						}
-					}
-				}
-			}
-		}
-
-		final int smoothableCacheStartPaddingX = smoothableCache.startPaddingX;
-		final int smoothableCacheStartPaddingY = smoothableCache.startPaddingY;
-		final int smoothableCacheStartPaddingZ = smoothableCache.startPaddingZ;
-
-		final int smoothableCacheSizeX = smoothableCache.sizeX;
-		final int smoothableCacheSizeY = smoothableCache.sizeY;
-
-		try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState")) {
-
-			// If pos passed in is smoothable return state from that pos
-			if (smoothableCacheArray[smoothableCache.getIndex(
-					relativePosX + smoothableCacheStartPaddingX,
-					relativePosY + smoothableCacheStartPaddingY,
-					relativePosZ + smoothableCacheStartPaddingZ,
-					smoothableCacheSizeX, smoothableCacheSizeY
-			)]) {
-				texturePooledMutablePos.setPos(posX, posY, posZ);
-				return blockCacheArray[stateCache.getIndex(
-						relativePosX + stateCacheStartPaddingX,
-						relativePosY + stateCacheStartPaddingY,
-						relativePosZ + stateCacheStartPaddingZ,
-						stateCacheSizeX, stateCacheSizeY
-				)];
-			}
-
-			// Start at state of pos passed in
-			IBlockState state = blockCacheArray[stateCache.getIndex(
-					relativePosX + stateCacheStartPaddingX,
-					relativePosY + stateCacheStartPaddingY,
-					relativePosZ + stateCacheStartPaddingZ,
-					stateCacheSizeX, stateCacheSizeY
-			)];
-
-			for (int[] offset : OFFSETS_ORDERED) {
-				if (smoothableCacheArray[smoothableCache.getIndex(
-						relativePosX + offset[0] + smoothableCacheStartPaddingX,
-						relativePosY + offset[1] + smoothableCacheStartPaddingY,
-						relativePosZ + offset[2] + smoothableCacheStartPaddingZ,
-						smoothableCacheSizeX, smoothableCacheSizeY
-				)]) {
-					texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
-					state = blockCacheArray[stateCache.getIndex(
-							relativePosX + offset[0] + stateCacheStartPaddingX,
-							relativePosY + offset[1] + stateCacheStartPaddingY,
-							relativePosZ + offset[2] + stateCacheStartPaddingZ,
-							stateCacheSizeX, stateCacheSizeY
-					)];
-					break;
-				}
-			}
-			return state;
-		}
-	}
 
 	public static boolean isStateSnow(final IBlockState checkState) {
 		if (checkState == SNOW_LAYER_DEFAULT) return true;
@@ -278,9 +136,8 @@ public final class ClientUtil {
 
 	public static void tryReloadRenderers() {
 		final RenderGlobal worldRenderer = Minecraft.getMinecraft().renderGlobal;
-		if (worldRenderer != null) {
+		if (worldRenderer != null)
 			worldRenderer.loadRenderers();
-		}
 	}
 
 	public static Chunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IBlockAccess reader) {
@@ -367,9 +224,9 @@ public final class ClientUtil {
 //	}
 
 	public static void replaceFluidRenderer() {
-		NoCubes.LOGGER.debug("Replacing fluid renderer");
+		getLogger().debug("Replacing fluid renderer...");
 		Minecraft.getMinecraft().getBlockRendererDispatcher().fluidRenderer = ClientEventSubscriber.smoothLightingBlockFluidRenderer = new SmoothLightingFluidBlockRenderer();
-		NoCubes.LOGGER.debug("Replaced fluid renderer");
+		getLogger().debug("Replaced fluid renderer");
 	}
 
 	public static void crashIfIncompatibleOptiFine() {

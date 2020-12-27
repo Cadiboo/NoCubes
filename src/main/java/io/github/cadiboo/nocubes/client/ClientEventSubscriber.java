@@ -1,24 +1,20 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.future.ConfigTracker;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
-import io.github.cadiboo.nocubes.network.C2SRequestSetTerrainCollisions;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.util.ColorParser;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import net.minecraft.block.Block;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -51,7 +47,6 @@ import java.util.Map;
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN;
-import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
@@ -68,27 +63,18 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
+		if (event.phase != TickEvent.Phase.END)
+			return;
 
-		if (event.phase != TickEvent.Phase.END) return;
+		NoCubesNetwork.currentServerHasNoCubes = doesCurrentServerHaveNoCubes();
+		if (!NoCubesNetwork.currentServerHasNoCubes)
+			NoCubesConfig.Server.terrainCollisionsEnabled = false;
 
-		final Minecraft minecraft = Minecraft.getMinecraft();
-
-		final NetHandlerPlayClient connection = minecraft.getConnection();
-		if (connection != null) {
-			final NetworkManager networkManager = connection.getNetworkManager();
-			if (networkManager != null) {
-				final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
-				if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-					Config.terrainCollisions = false;
-				}
-			}
-		}
-
-		final WorldClient world = minecraft.world;
-		// Every minute
-		if (world != null && world.getWorldTime() % 1200 == 0) {
-			BlockColorInfo.refresh();
-		}
+//		final WorldClient world = minecraft.world;
+//		// Every minute
+//		if (world != null && world.getWorldTime() % 1200 == 0) {
+//			BlockColorInfo.refresh();
+//		}
 
 //		// TODO: Temp!
 //		{
@@ -102,114 +88,44 @@ public final class ClientEventSubscriber {
 ////				LOGGER.info("Finished discovering smoothables in " + (System.nanoTime() - startTime) + " nano seconds");
 //			}
 //		}
+	}
 
-		// Rendering
-		{
-			if (toggleRenderSmoothTerrain.isPressed()) {
-				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
-				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
-				// Config saving is async so set it now
-				Config.renderSmoothTerrain = newRenderSmoothTerrain;
-				ClientUtil.tryReloadRenderers();
-				return;
-			}
-			if (toggleRenderSmoothLeaves.isPressed()) {
-				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
-				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
-				// Config saving is async so set it now
-				Config.renderSmoothLeaves = newRenderSmoothLeaves;
-				ClientUtil.tryReloadRenderers();
-				return;
-			}
-		}
+	private static boolean doesCurrentServerHaveNoCubes() {
+		NetHandlerPlayClient connection = ClientUtil.getMinecraft().getConnection();
+		if (connection == null)
+			return false;
 
-		// Collisions
-		{
-			if (toggleTerrainCollisions.isPressed()) {
-				if (Config.terrainCollisions) {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
-				} else {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestSetTerrainCollisions());
-				}
-			}
-		}
+		NetworkManager networkManager = connection.getNetworkManager();
+		if (networkManager == null)
+			return false;
 
-		// Smoothables
-		SMOOTHABLES:
-		{
-			final boolean terrainPressed = toggleTerrainSmoothableBlockState.isPressed();
-			final boolean leavesPressed = toggleLeavesSmoothableBlockState.isPressed();
-			if (!terrainPressed && !leavesPressed) {
-				break SMOOTHABLES;
-			}
-
-			final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
-			if (objectMouseOver.typeOfHit != BLOCK) {
-				break SMOOTHABLES;
-			}
-
-//			final BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
-			final BlockPos blockPos = objectMouseOver.getBlockPos();
-			final IBlockState state = minecraft.world.getBlockState(blockPos);
-
-			if (terrainPressed) {
-				if (TERRAIN.test(state))
-					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
-				else
-					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
-			}
-			if (leavesPressed) {
-				final BlockStateToast toast;
-				if (!LEAVES.test(state)) {
-					ConfigHelper.addLeavesSmoothable(state);
-					toast = new BlockStateToast.AddLeaves(state, blockPos);
-				} else {
-					ConfigHelper.removeLeavesSmoothable(state);
-					toast = new BlockStateToast.RemoveLeaves(state, blockPos);
-				}
-				minecraft.getToastGui().add(toast);
-
-				if (Config.renderSmoothLeaves) {
-					ClientUtil.tryReloadRenderers();
-				}
-			}
-		}
-
-		if (toggleProfilers.isPressed()) {
-			if (ModProfiler.isProfilingEnabled()) {
-				ModProfiler.disableProfiling();
-			} else {
-				ModProfiler.enableProfiling();
-			}
-		}
+		NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
+		return networkDispatcher != null && networkDispatcher.getModList().containsKey(MOD_ID);
 	}
 
 	@SubscribeEvent
 	public static void onRenderTickEvent(final RenderTickEvent event) {
-
-		if (!ModProfiler.isProfilingEnabled()) {
+		if (!ModProfiler.isProfilingEnabled())
 			return;
-		}
 
-		final Minecraft minecraft = Minecraft.getMinecraft();
-		if (minecraft.world == null || minecraft.player == null || minecraft.getRenderViewEntity() == null) {
+		Minecraft minecraft = ClientUtil.getMinecraft();
+		if (minecraft.world == null || minecraft.player == null || minecraft.getRenderViewEntity() == null)
 			return;
-		}
 
-		final Profiler profiler = minecraft.profiler;
+		Profiler profiler = minecraft.profiler;
 		profiler.startSection("debugNoCubes");
 		GlStateManager.pushMatrix();
 		try {
 			renderProfilers();
 		} catch (Exception e) {
-			LogManager.getLogger("NoCubes Profile Renderer").error("Error Rendering Profilers.", e);
+			LogManager.getLogger().error("Error Rendering Profilers.", e);
 		}
 		GlStateManager.popMatrix();
 		profiler.endSection();
 	}
 
 	private static void renderProfilers() {
-		final Minecraft mc = Minecraft.getMinecraft();
+		Minecraft mc = ClientUtil.getMinecraft();
 
 		synchronized (ModProfiler.PROFILERS) {
 			int visibleIndex = 0;
@@ -344,25 +260,20 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-
-		final Minecraft minecraft = Minecraft.getMinecraft();
-
-		final GameSettings gameSettings = minecraft.gameSettings;
-		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI) {
+		Minecraft minecraft = ClientUtil.getMinecraft();
+		GameSettings gameSettings = minecraft.gameSettings;
+		if (!gameSettings.showDebugInfo || !gameSettings.showDebugProfilerChart || gameSettings.hideGUI)
 			return;
-		}
 
-		final EntityPlayerSP player = minecraft.player;
-		if (player == null) {
+		EntityPlayerSP player = minecraft.player;
+		if (player == null)
 			return;
-		}
 
-		final World world = player.world;
-		if (world == null) {
+		World world = player.world;
+		if (world == null)
 			return;
-		}
 
-		final float partialTicks = event.getPartialTicks();
+		float partialTicks = event.getPartialTicks();
 
 		GlStateManager.enableBlend();
 		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -393,54 +304,47 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
-
-		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves) {
+		if (!NoCubesConfig.Client.renderSmoothTerrain && !NoCubesConfig.Client.renderSmoothLeaves)
 			return;
-		}
 
-		final EntityPlayer player = event.getPlayer();
-		if (player == null) {
+		EntityPlayer player = event.getPlayer();
+		if (player == null)
 			return;
-		}
 
-		final RayTraceResult rayTraceResult = event.getTarget();
-		if ((rayTraceResult == null) || (rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK)) {
+		RayTraceResult rayTraceResult = event.getTarget();
+		if ((rayTraceResult == null) || (rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK))
 			return;
-		}
 
-		final World world = player.world;
-		if (world == null) {
+		World world = player.world;
+		if (world == null)
 			return;
-		}
 
-		final float partialTicks = event.getPartialTicks();
-		final BlockPos pos = rayTraceResult.getBlockPos();
-		final IBlockState blockState = world.getBlockState(pos);
-		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
+		float partialTicks = event.getPartialTicks();
+		BlockPos lookingAtPos = rayTraceResult.getBlockPos();
+		IBlockState blockState = world.getBlockState(lookingAtPos);
+		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(lookingAtPos))
 			return;
-		}
 
 		final IsSmoothable isSmoothable;
-		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && TERRAIN.test(blockState)) {
+		if (NoCubesConfig.Client.renderSmoothTerrain && TERRAIN.test(blockState)) {
 			isSmoothable = TERRAIN;
-			meshGeneratorType = Config.terrainMeshGenerator;
+//			meshGeneratorType = Config.terrainMeshGenerator;
 			event.setCanceled(true);
-		} else if (Config.renderSmoothLeaves && LEAVES.test(blockState)) {
+		} else if (NoCubesConfig.Client.renderSmoothLeaves && LEAVES.test(blockState)) {
 			isSmoothable = LEAVES;
-			meshGeneratorType = Config.leavesMeshGenerator;
-			event.setCanceled(!Config.renderSmoothAndVanillaLeaves);
+//			meshGeneratorType = Config.leavesMeshGenerator;
+			event.setCanceled(!NoCubesConfig.Client.renderSmoothAndVanillaLeaves);
 		} else
 			return;
 
-		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
-		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
-		final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+		double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+		double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+		double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
 
-		final Tessellator tessellator = Tessellator.getInstance();
-		final BufferBuilder bufferbuilder = tessellator.getBuffer();
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuffer();
 
-		bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+		bufferBuilder.setTranslation(-renderX, -renderY, -renderZ);
 
 		GlStateManager.enableBlend();
 		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -451,31 +355,57 @@ public final class ClientEventSubscriber {
 		GlStateManager.color(0, 0, 0, 1);
 		GlStateManager.color(1, 1, 1, 1);
 
-		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+		bufferBuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
-			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
-				try (Face face = faces.get(i)) {
-					try (
-							Vec3 v0 = face.getVertex0();
-							Vec3 v1 = face.getVertex1();
-							Vec3 v2 = face.getVertex2();
-							Vec3 v3 = face.getVertex3()
-					) {
-						final double v0x = v0.x;
-						final double v0y = v0.y;
-						final double v0z = v0.z;
-						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
-						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						// End back at v0. Draw with alpha this time
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
-					}
+		SurfaceNets.generate(
+				lookingAtPos, lookingAtPos.add(1, 1, 1),
+				world, isSmoothable, // HIGHLIGHT,
+				(mask, pos) -> true,
+				(face, pos) -> {
+					Vec v0 = face.v0;
+					Vec v1 = face.v1;
+					Vec v2 = face.v2;
+					Vec v3 = face.v3;
+					ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
+					int red = color.red;
+					int blue = color.blue;
+					int green = color.green;
+					int alpha = color.alpha;
+
+					// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+					bufferBuilder.pos(v0.x, v0.y, v0.z).color(0, 0, 0, 0.0F).endVertex();
+					bufferBuilder.pos(v1.x, v1.y, v1.z).color(red, green, blue, alpha).endVertex();
+					bufferBuilder.pos(v2.x, v2.y, v2.z).color(red, green, blue, alpha).endVertex();
+					bufferBuilder.pos(v3.x, v3.y, v3.z).color(red, green, blue, alpha).endVertex();
+					// End back at v0. Draw with alpha this time
+					bufferBuilder.pos(v0.x, v0.y, v0.z).color(red, green, blue, alpha).endVertex();
+					return true;
 				}
-			}
-		}
+		);
+
+//		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(lookingAtPos, world, isSmoothable, meshGeneratorType)) {
+//			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
+//				try (Face face = faces.get(i)) {
+//					try (
+//							Vec3 v0 = face.getVertex0();
+//							Vec3 v1 = face.getVertex1();
+//							Vec3 v2 = face.getVertex2();
+//							Vec3 v3 = face.getVertex3()
+//					) {
+//						final double v0x = v0.x;
+//						final double v0y = v0.y;
+//						final double v0z = v0.z;
+//						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+//						bufferBuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
+//						bufferBuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
+//						bufferBuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
+//						bufferBuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
+//						// End back at v0. Draw with alpha this time
+//						bufferBuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
+//					}
+//				}
+//			}
+//		}
 
 		tessellator.draw();
 
@@ -483,16 +413,15 @@ public final class ClientEventSubscriber {
 		GlStateManager.enableTexture2D();
 		GlStateManager.disableBlend();
 
-		bufferbuilder.setTranslation(0, 0, 0);
+		bufferBuilder.setTranslation(0, 0, 0);
 
 	}
 
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
 		// TODO: Do this better (Do the same thing as StolenReposeCode.getDensity)
-		if (Config.terrainCollisions) {
+		if (NoCubesConfig.Server.terrainCollisionsEnabled)
 			event.setCanceled(true);
-		}
 	}
 
 	@SubscribeEvent

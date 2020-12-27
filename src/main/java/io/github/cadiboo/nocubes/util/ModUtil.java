@@ -1,22 +1,28 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraftforge.common.ForgeVersion;
 import net.minecraftforge.fml.common.ModContainer;
 import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Random;
+import java.util.function.BiConsumer;
 
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
@@ -133,29 +139,29 @@ public final class ModUtil {
 		return NoCubesLoadingPlugin.DEVELOPER_ENVIRONMENT;
 	}
 
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeX(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeXExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeY(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeYExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeZExtension());
-	}
+//	/**
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
+//	 */
+//	public static byte getMeshSizeX(final int initialSize, final MeshGenerator meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeXExtension());
+//	}
+//
+//	/**
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
+//	 */
+//	public static byte getMeshSizeY(final int initialSize, final MeshGenerator meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeYExtension());
+//	}
+//
+//	/**
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
+//	 */
+//	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeZExtension());
+//	}
 
 //	public static IFluidState getFluidState(final World world, final BlockPos pos) {
 //		final int posX = pos.getX();
@@ -319,6 +325,80 @@ public final class ModUtil {
 			final CrashReport crashReport = CrashReport.makeCrashReport(e, "Failed to load class \"" + simpleName + "\". This should not be possible!");
 			crashReport.makeCategory("Loading class");
 			throw new ReportedException(crashReport);
+		}
+	}
+
+	/**
+	 * Assumes the array is indexed [z][y][x].
+	 */
+	public static int get3dIndexInto1dArray(int x, int y, int z, int xSize, int ySize) {
+		return (z * xSize * ySize) + (y * xSize) + x;
+	}
+
+	public static void traverseArea(BlockPos startInclusive, BlockPos endInclusive, MutableBlockPos currentPosition, World world, BiConsumer<IBlockState, MutableBlockPos> func) {
+		traverseArea(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
+	}
+
+	/** Copied and tweaked from "https://github.com/Cadiboo/BiggerReactors/blob/1f0e0c48cdd16b8ecc0d2bc5f6c41db272dd8b7c/Phosphophyllite/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L76-L104". */
+	public static void traverseArea(
+			int startXInclusive, int startYInclusive, int startZInclusive,
+			int endXInclusive, int endYInclusive, int endZInclusive,
+			MutableBlockPos currentPosition, World world, BiConsumer<IBlockState, MutableBlockPos> func
+	) {
+		final IBlockState air = Blocks.AIR.getDefaultState();
+		int endXPlus1 = endXInclusive + 1;
+		int endYPlus1 = endYInclusive + 1;
+		int endZPlus1 = endZInclusive + 1;
+		int maxX = (endXInclusive + 16) & 0xFFFFFFF0;
+		int maxY = (endYInclusive + 16) & 0xFFFFFFF0;
+		int maxZ = (endZInclusive + 16) & 0xFFFFFFF0;
+		for (int blockChunkX = startXInclusive; blockChunkX < maxX; blockChunkX += 16) {
+			int maskedBlockChunkX = blockChunkX & 0xFFFFFFF0;
+			int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
+			for (int blockChunkZ = startZInclusive; blockChunkZ < maxZ; blockChunkZ += 16) {
+				int maskedBlockChunkZ = blockChunkZ & 0xFFFFFFF0;
+				int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
+				int chunkX = blockChunkX >> 4;
+				int chunkZ = blockChunkZ >> 4;
+//				@Nullable
+//				IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
+				@Nullable
+				Chunk chunk = world.getChunkProvider().getLoadedChunk(chunkX, chunkZ);
+//				@Nullable
+//				ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
+				@Nullable
+				ExtendedBlockStorage[] chunkSections = chunk == null ? null : chunk.getBlockStorageArray();
+				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
+					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
+					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
+					int chunkSectionIndex = blockChunkY >> 4;
+//					@Nullable
+//					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
+					// If chunkSectionIndex is out of range we want to continue supplying air to the func
+					// No clue how this will work with cubic chunks...
+//					@Nullable
+//					ChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					@Nullable
+					ExtendedBlockStorage chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
+					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
+					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);
+					int sectionMaxX = Math.min(maskedNextBlockChunkX, endXPlus1);
+					int sectionMaxY = Math.min(maskedNextBlockChunkY, endYPlus1);
+					int sectionMaxZ = Math.min(maskedNextBlockChunkZ, endZPlus1);
+					for (int x = sectionMinX; x < sectionMaxX; ++x) {
+						int maskedX = x & 15;
+						for (int y = sectionMinY; y < sectionMaxY; ++y) {
+							int maskedY = y & 15;
+							for (int z = sectionMinZ; z < sectionMaxZ; ++z) {
+								currentPosition.setPos(x, y, z);
+								IBlockState blockState = chunkSection == null ? air : chunkSection.get(maskedX, maskedY, z & 15);
+								func.accept(blockState, currentPosition);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
