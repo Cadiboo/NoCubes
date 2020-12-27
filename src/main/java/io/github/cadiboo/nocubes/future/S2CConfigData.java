@@ -11,16 +11,16 @@ import net.minecraftforge.fml.relauncher.Side;
 /**
  * @author Cadiboo
  */
-public final class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncConfig, IMessage> {
+public final class S2CConfigData implements IMessage, IMessageHandler<S2CConfigData, IMessage> {
 
 	private /*final*/ String fileName;
 	private /*final*/ byte[] fileData;
 
 	@SuppressWarnings("unused")
-	public S2CSyncConfig() {
+	public S2CConfigData() {
 	}
 
-	public S2CSyncConfig(final String fileName, final byte[] fileData) {
+	public S2CConfigData(final String fileName, final byte[] fileData) {
 		if (fileName.length() > 128) throw new IllegalStateException();
 		this.fileName = fileName;
 		this.fileData = fileData;
@@ -41,7 +41,7 @@ public final class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncCon
 	}
 
 	@Override
-	public IMessage onMessage(final S2CSyncConfig msg, final MessageContext context) {
+	public IMessage onMessage(final S2CConfigData msg, final MessageContext context) {
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> Minecraft.getMinecraft().addScheduledTask(() -> {
 			ConfigTracker.INSTANCE.receiveSyncedConfig(msg);
 		}));

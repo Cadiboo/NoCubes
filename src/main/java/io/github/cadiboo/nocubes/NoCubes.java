@@ -5,17 +5,22 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.future.ConfigTracker;
+import io.github.cadiboo.nocubes.future.FileUtils;
 import io.github.cadiboo.nocubes.future.ModConfig;
 import io.github.cadiboo.nocubes.network.*;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import io.github.cadiboo.nocubes.future.DistExecutor;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.nio.file.Path;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static org.apache.logging.log4j.LogManager.getLogger;
@@ -71,6 +76,14 @@ public final class NoCubes {
 	@Mod.EventHandler
 	public void onPostInit(final FMLPostInitializationEvent event) {
 		DistExecutor.runWhenOn(Side.CLIENT, () -> ClientUtil::replaceFluidRenderer);
+	}
+
+	@Mod.EventHandler
+	public void onServerAboutToStart(final FMLServerAboutToStartEvent event) {
+		final MinecraftServer server = event.getServer();
+		final Path serverConfig = server.getActiveAnvilConverter().getFile(server.getFolderName(), "serverconfig").toPath();
+		FileUtils.getOrCreateDirectory(serverConfig, "serverconfig");
+		ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.SERVER, serverConfig);
 	}
 
 }

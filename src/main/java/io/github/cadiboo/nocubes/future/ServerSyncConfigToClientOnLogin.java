@@ -27,7 +27,7 @@ public final class ServerSyncConfigToClientOnLogin {
 		}
 		final EntityPlayerMP playerMP = (EntityPlayerMP) player;
 		final SimpleNetworkWrapper network = NoCubesNetwork.CHANNEL;
-		for (final Pair<String, S2CSyncConfig> pair : ConfigTracker.INSTANCE.syncConfigs(false))
+		for (final Pair<String, S2CConfigData> pair : ConfigTracker.INSTANCE.syncConfigs(false))
 			network.sendTo(pair.getValue(), playerMP);
 	}
 

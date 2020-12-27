@@ -73,19 +73,21 @@ final class ConfigOptionsList extends GuiListExtended {
 	}
 
 	@Nonnull
-	private ValueEntry<?> createValueEntry(final ConfigValue<?> configValue, final String name, ModConfig.Type type) {
+	private ValueEntry<?> createValueEntry(ConfigValue<?> configValue, String name, ModConfig.Type type) {
 		Supplier<ModConfig> configSupplier = () -> ConfigTracker_getConfig(MOD_ID, type).get();
-		if (configValue instanceof BooleanValue) {
+		if (configValue instanceof BooleanValue)
 			return new BooleanValueEntry((BooleanValue) configValue, name, configSupplier);
-		} else if (configValue instanceof EnumValue<?>) {
+		if (configValue instanceof EnumValue<?>)
 			return new EnumValueEntry<>((EnumValue<?>) configValue, name, configSupplier);
-		} else {
-			try {
+		try {
+			Object value = configValue.get();
+			if (value instanceof List<?>)
 				return new ListValueEntry<>((ConfigValue<List<? extends String>>) configValue, name, configSupplier);
-			} catch (Exception e) {
-				return new NotImplementedValueEntry<>(configValue, name, configSupplier);
-			}
+			if (value instanceof String)
+				return new StringValueEntry((ConfigValue<String>) configValue, name, configSupplier);
+		} catch (Exception ignored) {
 		}
+		return new NotImplementedValueEntry<>(configValue, name, configSupplier);
 	}
 
 	private Map<ConfigValue<?>, String> getConfigValues(final Object config) {
@@ -94,9 +96,8 @@ final class ConfigOptionsList extends GuiListExtended {
 			declaredField.setAccessible(true);
 			try {
 				final Object o = declaredField.get(config);
-				if (o instanceof ConfigValue) {
+				if (o instanceof ConfigValue)
 					configValuesAndNames.put((ConfigValue) o, declaredField.getName());
-				}
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
@@ -349,6 +350,39 @@ final class ConfigOptionsList extends GuiListExtended {
 				list.add((T) str);
 			}
 			this.handleChanged(list);
+		}
+
+		@Override
+		public void keyTyped(final char eventChar, final int eventKey) {
+			((GuiTextField) widgetSupplier.getValue()).textboxKeyTyped(eventChar, eventKey);
+		}
+
+		@Override
+		public void mouseClicked(final int mouseX, final int mouseY, final int mouseEvent) {
+			((GuiTextField) widgetSupplier.getValue()).mouseClicked(mouseX, mouseY, mouseEvent);
+		}
+
+		@Override
+		public void updateCursorCounter() {
+			((GuiTextField) widgetSupplier.getValue()).updateCursorCounter();
+		}
+
+	}
+
+	final class StringValueEntry extends ValueEntry<String> {
+
+		StringValueEntry(final ConfigValue<String> configValue, final String name, final Supplier<ModConfig> configSupplier) {
+			super(configValue, name, configSupplier);
+		}
+
+		@Override
+		protected GuiTextField makeWidget() {
+			return new ListOption(this.text, () -> new String[] {this.currentValue}, this::handleChanged)
+					.createWidget((configGui.width / 4) * 3);
+		}
+
+		private void handleChanged(String[] newValue) {
+			this.handleChanged(newValue[0]);
 		}
 
 		@Override

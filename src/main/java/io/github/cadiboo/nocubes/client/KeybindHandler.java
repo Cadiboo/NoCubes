@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -50,6 +51,7 @@ public class KeybindHandler {
 
 	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
 		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		ClientRegistry.registerKeyBinding(keyBinding);
 		return Pair.of(keyBinding, action);
 	}
 

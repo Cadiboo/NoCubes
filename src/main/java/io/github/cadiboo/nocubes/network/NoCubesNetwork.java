@@ -1,11 +1,8 @@
 package io.github.cadiboo.nocubes.network;
 
-import com.mojang.authlib.GameProfile;
-import io.github.cadiboo.nocubes.future.S2CSyncConfig;
+import io.github.cadiboo.nocubes.future.S2CConfigData;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.management.PlayerList;
-import net.minecraft.server.management.UserListOpsEntry;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -95,8 +92,8 @@ public final class NoCubesNetwork {
 
 
 		CHANNEL.registerMessage(
-				S2CSyncConfig.class,
-				S2CSyncConfig.class,
+				S2CConfigData.class,
+				S2CConfigData.class,
 				networkId++,
 				CLIENT
 		);

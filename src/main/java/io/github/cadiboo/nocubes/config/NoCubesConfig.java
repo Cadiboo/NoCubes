@@ -84,7 +84,8 @@ public final class NoCubesConfig {
 	}
 
 	public static Optional<ModConfig> ConfigTracker_getConfig(final String modId, final ModConfig.Type type) {
-		Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configsByMod");
+//		Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configsByMod");
+		Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ConfigTracker.INSTANCE.configsByMod;
 		return Optional.ofNullable(configsByMod.getOrDefault(modId, Collections.emptyMap()).getOrDefault(type, null));
 	}
 

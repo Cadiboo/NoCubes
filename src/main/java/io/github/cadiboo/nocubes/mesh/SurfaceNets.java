@@ -39,7 +39,7 @@ public class SurfaceNets {
 	}
 
 	private static void generateOrThrow(
-			BlockPos start, BlockPos end,
+			BlockPos start0, BlockPos end,
 			World world, IsSmoothable isSmoothable, // ReusableCache<boolean[]> cache,
 			VoxelAction voxelAction, FaceAction faceAction
 	) {
@@ -57,9 +57,16 @@ public class SurfaceNets {
 //		final int fieldSizeY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
 //		final int fieldSizeZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
 
-		int fieldSizeX = end.getX() - start.getX();
-		int fieldSizeY = end.getY() - start.getY();
-		int fieldSizeZ = end.getZ() - start.getZ();
+		final BlockPos start = start0; //.add(-1, -1, -1);
+
+		int meshSizeX = end.getX() - start.getX();
+		int meshSizeY = end.getY() - start.getY();
+		int meshSizeZ = end.getZ() - start.getZ();
+
+		int fieldSizeX = meshSizeX + 1;
+		int fieldSizeY = meshSizeY + 1;
+		int fieldSizeZ = meshSizeZ + 1;
+
 
 		MutableBlockPos mutablePos = new MutableBlockPos();
 
@@ -84,8 +91,7 @@ public class SurfaceNets {
 
 		traverseMesh(
 				start,
-//				meshSizeX, meshSizeY, meshSizeZ,
-				fieldSizeX, fieldSizeY, fieldSizeZ,
+				meshSizeX, meshSizeY, meshSizeZ,
 				fieldSizeX, fieldSizeY, binaryField,
 				mutablePos, voxelAction, faceAction
 		);
@@ -204,9 +210,9 @@ public class SurfaceNets {
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					vertex[0] = -0.5 + 0 + x + s * vertex[0];
-					vertex[1] = -0.5 + 0 + y + s * vertex[1];
-					vertex[2] = -0.5 + 0 + z + s * vertex[2];
+					vertex[0] = 0.5 + 0 + x + s * vertex[0];
+					vertex[1] = 0.5 + 0 + y + s * vertex[1];
+					vertex[2] = 0.5 + 0 + z + s * vertex[2];
 //					vertex.multiply(s);
 //					vertex.add(
 //						x + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,

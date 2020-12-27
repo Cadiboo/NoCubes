@@ -366,6 +366,13 @@ public final class ClientEventSubscriber {
 					Vec v1 = face.v1;
 					Vec v2 = face.v2;
 					Vec v3 = face.v3;
+
+					// TEMP: I am dumb & lazy - fix this in SurfaceNets
+					face.v0.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
+					face.v1.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
+					face.v2.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
+					face.v3.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
+
 					ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
 					int red = color.red;
 					int blue = color.blue;
