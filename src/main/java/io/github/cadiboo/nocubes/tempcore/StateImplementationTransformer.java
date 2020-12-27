@@ -313,7 +313,7 @@ final class StateImplementationTransformer implements Opcodes {
 //  public default isOpaqueCube()Z
 //   L0
 //    LINENUMBER 213 L0
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothTerrain : Z
+//    GETSTATIC io/github/cadiboo/nocubes/config/NoCubesConfig$Client.renderSmoothTerrain : Z
 //    IFEQ L1
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isTerrainSmoothable ()Z (itf)
@@ -323,7 +323,7 @@ final class StateImplementationTransformer implements Opcodes {
 //   L1
 //    LINENUMBER 214 L1
 //   FRAME SAME
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.renderSmoothLeaves : Z
+//    GETSTATIC io/github/cadiboo/nocubes/config/NoCubesConfig$Client.renderSmoothLeaves : Z
 //    IFEQ L2
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isLeavesSmoothable ()Z (itf)
@@ -360,7 +360,7 @@ final class StateImplementationTransformer implements Opcodes {
 		LabelNode leavesChecksLabel = new LabelNode();
 
 		// Make list of instructions to inject
-		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothTerrain", "Z"));
+		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/NoCubesConfig$Client", "renderSmoothTerrain", "Z"));
 		toInject.add(new JumpInsnNode(IFEQ, leavesChecksLabel));
 		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 		toInject.add(new MethodInsnNode(
@@ -379,7 +379,7 @@ final class StateImplementationTransformer implements Opcodes {
 		toInject.add(new InsnNode(ICONST_0));
 		toInject.add(new InsnNode(IRETURN));
 		toInject.add(leavesChecksLabel);
-		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "renderSmoothLeaves", "Z"));
+		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/NoCubesConfig$Client", "renderSmoothLeaves", "Z"));
 		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 		toInject.add(new MethodInsnNode(
@@ -428,7 +428,7 @@ final class StateImplementationTransformer implements Opcodes {
 //  public default causesSuffocation()Z
 //   L0
 //    LINENUMBER 325 L0
-//    GETSTATIC io/github/cadiboo/nocubes/config/Config.terrainCollisions : Z
+//    GETSTATIC io/github/cadiboo/nocubes/config/NoCubesConfig$Server.terrainCollisionsEnabled : Z
 //    IFEQ L1
 //    ALOAD 0
 //    INVOKEINTERFACE net/minecraft/block/state/IBlockProperties.nocubes_isTerrainSmoothable ()Z (itf)
@@ -464,7 +464,7 @@ final class StateImplementationTransformer implements Opcodes {
 		LabelNode originalInstructionsLabel = new LabelNode();
 
 		// Make list of instructions to inject
-		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/Config", "terrainCollisions", "Z"));
+		toInject.add(new FieldInsnNode(GETSTATIC, "io/github/cadiboo/nocubes/config/NoCubesConfig$Server", "terrainCollisionsEnabled", "Z"));
 		toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
 		toInject.add(new VarInsnNode(ALOAD, ALOCALVARIABLE_this));
 		toInject.add(new MethodInsnNode(
