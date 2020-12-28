@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.MarchingCubesRenderer;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.future.ConfigTracker;
@@ -357,10 +357,15 @@ public final class ClientEventSubscriber {
 
 		bufferBuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		SurfaceNets.generate(
-				lookingAtPos, lookingAtPos.add(1, 1, 1),
-				world, isSmoothable, // HIGHLIGHT,
-				(mask, pos) -> true,
+//		SurfaceNets.generate(
+//				lookingAtPos, lookingAtPos.add(1, 1, 1),
+//				world, isSmoothable, // HIGHLIGHT,
+//				(mask, pos) -> true,
+//				(face, pos) -> {
+		BlockPos startPos = lookingAtPos.add(-8, -8, -8);
+		MarchingCubesRenderer.marchChunk(
+			startPos,
+				world,
 				(face, pos) -> {
 					Vec v0 = face.v0;
 					Vec v1 = face.v1;
@@ -368,10 +373,7 @@ public final class ClientEventSubscriber {
 					Vec v3 = face.v3;
 
 					// TEMP: I am dumb & lazy - fix this in SurfaceNets
-					face.v0.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
-					face.v1.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
-					face.v2.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
-					face.v3.add(lookingAtPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
+					face.add(startPos.getX(), lookingAtPos.getY(), lookingAtPos.getZ());
 
 					ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
 					int red = color.red;

@@ -56,4 +56,10 @@ public class Face {
 		v3.transform(matrix);
 	}
 
+	public void add(int x, int y, int z) {
+		v0.add(x, y, z);
+		v1.add(x, y, z);
+		v2.add(x, y, z);
+		v3.add(x, y, z);
+	}
 }

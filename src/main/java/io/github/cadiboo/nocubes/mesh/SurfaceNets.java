@@ -269,24 +269,6 @@ public class SurfaceNets {
 		}
 	}
 
-	public interface FaceAction {
-
-		/**
-		 * @return If the traversal should continue
-		 */
-		boolean apply(Face face, MutableBlockPos pos);
-
-	}
-
-	public interface VoxelAction {
-
-		/**
-		 * @return If the traversal should continue
-		 */
-		boolean apply(MutableBlockPos pos, int mask);
-
-	}
-
 	static final class Lookup {
 
 		/**
