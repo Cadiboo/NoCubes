@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.SnowBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.World;
@@ -84,6 +85,20 @@ public class ModUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
+	 */
+	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
+		if (!shouldSmooth)
+			return -1;
+		if (state.getBlock() == Blocks.SNOW) { // Snow layer
+			int value = state.get(SnowBlock.LAYERS);
+			// Map snow height between 0-8 to between -0.25F and -1
+			return -((value - 1) * 0.125F);
+		}
+		return 1;
 	}
 
 	/**

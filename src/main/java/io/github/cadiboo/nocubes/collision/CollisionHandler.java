@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ReusableCache;
-import io.github.cadiboo.nocubes.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.ReusableCache;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraft.util.math.BlockPos;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class CollisionHandler {
 
-	private static final ReusableCache<boolean[]> COLLISION = new ReusableCache.Local<>();
+	private static final ReusableCache<float[]> COLLISION = new ReusableCache.Local<>();
 	private static final ReusableCache<CollisionCreationData> DATA = new ReusableCache.Local<>();
 
 	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {

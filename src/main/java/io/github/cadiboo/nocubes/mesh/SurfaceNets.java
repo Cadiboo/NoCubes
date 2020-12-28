@@ -29,7 +29,7 @@ public class SurfaceNets {
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[]> cache,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
 		MeshAction action
 	) {
 		try {
@@ -44,7 +44,7 @@ public class SurfaceNets {
 	private static void generateOrThrow(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<boolean[]> cache,
+		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
 		MeshAction action
 	) {
 		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
@@ -67,8 +67,8 @@ public class SurfaceNets {
 		 * - 0 where the data value is below the isovalue
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
-		// binaryField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final boolean[] binaryField = cache.getOrCreate(() -> new boolean[fieldSizeZ * fieldSizeY * fieldSizeX]);
+		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
+		final float[] densityField = cache.getOrCreate(() -> new float[fieldSizeZ * fieldSizeY * fieldSizeX]);
 		ModUtil.traverseArea(
 			worldXStart, worldYStart, worldZStart,
 			worldXStart + meshSizeX, worldYStart + meshSizeY, worldZStart + meshSizeZ,
@@ -78,7 +78,7 @@ public class SurfaceNets {
 				int z = blockPos.getZ() - worldZStart;
 				boolean isStateSmoothable = isSmoothable.test(blockState);
 				int index = ModUtil.get3dIndexInto1dArray(x, y, z, fieldSizeX, fieldSizeY);
-				binaryField[index] = isStateSmoothable;
+				densityField[index] = ModUtil.getBlockDensity(isStateSmoothable, blockState);
 			}
 		);
 		// Old code from before 'traverseArea' was used, kept around because it might be useful for CubicChunks compat
@@ -135,9 +135,9 @@ public class SurfaceNets {
 						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += fieldSizeX - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
 								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, fieldSizeX, fieldSizeY);
-								float p = binaryField[index] ? 1 : -1;
-								grid[corner] = p;
-								mask |= (p < 0) ? (1 << corner) : 0;
+								float density = densityField[index];
+								grid[corner] = density;
+								mask |= (density < 0) ? (1 << corner) : 0;
 							}
 
 					// Check for early termination if cell does not intersect boundary
