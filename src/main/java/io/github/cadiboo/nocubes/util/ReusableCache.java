@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render.util;
+package io.github.cadiboo.nocubes.util;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;

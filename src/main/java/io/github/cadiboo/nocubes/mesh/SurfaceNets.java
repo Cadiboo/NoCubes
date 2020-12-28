@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.client.render.util.Face;
-import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
-import io.github.cadiboo.nocubes.client.render.util.Vec;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ReusableCache;
+import io.github.cadiboo.nocubes.util.Vec;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;

@@ -1,5 +1,6 @@
-package io.github.cadiboo.nocubes.client.render.util;
+package io.github.cadiboo.nocubes.client.util;
 
+import io.github.cadiboo.nocubes.util.Vec;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -33,6 +34,20 @@ public class VecTests {
 		assertEquals(vec.x, x + offsetX, 0);
 		assertEquals(vec.y, y + offsetY, 0);
 		assertEquals(vec.z, z + offsetZ, 0);
+	}
+
+	@Test
+	public void interpolateSanityCheck() {
+		int start = 10;
+		int end = 20;
+		float interpVal = 0.5F;
+		int expected = 15;
+
+		Vec startVec = new Vec(start, 0, 0);
+		Vec endVec = new Vec(end, 0, 0);
+
+		Vec actual = new Vec().interpolate(interpVal, startVec, endVec);
+		assertEquals(expected, actual.x, 0.01);
 	}
 
 }

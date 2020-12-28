@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render.util;
+package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -150,4 +150,18 @@ public class Vec {
 		this.y = doubles[1];
 		this.z = doubles[2];
 	}
+
+	public void copyFrom(Vec vec) {
+		this.x = vec.x;
+		this.y = vec.y;
+		this.z = vec.z;
+	}
+
+	public Vec interpolate(float t, Vec v0, Vec v1) {
+		this.x = v0.x + t * (v1.x - v0.x);
+		this.y = v0.y + t * (v1.y - v0.y);
+		this.z = v0.z + t * (v1.z - v0.z);
+		return this;
+	}
+
 }

@@ -1,9 +1,9 @@
 package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.util.Face;
-import io.github.cadiboo.nocubes.client.render.util.ReusableCache;
-import io.github.cadiboo.nocubes.client.render.util.Vec;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ReusableCache;
+import io.github.cadiboo.nocubes.util.Vec;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.ModUtil;

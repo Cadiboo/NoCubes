@@ -36,6 +36,20 @@ public class KeybindHandler {
 		KEYBINDS.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
 	}
 
+	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
+		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		return Pair.of(keyBinding, action);
+	}
+
+	@SubscribeEvent
+	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
+		if (event.phase != TickEvent.Phase.END)
+			return;
+		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
+			if (keybind.getKey().isPressed())
+				keybind.getValue().run();
+	}
+
 	private static void reloadAllChunks(Minecraft minecraft) {
 		WorldRenderer worldRenderer = minecraft.worldRenderer;
 		if (worldRenderer != null)
@@ -45,11 +59,6 @@ public class KeybindHandler {
 	private static void toggleVisuals() {
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
 		reloadAllChunks(Minecraft.getInstance());
-	}
-
-	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
-		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
-		return Pair.of(keyBinding, action);
 	}
 
 	private static void toggleLookedAtSmoothable() {
@@ -77,15 +86,6 @@ public class KeybindHandler {
 			// Send an update request packet
 			NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(state, newValue));
 		}
-	}
-
-	@SubscribeEvent
-	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
-		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
-			if (keybind.getKey().isPressed())
-				keybind.getValue().run();
 	}
 
 }

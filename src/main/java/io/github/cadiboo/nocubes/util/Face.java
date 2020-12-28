@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.client.render.util;
+package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.math.vector.Matrix4f;
 
@@ -39,6 +39,13 @@ public class Face {
 		toUse.x = (v0.x + v1.x + v2.x + v3.x) / 4;
 		toUse.y = (v0.y + v1.y + v2.y + v3.y) / 4;
 		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
+	}
+
+	public void add(int x, int y, int z) {
+		v0.add(x, y, z);
+		v1.add(x, y, z);
+		v2.add(x, y, z);
+		v3.add(x, y, z);
 	}
 
 	public void multiply(double d) {

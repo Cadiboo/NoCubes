@@ -1,5 +1,7 @@
-package io.github.cadiboo.nocubes.client.render.util;
+package io.github.cadiboo.nocubes.client.util;
 
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.Vec;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
