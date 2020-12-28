@@ -23,4 +23,4 @@ Steps:
 7. Run OptiFine by double clicking it (Mac: if you get a dialog about it being from an unidentified developer open System Preferences and go to Security & Privacy, there should be a button at the bottom saying 'Open Anyway')
 8. Click 'Extract' and put the resulting file in `./run/mods` (so `NoCubesProjectDirectory/run/mods`, create it if it doesn't exist)
 9. Download OptiFineDevTweaker from [here](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases) and put it into `./run/mods/`
-10. Thats as far as I got before I spent hours fruitlessly debugging graphics driver issues when trying to run OptiFine.
+10. I kept running into OpenGL issues (`NSWindow drag regions should only be invalidated on the Main Thread`) and spent a lot of time finding out why. I fixed it by disabling the Forge progress screen by setting `enabled=false` in splash.properties.
