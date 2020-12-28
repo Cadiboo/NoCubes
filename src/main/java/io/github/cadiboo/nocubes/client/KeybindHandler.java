@@ -16,6 +16,7 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
@@ -38,6 +39,7 @@ public class KeybindHandler {
 
 	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
 		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		ClientRegistry.registerKeyBinding(keyBinding);
 		return Pair.of(keyBinding, action);
 	}
 
