@@ -93,12 +93,15 @@ public class ModUtil {
 	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
 		if (!shouldSmooth)
 			return -1;
-		if (state.getBlock() == Blocks.SNOW) { // Snow layer
-			int value = state.get(SnowBlock.LAYERS);
-			// Map snow height between 0-8 to between -0.25F and -1
-			return -((value - 1) * 0.125F);
-		}
+		if (state.getBlock() == Blocks.SNOW)
+			// Snow layer, not the actual whole snow block
+			return mapSnowHeight(state.get(SnowBlock.LAYERS));
 		return 1;
+	}
+
+	/** Map snow height between 0-8 to between 0.25F and 1. */
+	private static float mapSnowHeight(int value) {
+		return (value - 1) * 0.125F;
 	}
 
 	/**
