@@ -14,11 +14,11 @@ public class NoCubesTest {
 
 	public static void addTests(final List<Test> tests) {
 		Collections.addAll(tests,
-//			new Test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.STONE.getDefaultState()))),
-//			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.DIRT.getDefaultState()))),
-			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(Blocks.AIR.getDefaultState()))),
+//			new Test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.STONE.defaultBlockState()))),
+//			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.DIRT.defaultBlockState()))),
+			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(Blocks.AIR.defaultBlockState()))),
 			new Test("removing smoothable should work", () -> {
-				BlockState dirt = Blocks.DIRT.getDefaultState();
+				BlockState dirt = Blocks.DIRT.defaultBlockState();
 				boolean oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
 				NoCubes.smoothableHandler.removeSmoothable(dirt);
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));

@@ -9,7 +9,7 @@ import java.util.IdentityHashMap;
 /**
  * The in-memory list of smoothables.
  * Shared between client & server in singleplayer.
- * Uses ASM-added fields with a hash set fallback.
+ * Uses ASM-added fields with an identity set fallback.
  *
  * @author Cadiboo
  */
@@ -36,20 +36,17 @@ public interface SmoothableHandler {
 
 		@Override
 		public void addSmoothable(final BlockState state) {
-//			state.nocubes_isTerrainSmoothable = true;
-			throw new RuntimeException();
+			state.nocubes_isTerrainSmoothable = true;
 		}
 
 		@Override
 		public void removeSmoothable(final BlockState state) {
-//			state.nocubes_isTerrainSmoothable = false;
-			throw new RuntimeException();
+			state.nocubes_isTerrainSmoothable = false;
 		}
 
 		@Override
 		public boolean isSmoothable(final BlockState state) {
-//			return state.nocubes_isTerrainSmoothable;
-			throw new RuntimeException();
+			return state.nocubes_isTerrainSmoothable;
 		}
 
 	}
