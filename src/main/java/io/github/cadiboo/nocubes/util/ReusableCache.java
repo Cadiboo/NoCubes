@@ -5,6 +5,18 @@ import java.util.function.Supplier;
 
 public interface ReusableCache<T> {
 
+//	LoadingCache<Object, ReusableCache<?>> cache = CacheBuilder.newBuilder()
+//		.maximumSize(16)
+//		.expireAfterAccess(1, TimeUnit.SECONDS)
+//		.build(new CacheLoader<Object, ReusableCache<?>>()
+//		{
+//			@Override
+//			public ReusableCache<?> load(Object key)
+//			{
+//				return ChunkRenderCache.generateCache(key.getLeft(), key.getRight().add(-1, -1, -1), key.getRight().add(16, 16, 16), 1);
+//			}
+//		});
+
 	@Nullable
 	T get();
 
@@ -60,6 +72,23 @@ public interface ReusableCache<T> {
 		@Override
 		public void clear() {
 			threadLocal.set(null);
+		}
+	}
+
+	class Uncached<T> implements ReusableCache<T> {
+
+		@Nullable
+		@Override
+		public T get() {
+			return null;
+		}
+
+		@Override
+		public void set(T value) {
+		}
+
+		@Override
+		public void clear() {
 		}
 	}
 

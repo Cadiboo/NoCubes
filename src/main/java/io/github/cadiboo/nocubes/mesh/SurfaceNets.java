@@ -21,19 +21,19 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  */
 public class SurfaceNets {
 
-	// Surface needs data for n+1 to generate n
-	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
 	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
+	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
+	// Never change this. I'm not sure why it's needed but it is needed very much
 	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
 
 	public static void generate(
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
 		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
-		MeshAction action
+		VoxelAction voxelAction, FaceAction faceAction
 	) {
 		try {
-			generateOrThrow(startX, startY, startZ, meshSizeX, meshSizeY, meshSizeZ, world, isSmoothable, cache, action);
+			generateOrThrow(startX, startY, startZ, meshSizeX, meshSizeY, meshSizeZ, world, isSmoothable, cache, voxelAction, faceAction);
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
@@ -45,18 +45,18 @@ public class SurfaceNets {
 		int startX, int startY, int startZ,
 		int meshSizeX, int meshSizeY, int meshSizeZ,
 		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
-		MeshAction action
+		VoxelAction voxelAction, FaceAction faceAction
 	) {
 		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
 		meshSizeY += MESH_SIZE_POSITIVE_EXTENSION;
 		meshSizeZ += MESH_SIZE_POSITIVE_EXTENSION;
-		final int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
-		final int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
-		final int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
-		// Need to add that extra block on each axis
-		final int fieldSizeX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int fieldSizeY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
-		final int fieldSizeZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
+		// Subtract the negative extension from the start and add it to the size
+		int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
+		int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
+		int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
+		int fieldSizeX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
+		int fieldSizeY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
+		int fieldSizeZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
 
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
 
@@ -71,7 +71,8 @@ public class SurfaceNets {
 		final float[] densityField = cache.getOrCreate(() -> new float[fieldSizeZ * fieldSizeY * fieldSizeX]);
 		ModUtil.traverseArea(
 			worldXStart, worldYStart, worldZStart,
-			worldXStart + meshSizeX, worldYStart + meshSizeY, worldZStart + meshSizeZ,
+			// Minus one because this is inclusive
+			worldXStart + fieldSizeZ - 1, worldYStart + fieldSizeY - 1, worldZStart + fieldSizeX - 1,
 			pos, Minecraft.getInstance().world, (blockState, blockPos) -> {
 				int x = blockPos.getX() - worldXStart;
 				int y = blockPos.getY() - worldYStart;
@@ -140,11 +141,14 @@ public class SurfaceNets {
 								mask |= (density < 0) ? (1 << corner) : 0;
 							}
 
+					pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+					if (!voxelAction.apply(pos, mask))
+						return;
+
 					// Check for early termination if cell does not intersect boundary
 					// This cell is either entirely inside or entirely outside the isosurface
-					if (mask == 0 || mask == 0xff) {
+					if (mask == 0 || mask == 0xff)
 						continue;
-					}
 
 					// Sum up edge intersections
 					int edge_mask = EDGE_TABLE[mask];
@@ -251,9 +255,7 @@ public class SurfaceNets {
 							face.v2.copyFrom(vertices.get(verticesBuffer[bufferPointer - du - dv]));
 							face.v3.copyFrom(vertices.get(verticesBuffer[bufferPointer - dv]));
 						}
-						pos.setPos(worldXStart, worldYStart, worldZStart);
-						pos.move(x, y, z);
-						if (!action.apply(pos, face))
+						if (!faceAction.apply(pos, face))
 							return;
 					}
 				}
@@ -261,7 +263,13 @@ public class SurfaceNets {
 		}
 	}
 
-	public interface MeshAction {
+	public interface VoxelAction {
+
+		boolean apply(BlockPos.Mutable pos, int mask);
+
+	}
+
+	public interface FaceAction {
 
 		boolean apply(BlockPos.Mutable pos, Face face);
 

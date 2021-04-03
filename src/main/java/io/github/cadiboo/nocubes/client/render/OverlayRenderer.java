@@ -71,6 +71,7 @@ public final class OverlayRenderer {
 			x, y, z,
 			1, 1, 1,
 			world, NoCubes.smoothableHandler::isSmoothable, HIGHLIGHT,
+			(pos, mask) -> true,
 			(pos, face) -> {
 				Vec v0 = face.v0.add(x, y, z);
 				Vec v1 = face.v1.add(x, y, z);
@@ -108,8 +109,8 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		if (cache == null || world.getGameTime() % 5 == 0)
-			cache = makeMesh(world, viewer);
+//		if (cache == null || world.getGameTime() % 5 == 0)
+//			cache = makeMesh(world, viewer);
 
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getActiveRenderInfo();
 
@@ -136,6 +137,21 @@ public final class OverlayRenderer {
 		viewer.world.getCollisionShapes(viewer, viewer.getBoundingBox()).forEach(voxelShape -> {
 			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
 		});
+
+		BlockPos start = viewer.getPosition().add(-5, -5, -5);
+		SurfaceNets.generate(
+			start.getX(), start.getY(), start.getZ(),
+			10, 10, 10,
+			viewer.world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
+			(pos, mask) -> {
+				if (mask == 0x00) {
+					VoxelShape voxelShape = VoxelShapes.fullCube().withOffset(pos.getX(), pos.getY(), pos.getZ());
+					drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 0.0F, 1.0F, 0.4F);
+				}
+				return true;
+			},
+			(pos, face) -> true
+		);
 
 		Matrix4f matrix4f = matrixStack.getLast().getMatrix();
 		{
@@ -323,6 +339,7 @@ public final class OverlayRenderer {
 			startX, startY, startZ,
 			meshSizeX, meshSizeY, meshSizeZ,
 			viewer.world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
+			(pos, mask) -> true,
 			(pos, face) -> meshFaces.add(new Face(
 				face.v0.add(startX, startY, startZ).copy(),
 				face.v1.add(startX, startY, startZ).copy(),

@@ -53,6 +53,7 @@ public class MeshRenderer {
 		SurfaceNets.generate(
 			blockpos.getX(), blockpos.getY(), blockpos.getZ(),
 			16, 16, 16, chunkrendercache, NoCubes.smoothableHandler::isSmoothable, CHUNKS,
+			(pos, mask) -> true,
 			(pos, face) -> {
 				SmoothableHandler handler = NoCubes.smoothableHandler;
 
@@ -149,6 +150,7 @@ public class MeshRenderer {
 		SurfaceNets.generate(
 			posIn.getX(), posIn.getY(), posIn.getZ(),
 			1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
+			(pos, mask) -> true,
 			(pos, face) -> {
 				face.transform(matrix4f);
 

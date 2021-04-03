@@ -53,22 +53,29 @@ public class CollisionHandler {
 			blockPos.getX(), blockPos.getY(), blockPos.getZ(),
 			1, 1, 1,
 			reader, NoCubes.smoothableHandler::isSmoothable, COLLISION,
+			(pos, mask) -> {
+				if (mask == 0x00) {
+					shapes.add(VoxelShapes.fullCube());
+					return false;
+				}
+				return true;
+			},
 			(pos, face) -> {
-				CollisionCreationData data = DATA.getOrCreate(CollisionCreationData::new);
-				Face normal = data.normal;
-				Vec centre = data.centre;
-				Vec averageOfNormal = data.averageOfNormal;
-
-				face.assignNormalTo(normal);
-				face.assignAverageTo(centre);
-
-				normal.assignAverageTo(averageOfNormal);
-				averageOfNormal.normalise().multiply(0.125d);
-
-				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v0));
-				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v1));
-				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v2));
-				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v3));
+//				CollisionCreationData data = DATA.getOrCreate(CollisionCreationData::new);
+//				Face normal = data.normal;
+//				Vec centre = data.centre;
+//				Vec averageOfNormal = data.averageOfNormal;
+//
+//				face.assignNormalTo(normal);
+//				face.assignAverageTo(centre);
+//
+//				normal.assignAverageTo(averageOfNormal);
+//				averageOfNormal.normalise().multiply(0.125d);
+//
+//				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v0));
+//				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v1));
+//				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v2));
+//				shapes.add(makeShape(0, 0, 0, centre, averageOfNormal, face.v3));
 				return true;
 			}
 		);
