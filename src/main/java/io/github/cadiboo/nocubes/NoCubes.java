@@ -1,9 +1,11 @@
 package io.github.cadiboo.nocubes;
 
+import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -23,7 +25,7 @@ public final class NoCubes {
 
 	public NoCubes() {
 		// Blocks is safe to use here, it gets inited before mods are constructed
-		smoothableHandler = SmoothableHandler.create(Blocks.STONE.getDefaultState());
+		smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
 		TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
@@ -38,7 +40,7 @@ public final class NoCubes {
 	 */
 	public static void addSmoothable(Block... blocks) {
 		for (final Block block : blocks)
-			addSmoothable(block.getStateContainer().getValidStates().toArray(new BlockState[0]));
+			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
 	}
 
 	/**

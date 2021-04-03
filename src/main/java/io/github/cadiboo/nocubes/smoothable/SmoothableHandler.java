@@ -36,17 +36,20 @@ public interface SmoothableHandler {
 
 		@Override
 		public void addSmoothable(final BlockState state) {
-			state.nocubes_isTerrainSmoothable = true;
+//			state.nocubes_isTerrainSmoothable = true;
+			throw new RuntimeException();
 		}
 
 		@Override
 		public void removeSmoothable(final BlockState state) {
-			state.nocubes_isTerrainSmoothable = false;
+//			state.nocubes_isTerrainSmoothable = false;
+			throw new RuntimeException();
 		}
 
 		@Override
 		public boolean isSmoothable(final BlockState state) {
-			return state.nocubes_isTerrainSmoothable;
+//			return state.nocubes_isTerrainSmoothable;
+			throw new RuntimeException();
 		}
 
 	}

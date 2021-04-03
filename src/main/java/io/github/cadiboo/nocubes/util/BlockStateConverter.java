@@ -21,7 +21,7 @@ public interface BlockStateConverter {
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")
-		BlockState state = Block.BLOCK_STATE_IDS.getByValue(id);
+		BlockState state = Block.BLOCK_STATE_REGISTRY.byId(id);
 		if (state == null)
 			throw new IllegalStateException("Unknown blockstate id" + id);
 		return state;
@@ -29,7 +29,7 @@ public interface BlockStateConverter {
 
 	static int toId(BlockState state) {
 		@SuppressWarnings("deprecation")
-		int id = Block.BLOCK_STATE_IDS.getId(state);
+		int id = Block.BLOCK_STATE_REGISTRY.getId(state);
 		if (id == -1)
 			throw new IllegalStateException("Unknown blockstate " + state);
 		return id;
@@ -50,7 +50,7 @@ public interface BlockStateConverter {
 		if (values.isEmpty())
 			return block;
 		return values.entrySet().stream()
-			.map(e -> e.getKey().getName() + "=" + Util.getValueName(e.getKey(), e.getValue()))
+			.map(e -> e.getKey().getName() + "=" + Util.getPropertyName(e.getKey(), e.getValue()))
 			.collect(Collectors.joining(",", block + "[", "]"));
 	}
 

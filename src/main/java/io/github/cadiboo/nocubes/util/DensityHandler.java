@@ -16,10 +16,10 @@ public class DensityHandler {
 	 */
 	public float densityF(BlockState state, IBlockReader world, BlockPos pos) {
 		// Check the field, not the method because we ASM the method
-		if (state.isSolid)
+		if (state.canOcclude())
 			return 1;
 		VoxelShape shape = state.getShape(world, pos);
-		return (float) shape.getEnd(Direction.Axis.Y);
+		return (float) shape.max(Direction.Axis.Y);
 	}
 
 	public char density(BlockState state, IBlockReader world, BlockPos pos) {

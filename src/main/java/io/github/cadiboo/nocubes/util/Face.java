@@ -12,6 +12,10 @@ public class Face {
 	public Vec v2;
 	public Vec v3;
 
+	public Face() {
+		this(new Vec(), new Vec(), new Vec(), new Vec());
+	}
+
 	public Face(final Vec v0, final Vec v1, final Vec v2, final Vec v3) {
 		this.v0 = v0;
 		this.v1 = v1;
@@ -41,14 +45,14 @@ public class Face {
 		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
 	}
 
-	public void add(int x, int y, int z) {
+	public void add(float x, float y, float z) {
 		v0.add(x, y, z);
 		v1.add(x, y, z);
 		v2.add(x, y, z);
 		v3.add(x, y, z);
 	}
 
-	public void multiply(double d) {
+	public void multiply(float d) {
 		v0.multiply(d);
 		v1.multiply(d);
 		v2.multiply(d);

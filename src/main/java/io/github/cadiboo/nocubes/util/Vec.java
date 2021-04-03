@@ -9,14 +9,14 @@ import net.minecraft.util.math.vector.Matrix4f;
  */
 public class Vec {
 
-	public double x;
-	public double y;
-	public double z;
+	public float x;
+	public float y;
+	public float z;
 
 	public Vec() {
 	}
 
-	public Vec(double x, double y, double z) {
+	public Vec(float x, float y, float z) {
 		this.x = x;
 		this.y = y;
 		this.z = z;
@@ -26,14 +26,21 @@ public class Vec {
 		this(v.x, v.y, v.z);
 	}
 
+	public Vec set(float x, float y, float z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+		return this;
+	}
+
 	public Direction getDirectionFromNormal() {
-		double x = this.x;
-		double y = this.y;
-		double z = this.z;
-		double ax = Math.abs(x);
-		double ay = Math.abs(y);
-		double az = Math.abs(z);
-		double max = Math.max(Math.max(ax, ay), az);
+		float x = this.x;
+		float y = this.y;
+		float z = this.z;
+		float ax = Math.abs(x);
+		float ay = Math.abs(y);
+		float az = Math.abs(z);
+		float max = Math.max(Math.max(ax, ay), az);
 		if (max == ax)
 			return x > 0 ? Direction.EAST : Direction.WEST;
 		else if (max == az)
@@ -44,7 +51,7 @@ public class Vec {
 			throw new IllegalStateException("Could not find a direction from the normal, wtf???");
 	}
 
-	public Vec add(double x, double y, double z) {
+	public Vec add(float x, float y, float z) {
 		this.x += x;
 		this.y += y;
 		this.z += z;
@@ -55,14 +62,14 @@ public class Vec {
 		return add(vec.x, vec.y, vec.z);
 	}
 
-	public Vec subtract(double x, double y, double z) {
+	public Vec subtract(float x, float y, float z) {
 		this.x -= x;
 		this.y -= y;
 		this.z -= z;
 		return this;
 	}
 
-	public Vec subtract(double d) {
+	public Vec subtract(float d) {
 		return subtract(d, d, d);
 	}
 
@@ -70,14 +77,14 @@ public class Vec {
 		return subtract(vec.x, vec.y, vec.z);
 	}
 
-	public Vec multiply(double x, double y, double z) {
+	public Vec multiply(float x, float y, float z) {
 		this.x *= x;
 		this.y *= y;
 		this.z *= z;
 		return this;
 	}
 
-	public Vec multiply(double d) {
+	public Vec multiply(float d) {
 		return multiply(d, d, d);
 	}
 
@@ -86,7 +93,7 @@ public class Vec {
 	}
 
 	public Vec normalise() {
-		double length = MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+		float length = MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 		if (length < 0.0001)
 			// Zero vector, everything is already zero
 			return this;
@@ -101,9 +108,9 @@ public class Vec {
 	 */
 	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace, Vec toUse) {
 //		normal = crossProduct(prev - vec, next - vec).normalise();
-		final double x = vec.x;
-		final double y = vec.y;
-		final double z = vec.z;
+		final float x = vec.x;
+		final float y = vec.y;
+		final float z = vec.z;
 		return cross(
 			prevVecInFace.x - x, prevVecInFace.y - y, prevVecInFace.z - z,
 			nextVecInFace.x - x, nextVecInFace.y - y, nextVecInFace.z - z,
@@ -116,8 +123,8 @@ public class Vec {
 	 * @return toUse
 	 */
 	public static Vec cross(
-		double x0, double y0, double z0,
-		double x1, double y1, double z1,
+		float x0, float y0, float z0,
+		float x1, float y1, float z1,
 		Vec toUse
 	) {
 		toUse.x = y0 * z1 - z0 * y1;
@@ -130,11 +137,11 @@ public class Vec {
 	 * Copied from {@link net.minecraft.util.math.vector.Vector4f#transform(Matrix4f)}
 	 */
 	public void transform(Matrix4f matrixIn) {
-		double x = this.x;
-		double y = this.y;
-		double z = this.z;
-//		double w = this.w;
-		double w = 1F;
+		float x = this.x;
+		float y = this.y;
+		float z = this.z;
+//		float w = this.w;
+		float w = 1F;
 		this.x = matrixIn.m00 * x + matrixIn.m01 * y + matrixIn.m02 * z + matrixIn.m03 * w;
 		this.y = matrixIn.m10 * x + matrixIn.m11 * y + matrixIn.m12 * z + matrixIn.m13 * w;
 		this.z = matrixIn.m20 * x + matrixIn.m21 * y + matrixIn.m22 * z + matrixIn.m23 * w;
@@ -145,10 +152,10 @@ public class Vec {
 		return new Vec(x, y, z);
 	}
 
-	public void copyFrom(double[] doubles) {
-		this.x = doubles[0];
-		this.y = doubles[1];
-		this.z = doubles[2];
+	public void copyFrom(float[] floats) {
+		this.x = floats[0];
+		this.y = floats[1];
+		this.z = floats[2];
 	}
 
 	public void copyFrom(Vec vec) {

@@ -1,18 +1,19 @@
 package io.github.cadiboo.nocubes.util;
 
+import com.google.common.collect.ImmutableList;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
-import net.minecraft.world.World;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.common.util.Lazy;
 
 import javax.annotation.Nullable;
-import java.util.function.BiConsumer;
 
 /**
  * @author Cadiboo
@@ -26,7 +27,15 @@ public class ModUtil {
 		return target.contains("userdev");
 	});
 
-	public static void traverseArea(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, World world, BiConsumer<BlockState, BlockPos.Mutable> func) {
+	public static ImmutableList<BlockState> getStates(Block block) {
+		return block.getStateDefinition().getPossibleStates();
+	}
+
+	public interface Traverser {
+		void accept(BlockState state, BlockPos.Mutable pos, int index);
+	}
+
+	public static void traverseArea(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, IWorldReader world, Traverser func) {
 		traverseArea(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
@@ -34,9 +43,9 @@ public class ModUtil {
 	public static void traverseArea(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.Mutable currentPosition, World world, BiConsumer<BlockState, BlockPos.Mutable> func
+		BlockPos.Mutable currentPosition, IWorldReader world, Traverser func
 	) {
-		final BlockState air = Blocks.AIR.getDefaultState();
+		final BlockState air = Blocks.AIR.defaultBlockState();
 		int endXPlus1 = endXInclusive + 1;
 		int endYPlus1 = endYInclusive + 1;
 		int endZPlus1 = endZInclusive + 1;
@@ -55,6 +64,7 @@ public class ModUtil {
 				IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
 				@Nullable
 				ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
+				int index = 0;
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
@@ -75,10 +85,10 @@ public class ModUtil {
 						int maskedX = x & 15;
 						for (int y = sectionMinY; y < sectionMaxY; ++y) {
 							int maskedY = y & 15;
-							for (int z = sectionMinZ; z < sectionMaxZ; ++z) {
-								currentPosition.setPos(x, y, z);
+							for (int z = sectionMinZ; z < sectionMaxZ; ++z, ++index) {
+								currentPosition.set(x, y, z);
 								BlockState blockState = chunkSection == null ? air : chunkSection.getBlockState(maskedX, maskedY, z & 15);
-								func.accept(blockState, currentPosition);
+								func.accept(blockState, currentPosition, index);
 							}
 						}
 					}
@@ -95,7 +105,7 @@ public class ModUtil {
 			return -1;
 		if (state.getBlock() == Blocks.SNOW)
 			// Snow layer, not the actual whole snow block
-			return mapSnowHeight(state.get(SnowBlock.LAYERS));
+			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
 		return 1;
 	}
 

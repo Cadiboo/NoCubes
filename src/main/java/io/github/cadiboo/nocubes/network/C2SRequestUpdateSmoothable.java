@@ -41,7 +41,7 @@ public class C2SRequestUpdateSmoothable {
 	public static void handle(final C2SRequestUpdateSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
 		ServerPlayerEntity sender = ctx.getSender();
-		boolean hasPermission = sender.hasPermissionLevel(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL);
+		boolean hasPermission = sender.hasPermissions(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL);
 		if (hasPermission) {
 			BlockState state = msg.state;
 			boolean newValue = msg.newValue;
@@ -51,7 +51,7 @@ public class C2SRequestUpdateSmoothable {
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(state, newValue));
 			}
 		} else
-			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".addSmoothableNoPermission"), Util.DUMMY_UUID);
+			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".addSmoothableNoPermission"), Util.NIL_UUID);
 		ctx.setPacketHandled(true);
 	}
 

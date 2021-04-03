@@ -1,10 +1,5 @@
 package io.github.cadiboo.nocubes;
 
-import net.minecraftforge.common.extensions.IForgeBlockState;
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
-
 /**
  * @author Cadiboo
  */

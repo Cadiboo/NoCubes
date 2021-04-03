@@ -4,6 +4,7 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
@@ -66,7 +67,7 @@ public final class NoCubesConfig {
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.flatMap(block -> block.getStateContainer().getValidStates().parallelStream())
+				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
 					if (whitelisted.contains(state))
 						NoCubes.smoothableHandler.addSmoothable(state);
@@ -84,7 +85,7 @@ public final class NoCubesConfig {
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.flatMap(block -> block.getStateContainer().getValidStates().parallelStream())
+				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
 					if (whitelisted.contains(state))
 						NoCubes.smoothableHandler.addSmoothable(state);

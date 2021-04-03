@@ -48,14 +48,14 @@ public class KeybindHandler {
 		if (event.phase != TickEvent.Phase.END)
 			return;
 		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
-			if (keybind.getKey().isPressed())
+			if (keybind.getKey().isDown())
 				keybind.getValue().run();
 	}
 
 	private static void reloadAllChunks(Minecraft minecraft) {
-		WorldRenderer worldRenderer = minecraft.worldRenderer;
+		WorldRenderer worldRenderer = minecraft.levelRenderer;
 		if (worldRenderer != null)
-			worldRenderer.loadRenderers();
+			worldRenderer.allChanged();
 	}
 
 	private static void toggleVisuals() {
@@ -65,15 +65,15 @@ public class KeybindHandler {
 
 	private static void toggleLookedAtSmoothable() {
 		Minecraft minecraft = Minecraft.getInstance();
-		ClientWorld world = minecraft.world;
-		RayTraceResult lookingAt = minecraft.objectMouseOver;
+		ClientWorld world = minecraft.level;
+		RayTraceResult lookingAt = minecraft.hitResult;
 		if (world == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK)
 			return;
 		BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
-		BlockState state = world.getBlockState(lookingAtBlock.getPos());
+		BlockState state = world.getBlockState(lookingAtBlock.getBlockPos());
 		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
 		System.out.println("toggleLookedAtSmoothable to " + newValue + " for " + BlockStateConverter.toString(state));
-		boolean singleplayer = minecraft.isSingleplayer() && !minecraft.getIntegratedServer().getPublic();
+		boolean singleplayer = minecraft.hasSingleplayerServer() && !minecraft.getSingleplayerServer().isPublished();
 		if (singleplayer || !NoCubesNetwork.currentServerHasNoCubes) {
 			// Either we're in singleplayer or the server doesn't have NoCubes
 			// Allow the player to have visuals
@@ -82,7 +82,7 @@ public class KeybindHandler {
 		}
 		if (singleplayer || NoCubesNetwork.currentServerHasNoCubes) {
 			// We're on a server with NoCubes installed
-			if (!minecraft.player.hasPermissionLevel(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL))
+			if (!minecraft.player.hasPermissions(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL))
 				// Not enough permission, don't send packet that will be denied
 				return;
 			// Send an update request packet

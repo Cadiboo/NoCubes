@@ -73,12 +73,8 @@ public class SurfaceNets {
 			worldXStart, worldYStart, worldZStart,
 			// Minus one because this is inclusive
 			worldXStart + fieldSizeZ - 1, worldYStart + fieldSizeY - 1, worldZStart + fieldSizeX - 1,
-			pos, Minecraft.getInstance().world, (blockState, blockPos) -> {
-				int x = blockPos.getX() - worldXStart;
-				int y = blockPos.getY() - worldYStart;
-				int z = blockPos.getZ() - worldZStart;
+			pos, Minecraft.getInstance().level, (blockState, blockPos, index) -> {
 				boolean isStateSmoothable = isSmoothable.test(blockState);
-				int index = ModUtil.get3dIndexInto1dArray(x, y, z, fieldSizeX, fieldSizeY);
 				densityField[index] = ModUtil.getBlockDensity(isStateSmoothable, blockState);
 			}
 		);
@@ -98,8 +94,8 @@ public class SurfaceNets {
 //			}
 //		}
 
-		final Face face = new Face(new Vec(), new Vec(), new Vec(), new Vec());
-		final ArrayList<double[]> vertices = new ArrayList<>(0x180);
+		final Face face = new Face();
+		final ArrayList<float[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
@@ -141,7 +137,7 @@ public class SurfaceNets {
 								mask |= (density < 0) ? (1 << corner) : 0;
 							}
 
-					pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
+					pos.set(worldXStart + x, worldYStart + y, worldZStart + z);
 					if (!voxelAction.apply(pos, mask))
 						return;
 
@@ -152,7 +148,7 @@ public class SurfaceNets {
 
 					// Sum up edge intersections
 					int edge_mask = EDGE_TABLE[mask];
-					final double[] vertex = {0, 0, 0};
+					final float[] vertex = {0, 0, 0};
 					int edgeCrossings = 0;
 
 					// For every edge of the cube...
@@ -204,9 +200,9 @@ public class SurfaceNets {
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					vertex[0] = -0.5 + 0 + x + s * vertex[0];
-					vertex[1] = -0.5 + 0 + y + s * vertex[1];
-					vertex[2] = -0.5 + 0 + z + s * vertex[2];
+					vertex[0] = -0.5F + 0 + x + s * vertex[0];
+					vertex[1] = -0.5F + 0 + y + s * vertex[1];
+					vertex[2] = -0.5F + 0 + z + s * vertex[2];
 //					vertex.multiply(s);
 //					vertex.add(
 //						x + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,
