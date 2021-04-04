@@ -6,6 +6,10 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.state.Property;
 import net.minecraft.util.registry.Registry;
 
+/**
+ * This is a copy and stub of the original minecraft BlockState class with a couple modifications so that NoCubes
+ * can compile against it's ASM-added 'nocubes_isTerrainSmoothable' field and the BlockState class in unit tests.
+ */
 public class BlockState extends AbstractBlock.AbstractBlockState implements net.minecraftforge.common.extensions.IForgeBlockState {
 //	/* Commented out for unit tests to work */ public static final Codec<BlockState> CODEC = codec(Registry.BLOCK, Block::defaultBlockState).stable();
 

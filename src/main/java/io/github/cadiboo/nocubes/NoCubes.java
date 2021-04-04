@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes;
 
-import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
@@ -13,6 +12,8 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
+
+import java.util.Arrays;
 
 /**
  * @author Cadiboo
@@ -29,8 +30,6 @@ public final class NoCubes {
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
 		TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
-//		ModLoadingContext.get().getActiveContainer().
-//		MinecraftForge.EVENT_BUS.register(this);
 		Hooks.loadClasses(FMLLoader.getDist());
 	}
 
@@ -48,9 +47,7 @@ public final class NoCubes {
 	 * Add your blocks as being smoothable.
 	 */
 	public static void addSmoothable(BlockState... states) {
-//		for (final BlockState state : states)
-//			// Can do this because all blockstates are reset when the server config is loaded
-//			smoothableHandler.addSmoothable(state);
+		NoCubesConfig.DEFAULT_SMOOTHABLES.addAll(Arrays.asList(states));
 	}
 
 }

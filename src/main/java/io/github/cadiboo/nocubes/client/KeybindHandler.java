@@ -72,7 +72,6 @@ public class KeybindHandler {
 		BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
 		BlockState state = world.getBlockState(lookingAtBlock.getBlockPos());
 		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
-		System.out.println("toggleLookedAtSmoothable to " + newValue + " for " + BlockStateConverter.toString(state));
 		boolean singleplayer = minecraft.hasSingleplayerServer() && !minecraft.getSingleplayerServer().isPublished();
 		if (singleplayer || !NoCubesNetwork.currentServerHasNoCubes) {
 			// Either we're in singleplayer or the server doesn't have NoCubes

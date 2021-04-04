@@ -26,7 +26,7 @@ public class Area {
 		return blocks;
 	}
 
-	private int getLength() {
+	public int getLength() {
 		// I could do Math.abs but I don't think I'll ever have the params passed in reversed
 		int depth = end.getZ() - start.getZ();
 		int height = end.getY() - start.getY();

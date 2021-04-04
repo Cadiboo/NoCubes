@@ -3,11 +3,12 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ReusableCache;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -18,6 +19,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Tuple;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
@@ -33,15 +35,15 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.LinkedList;
 import java.util.List;
 
+import static io.github.cadiboo.nocubes.config.ColorParser.*;
+
 /**
  * @author Cadiboo
  */
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public final class OverlayRenderer {
 
-	private static final ReusableCache<float[]> DEBUGGING = new ReusableCache.Global<>();
-	private static final ReusableCache<float[]> HIGHLIGHT = new ReusableCache.Global<>();
-	static List<Face> cache;
+	static Tuple<BlockPos, Face[]> cache;
 
 	@SubscribeEvent
 	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
@@ -57,42 +59,16 @@ public final class OverlayRenderer {
 
 		event.setCanceled(true);
 
-		final Vector3d projectedView = event.getInfo().getPosition();
-		final double d0 = projectedView.x;
-		final double d1 = projectedView.y;
-		final double d2 = projectedView.z;
+		final Vector3d camera = event.getInfo().getPosition();
+		Vector3d offset = new Vector3d(lookingAtPos.getX() - camera.x, lookingAtPos.getY() - camera.y, lookingAtPos.getZ() - camera.z);
 		final Matrix4f matrix4f = event.getMatrix().last().pose();
 		final IVertexBuilder bufferBuilder = event.getBuffers().getBuffer(RenderType.lines());
 
-		final int x = lookingAtPos.getX();
-		final int y = lookingAtPos.getY();
-		final int z = lookingAtPos.getZ();
-		SurfaceNets.generate(
-			x, y, z,
-			1, 1, 1,
-			world, NoCubes.smoothableHandler::isSmoothable, HIGHLIGHT,
-			(pos, mask) -> true,
-			(pos, face) -> {
-				Vec v0 = face.v0.add(x, y, z);
-				Vec v1 = face.v1.add(x, y, z);
-				Vec v2 = face.v2.add(x, y, z);
-				Vec v3 = face.v3.add(x, y, z);
-				final ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
-				final int red = color.red;
-				final int blue = color.blue;
-				final int green = color.green;
-				final int alpha = color.alpha;
-				bufferBuilder.vertex(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-				return true;
-			}
-		);
+		Area area = new Area(world, lookingAtPos, lookingAtPos.offset(1, 1, 1));
+		new SurfaceNets().generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+			drawFacePosColor(face, offset, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
+			return true;
+		});
 	}
 
 	@SubscribeEvent
@@ -109,15 +85,15 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-//		if (cache == null || world.getGameTime() % 5 == 0)
-//			cache = makeMesh(world, viewer);
+		if (cache == null || world.getGameTime() % 5 == 0)
+			cache = makeMesh(world, viewer);
 
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getMainCamera();
 
-		final Vector3d projectedView = activeRenderInfo.getPosition();
-		double d0 = projectedView.x;
-		double d1 = projectedView.y;
-		double d2 = projectedView.z;
+		final Vector3d camera = activeRenderInfo.getPosition();
+		double d0 = camera.x;
+		double d1 = camera.y;
+		double d2 = camera.z;
 		final MatrixStack matrixStack = event.getMatrixStack();
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
@@ -139,178 +115,108 @@ public final class OverlayRenderer {
 		});
 
 		BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
-		SurfaceNets.generate(
-			start.getX(), start.getY(), start.getZ(),
-			10, 10, 10,
-			world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
-			(pos, mask) -> {
-				if (mask == 0x00) {
-					VoxelShape voxelShape = VoxelShapes.block().move(pos.getX(), pos.getY(), pos.getZ());
-					drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 0.0F, 1.0F, 0.4F);
-				}
-				return true;
-			},
-			(pos, face) -> true
-		);
+		Area area = new Area(world, start, start.offset(10, 10, 10));
+		new OOCollisionHandler(new SurfaceNets()).generate(area, (x0, y0, z0, x1, y1, z1) -> {
+			VoxelShape voxelShape = VoxelShapes.box(
+				start.getX() + x0, start.getY() + y0, start.getZ() + z0,
+				start.getX() + x1, start.getY() + y1, start.getZ() + z1
+			);
+			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 0.0F, 1.0F, 0.4F);
+		});
 
 		Matrix4f matrix4f = matrixStack.last().pose();
 		{
-			final Face normal = new Face(new Vec(), new Vec(), new Vec(), new Vec());
+			final Face normal = new Face();
 			final Vec averageOfNormal = new Vec();
 			final Vec centre = new Vec();
-			for (Face face : cache) {
-				Vec v0 = face.v0;
-				Vec v1 = face.v1;
-				Vec v2 = face.v2;
-				Vec v3 = face.v3;
-				final float red = 0F;
-				final float blue = 1F;
-				final float green = 1F;
-				final float alpha = 1F;
-				bufferBuilder.vertex(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v1.x + -d0), (float) (v1.y + -d1), (float) (v1.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v2.x + -d0), (float) (v2.y + -d1), (float) (v2.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v3.x + -d0), (float) (v3.y + -d1), (float) (v3.z + -d2)).color(red, green, blue, alpha).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (v0.x + -d0), (float) (v0.y + -d1), (float) (v0.z + -d2)).color(red, green, blue, alpha).endVertex();
+			final Vec mutable = new Vec();
+
+			Face[] cachedFaces = cache.getB();
+			BlockPos pos = cache.getA();
+			Vector3d offset = new Vector3d(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
+			Color faceColor = new Color(0F, 1F, 1F, 1F);
+			Color normalDirectionColor = new Color(1F, 0F, 0F, 1F);
+			for (int i = 0, length = cachedFaces.length; i < length; i++) {
+				Face face = cachedFaces[i];
+				drawFacePosColor(face, offset, faceColor, bufferBuilder, matrix4f);
 
 				// Normals
 				face.assignNormalTo(normal);
-				normal.v0.multiply(-1);
-				normal.v1.multiply(-1);
-				normal.v2.multiply(-1);
-				normal.v3.multiply(-1);
+				normal.multiply(-1);
 
 				normal.assignAverageTo(averageOfNormal);
 				Direction direction = averageOfNormal.getDirectionFromNormal();
 				face.assignAverageTo(centre);
 
+				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-				bufferBuilder.vertex(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (centre.x + averageOfNormal.x * dirMul + -d0), (float) (centre.y + averageOfNormal.y * dirMul + -d1), (float) (centre.z + averageOfNormal.z * dirMul + -d2)).color(0F, 1F, 0F, 1F).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (centre.x + -d0), (float) (centre.y + -d1), (float) (centre.z + -d2)).color(1F, 0F, 0F, 1F).endVertex();
-				bufferBuilder.vertex(matrix4f, (float) (centre.x + direction.getStepX() * dirMul + -d0), (float) (centre.y + direction.getStepY() * dirMul + -d1), (float) (centre.z + direction.getStepZ() * dirMul + -d2)).color(1F, 0F, 0F, 1F).endVertex();
+				mutable.set(averageOfNormal).multiply(dirMul).add(centre);
+				drawLinePosColor(centre, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(direction.getStepX(), direction.getStepY(), direction.getStepZ()).multiply(dirMul).add(centre);
+				drawLinePosColor(centre, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
 
-				final float normMul = 0.1F;
-				{
-					Vec n = normal.v0;
-					Vec v = v0;
-					float nx = (float) (n.x) * normMul;
-					float ny = (float) (n.y) * normMul;
-					float nz = (float) (n.z) * normMul;
-					bufferBuilder.vertex(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-					bufferBuilder.vertex(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				}
-				{
-					Vec n = normal.v1;
-					Vec v = v1;
-					float nx = (float) (n.x) * normMul;
-					float ny = (float) (n.y) * normMul;
-					float nz = (float) (n.z) * normMul;
-					bufferBuilder.vertex(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-					bufferBuilder.vertex(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				}
-				{
-					Vec n = normal.v2;
-					Vec v = v2;
-					float nx = (float) (n.x) * normMul;
-					float ny = (float) (n.y) * normMul;
-					float nz = (float) (n.z) * normMul;
-					bufferBuilder.vertex(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-					bufferBuilder.vertex(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				}
-				{
-					Vec n = normal.v3;
-					Vec v = v3;
-					float nx = (float) (n.x) * normMul;
-					float ny = (float) (n.y) * normMul;
-					float nz = (float) (n.z) * normMul;
-					bufferBuilder.vertex(matrix4f, (float) (v.x + -d0), (float) (v.y + -d1), (float) (v.z + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-					bufferBuilder.vertex(matrix4f, (float) (v.x + nx + -d0), (float) (v.y + ny + -d1), (float) (v.z + nz + -d2)).color(0F, 0F, 1F, 1F).endVertex();
-				}
+				// Draw each vertex normal
+				mutable.set(normal.v0).multiply(dirMul);
+				drawLinePosColor(normal.v0, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v1).multiply(dirMul);
+				drawLinePosColor(normal.v1, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v2).multiply(dirMul);
+				drawLinePosColor(normal.v3, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v3).multiply(dirMul);
+				drawLinePosColor(normal.v3, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
 			}
 		}
 
-//		List<VoxelShape> shapes = new ArrayList<>();
-//		if (false) {
-//			BlockPos base = viewer.getPosition().add(0, 2, 0);
-//			final int collisionSizeX = 16;
-//			final int collisionSizeY = 16;
-//			final int collisionSizeZ = 16;
-//
-//			// Make this mesh centred around the base
-//			final int startX = base.getX() - collisionSizeX / 2;
-//			final int startY = base.getY() - collisionSizeY / 2;
-//			final int startZ = base.getZ() - collisionSizeZ / 2;
-//
-//			for (int z = 0; z < collisionSizeX; z++) {
-//				for (int y = 0; y < collisionSizeY; y++) {
-//					for (int x = 0; x < collisionSizeZ; x++) {
-//						final int currX = startX + x;
-//						final int currY = startY + y;
-//						final int currZ = startZ + z;
-//						SurfaceNets.generate(
-//							currX, currY, currZ,
-//							1, 1, 1,
-//							viewer.world, NoCubes.smoothableHandler::isSmoothable, COLLISIONS,
-//							(pos, face) -> {
-//								Vec v0 = face.v0;
-//								Vec v1 = face.v1;
-//								Vec v2 = face.v2;
-//								Vec v3 = face.v3;
-//								// Normals
-//								Vec n0 = Vec.normal(v3, v0, v1).multiply(-1);
-//								Vec n1 = Vec.normal(v0, v1, v2).multiply(-1);
-//								Vec n2 = Vec.normal(v1, v2, v3).multiply(-1);
-//								Vec n3 = Vec.normal(v2, v3, v0).multiply(-1);
-//
-//								Vec centre = Vec.of(
-//									(v0.x + v1.x + v2.x + v3.x) / 4,
-//									(v0.y + v1.y + v2.y + v3.y) / 4,
-//									(v0.z + v1.z + v2.z + v3.z) / 4
-//								);
-//
-//								final Vec nAverage = Vec.of(
-//									(n0.x + n2.x) / 2,
-//									(n0.y + n2.y) / 2,
-//									(n0.z + n2.z) / 2
-//								);
-//								nAverage.normalise().multiply(-0.125d);
-//
-//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v0));
-//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v1));
-//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v2));
-//								shapes.add(makeShape(currX, currY, currZ, centre, nAverage, v3));
-//								n0.close();
-//								n1.close();
-//								n2.close();
-//								n3.close();
-//								nAverage.close();
-//								centre.close();
-//
-////								for (Vec v : face.getVertices()) {
-////									v.add(currX, currY, currZ);
-////									shapes.add(VoxelShapes.create(
-////										v.x - 0.125, v.y - 0.125, v.z - 0.125,
-////										v.x + 0.125, v.y + 0.125, v.z + 0.125
-////									));
-////								}
-//								return true;
-//							}
-//						);
-//					}
-//				}
-//			}
-//		}
-//
-//		shapes.forEach(voxelShape -> {
-//			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 1.0F, 0.0F, 0.8F);
-//		});
-
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
 		bufferSource.endBatch(RenderType.lines());
+	}
+
+	private static void drawLinePosColor(Vec start, Vec end, Vector3d offset, Color color, IVertexBuilder bufferBuilder, Matrix4f matrix4f) {
+		int red = color.red;
+		int blue = color.blue;
+		int green = color.green;
+		int alpha = color.alpha;
+		double x = offset.x;
+		double y = offset.y;
+		double z = offset.z;
+		bufferBuilder.vertex(matrix4f, (float) (x + start.x), (float) (y + start.y), (float) (z + start.z)).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, (float) (x + end.x), (float) (y + end.y), (float) (z + end.z)).color(red, green, blue, alpha).endVertex();
+	}
+
+	private static void drawFacePosColor(Face face, Vector3d offset, Color color, IVertexBuilder bufferBuilder, Matrix4f matrix4f) {
+		int red = color.red;
+		int blue = color.blue;
+		int green = color.green;
+		int alpha = color.alpha;
+
+		Vec v0 = face.v0;
+		Vec v1 = face.v1;
+		Vec v2 = face.v2;
+		Vec v3 = face.v3;
+		double x = offset.x;
+		double y = offset.y;
+		double z = offset.z;
+
+		float v0x = (float) (x + v0.x);
+		float v1x = (float) (x + v1.x);
+		float v2x = (float) (x + v2.x);
+		float v3x = (float) (x + v3.x);
+		float v0y = (float) (y + v0.y);
+		float v1y = (float) (y + v1.y);
+		float v2y = (float) (y + v2.y);
+		float v3y = (float) (y + v3.y);
+		float v0z = (float) (z + v0.z);
+		float v1z = (float) (z + v1.z);
+		float v2z = (float) (z + v2.z);
+		float v3z = (float) (z + v3.z);
+		bufferBuilder.vertex(matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		bufferBuilder.vertex(matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
 	}
 
 	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
@@ -321,8 +227,7 @@ public final class OverlayRenderer {
 		});
 	}
 
-	private static List<Face> makeMesh(final World world, final Entity viewer) {
-		final List<Face> meshFaces = new LinkedList<>();
+	private static Tuple<BlockPos, Face[]> makeMesh(final World world, final Entity viewer) {
 //		BlockPos base = new BlockPos(viewer.chunkCoordX << 4, viewer.chunkCoordY << 4, viewer.chunkCoordZ << 4);
 		BlockPos base = viewer.blockPosition().offset(0, 2, 0);
 
@@ -331,22 +236,18 @@ public final class OverlayRenderer {
 		final int meshSizeZ = 16;
 
 		// Make this mesh centred around the base
-		final int startX = base.getX() - meshSizeX / 2;
-		final int startY = base.getY() - meshSizeY / 2;
-		final int startZ = base.getZ() - meshSizeZ / 2;
+		final int offsetX = meshSizeX / 2;
+		final int offsetY = meshSizeY / 2;
+		final int offsetZ = meshSizeZ / 2;
+		BlockPos start = base.offset(-offsetX, -offsetY, -offsetZ);
+		Area area = new Area(world, start, base.offset(offsetX, offsetY, offsetZ));
+		final List<Face> meshFaces = new LinkedList<>();
+		new SurfaceNets().generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+			meshFaces.add(new Face(face.v0.copy(), face.v1.copy(), face.v2.copy(), face.v3.copy()));
+			return true;
+		});
 
-		SurfaceNets.generate(
-			startX, startY, startZ,
-			meshSizeX, meshSizeY, meshSizeZ,
-			world, NoCubes.smoothableHandler::isSmoothable, DEBUGGING,
-			(pos, mask) -> true,
-			(pos, face) -> meshFaces.add(new Face(
-				face.v0.add(startX, startY, startZ).copy(),
-				face.v1.add(startX, startY, startZ).copy(),
-				face.v2.add(startX, startY, startZ).copy(),
-				face.v3.add(startX, startY, startZ).copy()
-			))
-		);
+		return new Tuple<>(start, meshFaces.toArray(new Face[0]));
 
 //		BlockPos.getAllInBoxMutable(base.add(-8, -8, -8), base.add(7, 7, 7)).forEach(blockPos -> {
 //			final BlockState state = viewer.world.getBlockState(blockPos);
@@ -411,25 +312,6 @@ public final class OverlayRenderer {
 //			}
 //		});
 
-//		final double x = viewer.getPosX();
-//		final double y = viewer.getPosY();
-//		final double z = viewer.getPosZ();
-//		Vec v0 = Vec.of(x + 0.5, y - 1, z + 0.5);
-//		Vec v1 = Vec.of(x - 0.5, y - 1, z + 0.5);
-//		Vec v2 = Vec.of(x - 0.5, y - 1, z - 0.5);
-//		Vec v3 = Vec.of(x + 0.5, y - 1, z - 0.5);
-//
-//		meshFaces.add(Face.of(v0, v1, v2, v3));
-
-		return meshFaces;
 	}
-
-//	private static Face toFace(final Vec v0, final Vec v1) {
-//		Vec v2 = Vec.of(v1);
-//		v2.y += 1;
-//		Vec v3 = Vec.of(v0);
-//		v3.y += 1;
-//		return Face.of(v0, v1, v2, v3);
-//	}
 
 }

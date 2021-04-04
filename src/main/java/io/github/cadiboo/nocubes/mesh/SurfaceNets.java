@@ -1,13 +1,10 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ReusableCache;
-import io.github.cadiboo.nocubes.util.Vec;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockReader;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
@@ -19,21 +16,17 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  * Written by Mikola Lysenko (C) 2012
  * Ported from JavaScript to Java and modified for NoCubes by Cadiboo.
  */
-public class SurfaceNets {
+public class SurfaceNets implements MeshGenerator {
 
 	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
 	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
 	// Never change this. I'm not sure why it's needed but it is needed very much
 	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
 
-	public static void generate(
-		int startX, int startY, int startZ,
-		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
-		VoxelAction voxelAction, FaceAction faceAction
-	) {
+	@Override
+	public void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
 		try {
-			generateOrThrow(startX, startY, startZ, meshSizeX, meshSizeY, meshSizeZ, world, isSmoothable, cache, voxelAction, faceAction);
+			generateOrThrow(area, isSmoothable, action);
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
@@ -41,22 +34,14 @@ public class SurfaceNets {
 		}
 	}
 
-	private static void generateOrThrow(
-		int startX, int startY, int startZ,
-		int meshSizeX, int meshSizeY, int meshSizeZ,
-		IBlockReader world, Predicate<BlockState> isSmoothable, ReusableCache<float[]> cache,
-		VoxelAction voxelAction, FaceAction faceAction
-	) {
-		meshSizeX += MESH_SIZE_POSITIVE_EXTENSION;
-		meshSizeY += MESH_SIZE_POSITIVE_EXTENSION;
-		meshSizeZ += MESH_SIZE_POSITIVE_EXTENSION;
+	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FaceAction faceAction) {
 		// Subtract the negative extension from the start and add it to the size
-		int worldXStart = startX - MESH_SIZE_NEGATIVE_EXTENSION;
-		int worldYStart = startY - MESH_SIZE_NEGATIVE_EXTENSION;
-		int worldZStart = startZ - MESH_SIZE_NEGATIVE_EXTENSION;
-		int fieldSizeX = meshSizeX + MESH_SIZE_NEGATIVE_EXTENSION;
-		int fieldSizeY = meshSizeY + MESH_SIZE_NEGATIVE_EXTENSION;
-		int fieldSizeZ = meshSizeZ + MESH_SIZE_NEGATIVE_EXTENSION;
+		int fieldSizeX = area.end.getX() - area.start.getX();
+		int fieldSizeY = area.end.getY() - area.start.getY();
+		int fieldSizeZ = area.end.getZ() - area.start.getZ();
+		int meshSizeX = fieldSizeX - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
+		int meshSizeY = fieldSizeY - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
+		int meshSizeZ = fieldSizeZ - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
 
 		final BlockPos.Mutable pos = new BlockPos.Mutable();
 
@@ -68,31 +53,13 @@ public class SurfaceNets {
 		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		final float[] densityField = cache.getOrCreate(() -> new float[fieldSizeZ * fieldSizeY * fieldSizeX]);
-		ModUtil.traverseArea(
-			worldXStart, worldYStart, worldZStart,
-			// Minus one because this is inclusive
-			worldXStart + fieldSizeZ - 1, worldYStart + fieldSizeY - 1, worldZStart + fieldSizeX - 1,
-			pos, Minecraft.getInstance().level, (blockState, blockPos, index) -> {
-				boolean isStateSmoothable = isSmoothable.test(blockState);
-				densityField[index] = ModUtil.getBlockDensity(isStateSmoothable, blockState);
-			}
-		);
-		// Old code from before 'traverseArea' was used, kept around because it might be useful for CubicChunks compat
-//		{
-//			int i = 0;
-//			for (int z = 0; z < fieldSizeZ; z++) {
-//				for (int y = 0; y < fieldSizeY; y++) {
-//					for (int x = 0; x < fieldSizeX; x++, i++) {
-//						pos.setPos(worldXStart + x, worldYStart + y, worldZStart + z);
-//						if (world instanceof WorldGenRegion && !((WorldGenRegion) world).chunkExists(x << 16, z << 16))
-//							binaryField[z][y][x] = false;
-//						else
-//							binaryField[z][y][x] = isSmoothable.test(world.getBlockState(pos));
-//					}
-//				}
-//			}
-//		}
+		BlockState[] states = area.getAndCacheBlocks();
+		final float[] densityField = new float[states.length];
+		for (int i = 0; i < states.length; i++) {
+			BlockState state = states[i];
+			boolean isStateSmoothable = isSmoothable.test(state);
+			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
+		}
 
 		final Face face = new Face();
 		final ArrayList<float[]> vertices = new ArrayList<>(0x180);
@@ -137,9 +104,9 @@ public class SurfaceNets {
 								mask |= (density < 0) ? (1 << corner) : 0;
 							}
 
-					pos.set(worldXStart + x, worldYStart + y, worldZStart + z);
-					if (!voxelAction.apply(pos, mask))
-						return;
+//					pos.set(worldXStart + x, worldYStart + y, worldZStart + z);
+//					if (!voxelAction.apply(pos, mask))
+//						return;
 
 					// Check for early termination if cell does not intersect boundary
 					// This cell is either entirely inside or entirely outside the isosurface
@@ -257,18 +224,6 @@ public class SurfaceNets {
 				}
 			}
 		}
-	}
-
-	public interface VoxelAction {
-
-		boolean apply(BlockPos.Mutable pos, int mask);
-
-	}
-
-	public interface FaceAction {
-
-		boolean apply(BlockPos.Mutable pos, Face face);
-
 	}
 
 	static final class Lookup {

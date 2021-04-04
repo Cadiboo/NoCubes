@@ -1,14 +1,17 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.function.Predicate;
+
 public class CubicMeshGenerator implements MeshGenerator {
 	@Override
-	public void generate(Area area, FaceAction action) {
+	public void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
 		BlockPos start = area.start;
 		BlockPos end = area.end;
 
@@ -28,10 +31,10 @@ public class CubicMeshGenerator implements MeshGenerator {
 					if (y == maxY - 1)
 						continue;
 					BlockState state = blocks[index];
-					if (state.getMaterial() == Material.AIR)
+					if (!isSmoothable.test(state))
 						continue;
 					BlockState up = blocks[index + width];
-					if (up.getMaterial() == Material.AIR)
+					if (!isSmoothable.test(up))
 						continue;
 					pos.set(x, y, z);
 					face.v0.set(x + 1, y, z + 1);

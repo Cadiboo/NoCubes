@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.config;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -21,13 +22,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
+
+import static net.minecraft.block.Blocks.*;
+import static net.minecraft.state.properties.BlockStateProperties.LIT;
+import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
 
 /**
  * The Config for NoCubes.
@@ -38,6 +37,118 @@ import java.util.stream.Collectors;
  */
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class NoCubesConfig {
+
+	/**
+	 * Stores the list of blocks that 'just are' smoothable by default.
+	 * This includes stuff like Stone and any blocks that other mods register as smoothable.
+	 */
+	public static Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
+
+	static {
+		BlockState[] vanilla = {
+			STONE.defaultBlockState(),
+			GRASS_BLOCK.defaultBlockState().setValue(SNOWY, false),
+			GRASS_BLOCK.defaultBlockState().setValue(SNOWY, true),
+
+			STONE.defaultBlockState(),
+			GRANITE.defaultBlockState(),
+			DIORITE.defaultBlockState(),
+			ANDESITE.defaultBlockState(),
+
+			DIRT.defaultBlockState(),
+			COARSE_DIRT.defaultBlockState(),
+
+			PODZOL.defaultBlockState().setValue(SNOWY, false),
+			PODZOL.defaultBlockState().setValue(SNOWY, true),
+
+			SAND.defaultBlockState(),
+			RED_SAND.defaultBlockState(),
+
+			SANDSTONE.defaultBlockState(),
+
+			RED_SANDSTONE.defaultBlockState(),
+
+			GRAVEL.defaultBlockState(),
+
+			COAL_ORE.defaultBlockState(),
+			IRON_ORE.defaultBlockState(),
+			GOLD_ORE.defaultBlockState(),
+			REDSTONE_ORE.defaultBlockState().setValue(LIT, false),
+			REDSTONE_ORE.defaultBlockState().setValue(LIT, true),
+			DIAMOND_ORE.defaultBlockState(),
+			LAPIS_ORE.defaultBlockState(),
+			EMERALD_ORE.defaultBlockState(),
+			NETHER_QUARTZ_ORE.defaultBlockState(),
+
+			INFESTED_STONE.defaultBlockState(),
+
+			GRASS_PATH.defaultBlockState(),
+
+			CLAY.defaultBlockState(),
+			TERRACOTTA.defaultBlockState(),
+
+			WHITE_TERRACOTTA.defaultBlockState(),
+			ORANGE_TERRACOTTA.defaultBlockState(),
+			MAGENTA_TERRACOTTA.defaultBlockState(),
+			LIGHT_BLUE_TERRACOTTA.defaultBlockState(),
+			YELLOW_TERRACOTTA.defaultBlockState(),
+			LIME_TERRACOTTA.defaultBlockState(),
+			PINK_TERRACOTTA.defaultBlockState(),
+			GRAY_TERRACOTTA.defaultBlockState(),
+			LIGHT_GRAY_TERRACOTTA.defaultBlockState(),
+			CYAN_TERRACOTTA.defaultBlockState(),
+			PURPLE_TERRACOTTA.defaultBlockState(),
+			BLUE_TERRACOTTA.defaultBlockState(),
+			BROWN_TERRACOTTA.defaultBlockState(),
+			GREEN_TERRACOTTA.defaultBlockState(),
+			RED_TERRACOTTA.defaultBlockState(),
+			BLACK_TERRACOTTA.defaultBlockState(),
+
+
+			PACKED_ICE.defaultBlockState(),
+
+			SNOW.defaultBlockState(),
+			SNOW_BLOCK.defaultBlockState(),
+
+			BEDROCK.defaultBlockState(),
+
+			NETHERRACK.defaultBlockState(),
+			SOUL_SAND.defaultBlockState(),
+			MAGMA_BLOCK.defaultBlockState(),
+			GLOWSTONE.defaultBlockState(),
+
+			END_STONE.defaultBlockState(),
+
+			MYCELIUM.defaultBlockState().setValue(SNOWY, false),
+			MYCELIUM.defaultBlockState().setValue(SNOWY, true),
+
+		};
+		String[] modded = {
+			"biomesoplenty:grass[snowy=false,variant=sandy]",
+			"biomesoplenty:dirt[coarse=false,variant=sandy]",
+			"biomesoplenty:white_sand",
+			"biomesoplenty:grass[snowy=false,variant=silty]",
+			"biomesoplenty:dirt[coarse=false,variant=loamy]",
+			"biomesoplenty:grass[snowy=false,variant=loamy]",
+			"biomesoplenty:dried_sand",
+			"biomesoplenty:hard_ice",
+			"biomesoplenty:mud[variant=mud]",
+			"biomesoplenty:dirt[coarse=false,variant=silty]",
+			"chisel:marble2[variation=7]",
+			"chisel:limestone2[variation=7]",
+			"dynamictrees:rootydirtspecies[life=0]",
+			"dynamictrees:rootysand[life=0]",
+			"iceandfire:ash",
+			"iceandfire:sapphire_ore",
+			"iceandfire:chared_grass",
+			"iceandfire:chared_stone",
+			"iceandfire:frozen_grass_path",
+			"notenoughroofs:copper_ore",
+			"rustic:slate",
+		};
+		DEFAULT_SMOOTHABLES.addAll(Arrays.asList(vanilla));
+		DEFAULT_SMOOTHABLES.addAll(parseBlockstates(Arrays.asList(modded)));
+	}
 
 	/**
 	 * Called from inside the mod constructor.
@@ -58,41 +169,33 @@ public final class NoCubesConfig {
 		else */
 		if (spec == Client.SPEC) {
 			Client.bake();
-			Set<BlockState> whitelisted = Client.INSTANCE.smoothableWhitelistPreference.get().parallelStream()
-				.map(BlockStateConverter::fromStringOrNull)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-			Set<BlockState> blacklisted = Client.INSTANCE.smoothableBlacklistPreference.get().parallelStream()
-				.map(BlockStateConverter::fromStringOrNull)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-			ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.flatMap(block -> ModUtil.getStates(block).parallelStream())
-				.forEach(state -> {
-					if (whitelisted.contains(state))
-						NoCubes.smoothableHandler.addSmoothable(state);
-					else if (blacklisted.contains(state))
-						NoCubes.smoothableHandler.removeSmoothable(state);
-				});
+			recomputeSmoothables(Client.INSTANCE.smoothableWhitelistPreference.get(), Client.INSTANCE.smoothableBlacklistPreference.get());
 		} else if (spec == Server.SPEC) {
 			Server.bake();
-			Set<BlockState> whitelisted = Server.INSTANCE.smoothableWhitelist.get().parallelStream()
-				.map(BlockStateConverter::fromStringOrNull)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-			Set<BlockState> blacklisted = Server.INSTANCE.smoothableBlacklist.get().parallelStream()
-				.map(BlockStateConverter::fromStringOrNull)
-				.filter(Objects::nonNull)
-				.collect(Collectors.toSet());
-			ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.flatMap(block -> ModUtil.getStates(block).parallelStream())
-				.forEach(state -> {
-					if (whitelisted.contains(state))
-						NoCubes.smoothableHandler.addSmoothable(state);
-					else if (blacklisted.contains(state))
-						NoCubes.smoothableHandler.removeSmoothable(state);
-				});
+			recomputeSmoothables(Server.INSTANCE.smoothableWhitelist.get(), Server.INSTANCE.smoothableBlacklist.get());
 		}
+	}
+
+	private static void recomputeSmoothables(List<? extends String> whitelist, List<? extends String> blacklist) {
+		Set<BlockState> whitelisted = parseBlockstates(whitelist);
+		Set<BlockState> blacklisted = parseBlockstates(blacklist);
+		ForgeRegistries.BLOCKS.getValues().parallelStream()
+			.flatMap(block -> ModUtil.getStates(block).parallelStream())
+			.forEach(state -> {
+				if (blacklisted.contains(state))
+					NoCubes.smoothableHandler.removeSmoothable(state);
+				else if (whitelisted.contains(state) || DEFAULT_SMOOTHABLES.contains(state))
+					NoCubes.smoothableHandler.addSmoothable(state);
+			});
+	}
+
+	private static Set<BlockState> parseBlockstates(List<? extends String> list) {
+		Set<BlockState> set = Sets.newIdentityHashSet();
+		list.parallelStream()
+			.map(BlockStateConverter::fromStringOrNull)
+			.filter(Objects::nonNull)
+			.forEach(set::add);
+		return set;
 	}
 
 	// Only call with correct type.
@@ -140,14 +243,12 @@ public final class NoCubesConfig {
 		}
 
 		public static void updateSmoothablePreference(final boolean newValue, final BlockState... states) {
-			System.out.println("Client.updateSmoothablePreference");
 			final NoCubesConfig.Client.Impl cfg = NoCubesConfig.Client.INSTANCE;
 			NoCubesConfig.updateSmoothable(newValue, states, (List) cfg.smoothableWhitelistPreference.get(), (List) cfg.smoothableBlacklistPreference.get());
 			saveAndLoad(ModConfig.Type.CLIENT);
 		}
 
 		public static void updateRender(final boolean newValue) {
-			System.out.println("Client.updateRender");
 			Client.INSTANCE.render.set(newValue);
 			saveAndLoad(ModConfig.Type.CLIENT);
 		}

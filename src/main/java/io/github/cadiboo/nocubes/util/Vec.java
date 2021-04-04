@@ -7,7 +7,7 @@ import net.minecraft.util.math.vector.Matrix4f;
 /**
  * @author Cadiboo
  */
-public class Vec {
+public /* inline */ class Vec {
 
 	public float x;
 	public float y;
@@ -24,6 +24,10 @@ public class Vec {
 
 	public Vec(Vec v) {
 		this(v.x, v.y, v.z);
+	}
+
+	public Vec set(Vec v) {
+		return set(v.x, v.y, v.z);
 	}
 
 	public Vec set(float x, float y, float z) {

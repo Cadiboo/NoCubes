@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3i;
 
 /**
  * @author Cadiboo
@@ -45,25 +46,47 @@ public class Face {
 		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
 	}
 
-	public void add(float x, float y, float z) {
+	public void assignValuesFrom(Face other) {
+		v0.set(other.v0);
+		v1.set(other.v1);
+		v2.set(other.v2);
+		v3.set(other.v3);
+	}
+
+	public Face add(Vector3i pos) {
+		return add(pos.getX(), pos.getY(), pos.getZ());
+	}
+
+	public Face add(float x, float y, float z) {
 		v0.add(x, y, z);
 		v1.add(x, y, z);
 		v2.add(x, y, z);
 		v3.add(x, y, z);
+		return this;
 	}
 
-	public void multiply(float d) {
+	public Face subtract(float x, float y, float z) {
+		v0.subtract(x, y, z);
+		v1.subtract(x, y, z);
+		v2.subtract(x, y, z);
+		v3.subtract(x, y, z);
+		return this;
+	}
+
+	public Face multiply(float d) {
 		v0.multiply(d);
 		v1.multiply(d);
 		v2.multiply(d);
 		v3.multiply(d);
+		return this;
 	}
 
-	public void transform(Matrix4f matrix) {
+	public Face transform(Matrix4f matrix) {
 		v0.transform(matrix);
 		v1.transform(matrix);
 		v2.transform(matrix);
 		v3.transform(matrix);
+		return this;
 	}
 
 }

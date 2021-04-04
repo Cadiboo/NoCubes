@@ -1,9 +1,13 @@
 package io.github.cadiboo.nocubes.collision;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.block.BlockState;
+
+import java.util.function.Predicate;
 
 public class OOCollisionHandler {
 	private final MeshGenerator meshGenerator;
@@ -16,7 +20,8 @@ public class OOCollisionHandler {
 		final Face normal = new Face();
 		final Vec averageOfNormal = new Vec();
 		final Vec centre = new Vec();
-		meshGenerator.generate(area, (pos, face) -> {
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable; // + || isLeavesSmoothable
+		meshGenerator.generate(area, isSmoothable, (pos, face) -> {
 			face.assignNormalTo(normal);
 			face.assignAverageTo(centre);
 
@@ -47,7 +52,7 @@ public class OOCollisionHandler {
 		);
 	}
 
-	interface IShapeConsumer {
+	public interface IShapeConsumer {
 
 		void accept(
 			float x0, float y0, float z0,

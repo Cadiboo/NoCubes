@@ -1,10 +1,8 @@
 package io.github.cadiboo.nocubes.smoothable;
 
+import com.google.common.collect.Sets;
 import net.minecraft.block.BlockState;
 import org.apache.logging.log4j.LogManager;
-
-import java.util.Collections;
-import java.util.IdentityHashMap;
 
 /**
  * The in-memory list of smoothables.
@@ -20,8 +18,8 @@ public interface SmoothableHandler {
 			SmoothableHandler asm = new ASM();
 			asm.isSmoothable(test);
 			return asm;
-		} catch (Exception e) {
-			LogManager.getLogger().error("Failed to create optimised ASM based handler, falling back to Set implementation", e);
+		} catch (NoSuchFieldError e) {
+			LogManager.getLogger().warn("Failed to create optimised ASM based handler, falling back to Set implementation, performance may suffer slightly", e);
 			return new Set();
 		}
 	}
@@ -53,7 +51,7 @@ public interface SmoothableHandler {
 
 	class Set implements SmoothableHandler {
 
-		private final java.util.Set<BlockState> smoothables = Collections.newSetFromMap(new IdentityHashMap<>());
+		private final java.util.Set<BlockState> smoothables = Sets.newIdentityHashSet();
 
 		@Override
 		public void addSmoothable(final BlockState state) {
