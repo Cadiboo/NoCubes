@@ -114,9 +114,12 @@ public final class OverlayRenderer {
 //		BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
 //		try (Area area = new Area(world, start, start.offset(10, 10, 10))) {
 //			new OOCollisionHandler(new SurfaceNets()).generate(area, (x0, y0, z0, x1, y1, z1) -> {
+//				double x = start.getX();
+//				double y = start.getY();
+//				double z = start.getZ();
 //				VoxelShape voxelShape = VoxelShapes.box(
-//					start.getX() + x0, start.getY() + y0, start.getZ() + z0,
-//					start.getX() + x1, start.getY() + y1, start.getZ() + z1
+//					x + x0, y + y0, z + z0,
+//					x + x1, y + y1, z + z1
 //				);
 //				drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 0.0F, 1.0F, 0.4F);
 //			});
