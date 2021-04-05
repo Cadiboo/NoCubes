@@ -48,7 +48,7 @@ public class KeybindHandler {
 		if (event.phase != TickEvent.Phase.END)
 			return;
 		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
-			if (keybind.getKey().isDown())
+			if (keybind.getKey().consumeClick())
 				keybind.getValue().run();
 	}
 

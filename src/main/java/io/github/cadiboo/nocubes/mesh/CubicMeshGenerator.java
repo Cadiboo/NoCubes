@@ -19,7 +19,7 @@ public class CubicMeshGenerator implements MeshGenerator {
 		int width = end.getX() - start.getX();
 
 		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.Mutable pos = start.mutable();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 		Face face = new Face();
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {
@@ -31,16 +31,16 @@ public class CubicMeshGenerator implements MeshGenerator {
 
 					// Up (pos y)
 					if (y < height - 1 && !isSmoothable.test(blocks[index + height]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
+							x + 1, y + 1, z + 1,
 							x + 1, y + 1, z + 0,
 							x + 0, y + 1, z + 0,
-							x + 0, y + 1, z + 1,
-							x + 1, y + 1, z + 1
+							x + 0, y + 1, z + 1
 						));
 
 					// Down (neg y)
 					if (y > 0 && !isSmoothable.test(blocks[index - height]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
 							x + 1, y, z + 1,
 							x + 0, y, z + 1,
 							x + 0, y, z + 0,
@@ -49,7 +49,7 @@ public class CubicMeshGenerator implements MeshGenerator {
 
 					// South (pos z)
 					if (z < depth - 1 && !isSmoothable.test(blocks[index + width * height]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
 							x + 1, y + 1, z + 1,
 							x + 0, y + 1, z + 1,
 							x + 0, y + 0, z + 1,
@@ -58,25 +58,25 @@ public class CubicMeshGenerator implements MeshGenerator {
 
 					// North (neg z)
 					if (z > 0 && !isSmoothable.test(blocks[index - width * height]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
+							x + 1, y + 1, z + 0,
 							x + 1, y + 0, z + 0,
 							x + 0, y + 0, z + 0,
-							x + 0, y + 1, z + 0,
-							x + 1, y + 1, z + 0
+							x + 0, y + 1, z + 0
 						));
 
 					// East (pos x)
 					if (x < width - 1 && !isSmoothable.test(blocks[index + 1]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
+							x + 1, y + 1, z + 1,
 							x + 1, y + 0, z + 1,
 							x + 1, y + 0, z + 0,
-							x + 1, y + 1, z + 0,
-							x + 1, y + 1, z + 1
+							x + 1, y + 1, z + 0
 						));
 
 					// West (neg x)
 					if (x > 0 && !isSmoothable.test(blocks[index - 1]))
-						action.apply(pos, face.set(
+						action.apply(pos.set(x, y, z), face.set(
 							x + 0, y + 1, z + 1,
 							x + 0, y + 1, z + 0,
 							x + 0, y + 0, z + 0,

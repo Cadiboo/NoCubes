@@ -29,7 +29,8 @@ public final class NoCubes {
 		smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
-		TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+		if (ModUtil.IS_DEVELOPER_WORKSPACE.get())
+			TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
 		Hooks.loadClasses(FMLLoader.getDist());
 	}
 

@@ -19,7 +19,7 @@ public interface MeshGenerator {
 		 * @param face The face, positioned relatively to the start of the area
 		 * @param pos  The position of the face, positioned relatively to the start of the area
 		 */
-		boolean apply(BlockPos pos, Face face);
+		boolean apply(BlockPos.Mutable pos, Face face);
 
 	}
 

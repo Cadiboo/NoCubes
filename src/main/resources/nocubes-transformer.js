@@ -144,45 +144,45 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
-//		"ChunkRender#rebuildChunk": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask",
-//				"methodName": "func_228940_a_", // "compile"
-//				"methodDesc": "(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)Ljava/util/Set;"
-//			},
-//			"transformer": function(methodNode) {
-//				print("in ChunkRender#rebuildChunk");
-//				var instructions = methodNode.instructions;
-////				// Check if any instructions reference an OptiFine class.
-////				for (var i = instructions.size() - 1; i >= 0; --i) {
-////					var instruction = instructions.get(i);
-////					if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
-////						isOptiFinePresent = true;
-////						print("Found OptiFine - ChunkCacheOF class");
-////						break;
-////					}
-////				}
-//				print("call injectPreIterationHook");
-//				injectPreIterationHook(instructions);
-//				print("call injectBlockRenderHook");
-//				injectBlockRenderHook(instructions);
-////				injectFluidRenderBypass(instructions);
-//				return methodNode;
-//			}
-//		},
-//		"ClientWorld#markForRerender": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.client.world.ClientWorld",
-//				"methodName": "func_225319_b",
-//				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"
-//			},
-//			"transformer": function(methodNode) {
-//				injectMarkForRerenderHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		},
+		"ChunkRender#rebuildChunk": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask",
+				"methodName": "func_228940_a_", // "compile"
+				"methodDesc": "(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)Ljava/util/Set;"
+			},
+			"transformer": function(methodNode) {
+				print("in ChunkRender#rebuildChunk");
+				var instructions = methodNode.instructions;
+//				// Check if any instructions reference an OptiFine class.
+//				for (var i = instructions.size() - 1; i >= 0; --i) {
+//					var instruction = instructions.get(i);
+//					if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
+//						isOptiFinePresent = true;
+//						print("Found OptiFine - ChunkCacheOF class");
+//						break;
+//					}
+//				}
+				print("call injectPreIterationHook");
+				injectPreIterationHook(instructions);
+				print("call injectBlockRenderHook");
+				injectBlockRenderHook(instructions);
+//				injectFluidRenderBypass(instructions);
+				return methodNode;
+			}
+		},
+		"ClientWorld#setBlocksDirty": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.client.world.ClientWorld",
+				"methodName": "setBlocksDirty",
+				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"
+			},
+			"transformer": function(methodNode) {
+				injectMarkForRerenderHook(methodNode.instructions);
+				return methodNode;
+			}
+		},
 //		"IWorldReader#getCollisionShapes": {
 //			"target": {
 //				"type": "METHOD",
@@ -1055,7 +1055,7 @@ function injectPreIterationHook(instructions) {
 	var getAllInBoxMutable_desc;
 	if (!isOptiFinePresent) {
 		var getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
-		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#getAllInBoxMutable
+		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_191531_b"); // BlockPos#betweenClosed
 		var getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
 	} else {
 		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
@@ -1083,9 +1083,8 @@ function injectPreIterationHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKESTATIC_getAllInBoxMutable) {
+	if (!first_INVOKESTATIC_getAllInBoxMutable)
 		throw "Error: Couldn't find injection point \"first BlockPos.getAllInBoxMutable\"!";
-	}
 
 	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
 	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >= 0; --i) {
@@ -1096,9 +1095,8 @@ function injectPreIterationHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable) {
+	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable)
 		throw "Error: Couldn't find label \"next Label\"!";
-	}
 
 	var toInject = new InsnList();
 
@@ -1500,37 +1498,37 @@ function injectFluidRenderBypass(instructions) {
 // 2) injects after first label
 function injectMarkForRerenderHook(instructions) {
 
-//	public void markForRerender(BlockPos pos, BlockState oldState, BlockState newState) {
-//		this.worldRenderer.markForRerender(pos, oldState, newState);
+//	public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
+//		this.levelRenderer.setBlocksDirty(pos, oldState, newState);
 //	}
 
-//   public void markForRerender(BlockPos pos, BlockState oldState, BlockState newState) {
+//   public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
 //		// NoCubes Start
-//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.worldRenderer, pos, oldState, newState);
+//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.levelRenderer, pos, oldState, newState);
 //		// NoCubes End
 //	}
 
 
-//  public markForRerender(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
+//  public setBlocksDirty(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L0
 //    LINENUMBER 525 L0
 //    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
+//    GETFIELD net/minecraft/client/world/ClientWorld.levelRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
 //    ALOAD 1
 //    ALOAD 2
 //    ALOAD 3
-//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.markForRerender (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
+//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.setBlocksDirty (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L1
 //    LINENUMBER 526 L1
 //    RETURN
 
-//  public markForRerender(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
+//  public setBlocksDirty(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
 //   L0
 //    LINENUMBER 547 L0
 //    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.mc : Lnet/minecraft/client/Minecraft;
+//    GETFIELD net/minecraft/client/world/ClientWorld.minecraft : Lnet/minecraft/client/Minecraft;
 //    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.worldRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
+//    GETFIELD net/minecraft/client/world/ClientWorld.levelRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
 //    ALOAD 1
 //    ALOAD 2
 //    ALOAD 3
@@ -1555,14 +1553,14 @@ function injectMarkForRerenderHook(instructions) {
 	var toInject = new InsnList();
 
 	// Labels n stuff
-	var mc_name = ASMAPI.mapField("field_73037_M"); // mc
-	var worldRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer
+	var minecraft_name = ASMAPI.mapField("field_73037_M"); // mc, minecraft
+	var levelRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer, levelRenderer
 
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", mc_name, "Lnet/minecraft/client/Minecraft;"));
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", minecraft_name, "Lnet/minecraft/client/Minecraft;"));
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", worldRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", levelRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
 	toInject.add(new VarInsnNode(ALOAD, 1)); // pos
 	toInject.add(new VarInsnNode(ALOAD, 2)); // oldState
 	toInject.add(new VarInsnNode(ALOAD, 3)); // newState

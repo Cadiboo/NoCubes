@@ -8,8 +8,10 @@ import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
 import net.minecraft.util.math.BlockPos;
@@ -185,33 +187,24 @@ public final class Hooks {
 //	public static void initChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
 //		ClientUtil.setupChunkRenderCache(_this, chunkStartX, chunkStartZ, chunks, start, end);
 //	}
-//
-//	/**
-//	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender)
-//	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
-//	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender)
-//	 * and calls ModelManager#func_224742_a(BlockState, BlockState) (areUnequal)
-//	 * This fixes seams that appear when meshes along chunk borders change
-//	 */
-//	@OnlyIn(Dist.CLIENT)
-//	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
-//		if (minecraft.getModelManager().func_224742_a(oldState, newState)) {
-//			final int posX = pos.getX();
-//			final int posY = pos.getY();
-//			final int posZ = pos.getZ();
-//			final int maxX = posX + 2;
-//			final int maxY = posY + 2;
-//			final int maxZ = posZ + 2;
-//			for (int z = posZ - 2; z <= maxZ; ++z) {
-//				for (int y = posY - 2; y <= maxY; ++y) {
-//					for (int x = posX - 2; x <= maxX; ++x) {
-//						worldRenderer.markForRerender(x >> 4, y >> 4, z >> 4);
-//					}
-//				}
-//			}
-//		}
-//	}
-//
+
+	/**
+	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
+	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
+	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
+	 * and calls ModelManager#func_224742_a(BlockState, BlockState) (needsRenderUpdate, requiresRender)
+	 * This fixes seams that appear when meshes along chunk borders change.
+	 */
+	@OnlyIn(Dist.CLIENT)
+	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
+		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
+			final int x = pos.getX();
+			final int y = pos.getY();
+			final int z = pos.getZ();
+			worldRenderer.setBlocksDirty(x - 2, y - 2, z - 2, x + 2, y + 2, z + 2);
+		}
+	}
+
 //	/**
 //	 * Called from: VoxelShapes.getAllowedOffset(AxisAlignedBB, IWorldReader, double, ISelectionContext, AxisRotation, Stream) before the MutableBlockPos is created
 //	 * Calls: VoxelShapesHandler.getAllowedOffset to handle mesh, repose and vanilla collisions offsets

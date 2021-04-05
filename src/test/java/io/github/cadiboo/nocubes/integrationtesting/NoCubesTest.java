@@ -1,11 +1,17 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
@@ -24,8 +30,42 @@ public class NoCubesTest {
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));
 				if (oldValue)
 					NoCubes.smoothableHandler.addSmoothable(dirt);
-			})
+			}),
+			new Test("mesh generators sanity check", NoCubesTest::meshGeneratorsSanityCheck)
 		);
+	}
+
+	private static void meshGeneratorsSanityCheck() {
+		Predicate<BlockState> isSmoothable = $ -> $ == Blocks.STONE.defaultBlockState();
+
+		BlockPos start = new BlockPos(100, 50, 25);
+		Area area = new Area(null, start, start.offset(5, 5, 5)) {
+			@Override
+			public BlockState[] getAndCacheBlocks() {
+				BlockState[] states = new BlockState[getLength()];
+				for (int i = 0; i < states.length; i++)
+					states[i] = i % 2 == 0 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
+				return states;
+			}
+
+			@Override
+			public void close() {
+				// No-op
+			}
+		};
+		new SurfaceNets().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+		new CubicMeshGenerator().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+	}
+
+	private static boolean checkAndMutate(BlockPos.Mutable pos, Face face) {
+		assertFalse(pos.getX() < 0);
+		assertFalse(pos.getX() >= 5);
+		pos.move(1000, 1000, 1000);
+
+		assertFalse(face.v0.x < -1);
+		assertFalse(face.v0.x >= 6);
+		face.v0.x += 10000;
+		return true;
 	}
 
 	private static void assertFalse(boolean value) {

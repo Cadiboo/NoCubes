@@ -99,10 +99,6 @@ public class SurfaceNets implements MeshGenerator {
 								mask |= (density < 0) ? (1 << corner) : 0;
 							}
 
-//					pos.set(worldXStart + x, worldYStart + y, worldZStart + z);
-//					if (!voxelAction.apply(pos, mask))
-//						return;
-
 					// Check for early termination if cell does not intersect boundary
 					// This cell is either entirely inside or entirely outside the isosurface
 					if (mask == 0 || mask == 0xff)
@@ -192,6 +188,7 @@ public class SurfaceNets implements MeshGenerator {
 							face.v2.copyFrom(verticesBuffer[bufferPointer - du - dv]);
 							face.v3.copyFrom(verticesBuffer[bufferPointer - dv]);
 						}
+						pos.set(x, y, z);
 						if (!faceAction.apply(pos, face))
 							return;
 					}
