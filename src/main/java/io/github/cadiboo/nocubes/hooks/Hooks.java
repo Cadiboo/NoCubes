@@ -87,7 +87,9 @@ public final class Hooks {
 	 */
 	public static VoxelShape getCollisionShape(AbstractBlockState _this, IBlockReader worldIn, BlockPos pos) {
 //		return _this.cache != null ? _this.cache.collisionShape : _this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
-		return _this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this) ? _this.cache.collisionShape : _this.getCollisionShape(worldIn, pos, ISelectionContext.empty());
+		if (_this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
+			return _this.cache.collisionShape;
+		return getCollisionShape(_this, worldIn, pos, ISelectionContext.empty());
 	}
 
 	/**
@@ -95,23 +97,19 @@ public final class Hooks {
 	 */
 	public static VoxelShape getCollisionShape(AbstractBlockState _this, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
 		if (NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
-			return CollisionHandler.getCollisionShape(_this.canOcclude, ((BlockState) _this), worldIn, pos, context);
+			return CollisionHandler.getCollisionShape(_this.getBlock().hasCollision, ((BlockState) _this), worldIn, pos, context);
 
 //		return _this.getBlock().getCollisionShape(_this.getSelf(), worldIn, pos, context);
 		return _this.getBlock().getCollisionShape((BlockState) _this, worldIn, pos, context);
 	}
 
-//	/**
-//	 * Hook this so that collisions work for normally solid blocks like stone.
-//	 */
-//	public static boolean hasOpaqueCollisionShape(AbstractBlockState _this, IBlockReader reader, BlockPos pos) {
-////		return _this.cache != null ? _this.cache.opaqueCollisionShape : Block.isOpaque(_this.getCollisionShape(reader, pos));
-//		return _this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this) ? _this.cache.isCollisionShapeFullBlock : Block.isOpaque(_this.getCollisionShape(reader, pos));
-//	}
-
-//	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
-//		return CollisionHandler.getCollisionShape(canCollide, state, reader, blockPos, context);
-//	}
+	/**
+	 * Hook this so that collisions work for normally solid blocks like stone.
+	 */
+	public static boolean isCollisionShapeFullBlock(AbstractBlockState _this, IBlockReader reader, BlockPos pos) {
+//		return _this.cache != null ? _this.cache.opaqueCollisionShape : Block.isOpaque(_this.getCollisionShape(reader, pos));
+		return _this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this) ? _this.cache.isCollisionShapeFullBlock : Block.isShapeFullBlock(_this.getCollisionShape(reader, pos));
+	}
 
 	/**
 	 * Load classes that we modify to get errors sooner.

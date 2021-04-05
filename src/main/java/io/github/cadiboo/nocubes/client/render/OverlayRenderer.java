@@ -101,7 +101,7 @@ public final class OverlayRenderer {
 //			if (NoCubes.smoothableHandler.isSmoothable(viewer.world.getBlockState(blockPos)))
 //				drawShape(matrixStack, bufferBuilder, VoxelShapes.fullCube(), -d0 + blockPos.getX(), -d1 + blockPos.getY(), -d2 + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
 //		});
-//
+
 //		// Draw nearby collisions in green
 //		world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
 //			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 0.0F, 0.4F);
@@ -125,12 +125,12 @@ public final class OverlayRenderer {
 //			});
 //		}
 
-		long startNanos = System.nanoTime();
-		drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
-		long elapsedNanos = System.nanoTime() - startNanos;
-		meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
-		if (timingsIndex % meshTimings.length == 0)
-			LogManager.getLogger("Calc & render chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+//		long startNanos = System.nanoTime();
+//		drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
+//		long elapsedNanos = System.nanoTime() - startNanos;
+//		meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
+//		if (timingsIndex % meshTimings.length == 0)
+//			LogManager.getLogger("Calc & render chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
 		bufferSource.endBatch(RenderType.lines());
@@ -238,8 +238,8 @@ public final class OverlayRenderer {
 	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
 		Matrix4f matrix4f = matrixStackIn.last().pose();
 		shapeIn.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-			bufferIn.vertex(matrix4f, (float) (x0 + xIn), (float) (y0 + yIn), (float) (z0 + zIn)).color(red, green, blue, alpha).endVertex();
-			bufferIn.vertex(matrix4f, (float) (x1 + xIn), (float) (y1 + yIn), (float) (z1 + zIn)).color(red, green, blue, alpha).endVertex();
+			vertex(bufferIn, matrix4f, (float) (x0 + xIn), (float) (y0 + yIn), (float) (z0 + zIn)).color(red, green, blue, alpha).endVertex();
+			vertex(bufferIn, matrix4f, (float) (x1 + xIn), (float) (y1 + yIn), (float) (z1 + zIn)).color(red, green, blue, alpha).endVertex();
 		});
 	}
 

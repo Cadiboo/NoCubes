@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -15,10 +16,7 @@ import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 
-public class CollisionHandler {
-
-//	private static final ReusableCache<float[]> COLLISION = new ReusableCache.Local<>();
-//	private static final ReusableCache<CollisionCreationData> DATA = new ReusableCache.Local<>();
+public final class CollisionHandler {
 
 	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		try {
@@ -45,13 +43,14 @@ public class CollisionHandler {
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			return state.getShape(reader, blockPos);
 		VoxelShape[] ref = {VoxelShapes.empty()};
-		try (Area area = new Area(reader, blockPos, blockPos.offset(1, 1, 1))) {
+		BlockPos start = blockPos.offset(-1, -1, -1);
+		try (Area area = new Area(reader, start, blockPos.offset(2, 2, 2))) {
 			new OOCollisionHandler(new SurfaceNets()).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
-				VoxelShape shape = VoxelShapes.box(x0, y0, z0, x1, y1, z1);
+				VoxelShape shape = VoxelShapes.box(x0 - 1, y0 - 1, z0 - 1, x1 - 1, y1 - 1, z1 - 1);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			}));
 		}
-		return ref[0].optimize();
+		return ref[0];//.optimize();
 	}
 
 //	static class CollisionCreationData {

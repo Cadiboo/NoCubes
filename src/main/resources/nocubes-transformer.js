@@ -219,166 +219,166 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
-//		"BlockState#getCollisionShape(NoContext)": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-//				"methodName": "func_196952_d",
-//				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
-//			},
-//			"transformer": function(methodNode) {
-//				var instructions = methodNode.instructions;
-//				var firstLabel;
-//            	var arrayLength = instructions.size();
-//            	for (var i = 0; i < arrayLength; ++i) {
-//            		var instruction = instructions.get(i);
-//            		if (instruction.getType() == LABEL) {
-//            			firstLabel = instruction;
-//            			print("Found injection point \"first Label\" " + instruction);
-//            			break;
-//            		}
-//            	}
-//            	if (!firstLabel) {
-//            		throw "Error: Couldn't find injection point \"first Label\"!";
-//            	}
-//
-//            	var toInject = new InsnList();
-//
-//            	// Labels n stuff
-//            	var originalInstructionsLabel = new LabelNode();
-//
-//            	// Make list of instructions to inject
-//            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-//				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-//				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-//				toInject.add(new MethodInsnNode(
-//						//int opcode
-//						INVOKESTATIC,
-//						//String owner
-//						"io/github/cadiboo/nocubes/hooks/Hooks",
-//						//String name
-//						"getCollisionShape",
-//						//String descriptor
-//						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;",
-//						//boolean isInterface
-//						false
-//				));
-//				toInject.add(new InsnNode(ARETURN));
-//
-//            	toInject.add(originalInstructionsLabel);
-//
-//            	// Inject instructions
-//            	instructions.insert(firstLabel, toInject);
-//				return methodNode;
-//			}
-//		},
-//		"BlockState#getCollisionShape(WithContext)": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-//				"methodName": "func_215685_b",
-//				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
-//			},
-//			"transformer": function(methodNode) {
-//				var instructions = methodNode.instructions;
-//				var firstLabel;
-//            	var arrayLength = instructions.size();
-//            	for (var i = 0; i < arrayLength; ++i) {
-//            		var instruction = instructions.get(i);
-//            		if (instruction.getType() == LABEL) {
-//            			firstLabel = instruction;
-//            			print("Found injection point \"first Label\" " + instruction);
-//            			break;
-//            		}
-//            	}
-//            	if (!firstLabel) {
-//            		throw "Error: Couldn't find injection point \"first Label\"!";
-//            	}
-//
-//            	var toInject = new InsnList();
-//
-//            	// Labels n stuff
-//            	var originalInstructionsLabel = new LabelNode();
-//
-//            	// Make list of instructions to inject
-//            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-//				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-//				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-//				toInject.add(new VarInsnNode(ALOAD, 3)); // context
-//				toInject.add(new MethodInsnNode(
-//						//int opcode
-//						INVOKESTATIC,
-//						//String owner
-//						"io/github/cadiboo/nocubes/hooks/Hooks",
-//						//String name
-//						"getCollisionShape",
-//						//String descriptor
-//						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;",
-//						//boolean isInterface
-//						false
-//				));
-//				toInject.add(new InsnNode(ARETURN));
-//
-//            	toInject.add(originalInstructionsLabel);
-//
-//            	// Inject instructions
-//            	instructions.insert(firstLabel, toInject);
-//				return methodNode;
-//			}
-//		},
-//		"BlockState#hasOpaqueCollisionShape": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-//				"methodName": "func_235785_r_",
-//				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
-//			},
-//			"transformer": function(methodNode) {
-//				var instructions = methodNode.instructions;
-//				var firstLabel;
-//            	var arrayLength = instructions.size();
-//            	for (var i = 0; i < arrayLength; ++i) {
-//            		var instruction = instructions.get(i);
-//            		if (instruction.getType() == LABEL) {
-//            			firstLabel = instruction;
-//            			print("Found injection point \"first Label\" " + instruction);
-//            			break;
-//            		}
-//            	}
-//            	if (!firstLabel) {
-//            		throw "Error: Couldn't find injection point \"first Label\"!";
-//            	}
-//
-//            	var toInject = new InsnList();
-//
-//            	// Labels n stuff
-//            	var originalInstructionsLabel = new LabelNode();
-//
-//            	// Make list of instructions to inject
-//            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-//				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-//				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-//				toInject.add(new MethodInsnNode(
-//						//int opcode
-//						INVOKESTATIC,
-//						//String owner
-//						"io/github/cadiboo/nocubes/hooks/Hooks",
-//						//String name
-//						"hasOpaqueCollisionShape",
-//						//String descriptor
-//						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z",
-//						//boolean isInterface
-//						false
-//				));
-//				toInject.add(new InsnNode(IRETURN));
-//
-//            	toInject.add(originalInstructionsLabel);
-//
-//            	// Inject instructions
-//            	instructions.insert(firstLabel, toInject);
-//				return methodNode;
-//			}
-//		},
+		"BlockState#getCollisionShape(NoContext)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_196952_d",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				var instructions = methodNode.instructions;
+				var firstLabel;
+            	var arrayLength = instructions.size();
+            	for (var i = 0; i < arrayLength; ++i) {
+            		var instruction = instructions.get(i);
+            		if (instruction.getType() == LABEL) {
+            			firstLabel = instruction;
+            			print("Found injection point \"first Label\" " + instruction);
+            			break;
+            		}
+            	}
+            	if (!firstLabel) {
+            		throw "Error: Couldn't find injection point \"first Label\"!";
+            	}
+
+            	var toInject = new InsnList();
+
+            	// Labels n stuff
+            	var originalInstructionsLabel = new LabelNode();
+
+            	// Make list of instructions to inject
+            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
+				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
+				toInject.add(new MethodInsnNode(
+						//int opcode
+						INVOKESTATIC,
+						//String owner
+						"io/github/cadiboo/nocubes/hooks/Hooks",
+						//String name
+						"getCollisionShape",
+						//String descriptor
+						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;",
+						//boolean isInterface
+						false
+				));
+				toInject.add(new InsnNode(ARETURN));
+
+            	toInject.add(originalInstructionsLabel);
+
+            	// Inject instructions
+            	instructions.insert(firstLabel, toInject);
+				return methodNode;
+			}
+		},
+		"BlockState#getCollisionShape(WithContext)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_215685_b",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				var instructions = methodNode.instructions;
+				var firstLabel;
+            	var arrayLength = instructions.size();
+            	for (var i = 0; i < arrayLength; ++i) {
+            		var instruction = instructions.get(i);
+            		if (instruction.getType() == LABEL) {
+            			firstLabel = instruction;
+            			print("Found injection point \"first Label\" " + instruction);
+            			break;
+            		}
+            	}
+            	if (!firstLabel) {
+            		throw "Error: Couldn't find injection point \"first Label\"!";
+            	}
+
+            	var toInject = new InsnList();
+
+            	// Labels n stuff
+            	var originalInstructionsLabel = new LabelNode();
+
+            	// Make list of instructions to inject
+            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
+				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
+				toInject.add(new VarInsnNode(ALOAD, 3)); // context
+				toInject.add(new MethodInsnNode(
+						//int opcode
+						INVOKESTATIC,
+						//String owner
+						"io/github/cadiboo/nocubes/hooks/Hooks",
+						//String name
+						"getCollisionShape",
+						//String descriptor
+						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;",
+						//boolean isInterface
+						false
+				));
+				toInject.add(new InsnNode(ARETURN));
+
+            	toInject.add(originalInstructionsLabel);
+
+            	// Inject instructions
+            	instructions.insert(firstLabel, toInject);
+				return methodNode;
+			}
+		},
+		"BlockState#isCollisionShapeFullBlock": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_235785_r_",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
+			},
+			"transformer": function(methodNode) {
+				var instructions = methodNode.instructions;
+				var firstLabel;
+            	var arrayLength = instructions.size();
+            	for (var i = 0; i < arrayLength; ++i) {
+            		var instruction = instructions.get(i);
+            		if (instruction.getType() == LABEL) {
+            			firstLabel = instruction;
+            			print("Found injection point \"first Label\" " + instruction);
+            			break;
+            		}
+            	}
+            	if (!firstLabel) {
+            		throw "Error: Couldn't find injection point \"first Label\"!";
+            	}
+
+            	var toInject = new InsnList();
+
+            	// Labels n stuff
+            	var originalInstructionsLabel = new LabelNode();
+
+            	// Make list of instructions to inject
+            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
+				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
+				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
+				toInject.add(new MethodInsnNode(
+						//int opcode
+						INVOKESTATIC,
+						//String owner
+						"io/github/cadiboo/nocubes/hooks/Hooks",
+						//String name
+						"isCollisionShapeFullBlock",
+						//String descriptor
+						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z",
+						//boolean isInterface
+						false
+				));
+				toInject.add(new InsnNode(IRETURN));
+
+            	toInject.add(originalInstructionsLabel);
+
+            	// Inject instructions
+            	instructions.insert(firstLabel, toInject);
+				return methodNode;
+			}
+		},
 //		"BlockState#isCollisionShapeLargerThanFullBlock": {
 //			"target": {
 //				"type": "METHOD",
@@ -2258,8 +2258,9 @@ function wrapWithLogging(transformersObj) {
 function makeLoggingTransformerFunction(transformerObjName, transformer) {
 	return function(obj) {
 		currentPrintTransformer = transformerObjName;
-		print("Starting Transform.");
+		print("Starting Transform");
 		obj = transformer(obj);
+		print("Finished Transform");
 		currentPrintTransformer = null;
 		return obj;
 	}

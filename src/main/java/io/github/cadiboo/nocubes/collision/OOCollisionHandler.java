@@ -37,18 +37,18 @@ public class OOCollisionHandler {
 	}
 
 	private static void generateShape(Vec centre, Vec averageOfNormal, IShapeConsumer consumer, Vec v) {
-		float w = centre.x - v.x;
-		if (-0.01 < w && w < 0.01)
-			w = 0.0625F * averageOfNormal.x;
-		float h = centre.y - v.y;
-		if (-0.01 < h && h < 0.01)
-			h = 0.0625F * averageOfNormal.y;
-		float l = centre.z - v.z;
-		if (-0.01 < l && l < 0.01)
-			l = 0.0625F * averageOfNormal.z;
+		float width = centre.x - v.x;
+		float height = centre.y - v.y;
+		float length = centre.z - v.z;
+		if (-0.01 < width && width < 0.01)
+			width = averageOfNormal.x;
+		if (-0.01 < height && height < 0.01)
+			height = averageOfNormal.y;
+		if (-0.01 < length && length < 0.01)
+			length = averageOfNormal.z;
 		consumer.accept(
 			v.x, v.y, v.z,
-			v.x + w, v.y + h, v.z + l
+			v.x + width, v.y + height, v.z + length
 		);
 	}
 

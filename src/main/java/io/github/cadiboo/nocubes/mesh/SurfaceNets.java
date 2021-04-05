@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
@@ -20,6 +21,8 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  * @see "https://github.com/mikolalysenko/mikolalysenko.github.com/blob/master/Isosurface/js/surfacenets.js"
  */
 public class SurfaceNets implements MeshGenerator {
+
+	private static final ThreadLocal<CachedArray> CACHE = ThreadLocal.withInitial(CachedArray::new);
 
 	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
 	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
@@ -38,9 +41,6 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FaceAction faceAction) {
-		BlockPos dims = area.end.subtract(area.start);
-		BlockPos.Mutable pos = new BlockPos.Mutable();
-
 		/*
 		 * From Wikipedia:
 		 * Apply a threshold to the 2D field to make a binary image containing:
@@ -50,12 +50,24 @@ public class SurfaceNets implements MeshGenerator {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
-		final float[] densityField = new float[states.length];
+		CachedArray cachedArray = CACHE.get();
+		final float[] densityField = cachedArray.takeArray(states.length);
 		for (int i = 0; i < states.length; i++) {
 			BlockState state = states[i];
 			boolean isStateSmoothable = isSmoothable.test(state);
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
+
+		BlockPos dims = area.end.subtract(area.start);
+		try {
+			generateOrThrow2(densityField, dims, faceAction);
+		} finally {
+			cachedArray.releaseArray();
+		}
+	}
+
+	private static void generateOrThrow2(float[] densityField, BlockPos dims, FaceAction faceAction) {
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		final Face face = new Face();
 		int n = 0;
@@ -76,6 +88,7 @@ public class SurfaceNets implements MeshGenerator {
 		// visibly writing pixels each frame, causing a wipe-down effect as the new data is written
 		// the way that happens in old CRT (cathode-ray tube) monitors/TVs)
 		final Vec[] verticesBuffer = new Vec[axisMultipliers[2] * 2];
+		final float[] vertexUntilIFigureOutTheInterpolationAndIntersection = {0, 0, 0};
 
 		//March over the voxel grid
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX(), buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
@@ -106,7 +119,7 @@ public class SurfaceNets implements MeshGenerator {
 
 					// Sum up edge intersections
 					int edge_mask = EDGE_TABLE[mask];
-					final float[] vertex = {0, 0, 0};
+					vertexUntilIFigureOutTheInterpolationAndIntersection[0] = vertexUntilIFigureOutTheInterpolationAndIntersection[1] = vertexUntilIFigureOutTheInterpolationAndIntersection[2] = 0;
 					int edgeCrossings = 0;
 
 					// For every edge of the cube...
@@ -139,28 +152,27 @@ public class SurfaceNets implements MeshGenerator {
 							final int a = edgeStart & k;
 							final int b = edgeEnd & k;
 							if (a != b)
-								vertex[j] += a != 0 ? 1F - t : t;
+								vertexUntilIFigureOutTheInterpolationAndIntersection[j] += a != 0 ? 1F - t : t;
 							else
-								vertex[j] += a != 0 ? 1F : 0;
+								vertexUntilIFigureOutTheInterpolationAndIntersection[j] += a != 0 ? 1F : 0;
 						}
 					}
 
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					Vec vec = new Vec(vertex[0], vertex[1], vertex[2]);
-					vec.x = -0.5F + 1 + x + s * vec.x;
-					vec.y = -0.5F + 1 + y + s * vec.y;
-					vec.z = -0.5F + 1 + z + s * vec.z;
+					Vec vertex = new Vec(vertexUntilIFigureOutTheInterpolationAndIntersection[0], vertexUntilIFigureOutTheInterpolationAndIntersection[1], vertexUntilIFigureOutTheInterpolationAndIntersection[2]);
+					vertex.x = 0.5F + x + s * vertex.x;
+					vertex.y = 0.5F + y + s * vertex.y;
+					vertex.z = 0.5F + z + s * vertex.z;
 //					//Add vertex to buffer
-					verticesBuffer[bufferPointer] = vec;
+					verticesBuffer[bufferPointer] = vertex;
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int axis = 0; axis < 3; ++axis) {
 						//The first three entries of the edge_mask count the crossings along the edge
-						if ((edge_mask & (1 << axis)) == 0) {
+						if ((edge_mask & (1 << axis)) == 0)
 							continue;
-						}
 
 						// axis = axes we are point along.  nextAxis, nextNextAxis = orthogonal axes
 						final int nextAxis = (axis + 1) % 3;
@@ -269,6 +281,28 @@ public class SurfaceNets implements MeshGenerator {
 			}
 		}
 
+	}
+
+	private static class CachedArray {
+
+		private StackTraceElement[] trace;
+		private float[] array;
+
+		public float[] takeArray(int minLength) {
+			// TODO: Remove this once I'm done developing, this is just a sanity check
+			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get()) {
+				if (trace != null)
+					throw new IllegalStateException("Already owned by " + Arrays.toString(trace));
+				trace = new Throwable().getStackTrace();
+			}
+			if (array == null || array.length < minLength)
+				array = new float[minLength];
+			return array;
+		}
+
+		public void releaseArray() {
+			trace = null;
+		}
 	}
 
 }

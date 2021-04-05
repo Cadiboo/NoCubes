@@ -28,7 +28,7 @@ import java.util.List;
  * @author Cadiboo
  */
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = Dist.CLIENT)
-public class KeybindHandler {
+public final class KeybindHandler {
 
 	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
 
