@@ -4,11 +4,11 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -21,6 +21,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3i;
@@ -30,9 +31,6 @@ import net.minecraftforge.client.event.DrawHighlightEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.apache.logging.log4j.LogManager;
-
-import java.util.stream.LongStream;
 
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
@@ -96,11 +94,21 @@ public final class OverlayRenderer {
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
-//		final BlockPos viewerPos = new BlockPos(viewer.getPosition());
-//		BlockPos.getAllInBoxMutable(viewerPos.add(-5, -5, -5), viewerPos.add(5, 5, 5)).forEach(blockPos -> {
-//			if (NoCubes.smoothableHandler.isSmoothable(viewer.world.getBlockState(blockPos)))
+		final BlockPos viewerPos = new BlockPos(viewer.blockPosition());
+//		BlockPos.betweenClosed(viewerPos.offset(-5, -5, -5), viewerPos.offset(5, 5, 5)).forEach(blockPos -> {
+//			if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(blockPos)))
 //				drawShape(matrixStack, bufferBuilder, VoxelShapes.fullCube(), -d0 + blockPos.getX(), -d1 + blockPos.getY(), -d2 + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
 //		});
+		float p = 1 / 16F;
+		VoxelShape indicator = VoxelShapes.box(-p, -p, -p, +p, +p, +p);
+		BlockPos.betweenClosed(viewerPos.offset(-5, -5, -5), viewerPos.offset(5, 5, 5)).forEach(pos -> {
+			BlockState state = viewer.level.getBlockState(pos);
+			boolean smoothable = NoCubes.smoothableHandler.isSmoothable(state);
+			float density = ModUtil.getBlockDensity(smoothable, state);
+			float scale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
+			if (scale > 0.01)
+				drawShape(matrixStack, bufferBuilder, indicator, pos.getX() - d0, pos.getY() - d1, pos.getZ() - d2, 1F, 0F, 0F, scale);
+		});
 
 //		// Draw nearby collisions in green
 //		world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
