@@ -48,7 +48,7 @@ public class CubicMeshGenerator implements MeshGenerator {
 						));
 
 					// South (pos z)
-					if (z < depth - 1 && !isSmoothable.test(blocks[index + depth]))
+					if (z < depth - 1 && !isSmoothable.test(blocks[index + width * height]))
 						action.apply(pos, face.set(
 							x + 1, y + 1, z + 1,
 							x + 0, y + 1, z + 1,
@@ -57,25 +57,25 @@ public class CubicMeshGenerator implements MeshGenerator {
 						));
 
 					// North (neg z)
-					if (z > 0 && !isSmoothable.test(blocks[index - depth]))
+					if (z > 0 && !isSmoothable.test(blocks[index - width * height]))
 						action.apply(pos, face.set(
-							x + 1, y + 1, z + 0,
-							x + 0, y + 1, z + 0,
+							x + 1, y + 0, z + 0,
 							x + 0, y + 0, z + 0,
-							x + 1, y + 0, z + 0
+							x + 0, y + 1, z + 0,
+							x + 1, y + 1, z + 0
 						));
 
 					// East (pos x)
-					if (x < width - 1 && !isSmoothable.test(blocks[index + width]))
+					if (x < width - 1 && !isSmoothable.test(blocks[index + 1]))
 						action.apply(pos, face.set(
-							x + 1, y + 1, z + 1,
-							x + 1, y + 1, z + 0,
+							x + 1, y + 0, z + 1,
 							x + 1, y + 0, z + 0,
-							x + 1, y + 0, z + 1
+							x + 1, y + 1, z + 0,
+							x + 1, y + 1, z + 1
 						));
 
 					// West (neg x)
-					if (x > 0 && !isSmoothable.test(blocks[index - width]))
+					if (x > 0 && !isSmoothable.test(blocks[index - 1]))
 						action.apply(pos, face.set(
 							x + 0, y + 1, z + 1,
 							x + 0, y + 1, z + 0,
