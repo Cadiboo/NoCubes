@@ -3,10 +3,10 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 
-import java.util.ArrayList;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
@@ -58,7 +58,6 @@ public class SurfaceNets implements MeshGenerator {
 		}
 
 		final Face face = new Face();
-		final ArrayList<float[]> vertices = new ArrayList<>(0x180);
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
@@ -76,7 +75,9 @@ public class SurfaceNets implements MeshGenerator {
 		// of the buffer, while displaying the other half and flip sides each frame (so you're not
 		// visibly writing pixels each frame, causing a wipe-down effect as the new data is written
 		// the way that happens in old CRT (cathode-ray tube) monitors/TVs)
-		final int[] verticesBuffer = new int[axisMultipliers[2] * 2];
+//		// Instead of storing a Vec[] I store the data packed as 3 floats next to each other
+//		// TO DO: Undo this once we have inline types
+		final Vec[] verticesBuffer = new Vec[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX(), buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
@@ -133,53 +134,33 @@ public class SurfaceNets implements MeshGenerator {
 						//Unpack grid values
 						final float edgeStartValue = grid[edgeStart];
 						final float edgeEndValue = grid[edgeEnd];
-//						//Compute point of intersection (the point where the isosurface is and the vertex is)
-//						float t = edgeStartValue - edgeEndValue;
-//						vertex.add(
-//							(edgeStart & 0b001) * (1.0 - t) + (edgeEnd & 0b001) * t,
-//							(edgeStart & 0b010) * (1.0 - t) + (edgeEnd & 0b010) * t,
-//							(edgeStart & 0b100) * (1.0 - t) + (edgeEnd & 0b100) * t
-//						);
-						//Compute point of intersection
+						//Compute point of intersection (the point where the isosurface is and the vertex is)
 						float t = edgeStartValue - edgeEndValue;
-						if (Math.abs(t) > 1e-6) {
+						if (Math.abs(t) > 1e-6)
 							t = edgeStartValue / t;
-						} else {
+						else
 							continue;
-						}
 
 						//Interpolate vertices and add up intersections (this can be done without multiplying)
 						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
 							final int a = edgeStart & k;
 							final int b = edgeEnd & k;
-							if (a != b) {
+							if (a != b)
 								vertex[j] += a != 0 ? 1F - t : t;
-							} else {
+							else
 								vertex[j] += a != 0 ? 1F : 0;
-							}
 						}
 					}
 
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					vertex[0] = -0.5F + 1 + x + s * vertex[0];
-					vertex[1] = -0.5F + 1 + y + s * vertex[1];
-					vertex[2] = -0.5F + 1 + z + s * vertex[2];
-//					vertex.multiply(s);
-//					vertex.add(
-//						x + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,
-//						y + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,
-//						z + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION
-//					);
-
-//					Vec fromPreviousPreviousSlice = verticesBuffer[bufferPointer];
-//					if (fromPreviousPreviousSlice != null)
-//						fromPreviousPreviousSlice.close();
+					Vec vec = new Vec(vertex[0], vertex[1], vertex[2]);
+					vec.x = -0.5F + 1 + x + s * vec.x;
+					vec.y = -0.5F + 1 + y + s * vec.y;
+					vec.z = -0.5F + 1 + z + s * vec.z;
 //					//Add vertex to buffer
-//					verticesBuffer[bufferPointer] = vertex;
-					verticesBuffer[bufferPointer] = vertices.size();
-					vertices.add(vertex);
+					verticesBuffer[bufferPointer] = vec;
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int axis = 0; axis < 3; ++axis) {
@@ -204,15 +185,15 @@ public class SurfaceNets implements MeshGenerator {
 
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
-							face.v0.copyFrom(vertices.get(verticesBuffer[bufferPointer]));
-							face.v1.copyFrom(vertices.get(verticesBuffer[bufferPointer - dv]));
-							face.v2.copyFrom(vertices.get(verticesBuffer[bufferPointer - du - dv]));
-							face.v3.copyFrom(vertices.get(verticesBuffer[bufferPointer - du]));
+							face.v0.copyFrom(verticesBuffer[bufferPointer]);
+							face.v1.copyFrom(verticesBuffer[bufferPointer - dv]);
+							face.v2.copyFrom(verticesBuffer[bufferPointer - du - dv]);
+							face.v3.copyFrom(verticesBuffer[bufferPointer - du]);
 						} else {
-							face.v0.copyFrom(vertices.get(verticesBuffer[bufferPointer]));
-							face.v1.copyFrom(vertices.get(verticesBuffer[bufferPointer - du]));
-							face.v2.copyFrom(vertices.get(verticesBuffer[bufferPointer - du - dv]));
-							face.v3.copyFrom(vertices.get(verticesBuffer[bufferPointer - dv]));
+							face.v0.copyFrom(verticesBuffer[bufferPointer]);
+							face.v1.copyFrom(verticesBuffer[bufferPointer - du]);
+							face.v2.copyFrom(verticesBuffer[bufferPointer - du - dv]);
+							face.v3.copyFrom(verticesBuffer[bufferPointer - dv]);
 						}
 						if (!faceAction.apply(pos, face))
 							return;

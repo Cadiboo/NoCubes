@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -22,7 +21,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3i;
@@ -136,8 +134,8 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
-		MeshGenerator meshGenerator = new CubicMeshGenerator();
-		Vector3i meshSize = new BlockPos(16, 16, 16);
+		MeshGenerator meshGenerator = new SurfaceNets();
+		Vector3i meshSize = new BlockPos(32, 32, 32);
 		BlockPos start = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (Area area = new Area(viewer.level, start, start.offset(meshSize).offset(1, 1, 1))) {
 			final Face normal = new Face();
@@ -149,6 +147,8 @@ public final class OverlayRenderer {
 			Color normalDirectionColor = new Color(1F, 0F, 0F, 1F);
 
 			meshGenerator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+				if (Screen.hasControlDown())
+					return true;
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
 
 				face.assignNormalTo(normal);
