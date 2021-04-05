@@ -15,6 +15,9 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
 /**
  * Written by Mikola Lysenko (C) 2012
  * Ported from JavaScript to Java and modified for NoCubes by Cadiboo.
+ *
+ * @see "https://github.com/mikolalysenko/isosurface/blob/master/lib/surfacenets.js"
+ * @see "https://github.com/mikolalysenko/mikolalysenko.github.com/blob/master/Isosurface/js/surfacenets.js"
  */
 public class SurfaceNets implements MeshGenerator {
 
@@ -35,15 +38,8 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FaceAction faceAction) {
-		// Subtract the negative extension from the start and add it to the size
-		int fieldSizeX = area.end.getX() - area.start.getX();
-		int fieldSizeY = area.end.getY() - area.start.getY();
-		int fieldSizeZ = area.end.getZ() - area.start.getZ();
-		int meshSizeX = fieldSizeX - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
-		int meshSizeY = fieldSizeY - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
-		int meshSizeZ = fieldSizeZ - MESH_SIZE_POSITIVE_EXTENSION - MESH_SIZE_NEGATIVE_EXTENSION;
-
-		final BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos dims = area.end.subtract(area.start);
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		/*
 		 * From Wikipedia:
@@ -68,7 +64,7 @@ public class SurfaceNets implements MeshGenerator {
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
 		// (x, y, z) -> [z * fieldSizeX * fieldSizeY + y * fieldSizeX + x]
 		// So the multiplier for X is 1, the multiplier for Y is fieldSizeX and the multiplier for z is fieldSizeX * fieldSizeY
-		final int[] axisMultipliers = {1, (fieldSizeX + 1), (fieldSizeX + 1) * (fieldSizeY + 1)};
+		final int[] axisMultipliers = {1, (dims.getX() + 1), (dims.getX() + 1) * (dims.getY() + 1)};
 		final float[] grid = new float[8];
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
@@ -83,22 +79,22 @@ public class SurfaceNets implements MeshGenerator {
 		final int[] verticesBuffer = new int[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
-		for (int z = 0; z < meshSizeZ; ++z, n += fieldSizeX, buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
+		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX(), buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
 
 			//bufferPointer is the pointer into the buffer we are going to use.
 			//The contents of the buffer will be the indices of the vertices on the previous x/y slice of the volume
-			int bufferPointer = 1 + (fieldSizeX + 1) * (1 + buf_no * (fieldSizeY + 1));
+			int bufferPointer = 1 + (dims.getX() + 1) * (1 + buf_no * (dims.getY() + 1));
 
-			for (int y = 0; y < meshSizeY; ++y, ++n, bufferPointer += 2) {
-				for (int x = 0; x < meshSizeX; ++x, ++n, ++bufferPointer) {
+			for (int y = 0; y < dims.getY() - 1; ++y, ++n, bufferPointer += 2) {
+				for (int x = 0; x < dims.getX() - 1; ++x, ++n, ++bufferPointer) {
 
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
 					int mask = 0, corner = 0, idx = n;
-					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += fieldSizeX * (fieldSizeY - 2))
-						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += fieldSizeX - 2)
+					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += dims.getX() * (dims.getY() - 2))
+						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += dims.getX() - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
-								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, fieldSizeX, fieldSizeY);
+								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, dims.getX(), dims.getY());
 								float density = densityField[index];
 								grid[corner] = density;
 								mask |= (density < 0) ? (1 << corner) : 0;
@@ -167,9 +163,9 @@ public class SurfaceNets implements MeshGenerator {
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					vertex[0] = -0.5F + 0 + x + s * vertex[0];
-					vertex[1] = -0.5F + 0 + y + s * vertex[1];
-					vertex[2] = -0.5F + 0 + z + s * vertex[2];
+					vertex[0] = -0.5F + 1 + x + s * vertex[0];
+					vertex[1] = -0.5F + 1 + y + s * vertex[1];
+					vertex[2] = -0.5F + 1 + z + s * vertex[2];
 //					vertex.multiply(s);
 //					vertex.add(
 //						x + 0.5 - MESH_SIZE_NEGATIVE_EXTENSION,

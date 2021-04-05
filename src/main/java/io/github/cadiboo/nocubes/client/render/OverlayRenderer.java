@@ -4,7 +4,6 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
-import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
@@ -34,8 +33,9 @@ import net.minecraftforge.fml.common.Mod;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.LongStream;
 
-import static io.github.cadiboo.nocubes.config.ColorParser.*;
+import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
 /**
  * @author Cadiboo
@@ -44,6 +44,7 @@ import static io.github.cadiboo.nocubes.config.ColorParser.*;
 public final class OverlayRenderer {
 
 	static Tuple<BlockPos, Face[]> cache;
+	static long[] cacheTimings = new long[20];
 
 	@SubscribeEvent
 	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
@@ -85,8 +86,15 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		if (cache == null || world.getGameTime() % 5 == 0)
+//		if (cache == null || world.getGameTime() % 5 == 0)
+		{
+			long startNanos = System.nanoTime();
 			cache = makeMesh(world, viewer);
+			long elapsedNanos = System.nanoTime() - startNanos;
+			cacheTimings[(int) (world.getGameTime() % 20)] = elapsedNanos;
+			if (world.getGameTime() % 20 == 0)
+				System.out.println("Rendering area took on average " + ((LongStream.of(cacheTimings).sum() / 20) / 1000_000) + "ms");
+		}
 
 		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getMainCamera();
 
@@ -156,14 +164,14 @@ public final class OverlayRenderer {
 				drawLinePosColor(centre, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
 
 				// Draw each vertex normal
-				mutable.set(normal.v0).multiply(dirMul);
-				drawLinePosColor(normal.v0, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
-				mutable.set(normal.v1).multiply(dirMul);
-				drawLinePosColor(normal.v1, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
-				mutable.set(normal.v2).multiply(dirMul);
-				drawLinePosColor(normal.v3, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
-				mutable.set(normal.v3).multiply(dirMul);
-				drawLinePosColor(normal.v3, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v0).multiply(dirMul).add(face.v0);
+				drawLinePosColor(face.v0, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v1).multiply(dirMul).add(face.v1);
+				drawLinePosColor(face.v1, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v2).multiply(dirMul).add(face.v2);
+				drawLinePosColor(face.v2, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
+				mutable.set(normal.v3).multiply(dirMul).add(face.v3);
+				drawLinePosColor(face.v3, mutable, offset, normalDirectionColor, bufferBuilder, matrix4f);
 			}
 		}
 

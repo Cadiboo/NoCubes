@@ -21,7 +21,13 @@ public class Area {
 	public BlockState[] getAndCacheBlocks() {
 		if (blocks == null) {
 			blocks = new BlockState[this.getLength()];
-			ModUtil.traverseArea(start, end, new BlockPos.Mutable(), world, (state, pos, index) -> blocks[index] = state);
+			int width = end.getX() - start.getX();
+			int height = end.getY() - start.getY();
+			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, index) -> {
+				pos.move(-start.getX(), -start.getY(), -start.getZ());
+				int idx = pos.getZ() * width * height + pos.getY() * height + pos.getX();
+				blocks[idx] = state;
+			});
 		}
 		return blocks;
 	}
