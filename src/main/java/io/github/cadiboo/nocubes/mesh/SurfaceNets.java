@@ -75,8 +75,6 @@ public class SurfaceNets implements MeshGenerator {
 		// of the buffer, while displaying the other half and flip sides each frame (so you're not
 		// visibly writing pixels each frame, causing a wipe-down effect as the new data is written
 		// the way that happens in old CRT (cathode-ray tube) monitors/TVs)
-//		// Instead of storing a Vec[] I store the data packed as 3 floats next to each other
-//		// TO DO: Undo this once we have inline types
 		final Vec[] verticesBuffer = new Vec[axisMultipliers[2] * 2];
 
 		//March over the voxel grid
@@ -117,7 +115,6 @@ public class SurfaceNets implements MeshGenerator {
 
 					// For every edge of the cube...
 					for (int edge = 0; edge < 12; ++edge) {
-
 						//Use edge mask to check if it is crossed
 						if ((edge_mask & (1 << edge)) == 0)
 							continue;
@@ -136,7 +133,7 @@ public class SurfaceNets implements MeshGenerator {
 						final float edgeEndValue = grid[edgeEnd];
 						//Compute point of intersection (the point where the isosurface is and the vertex is)
 						float t = edgeStartValue - edgeEndValue;
-						if (Math.abs(t) > 1e-6)
+						if (Math.abs(t) > 0.00000001F)
 							t = edgeStartValue / t;
 						else
 							continue;

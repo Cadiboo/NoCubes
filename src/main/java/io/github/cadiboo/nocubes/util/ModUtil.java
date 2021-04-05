@@ -32,7 +32,7 @@ public class ModUtil {
 	}
 
 	public interface Traverser {
-		void accept(BlockState state, BlockPos.Mutable pos, int index);
+		void accept(BlockState state, BlockPos.Mutable pos, int zyxIndex);
 	}
 
 	public static void traverseArea(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, IWorldReader world, Traverser func) {

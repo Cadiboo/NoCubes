@@ -25,7 +25,7 @@ public class Area implements AutoCloseable {
 	public BlockState[] getAndCacheBlocks() {
 		if (blocks == null) {
 			blocks = cache.get().takeArray(this.getLength());
-			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, index) -> blocks[index] = state);
+			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, zyxIndex) -> blocks[zyxIndex] = state);
 		}
 		return blocks;
 	}

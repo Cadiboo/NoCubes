@@ -438,19 +438,19 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
-//		"BlockState": {
-//			"target": {
-//				"type": "CLASS",
-//				"name": "net.minecraft.block.BlockState"
-//			},
-//			"transformer": function(classNode) {
-//				var fields = classNode.fields;
-//				// Params: int access, String name, String descriptor, String signature, Object value
-//				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isTerrainSmoothable", "Z", null, false));
-////				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isLeavesSmoothable", "Z", null, false));
-//				return classNode;
-//			}
-//		}
+		"BlockState": {
+			"target": {
+				"type": "CLASS",
+				"name": "net.minecraft.block.BlockState"
+			},
+			"transformer": function(classNode) {
+				var fields = classNode.fields;
+				// Params: int access, String name, String descriptor, String signature, Object value
+				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isTerrainSmoothable", "Z", null, false));
+//				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isLeavesSmoothable", "Z", null, false));
+				return classNode;
+			}
+		}
 //		,
 //		"VoxelShapes#getAllowedOffset": {
 //			"target": {

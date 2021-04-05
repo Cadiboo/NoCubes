@@ -135,7 +135,7 @@ public final class OverlayRenderer {
 
 	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
 		MeshGenerator meshGenerator = new SurfaceNets();
-		Vector3i meshSize = new BlockPos(32, 32, 32);
+		Vector3i meshSize = new BlockPos(16, 16, 16);
 		BlockPos start = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (Area area = new Area(viewer.level, start, start.offset(meshSize).offset(1, 1, 1))) {
 			final Face normal = new Face();
