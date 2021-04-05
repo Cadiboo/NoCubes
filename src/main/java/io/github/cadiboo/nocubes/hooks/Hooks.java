@@ -108,7 +108,11 @@ public final class Hooks {
 	 */
 	public static boolean isCollisionShapeFullBlock(AbstractBlockState _this, IBlockReader reader, BlockPos pos) {
 //		return _this.cache != null ? _this.cache.opaqueCollisionShape : Block.isOpaque(_this.getCollisionShape(reader, pos));
-		return _this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this) ? _this.cache.isCollisionShapeFullBlock : Block.isShapeFullBlock(_this.getCollisionShape(reader, pos));
+		if (NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
+			return false;
+		if (_this.cache != null)
+			return _this.cache.isCollisionShapeFullBlock;
+		return Block.isShapeFullBlock(_this.getCollisionShape(reader, pos));
 	}
 
 	/**

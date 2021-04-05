@@ -51,15 +51,14 @@ public class SurfaceNets implements MeshGenerator {
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
 		CachedArray cachedArray = CACHE.get();
-		final float[] densityField = cachedArray.takeArray(states.length);
-		for (int i = 0; i < states.length; i++) {
-			BlockState state = states[i];
-			boolean isStateSmoothable = isSmoothable.test(state);
-			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
-		}
-
-		BlockPos dims = area.end.subtract(area.start);
+		float[] densityField = cachedArray.takeArray(states.length);
 		try {
+			for (int i = 0; i < states.length; i++) {
+				BlockState state = states[i];
+				boolean isStateSmoothable = isSmoothable.test(state);
+				densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
+			}
+			BlockPos dims = area.end.subtract(area.start);
 			generateOrThrow2(densityField, dims, faceAction);
 		} finally {
 			cachedArray.releaseArray();
