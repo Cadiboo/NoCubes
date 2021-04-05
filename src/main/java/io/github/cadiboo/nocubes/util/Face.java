@@ -46,11 +46,24 @@ public class Face {
 		toUse.z = (v0.z + v1.z + v2.z + v3.z) / 4;
 	}
 
-	public void assignValuesFrom(Face other) {
+	public void setValuesFrom(Face other) {
 		v0.set(other.v0);
 		v1.set(other.v1);
 		v2.set(other.v2);
 		v3.set(other.v3);
+	}
+
+	public Face set(
+		float v0x, float v0y, float v0z,
+		float v1x, float v1y, float v1z,
+		float v2x, float v2y, float v2z,
+		float v3x, float v3y, float v3z
+	) {
+		v0.set(v0x, v0y, v0z);
+		v1.set(v1x, v1y, v1z);
+		v2.set(v2x, v2y, v2z);
+		v3.set(v3x, v3y, v3z);
+		return this;
 	}
 
 	public Face add(Vector3i pos) {

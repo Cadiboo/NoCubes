@@ -4,7 +4,11 @@ import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorldReader;
 
-public class Area {
+import java.util.Arrays;
+
+public class Area implements AutoCloseable {
+
+	private static final ThreadLocal<CachedArray> cache = ThreadLocal.withInitial(CachedArray::new);
 
 	public final IWorldReader world;
 	public final BlockPos start;
@@ -20,14 +24,8 @@ public class Area {
 
 	public BlockState[] getAndCacheBlocks() {
 		if (blocks == null) {
-			blocks = new BlockState[this.getLength()];
-			int width = end.getX() - start.getX();
-			int height = end.getY() - start.getY();
-			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, index) -> {
-				pos.move(-start.getX(), -start.getY(), -start.getZ());
-				int idx = pos.getZ() * width * height + pos.getY() * height + pos.getX();
-				blocks[idx] = state;
-			});
+			blocks = cache.get().takeArray(this.getLength());
+			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, index) -> blocks[index] = state);
 		}
 		return blocks;
 	}
@@ -38,6 +36,31 @@ public class Area {
 		int height = end.getY() - start.getY();
 		int width = end.getX() - start.getX();
 		return depth * height * width;
+	}
+
+	@Override
+	public void close() {
+		if (blocks != null)
+			cache.get().releaseArray();
+	}
+
+	private static class CachedArray {
+
+		private StackTraceElement[] trace;
+		private BlockState[] array;
+
+		public BlockState[] takeArray(int minLength) {
+			if (trace != null)
+				throw new IllegalStateException("Already owned by " + Arrays.toString(trace));
+			trace = new Throwable().getStackTrace();
+			if (array == null || array.length < minLength)
+				array = new BlockState[minLength];
+			return array;
+		}
+
+		public void releaseArray() {
+			trace = null;
+		}
 	}
 
 }

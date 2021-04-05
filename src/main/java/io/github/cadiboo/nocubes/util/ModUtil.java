@@ -52,6 +52,9 @@ public class ModUtil {
 		int maxX = (endXInclusive + 16) & 0xFFFFFFF0;
 		int maxY = (endYInclusive + 16) & 0xFFFFFFF0;
 		int maxZ = (endZInclusive + 16) & 0xFFFFFFF0;
+		int width = endXPlus1 - startXInclusive;
+		int height = endYPlus1 - startYInclusive;
+		int widthMulHeight = width * height;
 		for (int blockChunkX = startXInclusive; blockChunkX < maxX; blockChunkX += 16) {
 			int maskedBlockChunkX = blockChunkX & 0xFFFFFFF0;
 			int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
@@ -64,7 +67,6 @@ public class ModUtil {
 				IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
 				@Nullable
 				ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
-				int index = 0;
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
@@ -81,14 +83,16 @@ public class ModUtil {
 					int sectionMaxX = Math.min(maskedNextBlockChunkX, endXPlus1);
 					int sectionMaxY = Math.min(maskedNextBlockChunkY, endYPlus1);
 					int sectionMaxZ = Math.min(maskedNextBlockChunkZ, endZPlus1);
-					for (int x = sectionMinX; x < sectionMaxX; ++x) {
-						int maskedX = x & 15;
-						for (int y = sectionMinY; y < sectionMaxY; ++y) {
-							int maskedY = y & 15;
-							for (int z = sectionMinZ; z < sectionMaxZ; ++z, ++index) {
+					// PalettedContainers are indexed [y][z][x] so lets iterate in that order (cache locality gain?)
+					for (int y = sectionMinY; y < sectionMaxY; ++y) {
+						int maskedY = y & 15;
+						for (int z = sectionMinZ; z < sectionMaxZ; ++z) {
+							int maskedZ = z & 15;
+							for (int x = sectionMinX; x < sectionMaxX; ++x) {
+								BlockState blockState = chunkSection == null ? air : chunkSection.getBlockState(x & 15, maskedY, maskedZ);
 								currentPosition.set(x, y, z);
-								BlockState blockState = chunkSection == null ? air : chunkSection.getBlockState(maskedX, maskedY, z & 15);
-								func.accept(blockState, currentPosition, index);
+								int zyxIndex = (z - startZInclusive) * widthMulHeight + (y - startYInclusive) * height + (x - startXInclusive);
+								func.accept(blockState, currentPosition, zyxIndex);
 							}
 						}
 					}
