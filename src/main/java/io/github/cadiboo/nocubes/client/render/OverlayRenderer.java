@@ -137,10 +137,9 @@ public final class OverlayRenderer {
 
 	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
 		MeshGenerator meshGenerator = new CubicMeshGenerator();
-		BlockPos start = viewer.blockPosition().offset(-8, -6, -8);
 		Vector3i meshSize = new BlockPos(16, 16, 16);
+		BlockPos start = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (Area area = new Area(viewer.level, start, start.offset(meshSize).offset(1, 1, 1))) {
-
 			final Face normal = new Face();
 			final Vec averageOfNormal = new Vec();
 			final Vec centre = new Vec();
@@ -182,8 +181,8 @@ public final class OverlayRenderer {
 		float startX = (float) (pos.getX() - camera.x + start.x);
 		float startY = (float) (pos.getY() - camera.y + start.y);
 		float startZ = (float) (pos.getZ() - camera.z + start.z);
-		bufferBuilder.vertex(matrix4f, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
 	}
 
 	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder bufferBuilder, Matrix4f matrix4f) {
@@ -212,14 +211,25 @@ public final class OverlayRenderer {
 		float v1z = (float) (z + v1.z);
 		float v2z = (float) (z + v2.z);
 		float v3z = (float) (z + v3.z);
-		bufferBuilder.vertex(matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		bufferBuilder.vertex(matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		vertex(bufferBuilder, matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+	}
+
+	private static IVertexBuilder vertex(IVertexBuilder bufferBuilder, Matrix4f matrix4f, float x, float y, float z) {
+		// Calling 'bufferBuilder.vertex(matrix4f, x, y, z)' allocates a Vector4f
+		// To avoid allocating so many short lived vectors we do the transform ourselves instead
+		float w = 1.0F;
+		float tx = matrix4f.m00 * x + matrix4f.m01 * y + matrix4f.m02 * z + matrix4f.m03 * w;
+		float ty = matrix4f.m10 * x + matrix4f.m11 * y + matrix4f.m12 * z + matrix4f.m13 * w;
+		float tz = matrix4f.m20 * x + matrix4f.m21 * y + matrix4f.m22 * z + matrix4f.m23 * w;
+//		float tw = matrix4f.m30 * x + matrix4f.m31 * y + matrix4f.m32 * z + matrix4f.m33 * w;
+		return bufferBuilder.vertex(tx, ty, tz);
 	}
 
 	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {

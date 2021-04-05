@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector4f;
 
 /**
  * @author Cadiboo
@@ -138,18 +139,19 @@ public /* inline */ class Vec {
 	}
 
 	/**
-	 * Copied from {@link net.minecraft.util.math.vector.Vector4f#transform(Matrix4f)}
+	 * Copied from {@link Vector4f#transform(Matrix4f)}
 	 */
-	public void transform(Matrix4f matrixIn) {
+	public Vec transform(Matrix4f matrix) {
 		float x = this.x;
 		float y = this.y;
 		float z = this.z;
 //		float w = this.w;
 		float w = 1F;
-		this.x = matrixIn.m00 * x + matrixIn.m01 * y + matrixIn.m02 * z + matrixIn.m03 * w;
-		this.y = matrixIn.m10 * x + matrixIn.m11 * y + matrixIn.m12 * z + matrixIn.m13 * w;
-		this.z = matrixIn.m20 * x + matrixIn.m21 * y + matrixIn.m22 * z + matrixIn.m23 * w;
-//		this.w = matrixIn.m30 * x + matrixIn.m31 * y + matrixIn.m32 * z + matrixIn.m33 * w;
+		this.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
+		this.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
+		this.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
+//		this.w = matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
+		return this;
 	}
 
 	public Vec copy() {
