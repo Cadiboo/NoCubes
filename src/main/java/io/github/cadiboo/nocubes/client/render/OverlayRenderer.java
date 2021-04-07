@@ -71,7 +71,7 @@ public final class OverlayRenderer {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-		if (Screen.hasAltDown())
+		if (!Screen.hasAltDown())
 			return;
 
 		final Minecraft minecraft = Minecraft.getInstance();
