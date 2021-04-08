@@ -17,10 +17,10 @@ public class Area implements AutoCloseable {
 	// Arrays are indexed [z][y][x] for cache locality
 	private CachedArray blocks;
 
-	public Area(IBlockReader world, BlockPos start, BlockPos end) {
+	public Area(IBlockReader world, BlockPos startInclusive, BlockPos endExclusive) {
 		this.world = world;
-		this.start = start.immutable();
-		this.end = end.immutable();
+		this.start = startInclusive.immutable();
+		this.end = endExclusive.immutable();
 	}
 
 	public BlockState[] getAndCacheBlocks() {
