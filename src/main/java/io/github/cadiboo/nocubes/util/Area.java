@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
 
 import java.util.Arrays;
@@ -10,13 +11,13 @@ public class Area implements AutoCloseable {
 
 	private static final ThreadLocal<CachedArray> CACHE = ThreadLocal.withInitial(CachedArray::new);
 
-	public final IWorldReader world;
+	public final IBlockReader world;
 	public final BlockPos start;
 	public final BlockPos end;
 	// Arrays are indexed [z][y][x] for cache locality
 	private CachedArray blocks;
 
-	public Area(IWorldReader world, BlockPos start, BlockPos end) {
+	public Area(IBlockReader world, BlockPos start, BlockPos end) {
 		this.world = world;
 		this.start = start.immutable();
 		this.end = end.immutable();
@@ -26,7 +27,20 @@ public class Area implements AutoCloseable {
 		if (blocks == null) {
 			blocks = CACHE.get();
 			BlockState[] array = blocks.takeArray(this.getLength());
-			ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
+			if (world instanceof IWorldReader)
+				ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
+			else {
+				BlockPos.Mutable pos = new BlockPos.Mutable();
+				IBlockReader world = this.world;
+				int maxZ = end.getZ();
+				int maxY = end.getY();
+				int maxX = end.getZ();
+				int zyxIndex = 0;
+				for (int z = start.getZ(); z < maxZ; ++z)
+					for (int y = start.getY(); y < maxY; ++y)
+						for (int x = start.getX(); x < maxX; ++x, ++zyxIndex)
+							array[zyxIndex] = world.getBlockState(pos.set(x, y, z));
+			}
 		}
 		return blocks.array;
 	}
