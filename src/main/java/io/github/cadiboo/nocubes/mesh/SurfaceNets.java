@@ -105,8 +105,8 @@ public class SurfaceNets implements MeshGenerator {
 					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += dims.getX() * (dims.getY() - 2))
 						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += dims.getX() - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
-								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, dims.getX(), dims.getY());
-								float density = densityField[index];
+//								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, dims.getX(), dims.getY());
+								float density = densityField[idx];
 								grid[corner] = density;
 								mask |= (density < 0) ? (1 << corner) : 0;
 							}
@@ -161,9 +161,9 @@ public class SurfaceNets implements MeshGenerator {
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
 					Vec vertex = new Vec(vertexUntilIFigureOutTheInterpolationAndIntersection[0], vertexUntilIFigureOutTheInterpolationAndIntersection[1], vertexUntilIFigureOutTheInterpolationAndIntersection[2]);
-					vertex.x = 0.5F + x + s * vertex.x;
-					vertex.y = 0.5F + y + s * vertex.y;
-					vertex.z = 0.5F + z + s * vertex.z;
+					vertex.x = x + s * vertex.x;
+					vertex.y = y + s * vertex.y;
+					vertex.z = z + s * vertex.z;
 //					//Add vertex to buffer
 					verticesBuffer[bufferPointer] = vertex;
 
