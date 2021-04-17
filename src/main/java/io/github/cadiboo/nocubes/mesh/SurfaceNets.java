@@ -1,15 +1,10 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.SnowyDirtBlock;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 
@@ -53,7 +48,7 @@ public class SurfaceNets implements MeshGenerator {
 		return ModUtil.VEC_ONE;
 	}
 
-	private void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
@@ -67,30 +62,8 @@ public class SurfaceNets implements MeshGenerator {
 		try {
 			for (int i = 0; i < states.length; i++) {
 				BlockState state = states[i];
-//				boolean isStateSmoothable = isSmoothable.test(state);
-				if (this == NoCubesConfig.Server.meshGenerator) {
-					boolean smoothable = isSmoothable.test(state);
-					boolean isTerrain = RenderTypeLookup.canRenderInLayer(state, RenderType.solid()) || state.getBlock() instanceof SnowyDirtBlock;
-					float density;
-					if (smoothable && isTerrain)
-						density = 0;
-					else if (smoothable)
-						density = 1;
-					else
-						density = -1;
-					densityField[i] = density;
-				} else {
-					boolean smoothable = isSmoothable.test(state);
-					boolean isTerrain = RenderTypeLookup.canRenderInLayer(state, RenderType.solid()) || state.getBlock() instanceof SnowyDirtBlock;
-					float density;
-					if (smoothable && isTerrain)
-						density = 1;
-					else if (smoothable)
-						density = -1;
-					else
-						density = -1;
-					densityField[i] = density;
-				}
+				boolean isStateSmoothable = isSmoothable.test(state);
+				densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 			}
 			BlockPos dims = area.end.subtract(area.start);
 			generateOrThrow2(densityField, dims, voxelAction, faceAction);
