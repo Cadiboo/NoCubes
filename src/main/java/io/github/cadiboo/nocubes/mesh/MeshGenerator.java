@@ -21,8 +21,8 @@ public interface MeshGenerator {
 		/**
 		 * Return false if no more faces need to be generated
 		 *
-		 * @param face The face, positioned relatively to the start of the area
 		 * @param pos  The position of the face, positioned relatively to the start of the area
+		 * @param face The face, positioned relatively to the start of the area
 		 */
 		boolean apply(BlockPos.Mutable pos, Face face);
 
