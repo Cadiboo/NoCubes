@@ -45,57 +45,63 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 
 					// Up (pos y)
 					if (y < height - 1 && !isSmoothable.test(blocks[index + height]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.75F, y + 0.75F, z + 0.75F,
 							x + 0.75F, y + 0.75F, z + 0.25F,
 							x + 0.25F, y + 0.75F, z + 0.25F,
 							x + 0.25F, y + 0.75F, z + 0.75F
-						));
+						)))
+							return;
 
 					// Down (neg y)
 					if (y > 0 && !isSmoothable.test(blocks[index - height]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.75F, y, z + 0.75F,
 							x + 0.25F, y, z + 0.75F,
 							x + 0.25F, y, z + 0.25F,
 							x + 0.75F, y, z + 0.25F
-						));
+						)))
+							return;
 
 					// South (pos z)
 					if (z < depth - 1 && !isSmoothable.test(blocks[index + width * height]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.75F, y + 0.75F, z + 0.75F,
 							x + 0.25F, y + 0.75F, z + 0.75F,
 							x + 0.25F, y + 0.25F, z + 0.75F,
 							x + 0.75F, y + 0.25F, z + 0.75F
-						));
+						)))
+							return;
 
 					// North (neg z)
 					if (z > 0 && !isSmoothable.test(blocks[index - width * height]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.75F, y + 0.75F, z + 0.25F,
 							x + 0.75F, y + 0.25F, z + 0.25F,
 							x + 0.25F, y + 0.25F, z + 0.25F,
 							x + 0.25F, y + 0.75F, z + 0.25F
-						));
+						)))
+							return;
 
 					// East (pos x)
 					if (x < width - 1 && !isSmoothable.test(blocks[index + 1]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.75F, y + 0.75F, z + 0.75F,
 							x + 0.75F, y + 0.25F, z + 0.75F,
 							x + 0.75F, y + 0.25F, z + 0.25F,
 							x + 0.75F, y + 0.75F, z + 0.25F
-						));
+						)))
+							return;
 
 					// West (neg x)
 					if (x > 0 && !isSmoothable.test(blocks[index - 1]))
-						action.apply(pos.set(x, y, z), face.set(
+						if (faceAction.apply(pos.set(x, y, z), face.set(
 							x + 0.25F, y + 0.75F, z + 0.75F,
 							x + 0.25F, y + 0.75F, z + 0.25F,
 							x + 0.25F, y + 0.25F, z + 0.25F,
 							x + 0.25F, y + 0.25F, z + 0.75F
-						));
+						)))
+							return;
 				}
 			}
 		}
