@@ -24,7 +24,7 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 	}
 
 	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos start = area.start;
 		BlockPos end = area.end;
 
@@ -39,7 +39,10 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 		for (int z = 0; z < depth; ++z) {
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x, ++index) {
-					if (!isSmoothable.test(blocks[index]))
+					boolean smoothable = isSmoothable.test(blocks[index]);
+					if (!voxelAction.apply(pos.set(x, y, z), smoothable ? 1 : 0))
+						return;
+					if (!smoothable)
 						// We aren't smoothable
 						continue;
 

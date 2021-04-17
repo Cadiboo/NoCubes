@@ -10,7 +10,13 @@ import java.util.function.Predicate;
 
 public interface MeshGenerator {
 
-	void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action);
+	VoxelAction DEFAULT_VOXEL_ACTION = (pos, amount) -> true;
+
+	default void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+		generate(area, isSmoothable, DEFAULT_VOXEL_ACTION, action);
+	}
+
+	void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
 
     Vector3i getPositiveAreaExtension();
 
@@ -25,6 +31,18 @@ public interface MeshGenerator {
 		 * @param face The face, positioned relatively to the start of the area
 		 */
 		boolean apply(BlockPos.Mutable pos, Face face);
+
+	}
+
+    interface VoxelAction {
+
+		/**
+		 * Return false if no more voxels need to iterated over
+		 *
+		 * @param pos  The position of the voxel, positioned relatively to the start of the area
+		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
+		 */
+		boolean apply(BlockPos.Mutable pos, float amountInsideIsosurface);
 
 	}
 

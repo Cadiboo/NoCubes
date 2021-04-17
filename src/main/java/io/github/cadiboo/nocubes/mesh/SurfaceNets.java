@@ -26,9 +26,9 @@ public class SurfaceNets implements MeshGenerator {
 	private static final ThreadLocal<CachedArray> CACHE = ThreadLocal.withInitial(CachedArray::new);
 
 	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		try {
-			generateOrThrow(area, isSmoothable, action);
+			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
@@ -48,7 +48,7 @@ public class SurfaceNets implements MeshGenerator {
 		return ModUtil.VEC_ONE;
 	}
 
-	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FaceAction faceAction) {
+	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
@@ -66,13 +66,13 @@ public class SurfaceNets implements MeshGenerator {
 				densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 			}
 			BlockPos dims = area.end.subtract(area.start);
-			generateOrThrow2(densityField, dims, faceAction);
+			generateOrThrow2(densityField, dims, voxelAction, faceAction);
 		} finally {
 			cachedArray.releaseArray();
 		}
 	}
 
-	private static void generateOrThrow2(float[] densityField, BlockPos dims, FaceAction faceAction) {
+	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		final Face face = new Face();
@@ -109,14 +109,18 @@ public class SurfaceNets implements MeshGenerator {
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
 					int mask = 0, corner = 0, idx = n;
-					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx += dims.getX() * (dims.getY() - 2))
-						for (int cornerY = 0; cornerY < 2; ++cornerY, idx += dims.getX() - 2)
-							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++idx) {
-//								int index = ModUtil.get3dIndexInto1dArray(x + cornerX, y + cornerY, z + cornerZ, dims.getX(), dims.getY());
-								float density = densityField[idx];
-								grid[corner] = density;
-								mask |= (density < 0) ? (1 << corner) : 0;
+					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, idx += dims.getX() * (dims.getY() - 2))
+						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, idx += dims.getX() - 2)
+							for (byte neighbourX = 0; neighbourX < 2; ++neighbourX, ++corner, ++idx) {
+								float signedDistance = densityField[idx];
+								grid[corner] = signedDistance;
+								// Signed distance field values are negative when they fall inside the shape
+								boolean insideIsosurface = signedDistance < 0;
+								mask |= insideIsosurface ? (1 << corner) : 0;
 							}
+
+					if (mask == 0 && !voxelAction.apply(pos.set(x, y, z), (grid[0] + 1) / 2F))
+						return;
 
 					// Check for early termination if cell does not intersect boundary
 					// This cell is either entirely inside or entirely outside the isosurface
