@@ -11,8 +11,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -59,6 +62,10 @@ public final class KeybindHandler {
 	}
 
 	private static void toggleVisuals() {
+		if (NoCubesConfig.Client.render && NoCubesConfig.Server.forceVisuals) {
+			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".visualsForcedByServer").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			return;
+		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
 		reloadAllChunks(Minecraft.getInstance());
 	}

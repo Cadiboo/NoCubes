@@ -253,7 +253,7 @@ public final class NoCubesConfig {
 		}
 
 		public static void bake() {
-			render = INSTANCE.render.get();
+			render = Server.forceVisuals || INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 
 			debugEnabled = INSTANCE.debugEnabled.get();
@@ -350,6 +350,7 @@ public final class NoCubesConfig {
 		public static final ForgeConfigSpec SPEC;
 		public static MeshGenerator meshGenerator = new SurfaceNets();
 		public static boolean collisionsEnabled;
+		public static boolean forceVisuals;
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -359,6 +360,9 @@ public final class NoCubesConfig {
 
 		public static void bake() {
 			collisionsEnabled = INSTANCE.collisionsEnabled.get();
+			forceVisuals = INSTANCE.forceVisuals.get();
+			if (forceVisuals)
+				Client.render = true;
 		}
 
 		public static void updateSmoothable(final boolean newValue, final BlockState... states) {
@@ -386,6 +390,7 @@ public final class NoCubesConfig {
 			final ConfigValue<List<? extends String>> smoothableWhitelist;
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
 			final BooleanValue collisionsEnabled;
+			final BooleanValue forceVisuals;
 
 			private Impl(final ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
@@ -399,6 +404,14 @@ public final class NoCubesConfig {
 				collisionsEnabled = builder
 					.translation(NoCubes.MOD_ID + ".config.collisionsEnabled")
 					.define("collisionsEnabled", true);
+
+				forceVisuals = builder
+					.translation(NoCubes.MOD_ID + ".config.forceVisuals")
+					.comment(
+						"For MMO servers that require NoCubes to be enabled for a proper player experience.",
+						"If you enable this make sure that you've manually checked that every chunk is navigable!"
+					)
+					.define("forceVisuals", true);
 			}
 
 		}
