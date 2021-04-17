@@ -4,11 +4,11 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -42,10 +43,15 @@ public final class MeshRenderer {
 		final Face normal = new Face();
 		final Vec averageOfNormal = new Vec();
 		final TextureInfo uvs = new TextureInfo();
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		BlockPos start = blockpos;
-		try (Area area = new Area(Minecraft.getInstance().level, start, blockpos.offset(18, 18, 18))) {
-			new SurfaceNets().generate(area, NoCubes.smoothableHandler::isSmoothable, ((pos, face) -> {
+		Vector3i negativeAreaExtension = generator.getNegativeAreaExtension();
+		BlockPos start = blockpos.subtract(negativeAreaExtension);
+		BlockPos end = blockpos.offset(ModUtil.CHUNK_SIZE).offset(generator.getPositiveAreaExtension());
+		try (Area area = new Area(Minecraft.getInstance().level, start, end)) {
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, ((pos, face) -> {
+				// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
+				face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
 				face.assignNormalTo(normal);
 				normal.multiply(-1);
 				normal.assignAverageTo(averageOfNormal);

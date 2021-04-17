@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 
 import java.util.Arrays;
 import java.util.function.Predicate;
@@ -24,11 +25,6 @@ public class SurfaceNets implements MeshGenerator {
 
 	private static final ThreadLocal<CachedArray> CACHE = ThreadLocal.withInitial(CachedArray::new);
 
-	// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
-	public static final int MESH_SIZE_POSITIVE_EXTENSION = 1;
-	// Never change this. I'm not sure why it's needed but it is needed very much
-	public static final int MESH_SIZE_NEGATIVE_EXTENSION = 1;
-
 	@Override
 	public void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
 		try {
@@ -40,17 +36,28 @@ public class SurfaceNets implements MeshGenerator {
 		}
 	}
 
+	@Override
+	public Vector3i getPositiveAreaExtension() {
+		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
+		return ModUtil.VEC_ONE;
+	}
+
+	@Override
+	public Vector3i getNegativeAreaExtension() {
+		// I'm not sure why it's needed but it is needed very much
+		return ModUtil.VEC_ONE;
+	}
+
 	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FaceAction faceAction) {
-		/*
-		 * From Wikipedia:
-		 * Apply a threshold to the 2D field to make a binary image containing:
-		 * - 1 where the data value is above the isovalue
-		 * - 0 where the data value is below the isovalue
-		 */
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
 		CachedArray cachedArray = CACHE.get();
+		// NB: SurfaceNets expects to be working on the signed distance at the corner of each block
+		// To get this we would have to average the densities of each block & its neighbours
+		// Doing this results in loss of terrain features (one-block large features effectively disappear)
+		// Because we want to preserve these features, we feed SurfaceNets the block densities, pretending that they
+		// are the corner distances and then offset the resulting mesh by 0.5
 		float[] densityField = cachedArray.takeArray(states.length);
 		try {
 			for (int i = 0; i < states.length; i++) {
@@ -164,6 +171,8 @@ public class SurfaceNets implements MeshGenerator {
 					vertex.x = x + s * vertex.x;
 					vertex.y = y + s * vertex.y;
 					vertex.z = z + s * vertex.z;
+					// Because we are passing block densities instead of corner distances (see the NB comment above) we need to offset the mesh
+					vertex.add(0.5F, 0.5F, 0.5F);
 //					//Add vertex to buffer
 					verticesBuffer[bufferPointer] = vertex;
 

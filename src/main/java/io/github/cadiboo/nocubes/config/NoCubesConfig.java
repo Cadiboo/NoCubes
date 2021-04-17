@@ -4,6 +4,8 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
@@ -25,8 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static net.minecraft.block.Blocks.*;
-import static net.minecraft.state.properties.BlockStateProperties.LIT;
-import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
+import static net.minecraft.state.properties.BlockStateProperties.*;
 
 /**
  * The Config for NoCubes.
@@ -107,7 +108,14 @@ public final class NoCubesConfig {
 
 			PACKED_ICE.defaultBlockState(),
 
-			SNOW.defaultBlockState(),
+			SNOW.defaultBlockState().setValue(LAYERS, 1),
+			SNOW.defaultBlockState().setValue(LAYERS, 2),
+			SNOW.defaultBlockState().setValue(LAYERS, 3),
+			SNOW.defaultBlockState().setValue(LAYERS, 4),
+			SNOW.defaultBlockState().setValue(LAYERS, 5),
+			SNOW.defaultBlockState().setValue(LAYERS, 6),
+			SNOW.defaultBlockState().setValue(LAYERS, 7),
+			SNOW.defaultBlockState().setValue(LAYERS, 8),
 			SNOW_BLOCK.defaultBlockState(),
 
 			BEDROCK.defaultBlockState(),
@@ -303,6 +311,7 @@ public final class NoCubesConfig {
 
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
+		public static MeshGenerator meshGenerator = new SurfaceNets();
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);

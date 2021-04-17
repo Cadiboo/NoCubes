@@ -3,9 +3,9 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -13,13 +13,14 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Matrix4f;
@@ -31,6 +32,9 @@ import net.minecraftforge.client.event.DrawHighlightEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.apache.logging.log4j.LogManager;
+
+import java.util.stream.LongStream;
 
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
@@ -60,10 +64,13 @@ public final class OverlayRenderer {
 		final Vector3d camera = event.getInfo().getPosition();
 		final Matrix4f matrix4f = event.getMatrix().last().pose();
 		final IVertexBuilder bufferBuilder = event.getBuffers().getBuffer(RenderType.lines());
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		BlockPos start = lookingAtPos.subtract(generator.getNegativeAreaExtension());
+		BlockPos end = lookingAtPos.offset(1, 1, 1).offset(generator.getPositiveAreaExtension());
 
-		try (Area area = new Area(world, lookingAtPos, lookingAtPos.offset(1, 1, 1))) {
-			new SurfaceNets().generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
-				drawFacePosColor(face, camera, lookingAtPos, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
+		try (Area area = new Area(world, start, end)) {
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+				drawFacePosColor(face, camera, start, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
 				return true;
 			});
 		}
@@ -83,72 +90,130 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		final ActiveRenderInfo activeRenderInfo = minecraft.gameRenderer.getMainCamera();
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		final Vector3d camera = activeRenderInfo.getPosition();
-		double d0 = camera.x;
-		double d1 = camera.y;
-		double d2 = camera.z;
+		final Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
+		double cameraX = camera.x;
+		double cameraY = camera.y;
+		double cameraZ = camera.z;
 		final MatrixStack matrixStack = event.getMatrixStack();
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
-		final BlockPos viewerPos = new BlockPos(viewer.blockPosition());
-//		BlockPos.betweenClosed(viewerPos.offset(-5, -5, -5), viewerPos.offset(5, 5, 5)).forEach(blockPos -> {
-//			if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(blockPos)))
-//				drawShape(matrixStack, bufferBuilder, VoxelShapes.fullCube(), -d0 + blockPos.getX(), -d1 + blockPos.getY(), -d2 + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
-//		});
-		float p = 1 / 16F;
-		VoxelShape indicator = VoxelShapes.box(-p, -p, -p, +p, +p, +p);
-		BlockPos.betweenClosed(viewerPos.offset(-5, -5, -5), viewerPos.offset(5, 5, 5)).forEach(pos -> {
-			BlockState state = viewer.level.getBlockState(pos);
-			boolean smoothable = NoCubes.smoothableHandler.isSmoothable(state);
-			float density = ModUtil.getBlockDensity(smoothable, state);
-			float scale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
-			if (scale > 0.01)
-				drawShape(matrixStack, bufferBuilder, indicator, pos.getX() - d0, pos.getY() - d1, pos.getZ() - d2, 1F, 0F, 0F, scale);
-		});
+		// Outline nearby smoothable blocks
+		if (false) {
+			BlockPos start = viewer.blockPosition().offset(-5, -5, -5).subtract(generator.getNegativeAreaExtension());
+			BlockPos end = viewer.blockPosition().offset(5, 5, 5).offset(generator.getPositiveAreaExtension());
+			BlockPos.betweenClosed(start, end).forEach(blockPos -> {
+				if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(blockPos)))
+					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), -cameraX + blockPos.getX(), -cameraY + blockPos.getY(), -cameraZ + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
+			});
+		}
 
-//		// Draw nearby collisions in green
-//		world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
-//			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 1.0F, 0.0F, 0.4F);
-//		});
-//		// Draw player intersecting collisions in red
-//		world.getBlockCollisions(viewer, viewer.getBoundingBox()).forEach(voxelShape -> {
-//			drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 1.0F, 0.0F, 0.0F, 0.4F);
-//		});
+		// Draw nearby block densities and computed corner signed distance fields
+		// This was just for understanding how SurfaceNets works
+		// It made me understand why feeding it the 'proper' corner info results in much smoother terrain
+		// at the cost of 1-block formations disappearing
+		if (false) {
+			VoxelShape distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 
-//		BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
-//		try (Area area = new Area(world, start, start.offset(10, 10, 10))) {
-//			new OOCollisionHandler(new SurfaceNets()).generate(area, (x0, y0, z0, x1, y1, z1) -> {
-//				double x = start.getX();
-//				double y = start.getY();
-//				double z = start.getZ();
-//				VoxelShape voxelShape = VoxelShapes.box(
-//					x + x0, y + y0, z + z0,
-//					x + x1, y + y1, z + z1
-//				);
-//				drawShape(matrixStack, bufferBuilder, voxelShape, -d0, -d1, -d2, 0.0F, 0.0F, 1.0F, 0.4F);
-//			});
-//		}
+			RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
+			// Where the player is looking at or their position of they're not looking at a block
+			BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
+			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), targetedPos.offset(4, 4, 4))) {
+				BlockState[] states = area.getAndCacheBlocks();
+				float[] densities = new float[area.getLength()];
+				for (int i = 0; i < densities.length; ++i) {
+					BlockState state = states[i];
+					boolean smoothable = NoCubes.smoothableHandler.isSmoothable(state);
+					densities[i] = ModUtil.getBlockDensity(smoothable, state);
+				}
 
-//		long startNanos = System.nanoTime();
-//		drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
-//		long elapsedNanos = System.nanoTime() - startNanos;
-//		meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
-//		if (timingsIndex % meshTimings.length == 0)
-//			LogManager.getLogger("Calc & render chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+				int maxZ = area.end.getZ();
+				int maxY = area.end.getY();
+				int maxX = area.end.getX();
+				int minZ = area.start.getZ();
+				int minY = area.start.getY();
+				int minX = area.start.getX();
+				int width = maxX - minX;
+				int height = maxY - minY;
+				int zyxIndex = 0;
+				for (int z = minZ; z < maxZ; ++z) {
+					for (int y = minY; y < maxY; ++y) {
+						for (int x = minX; x < maxX; ++x, ++zyxIndex) {
+							float density = densities[zyxIndex];
+							float densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
+							if (densityScale > 0.01) {
+								VoxelShape box = VoxelShapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
+								drawShape(matrixStack, bufferBuilder, box, x - cameraX, y - cameraY, z - cameraZ, 0F, 0F, 1F, 0.5F);
+							}
+							if (x <= minX || y <= minY || z <= minZ)
+								continue;
+
+							float combinedDensity = 0; // AKA signed distance field
+							int idx = zyxIndex;
+							for (int cornerZ = 0; cornerZ < 2; ++cornerZ, idx -= width * (height - 2))
+								for (int cornerY = 0; cornerY < 2; ++cornerY, idx -= width - 2)
+									for (byte cornerX = 0; cornerX < 2; ++cornerX, --idx) {
+										combinedDensity += densities[idx];
+									}
+							float combinedDensityScale = 0.5F + combinedDensity / 16F; // from [-8, 8] -> [0, 1]
+							drawShape(matrixStack, bufferBuilder, distanceIndicator, x - cameraX, y - cameraY, z - cameraZ, combinedDensityScale, 1 - combinedDensityScale, 0F, 0.4F);
+						}
+					}
+				}
+			}
+		}
+
+		// Draw nearby collisions in green and player intersecting collisions in red
+		if (false) {
+			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
+				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 0.0F, 1.0F, 0.0F, 0.4F);
+			});
+			world.getBlockCollisions(viewer, viewer.getBoundingBox()).forEach(voxelShape -> {
+				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 1.0F, 0.0F, 0.0F, 0.4F);
+			});
+		}
+
+		if (false) {
+			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
+			try (Area area = new Area(world, start, start.offset(10, 10, 10))) {
+				new OOCollisionHandler(generator).generate(area, (x0, y0, z0, x1, y1, z1) -> {
+					double x = start.getX();
+					double y = start.getY();
+					double z = start.getZ();
+					VoxelShape voxelShape = VoxelShapes.box(
+						x + x0, y + y0, z + z0,
+						x + x1, y + y1, z + z1
+					);
+					drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 0.0F, 0.0F, 1.0F, 0.4F);
+				});
+			}
+		}
+
+		// Measure the performance of meshing nearby blocks (and maybe render the result)
+		if (false) {
+			long startNanos = System.nanoTime();
+			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
+			long elapsedNanos = System.nanoTime() - startNanos;
+			meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
+			if (timingsIndex % meshTimings.length == 0)
+				LogManager.getLogger("Calc & render chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+		}
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
 		bufferSource.endBatch(RenderType.lines());
 	}
 
 	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
-		MeshGenerator meshGenerator = new SurfaceNets();
+		MeshGenerator meshGenerator = NoCubesConfig.Server.meshGenerator;
 		Vector3i meshSize = new BlockPos(16, 16, 16);
-		BlockPos start = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
-		try (Area area = new Area(viewer.level, start, start.offset(meshSize).offset(1, 1, 1))) {
+		BlockPos start = viewer.blockPosition()
+			.offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2)
+			.subtract(meshGenerator.getNegativeAreaExtension());
+		BlockPos end = start.offset(meshSize).offset(meshGenerator.getPositiveAreaExtension());
+		try (Area area = new Area(viewer.level, start, end)) {
 			final Face normal = new Face();
 			final Vec averageOfNormal = new Vec();
 			final Vec centre = new Vec();

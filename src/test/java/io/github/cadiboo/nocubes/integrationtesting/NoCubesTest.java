@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
+import io.github.cadiboo.nocubes.mesh.CullingCubicMeshGenerator;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -54,7 +54,7 @@ public class NoCubesTest {
 			}
 		};
 		new SurfaceNets().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
-		new CubicMeshGenerator().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+		new CullingCubicMeshGenerator().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
 	private static boolean checkAndMutate(BlockPos.Mutable pos, Face face) {

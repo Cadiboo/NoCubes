@@ -2,8 +2,7 @@ package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.CubicMeshGenerator;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
@@ -13,14 +12,14 @@ import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
 
 public final class CollisionHandler {
 
 	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		try {
-			return getCollisionShapeOrThrow(canCollide, state, (IWorldReader) reader, blockPos, context);
+			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, context);
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
@@ -31,7 +30,7 @@ public final class CollisionHandler {
 	// TODO: Why is the 'cache' of every blockstate storing an empty VoxelShape... this is causing issues like
 	// grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
 	// and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
-	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IWorldReader reader, BlockPos blockPos, ISelectionContext context) {
+	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		if (!canCollide)
 			return VoxelShapes.empty();
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
@@ -42,11 +41,18 @@ public final class CollisionHandler {
 		if (reader.getBlockState(blockPos) != state)
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			return state.getShape(reader, blockPos);
+
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		Vector3i negativeAreaExtension = generator.getNegativeAreaExtension();
+		BlockPos start = blockPos.subtract(negativeAreaExtension);
+		BlockPos end = blockPos.offset(1, 1, 1).offset(generator.getPositiveAreaExtension());
 		VoxelShape[] ref = {VoxelShapes.empty()};
-		BlockPos start = blockPos.offset(-1, -1, -1);
-		try (Area area = new Area(reader, start, blockPos.offset(2, 2, 2))) {
-			new OOCollisionHandler(new SurfaceNets()).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
-				VoxelShape shape = VoxelShapes.box(x0 - 1, y0 - 1, z0 - 1, x1 - 1, y1 - 1, z1 - 1);
+		try (Area area = new Area(reader, start, end)) {
+			new OOCollisionHandler(generator).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
+				VoxelShape shape = VoxelShapes.box(
+					x0 - negativeAreaExtension.getX(), y0 - negativeAreaExtension.getY(), z0 - negativeAreaExtension.getZ(),
+					x1 - negativeAreaExtension.getX(), y1 - negativeAreaExtension.getY(), z1 - negativeAreaExtension.getZ()
+				);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			}));
 		}
