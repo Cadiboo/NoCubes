@@ -175,7 +175,7 @@ function initializeCoreMod() {
 			"target": {
 				"type": "METHOD",
 				"class": "net.minecraft.client.world.ClientWorld",
-				"methodName": "setBlocksDirty",
+				"methodName": "func_225319_b",
 				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"
 			},
 			"transformer": function(methodNode) {
@@ -1055,7 +1055,7 @@ function injectPreIterationHook(instructions) {
 	var getAllInBoxMutable_desc;
 	if (!isOptiFinePresent) {
 		var getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
-		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_191531_b"); // BlockPos#betweenClosed
+		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#betweenClosed
 		var getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
 	} else {
 		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
