@@ -238,6 +238,13 @@ public final class NoCubesConfig {
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
 		public static ColorParser.Color selectionBoxColor;
+		public static boolean debugEnabled;
+		public static boolean debugOutlineSmoothables;
+		public static boolean debugVisualiseDensitiesGrid;
+		public static boolean debugRenderCollisions;
+		public static boolean debugRenderMeshCollisions;
+		public static boolean debugRecordMeshPerformance;
+		public static boolean debugRenderNearbyMesh;
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -248,6 +255,14 @@ public final class NoCubesConfig {
 		public static void bake() {
 			render = INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
+
+			debugEnabled = INSTANCE.debugEnabled.get();
+			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
+			debugVisualiseDensitiesGrid = INSTANCE.debugVisualiseDensitiesGrid.get();
+			debugRenderCollisions = INSTANCE.debugRenderCollisions.get();
+			debugRenderMeshCollisions = INSTANCE.debugRenderMeshCollisions.get();
+			debugRecordMeshPerformance = INSTANCE.debugRecordMeshPerformance.get();
+			debugRenderNearbyMesh = INSTANCE.debugRenderNearbyMesh.get();
 		}
 
 		public static void updateSmoothablePreference(final boolean newValue, final BlockState... states) {
@@ -267,6 +282,13 @@ public final class NoCubesConfig {
 			final ConfigValue<String> selectionBoxColor;
 			final ConfigValue<List<? extends String>> smoothableWhitelistPreference;
 			final ConfigValue<List<? extends String>> smoothableBlacklistPreference;
+			final BooleanValue debugEnabled;
+			final BooleanValue debugOutlineSmoothables;
+			final BooleanValue debugVisualiseDensitiesGrid;
+			final BooleanValue debugRenderCollisions;
+			final BooleanValue debugRenderMeshCollisions;
+			final BooleanValue debugRecordMeshPerformance;
+			final BooleanValue debugRenderNearbyMesh;
 
 			private Impl(final ForgeConfigSpec.Builder builder) {
 				render = builder
@@ -301,6 +323,17 @@ public final class NoCubesConfig {
 				smoothableBlacklistPreference = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklistPreference")
 					.defineList("smoothableBlacklistPreference", Lists::newArrayList, String.class::isInstance);
+
+				debugEnabled = builder
+					.translation(NoCubes.MOD_ID + ".config.debugEnabled")
+					.define("debugEnabled", false);
+
+				debugOutlineSmoothables = builder.define("debugOutlineSmoothables", false);
+				debugVisualiseDensitiesGrid = builder.define("debugVisualiseDensitiesGrid", false);
+				debugRenderCollisions = builder.define("debugRenderCollisions", false);
+				debugRenderMeshCollisions = builder.define("debugRenderMeshCollisions", false);
+				debugRecordMeshPerformance = builder.define("debugRecordMeshPerformance", false);
+				debugRenderNearbyMesh = builder.define("debugRenderNearbyMesh", false);
 			}
 
 		}

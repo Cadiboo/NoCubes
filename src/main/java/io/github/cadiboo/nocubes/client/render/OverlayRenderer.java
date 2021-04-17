@@ -18,9 +18,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Matrix4f;
@@ -78,7 +80,7 @@ public final class OverlayRenderer {
 
 	@SubscribeEvent
 	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
-		if (!Screen.hasAltDown())
+		if (!NoCubesConfig.Client.debugEnabled)
 			return;
 
 		final Minecraft minecraft = Minecraft.getInstance();
@@ -102,7 +104,7 @@ public final class OverlayRenderer {
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
 		// Outline nearby smoothable blocks
-		if (false) {
+		if (NoCubesConfig.Client.debugOutlineSmoothables) {
 			BlockPos start = viewer.blockPosition().offset(-5, -5, -5).subtract(generator.getNegativeAreaExtension());
 			BlockPos end = viewer.blockPosition().offset(5, 5, 5).offset(generator.getPositiveAreaExtension());
 			BlockPos.betweenClosed(start, end).forEach(blockPos -> {
@@ -115,7 +117,7 @@ public final class OverlayRenderer {
 		// This was just for understanding how SurfaceNets works
 		// It made me understand why feeding it the 'proper' corner info results in much smoother terrain
 		// at the cost of 1-block formations disappearing
-		if (false) {
+		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
 			VoxelShape distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 
 			RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
@@ -167,16 +169,18 @@ public final class OverlayRenderer {
 		}
 
 		// Draw nearby collisions in green and player intersecting collisions in red
-		if (false) {
+		if (NoCubesConfig.Client.debugRenderCollisions) {
+			VoxelShape viewerShape = VoxelShapes.create(viewer.getBoundingBox());
 			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
-				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 0.0F, 1.0F, 0.0F, 0.4F);
-			});
-			world.getBlockCollisions(viewer, viewer.getBoundingBox()).forEach(voxelShape -> {
-				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 1.0F, 0.0F, 0.0F, 0.4F);
+				boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.OR);
+				float red = intersects ? 1 : 0;
+				float green = intersects ? 0 : 1;
+				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, red, green, 0.0F, 0.4F);
 			});
 		}
 
-		if (false) {
+		// Draw NoCubes' collisions
+		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
 			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
 			try (Area area = new Area(world, start, start.offset(10, 10, 10))) {
 				new OOCollisionHandler(generator).generate(area, (x0, y0, z0, x1, y1, z1) -> {
@@ -193,13 +197,15 @@ public final class OverlayRenderer {
 		}
 
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
-		if (false) {
+		if (NoCubesConfig.Client.debugRecordMeshPerformance || NoCubesConfig.Client.debugRenderNearbyMesh) {
 			long startNanos = System.nanoTime();
 			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
-			long elapsedNanos = System.nanoTime() - startNanos;
-			meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
-			if (timingsIndex % meshTimings.length == 0)
-				LogManager.getLogger("Calc & render chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+			if (NoCubesConfig.Client.debugRecordMeshPerformance) {
+				long elapsedNanos = System.nanoTime() - startNanos;
+				meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
+				if (timingsIndex % meshTimings.length == 0)
+					LogManager.getLogger("Calc " + (NoCubesConfig.Client.debugRenderNearbyMesh ? "& render" : "") + " chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+			}
 		}
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
@@ -225,7 +231,7 @@ public final class OverlayRenderer {
 			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
 
 			meshGenerator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
-				if (Screen.hasControlDown())
+				if (!NoCubesConfig.Client.debugRenderNearbyMesh)
 					return true;
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
 
