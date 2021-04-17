@@ -411,7 +411,7 @@ public final class NoCubesConfig {
 						"For MMO servers that require NoCubes to be enabled for a proper player experience.",
 						"If you enable this make sure that you've manually checked that every chunk is navigable!"
 					)
-					.define("forceVisuals", true);
+					.define("forceVisuals", false);
 			}
 
 		}
