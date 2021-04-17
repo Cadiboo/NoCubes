@@ -5,14 +5,12 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
@@ -30,6 +28,7 @@ import net.minecraftforge.client.model.data.IModelData;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
@@ -49,84 +48,175 @@ public final class MeshRenderer {
 		BlockPos start = blockpos.subtract(negativeAreaExtension);
 		BlockPos end = blockpos.offset(ModUtil.CHUNK_SIZE).offset(generator.getPositiveAreaExtension());
 		try (Area area = new Area(Minecraft.getInstance().level, start, end)) {
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, ((pos, face) -> {
-				// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
-				face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
-				face.assignNormalTo(normal);
-				normal.multiply(-1);
-				normal.assignAverageTo(averageOfNormal);
-				Direction direction = averageOfNormal.getDirectionFromNormal();
+			{
+				Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+				generator.generate(area, isSmoothable, (pos, face) -> {
+					// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
+					face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
+					face.assignNormalTo(normal);
+					normal.multiply(-1);
+					normal.assignAverageTo(averageOfNormal);
+					Direction direction = averageOfNormal.getDirectionFromNormal();
 
-				SmoothableHandler handler = NoCubes.smoothableHandler;
-				BlockState blockstate = chunkrendercache.getBlockState(pos.move(start));
-				// Vertices can generate at positions different to the position of the block they are for
-				// This occurs mostly for positions below, west of and north of the position they are for
-				// Search the opposite of those directions for the actual block
-				// We could also attempt to get the state from the vertex positions
-				if (!handler.isSmoothable(blockstate)) {
-					int x = pos.getX();
-					int y = pos.getY();
-					int z = pos.getZ();
-					blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
-					if (!handler.isSmoothable(blockstate)) {
-						// Give up
-						blockstate = Blocks.SCAFFOLDING.defaultBlockState();
-						pos.set(x, y, z);
-					}
-				}
-
-				long rand = blockstate.getSeed(pos);
-				BlockColors blockColors = Minecraft.getInstance().getBlockColors();
-				int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
-
-				if (blockstate.getRenderShape() == BlockRenderType.INVISIBLE)
-					return true;
-
-				IModelData modelData = rebuildTask.getModelData(pos);
-				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, pos.relative(direction));
-
-				for (RenderType rendertype : RenderType.chunkBufferLayers()) {
-					if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
-						continue;
-					ForgeHooksClient.setRenderLayer(rendertype);
-					BufferBuilder bufferbuilder = builderIn.builder(rendertype);
-					if (compiledChunkIn.hasLayer.add(rendertype))
-						chunkRender.beginLayer(bufferbuilder);
-
-					matrixstack.pushPose();
-					matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
-
-					IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
-					random.setSeed(rand);
-					List<BakedQuad> dirQuads;
-					if (blockstate.hasProperty(BlockStateProperties.SNOWY))
-						// Make grass/snow/mycilium side faces be rendered with their top texture
-						// Equivalent to OptiFine's Better Grass feature
-						if (!blockstate.getValue(BlockStateProperties.SNOWY))
-							dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
-						else {
-							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-							BlockState snow = Blocks.SNOW.defaultBlockState();
-							dirQuads = blockrendererdispatcher.getBlockModel(snow).getQuads(snow, null, random, modelData);
+					BlockState blockstate = chunkrendercache.getBlockState(pos.move(start));
+					// Vertices can generate at positions different to the position of the block they are for
+					// This occurs mostly for positions below, west of and north of the position they are for
+					// Search the opposite of those directions for the actual block
+					// We could also attempt to get the state from the vertex positions
+					if (!isSmoothable.test(blockstate)) {
+						int x = pos.getX();
+						int y = pos.getY();
+						int z = pos.getZ();
+						blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
+						if (!isSmoothable.test(blockstate)) {
+							// Give up
+							blockstate = Blocks.SCAFFOLDING.defaultBlockState();
+							pos.set(x, y, z);
 						}
-					else
-						dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
-					random.setSeed(rand);
-					List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
-					if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
-						dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
-					renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads);
-
-					if (true) {
-						compiledChunkIn.isCompletelyEmpty = false;
-						compiledChunkIn.hasBlocks.add(rendertype);
 					}
-					matrixstack.popPose();
-				}
-				ForgeHooksClient.setRenderLayer(null);
+					boolean isTerrain = RenderTypeLookup.canRenderInLayer(blockstate, RenderType.solid()) || blockstate.getBlock() instanceof SnowyDirtBlock;
+					if (isTerrain)
+						return true;
 
-				return true;
-			}));
+					boolean drawBothFaceSides = blockstate.getBlock() instanceof LeavesBlock;
+
+					long rand = blockstate.getSeed(pos);
+					BlockColors blockColors = Minecraft.getInstance().getBlockColors();
+					int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+
+					if (blockstate.getRenderShape() == BlockRenderType.INVISIBLE)
+						return true;
+
+					IModelData modelData = rebuildTask.getModelData(pos);
+					int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, pos.relative(direction));
+
+					for (RenderType rendertype : RenderType.chunkBufferLayers()) {
+						if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
+							continue;
+						ForgeHooksClient.setRenderLayer(rendertype);
+						BufferBuilder bufferbuilder = builderIn.builder(rendertype);
+						if (compiledChunkIn.hasLayer.add(rendertype))
+							chunkRender.beginLayer(bufferbuilder);
+
+						matrixstack.pushPose();
+						matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
+
+						IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
+						random.setSeed(rand);
+						List<BakedQuad> dirQuads;
+						if (blockstate.hasProperty(BlockStateProperties.SNOWY))
+							// Make grass/snow/mycilium side faces be rendered with their top texture
+							// Equivalent to OptiFine's Better Grass feature
+							if (!blockstate.getValue(BlockStateProperties.SNOWY))
+								dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+							else {
+								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+								BlockState snow = Blocks.SNOW.defaultBlockState();
+								dirQuads = blockrendererdispatcher.getBlockModel(snow).getQuads(snow, null, random, modelData);
+							}
+						else
+							dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+						random.setSeed(rand);
+						List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
+						if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
+							dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
+						renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads, drawBothFaceSides);
+
+						if (true) {
+							compiledChunkIn.isCompletelyEmpty = false;
+							compiledChunkIn.hasBlocks.add(rendertype);
+						}
+						matrixstack.popPose();
+					}
+					ForgeHooksClient.setRenderLayer(null);
+
+					return true;
+				});
+			}
+
+			{
+				Predicate<BlockState> isSmoothable = state -> NoCubes.smoothableHandler.isSmoothable(state);
+				new SurfaceNets().generate(area, isSmoothable, (pos, face) -> {
+					// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
+					face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
+					face.assignNormalTo(normal);
+					normal.multiply(-1);
+					normal.assignAverageTo(averageOfNormal);
+					Direction direction = averageOfNormal.getDirectionFromNormal();
+
+					BlockState blockstate = chunkrendercache.getBlockState(pos.move(start));
+					// Vertices can generate at positions different to the position of the block they are for
+					// This occurs mostly for positions below, west of and north of the position they are for
+					// Search the opposite of those directions for the actual block
+					// We could also attempt to get the state from the vertex positions
+					if (!isSmoothable.test(blockstate)) {
+						int x = pos.getX();
+						int y = pos.getY();
+						int z = pos.getZ();
+						blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
+						if (!isSmoothable.test(blockstate)) {
+							// Give up
+							blockstate = Blocks.SCAFFOLDING.defaultBlockState();
+							pos.set(x, y, z);
+						}
+					}
+					boolean isTerrain = RenderTypeLookup.canRenderInLayer(blockstate, RenderType.solid()) || blockstate.getBlock() instanceof SnowyDirtBlock;
+					if (!isTerrain)
+						return true;
+
+					long rand = blockstate.getSeed(pos);
+					BlockColors blockColors = Minecraft.getInstance().getBlockColors();
+					int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+
+					if (blockstate.getRenderShape() == BlockRenderType.INVISIBLE)
+						return true;
+
+					IModelData modelData = rebuildTask.getModelData(pos);
+					int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, pos.relative(direction));
+
+					for (RenderType rendertype : RenderType.chunkBufferLayers()) {
+						if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
+							continue;
+						ForgeHooksClient.setRenderLayer(rendertype);
+						BufferBuilder bufferbuilder = builderIn.builder(rendertype);
+						if (compiledChunkIn.hasLayer.add(rendertype))
+							chunkRender.beginLayer(bufferbuilder);
+
+						matrixstack.pushPose();
+						matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
+
+						IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
+						random.setSeed(rand);
+						List<BakedQuad> dirQuads;
+						if (blockstate.hasProperty(BlockStateProperties.SNOWY))
+							// Make grass/snow/mycilium side faces be rendered with their top texture
+							// Equivalent to OptiFine's Better Grass feature
+							if (!blockstate.getValue(BlockStateProperties.SNOWY))
+								dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+							else {
+								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+								BlockState snow = Blocks.SNOW.defaultBlockState();
+								dirQuads = blockrendererdispatcher.getBlockModel(snow).getQuads(snow, null, random, modelData);
+							}
+						else
+							dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+						random.setSeed(rand);
+						List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
+						if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
+							dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
+						renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads, false);
+
+						if (true) {
+							compiledChunkIn.isCompletelyEmpty = false;
+							compiledChunkIn.hasBlocks.add(rendertype);
+						}
+						matrixstack.popPose();
+					}
+					ForgeHooksClient.setRenderLayer(null);
+
+					return true;
+				});
+			}
 		}
 	}
 
@@ -175,7 +265,7 @@ public final class MeshRenderer {
 //		);
 	}
 
-	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Face face, Face reversedNormal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, int light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads) {
+	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Face face, Face reversedNormal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, int light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads, boolean doubleSided) {
 		final Vec v0 = face.v0;
 		final Vec v1 = face.v1;
 		final Vec v2 = face.v2;
@@ -216,6 +306,12 @@ public final class MeshRenderer {
 			bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light).normal(n1.x, n1.y, n1.z).endVertex();
 			bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light).normal(n2.x, n2.y, n2.z).endVertex();
 			bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light).normal(n3.x, n3.y, n3.z).endVertex();
+			if (doubleSided) {
+				bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light).normal(n3.x, n3.y, n3.z).endVertex();
+				bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light).normal(n2.x, n2.y, n2.z).endVertex();
+				bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light).normal(n1.x, n1.y, n1.z).endVertex();
+				bufferbuilder.vertex(v0.x, v0.y, v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light).normal(n0.x, n0.y, n0.z).endVertex();
+			}
 		}
 	}
 

@@ -193,7 +193,7 @@ public final class OverlayRenderer {
 		}
 
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
-		if (false) {
+		if (true) {
 			long startNanos = System.nanoTime();
 			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
 			long elapsedNanos = System.nanoTime() - startNanos;
@@ -232,8 +232,12 @@ public final class OverlayRenderer {
 				face.assignNormalTo(normal);
 				normal.multiply(-1);
 				normal.assignAverageTo(averageOfNormal);
+				averageOfNormal.add(0, 0.1F, 0);
 				Direction direction = averageOfNormal.getDirectionFromNormal();
 				face.assignAverageTo(centre);
+
+//				if (direction == Direction.SOUTH || direction == Direction.EAST)
+//					if ()
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
