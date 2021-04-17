@@ -1106,7 +1106,8 @@ function injectPreIterationHook(instructions) {
 	// Make list of instructions to inject
 	toInject.add(new VarInsnNode(ALOAD, 0)); // this
 	toInject.add(new VarInsnNode(ALOAD, 0)); // ChunkRender.this
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask", "this$1", "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;"));
+	var outerClassFieldName = ASMAPI.mapField("field_228939_e_")
+	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask", outerClassFieldName, "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;"));
 	toInject.add(new VarInsnNode(ALOAD, 4)); // compiledChunkIn
 	toInject.add(new VarInsnNode(ALOAD, 5)); // builderIn
 	toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos - startPosition
