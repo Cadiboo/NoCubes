@@ -220,7 +220,9 @@ public final class OverlayRenderer {
 			final Vec mut = new Vec();
 
 			Color faceColor = new Color(0F, 1F, 1F, 1F);
-			Color normalDirectionColor = new Color(1F, 0F, 0F, 1F);
+			Color normalColor = new Color(0F, 0F, 1F, 0.5F);
+			Color averageNormalColor = new Color(1F, 0F, 0F, 1F);
+			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
 
 			meshGenerator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				if (Screen.hasControlDown())
@@ -235,14 +237,14 @@ public final class OverlayRenderer {
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-				drawLinePosColor(centre, mut.set(averageOfNormal).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
+				drawLinePosColor(centre, mut.set(averageOfNormal).multiply(dirMul), camera, start, averageNormalColor, bufferBuilder, matrix4f);
 				drawLinePosColor(centre, mut.set(direction.getStepX(), direction.getStepY(), direction.getStepZ()).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
 
 				// Draw each vertex normal
-				drawLinePosColor(face.v0, mut.set(normal.v0).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
-				drawLinePosColor(face.v1, mut.set(normal.v1).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
-				drawLinePosColor(face.v2, mut.set(normal.v2).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
-				drawLinePosColor(face.v3, mut.set(normal.v3).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
+				drawLinePosColor(face.v0, mut.set(normal.v0).multiply(dirMul), camera, start, normalColor, bufferBuilder, matrix4f);
+				drawLinePosColor(face.v1, mut.set(normal.v1).multiply(dirMul), camera, start, normalColor, bufferBuilder, matrix4f);
+				drawLinePosColor(face.v2, mut.set(normal.v2).multiply(dirMul), camera, start, normalColor, bufferBuilder, matrix4f);
+				drawLinePosColor(face.v3, mut.set(normal.v3).multiply(dirMul), camera, start, normalColor, bufferBuilder, matrix4f);
 
 				return true;
 			});

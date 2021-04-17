@@ -120,7 +120,7 @@ public /* inline */ class Vec {
 			prevVecInFace.x - x, prevVecInFace.y - y, prevVecInFace.z - z,
 			nextVecInFace.x - x, nextVecInFace.y - y, nextVecInFace.z - z,
 			toUse
-		).normalise();
+		);//.normalise();
 //		).normalise().multiply(-1);
 	}
 
