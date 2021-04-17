@@ -82,6 +82,7 @@ public final class NoCubesConfig {
 			NETHER_QUARTZ_ORE.defaultBlockState(),
 
 			INFESTED_STONE.defaultBlockState(),
+			BONE_BLOCK.defaultBlockState(),
 
 			GRASS_PATH.defaultBlockState(),
 
@@ -104,7 +105,6 @@ public final class NoCubesConfig {
 			GREEN_TERRACOTTA.defaultBlockState(),
 			RED_TERRACOTTA.defaultBlockState(),
 			BLACK_TERRACOTTA.defaultBlockState(),
-
 
 			PACKED_ICE.defaultBlockState(),
 
