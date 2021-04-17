@@ -268,12 +268,16 @@ public final class NoCubesConfig {
 		public static void updateSmoothablePreference(final boolean newValue, final BlockState... states) {
 			final NoCubesConfig.Client.Impl cfg = NoCubesConfig.Client.INSTANCE;
 			NoCubesConfig.updateSmoothable(newValue, states, (List) cfg.smoothableWhitelistPreference.get(), (List) cfg.smoothableBlacklistPreference.get());
-			saveAndLoad(ModConfig.Type.CLIENT);
+			saveAndLoad();
 		}
 
 		public static void updateRender(final boolean newValue) {
 			Client.INSTANCE.render.set(newValue);
-			saveAndLoad(ModConfig.Type.CLIENT);
+			saveAndLoad();
+		}
+
+		private static void saveAndLoad() {
+			NoCubesConfig.saveAndLoad(ModConfig.Type.CLIENT);
 		}
 
 		static class Impl {
@@ -345,6 +349,7 @@ public final class NoCubesConfig {
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
 		public static MeshGenerator meshGenerator = new SurfaceNets();
+		public static boolean collisionsEnabled;
 
 		static {
 			final Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -353,6 +358,22 @@ public final class NoCubesConfig {
 		}
 
 		public static void bake() {
+			collisionsEnabled = INSTANCE.collisionsEnabled.get();
+		}
+
+		public static void updateSmoothable(final boolean newValue, final BlockState... states) {
+			final NoCubesConfig.Server.Impl cfg = NoCubesConfig.Server.INSTANCE;
+			NoCubesConfig.updateSmoothable(newValue, states, (List) cfg.smoothableWhitelist.get(), (List) cfg.smoothableBlacklist.get());
+			saveAndLoad();
+		}
+
+		public static void updateCollisions(final boolean newValue) {
+			Server.INSTANCE.collisionsEnabled.set(newValue);
+			saveAndLoad();
+		}
+
+		private static void saveAndLoad() {
+			NoCubesConfig.saveAndLoad(ModConfig.Type.SERVER);
 		}
 
 		static class Impl {
@@ -364,6 +385,7 @@ public final class NoCubesConfig {
 			 */
 			final ConfigValue<List<? extends String>> smoothableWhitelist;
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
+			final BooleanValue collisionsEnabled;
 
 			private Impl(final ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
@@ -373,15 +395,12 @@ public final class NoCubesConfig {
 				smoothableBlacklist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklist")
 					.defineList("smoothableBlacklist", Lists::newArrayList, String.class::isInstance);
+
+				collisionsEnabled = builder
+					.translation(NoCubes.MOD_ID + ".config.collisionsEnabled")
+					.define("collisionsEnabled", true);
 			}
 
-		}
-
-		public static void updateSmoothable(final boolean newValue, final BlockState... states) {
-			System.out.println("Server.updateSmoothable");
-			final NoCubesConfig.Server.Impl cfg = NoCubesConfig.Server.INSTANCE;
-			NoCubesConfig.updateSmoothable(newValue, states, (List) cfg.smoothableWhitelist.get(), (List) cfg.smoothableBlacklist.get());
-			saveAndLoad(ModConfig.Type.SERVER);
 		}
 
 	}

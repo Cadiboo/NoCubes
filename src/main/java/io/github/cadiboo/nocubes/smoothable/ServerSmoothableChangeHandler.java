@@ -1,7 +1,5 @@
 package io.github.cadiboo.nocubes.smoothable;
 
-import net.minecraft.block.BlockState;
-
 /**
  * @author Cadiboo
  */

@@ -33,7 +33,7 @@ public final class CollisionHandler {
 	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		if (!canCollide)
 			return VoxelShapes.empty();
-		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
+		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state))
 			return state.getShape(reader, blockPos);
 		if (context.getEntity() instanceof FallingBlockEntity)
 			// Stop sand etc. breaking when it falls
