@@ -34,7 +34,7 @@ public class Area implements AutoCloseable {
 				IBlockReader world = this.world;
 				int maxZ = end.getZ();
 				int maxY = end.getY();
-				int maxX = end.getZ();
+				int maxX = end.getX();
 				int zyxIndex = 0;
 				for (int z = start.getZ(); z < maxZ; ++z)
 					for (int y = start.getY(); y < maxY; ++y)
