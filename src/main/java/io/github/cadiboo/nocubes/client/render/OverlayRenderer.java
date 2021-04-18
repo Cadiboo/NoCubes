@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -18,7 +19,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -48,6 +48,7 @@ public final class OverlayRenderer {
 
 	static long[] meshTimings = new long[60 * 10];
 	static int timingsIndex = 0;
+	static long selfCheckInfoPrintedAt = Long.MIN_VALUE;
 
 	@SubscribeEvent
 	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
@@ -84,12 +85,21 @@ public final class OverlayRenderer {
 			return;
 
 		final Minecraft minecraft = Minecraft.getInstance();
-		Entity viewer = minecraft.gameRenderer.getMainCamera().getEntity();
-		if (viewer == null)
+		final World world = minecraft.level;
+		if (world == null)
 			return;
 
-		final World world = viewer.level;
-		if (world == null)
+		if (Screen.hasAltDown()) {
+			long time = world.getGameTime();
+			// Only print once every 10 seconds, don't spam the log
+			if (time - 10 * 20 > selfCheckInfoPrintedAt) {
+				selfCheckInfoPrintedAt = time;
+				LogManager.getLogger("SelfCheck").debug(String.join("\n", SelfCheck.info()));
+			}
+		}
+
+		Entity viewer = minecraft.gameRenderer.getMainCamera().getEntity();
+		if (viewer == null)
 			return;
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;

@@ -40,6 +40,7 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, RegionRenderCacheBuilder builderIn, BlockPos blockpos, IBlockDisplayReader chunkrendercache, MatrixStack matrixstack, Random random, BlockRendererDispatcher blockrendererdispatcher) {
+		SelfCheck.preIteration = true;
 		MeshRenderer.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
 
@@ -52,6 +53,7 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(BlockState blockstate) {
+		SelfCheck.canBlockStateRender = true;
 		return !NoCubes.smoothableHandler.isSmoothable(blockstate) || !NoCubesConfig.Client.render;
 //		if (blockstate.nocubes_isTerrainSmoothable && Config.renderSmoothTerrain) return false;
 //		if (blockstate.nocubes_isLeavesSmoothable) {
@@ -70,6 +72,7 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
+		SelfCheck.renderBlockDamage = true;
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(blockStateIn))
 			return false;
 		MeshRenderer.renderBlockDamage(blockRendererDispatcher, blockStateIn, posIn, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData);
@@ -77,6 +80,7 @@ public final class Hooks {
 	}
 
 	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlockState blockState) {
+		SelfCheck.isCollisionShapeLargerThanFullBlock = true;
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
 			return ret;
 		return true;
@@ -86,6 +90,7 @@ public final class Hooks {
 	 * Hook this so that collisions work for blockstates with a cache.
 	 */
 	public static VoxelShape getCollisionShape(AbstractBlockState _this, IBlockReader worldIn, BlockPos pos) {
+		SelfCheck.getCollisionShapeNoContext = true;
 //		return _this.cache != null ? _this.cache.collisionShape : _this.getCollisionShape(worldIn, pos, ISelectionContext.dummy());
 		if (_this.cache != null && !NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
 			return _this.cache.collisionShape;
@@ -96,6 +101,7 @@ public final class Hooks {
 	 * Hook this so collisions work.
 	 */
 	public static VoxelShape getCollisionShape(AbstractBlockState _this, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+		SelfCheck.getCollisionShapeWithContext = true;
 		if (NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
 			return CollisionHandler.getCollisionShape(_this.getBlock().hasCollision, ((BlockState) _this), worldIn, pos, context);
 
@@ -107,6 +113,7 @@ public final class Hooks {
 	 * Hook this so that collisions work for normally solid blocks like stone.
 	 */
 	public static boolean isCollisionShapeFullBlock(AbstractBlockState _this, IBlockReader reader, BlockPos pos) {
+		SelfCheck.isCollisionShapeFullBlock = true;
 //		return _this.cache != null ? _this.cache.opaqueCollisionShape : Block.isOpaque(_this.getCollisionShape(reader, pos));
 		if (NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable((BlockState) _this))
 			return false;
@@ -199,6 +206,7 @@ public final class Hooks {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
+		SelfCheck.markForRerender = true;
 		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
 			final int x = pos.getX();
 			final int y = pos.getY();
