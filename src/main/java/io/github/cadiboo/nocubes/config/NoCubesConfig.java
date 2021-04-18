@@ -253,6 +253,7 @@ public final class NoCubesConfig {
 		}
 
 		public static void bake() {
+			// Directly querying the baked field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 
@@ -328,16 +329,21 @@ public final class NoCubesConfig {
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklistPreference")
 					.defineList("smoothableBlacklistPreference", Lists::newArrayList, String.class::isInstance);
 
-				debugEnabled = builder
-					.translation(NoCubes.MOD_ID + ".config.debugEnabled")
-					.define("debugEnabled", false);
+				builder
+					.push("debug");
+				{
+					debugEnabled = builder
+						.translation(NoCubes.MOD_ID + ".config.debugEnabled")
+						.define("debugEnabled", false);
 
-				debugOutlineSmoothables = builder.define("debugOutlineSmoothables", false);
-				debugVisualiseDensitiesGrid = builder.define("debugVisualiseDensitiesGrid", false);
-				debugRenderCollisions = builder.define("debugRenderCollisions", false);
-				debugRenderMeshCollisions = builder.define("debugRenderMeshCollisions", false);
-				debugRecordMeshPerformance = builder.define("debugRecordMeshPerformance", false);
-				debugRenderNearbyMesh = builder.define("debugRenderNearbyMesh", false);
+					debugOutlineSmoothables = builder.define("debugOutlineSmoothables", false);
+					debugVisualiseDensitiesGrid = builder.define("debugVisualiseDensitiesGrid", false);
+					debugRenderCollisions = builder.define("debugRenderCollisions", false);
+					debugRenderMeshCollisions = builder.define("debugRenderMeshCollisions", false);
+					debugRecordMeshPerformance = builder.define("debugRecordMeshPerformance", false);
+					debugRenderNearbyMesh = builder.define("debugRenderNearbyMesh", false);
+				}
+				builder.pop();
 			}
 
 		}
@@ -362,6 +368,7 @@ public final class NoCubesConfig {
 			collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			forceVisuals = INSTANCE.forceVisuals.get();
 			if (forceVisuals)
+				// Directly setting the baked field - won't cause a NPE on the dedicated server
 				Client.render = true;
 		}
 
