@@ -144,6 +144,8 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
+
+		// Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 		"ChunkRender#rebuildChunk": {
 			"target": {
 				"type": "METHOD",
@@ -152,25 +154,83 @@ function initializeCoreMod() {
 				"methodDesc": "(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)Ljava/util/Set;"
 			},
 			"transformer": function(methodNode) {
-				print("in ChunkRender#rebuildChunk");
 				var instructions = methodNode.instructions;
-//				// Check if any instructions reference an OptiFine class.
-//				for (var i = instructions.size() - 1; i >= 0; --i) {
-//					var instruction = instructions.get(i);
-//					if (instruction.getType() == METHOD_INSN && instruction.owner == "net/optifine/override/ChunkCacheOF") {
-//						isOptiFinePresent = true;
-//						print("Found OptiFine - ChunkCacheOF class");
-//						break;
-//					}
-//				}
-				print("call injectPreIterationHook");
-				injectPreIterationHook(instructions);
-				print("call injectBlockRenderHook");
-				injectBlockRenderHook(instructions);
+				var isOptiFinePresent = detectOptiFine(instructions);
+
+				// Inject the hook where we do our rendering
+				// We inject right above where vanilla loops (iterates) through all the the blocks
+				{
+					var positionsIteratorCall = ASMAPI.findFirstMethodCall(
+						methodNode,
+						ASMAPI.MethodType.STATIC,
+						isOptiFinePresent ? "net/optifine/BlockPosM" : "net/minecraft/util/math/BlockPos",
+						isOptiFinePresent ? "getAllInBoxMutable" : ASMAPI.mapMethod("func_218278_a"), // BlockPos#betweenClosed
+						"(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;"
+					);
+					if (!positionsIteratorCall)
+						throw "Error: Couldn't find 'positionsIteratorCall' in " + stringifyInstructions(instructions);
+					var firstLabelAfterPositionsIteratorCall = findFirstLabel(instructions, instructions.indexOf(positionsIteratorCall));
+
+					var outerClassFieldName = ASMAPI.mapField("field_228939_e_");
+					instructions.insert(firstLabelAfterPositionsIteratorCall, ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new VarInsnNode(ALOAD, 0), // ChunkRender.this
+						new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask", outerClassFieldName, "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;"),
+						new VarInsnNode(ALOAD, 4), // compiledChunkIn
+						new VarInsnNode(ALOAD, 5), // builderIn
+						new VarInsnNode(ALOAD, 7), // blockpos - startPosition
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 12 : 11), // chunkrendercache
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 12), // matrixstack
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 16 : 13), // random
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 17 : 14), // blockrendererdispatcher
+						callNoCubesHook("preIteration", "(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Ljava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V"),
+						new LabelNode() // Label for original instructions
+					));
+				}
+				print("Done injecting the preIteration hook");
+
+				// Inject the hook where we cancel vanilla's block rendering for smoothable blocks
+				{
+					// The code that we are trying to inject looks like this:
+					//	// NoCubes Start
+                    //	if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(blockstate)))
+                    //	// NoCubes End
+                    //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
+
+					var getRenderTypeName = ASMAPI.mapMethod("func_185901_i"); // getRenderType
+					var getRenderTypeCall = ASMAPI.findFirstMethodCall(
+						methodNode,
+						ASMAPI.MethodType.VIRTUAL,
+						"net/minecraft/block/BlockState",
+						getRenderTypeName,
+						"()Lnet/minecraft/block/BlockRenderType;"
+					);
+					if (!getRenderTypeCall)
+						throw "Error: Couldn't find 'getRenderTypeCall' in " + stringifyInstructions(instructions);
+					var getRenderTypeCallIndex = instructions.indexOf(getRenderTypeCall);
+					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBefore(instructions, getRenderTypeCallIndex);
+					var branchIfBlockIsInvisibleInstruction = ASMAPI.findFirstInstructionAfter(methodNode, IF_ACMPEQ, getRenderTypeCallIndex);
+					if (!branchIfBlockIsInvisibleInstruction)
+						throw "Error: Couldn't find 'branchIfBlockIsInvisible' instruction in " + stringifyInstructions(instructions);
+					var labelToJumpToIfBlockIsInvisible = branchIfBlockIsInvisibleInstruction.label
+
+					instructions.insert(firstLabelBeforeGetRenderTypeCall, ASMAPI.listOf(
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 20 : 17), // blockstate
+						callNoCubesHook("canBlockStateRender", "(Lnet/minecraft/block/BlockState;)Z"),
+                    	new JumpInsnNode(IFEQ, labelToJumpToIfBlockIsInvisible),
+						new LabelNode() // Label for original instructions
+					));
+				}
+				print("Done injecting the canBlockStateRender hook");
+
 //				injectFluidRenderBypass(instructions);
 				return methodNode;
 			}
 		},
+
+		// Hooks the function that gets called when a block is updated and marked for re-render
+		// We need to extend the range of blocks that get marked for re-render (from vanilla's 1 to 2)
+		// This fixes seams that appear when meshes along chunk borders change
 		"ClientWorld#setBlocksDirty": {
 			"target": {
 				"type": "METHOD",
@@ -179,10 +239,25 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"
 			},
 			"transformer": function(methodNode) {
-				injectMarkForRerenderHook(methodNode.instructions);
+				// Redirect execution to our hook
+				var minecraft_name = ASMAPI.mapField("field_73037_M"); // mc, minecraft
+				var levelRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer, levelRenderer
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", minecraft_name, "Lnet/minecraft/client/Minecraft;"),
+					new VarInsnNode(ALOAD, 0), // this
+					new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", levelRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"),
+					new VarInsnNode(ALOAD, 1), // pos
+					new VarInsnNode(ALOAD, 2), // oldState
+					new VarInsnNode(ALOAD, 3), // newState
+					callNoCubesHook("markForRerender", "(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V"),
+					new InsnNode(RETURN),
+					new LabelNode() // Label for original instructions
+				));
 				return methodNode;
 			}
 		},
+
 //		"IWorldReader#getCollisionShapes": {
 //			"target": {
 //				"type": "METHOD",
@@ -227,48 +302,15 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
 			},
 			"transformer": function(methodNode) {
-				var instructions = methodNode.instructions;
-				var firstLabel;
-            	var arrayLength = instructions.size();
-            	for (var i = 0; i < arrayLength; ++i) {
-            		var instruction = instructions.get(i);
-            		if (instruction.getType() == LABEL) {
-            			firstLabel = instruction;
-            			print("Found injection point \"first Label\" " + instruction);
-            			break;
-            		}
-            	}
-            	if (!firstLabel) {
-            		throw "Error: Couldn't find injection point \"first Label\"!";
-            	}
-
-            	var toInject = new InsnList();
-
-            	// Labels n stuff
-            	var originalInstructionsLabel = new LabelNode();
-
-            	// Make list of instructions to inject
-            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-				toInject.add(new MethodInsnNode(
-						//int opcode
-						INVOKESTATIC,
-						//String owner
-						"io/github/cadiboo/nocubes/hooks/Hooks",
-						//String name
-						"getCollisionShape",
-						//String descriptor
-						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;",
-						//boolean isInterface
-						false
+				// Redirect execution to our hook
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new VarInsnNode(ALOAD, 1), // reader
+					new VarInsnNode(ALOAD, 2), // pos
+					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
+					new InsnNode(ARETURN),
+					new LabelNode() // Label for original instructions
 				));
-				toInject.add(new InsnNode(ARETURN));
-
-            	toInject.add(originalInstructionsLabel);
-
-            	// Inject instructions
-            	instructions.insert(firstLabel, toInject);
 				return methodNode;
 			}
 		},
@@ -280,49 +322,16 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
 			},
 			"transformer": function(methodNode) {
-				var instructions = methodNode.instructions;
-				var firstLabel;
-            	var arrayLength = instructions.size();
-            	for (var i = 0; i < arrayLength; ++i) {
-            		var instruction = instructions.get(i);
-            		if (instruction.getType() == LABEL) {
-            			firstLabel = instruction;
-            			print("Found injection point \"first Label\" " + instruction);
-            			break;
-            		}
-            	}
-            	if (!firstLabel) {
-            		throw "Error: Couldn't find injection point \"first Label\"!";
-            	}
-
-            	var toInject = new InsnList();
-
-            	// Labels n stuff
-            	var originalInstructionsLabel = new LabelNode();
-
-            	// Make list of instructions to inject
-            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-				toInject.add(new VarInsnNode(ALOAD, 3)); // context
-				toInject.add(new MethodInsnNode(
-						//int opcode
-						INVOKESTATIC,
-						//String owner
-						"io/github/cadiboo/nocubes/hooks/Hooks",
-						//String name
-						"getCollisionShape",
-						//String descriptor
-						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;",
-						//boolean isInterface
-						false
+				// Redirect execution to our hook
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new VarInsnNode(ALOAD, 1), // reader
+					new VarInsnNode(ALOAD, 2), // pos
+					new VarInsnNode(ALOAD, 3), // context
+					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
+					new InsnNode(ARETURN),
+					new LabelNode() // Label for original instructions
 				));
-				toInject.add(new InsnNode(ARETURN));
-
-            	toInject.add(originalInstructionsLabel);
-
-            	// Inject instructions
-            	instructions.insert(firstLabel, toInject);
 				return methodNode;
 			}
 		},
@@ -334,48 +343,15 @@ function initializeCoreMod() {
 				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
 			},
 			"transformer": function(methodNode) {
-				var instructions = methodNode.instructions;
-				var firstLabel;
-            	var arrayLength = instructions.size();
-            	for (var i = 0; i < arrayLength; ++i) {
-            		var instruction = instructions.get(i);
-            		if (instruction.getType() == LABEL) {
-            			firstLabel = instruction;
-            			print("Found injection point \"first Label\" " + instruction);
-            			break;
-            		}
-            	}
-            	if (!firstLabel) {
-            		throw "Error: Couldn't find injection point \"first Label\"!";
-            	}
-
-            	var toInject = new InsnList();
-
-            	// Labels n stuff
-            	var originalInstructionsLabel = new LabelNode();
-
-            	// Make list of instructions to inject
-            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-				toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-				toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-				toInject.add(new MethodInsnNode(
-						//int opcode
-						INVOKESTATIC,
-						//String owner
-						"io/github/cadiboo/nocubes/hooks/Hooks",
-						//String name
-						"isCollisionShapeFullBlock",
-						//String descriptor
-						"(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z",
-						//boolean isInterface
-						false
+				// Redirect execution to our hook
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new VarInsnNode(ALOAD, 1), // reader
+					new VarInsnNode(ALOAD, 2), // pos
+					callNoCubesHook("isCollisionShapeFullBlock", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"),
+					new InsnNode(IRETURN),
+					new LabelNode() // Label for original instructions
 				));
-				toInject.add(new InsnNode(IRETURN));
-
-            	toInject.add(originalInstructionsLabel);
-
-            	// Inject instructions
-            	instructions.insert(firstLabel, toInject);
 				return methodNode;
 			}
 		},
@@ -471,117 +447,33 @@ function initializeCoreMod() {
 // 2) Find first label before
 // 3) inject right after label
 function injectInitChunkRenderCacheHook(instructions) {
-
-//	this.cacheStartPos = start;
-//	this.cacheSizeX = end.getX() - start.getX() + 1;
-
 //	this.cacheStartPos = start;
 //	// NoCubes Start
 //	io.github.cadiboo.nocubes.hooks.Hooks.initChunkRenderCache(this, chunkStartX, chunkStartZ, chunks, start, end);
 //	// NoCubes End
 
+	var getXCall = ASMAPI.findFirstMethodCall(
+		methodNode,
+		ASMAPI.MethodType.VIRTUAL,
+		"net/minecraft/util/math/BlockPos",
+		ASMAPI.mapMethod("func_177958_n"), // Vec3i.getX
+		"()I"
+	);
+	if (!getXCall)
+		throw "Error: Couldn't find 'getXCall' in " + stringifyInstructions(instructions);
 
-//   L5
-//    LINENUMBER 68 L5
-//    ALOAD 0
-//    ALOAD 5
-//    PUTFIELD net/minecraft/client/renderer/chunk/ChunkRenderCache.cacheStartPos : Lnet/minecraft/util/math/BlockPos;
-//   L6
-//    LINENUMBER 70 L6
-//    ALOAD 0
-//    ALOAD 6
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ALOAD 5
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ISUB
-//    ICONST_1
-//    IADD
-//    PUTFIELD net/minecraft/client/renderer/chunk/ChunkRenderCache.cacheSizeX : I
-//   L7
-
-//   L5
-//    LINENUMBER 42 L5
-//    ALOAD 0
-//    ALOAD 5
-//    PUTFIELD net/minecraft/client/renderer/chunk/ChunkRenderCache.cacheStartPos : Lnet/minecraft/util/math/BlockPos;
-//   L6
-//    LINENUMBER 44 L6
-//    ALOAD 0
-//    ILOAD 2
-//    ILOAD 3
-//    ALOAD 4
-//    ALOAD 5
-//    ALOAD 6
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.initChunkRenderCache (Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V
-//    RETURN
-//   L7
-
-
-	var getX_name = ASMAPI.mapMethod("func_177958_n"); // Vec3i.getX
-
-	var first_INVOKEVIRTUAL_getX;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/util/math/BlockPos") {
-				if (instruction.name == getX_name) {
-					if (instruction.desc == "()I") {
-						if (instruction.itf == false) {
-							first_INVOKEVIRTUAL_getX = instruction;
-							print("Found injection point \"Vec3i.getX\" " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKEVIRTUAL_getX) {
-		throw "Error: Couldn't find injection point \"Vec3i.getX\"!";
-	}
-
-	var firstLabelBefore_first_INVOKEVIRTUAL_getX;
-	for (i = instructions.indexOf(first_INVOKEVIRTUAL_getX); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabelBefore_first_INVOKEVIRTUAL_getX = instruction;
-			print("Found label \"firstLabelBefore_first_INVOKEVIRTUAL_getX\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_first_INVOKEVIRTUAL_getX) {
-		throw "Error: Couldn't find label \"firstLabelBefore_first_INVOKEVIRTUAL_getX\"!";
-	}
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new VarInsnNode(ILOAD, 2)); // chunkStartX
-	toInject.add(new VarInsnNode(ILOAD, 3)); // chunkStartZ
-	toInject.add(new VarInsnNode(ALOAD, 4)); // chunks
-	toInject.add(new VarInsnNode(ALOAD, 5)); // start
-	toInject.add(new VarInsnNode(ALOAD, 6)); // end
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"initChunkRenderCache",
-			//String descriptor
-			"(Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V",
-			//boolean isInterface
-			false
+	var firstLabelBeforeGetXCall = findFirstLabelBefore(instructions, instructions.indexOf(getXCall));
+	instructions.insert(firstLabelBeforeGetXCall, ASMAPI.listOf(
+		new VarInsnNode(ALOAD, 0), // this
+		new VarInsnNode(ILOAD, 2), // chunkStartX
+		new VarInsnNode(ILOAD, 3), // chunkStartZ
+		new VarInsnNode(ALOAD, 4), // chunks
+		new VarInsnNode(ALOAD, 5), // start
+		new VarInsnNode(ALOAD, 6), // end
+		callNoCubesHook("initChunkRenderCache", "(Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V"),
+		new InsnNode(RETURN),
+		new LabelNode() // Label for original instructions
 	));
-	toInject.add(new InsnNode(RETURN));
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_first_INVOKEVIRTUAL_getX, toInject);
-
 }
 
 // 1) Find last ACONST_NULL then ARETURN
@@ -591,16 +483,6 @@ function injectInitChunkRenderCacheHook(instructions) {
 // 5) Find next ISTORE
 // 6) Inject GOTO to label after ISTORE
 function injectGenerateCacheHook(instructions) {
-
-//	for (int x = start.getX() >> 4; x <= end.getX() >> 4; ++x) {
-//		for (int z = start.getZ() >> 4; z <= end.getZ() >> 4; ++z) {
-//			Chunk chunk = chunks[x - chunkStartX][z - chunkStartZ];
-//			if (!chunk.isEmptyBetween(start.getY(), end.getY())) {
-//				lvt_9_2_ = false;
-//			}
-//		}
-//	}
-
 //	// NoCubes Start
 //	IS_EMPTY:
 //	// NoCubes End
@@ -616,180 +498,15 @@ function injectGenerateCacheHook(instructions) {
 //		}
 //	}
 
-
-//   L7
-//    LINENUMBER 43 L7
-//   FRAME FULL [net/minecraft/world/World net/minecraft/util/math/BlockPos net/minecraft/util/math/BlockPos T I I T T [[Lnet/minecraft/world/chunk/Chunk;] []
-//    ICONST_1
-//    ISTORE 9
-//   L13
-//    LINENUMBER 44 L13
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ICONST_4
-//    ISHR
-//    ISTORE 10
-//   L14
-//   FRAME APPEND [I I]
-//    ILOAD 10
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ICONST_4
-//    ISHR
-//    IF_ICMPGT L15
-//   L16
-//    LINENUMBER 45 L16
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    ICONST_4
-//    ISHR
-//    ISTORE 11
-//   L17
-//   FRAME APPEND [I]
-//    ILOAD 11
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    ICONST_4
-//    ISHR
-//    IF_ICMPGT L18
-//   L19
-//    LINENUMBER 46 L19
-//    ALOAD 8
-//    ILOAD 10
-//    ILOAD 4
-//    ISUB
-//    AALOAD
-//    ILOAD 11
-//    ILOAD 5
-//    ISUB
-//    AALOAD
-//    ASTORE 12
-//   L20
-//    LINENUMBER 47 L20
-//    ALOAD 12
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween (II)Z
-//    IFNE L21
-//   L22
-//    LINENUMBER 48 L22
-//    ICONST_0
-//    ISTORE 9
-//   L21
-//    LINENUMBER 45 L21
-//   FRAME SAME
-//    IINC 11 1
-//    GOTO L17
-//   L18
-//    LINENUMBER 44 L18
-//   FRAME CHOP 1
-//    IINC 10 1
-//    GOTO L14
-//   L15
-//    LINENUMBER 53 L15
-//   FRAME CHOP 1
-//    ILOAD 9
-//    IFEQ L23
-//   L24
-//    LINENUMBER 54 L24
-//    ACONST_NULL
-//    ARETURN
-
-//   L7
-//    LINENUMBER 62 L7
-//   FRAME CHOP 1
-//    ICONST_1
-//    ISTORE 9
-//   L13
-//    LINENUMBER 67 L13
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ICONST_4
-//    ISHR
-//    ISTORE 10
-//   L14
-//   FRAME APPEND [I I]
-//    ILOAD 10
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-//    ICONST_4
-//    ISHR
-//    IF_ICMPGT L15
-//   L16
-//    LINENUMBER 68 L16
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    ICONST_4
-//    ISHR
-//    ISTORE 11
-//   L17
-//   FRAME APPEND [I]
-//    ILOAD 11
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getZ ()I
-//    ICONST_4
-//    ISHR
-//    IF_ICMPGT L18
-//   L19
-//    LINENUMBER 69 L19
-//    ALOAD 8
-//    ILOAD 10
-//    ILOAD 4
-//    ISUB
-//    AALOAD
-//    ILOAD 11
-//    ILOAD 5
-//    ISUB
-//    AALOAD
-//    ASTORE 12
-//   L20
-//    LINENUMBER 70 L20
-//    ALOAD 12
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getY ()I
-//    INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween (II)Z
-//    IFNE L21
-//   L22
-//    LINENUMBER 71 L22
-//    ICONST_0
-//    ISTORE 9
-//   L23
-//    LINENUMBER 73 L23
-//    GOTO L15
-//   L21
-//    LINENUMBER 68 L21
-//   FRAME SAME
-//    IINC 11 1
-//    GOTO L17
-//   L18
-//    LINENUMBER 67 L18
-//   FRAME CHOP 1
-//    IINC 10 1
-//    GOTO L14
-//   L15
-//    LINENUMBER 79 L15
-//   FRAME CHOP 1
-//    ILOAD 9
-//    IFEQ L24
-//   L25
-//    LINENUMBER 80 L25
-//    ACONST_NULL
-//    ARETURN
-
 	// 1) Find last ACONST_NULL then ARETURN
 	var firstACONST_NULL_then_ARETURN;
 	var previousInsn; // The previous insn that was checked (technically the next insn in the list)
-	var arrayLength = instructions.size();
-	for (var i = arrayLength - 1; i >= 0; --i) {
+	var length = instructions.size();
+	for (var i = length - 1; i >= 0; --i) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == ACONST_NULL) {
-			if (!previousInsn) {
+			if (!previousInsn)
 				continue;
-			}
 			if (previousInsn.getOpcode() == ARETURN) {
 				firstACONST_NULL_then_ARETURN = instruction;
 				print("Found ACONST_NULL & ARETURN");
@@ -798,9 +515,8 @@ function injectGenerateCacheHook(instructions) {
 		}
 		previousInsn = instruction;
 	}
-	if (!firstACONST_NULL_then_ARETURN) {
-		throw "Error: Couldn't find ACONST_NULL & ARETURN!";
-	}
+	if (!firstACONST_NULL_then_ARETURN)
+		throw "Error: Couldn't find ACONST_NULL & ARETURN in " + stringifyInstructions(instructions);
 
 	// 2) Find previous IFEQ
 	var firstIFEQBefore_firstACONST_NULL_then_ARETURN;
@@ -812,81 +528,36 @@ function injectGenerateCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
-		throw "Error: Couldn't find IFEQ!";
-	}
+	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN)
+		throw "Error: Couldn't find IFEQ in " + stringifyInstructions(instructions);
 
 	// 3) Find previous Label
-	var firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
-			print("Found label \"previous Label\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
-		throw "Error: Couldn't find label \"previous Label\"!";
-	}
+	var previousLabel = findFirstLabelBefore(instructions, instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN));
 
 	// 4) Find previous INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween
-	var isEmptyBetween_name = ASMAPI.mapMethod("func_76606_c"); // isEmptyBetween
-
-	var firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/world/chunk/Chunk") {
-				if (instruction.name == isEmptyBetween_name) {
-					if (instruction.desc == "(II)Z") {
-						if (instruction.itf == false) {
-							firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
-							print("Found injection point \"Previous INVOKEVIRTUAL Chunk.isEmptyBetween\" " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
-		throw "Error: Couldn't find injection point \"Previous INVOKEVIRTUAL Chunk.isEmptyBetween\"!";
-	}
+	var isEmptyBetweenCall = ASMAPI.findFirstMethodCallBefore(
+		methodNode,
+		ASMAPI.MethodType.VIRTUAL,
+		"net/minecraft/world/chunk/Chunk",
+		ASMAPI.mapMethod("func_76606_c"), // isEmptyBetween
+		"(II)Z"
+	);
+	if (!isEmptyBetweenCall)
+		throw "Error: Couldn't find 'isEmptyBetween' in " + stringifyInstructions(instructions);
 
 	// 5) Find next ISTORE
-	var firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (var i = instructions.indexOf(firstINVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN); i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == ISTORE) {
-			firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
-			print("Found injection point \"next ISTORE\" " + instruction);
-			break;
-		}
-	}
-	if (!firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN) {
-		throw "Error: Couldn't find injection point \"next ISTORE\"!";
-	}
+	var nextISTORE = ASMAPI.findFirstInstructionAfter(methodNode, ISTORE, instructions.indexOf(isEmptyBetweenCall));
+	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN)
+		throw "Error: Couldn't find next 'ISTORE' in " + stringifyInstructions(instructions);
 
-	var toInject = new InsnList();
-
-	// Labels n stuff
-
-	// Make list of instructions to inject
-	toInject.add(new JumpInsnNode(GOTO, firstLabelBefore_firstIFEQBefore_firstACONST_NULL_then_ARETURN));
-
-	// Inject instructions
-	instructions.insert(firstISTORE_after_First_INVOKEVIRTUAL_Chunk_isEmptyBetween_Before_firstIFEQBefore_firstACONST_NULL_then_ARETURN, toInject);
-
+	instructions.insert(nextISTORE, ASMAPI.listOf(
+		new JumpInsnNode(GOTO, previousLabel)
+	));
 }
 
 // 1) Find first label
 // 2) Insert right after label
 function injectRenderBlockDamageHook(instructions) {
-
-//	public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
-//		if (state.getRenderType() == BlockRenderType.MODEL) {
-
 //	public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
 //		// NoCubes Start
 //		if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, sprite, reader)){
@@ -895,451 +566,32 @@ function injectRenderBlockDamageHook(instructions) {
 //		// NoCubes End
 //		if (state.getRenderType() == BlockRenderType.MODEL) {
 
-
-//  public renderBlockDamage(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IEnviromentBlockReader;)V
-//   L0
-//    LINENUMBER 40 L0
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getRenderType ()Lnet/minecraft/block/BlockRenderType;
-//    GETSTATIC net/minecraft/block/BlockRenderType.MODEL : Lnet/minecraft/block/BlockRenderType;
-//    IF_ACMPNE L1
-//   L2
-
-//  public renderBlockDamage(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IEnviromentBlockReader;)V
-//   L0
-//    LINENUMBER 40 L0
-//    ALOAD 0
-//    ALOAD 1
-//    ALOAD 2
-//    ALOAD 3
-//    ALOAD 4
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.renderBlockDamage (Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/world/IEnviromentBlockReader;)Z
-//    IFEQ L1
-//   L2
-//    LINENUMBER 41 L2
-//    RETURN
-//   L1
-//    LINENUMBER 43 L1
-//   FRAME SAME
-//    ALOAD 1
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getRenderType ()Lnet/minecraft/block/BlockRenderType;
-//    GETSTATIC net/minecraft/block/BlockRenderType.MODEL : Lnet/minecraft/block/BlockRenderType;
-//    IF_ACMPNE L3
-//   L4
-
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabel = instruction;
-			print("Found injection point \"first Label\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
 	var originalInstructionsLabel = new LabelNode();
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new VarInsnNode(ALOAD, 1)); // state
-	toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-	toInject.add(new VarInsnNode(ALOAD, 3)); // lightReaderIn
-	toInject.add(new VarInsnNode(ALOAD, 4)); // matrixStackIn
-	toInject.add(new VarInsnNode(ALOAD, 5)); // vertexBuilderIn
-	toInject.add(new VarInsnNode(ALOAD, 6)); // modelData
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"renderBlockDamage",
-			//String descriptor
-			"(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z",
-			//boolean isInterface
-			false
+	injectAfterFirstLabel(instructions, ASMAPI.listOf(
+		new VarInsnNode(ALOAD, 0), // this
+		new VarInsnNode(ALOAD, 1), // state
+		new VarInsnNode(ALOAD, 2), // pos
+		new VarInsnNode(ALOAD, 3), // lightReaderIn
+		new VarInsnNode(ALOAD, 4), // matrixStackIn
+		new VarInsnNode(ALOAD, 5), // vertexBuilderIn
+		new VarInsnNode(ALOAD, 6), // modelData
+		callNoCubesHook("renderBlockDamage", "(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z"),
+		new JumpInsnNode(IFEQ, originalInstructionsLabel),
+		new InsnNode(RETURN),
+		originalInstructionsLabel
 	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new InsnNode(RETURN));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabel, toInject);
-
-}
-
-// 1) Finds the first instruction INVOKESTATIC BlockPos.getAllInBoxMutable
-// 2) Finds the previous label
-// 3) Inserts after the label and before the label's instructions.
-function injectPreIterationHook(instructions) {
-
-	print("injectPreIterationHook");
-
-//	BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-//
-//	for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
-
-//	BlockRendererDispatcher blockrendererdispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
-//
-//	// NoCubes Start
-//	io.github.cadiboo.nocubes.hooks.Hooks.preIteration(this, x, y, z, generator, compiledchunk, blockpos, blockpos1, world, lvt_10_1_, lvt_11_1_, lvt_12_1_, aboolean, random, blockrendererdispatcher);
-//	// NoCubes End
-//	for(BlockPos.MutableBlockPos blockpos$mutableblockpos : BlockPos.getAllInBoxMutable(blockpos, blockpos1)) {
-
-
-//   L31
-//    LINENUMBER 137 L31
-//    INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//    ASTORE 15
-//   L32
-//    LINENUMBER 139 L32
-//    ALOAD 7
-//    ALOAD 8
-//    INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//    INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//    ASTORE 16
-//   L33
-
-//   L31
-//    LINENUMBER 141 L31
-//    INVOKESTATIC net/minecraft/client/Minecraft.getInstance ()Lnet/minecraft/client/Minecraft;
-//    INVOKEVIRTUAL net/minecraft/client/Minecraft.getBlockRendererDispatcher ()Lnet/minecraft/client/renderer/BlockRendererDispatcher;
-//    ASTORE 15
-//   L32
-//    LINENUMBER 143 L32
-//    ALOAD 0
-//    FLOAD 1
-//    FLOAD 2
-//    FLOAD 3
-//    ALOAD 4
-//    ALOAD 5
-//    ALOAD 7
-//    ALOAD 8
-//    ALOAD 9
-//    ALOAD 10
-//    ALOAD 11
-//    ALOAD 12
-//    ALOAD 13
-//    ALOAD 14
-//    ALOAD 15
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.preIteration (Lnet/minecraft/client/renderer/chunk/ChunkRender;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;Lnet/minecraft/world/IEnviromentBlockReader;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V
-//   L33
-//    LINENUMBER 144 L33
-//    ALOAD 7
-//    ALOAD 8
-//    INVOKESTATIC net/minecraft/util/math/BlockPos.getAllInBoxMutable (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;
-//    INVOKEINTERFACE java/lang/Iterable.iterator ()Ljava/util/Iterator; (itf)
-//    ASTORE 16
-//   L34
-
-	isOptiFinePresent = false
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		if (instructions.get(i).owner == "net/optifine/BlockPosM") {
-			isOptiFinePresent = true;
-			break;
-		}
-	}
-
-	var getAllInBoxMutable_owner;
-	var getAllInBoxMutable_name;
-	var getAllInBoxMutable_desc;
-	if (!isOptiFinePresent) {
-		var getAllInBoxMutable_owner = "net/minecraft/util/math/BlockPos";
-		var getAllInBoxMutable_name = ASMAPI.mapMethod("func_218278_a"); // BlockPos#betweenClosed
-		var getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
-	} else {
-		getAllInBoxMutable_owner = "net/optifine/BlockPosM";
-		getAllInBoxMutable_name = "getAllInBoxMutable"; // BlockPosM#getAllInBoxMutable
-		getAllInBoxMutable_desc = "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;";
-	}
-
-	print("isOptiFinePresent: " + isOptiFinePresent)
-
-	var first_INVOKESTATIC_getAllInBoxMutable;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKESTATIC) {
-			if (instruction.owner == getAllInBoxMutable_owner) {
-				if (instruction.name == getAllInBoxMutable_name) {
-					if (instruction.desc == getAllInBoxMutable_desc) {
-						if (instruction.itf == false) {
-							first_INVOKESTATIC_getAllInBoxMutable = instruction;
-							print("Found injection point \"first BlockPos.getAllInBoxMutable\" " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKESTATIC_getAllInBoxMutable)
-		throw "Error: Couldn't find injection point \"first BlockPos.getAllInBoxMutable\"!";
-
-	var firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable;
-	for (i = instructions.indexOf(first_INVOKESTATIC_getAllInBoxMutable); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable = instruction;
-			print("Found label \"next Label\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable)
-		throw "Error: Couldn't find label \"next Label\"!";
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new VarInsnNode(ALOAD, 0)); // ChunkRender.this
-	var outerClassFieldName = ASMAPI.mapField("field_228939_e_")
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask", outerClassFieldName, "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;"));
-	toInject.add(new VarInsnNode(ALOAD, 4)); // compiledChunkIn
-	toInject.add(new VarInsnNode(ALOAD, 5)); // builderIn
-	toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos - startPosition
-	if (!isOptiFinePresent) {
-		toInject.add(new VarInsnNode(ALOAD, 11)); // chunkrendercache
-		toInject.add(new VarInsnNode(ALOAD, 12)); // matrixstack
-		toInject.add(new VarInsnNode(ALOAD, 13)); // random
-		toInject.add(new VarInsnNode(ALOAD, 14)); // blockrendererdispatcher
-	} else {
-		toInject.add(new VarInsnNode(ALOAD, 12)); // chunkrendercache
-		toInject.add(new VarInsnNode(ALOAD, 11)); // matrixstack
-		toInject.add(new VarInsnNode(ALOAD, 14)); // random
-		toInject.add(new VarInsnNode(ALOAD, 15)); // blockrendererdispatcher
-	}
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"preIteration",
-			//String descriptor
-			"(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Ljava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
-			//boolean isInterface
-			false
-	));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable, toInject);
-
-//	// Make list of instructions to inject
-//	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-//	toInject.add(new VarInsnNode(FLOAD, 1)); // x
-//	toInject.add(new VarInsnNode(FLOAD, 2)); // t
-//	toInject.add(new VarInsnNode(FLOAD, 3)); // z
-//	toInject.add(new VarInsnNode(ALOAD, 4)); // generator
-//	toInject.add(new VarInsnNode(ALOAD, 5)); // compiledchunk
-//	toInject.add(new VarInsnNode(ALOAD, 7)); // blockpos - startPosition
-//	toInject.add(new VarInsnNode(ALOAD, 8)); // blockpos1 - endPosition
-//	toInject.add(new VarInsnNode(ALOAD, 9)); // world
-//	toInject.add(new VarInsnNode(ALOAD, 10)); // lvt_10_1_ - visGraph
-//	toInject.add(new VarInsnNode(ALOAD, 11)); // lvt_11_1_ - hashSetTileEntitiesWithGlobalRenderers
-//	if (!isOptiFinePresent) {
-//		toInject.add(new VarInsnNode(ALOAD, 12)); // lvt_12_1_ - chunkRenderCache
-//		toInject.add(new VarInsnNode(ALOAD, 13)); // aboolean - usedRenderLayers
-//		toInject.add(new VarInsnNode(ALOAD, 14)); // random
-//		toInject.add(new VarInsnNode(ALOAD, 15)); // blockrendererdispatcher
-//	} else {
-//		toInject.add(new VarInsnNode(ALOAD, 12)); // lvt_12_1_ - chunkCacheOF
-//		toInject.add(new VarInsnNode(ALOAD, 15)); // aboolean - usedRenderLayers
-//		toInject.add(new VarInsnNode(ALOAD, 16)); // random
-//		toInject.add(new VarInsnNode(ALOAD, 17)); // blockrendererdispatcher
-//	}
-//	toInject.add(new MethodInsnNode(
-//			//int opcode
-//			INVOKESTATIC,
-//			//String owner
-//			"io/github/cadiboo/nocubes/hooks/Hooks",
-//			//String name
-//			"preIteration",
-//			//String descriptor
-//			"(Lnet/minecraft/client/renderer/chunk/ChunkRender;FFFLnet/minecraft/client/renderer/chunk/ChunkRenderTask;Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/util/HashSet;Lnet/minecraft/world/IEnviromentBlockReader;[ZLjava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V",
-//			//boolean isInterface
-//			false
-//	));
-//
-//	toInject.add(originalInstructionsLabel);
-//
-//	// Inject instructions
-//	instructions.insert(firstLabelBefore_first_INVOKESTATIC_getAllInBoxMutable, toInject);
-
-}
-
-// 1) find BlockState.getRenderType
-// 2) find label for BlockState.getRenderType
-// 3) find label that BlockState.getRenderType would jump to
-// 4) insert right after BlockState.getRenderType label
-function injectBlockRenderHook(instructions) {
-
-//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
-
-//	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(blockstate)))
-//	// NoCubes End
-//	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
-
-
-//    INVOKEVIRTUAL net/minecraft/client/renderer/BlockRendererDispatcher.renderFluid (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IWorldReader;Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/fluid/IFluidState;)Z
-//    IOR
-//    BASTORE
-//   L54
-//    LINENUMBER 174 L54
-//   FRAME CHOP 2
-//    ALOAD 18
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.getRenderType ()Lnet/minecraft/util/EnumBlockRenderType; (itf)
-//    GETSTATIC net/minecraft/util/EnumBlockRenderType.INVISIBLE : Lnet/minecraft/util/EnumBlockRenderType;
-//    IF_ACMPEQ L61
-//    ALOAD 18
-//    ALOAD 25
-//    INVOKEINTERFACE net/minecraft/block/state/IBlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z (itf)
-//    IFEQ L61
-
-//    INVOKEINTERFACE java/util/Set.add (Ljava/lang/Object;)Z (itf)
-//    POP
-//   L32
-//    LINENUMBER 526 L32
-//   FRAME CHOP 1
-//    ALOAD 17
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.shouldBlockStateRender (Lnet/minecraft/block/BlockState;)Z
-//    IFEQ L39
-//   L40
-//    LINENUMBER 527 L40
-//    ALOAD 17
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getRenderType ()Lnet/minecraft/block/BlockRenderType;
-//    GETSTATIC net/minecraft/block/BlockRenderType.INVISIBLE : Lnet/minecraft/block/BlockRenderType;
-//    IF_ACMPEQ L61
-//    ALOAD 18
-//    ALOAD 25
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.canRenderInLayer (Lnet/minecraft/util/BlockRenderLayer;)Z
-//    IFEQ L61
-
-	var blockCannotRenderLabel;
-
-	var getRenderType_name = ASMAPI.mapMethod("func_185901_i"); // getRenderType
-
-	var BlockState_getRenderType;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == "net/minecraft/block/BlockState") {
-				if (instruction.name == getRenderType_name) {
-					if (instruction.desc == "()Lnet/minecraft/block/BlockRenderType;") {
-						if (instruction.itf == false) {
-							BlockState_getRenderType = instruction;
-							print("Found injection point \"first BlockState.getRenderType\" " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!BlockState_getRenderType) {
-		throw "Error: Couldn't find injection point \"first BlockState.getRenderType\"!";
-	}
-
-	var firstLabelBefore_BlockState_getRenderType;
-	for (i = instructions.indexOf(BlockState_getRenderType); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabelBefore_BlockState_getRenderType = instruction;
-			print("Found label \"next Label\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabelBefore_BlockState_getRenderType) {
-		throw "Error: Couldn't find label \"next Label\"!";
-	}
-
-	var lookStart = instructions.indexOf(BlockState_getRenderType);
-	var lookMax = lookStart + 10;
-	var blockCannotRenderLabel;
-	for (var i = lookStart; i < lookMax; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == IFEQ || instruction.getOpcode() == IFNE || instruction.getOpcode() == IF_ACMPEQ) {
-			blockCannotRenderLabel = instruction.label;
-			print("Found blockCannotRenderLabel " + instruction.label);
-			break;
-		}
-	}
-	if (!blockCannotRenderLabel) {
-		throw "Error: Couldn't find blockCannotRenderLabel!";
-	}
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	if (!isOptiFinePresent)
-		toInject.add(new VarInsnNode(ALOAD, 17)); // blockstate
-	else
-		toInject.add(new VarInsnNode(ALOAD, 18)); // blockstate
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"canBlockStateRender",
-			//String descriptor
-			"(Lnet/minecraft/block/BlockState;)Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, blockCannotRenderLabel));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabelBefore_BlockState_getRenderType, toInject);
-
 }
 
 // 1) Finds the first instruction INVOKEVIRTUAL ChunkRenderCache.getFluidState
 // 2) Then injects
 // 3) Then removes the two previous instructions and then the instruction
 function injectFluidRenderBypass(instructions) {
-
-// Forge/Vanilla/Original
-//	}
-//
-//	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
-//	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
-
-// Forge/OptiFine/Original
-//	IFluidState ifluidstate = blockstate.getFluidState();
-//		if (!ifluidstate.isEmpty()) {
-
 // Forge/Vanilla/Patched
-//	}
-//
 //	// NoCubes Start
 ////	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
 //	IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
 //	// NoCubes End
 //	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
-
 
 // Forge/OptiFine/Patched
 //	// NoCubes Start
@@ -1348,119 +600,23 @@ function injectFluidRenderBypass(instructions) {
 //	// NoCubes End
 //		if (!ifluidstate.isEmpty()) {
 
-// Forge/Vanilla/Original
-//    ALOAD 5
-//    ALOAD 20
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
-//   L40
-//    LINENUMBER 175 L40
-//   FRAME CHOP 2
-//    ALOAD 12
-//    ALOAD 17
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderCache.getFluidState (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;
-//    ASTORE 20
-//   L48
-//    LINENUMBER 177 L48
-//    ALOAD 4
-//    ALOAD 17
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
-//    ASTORE 21
-
-// Forge/Vanilla/Patched
-//    ALOAD 5
-//    ALOAD 20
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
-//   L40
-//    LINENUMBER 175 L40
-//   FRAME CHOP 2
-//    GETSTATIC net/minecraft/fluid/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
-//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
-//    ASTORE 20
-//   L48
-//    LINENUMBER 177 L48
-//    ALOAD 4
-//    ALOAD 17
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/ChunkRenderTask.getModelData (Lnet/minecraft/util/math/BlockPos;)Lnet/minecraftforge/client/model/data/IModelData;
-//    ASTORE 21
-
-// Forge/OptiFine/Original
-//    ALOAD 5
-//    ALOAD 22
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
-//   L43
-//    LINENUMBER 307 L43
-//   FRAME CHOP 2
-//    ALOAD 20
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getFluidState ()Lnet/minecraft/fluid/IFluidState;
-//    ASTORE 22
-//   L51
-//    LINENUMBER 309 L51
-//    ALOAD 22
-//    INVOKEINTERFACE net/minecraft/fluid/IFluidState.isEmpty ()Z (itf)
-//    IFNE L52
-
-// Forge/OptiFine/Patched
-//    ALOAD 5
-//    ALOAD 22
-//    INVOKEVIRTUAL net/minecraft/client/renderer/chunk/CompiledChunk.addTileEntity (Lnet/minecraft/tileentity/TileEntity;)V
-//   L43
-//    LINENUMBER 307 L43
-//   FRAME CHOP 2
-//    GETSTATIC net/minecraft/fluid/Fluids.EMPTY : Lnet/minecraft/fluid/Fluid;
-//    INVOKEVIRTUAL net/minecraft/fluid/Fluid.getDefaultState ()Lnet/minecraft/fluid/IFluidState;
-//    ASTORE 22
-//   L51
-//    LINENUMBER 309 L51
-//    ALOAD 22
-//    INVOKEINTERFACE net/minecraft/fluid/IFluidState.isEmpty ()Z (itf)
-//    IFNE L52
-
-	var getFluidState_owner;
-	var getFluidState_name;
-	var getFluidState_desc;
-	if (!isOptiFinePresent) {
-		getFluidState_owner = "net/minecraft/client/renderer/chunk/ChunkRenderCache";
-		getFluidState_name = ASMAPI.mapMethod("func_204610_c"); // ChunkRenderCache#getFluidState
-		getFluidState_desc = "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;";
-	} else {
-		getFluidState_owner = "net/minecraft/block/BlockState";
-		getFluidState_name = ASMAPI.mapMethod("func_204520_s"); // BlockState#getFluidState
-		getFluidState_desc = "()Lnet/minecraft/fluid/IFluidState;";
-	}
-
-	var first_INVOKEVIRTUAL_getFluidState;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == INVOKEVIRTUAL) {
-			if (instruction.owner == getFluidState_owner) {
-				if (instruction.name == getFluidState_name) {
-					if (instruction.desc == getFluidState_desc) {
-						if (instruction.itf == false) {
-							first_INVOKEVIRTUAL_getFluidState = instruction;
-							print("Found injection point \"first_INVOKEVIRTUAL_getFluidState\" " + instruction);
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	if (!first_INVOKEVIRTUAL_getFluidState) {
-		throw "Error: Couldn't find injection point \"first_INVOKEVIRTUAL_getFluidState\"!";
-	}
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
+	var isOptiFinePresent = detectOptiFine(instructions);
+	var getFluidStateCall = ASMAPI.findFirstMethodCall(
+		methodNode,
+		ASMAPI.MethodType.VIRTUAL,
+		isOptiFinePresent ? "net/minecraft/block/BlockState" : "net/minecraft/client/renderer/chunk/ChunkRenderCache",
+		// isOptiFinePresent ? BlockState#getFluidState : ChunkRenderCache#getFluidState
+		isOptiFinePresent ? ASMAPI.mapMethod("func_204520_s") : ASMAPI.mapMethod("func_204610_c"),
+		isOptiFinePresent ? "()Lnet/minecraft/fluid/IFluidState;" : "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;"
+	);
+	if (!getFluidStateCall)
+		throw "Error: Couldn't find 'getFluidState' call in " + stringifyInstructions(instructions);
 
 	var Fluids_EMPTY_name = ASMAPI.mapField("field_204541_a"); // Fluids.EMPTY
 	var Fluid_getDefaultState_name = ASMAPI.mapMethod("func_207188_f"); // Fluid#getDefaultState
-
-	// Make list of instructions to inject
-	toInject.add(new FieldInsnNode(GETSTATIC, "net/minecraft/fluid/Fluids", Fluids_EMPTY_name, "Lnet/minecraft/fluid/Fluid;"));
-	toInject.add(new MethodInsnNode(
+	instructions.insert(first_INVOKEVIRTUAL_getFluidState, ASMAPI.listOf(
+		new FieldInsnNode(GETSTATIC, "net/minecraft/fluid/Fluids", Fluids_EMPTY_name, "Lnet/minecraft/fluid/Fluid;"),
+		new MethodInsnNode(
 			//int opcode
 			INVOKEVIRTUAL,
 			//String owner
@@ -1471,12 +627,8 @@ function injectFluidRenderBypass(instructions) {
 			"()Lnet/minecraft/fluid/IFluidState;",
 			//boolean isInterface
 			false
+		)
 	));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(first_INVOKEVIRTUAL_getFluidState, toInject);
 
 	// Remove old instructions
 	if (!isOptiFinePresent) {
@@ -1492,96 +644,6 @@ function injectFluidRenderBypass(instructions) {
 		// INVOKEVIRTUAL BlockState#getFluidState
 		instructions.remove(first_INVOKEVIRTUAL_getFluidState);
 	}
-
-}
-
-// 1) Finds the first label
-// 2) injects after first label
-function injectMarkForRerenderHook(instructions) {
-
-//	public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
-//		this.levelRenderer.setBlocksDirty(pos, oldState, newState);
-//	}
-
-//   public void setBlocksDirty(BlockPos pos, BlockState oldState, BlockState newState) {
-//		// NoCubes Start
-//		io.github.cadiboo.nocubes.hooks.Hooks.markForRerender(this.mc, this.levelRenderer, pos, oldState, newState);
-//		// NoCubes End
-//	}
-
-
-//  public setBlocksDirty(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
-//   L0
-//    LINENUMBER 525 L0
-//    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.levelRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
-//    ALOAD 1
-//    ALOAD 2
-//    ALOAD 3
-//    INVOKEVIRTUAL net/minecraft/client/renderer/WorldRenderer.setBlocksDirty (Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
-//   L1
-//    LINENUMBER 526 L1
-//    RETURN
-
-//  public setBlocksDirty(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
-//   L0
-//    LINENUMBER 547 L0
-//    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.minecraft : Lnet/minecraft/client/Minecraft;
-//    ALOAD 0
-//    GETFIELD net/minecraft/client/world/ClientWorld.levelRenderer : Lnet/minecraft/client/renderer/WorldRenderer;
-//    ALOAD 1
-//    ALOAD 2
-//    ALOAD 3
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.markForRerender (Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V
-//    RETURN
-
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabel = instruction;
-			print("Found injection point \"first Label\" " + instruction);
-			break;
-		}
-	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-	var minecraft_name = ASMAPI.mapField("field_73037_M"); // mc, minecraft
-	var levelRenderer_name = ASMAPI.mapField("field_217430_d"); // worldRenderer, levelRenderer
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", minecraft_name, "Lnet/minecraft/client/Minecraft;"));
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new FieldInsnNode(GETFIELD, "net/minecraft/client/world/ClientWorld", levelRenderer_name, "Lnet/minecraft/client/renderer/WorldRenderer;"));
-	toInject.add(new VarInsnNode(ALOAD, 1)); // pos
-	toInject.add(new VarInsnNode(ALOAD, 2)); // oldState
-	toInject.add(new VarInsnNode(ALOAD, 3)); // newState
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"markForRerender",
-			//String descriptor
-			"(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new InsnNode(RETURN));
-
-	// Inject instructions
-	instructions.insert(firstLabel, toInject);
-
 }
 
 // 1) Finds the first instruction NEW CubeCoordinateIterator
@@ -2201,6 +1263,77 @@ function injectGetAllowedOffsetHook(instructions) {
 
 }
 
+function findFirstLabel(instructions, startIndex) {
+	if (!startIndex)
+		startIndex = 0;
+	var length = instructions.size();
+	var i;
+	for (i = startIndex; i < length; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == LABEL) {
+			print("Found first label after index " + startIndex + ": " + instruction);
+			return instruction;
+		}
+	}
+	throw "Error: Couldn't find first label after index " + startIndex + " in " + stringifyInstructions(instructions);
+}
+
+function findFirstLabelBefore(instructions, startIndex) {
+	var length = instructions.size();
+	if (!startIndex)
+		startIndex = length - 1;
+	var i;
+	for (i = startIndex; i >= 0; --i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == LABEL) {
+			print("Found first label before index " + startIndex + ": " + instruction);
+			return instruction;
+		}
+	}
+	throw "Error: Couldn't find first label before index " + startIndex + " in " + stringifyInstructions(instructions);
+}
+
+/**
+ * Utility function to create an INVOKESTATIC call to one of our hooks
+ *
+ * @param {string} name The name of the hook method
+ * @param {string} desc The hook method's method descriptor
+ * @return {object} The transformersObj with all transformers wrapped
+ */
+function callNoCubesHook(name, desc) {
+	return new MethodInsnNode(
+		//int opcode
+		INVOKESTATIC,
+		//String owner
+		"io/github/cadiboo/nocubes/hooks/Hooks",
+		//String name
+		name,
+		//String descriptor
+		desc,
+		//boolean isInterface
+		false
+	);
+}
+
+function injectAfterFirstLabel(instructions, instructionsToInject) {
+	var injectAfter = findFirstLabel(instructions);
+	instructions.insert(injectAfter, instructionsToInject);
+}
+
+function detectOptiFine(instructions) {
+	var length = instructions.size();
+	var i;
+	for (i = 0; i < length; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.getType() == METHOD_INSN) {
+			var owner = instruction.owner;
+			if (owner == "net/optifine/override/ChunkCacheOF" || owner == "net/optifine/BlockPosM")
+				return true;
+		}
+	}
+	return false;
+}
+
 
 
 
@@ -2221,11 +1354,10 @@ function injectGetAllowedOffsetHook(instructions) {
 /**
  * Utility function to wrap all transformers in transformers that have logging
  *
- * @param {object} transformersObj All the transformers of this coremod.
- * @return {object} The transformersObj with all transformers wrapped.
+ * @param {object} transformersObj All the transformers of this coremod
+ * @return {object} The transformersObj with all transformers wrapped
  */
 function wrapWithLogging(transformersObj) {
-
 	var oldPrint = print;
 	// Global variable because makeLoggingTransformerFunction is a separate function (thanks to scoping issues)
 	currentPrintTransformer = null;
@@ -2238,11 +1370,11 @@ function wrapWithLogging(transformersObj) {
 	for (var transformerObjName in transformersObj) {
 		var transformerObj = transformersObj[transformerObjName];
 
-		var transformer = transformerObj["transformer"];
+		var transformer = transformerObj.transformer;
 		if (!transformer)
 			continue;
 
-		transformerObj["transformer"] = makeLoggingTransformerFunction(transformerObjName, transformer);
+		transformerObj.transformer = makeLoggingTransformerFunction(transformerObjName, transformer);
 	}
 	return transformersObj;
 }
@@ -2264,44 +1396,43 @@ function makeLoggingTransformerFunction(transformerObjName, transformer) {
 		print("Finished Transform");
 		currentPrintTransformer = null;
 		return obj;
-	}
+	};
 }
 
 /**
  * Utility function to wrap all method transformers in class transformers
  * to make them run after OptiFine's class transformers
  *
- * @param {object} transformersObj All the transformers of this coremod.
- * @return {object} The transformersObj with all method transformers wrapped.
+ * @param {object} transformersObj All the transformers of this coremod
+ * @return {object} The transformersObj with all method transformers wrapped
  */
 function wrapMethodTransformers(transformersObj) {
-
 	for (var transformerObjName in transformersObj) {
 		var transformerObj = transformersObj[transformerObjName];
 
-		var target = transformerObj["target"];
+		var target = transformerObj.target;
 		if (!target)
 			continue;
 
-		var type = target["type"];
+		var type = target.type;
 		if (!type || !type.equals("METHOD"))
 			continue;
 
-		var clazz = target["class"];
+		var clazz = target.class;
 		if (!clazz)
 			continue;
 
-		var methodName = target["methodName"];
+		var methodName = target.methodName;
 		if (!methodName)
 			continue;
 
 		var mappedMethodName = ASMAPI.mapMethod(methodName);
 
-		var methodDesc = target["methodDesc"];
+		var methodDesc = target.methodDesc;
 		if (!methodDesc)
 			continue;
 
-		var methodTransformer = transformerObj["transformer"];
+		var methodTransformer = transformerObj.transformer;
 		if (!methodTransformer)
 			continue;
 
@@ -2342,12 +1473,12 @@ function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, metho
 			methods[i] = methodTransformer(methodNode);
 			return classNode;
 		}
-		var searchedMethods = "["
+		var searchedMethods = "[";
 		for (var i in methods) {
 			var methodNode = methods[i];
 			searchedMethods + "\"" + classNode.name + "." + methodNode.name + " " + methodNode.desc + "\"";
 		}
-		searchedMethods += "]"
+		searchedMethods += "]";
 		throw new Error("Method transformer did not find a method! Target method was \"" + classNode.name + "." + mappedMethodName + " " + methodDesc + "\". Searched " + searchedMethods + ".")
 	};
 }
@@ -2400,6 +1531,27 @@ function printInstructions(instructions) {
 		if (text.length > 0) // Some instructions are ignored
 			print(text);
 	}
+}
+
+/**
+ * Util function to stringify a list of instructions for debugging
+ *
+ * @param {InsnList} instructions The list of instructions to stringify
+ * @returns {string} The stringified instructions, joined with newlines
+ */
+function stringifyInstructions(instructions) {
+	var fullText = "";
+	var labelNames = {
+		length: 0
+	};
+	var arrayLength = instructions.size();
+	var i;
+	for (i = 0; i < arrayLength; ++i) {
+		var text = getInstructionText(instructions.get(i), labelNames);
+		if (text.length > 0) // Some instructions are ignored
+			fullText += text + "\n";
+	}
+	return fullText;
 }
 
 /**
