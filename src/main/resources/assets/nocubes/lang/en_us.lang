@@ -26,6 +26,7 @@ nocubes.addedTerrainSmoothable=Added Terrain Smoothable: %s
 nocubes.removedTerrainSmoothable=Removed Terrain Smoothable: %s
 nocubes.setExtendFluidsRange=Set Extend Fluids Range to %s
 nocubes.setTerrainMeshGenerator=Set Terrain Mesh Generator to %s
+nocubes.visualsForcedByServer=NoCubes' terrain rendering is being forced by the server and cannot be disabled
 
 nocubes.config.title=NoCubes Config Gui Beta (Changes aren't instant)
 nocubes.config.client=Client Config

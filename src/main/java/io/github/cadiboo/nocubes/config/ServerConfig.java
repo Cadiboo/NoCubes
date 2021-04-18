@@ -21,6 +21,8 @@ final class ServerConfig {
 	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
 	@Nonnull
 	final ForgeConfigSpec.BooleanValue terrainCollisions;
+	@Nonnull
+	final ForgeConfigSpec.BooleanValue forceVisuals;
 
 	ServerConfig(@Nonnull final ForgeConfigSpec.Builder builder) {
 		builder.push("general");
@@ -40,6 +42,13 @@ final class ServerConfig {
 				.comment("If realistic terrain collisions should be calculated")
 				.translation(MOD_ID + ".config.terrainCollisions")
 				.define("terrainCollisions", true);
+		forceVisuals = builder
+				.translation(MOD_ID + ".config.forceVisuals")
+				.comment(
+					"For MMO servers that require NoCubes to be enabled for a proper player experience.",
+					"If you enable this make sure that you've manually checked that every chunk is navigable!"
+				)
+				.define("forceVisuals", false);
 		builder.pop();
 	}
 

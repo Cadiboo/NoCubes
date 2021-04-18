@@ -47,5 +47,6 @@ public final class Config {
 	public static MeshGeneratorType terrainMeshGenerator;
 	public static boolean terrainCollisions;
 	public static Set<String> terrainSmoothable;
+	public static boolean forceVisuals;
 
 }

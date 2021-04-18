@@ -26,6 +26,7 @@ nocubes.addedTerrainSmoothable=Terreno Añadidas Suavizables: %s
 nocubes.removedTerrainSmoothable=Terreno Removidas Suavizables: %s
 nocubes.setExtendFluidsRange=Establecer Extender el Dango de Fluido a %s
 nocubes.setTerrainMeshGenerator=Establecer el Generador de Malla de Terreno en %s
+nocubes.visualsForcedByServer=El servidor está forzando la renderización del terreno de NoCubes y no se puede deshabilitar
 
 nocubes.config.title=NoCubes Configuración Gui Beta (Los cambios no son instantáneos)
 nocubes.config.client=Configuración del Cliente

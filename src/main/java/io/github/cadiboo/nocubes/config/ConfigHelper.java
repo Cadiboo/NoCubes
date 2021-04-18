@@ -33,24 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.github.cadiboo.nocubes.config.Config.LOGGER;
-import static io.github.cadiboo.nocubes.config.Config.applyDiffuseLighting;
-import static io.github.cadiboo.nocubes.config.Config.betterTextures;
-import static io.github.cadiboo.nocubes.config.Config.extendFluidsRange;
-import static io.github.cadiboo.nocubes.config.Config.leavesMeshGenerator;
-import static io.github.cadiboo.nocubes.config.Config.leavesSmoothable;
-import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
-import static io.github.cadiboo.nocubes.config.Config.naturalFluidTextures;
-import static io.github.cadiboo.nocubes.config.Config.renderSmoothAndVanillaLeaves;
-import static io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves;
-import static io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain;
-import static io.github.cadiboo.nocubes.config.Config.shortGrass;
-import static io.github.cadiboo.nocubes.config.Config.smoothFluidColors;
-import static io.github.cadiboo.nocubes.config.Config.smoothFluidLighting;
-import static io.github.cadiboo.nocubes.config.Config.smoothLeavesType;
-import static io.github.cadiboo.nocubes.config.Config.terrainCollisions;
-import static io.github.cadiboo.nocubes.config.Config.terrainMeshGenerator;
-import static io.github.cadiboo.nocubes.config.Config.terrainSmoothable;
+import static io.github.cadiboo.nocubes.config.Config.*;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.CLAY;
 import static net.minecraft.init.Blocks.COAL_ORE;
@@ -105,7 +88,8 @@ public final class ConfigHelper {
 	public static void bakeClient(final ModConfig config) {
 		clientConfig = config;
 
-		renderSmoothTerrain = ConfigHolder.CLIENT.renderSmoothTerrain.get();
+		// Directly querying the baked field - won't cause a NPE on the client when there is no server
+	 	renderSmoothTerrain = Config.forceVisuals | ConfigHolder.CLIENT.renderSmoothTerrain.get();
 
 		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
 		renderSmoothAndVanillaLeaves = ConfigHolder.CLIENT.renderSmoothAndVanillaLeaves.get();
@@ -136,6 +120,11 @@ public final class ConfigHelper {
 
 		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
 		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
+
+		forceVisuals = ConfigHolder.SERVER.forceVisuals.get();
+		if (forceVisuals)
+			// Directly setting the baked field - won't cause a NPE on the dedicated server
+			renderSmoothTerrain = true;
 	}
 
 	public static void discoverDefaultTerrainSmoothable() {

@@ -26,6 +26,7 @@ nocubes.addedTerrainSmoothable=已添加到可平滑地形列表: %s
 nocubes.removedTerrainSmoothable=已从可平滑地形列表中移除: %s
 nocubes.setExtendFluidsRange=设置扩展流体范围为 ％s
 nocubes.setTerrainMeshGenerator=将地形网格生成器设置为 ％s
+nocubes.visualsForcedByServer=NoCubes的地形渲染是由服务器强制执行的，无法禁用
 
 nocubes.config.title=NoCubes 配置界面 Beta 版 (修改不会立即生效)
 nocubes.config.client=客户端配置

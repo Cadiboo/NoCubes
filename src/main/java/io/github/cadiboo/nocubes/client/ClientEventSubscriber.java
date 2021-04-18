@@ -35,10 +35,13 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
@@ -141,12 +144,19 @@ public final class ClientEventSubscriber {
 		// Rendering
 		{
 			if (toggleRenderSmoothTerrain.isPressed()) {
-				final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
-				ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
-				// Config saving is async so set it now
-				Config.renderSmoothTerrain = newRenderSmoothTerrain;
-				ClientUtil.tryReloadRenderers();
-				return;
+				if (Config.renderSmoothTerrain && Config.forceVisuals) {
+					TextComponentTranslation msg = new TextComponentTranslation(MOD_ID + ".visualsForcedByServer");
+					msg.getStyle().setColor(TextFormatting.RED);
+					Minecraft.getMinecraft().player.sendMessage(msg);
+					return;
+				} else {
+					final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
+					ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
+					// Config saving is async so set it now
+					Config.renderSmoothTerrain = newRenderSmoothTerrain;
+					ClientUtil.tryReloadRenderers();
+					return;
+				}
 			}
 			if (toggleRenderSmoothLeaves.isPressed()) {
 				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
