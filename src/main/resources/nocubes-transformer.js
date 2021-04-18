@@ -169,10 +169,10 @@ function initializeCoreMod() {
 					);
 					if (!positionsIteratorCall)
 						throw "Error: Couldn't find 'positionsIteratorCall' in " + stringifyInstructions(instructions);
-					var firstLabelAfterPositionsIteratorCall = findFirstLabel(instructions, instructions.indexOf(positionsIteratorCall));
+					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, instructions.indexOf(positionsIteratorCall));
 
 					var outerClassFieldName = ASMAPI.mapField("field_228939_e_");
-					instructions.insert(firstLabelAfterPositionsIteratorCall, ASMAPI.listOf(
+					instructions.insert(firstLabelBeforePositionsIteratorCall, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, 0), // this
 						new VarInsnNode(ALOAD, 0), // ChunkRender.this
 						new FieldInsnNode(GETFIELD, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask", outerClassFieldName, "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;"),
