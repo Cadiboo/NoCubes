@@ -1,0 +1,51 @@
+nocubes.addedTerrainSmoothableBlockState=Добавлено Terrain сглаживаемо
+nocubes.removedTerrainSmoothableBlockState=Удалены Terrain сглаживаемо
+nocubes.addedLeavesSmoothableBlockState=Добавлено Листья сглаживаемо
+nocubes.removedLeavesSmoothableBlockState=Удаленные листья сглаживаются
+
+key.categories.nocubes=NoCubes
+nocubes.key.toggleTerrainSmoothableBlockState=Переключить состояние блока сглаживания ландшафта
+nocubes.key.toggleLeavesSmoothableBlockState=Переключить оставляет сглаживаемое состояние блока
+nocubes.key.toggleProfilers=Переключить профилировщики
+nocubes.key.toggleTerrainCollisions=Переключить столкновения с ландшафтом
+nocubes.key.toggleRenderSmoothTerrain=Переключить рендеринг сглаженной местности
+nocubes.key.toggleRenderSmoothLeaves=Переключить рендеринг гладких листьев
+
+nocubes.terrainCollisions114=NoCubes Terrain Collisions don't work properly in 1.14 yet. This is being worked on and will be fixed soon
+nocubes.terrainCollisionsEnabled=Включено NoCubes Terrain Collisions
+nocubes.terrainCollisionsDisabled=NoCubes Terrain Collisions отключен
+
+nocubes.addTerrainSmoothableNoPermission=Вы должны быть администратором, чтобы добавить Terrain Smoothable.
+nocubes.disableCollisionsNoPermission=Вы должны быть администратором, чтобы отключить NoCubes Terrain Collisions.
+nocubes.enableCollisionsNoPermission=Вы должны быть администратором, чтобы включить NoCubes Terrain Collisions.
+nocubes.removeTerrainSmoothableNoPermission=Вы должны быть оператором, чтобы удалить Terrain Smoothable.
+nocubes.setExtendFluidsRangeNoPermission=Вы должны быть оператором, чтобы установить Extend Fluids Range.
+nocubes.setTerrainMeshGeneratorNoPermission=Вы должны быть оператором, чтобы установить Terrain Mesh Generator.
+
+nocubes.addedTerrainSmoothable=Добавлен сглаживание ландшафта: %s
+nocubes.removedTerrainSmoothable=Удалена сглаживание ландшафта: %s
+nocubes.setExtendFluidsRange=Установите Extend Fluids Range на %s
+nocubes.setTerrainMeshGenerator=Установите Terrain Mesh Generator на %s
+nocubes.visualsForcedByServer=Рендерингом может управлять только администратор.
+
+nocubes.config.title=NoCubes Экран конфигурации Beta (Изменения не мгновенные)
+nocubes.config.client=Конфигурация клиента
+nocubes.config.renderSmoothTerrain=Рендеринг гладкой местности
+nocubes.config.renderSmoothLeaves=Рендеринг гладких листьев
+nocubes.config.renderSmoothAndVanillaLeaves=Рендеринг как гладких, так и ванильных листьев
+nocubes.config.leavesSmoothable=Листья гладкие
+nocubes.config.leavesMeshGenerator=Генератор сетки листьев
+nocubes.config.smoothLeavesType=Тип гладких листьев
+nocubes.config.applyDiffuseLighting=Применить диффузное освещение
+nocubes.config.betterTextures=Лучшие текстуры
+nocubes.config.shortGrass=Короткая трава
+nocubes.config.smoothFluidLighting=Гладкое жидкое освещение
+nocubes.config.smoothFluidColors=Гладкие жидкие цвета
+nocubes.config.naturalFluidTextures=Естественные жидкие текстуры
+nocubes.config.server=Конфигурация сервера
+nocubes.config.terrainSmoothable=Сглаживаемый ландшафт
+nocubes.config.extendFluidsRange=Расширение ассортимента жидкостей
+nocubes.config.terrainMeshGenerator=Генератор сетки ландшафта
+nocubes.config.terrainCollisions=Столкновения с местностью
+
+nocubes.waitSeconds=Подождите %s секунд
