@@ -32,6 +32,9 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 		int height = end.getY() - start.getY();
 		int width = end.getX() - start.getX();
 
+		final float min = 0.75F;
+		final float max = 0.25F;
+
 		BlockState[] blocks = area.getAndCacheBlocks();
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 		Face face = new Face();
@@ -49,60 +52,60 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 					// Up (pos y)
 					if (y < height - 1 && !isSmoothable.test(blocks[index + height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.75F, y + 0.75F, z + 0.75F,
-							x + 0.75F, y + 0.75F, z + 0.25F,
-							x + 0.25F, y + 0.75F, z + 0.25F,
-							x + 0.25F, y + 0.75F, z + 0.75F
+							x + min, y + min, z + min,
+							x + min, y + min, z + max,
+							x + max, y + min, z + max,
+							x + max, y + min, z + min
 						)))
 							return;
 
 					// Down (neg y)
 					if (y > 0 && !isSmoothable.test(blocks[index - height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.75F, y, z + 0.75F,
-							x + 0.25F, y, z + 0.75F,
-							x + 0.25F, y, z + 0.25F,
-							x + 0.75F, y, z + 0.25F
+							x + min, y, z + min,
+							x + max, y, z + min,
+							x + max, y, z + max,
+							x + min, y, z + max
 						)))
 							return;
 
 					// South (pos z)
 					if (z < depth - 1 && !isSmoothable.test(blocks[index + width * height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.75F, y + 0.75F, z + 0.75F,
-							x + 0.25F, y + 0.75F, z + 0.75F,
-							x + 0.25F, y + 0.25F, z + 0.75F,
-							x + 0.75F, y + 0.25F, z + 0.75F
+							x + min, y + min, z + min,
+							x + max, y + min, z + min,
+							x + max, y + max, z + min,
+							x + min, y + max, z + min
 						)))
 							return;
 
 					// North (neg z)
 					if (z > 0 && !isSmoothable.test(blocks[index - width * height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.75F, y + 0.75F, z + 0.25F,
-							x + 0.75F, y + 0.25F, z + 0.25F,
-							x + 0.25F, y + 0.25F, z + 0.25F,
-							x + 0.25F, y + 0.75F, z + 0.25F
+							x + min, y + min, z + max,
+							x + min, y + max, z + max,
+							x + max, y + max, z + max,
+							x + max, y + min, z + max
 						)))
 							return;
 
 					// East (pos x)
 					if (x < width - 1 && !isSmoothable.test(blocks[index + 1]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.75F, y + 0.75F, z + 0.75F,
-							x + 0.75F, y + 0.25F, z + 0.75F,
-							x + 0.75F, y + 0.25F, z + 0.25F,
-							x + 0.75F, y + 0.75F, z + 0.25F
+							x + min, y + min, z + min,
+							x + min, y + max, z + min,
+							x + min, y + max, z + max,
+							x + min, y + min, z + max
 						)))
 							return;
 
 					// West (neg x)
 					if (x > 0 && !isSmoothable.test(blocks[index - 1]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + 0.25F, y + 0.75F, z + 0.75F,
-							x + 0.25F, y + 0.75F, z + 0.25F,
-							x + 0.25F, y + 0.25F, z + 0.25F,
-							x + 0.25F, y + 0.25F, z + 0.75F
+							x + max, y + min, z + min,
+							x + max, y + min, z + max,
+							x + max, y + max, z + max,
+							x + max, y + max, z + min
 						)))
 							return;
 				}
