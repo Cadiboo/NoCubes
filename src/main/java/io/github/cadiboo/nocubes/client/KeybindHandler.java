@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.network.C2SRequestSetCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.ServerSmoothableChangeHandler;
@@ -36,8 +37,9 @@ public final class KeybindHandler {
 	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
 
 	static {
-		KEYBINDS.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
 		KEYBINDS.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
+		KEYBINDS.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
+		KEYBINDS.add(makeKeybind("toggleCollisions", GLFW.GLFW_KEY_C, KeybindHandler::toggleCollisions));
 	}
 
 	private static Pair<KeyBinding, Runnable> makeKeybind(String name, int key, Runnable action) {
@@ -94,6 +96,15 @@ public final class KeybindHandler {
 			// Send an update request packet
 			NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(state, newValue));
 		}
+	}
+
+	private static void toggleCollisions() {
+		if (!NoCubesNetwork.currentServerHasNoCubes) {
+			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".nocubesNotInstalledOnServerCollisions").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			return;
+		}
+		// Send an update request packet
+		NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestSetCollisions(!NoCubesConfig.Server.collisionsEnabled));
 	}
 
 }

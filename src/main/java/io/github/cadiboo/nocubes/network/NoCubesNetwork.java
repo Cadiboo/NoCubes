@@ -18,6 +18,7 @@ public final class NoCubesNetwork {
 	/**
 	 * Only valid when connected to a server on the client.
 	 * Contains random values from the most recently pinged server otherwise.
+	 * Also valid for singleplayer integrated servers (always true).
 	 */
 	public static boolean currentServerHasNoCubes = false;
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
@@ -42,25 +43,25 @@ public final class NoCubesNetwork {
 	public static void register() {
 		int networkId = 0;
 		// Client -> Server
-		CHANNEL.registerMessage(networkId++,
+		CHANNEL.registerMessage(networkId,
 			C2SRequestUpdateSmoothable.class,
 			C2SRequestUpdateSmoothable::encode,
 			C2SRequestUpdateSmoothable::decode,
 			C2SRequestUpdateSmoothable::handle
 		);
-//		CHANNEL.registerMessage(networkId++,
-//			C2SRequestSetTerrainCollisions.class,
-//			C2SRequestSetTerrainCollisions::encode,
-//			C2SRequestSetTerrainCollisions::decode,
-//			C2SRequestSetTerrainCollisions::handle
-//		);
-//		CHANNEL.registerMessage(networkId++,
+		CHANNEL.registerMessage(++networkId,
+			C2SRequestSetCollisions.class,
+			C2SRequestSetCollisions::encode,
+			C2SRequestSetCollisions::decode,
+			C2SRequestSetCollisions::handle
+		);
+//		CHANNEL.registerMessage(++networkId,
 //			C2SRequestSetExtendFluidsRange.class,
 //			C2SRequestSetExtendFluidsRange::encode,
 //			C2SRequestSetExtendFluidsRange::decode,
 //			C2SRequestSetExtendFluidsRange::handle
 //		);
-//		CHANNEL.registerMessage(networkId++,
+//		CHANNEL.registerMessage(++networkId,
 //			C2SRequestSetTerrainMeshGenerator.class,
 //			C2SRequestSetTerrainMeshGenerator::encode,
 //			C2SRequestSetTerrainMeshGenerator::decode,
@@ -68,25 +69,25 @@ public final class NoCubesNetwork {
 //		);
 
 		// Server -> Client
-		CHANNEL.registerMessage(networkId++,
+		CHANNEL.registerMessage(++networkId,
 			S2CUpdateSmoothable.class,
 			S2CUpdateSmoothable::encode,
 			S2CUpdateSmoothable::decode,
 			S2CUpdateSmoothable::handle
 		);
-//		CHANNEL.registerMessage(networkId++,
-//			S2CSetTerrainCollisions.class,
-//			S2CSetTerrainCollisions::encode,
-//			S2CSetTerrainCollisions::decode,
-//			S2CSetTerrainCollisions::handle
-//		);
-//		CHANNEL.registerMessage(networkId++,
+		CHANNEL.registerMessage(++networkId,
+			S2CSetCollisions.class,
+			S2CSetCollisions::encode,
+			S2CSetCollisions::decode,
+			S2CSetCollisions::handle
+		);
+//		CHANNEL.registerMessage(++networkId,
 //			S2CSetExtendFluidsRange.class,
 //			S2CSetExtendFluidsRange::encode,
 //			S2CSetExtendFluidsRange::decode,
 //			S2CSetExtendFluidsRange::handle
 //		);
-//		CHANNEL.registerMessage(networkId++,
+//		CHANNEL.registerMessage(++networkId,
 //			S2CSetTerrainMeshGenerator.class,
 //			S2CSetTerrainMeshGenerator::encode,
 //			S2CSetTerrainMeshGenerator::decode,
