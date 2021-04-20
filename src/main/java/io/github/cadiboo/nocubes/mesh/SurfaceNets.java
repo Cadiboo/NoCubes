@@ -1,14 +1,10 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 
-import java.util.Arrays;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
@@ -23,7 +19,7 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  */
 public class SurfaceNets implements MeshGenerator {
 
-	private static final ThreadLocal<CachedArray> CACHE = ThreadLocal.withInitial(CachedArray::new);
+	private static final ThreadLocalArrayCache<float[]> DENSITY_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
 
 	@Override
 	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
@@ -52,24 +48,20 @@ public class SurfaceNets implements MeshGenerator {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
-		CachedArray cachedArray = CACHE.get();
 		// NB: SurfaceNets expects to be working on the signed distance at the corner of each block
 		// To get this we would have to average the densities of each block & its neighbours
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
 		// Because we want to preserve these features, we feed SurfaceNets the block densities, pretending that they
 		// are the corner distances and then offset the resulting mesh by 0.5
-		float[] densityField = cachedArray.takeArray(states.length);
-		try {
-			for (int i = 0; i < states.length; i++) {
-				BlockState state = states[i];
-				boolean isStateSmoothable = isSmoothable.test(state);
-				densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
-			}
-			BlockPos dims = area.end.subtract(area.start);
-			generateOrThrow2(densityField, dims, voxelAction, faceAction);
-		} finally {
-			cachedArray.releaseArray();
+		int length = area.getLength();
+		float[] densityField = DENSITY_CACHE.takeArray(length);
+		for (int i = 0; i < length; i++) {
+			BlockState state = states[i];
+			boolean isStateSmoothable = isSmoothable.test(state);
+			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
+		BlockPos dims = area.end.subtract(area.start);
+		generateOrThrow2(densityField, dims, voxelAction, faceAction);
 	}
 
 	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
@@ -293,28 +285,6 @@ public class SurfaceNets implements MeshGenerator {
 			}
 		}
 
-	}
-
-	private static class CachedArray {
-
-		private StackTraceElement[] trace;
-		private float[] array;
-
-		public float[] takeArray(int minLength) {
-			// TODO: Remove this once I'm done developing, this is just a sanity check
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get()) {
-				if (trace != null)
-					throw new IllegalStateException("Already owned by " + Arrays.toString(trace));
-				trace = new Throwable().getStackTrace();
-			}
-			if (array == null || array.length < minLength)
-				array = new float[minLength];
-			return array;
-		}
-
-		public void releaseArray() {
-			trace = null;
-		}
 	}
 
 }
