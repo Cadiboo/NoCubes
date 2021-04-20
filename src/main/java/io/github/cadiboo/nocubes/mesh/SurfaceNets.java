@@ -55,7 +55,7 @@ public class SurfaceNets implements MeshGenerator {
 		// are the corner distances and then offset the resulting mesh by 0.5
 		int length = area.getLength();
 		float[] densityField = DENSITY_CACHE.takeArray(length);
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < length; ++i) {
 			BlockState state = states[i];
 			boolean isStateSmoothable = isSmoothable.test(state);
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);

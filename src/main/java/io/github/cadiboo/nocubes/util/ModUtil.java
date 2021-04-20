@@ -93,7 +93,7 @@ public class ModUtil {
 							for (int x = sectionMinX; x < sectionMaxX; ++x) {
 								BlockState blockState = chunkSection == null ? air : chunkSection.getBlockState(x & 15, maskedY, maskedZ);
 								currentPosition.set(x, y, z);
-								int zyxIndex = (z - startZInclusive) * widthMulHeight + (y - startYInclusive) * height + (x - startXInclusive);
+								int zyxIndex = (z - startZInclusive) * widthMulHeight + (y - startYInclusive) * width + (x - startXInclusive);
 								func.accept(blockState, currentPosition, zyxIndex);
 							}
 						}
