@@ -5,16 +5,16 @@ import javax.annotation.Nonnull;
 /**
  * @author Cadiboo
  */
-public final class DensityCache extends XYZCache implements AutoCloseable {
+public final class CornerDensityCache extends XYZCache implements AutoCloseable {
 
-	private static final ThreadLocal<DensityCache> POOL = ThreadLocal.withInitial(() -> new DensityCache(0, 0, 0, 0, 0, 0));
+	private static final ThreadLocal<CornerDensityCache> POOL = ThreadLocal.withInitial(() -> new CornerDensityCache(0, 0, 0, 0, 0, 0));
 
 	@Nonnull
 	private float[] cache;
 
 	private boolean inUse;
 
-	private DensityCache(
+	private CornerDensityCache(
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			final int sizeX, final int sizeY, final int sizeZ
 	) {
@@ -24,15 +24,15 @@ public final class DensityCache extends XYZCache implements AutoCloseable {
 	}
 
 	@Nonnull
-	public static DensityCache retain(
+	public static CornerDensityCache retain(
 			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
 			final int sizeX, final int sizeY, final int sizeZ
 	) {
 
-		final DensityCache pooled = POOL.get();
+		final CornerDensityCache pooled = POOL.get();
 
 		if (pooled.inUse)
-			throw new IllegalStateException("DensityCache is already in use!");
+			throw new IllegalStateException("CornerDensityCache is already in use!");
 		pooled.inUse = true;
 
 		pooled.startPaddingX = startPaddingX;
@@ -55,7 +55,7 @@ public final class DensityCache extends XYZCache implements AutoCloseable {
 	}
 
 	@Nonnull
-	public float[] getDensityCache() {
+	public float[] getCornerDensityCache() {
 		return cache;
 	}
 

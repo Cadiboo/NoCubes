@@ -16,7 +16,7 @@ import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.CornerDensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
@@ -174,7 +174,7 @@ public final class RenderDispatcher {
 									1, 1, 1,
 									stateCache, TERRAIN_SMOOTHABLE
 							);
-							DensityCache densityCache = CacheUtil.generateDensityCache(
+							CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
 									// Density Cache needs 1 extra on each negative axis
 									chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
 									// FIXME: Why? Why? Why? It makes no sense
@@ -209,7 +209,7 @@ public final class RenderDispatcher {
 //									chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
 //									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 //									pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-//									Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes ? null : densityCache
+//									Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes ? null : cornerDensityCache
 //							);
 //						}
 						renderTerrainChunk(
@@ -217,7 +217,7 @@ public final class RenderDispatcher {
 								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
 								pooledMutableBlockPos, stateCache, lazyPackedLightCache,
 								meshGenerator, meshSizeX, meshSizeY, meshSizeZ,
-								smoothableCache, densityCache
+								smoothableCache, cornerDensityCache
 						);
 					}
 				} else {
@@ -267,7 +267,7 @@ public final class RenderDispatcher {
 			final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache,
 			final MeshGenerator meshGenerator,
 			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
-			final SmoothableCache smoothableCache, final DensityCache densityCache
+			final SmoothableCache smoothableCache, final CornerDensityCache cornerDensityCache
 	) {
 		PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
@@ -285,7 +285,7 @@ public final class RenderDispatcher {
 					mesh = MeshDispatcher.offsetChunkMesh(
 							chunkRenderPos,
 							meshGenerator.generateChunk(
-									densityCache.getDensityCache(),
+									cornerDensityCache.getCornerDensityCache(),
 									new byte[]{meshSizeX, meshSizeY, meshSizeZ}
 							)
 					);
@@ -345,7 +345,7 @@ public final class RenderDispatcher {
 											1, 1, 1,
 											stateCache, isSmoothable
 									);
-									DensityCache densityCache = CacheUtil.generateDensityCache(
+									CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
 											// Density Cache needs 1 extra on each negative axis
 											chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
 											// FIXME: Why? Why? Why? It makes no sense
@@ -362,7 +362,7 @@ public final class RenderDispatcher {
 									mesh = MeshDispatcher.offsetChunkMesh(
 											chunkRenderPos,
 											meshGenerator.generateChunk(
-													densityCache.getDensityCache(),
+													cornerDensityCache.getCornerDensityCache(),
 													new byte[]{meshSizeX, meshSizeY, meshSizeZ}
 											)
 									);
@@ -401,7 +401,7 @@ public final class RenderDispatcher {
 										1, 1, 1,
 										stateCache, isSmoothable
 								);
-								DensityCache densityCache = CacheUtil.generateDensityCache(
+								CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
 										// Density Cache needs 1 extra on each negative axis
 										chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
 										// FIXME: Why? Why? Why? It makes no sense
@@ -418,7 +418,7 @@ public final class RenderDispatcher {
 								mesh = MeshDispatcher.offsetChunkMesh(
 										chunkRenderPos,
 										meshGenerator.generateChunk(
-												densityCache.getDensityCache(),
+												cornerDensityCache.getCornerDensityCache(),
 												new byte[]{meshSizeX, meshSizeY, meshSizeZ}
 										)
 								);

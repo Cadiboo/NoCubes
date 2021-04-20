@@ -11,7 +11,7 @@ import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.CornerDensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.addShapeToListIfIntersects;
-import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.floorAvg;
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.makeShape;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
@@ -199,7 +198,7 @@ public final class CollisionHandler {
 			final byte meshSizeY = getMeshSizeY(maxYp1 - minYm1, meshGenerator);
 			final byte meshSizeZ = getMeshSizeZ(maxZp1 - minZm1, meshGenerator);
 
-			// DensityCache needs -1 on each NEGATIVE axis
+			// CornerDensityCache needs -1 on each NEGATIVE axis
 			final int startPosX = minXm1 - 1;
 			final int startPosY = minYm1 - 1;
 			final int startPosZ = minZm1 - 1;
@@ -221,7 +220,7 @@ public final class CollisionHandler {
 
 			final ModProfiler profiler = ModProfiler.get();
 			try (
-					// DensityCache needs -1 on each NEGATIVE axis
+					// CornerDensityCache needs -1 on each NEGATIVE axis
 					// StateCache needs +1 on each POSITIVE axis
 					// Density calculation needs +1 on ALL axis, 1+1=2
 					StateCache stateCache = CacheUtil.generateStateCache(
@@ -237,9 +236,9 @@ public final class CollisionHandler {
 							1, 1, 1,
 							stateCache, TERRAIN_SMOOTHABLE
 					);
-					DensityCache densityCache = CacheUtil.generateDensityCache(
+					CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
 							startPosX, startPosY, startPosZ,
-							// DensityCache needs -1 on each NEGATIVE axis (not +1 on each positive axis as well)
+							// CornerDensityCache needs -1 on each NEGATIVE axis (not +1 on each positive axis as well)
 							endPosX - 1, endPosY - 1, endPosZ - 1,
 							1, 1, 1,
 							stateCache, smoothableCache
@@ -248,7 +247,7 @@ public final class CollisionHandler {
 
 				final List<AxisAlignedBB> collidingShapes = new ArrayList<>();
 
-				final float[] densityCacheArray = densityCache.getDensityCache();
+				final float[] densityCacheArray = cornerDensityCache.getCornerDensityCache();
 
 				final IBlockState[] blockStateArray = stateCache.getBlockStates();
 
@@ -266,11 +265,11 @@ public final class CollisionHandler {
 					final int sizeY = maxYp1 - minYm1;
 					final int sizeZ = maxZp1 - minZm1;
 
-					final int densityOffsetX = densityCache.startPaddingX;
-					final int densityOffsetY = densityCache.startPaddingY;
-					final int densityOffsetZ = densityCache.startPaddingZ;
-					final int densityCacheSizeX = densityCache.sizeX;
-					final int densityCacheSizeY = densityCache.sizeY;
+					final int densityOffsetX = cornerDensityCache.startPaddingX;
+					final int densityOffsetY = cornerDensityCache.startPaddingY;
+					final int densityOffsetZ = cornerDensityCache.startPaddingZ;
+					final int densityCacheSizeX = cornerDensityCache.sizeX;
+					final int densityCacheSizeY = cornerDensityCache.sizeY;
 
 					for (int z = 0; z < sizeZ; ++z) {
 						for (int y = 0; y < sizeY; ++y) {
@@ -283,7 +282,7 @@ public final class CollisionHandler {
 								)];
 								if (!TERRAIN_SMOOTHABLE.test(blockState)
 										||
-										densityCacheArray[densityCache.getIndex(
+										densityCacheArray[cornerDensityCache.getIndex(
 												densityOffsetX + x,
 												densityOffsetY + y,
 												densityOffsetZ + z,
@@ -307,7 +306,7 @@ public final class CollisionHandler {
 								OldNoCubes.generateBlock(new BlockPos(minXm1 + 1, minYm1 + 1, minZm1 + 1), _this, TERRAIN_SMOOTHABLE, pooledMutableBlockPos)
 						);
 					} else {
-						meshData = meshGenerator.generateChunk(densityCache.getDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
+						meshData = meshGenerator.generateChunk(cornerDensityCache.getCornerDensityCache(), new byte[]{meshSizeX, meshSizeY, meshSizeZ});
 					}
 				}
 

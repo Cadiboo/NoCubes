@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
-import io.github.cadiboo.nocubes.util.pooled.cache.DensityCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.CornerDensityCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
@@ -248,9 +248,9 @@ public final class CacheUtil {
 	}
 
 	/**
-	 * Generates a {@link DensityCache} from a {@link StateCache} and a {@link SmoothableCache}
+	 * Generates a {@link CornerDensityCache} from a {@link StateCache} and a {@link SmoothableCache}
 	 */
-	public static DensityCache generateDensityCache(
+	public static CornerDensityCache generateCornerDensityCache(
 			// from position
 			// Usually chunkRenderPosition - 1 because DensityCaches need 1 extra block on each negative axis
 			final int fromX, final int fromY, final int fromZ,
@@ -266,14 +266,14 @@ public final class CacheUtil {
 		final int cacheSizeY = Math.abs(toY - fromY);
 		final int cacheSizeZ = Math.abs(toZ - fromZ);
 		try (ModProfiler ignored = ModProfiler.get().start("generate densityCache")) {
-			final DensityCache densityCache = DensityCache.retain(startPaddingX, startPaddingY, startPaddingZ, cacheSizeX, cacheSizeY, cacheSizeZ);
-			final float[] densityCacheArray = densityCache.getDensityCache();
+			final CornerDensityCache cornerDensityCache = CornerDensityCache.retain(startPaddingX, startPaddingY, startPaddingZ, cacheSizeX, cacheSizeY, cacheSizeZ);
+			final float[] densityCacheArray = cornerDensityCache.getCornerDensityCache();
 
 			int index = 0;
 			for (int z = 0; z < cacheSizeZ; ++z) {
 				for (int y = 0; y < cacheSizeY; ++y) {
 					for (int x = 0; x < cacheSizeX; ++x, ++index) {
-						densityCacheArray[index] = getBlockDensity(
+						densityCacheArray[index] = getCornerDensity(
 								x, y, z,
 								startPaddingX, startPaddingY, startPaddingZ,
 								stateCache, smoothableCache
@@ -281,14 +281,14 @@ public final class CacheUtil {
 					}
 				}
 			}
-			return densityCache;
+			return cornerDensityCache;
 		}
 	}
 
 	/**
-	 * Gets the density for a block (between -8 and 8) based on the smoothability of itself and its 7 neighbours in positive directions
+	 * Gets the density for a corner (between -8 and 8).
 	 */
-	private static float getBlockDensity(
+	private static float getCornerDensity(
 			final int posX, final int posY, final int posZ,
 			// the difference between the chunkRenderPosition and the density cache's from position. Always positive
 			final int densityCacheStartPaddingX, final int densityCacheStartPaddingY, final int densityCacheStartPaddingZ,
@@ -307,11 +307,11 @@ public final class CacheUtil {
 		final int smoothableCacheSizeY = smoothableCache.sizeY;
 		final boolean[] smoothableCacheArray = smoothableCache.getSmoothableCache();
 
-		float density = 0;
+		float cornerDensity = 0;
 		for (int zOffset = 0; zOffset < 2; ++zOffset) {
 			for (int yOffset = 0; yOffset < 2; ++yOffset) {
 				for (int xOffset = 0; xOffset < 2; ++xOffset) {
-					density += ModUtil.getIndividualBlockDensity(
+					cornerDensity += ModUtil.getIndividualBlockDensity(
 							smoothableCacheArray[smoothableCache.getIndex(
 									posX + xOffset,
 									posY + yOffset,
@@ -328,7 +328,7 @@ public final class CacheUtil {
 				}
 			}
 		}
-		return density;
+		return cornerDensity;
 	}
 
 }
