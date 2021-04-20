@@ -1327,10 +1327,13 @@ function detectOptiFine(instructions) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == METHOD_INSN) {
 			var owner = instruction.owner;
-			if (owner == "net/optifine/override/ChunkCacheOF" || owner == "net/optifine/BlockPosM")
+			if (owner == "net/optifine/override/ChunkCacheOF" || owner == "net/optifine/BlockPosM") {
+				print('Detected OptiFine')
 				return true;
+			}
 		}
 	}
+	print('Did not detect OptiFine')
 	return false;
 }
 
