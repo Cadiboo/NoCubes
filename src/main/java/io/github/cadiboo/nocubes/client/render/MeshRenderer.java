@@ -6,10 +6,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -83,43 +80,85 @@ public final class MeshRenderer {
 					return true;
 
 				IModelData modelData = rebuildTask.getModelData(pos);
-				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, pos.relative(direction));
+				BlockPos lightPos = pos.relative(direction); // TODO: Mutable
+				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, lightPos);
+				// OptiFine
+//				light = DynamicLights.getCombinedLight(lightPos, light);
+
+//				// OptiFine
+//				boolean shaders = Config.isShaders();
+//				boolean shadersMidBlock = shaders && Shaders.useMidBlockAttrib;
 
 				for (RenderType rendertype : RenderType.chunkBufferLayers()) {
 					if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
 						continue;
 					ForgeHooksClient.setRenderLayer(rendertype);
 					BufferBuilder bufferbuilder = builderIn.builder(rendertype);
+//					// OptiFine
+//					bufferbuilder.setBlockLayer(rendertype);
+//					RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
+//					renderEnv.setRegionRenderCacheBuilder(builderIn);
+//					((ChunkCacheOF) chunkrendercache).setRenderEnv(renderEnv);
+//					// End OptiFine
+
 					if (compiledChunkIn.hasLayer.add(rendertype))
 						chunkRender.beginLayer(bufferbuilder);
 
 					matrixstack.pushPose();
 					matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
-
-					IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
-					random.setSeed(rand);
-					List<BakedQuad> dirQuads;
-					if (blockstate.hasProperty(BlockStateProperties.SNOWY))
-						// Make grass/snow/mycilium side faces be rendered with their top texture
-						// Equivalent to OptiFine's Better Grass feature
-						if (!blockstate.getValue(BlockStateProperties.SNOWY))
+//					// OptiFine
+//					{
+//						if (shadersMidBlock)
+//							bufferbuilder.setMidBlock(
+//								0.5F + (float)chunkRender.regionDX + (float)(pos.getX() & 15),
+//								0.5F + (float)chunkRender.regionDY + (float)(pos.getY() & 15),
+//								0.5F + (float)chunkRender.regionDZ + (float)(pos.getZ() & 15)
+//							);
+//						if (shaders)
+//							SVertexBuilder.pushEntity(blockstate, bufferbuilder);
+//						if (!Config.isAlternateBlocks())
+//							rand = 0L;
+//					}
+					{
+						IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
+//						// OptiFine
+//						{
+//							modelIn = BlockModelCustomizer.getRenderModel(modelIn, blockstate, renderEnv);
+//						}
+						random.setSeed(rand);
+						List<BakedQuad> dirQuads;
+						if (blockstate.hasProperty(BlockStateProperties.SNOWY))
+							// Make grass/snow/mycilium side faces be rendered with their top texture
+							// Equivalent to OptiFine's Better Grass feature
+							if (!blockstate.getValue(BlockStateProperties.SNOWY))
+								dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
+							else {
+								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+								BlockState snow = Blocks.SNOW.defaultBlockState();
+								dirQuads = blockrendererdispatcher.getBlockModel(snow).getQuads(snow, null, random, modelData);
+							}
+						else
 							dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
-						else {
-							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-							BlockState snow = Blocks.SNOW.defaultBlockState();
-							dirQuads = blockrendererdispatcher.getBlockModel(snow).getQuads(snow, null, random, modelData);
-						}
-					else
-						dirQuads = modelIn.getQuads(blockstate, direction, random, modelData);
-					random.setSeed(rand);
-					List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
-					if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
-						dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
-					renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads);
+						random.setSeed(rand);
+						List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
+						if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
+							dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
+						renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads);
+					}
+
+//					if (shaders)
+//						SVertexBuilder.popEntity(bufferbuilder);
 
 					if (true) {
 						compiledChunkIn.isCompletelyEmpty = false;
 						compiledChunkIn.hasBlocks.add(rendertype);
+//						// OptiFine
+//						{
+//							if (renderEnv.isOverlaysRendered()) {
+//								chunkRender.postRenderOverlays(builderIn, compiledChunkIn);
+//								renderEnv.setOverlaysRendered(false);
+//							}
+//						}
 					}
 					matrixstack.popPose();
 				}
@@ -192,31 +231,46 @@ public final class MeshRenderer {
 		for (int i1 = 0; i1 < dirQuadsSize + nullQuads.size(); i1++) {
 			final BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
 
-			uvs.unpackFromQuad(quad, formatSize);
-			uvs.switchForDirection(direction);
+//			// OptiFine
+//			{
+//				RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
+//				BakedQuad emissive = quad.getQuadEmissive();
+//				if (emissive != null) {
+//					renderEnv.reset(blockstate, pos);
+//					renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, LightTexture.MAX_BRIGHTNESS, v0, v1, v2, v3, n0, n1, n2, n3, shading, emissive);
+//				}
+//				renderEnv.reset(blockstate, pos);
+//			}
 
-			float red;
-			float blue;
-			float green;
-			if (quad.isTinted()) {
-				int packedColor = blockColors.getColor(blockstate, chunkrendercache, pos, quad.getTintIndex());
-				red = (float) (packedColor >> 16 & 255) / 255.0F;
-				green = (float) (packedColor >> 8 & 255) / 255.0F;
-				blue = (float) (packedColor & 255) / 255.0F;
-			} else {
-				red = 1.0F;
-				green = 1.0F;
-				blue = 1.0F;
-			}
-			red *= shading;
-			green *= shading;
-			blue *= shading;
-			final float alpha = 1.0F;
-			bufferbuilder.vertex(v0.x, v0.y, v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light).normal(n0.x, n0.y, n0.z).endVertex();
-			bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light).normal(n1.x, n1.y, n1.z).endVertex();
-			bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light).normal(n2.x, n2.y, n2.z).endVertex();
-			bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light).normal(n3.x, n3.y, n3.z).endVertex();
+			renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, light, v0, v1, v2, v3, n0, n1, n2, n3, shading, quad);
 		}
+	}
+
+	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, int light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, float shading, BakedQuad quad) {
+		uvs.unpackFromQuad(quad, formatSize);
+		uvs.switchForDirection(direction);
+
+		float red;
+		float blue;
+		float green;
+		if (quad.isTinted()) {
+			int packedColor = blockColors.getColor(blockstate, chunkrendercache, pos, quad.getTintIndex());
+			red = (float) (packedColor >> 16 & 255) / 255.0F;
+			green = (float) (packedColor >> 8 & 255) / 255.0F;
+			blue = (float) (packedColor & 255) / 255.0F;
+		} else {
+			red = 1.0F;
+			green = 1.0F;
+			blue = 1.0F;
+		}
+		red *= shading;
+		green *= shading;
+		blue *= shading;
+		final float alpha = 1.0F;
+		bufferbuilder.vertex(v0.x, v0.y, v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light).normal(n0.x, n0.y, n0.z).endVertex();
+		bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light).normal(n1.x, n1.y, n1.z).endVertex();
+		bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light).normal(n2.x, n2.y, n2.z).endVertex();
+		bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light).normal(n3.x, n3.y, n3.z).endVertex();
 	}
 
 	static final class TextureInfo {
