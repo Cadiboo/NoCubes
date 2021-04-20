@@ -169,7 +169,7 @@ public class SurfaceNets implements MeshGenerator {
 					vertex.z = z + s * vertex.z;
 					// Because we are passing block densities instead of corner distances (see the NB comment above) we need to offset the mesh
 					vertex.add(0.5F, 0.5F, 0.5F);
-//					//Add vertex to buffer
+					//Add vertex to buffer
 					verticesBuffer[bufferPointer] = vertex;
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
