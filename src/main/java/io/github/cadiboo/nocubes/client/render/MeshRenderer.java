@@ -24,6 +24,13 @@ import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
+import net.optifine.Config;
+import net.optifine.DynamicLights;
+import net.optifine.model.BlockModelCustomizer;
+import net.optifine.override.ChunkCacheOF;
+import net.optifine.render.RenderEnv;
+import net.optifine.shaders.SVertexBuilder;
+import net.optifine.shaders.Shaders;
 
 import java.util.List;
 import java.util.Random;
@@ -80,9 +87,9 @@ public final class MeshRenderer {
 					return true;
 
 				IModelData modelData = rebuildTask.getModelData(pos);
-				BlockPos lightPos = pos.relative(direction); // TODO: Mutable
+				BlockPos lightPos = pos.relative(direction); // TODO: Use mutable
 				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, lightPos);
-				// OptiFine
+//				// OptiFine
 //				light = DynamicLights.getCombinedLight(lightPos, light);
 
 //				// OptiFine
