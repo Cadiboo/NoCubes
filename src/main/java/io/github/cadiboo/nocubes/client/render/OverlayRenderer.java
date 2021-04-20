@@ -189,10 +189,11 @@ public final class OverlayRenderer {
 			});
 		}
 
-		// Draw NoCubes' collisions
+		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
-			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
-			try (Area area = new Area(world, start, start.offset(10, 10, 10))) {
+			Vector3i size = new Vector3i(10, 10, 10);
+			BlockPos start = viewer.blockPosition().offset(-size.getX() / 2, -size.getY() / 2, -size.getZ() / 2);
+			try (Area area = new Area(world, start, start.offset(size))) {
 				new OOCollisionHandler(generator).generate(area, (x0, y0, z0, x1, y1, z1) -> {
 					double x = start.getX();
 					double y = start.getY();
@@ -201,7 +202,8 @@ public final class OverlayRenderer {
 						x + x0, y + y0, z + z0,
 						x + x1, y + y1, z + z1
 					);
-					drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, 0.0F, 0.0F, 1.0F, 0.4F);
+					float red = NoCubesConfig.Client.debugRenderCollisions ? 1.0F : 0.0F;
+					drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, red, 1.0F, 0.0F, 0.4F);
 				});
 			}
 		}
