@@ -154,6 +154,13 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
+
+	// If OptiFine (deobfuscated with Cadiboo's OptiFine deobf tool) is in libs, we want to be able to compile against its classes
+	// We use 'provided' and not 'implementation', we don't want it to actually load at runtime because the non-deobf
+	// version of OptiFine and OptiFineDevTweaker are loaded from the mods folder at runtime
+	// OptiFine is the first dependency because so that we can compile against its version of vanilla's classes, not Forge's
+	compileOnly fileTree(include: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
+
 	// Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
 	// that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
 	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
@@ -174,7 +181,7 @@ dependencies {
 	// deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
 
 	// Add a compile/implementation dependency on all .jar files in ./libs
-	implementation fileTree(include: ['*.jar'], dir: 'libs')
+	implementation fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
 
 	// For the config color picker
 	implementation 'org.beryx:awt-color-factory:1.0.2'

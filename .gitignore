@@ -21,3 +21,5 @@ build
 
 # other
 run
+# Ignore deobfuscated OptiFine
+libs/OptiFine_*_MOD-deobf.jar
