@@ -6,17 +6,16 @@ import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigTracker;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
+import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
 import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -35,11 +34,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.*;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
@@ -420,13 +415,14 @@ public final class ClientEventSubscriber {
 		double d0 = player.lastTickPosX + (player.posX - player.lastTickPosX) * (double) partialTicks;
 		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
 		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
-		// Draw nearby collisions
-		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()).grow(3))) {
-			RenderGlobal.drawSelectionBoundingBox(voxelShape.offset(-d0, -d1, -d2), 0, 1, 1, 0.4F);
-		}
-		// Draw player intersecting collisions
-		for (final AxisAlignedBB voxelShape : world.getCollisionBoxes(player, new AxisAlignedBB(player.getPosition()))) {
-			RenderGlobal.drawSelectionBoundingBox(voxelShape.offset(-d0, -d1, -d2), 1, 0, 0, 0.4F);
+		// Draw nearby collisions in aqua and player intersecting collisions in red
+		AxisAlignedBB playerAABB = new AxisAlignedBB(player.getPosition());
+		for (AxisAlignedBB collision : world.getCollisionBoxes(player, playerAABB.grow(3))) {
+			boolean intersects = playerAABB.intersects(collision);
+			float red = intersects ? 1F : 0F;
+			float green = intersects ? 0F : 1F;
+			float blue = intersects ? 0F : 1F;
+			RenderGlobal.drawSelectionBoundingBox(collision.offset(-d0, -d1, -d2), red, green, blue, 0.4F);
 		}
 		GlStateManager.popMatrix();
 		GlStateManager.matrixMode(5888);
@@ -459,76 +455,73 @@ public final class ClientEventSubscriber {
 		}
 
 		final float partialTicks = event.getPartialTicks();
-		final BlockPos pos = rayTraceResult.getBlockPos();
-		final IBlockState blockState = world.getBlockState(pos);
-		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
+		final BlockPos targetedPos = rayTraceResult.getBlockPos();
+		final IBlockState blockState = world.getBlockState(targetedPos);
+		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(targetedPos)) {
 			return;
 		}
 
 		final IsSmoothable isSmoothable;
-		final MeshGeneratorType meshGeneratorType;
 		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(blockState)) {
 			isSmoothable = TERRAIN_SMOOTHABLE;
-			meshGeneratorType = Config.terrainMeshGenerator;
 			event.setCanceled(true);
 		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(blockState)) {
 			isSmoothable = LEAVES_SMOOTHABLE;
-			meshGeneratorType = Config.leavesMeshGenerator;
 			event.setCanceled(!Config.renderSmoothAndVanillaLeaves);
 		} else
 			return;
 
-		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
-		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
-		final double renderZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
+		MeshGenerator generator = Config.terrainMeshGenerator.getMeshGenerator();
+		Vec3i negativeAreaExtension = generator.getNegativeAreaExtension();
+		BlockPos start = targetedPos.subtract(negativeAreaExtension);
+		BlockPos end = targetedPos.add(1, 1, 1).add(generator.getPositiveAreaExtension());
+		try (Area area = new Area(world, start, end)) {
 
-		final Tessellator tessellator = Tessellator.getInstance();
-		final BufferBuilder bufferbuilder = tessellator.getBuffer();
+			GlStateManager.enableBlend();
+			GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+			GlStateManager.glLineWidth(3.0F);
+			GlStateManager.disableTexture2D();
+			GlStateManager.depthMask(false);
 
-		bufferbuilder.setTranslation(-renderX, -renderY, -renderZ);
+			GlStateManager.color(0, 0, 0, 1);
+			GlStateManager.color(1, 1, 1, 1);
 
-		GlStateManager.enableBlend();
-		GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-		GlStateManager.glLineWidth(3.0F);
-		GlStateManager.disableTexture2D();
-		GlStateManager.depthMask(false);
+			double cameraX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
+			double cameraY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
+			double cameraZ = player.lastTickPosZ + ((player.posZ - player.lastTickPosZ) * partialTicks);
 
-		GlStateManager.color(0, 0, 0, 1);
-		GlStateManager.color(1, 1, 1, 1);
+			Tessellator tessellator = Tessellator.getInstance();
+			BufferBuilder bufferbuilder = tessellator.getBuffer();
+			bufferbuilder.setTranslation(start.getX() - cameraX, start.getY() - cameraY, start.getZ() - cameraZ);
+			bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
+			generator.generate(area, isSmoothable, (pos, face) -> {
+				Vec v0 = face.v0;
+				Vec v1 = face.v1;
+				Vec v2 = face.v2;
+				Vec v3 = face.v3;
 
-		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
-			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
-				try (Face face = faces.get(i)) {
-					try (
-							Vec3 v0 = face.getVertex0();
-							Vec3 v1 = face.getVertex1();
-							Vec3 v2 = face.getVertex2();
-							Vec3 v3 = face.getVertex3()
-					) {
-						final double v0x = v0.x;
-						final double v0y = v0.y;
-						final double v0z = v0.z;
-						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
-						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						// End back at v0. Draw with alpha this time
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
-					}
-				}
-			}
+				float v0x = v0.x;
+				float v0y = v0.y;
+				float v0z = v0.z;
+				// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+				bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
+				bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
+				bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
+				bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
+				// End back at v0. Draw with alpha this time
+				bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
+
+				return true;
+			});
+
+			tessellator.draw();
+			bufferbuilder.setTranslation(0, 0, 0);
+
+			GlStateManager.depthMask(true);
+			GlStateManager.enableTexture2D();
+			GlStateManager.disableBlend();
 		}
-
-		tessellator.draw();
-
-		GlStateManager.depthMask(true);
-		GlStateManager.enableTexture2D();
-		GlStateManager.disableBlend();
-
-		bufferbuilder.setTranslation(0, 0, 0);
 
 	}
 

@@ -45,6 +45,11 @@ public final class ModProfiler extends Profiler1122 implements AutoCloseable {
 		}
 	}
 
+	public void endStart(final String name) {
+		end();
+		start(name);
+	}
+
 	@Override
 	public void close() {
 		end();

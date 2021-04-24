@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.hooks;
 
-import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
+import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.state.IBlockState;
@@ -41,7 +41,7 @@ public final class Hooks {
 	 */
 	@SideOnly(Side.CLIENT)
 	public static void preIteration(final RenderChunk renderChunk, final float x, final float y, final float z, final ChunkCompileTaskGenerator generator, final CompiledChunk compiledchunk, final BlockPos blockpos, final BlockPos blockpos1, final World world, final IBlockAccess lvt_10_1_, final VisGraph lvt_11_1_, final HashSet lvt_12_1_, final boolean[] aboolean, final BlockRendererDispatcher blockrendererdispatcher) {
-		RenderDispatcher.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, new Random(), blockrendererdispatcher);
+		MeshRenderer.renderChunk(renderChunk, blockpos, generator, compiledchunk, world, lvt_10_1_, aboolean, new Random(), blockrendererdispatcher);
 	}
 
 	/**
@@ -57,7 +57,7 @@ public final class Hooks {
 				return true;
 			}
 		}
-		RenderDispatcher.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
+		MeshRenderer.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
 		return false;
 	}
 
