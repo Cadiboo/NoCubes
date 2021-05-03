@@ -66,6 +66,10 @@ public class Face {
 		return this;
 	}
 
+	public Face add(Vector3i pos) {
+		return add(pos.getX(), pos.getY(), pos.getZ());
+	}
+
 	public Face add(float x, float y, float z) {
 		v0.add(x, y, z);
 		v1.add(x, y, z);

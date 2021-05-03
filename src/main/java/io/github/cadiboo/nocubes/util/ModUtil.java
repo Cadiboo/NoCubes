@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 public class ModUtil {
 
 	public static final Vector3i VEC_ONE = new Vector3i(1, 1, 1);
-	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
+	public static final Vector3i CHUNK_SIZE = new Vector3i(16, 16, 16);
 	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
 		final String target = System.getenv().get("target");
 		if (target == null)
@@ -108,13 +108,11 @@ public class ModUtil {
 	 */
 	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
 		if (!shouldSmooth)
-			return state.canOcclude() ? 0 : -1;
-		if (state.getBlock() == Blocks.SNOW) { // Snow layer
-			final int value = state.getValue(SnowBlock.LAYERS);
-			// zero-height snow layer = -1 else map snow height between 0-8 to between 0.25F and 1
-			return value == 1 ? -1 : mapSnowHeight(value);
-		}
-		return state.getBlock() == Blocks.BEDROCK ? 1.0005F : 1;
+			return -1;
+		if (state.getBlock() == Blocks.SNOW)
+			// Snow layer, not the actual whole snow block
+			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
+		return 1;
 	}
 
 	/** Map snow height between 0-8 to between 0.25F and 1. */

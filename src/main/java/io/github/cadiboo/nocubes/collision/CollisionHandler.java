@@ -38,7 +38,7 @@ public final class CollisionHandler {
 		if (context.getEntity() instanceof FallingBlockEntity)
 			// Stop sand etc. breaking when it falls
 			return state.getShape(reader, blockPos);
-		if (context.getEntity() == null)
+		if (reader.getBlockState(blockPos) != state)
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			return state.getShape(reader, blockPos);
 
@@ -55,8 +55,8 @@ public final class CollisionHandler {
 				);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			}));
-			return ref[0];//.optimize();
 		}
+		return ref[0];//.optimize();
 	}
 
 //	static class CollisionCreationData {

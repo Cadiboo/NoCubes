@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockReader;
@@ -12,36 +11,31 @@ public class Area implements AutoCloseable {
 
 	public final IBlockReader world;
 	public final BlockPos start;
-	public final BlockPos size;
-	// Indexed [z][y][x] for cache locality
+	public final BlockPos end;
+	// Arrays are indexed [z][y][x] for cache locality
 	private BlockState[] blocks;
 
 	public Area(IBlockReader world, BlockPos startInclusive, BlockPos endExclusive) {
 		this.world = world;
 		this.start = startInclusive.immutable();
-		this.size = endExclusive.subtract(startInclusive);
-	}
-
-	public Area(IBlockReader world, BlockPos startInclusive, BlockPos size, MeshGenerator generator) {
-		this(world, startInclusive.subtract(generator.getNegativeAreaExtension()), size.offset(generator.getPositiveAreaExtension()));
+		this.end = endExclusive.immutable();
 	}
 
 	public BlockState[] getAndCacheBlocks() {
 		if (blocks == null) {
 			BlockState[] array = blocks = BLOCKS_CACHE.takeArray(this.getLength());
-			int endX = start.getX() + size.getX();
-			int endY = start.getY() + size.getY();
-			int endZ = start.getZ() + size.getZ();
-			IBlockReader world = this.world;
-			if (world instanceof IWorldReader) {
-				BlockPos endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
-				ModUtil.traverseArea(start, endInclusive, new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
-			} else {
+			if (world instanceof IWorldReader)
+				ModUtil.traverseArea(start, end.offset(-1, -1, -1), new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
+			else {
 				BlockPos.Mutable pos = new BlockPos.Mutable();
+				IBlockReader world = this.world;
+				int maxZ = end.getZ();
+				int maxY = end.getY();
+				int maxX = end.getX();
 				int zyxIndex = 0;
-				for (int z = start.getZ(); z < endZ; ++z)
-					for (int y = start.getY(); y < endY; ++y)
-						for (int x = start.getX(); x < endX; ++x, ++zyxIndex)
+				for (int z = start.getZ(); z < maxZ; ++z)
+					for (int y = start.getY(); y < maxY; ++y)
+						for (int x = start.getX(); x < maxX; ++x, ++zyxIndex)
 							array[zyxIndex] = world.getBlockState(pos.set(x, y, z));
 			}
 		}
@@ -49,7 +43,11 @@ public class Area implements AutoCloseable {
 	}
 
 	public int getLength() {
-		return size.getZ() * size.getY() * size.getX();
+		// I could do Math.abs but I don't think I'll ever have the params passed in reversed
+		int depth = end.getZ() - start.getZ();
+		int height = end.getY() - start.getY();
+		int width = end.getX() - start.getX();
+		return depth * height * width;
 	}
 
 	@Override

@@ -142,14 +142,14 @@ public final class OverlayRenderer {
 					densities[i] = ModUtil.getBlockDensity(smoothable, state);
 				}
 
+				int maxZ = area.end.getZ();
+				int maxY = area.end.getY();
+				int maxX = area.end.getX();
 				int minZ = area.start.getZ();
 				int minY = area.start.getY();
 				int minX = area.start.getX();
-				int width = area.size.getX();
-				int height = area.size.getY();
-				int maxZ = minZ + area.size.getZ();
-				int maxY = minY + height;
-				int maxX = minX + width;
+				int width = maxX - minX;
+				int height = maxY - minY;
 				int zyxIndex = 0;
 				for (int z = minZ; z < maxZ; ++z) {
 					for (int y = minY; y < maxY; ++y) {
