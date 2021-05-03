@@ -60,7 +60,8 @@ public class SurfaceNets implements MeshGenerator {
 			boolean isStateSmoothable = isSmoothable.test(state);
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
-		generateOrThrow2(densityField, area.size, voxelAction, faceAction);
+		BlockPos dims = area.end.subtract(area.start);
+		generateOrThrow2(densityField, dims, voxelAction, faceAction);
 	}
 
 	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
