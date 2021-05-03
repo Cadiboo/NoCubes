@@ -25,12 +25,9 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 
 	@Override
 	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos start = area.start;
-		BlockPos end = area.end;
-
-		int depth = end.getZ() - start.getZ();
-		int height = end.getY() - start.getY();
-		int width = end.getX() - start.getX();
+		int depth = area.size.getZ();
+		int height = area.size.getY();
+		int width = area.size.getX();
 
 		final float min = 0.75F;
 		final float max = 0.25F;

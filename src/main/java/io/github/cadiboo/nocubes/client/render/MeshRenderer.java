@@ -59,15 +59,18 @@ public final class MeshRenderer {
 		final TextureInfo uvs = new TextureInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		try (Area area = new Area(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE, generator)) {
+		try (
+			Area area = new Area(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE, generator);
+			LightCache light = new LightCache(area);
+		) {
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 			generator.generate(area, isSmoothable, ((pos, face) -> {
 				face.assignNormalTo(normal);
 				normal.multiply(-1).assignAverageTo(averageOfNormal);
-//				Direction direction = averageOfNormal.getDirectionFromNormal();
+				Direction direction = averageOfNormal.getDirectionFromNormal();
 
 				// Sets pos to the position of the state (relative to the start)
-				BlockState blockstate, Direction direction = locateRenderableState(area, pos, normal, isSmoothable);
+				BlockState blockstate = locateRenderableState(area, pos, direction, isSmoothable);
 				pos.offset(area.start);
 
 				long rand = blockstate.getSeed(pos);
@@ -78,11 +81,6 @@ public final class MeshRenderer {
 					return true;
 
 				IModelData modelData = rebuildTask.getModelData(pos);
-				// TODO: Smooth lighting
-				BlockPos lightPos = pos.relative(averageOfNormal.getDirectionFromNormal()); // TODO: Use mutable
-				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, lightPos);
-				// OptiFine
-				light = DynamicLights.getCombinedLight(lightPos, light);
 
 				// OptiFine
 				boolean shaders = Config.isShaders();
@@ -168,21 +166,18 @@ public final class MeshRenderer {
 		}
 	}
 
-	private static BlockState locateRenderableState(Area area, BlockPos.Mutable pos, Face normal, Predicate<BlockState> isSmoothable) {
-		BlockState[] blocks = area.getAndCacheBlocks();
-
-
-		BlockState blockstate = blocks[1];
+	private static BlockState locateRenderableState(Area area, BlockPos.Mutable pos, Direction direction, Predicate<BlockState> isSmoothable) {
+		BlockState blockstate = area.world.getBlockState(pos);
 		// Vertices can generate at positions different to the position of the block they are for
 		// This occurs mostly for positions below, west of and north of the position they are for
 		// Search the opposite of those directions for the actual block
 		// We could also attempt to get the state from the vertex positions
-		if (!handler.isSmoothable(blockstate)) {
+		if (!isSmoothable.test(blockstate)) {
 			int x = pos.getX();
 			int y = pos.getY();
 			int z = pos.getZ();
-			blockstate = area.getBlockState(pos.move(direction.getOpposite()));
-			if (!handler.isSmoothable(blockstate)) {
+			blockstate = area.world.getBlockState(pos.move(direction.getOpposite()));
+			if (!isSmoothable.test(blockstate)) {
 				// Give up
 				blockstate = Blocks.SCAFFOLDING.defaultBlockState();
 				pos.set(x, y, z);
@@ -236,7 +231,7 @@ public final class MeshRenderer {
 //		);
 	}
 
-	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Face face, Face reversedNormal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, int light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads) {
+	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Face face, Face reversedNormal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads) {
 		final Vec v0 = face.v0;
 		final Vec v1 = face.v1;
 		final Vec v2 = face.v2;
@@ -259,7 +254,7 @@ public final class MeshRenderer {
 				BakedQuad emissive = quad.getQuadEmissive();
 				if (emissive != null) {
 					renderEnv.reset(blockstate, pos);
-					renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, LightTexture.MAX_BRIGHTNESS, v0, v1, v2, v3, n0, n1, n2, n3, shading, emissive);
+					renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, null, v0, v1, v2, v3, n0, n1, n2, n3, shading, emissive);
 				}
 				renderEnv.reset(blockstate, pos);
 			}
@@ -268,7 +263,7 @@ public final class MeshRenderer {
 		}
 	}
 
-	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, int light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, float shading, BakedQuad quad) {
+	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, float shading, BakedQuad quad) {
 		uvs.unpackFromQuad(quad, formatSize);
 		uvs.switchForDirection(direction);
 
@@ -289,10 +284,10 @@ public final class MeshRenderer {
 		green *= shading;
 		blue *= shading;
 		final float alpha = 1.0F;
-		bufferbuilder.vertex(v0.x, v0.y, v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light).normal(n0.x, n0.y, n0.z).endVertex();
-		bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light).normal(n1.x, n1.y, n1.z).endVertex();
-		bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light).normal(n2.x, n2.y, n2.z).endVertex();
-		bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light).normal(n3.x, n3.y, n3.z).endVertex();
+		bufferbuilder.vertex(v0.x, v0.y, v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(v0, n0)).normal(n0.x, n0.y, n0.z).endVertex();
+		bufferbuilder.vertex(v1.x, v1.y, v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(v1, n1)).normal(n1.x, n1.y, n1.z).endVertex();
+		bufferbuilder.vertex(v2.x, v2.y, v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(v2, n2)).normal(n2.x, n2.y, n2.z).endVertex();
+		bufferbuilder.vertex(v3.x, v3.y, v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(v3, n3)).normal(n3.x, n3.y, n3.z).endVertex();
 	}
 
 	static final class TextureInfo {

@@ -23,7 +23,9 @@ public class Area implements AutoCloseable {
 	}
 
 	public Area(IBlockReader world, BlockPos startInclusive, BlockPos size, MeshGenerator generator) {
-		this(world, startInclusive.subtract(generator.getNegativeAreaExtension()), size.offset(generator.getPositiveAreaExtension()));
+		this.world = world;
+		this.start = startInclusive.subtract(generator.getNegativeAreaExtension()).immutable();
+		this.size = size.offset(generator.getPositiveAreaExtension());
 	}
 
 	public BlockState[] getAndCacheBlocks() {
