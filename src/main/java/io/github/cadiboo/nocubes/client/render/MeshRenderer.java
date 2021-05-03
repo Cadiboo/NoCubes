@@ -32,13 +32,23 @@ import net.optifine.render.RenderEnv;
 import net.optifine.shaders.SVertexBuilder;
 import net.optifine.shaders.Shaders;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
  */
 public final class MeshRenderer {
+
+	private static final int[] UNSET_LIGHTS = new int[18*18*18];
+	static {
+		Arrays.fill(UNSET_LIGHTS, -1);
+	}
+	private static final ThreadLocalArrayCache<int[]> PACKED_LIGHT_CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, (length, array) -> {
+		System.arraycopy(UNSET_LIGHTS, 0, array, 0, length);
+	});
 
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final IBlockDisplayReader chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (!NoCubesConfig.Client.render)
@@ -49,35 +59,16 @@ public final class MeshRenderer {
 		final TextureInfo uvs = new TextureInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		Vector3i negativeAreaExtension = generator.getNegativeAreaExtension();
-		BlockPos start = blockpos.subtract(negativeAreaExtension);
-		BlockPos end = blockpos.offset(ModUtil.CHUNK_SIZE).offset(generator.getPositiveAreaExtension());
-		try (Area area = new Area(Minecraft.getInstance().level, start, end)) {
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, ((pos, face) -> {
-				// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
-				face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
+		try (Area area = new Area(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE, generator)) {
+			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+			generator.generate(area, isSmoothable, ((pos, face) -> {
 				face.assignNormalTo(normal);
-				normal.multiply(-1);
-				normal.assignAverageTo(averageOfNormal);
-				Direction direction = averageOfNormal.getDirectionFromNormal();
+				normal.multiply(-1).assignAverageTo(averageOfNormal);
+//				Direction direction = averageOfNormal.getDirectionFromNormal();
 
-				SmoothableHandler handler = NoCubes.smoothableHandler;
-				BlockState blockstate = chunkrendercache.getBlockState(pos.move(start));
-				// Vertices can generate at positions different to the position of the block they are for
-				// This occurs mostly for positions below, west of and north of the position they are for
-				// Search the opposite of those directions for the actual block
-				// We could also attempt to get the state from the vertex positions
-				if (!handler.isSmoothable(blockstate)) {
-					int x = pos.getX();
-					int y = pos.getY();
-					int z = pos.getZ();
-					blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
-					if (!handler.isSmoothable(blockstate)) {
-						// Give up
-						blockstate = Blocks.SCAFFOLDING.defaultBlockState();
-						pos.set(x, y, z);
-					}
-				}
+				// Sets pos to the position of the state (relative to the start)
+				BlockState blockstate, Direction direction = locateRenderableState(area, pos, normal, isSmoothable);
+				pos.offset(area.start);
 
 				long rand = blockstate.getSeed(pos);
 				BlockColors blockColors = Minecraft.getInstance().getBlockColors();
@@ -87,51 +78,52 @@ public final class MeshRenderer {
 					return true;
 
 				IModelData modelData = rebuildTask.getModelData(pos);
-				BlockPos lightPos = pos.relative(direction); // TODO: Use mutable
+				// TODO: Smooth lighting
+				BlockPos lightPos = pos.relative(averageOfNormal.getDirectionFromNormal()); // TODO: Use mutable
 				int light = WorldRenderer.getLightColor(chunkrendercache, blockstate, lightPos);
-//				// OptiFine
-//				light = DynamicLights.getCombinedLight(lightPos, light);
+				// OptiFine
+				light = DynamicLights.getCombinedLight(lightPos, light);
 
-//				// OptiFine
-//				boolean shaders = Config.isShaders();
-//				boolean shadersMidBlock = shaders && Shaders.useMidBlockAttrib;
+				// OptiFine
+				boolean shaders = Config.isShaders();
+				boolean shadersMidBlock = shaders && Shaders.useMidBlockAttrib;
 
 				for (RenderType rendertype : RenderType.chunkBufferLayers()) {
 					if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
 						continue;
 					ForgeHooksClient.setRenderLayer(rendertype);
 					BufferBuilder bufferbuilder = builderIn.builder(rendertype);
-//					// OptiFine
-//					bufferbuilder.setBlockLayer(rendertype);
-//					RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
-//					renderEnv.setRegionRenderCacheBuilder(builderIn);
-//					((ChunkCacheOF) chunkrendercache).setRenderEnv(renderEnv);
-//					// End OptiFine
+					// OptiFine
+					bufferbuilder.setBlockLayer(rendertype);
+					RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
+					renderEnv.setRegionRenderCacheBuilder(builderIn);
+					((ChunkCacheOF) chunkrendercache).setRenderEnv(renderEnv);
+					// End OptiFine
 
 					if (compiledChunkIn.hasLayer.add(rendertype))
 						chunkRender.beginLayer(bufferbuilder);
 
 					matrixstack.pushPose();
 					matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
-//					// OptiFine
-//					{
-//						if (shadersMidBlock)
-//							bufferbuilder.setMidBlock(
-//								0.5F + (float)chunkRender.regionDX + (float)(pos.getX() & 15),
-//								0.5F + (float)chunkRender.regionDY + (float)(pos.getY() & 15),
-//								0.5F + (float)chunkRender.regionDZ + (float)(pos.getZ() & 15)
-//							);
-//						if (shaders)
-//							SVertexBuilder.pushEntity(blockstate, bufferbuilder);
-//						if (!Config.isAlternateBlocks())
-//							rand = 0L;
-//					}
+					// OptiFine
+					{
+						if (shadersMidBlock)
+							bufferbuilder.setMidBlock(
+								0.5F + (float)chunkRender.regionDX + (float)(pos.getX() & 15),
+								0.5F + (float)chunkRender.regionDY + (float)(pos.getY() & 15),
+								0.5F + (float)chunkRender.regionDZ + (float)(pos.getZ() & 15)
+							);
+						if (shaders)
+							SVertexBuilder.pushEntity(blockstate, bufferbuilder);
+						if (!Config.isAlternateBlocks())
+							rand = 0L;
+					}
 					{
 						IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
-//						// OptiFine
-//						{
-//							modelIn = BlockModelCustomizer.getRenderModel(modelIn, blockstate, renderEnv);
-//						}
+						// OptiFine
+						{
+							modelIn = BlockModelCustomizer.getRenderModel(modelIn, blockstate, renderEnv);
+						}
 						random.setSeed(rand);
 						List<BakedQuad> dirQuads;
 						if (blockstate.hasProperty(BlockStateProperties.SNOWY))
@@ -153,19 +145,19 @@ public final class MeshRenderer {
 						renderQuads(chunkrendercache, uvs, pos, face, normal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads);
 					}
 
-//					if (shaders)
-//						SVertexBuilder.popEntity(bufferbuilder);
+					if (shaders)
+						SVertexBuilder.popEntity(bufferbuilder);
 
 					if (true) {
 						compiledChunkIn.isCompletelyEmpty = false;
 						compiledChunkIn.hasBlocks.add(rendertype);
-//						// OptiFine
-//						{
-//							if (renderEnv.isOverlaysRendered()) {
-//								chunkRender.postRenderOverlays(builderIn, compiledChunkIn);
-//								renderEnv.setOverlaysRendered(false);
-//							}
-//						}
+						// OptiFine
+						{
+							if (renderEnv.isOverlaysRendered()) {
+								chunkRender.postRenderOverlays(builderIn, compiledChunkIn);
+								renderEnv.setOverlaysRendered(false);
+							}
+						}
 					}
 					matrixstack.popPose();
 				}
@@ -174,6 +166,29 @@ public final class MeshRenderer {
 				return true;
 			}));
 		}
+	}
+
+	private static BlockState locateRenderableState(Area area, BlockPos.Mutable pos, Face normal, Predicate<BlockState> isSmoothable) {
+		BlockState[] blocks = area.getAndCacheBlocks();
+
+
+		BlockState blockstate = blocks[1];
+		// Vertices can generate at positions different to the position of the block they are for
+		// This occurs mostly for positions below, west of and north of the position they are for
+		// Search the opposite of those directions for the actual block
+		// We could also attempt to get the state from the vertex positions
+		if (!handler.isSmoothable(blockstate)) {
+			int x = pos.getX();
+			int y = pos.getY();
+			int z = pos.getZ();
+			blockstate = area.getBlockState(pos.move(direction.getOpposite()));
+			if (!handler.isSmoothable(blockstate)) {
+				// Give up
+				blockstate = Blocks.SCAFFOLDING.defaultBlockState();
+				pos.set(x, y, z);
+			}
+		}
+		return blockstate;
 	}
 
 	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
@@ -238,16 +253,16 @@ public final class MeshRenderer {
 		for (int i1 = 0; i1 < dirQuadsSize + nullQuads.size(); i1++) {
 			final BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
 
-//			// OptiFine
-//			{
-//				RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
-//				BakedQuad emissive = quad.getQuadEmissive();
-//				if (emissive != null) {
-//					renderEnv.reset(blockstate, pos);
-//					renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, LightTexture.MAX_BRIGHTNESS, v0, v1, v2, v3, n0, n1, n2, n3, shading, emissive);
-//				}
-//				renderEnv.reset(blockstate, pos);
-//			}
+			// OptiFine
+			{
+				RenderEnv renderEnv = bufferbuilder.getRenderEnv(blockstate, pos);
+				BakedQuad emissive = quad.getQuadEmissive();
+				if (emissive != null) {
+					renderEnv.reset(blockstate, pos);
+					renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, LightTexture.MAX_BRIGHTNESS, v0, v1, v2, v3, n0, n1, n2, n3, shading, emissive);
+				}
+				renderEnv.reset(blockstate, pos);
+			}
 
 			renderQuad(chunkrendercache, uvs, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, light, v0, v1, v2, v3, n0, n1, n2, n3, shading, quad);
 		}
