@@ -25,15 +25,13 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 
 	@Override
 	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos start = area.start;
-		BlockPos end = area.end;
+		BlockPos size = area.size;
+		int depth = size.getZ();
+		int height = size.getY();
+		int width = size.getX();
 
-		int depth = end.getZ() - start.getZ();
-		int height = end.getY() - start.getY();
-		int width = end.getX() - start.getX();
-
-		final float min = 0.75F;
-		final float max = 0.25F;
+		final float min = 0.1F;
+		final float max = 1F - min;
 
 		BlockState[] blocks = area.getAndCacheBlocks();
 		BlockPos.Mutable pos = new BlockPos.Mutable();
@@ -42,6 +40,10 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 		for (int z = 0; z < depth; ++z) {
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x, ++index) {
+					if (y >= height - 1 || y <= 0 || z >= depth - 1 || z <= 0 || x >= width - 1 || x <= 0)
+						// Block is outside where we are generating it for, we only query it for its neighbouring faces
+						continue;
+
 					boolean smoothable = isSmoothable.test(blocks[index]);
 					if (!voxelAction.apply(pos.set(x, y, z), smoothable ? 1 : 0))
 						return;
@@ -50,62 +52,62 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 						continue;
 
 					// Up (pos y)
-					if (y < height - 1 && !isSmoothable.test(blocks[index + height]))
+					if (!isSmoothable.test(blocks[index + height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + min, y + min, z + min,
-							x + min, y + min, z + max,
-							x + max, y + min, z + max,
-							x + max, y + min, z + min
+							x + max, y + max, z + max,
+							x + max, y + max, z + min,
+							x + min, y + max, z + min,
+							x + min, y + max, z + max
 						)))
 							return;
 
 					// Down (neg y)
-					if (y > 0 && !isSmoothable.test(blocks[index - height]))
+					if (!isSmoothable.test(blocks[index - height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + min, y, z + min,
-							x + max, y, z + min,
 							x + max, y, z + max,
-							x + min, y, z + max
+							x + min, y, z + max,
+							x + min, y, z + min,
+							x + max, y, z + min
 						)))
 							return;
 
 					// South (pos z)
-					if (z < depth - 1 && !isSmoothable.test(blocks[index + width * height]))
+					if (!isSmoothable.test(blocks[index + width * height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + min, y + min, z + min,
-							x + max, y + min, z + min,
-							x + max, y + max, z + min,
-							x + min, y + max, z + min
-						)))
-							return;
-
-					// North (neg z)
-					if (z > 0 && !isSmoothable.test(blocks[index - width * height]))
-						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + min, y + min, z + max,
-							x + min, y + max, z + max,
 							x + max, y + max, z + max,
+							x + min, y + max, z + max,
+							x + min, y + min, z + max,
 							x + max, y + min, z + max
 						)))
 							return;
 
-					// East (pos x)
-					if (x < width - 1 && !isSmoothable.test(blocks[index + 1]))
+					// North (neg z)
+					if (!isSmoothable.test(blocks[index - width * height]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
+							x + max, y + max, z + min,
+							x + max, y + min, z + min,
 							x + min, y + min, z + min,
-							x + min, y + max, z + min,
-							x + min, y + max, z + max,
-							x + min, y + min, z + max
+							x + min, y + max, z + min
+						)))
+							return;
+
+					// East (pos x)
+					if (!isSmoothable.test(blocks[index + 1]))
+						if (!faceAction.apply(pos.set(x, y, z), face.set(
+							x + max, y + max, z + max,
+							x + max, y + min, z + max,
+							x + max, y + min, z + min,
+							x + max, y + max, z + min
 						)))
 							return;
 
 					// West (neg x)
-					if (x > 0 && !isSmoothable.test(blocks[index - 1]))
+					if (!isSmoothable.test(blocks[index - 1]))
 						if (!faceAction.apply(pos.set(x, y, z), face.set(
-							x + max, y + min, z + min,
-							x + max, y + min, z + max,
-							x + max, y + max, z + max,
-							x + max, y + max, z + min
+							x + min, y + max, z + max,
+							x + min, y + max, z + min,
+							x + min, y + min, z + min,
+							x + min, y + min, z + max
 						)))
 							return;
 				}

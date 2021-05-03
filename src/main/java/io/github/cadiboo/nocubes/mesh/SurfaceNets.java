@@ -35,7 +35,7 @@ public class SurfaceNets implements MeshGenerator {
 	@Override
 	public Vector3i getPositiveAreaExtension() {
 		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
-		return ModUtil.VEC_ONE;
+		return new BlockPos(2, 2, 2);
 	}
 
 	@Override
@@ -53,15 +53,14 @@ public class SurfaceNets implements MeshGenerator {
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
 		// Because we want to preserve these features, we feed SurfaceNets the block densities, pretending that they
 		// are the corner distances and then offset the resulting mesh by 0.5
-		int length = area.getLength();
+		int length = area.numBlocks();
 		float[] densityField = DENSITY_CACHE.takeArray(length);
 		for (int i = 0; i < length; ++i) {
 			BlockState state = states[i];
 			boolean isStateSmoothable = isSmoothable.test(state);
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
-		BlockPos dims = area.end.subtract(area.start);
-		generateOrThrow2(densityField, dims, voxelAction, faceAction);
+		generateOrThrow2(densityField, area.size, voxelAction, faceAction);
 	}
 
 	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {

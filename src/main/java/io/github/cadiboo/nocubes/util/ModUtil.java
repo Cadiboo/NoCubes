@@ -20,8 +20,9 @@ import javax.annotation.Nullable;
  */
 public class ModUtil {
 
-	public static final Vector3i VEC_ONE = new Vector3i(1, 1, 1);
-	public static final Vector3i CHUNK_SIZE = new Vector3i(16, 16, 16);
+	public static final BlockPos VEC_ZERO = new BlockPos(0, 0, 0);
+	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
+	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
 	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
 		final String target = System.getenv().get("target");
 		if (target == null)

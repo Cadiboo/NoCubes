@@ -49,20 +49,20 @@ public final class MeshRenderer {
 		final TextureInfo uvs = new TextureInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		Vector3i negativeAreaExtension = generator.getNegativeAreaExtension();
-		BlockPos start = blockpos.subtract(negativeAreaExtension);
-		BlockPos end = blockpos.offset(ModUtil.CHUNK_SIZE).offset(generator.getPositiveAreaExtension());
-		try (Area area = new Area(Minecraft.getInstance().level, start, end)) {
+		try (
+			Area area = new Area(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE, generator)
+		) {
+			BlockPos diff = area.start.subtract(blockpos);
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, ((pos, face) -> {
 				// Translate back to being relative to the chunk pos, this face was generated relative to the area's start, not the chunk start
-				face.subtract(negativeAreaExtension.getX(), negativeAreaExtension.getY(), negativeAreaExtension.getZ());
+				face.add(diff);
 				face.assignNormalTo(normal);
 				normal.multiply(-1);
 				normal.assignAverageTo(averageOfNormal);
 				Direction direction = averageOfNormal.getDirectionFromNormal();
 
 				SmoothableHandler handler = NoCubes.smoothableHandler;
-				BlockState blockstate = chunkrendercache.getBlockState(pos.move(start));
+				BlockState blockstate = chunkrendercache.getBlockState(pos.move(area.start));
 				// Vertices can generate at positions different to the position of the block they are for
 				// This occurs mostly for positions below, west of and north of the position they are for
 				// Search the opposite of those directions for the actual block

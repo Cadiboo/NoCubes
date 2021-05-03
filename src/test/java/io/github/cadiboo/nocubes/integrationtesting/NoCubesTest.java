@@ -31,18 +31,25 @@ public class NoCubesTest {
 				if (oldValue)
 					NoCubes.smoothableHandler.addSmoothable(dirt);
 			}),
+			new Test("area sanity check", NoCubesTest::areaSanityCheck),
 			new Test("mesh generators sanity check", NoCubesTest::meshGeneratorsSanityCheck)
 		);
+	}
+
+	private static void areaSanityCheck() {
+		BlockPos start = new BlockPos(100, 50, 25);
+		assertTrue(0 == new Area(null, start, new BlockPos(0, 0, 0)).numBlocks());
+		assertTrue(1 == new Area(null, start, new BlockPos(1, 1, 1)).numBlocks());
 	}
 
 	private static void meshGeneratorsSanityCheck() {
 		Predicate<BlockState> isSmoothable = $ -> $ == Blocks.STONE.defaultBlockState();
 
 		BlockPos start = new BlockPos(100, 50, 25);
-		Area area = new Area(null, start, start.offset(5, 5, 5)) {
+		Area area = new Area(null, start, new BlockPos(5, 5, 5)) {
 			@Override
 			public BlockState[] getAndCacheBlocks() {
-				BlockState[] states = new BlockState[getLength()];
+				BlockState[] states = new BlockState[numBlocks()];
 				for (int i = 0; i < states.length; i++)
 					states[i] = i % 2 == 0 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
 				return states;
@@ -66,6 +73,11 @@ public class NoCubesTest {
 		assertFalse(face.v0.x >= 6);
 		face.v0.x += 10000;
 		return true;
+	}
+
+	private static void assertTrue(boolean value) {
+		if (!value)
+			throw new AssertionError("Expected the passed in value to be true");
 	}
 
 	private static void assertFalse(boolean value) {

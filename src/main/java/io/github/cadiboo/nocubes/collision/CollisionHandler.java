@@ -12,7 +12,6 @@ import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
 
 public final class CollisionHandler {
@@ -43,16 +42,14 @@ public final class CollisionHandler {
 			return state.getShape(reader, blockPos);
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		Vector3i negativeAreaExtension = generator.getNegativeAreaExtension();
-		BlockPos start = blockPos.subtract(negativeAreaExtension);
-		BlockPos end = blockPos.offset(1, 1, 1).offset(generator.getPositiveAreaExtension());
 		VoxelShape[] ref = {VoxelShapes.empty()};
-		try (Area area = new Area(reader, start, end)) {
+		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
+			BlockPos diff = area.start.subtract(blockPos);
 			new OOCollisionHandler(generator).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
-				VoxelShape shape = VoxelShapes.box(
-					x0 - negativeAreaExtension.getX(), y0 - negativeAreaExtension.getY(), z0 - negativeAreaExtension.getZ(),
-					x1 - negativeAreaExtension.getX(), y1 - negativeAreaExtension.getY(), z1 - negativeAreaExtension.getZ()
-				);
+				float dx = diff.getX();
+				float dy = diff.getY();
+				float dz = diff.getZ();
+				VoxelShape shape = VoxelShapes.box(x0 + dx, y0 + dy, z0 + dz, x1 + dx, y1 + dy, z1 + dz);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			}));
 		}

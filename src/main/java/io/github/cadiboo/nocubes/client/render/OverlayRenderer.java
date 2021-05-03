@@ -68,12 +68,9 @@ public final class OverlayRenderer {
 		final Matrix4f matrix4f = event.getMatrix().last().pose();
 		final IVertexBuilder bufferBuilder = event.getBuffers().getBuffer(RenderType.lines());
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		BlockPos start = lookingAtPos.subtract(generator.getNegativeAreaExtension());
-		BlockPos end = lookingAtPos.offset(1, 1, 1).offset(generator.getPositiveAreaExtension());
-
-		try (Area area = new Area(world, start, end)) {
+		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
-				drawFacePosColor(face, camera, start, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
+				drawFacePosColor(face, camera, area.start, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
 				return true;
 			});
 		}
@@ -133,23 +130,23 @@ public final class OverlayRenderer {
 			RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
 			// Where the player is looking at or their position of they're not looking at a block
 			BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
-			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), targetedPos.offset(4, 4, 4))) {
+			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
 				BlockState[] states = area.getAndCacheBlocks();
-				float[] densities = new float[area.getLength()];
+				float[] densities = new float[area.numBlocks()];
 				for (int i = 0; i < densities.length; ++i) {
 					BlockState state = states[i];
 					boolean smoothable = NoCubes.smoothableHandler.isSmoothable(state);
 					densities[i] = ModUtil.getBlockDensity(smoothable, state);
 				}
 
-				int maxZ = area.end.getZ();
-				int maxY = area.end.getY();
-				int maxX = area.end.getX();
 				int minZ = area.start.getZ();
 				int minY = area.start.getY();
 				int minX = area.start.getX();
-				int width = maxX - minX;
-				int height = maxY - minY;
+				int width = area.size.getX();
+				int height = area.size.getY();
+				int maxZ = minZ + area.size.getZ();
+				int maxY = minY + height;
+				int maxX = minX + width;
 				int zyxIndex = 0;
 				for (int z = minZ; z < maxZ; ++z) {
 					for (int y = minY; y < maxY; ++y) {
@@ -191,13 +188,13 @@ public final class OverlayRenderer {
 
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
-			Vector3i size = new Vector3i(10, 10, 10);
+			BlockPos size = new BlockPos(10, 10, 10);
 			BlockPos start = viewer.blockPosition().offset(-size.getX() / 2, -size.getY() / 2, -size.getZ() / 2);
-			try (Area area = new Area(world, start, start.offset(size))) {
+			try (Area area = new Area(world, start, size)) {
 				new OOCollisionHandler(generator).generate(area, (x0, y0, z0, x1, y1, z1) -> {
-					double x = start.getX();
-					double y = start.getY();
-					double z = start.getZ();
+					double x = area.start.getX();
+					double y = area.start.getY();
+					double z = area.start.getZ();
 					VoxelShape voxelShape = VoxelShapes.box(
 						x + x0, y + y0, z + z0,
 						x + x1, y + y1, z + z1
@@ -225,13 +222,10 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
-		MeshGenerator meshGenerator = NoCubesConfig.Server.meshGenerator;
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		Vector3i meshSize = new BlockPos(16, 16, 16);
-		BlockPos start = viewer.blockPosition()
-			.offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2)
-			.subtract(meshGenerator.getNegativeAreaExtension());
-		BlockPos end = start.offset(meshSize).offset(meshGenerator.getPositiveAreaExtension());
-		try (Area area = new Area(viewer.level, start, end)) {
+		BlockPos meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
+		try (Area area = new Area(viewer.level, meshStart, new BlockPos(16, 16, 16), generator)) {
 			final Face normal = new Face();
 			final Vec averageOfNormal = new Vec();
 			final Vec centre = new Vec();
@@ -242,9 +236,10 @@ public final class OverlayRenderer {
 			Color averageNormalColor = new Color(1F, 0F, 0F, 1F);
 			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
 
-			meshGenerator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugRenderNearbyMesh)
 					return true;
+				BlockPos start = area.start;
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
 
 				face.assignNormalTo(normal);
