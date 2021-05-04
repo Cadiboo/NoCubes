@@ -30,7 +30,7 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 		int height = size.getY();
 		int width = size.getX();
 
-		final float min = 0.1F;
+		final float min = 0F;
 		final float max = 1F - min;
 
 		BlockState[] blocks = area.getAndCacheBlocks();

@@ -1,15 +1,13 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
-import net.minecraft.world.IWorldReader;
-import net.optifine.DynamicLights;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.Arrays;
 
@@ -21,11 +19,15 @@ public final class LightCache implements AutoCloseable {
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
 
 	private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
-	private final Area area;
+	private final ClientWorld world;
+	private final BlockPos start;
+	private final BlockPos size;
 	private int[] array;
 
-	public LightCache(Area area) {
-		this.area = area;
+	public LightCache(ClientWorld world, BlockPos meshStart, BlockPos meshSize) {
+		this.world = world;
+		this.start = meshStart.offset(-1, -1, -1).immutable();
+		this.size = meshSize.offset(2, 2, 2).immutable();
 	}
 
 	private static void resetIntArray(int length, int[] array) {
@@ -36,14 +38,41 @@ public final class LightCache implements AutoCloseable {
 //			System.arraycopy(resetArray, 0, array, i, length);
 	}
 
-	public int get(Vec vec, Vec normal) {
-		float vx = vec.x + normal.x;
-		float vy = vec.y + normal.y;
-		float vz = vec.z + normal.z;
-		return get(Math.round(vx), Math.round(vy), Math.round(vz));
-//		int x = (int) vx;
-//		int y = (int) vy;
-//		int z = (int) vz;
+	/**
+	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
+	 * @return The position in world space to use to get light values for this vertex
+	 */
+	public BlockPos lightPos(BlockPos relativeTo, Vec vec, Vec normal) {
+		return locateWorldLightPosFor(relativeTo, vec, normal, this.mutablePos);
+	}
+
+	/**
+	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
+	 */
+	public static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
+		float vx = vec.x + MathHelper.clamp(normal.x * 10, -1, 1);
+		float vy = vec.y + MathHelper.clamp(normal.y * 10, -1, 1);
+		float vz = vec.z + MathHelper.clamp(normal.z * 10, -1, 1);
+
+		int x = (int) Math.round(vx);
+		int y = (int) Math.round(vy);
+		int z = (int) Math.round(vz);
+		toMove.set(relativeTo).move(x, y, z);
+		return toMove;
+	}
+
+	/**
+	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
+	 */
+	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
+		return get(lightPos(relativeTo, vec, normal));
+//		return get((int)(vx), (int)(vy), (int)(vz));
+//		int x = (int) Math.ceil(vx);
+//		int y = (int) Math.ceil(vy);
+//		int z = (int) Math.ceil(vz);
+//		int x = (int) (vx);
+//		int y = (int) (vy);
+//		int z = (int) (vz);
 //
 //		int l000 = get(x + 0, y + 0, z + 0);
 //		int l001 = get(x + 0, y + 0, z + 1);
@@ -87,40 +116,43 @@ public final class LightCache implements AutoCloseable {
 		return Math.round(a + t * (a - b));
 	}
 
-	/**
-	 * x, y & z are relative to the start of the area.
-	 */
-	public int get(int x, int y, int z) {
-		int index = index(x, y, z);
+	public int get(BlockPos worldPos) {
+		int index = index(worldPos);
 		int[] array = getArray();
 
-		if (index < 0 || index >= array.length) // TODO: Remove
-			return 0;
+		if (index < 0 || index >= numBlocks()) // TODO: Shouldn't need this
+			return fetchCombinedLight(worldPos);
 
 		int color = array[index];
-		if (color == -1) {
-			BlockPos start = area.start;
-			BlockPos.Mutable worldPos = this.mutablePos.set(start.getX() + x, start.getY() + y, start.getZ() + z);
-			array[index] = color = compute(index, worldPos);
-		}
+		if (color == -1)
+			array[index] = color = fetchCombinedLight(worldPos);
 		return color;
 	}
 
-	private int compute(int index, BlockPos.Mutable worldPos) {
-		Area area = this.area;
-		BlockState state = area.getAndCacheBlocks()[index];
-		return WorldRenderer.getLightColor((IBlockDisplayReader) area.world, state, worldPos);
+	public int fetchCombinedLight(BlockPos worldPos) {
+		ClientWorld world = this.world;
+		BlockState state = world.getBlockState(worldPos);
+		return WorldRenderer.getLightColor(world, state, worldPos);
 	}
 
 	private int[] getArray() {
 		int[] array = this.array;
 		if (array == null)
-			this.array = array = CACHE.takeArray(area.numBlocks());
+			this.array = array = CACHE.takeArray(numBlocks());
 		return array;
 	}
 
-	private int index(int x, int y, int z) {
-		BlockPos size = area.size;
+	public int numBlocks() {
+		BlockPos size = this.size;
+		return size.getX() * size.getY() * size.getZ();
+	}
+
+	private int index(BlockPos worldPos) {
+		BlockPos start = this.start;
+		int x = worldPos.getX() - start.getX();
+		int y = worldPos.getY() - start.getY();
+		int z = worldPos.getZ() - start.getZ();
+		BlockPos size = this.size;
 		return ModUtil.get3dIndexInto1dArray(x, y, z, size.getX(), size.getY());
 	}
 

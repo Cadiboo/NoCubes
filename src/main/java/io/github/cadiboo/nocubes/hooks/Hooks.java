@@ -81,7 +81,7 @@ public final class Hooks {
 
 	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlockState blockState) {
 		SelfCheck.isCollisionShapeLargerThanFullBlock = true;
-		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
+		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
 			return ret;
 		return true;
 	}

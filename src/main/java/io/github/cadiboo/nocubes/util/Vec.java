@@ -40,8 +40,9 @@ public /* inline */ class Vec {
 
 	public Direction getDirectionFromNormal() {
 		float x = this.x;
-		float y = this.y;
-		float z = this.z;
+		// Adding a tiny amount solves conflicts caused by floating point errors for faces that are perfectly diagonal
+		float y = this.y + 0.0002F;
+		float z = this.z + 0.0001F;
 		float ax = Math.abs(x);
 		float ay = Math.abs(y);
 		float az = Math.abs(z);
