@@ -171,7 +171,7 @@ function initializeCoreMod() {
 						throw "Error: Couldn't find 'positionsIteratorCall' in " + stringifyInstructions(instructions);
 					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, instructions.indexOf(positionsIteratorCall));
 
-					var outerClassFieldName = ASMAPI.mapField("field_228939_e_");
+					var outerClassFieldName = isOptiFinePresent ? "this$1" : ASMAPI.mapField("field_228939_e_");
 					instructions.insert(firstLabelBeforePositionsIteratorCall, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, 0), // this
 						new VarInsnNode(ALOAD, 0), // ChunkRender.this
