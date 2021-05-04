@@ -35,7 +35,7 @@ public class SurfaceNets implements MeshGenerator {
 	@Override
 	public Vector3i getPositiveAreaExtension() {
 		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
-		return new BlockPos(2, 2, 2);
+		return ModUtil.VEC_ONE;
 	}
 
 	@Override
