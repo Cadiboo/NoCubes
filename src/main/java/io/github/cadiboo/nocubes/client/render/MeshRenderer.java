@@ -65,22 +65,7 @@ public final class MeshRenderer {
 				normal.assignAverageTo(averageOfNormal);
 				Direction direction = averageOfNormal.getDirectionFromNormal();
 
-				BlockState blockstate = chunkrendercache.getBlockState(pos.move(area.start));
-				// Vertices can generate at positions different to the position of the block they are for
-				// This occurs mostly for positions below, west of and north of the position they are for
-				// Search the opposite of those directions for the actual block
-				// We could also attempt to get the state from the vertex positions
-				if (!isSmoothable.test(blockstate)) {
-					int x = pos.getX();
-					int y = pos.getY();
-					int z = pos.getZ();
-					blockstate = chunkrendercache.getBlockState(pos.move(direction.getOpposite()));
-					if (!isSmoothable.test(blockstate)) {
-						// Give up
-						blockstate = Blocks.SCAFFOLDING.defaultBlockState();
-						pos.set(x, y, z);
-					}
-				}
+				BlockState blockstate = getTexturePosAndState(pos.move(area.start), area, isSmoothable, direction);
 
 				long rand = blockstate.getSeed(pos);
 				BlockColors blockColors = Minecraft.getInstance().getBlockColors();
@@ -354,6 +339,131 @@ public final class MeshRenderer {
 			}
 		}
 
+	}
+
+//	private static final int[][] OFFSETS_ORDERED = {
+//		// check 6 immediate neighbours
+//		{+0, -1, +0},
+//		{+0, +1, +0},
+//		{-1, +0, +0},
+//		{+1, +0, +0},
+//		{+0, +0, -1},
+//		{+0, +0, +1},
+//		// check 12 non-immediate, non-corner neighbours
+//		{-1, -1, +0},
+//		{-1, +0, -1},
+//		{-1, +0, +1},
+//		{-1, +1, +0},
+//		{+0, -1, -1},
+//		{+0, -1, +1},
+//		// {+0, +0, +0}, // Don't check self
+//		{+0, +1, -1},
+//		{+0, +1, +1},
+//		{+1, -1, +0},
+//		{+1, +0, -1},
+//		{+1, +0, +1},
+//		{+1, +1, +0},
+//		// check 8 corner neighbours
+//		{+1, +1, +1},
+//		{+1, +1, -1},
+//		{-1, +1, +1},
+//		{-1, +1, -1},
+//		{+1, -1, +1},
+//		{+1, -1, -1},
+//		{-1, -1, +1},
+//		{-1, -1, -1},
+//	};
+
+	/**
+	 * Returns a state and sets the texturePooledMutablePos to the pos it found
+	 *
+	 * @return a state
+	 */
+	public static BlockState getTexturePosAndState(BlockPos.Mutable worldPos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
+		BlockState state = area.world.getBlockState(worldPos);
+		if (isSmoothable.test(state))
+			return state;
+
+		// Vertices can generate at positions different to the position of the block they are for
+		// This occurs mostly for positions below, west of and north of the position they are for
+		// Search the opposite of those directions for the actual block
+		// We could also attempt to get the state from the vertex positions
+		int x = worldPos.getX();
+		int y = worldPos.getY();
+		int z = worldPos.getZ();
+
+		state = area.world.getBlockState(worldPos.move(direction.getOpposite()));
+		if (isSmoothable.test(state))
+			return state;
+
+//		for (int[] offset : OFFSETS_ORDERED) {
+//			worldPos.set(
+//				x + offset[0],
+//				y + offset[1],
+//				z + offset[2]
+//			);
+//			state = area.world.getBlockState(worldPos);
+//			if (isSmoothable.test(state))
+//				return state;
+//		}
+
+		// Give up
+		worldPos.set(x, y, z);
+		return Blocks.SCAFFOLDING.defaultBlockState();
+
+//		if (NoCubesConfig.Client.betterTextures) {
+//			if (tryForBetterTexturesSnow) {
+//					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
+//						relativePosX + stateCacheStartPaddingX,
+//						relativePosY + stateCacheStartPaddingY,
+//						relativePosZ + stateCacheStartPaddingZ,
+//						stateCacheSizeX, stateCacheSizeY
+//					)];
+//
+//					if (isStateSnow(betterTextureState)) {
+//						texturePooledMutablePos.setPos(posX, posY, posZ);
+//						return betterTextureState;
+//					}
+//					for (int[] offset : OFFSETS_ORDERED) {
+//						betterTextureState = blockCacheArray[stateCache.getIndex(
+//							relativePosX + offset[0] + stateCacheStartPaddingX,
+//							relativePosY + offset[1] + stateCacheStartPaddingY,
+//							relativePosZ + offset[2] + stateCacheStartPaddingZ,
+//							stateCacheSizeX, stateCacheSizeY
+//						)];
+//						if (isStateSnow(betterTextureState)) {
+//							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
+//							return betterTextureState;
+//						}
+//					}
+//			}
+//			if (tryForBetterTexturesGrass) {
+//					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
+//						relativePosX + stateCacheStartPaddingX,
+//						relativePosY + stateCacheStartPaddingY,
+//						relativePosZ + stateCacheStartPaddingZ,
+//						stateCacheSizeX, stateCacheSizeY
+//					)];
+//
+//					if (isStateGrass(betterTextureState)) {
+//						texturePooledMutablePos.setPos(posX, posY, posZ);
+//						return betterTextureState;
+//					}
+//					for (int[] offset : OFFSETS_ORDERED) {
+//						betterTextureState = blockCacheArray[stateCache.getIndex(
+//							relativePosX + offset[0] + stateCacheStartPaddingX,
+//							relativePosY + offset[1] + stateCacheStartPaddingY,
+//							relativePosZ + offset[2] + stateCacheStartPaddingZ,
+//							stateCacheSizeX, stateCacheSizeY
+//						)];
+//						if (isStateGrass(betterTextureState)) {
+//							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
+//							return betterTextureState;
+//						}
+//					}
+//				}
+//			}
+//		}
 	}
 
 }

@@ -61,6 +61,28 @@ public class SurfaceNets implements MeshGenerator {
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
 		generateOrThrow2(densityField, area.size, voxelAction, faceAction);
+
+//		int index = 0;
+//		int maxX = area.size.getX() - 1;
+//		int maxY = area.size.getY() - 1;
+//		int maxZ = area.size.getZ() - 1;
+//		for (int z = 0; z < maxZ; ++z) {
+//			for (int y = 0; y < maxY; ++y) {
+//				for (int x = 0; x < maxX; ++x, ++index) {
+//					float density = 0;
+//					int idx = ModUtil.get3dIndexInto1dArray(x, y, z, maxX + 1, maxY + 1);
+//					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, idx += maxX * (maxY - 2))
+//						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, idx += maxX - 2)
+//							for (byte neighbourX = 0; neighbourX < 2; ++neighbourX, ++idx) {
+//								BlockState state = states[idx];
+//								boolean isStateSmoothable = isSmoothable.test(state);
+//								density += ModUtil.getBlockDensity(isStateSmoothable, state);
+//							}
+//					densityField[index] = density / 8F;
+//				}
+//			}
+//		}
+//		generateOrThrow2(densityField, area.size.offset(-1, -1, -1), voxelAction, faceAction);
 	}
 
 	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
