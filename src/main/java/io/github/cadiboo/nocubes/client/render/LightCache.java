@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
@@ -14,8 +15,14 @@ import java.util.Arrays;
 /**
  * @author Cadiboo
  */
-public final class LightCache implements AutoCloseable {
+public class LightCache implements AutoCloseable {
 
+	public static final LightCache FULL_LIGHT = new LightCache(null, null, null) {
+		@Override
+		public int get(BlockPos relativeTo, Vec vec, Vec normal) {
+			return LightTexture.MAX_BRIGHTNESS;
+		}
+	};
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
 
 	private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
@@ -49,7 +56,7 @@ public final class LightCache implements AutoCloseable {
 	/**
 	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
 	 */
-	public static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
+	private static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
 		float vx = vec.x + MathHelper.clamp(normal.x, -1, 1);
 		float vy = vec.y + MathHelper.clamp(normal.y, -1, 1);
 		float vz = vec.z + MathHelper.clamp(normal.z, -1, 1);
@@ -116,7 +123,7 @@ public final class LightCache implements AutoCloseable {
 		return Math.round(a + t * (a - b));
 	}
 
-	public int get(BlockPos worldPos) {
+	private int get(BlockPos worldPos) {
 		int index = index(worldPos);
 		int[] array = getArray();
 
@@ -129,7 +136,7 @@ public final class LightCache implements AutoCloseable {
 		return light;
 	}
 
-	public int fetchCombinedLight(BlockPos worldPos) {
+	private int fetchCombinedLight(BlockPos worldPos) {
 		ClientWorld world = this.world;
 		BlockState state = world.getBlockState(worldPos);
 		return WorldRenderer.getLightColor(world, state, worldPos);
@@ -142,7 +149,7 @@ public final class LightCache implements AutoCloseable {
 		return array;
 	}
 
-	public int numBlocks() {
+	private int numBlocks() {
 		BlockPos size = this.size;
 		return size.getX() * size.getY() * size.getZ();
 	}
