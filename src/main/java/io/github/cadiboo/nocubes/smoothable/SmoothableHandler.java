@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 
 /**
  * The in-memory list of smoothables.
- * Shared between client & server in singleplayer.
+ * Shared between client and server in singleplayer.
  * Uses ASM-added fields with an identity set fallback.
  *
  * @author Cadiboo

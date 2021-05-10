@@ -1,9 +1,8 @@
-// Forge buildscript
-// Necessary for Forge to be setup
+// Forge buildscript - necessary for Forge to be setup
 buildscript {
 	repositories {
 		// Forge Maven
-		maven { url = 'https://files.minecraftforge.net/maven' }
+		maven { url = 'https://maven.minecraftforge.net' }
 		// Other useful Mavens
 		jcenter()
 		mavenCentral()
@@ -15,16 +14,7 @@ buildscript {
 }
 
 plugins {
-//	// SpotBugs uses static analysis to look for bugs in Java code
-//	id 'com.github.spotbugs' version '1.6.9'
-//	// Gradle plugin to upload Minecraft mods to CurseForge
-//	id 'com.matthewprenger.cursegradle' version '1.4.0'
-//	// Static code analysis
-//	id 'org.sonarqube' version '2.8'
-	// Code style
-	id 'checkstyle'
-//	// Minify coremod javascript
-//	id 'com.leobia.gradle.jsgradlecompiler' version '0.3.0'
+	// Shadow jar includes our libraries into our final jar
 	id 'com.github.johnrengelman.shadow' version '6.1.0'
 }
 
@@ -43,45 +33,21 @@ if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || Sys
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
 
-println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 minecraft {
-	// The mappings can be changed at any time, and must be in the following format.
-	// Channel:   Version:
-	// snapshot   YYYYMMDD   Snapshot are built nightly.
-	// stable     #          Stables are built at the discretion of the MCP team.
-	// official   MCVersion  Official field/method names from Mojang mapping files
-	//
-	// You must be aware of the Mojang license when using the 'official' mappings.
-	// See more information here: https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
-	//
-	// Use non-default mappings at your own risk. they may not always work.
-	// Simply re-run your setup task after changing the mappings to update your workspace.
+	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L23-L33"
 	mappings channel: 'official', version: modMinecraftVersion
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
+	// We have an access transformer because we reach into some of Minecraft's private/protected rendering internals
 	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
-	// Default run configurations.
-	// These can be tweaked, removed, or duplicated as needed.
 	runs {
 		client {
 			workingDirectory project.file('run')
-
-			// Recommended logging data for a userdev environment
-			// The markers can be changed as needed.
-			// "SCAN": For mods scan.
-			// "REGISTRIES": For firing of registry events.
-			// "REGISTRYDUMP": For getting the contents of all registries.
 			property 'forge.logging.markers', 'XFORM'
-			// For ASM classdump
-//			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP'
-
-			// Recommended logging level for the console
-			// You can set various levels here.
-			// Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
+//			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
 			property 'forge.logging.console.level', 'debug'
-			// For ASM classdump
-//			property 'forge.logging.console.level', 'trace'
+//			property 'forge.logging.console.level', 'trace' // For ASM classdump
 
 			mods {
 				nocubes {
@@ -95,17 +61,7 @@ minecraft {
 
 		server {
 			workingDirectory project.file('run/server')
-
-			// Recommended logging data for a userdev environment
-			// The markers can be changed as needed.
-			// "SCAN": For mods scan.
-			// "REGISTRIES": For firing of registry events.
-			// "REGISTRYDUMP": For getting the contents of all registries.
 			property 'forge.logging.markers', 'XFORM'
-
-			// Recommended logging level for the console
-			// You can set various levels here.
-			// Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
 			property 'forge.logging.console.level', 'debug'
 
 			mods {
@@ -119,42 +75,10 @@ minecraft {
 			property 'nocubes.testing.integration', 'true'
 			setForceExit(false)
 		}
-
-		data {
-			workingDirectory project.file('run')
-
-			// Recommended logging data for a userdev environment
-			// The markers can be changed as needed.
-			// "SCAN": For mods scan.
-			// "REGISTRIES": For firing of registry events.
-			// "REGISTRYDUMP": For getting the contents of all registries.
-			property 'forge.logging.markers', 'REGISTRIES'
-
-			// Recommended logging level for the console
-			// You can set various levels here.
-			// Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-			property 'forge.logging.console.level', 'debug'
-
-			// Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-			args '--mod', modId, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-
-			mods {
-				nocubes {
-					// Main sources (everything that goes in your final compiled mod. From /src/main/)
-					source sourceSets.main
-					// Test sources (debugging, unit tests. From /src/test/)
-					source sourceSets.test
-				}
-			}
-		}
 	}
 }
 
-// Include resources generated by data generators.
-sourceSets.main.resources { srcDir 'src/generated/resources' }
-
 dependencies {
-
 	// If OptiFine (deobfuscated with Cadiboo's OptiFine deobf tool) is in libs, we want to be able to compile against its classes
 	// We use 'provided' and not 'implementation', we don't want it to actually load at runtime because the non-deobf
 	// version of OptiFine and OptiFineDevTweaker are loaded from the mods folder at runtime
@@ -166,40 +90,24 @@ dependencies {
 	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
 	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
 
-	// You may put jars on which you depend on in ./libs or you may define them like so..
-	// compile "some.group:artifact:version:classifier"
-	// compile "some.group:artifact:version"
-
-	// Real examples
-	// compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-	// compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-	// The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-	// provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-	// These dependencies get remapped to your current MCP mappings
-	// deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
 	// Add a compile/implementation dependency on all .jar files in ./libs
 	implementation fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
 
-	// For the config color picker
-	implementation 'org.beryx:awt-color-factory:1.0.2'
-	shadow 'org.beryx:awt-color-factory:1.0.2'
+	// For the config color picker (we include it in our production jar with ShadowJar)
+	shadow implementation('org.beryx:awt-color-factory:1.0.2')
 
-	// For more info...
-	// http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-	// http://www.gradle.org/docs/current/userguide/dependency_management.html
-
-	// https://mvnrepository.com/artifact/org.mockito/mockito-all
-	testImplementation group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+	// For unit tests
+	testImplementation 'org.mockito:mockito-all:1.10.19'
 	testImplementation 'junit:junit:4.13'
-
 }
 
-// Example for how to get properties into the manifest for reading by the runtime..
-jar {
-	// Don't put the modified minecraft files in final jar (but compile them and everything)
+shadowJar {
+	archiveClassifier.set('') // Make shadow do the library injection in-place
+	configurations = [project.configurations.shadow]
+	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
+
+	// We have a modified version of minecraft's BlockState class with our ASM fields added that we compile against
+	// We remove it from the final jar though (we don't want it interfering with anything at runtime)
 	exclude '**/net/minecraft/**'
 
 	manifest {
@@ -217,125 +125,46 @@ jar {
 		])
 	}
 }
-
-// Example configuration to allow publishing using the maven-publish task
-// This is the preferred method to reobfuscate your jar file
-jar.finalizedBy('reobfJar')
-// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
-//publish.dependsOn('reobfJar')
-
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			artifact jar
-		}
-	}
-	repositories {
-		maven {
-			url "file:///${project.projectDir}/mcmodsrepo"
-		}
-	}
-}
-
-// Copy pasta shadow jar code
-// https://github.com/ldtteam/ChatChainMC/blob/9de4a32b0bdf3586b2b09e4d489ab98cc6606122/build.gradle#L104-L116
-// https://github.com/ldtteam/ChatChainMC/blob/9de4a32b0bdf3586b2b09e4d489ab98cc6606122/build.gradle#L61
-// (Forge Discord) https://discordapp.com/channels/313125603924639766/725850371834118214/756852152185520158
-shadowJar {
-	configurations = [project.configurations.shadow]
-
-	exclude 'dummyThing'
-	// Don't put the modified minecraft/optifine files in final jar (but compile them and everything)
-	exclude '**/net/minecraft/**'
-	exclude '**/net/optifine/**'
-
-	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
-}
 reobf {
-	shadowJar {}
+	// We want the output of the following tasks to be reobfuscated
+	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
+	shadowJar
 }
-
-// Coremod minification
-//jsOptions {
-////	inputPath = file("./resources/custom/")
-////	outputPath = file("./resources/custom/minified/")
-//	inputPath = file("${rootDir}/src/main/resources")
-//	outputPath = file("$buildDir")
-//	compilationLevel = "ADVANCED_OPTIMIZATIONS"
-//	jsVersionIn = 'ECMASCRIPT5'
-//	jsVersionOut = 'ECMASCRIPT5'
-//	combineAllFiles = false
-//	keepSameName = true
-//}
-//build.dependsOn compileJs
-
-// Jar signing
-import net.minecraftforge.gradle.common.task.SignJar
-
-task signJar(type: SignJar, dependsOn: jar) {
-	// Skips if the keyStore property is missing.
-	onlyIf {
-		project.hasProperty('keyStore')
-	}
-	// findProperty allows us to reference the property without it existing.
-	// Using project.propName would cause the script to fail validation if the property did not exist.
-	keyStore = project.findProperty('keyStore')
-	alias = project.findProperty('keyStoreAlias')
-	storePass = project.findProperty('keyStorePass')
-	keyPass = project.findProperty('keyStoreKeyPass')
-	inputFile = jar.archivePath
-	outputFile = jar.archivePath
-}
-
-// Runs the signJar task automatically when build is run.
-build.dependsOn signJar
-
-// Create Sources Jar
 task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = 'sources'
+	archiveClassifier.set('sources')
 	from sourceSets.main.allSource
 }
-
-// TODO: Sign the dev jar
-// Create Dev Jar
-task devJar(type: Jar, dependsOn: jar) {
-	classifier = 'dev'
-	// For some reason using jar.source puts a copy of the jar's manifest
-	// in the root directory (But not in META-INF). So we add the manifest
-	// manually and then exclude the one in the root directory.
-	from jar.source
-	// No clue why "manifest jar.manifest" fails and "manifest = jar.manifest"
-	// works. The "=" shouldn't change anything, but it does.
-	manifest = jar.manifest
-	exclude jar.excludes + '/MANIFEST.MF'
+task javadocJar(type: Jar, dependsOn: javadoc) {
+	archiveClassifier.set('javadoc')
+	from javadoc.destinationDir
 }
-
-task signDevJar(type: SignJar) {
-	onlyIf {
-		project.hasProperty('keyStore')
-	}
-
-	description = 'Sign the dev JAR'
-	keyStore = project.findProperty('keyStore')
-	alias = project.findProperty('keyStoreAlias')
-	storePass = project.findProperty('keyStorePass')
-	keyPass = project.findProperty('keyStoreKeyPass')
-
-	inputFile = devJar.archivePath
-	outputFile = devJar.archivePath
-}
-
-// Runs the signDevJar task automatically when build is run.
-build.dependsOn signDevJar
-
-//// Create Javadoc Jar
-//task javadocJar(type: Jar, dependsOn: javadoc) {
-//	classifier = 'javadoc'
-//	from javadoc.destinationDir
-//}
 
 artifacts {
+	archives shadowJar
 	archives sourcesJar
-	archives devJar
-//	archives javadocJar
+	archives javadocJar
+}
+
+// Sign all the jars
+import net.minecraftforge.gradle.common.task.SignJar
+[
+	shadowJar,
+	sourcesJar,
+	javadocJar,
+].each {jarTask ->
+	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: SignJar, dependsOn: jarTask) {
+		// Skips if the keyStore property is missing.
+		onlyIf {
+			project.hasProperty('keyStore')
+		}
+		// findProperty allows us to reference the property without it existing.
+		// Using project.propName would cause the script to fail validation if the property did not exist.
+		keyStore = project.findProperty('keyStore')
+		alias = project.findProperty('keyStoreAlias')
+		storePass = project.findProperty('keyStorePass')
+		keyPass = project.findProperty('keyStoreKeyPass')
+		inputFile = jarTask.archiveFile
+		outputFile = jarTask.archiveFile
+	}
+	jarTask.finalizedBy(signingTask)
 }
