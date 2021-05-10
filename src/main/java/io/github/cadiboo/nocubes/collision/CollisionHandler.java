@@ -13,6 +13,7 @@ import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.World;
 
 public final class CollisionHandler {
 
@@ -43,6 +44,8 @@ public final class CollisionHandler {
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		VoxelShape[] ref = {VoxelShapes.empty()};
+		if (reader instanceof World)
+			((World) reader).getProfiler().push("NoCubes collisions");
 		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
 			BlockPos diff = area.start.subtract(blockPos);
 			new OOCollisionHandler(generator).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
@@ -52,6 +55,9 @@ public final class CollisionHandler {
 				VoxelShape shape = VoxelShapes.box(x0 + dx, y0 + dy, z0 + dz, x1 + dx, y1 + dy, z1 + dz);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			}));
+		} finally {
+			if (reader instanceof World)
+				((World) reader).getProfiler().pop();
 		}
 		return ref[0];//.optimize();
 	}

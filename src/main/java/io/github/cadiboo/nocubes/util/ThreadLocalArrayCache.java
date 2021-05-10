@@ -8,13 +8,13 @@ public class ThreadLocalArrayCache<T> extends ThreadLocal<T> {
 
 	private final IntFunction<T> constructor;
 	private final ToIntFunction<T> length;
-	private final BiConsumer<Integer, T> initialiser;
+	private final BiConsumer<T, Integer> initialiser;
 
 	public ThreadLocalArrayCache(IntFunction<T> constructor, ToIntFunction<T> length) {
-		this(constructor, length, (newLength, array) -> {});
+		this(constructor, length, (array, newLength) -> {});
 	}
 
-	public ThreadLocalArrayCache(IntFunction<T> constructor, ToIntFunction<T> length, BiConsumer<Integer, T> initialiser) {
+	public ThreadLocalArrayCache(IntFunction<T> constructor, ToIntFunction<T> length, BiConsumer<T, Integer> initialiser) {
 		this.constructor = constructor;
 		this.length = length;
 		this.initialiser = initialiser;
@@ -26,7 +26,7 @@ public class ThreadLocalArrayCache<T> extends ThreadLocal<T> {
 			array = constructor.apply(minLength);
 			set(array);
 		}
-		initialiser.accept(minLength, array);
+		initialiser.accept(array, minLength);
 		return array;
 	}
 }

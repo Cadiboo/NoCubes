@@ -30,12 +30,12 @@ public final class LightCache implements AutoCloseable {
 		this.size = meshSize.offset(2, 2, 2).immutable();
 	}
 
-	private static void resetIntArray(int length, int[] array) {
+	private static void resetIntArray(int[] array, int length) {
 		Arrays.fill(array, 0, length, -1);
 //		int[] resetArray = ClientUtil.NEGATIVE_1_8000;
 //		int fillLength = resetArray.length;
 //		for (int i = 0; i < length; i += fillLength)
-//			System.arraycopy(resetArray, 0, array, i, length);
+//			System.arraycopy(resTicketManager.javaetArray, 0, array, i, length);
 	}
 
 	/**
@@ -50,9 +50,9 @@ public final class LightCache implements AutoCloseable {
 	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
 	 */
 	public static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
-		float vx = vec.x + MathHelper.clamp(normal.x * 10, -1, 1);
-		float vy = vec.y + MathHelper.clamp(normal.y * 10, -1, 1);
-		float vz = vec.z + MathHelper.clamp(normal.z * 10, -1, 1);
+		float vx = vec.x + MathHelper.clamp(normal.x, -1, 1);
+		float vy = vec.y + MathHelper.clamp(normal.y, -1, 1);
+		float vz = vec.z + MathHelper.clamp(normal.z, -1, 1);
 
 		int x = (int) Math.round(vx);
 		int y = (int) Math.round(vy);
@@ -123,10 +123,10 @@ public final class LightCache implements AutoCloseable {
 		if (index < 0 || index >= numBlocks()) // TODO: Shouldn't need this
 			return fetchCombinedLight(worldPos);
 
-		int color = array[index];
-		if (color == -1)
-			array[index] = color = fetchCombinedLight(worldPos);
-		return color;
+		int light = array[index];
+		if (light == -1)
+			array[index] = light = fetchCombinedLight(worldPos);
+		return light;
 	}
 
 	public int fetchCombinedLight(BlockPos worldPos) {
@@ -149,10 +149,12 @@ public final class LightCache implements AutoCloseable {
 
 	private int index(BlockPos worldPos) {
 		BlockPos start = this.start;
+		BlockPos size = this.size;
 		int x = worldPos.getX() - start.getX();
 		int y = worldPos.getY() - start.getY();
 		int z = worldPos.getZ() - start.getZ();
-		BlockPos size = this.size;
+		if (x < 0 || x >= size.getX() || y < 0 || y >= size.getY() || z < 0 || z >= size.getZ())
+			return -1; // Outside cache
 		return ModUtil.get3dIndexInto1dArray(x, y, z, size.getX(), size.getY());
 	}
 

@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -158,10 +159,9 @@ public final class MeshRenderer {
 					}
 					matrixstack.popPose();
 				}
-				ForgeHooksClient.setRenderLayer(null);
-
 				return true;
 			}));
+			ForgeHooksClient.setRenderLayer(null);
 		}
 	}
 
@@ -243,6 +243,14 @@ public final class MeshRenderer {
 	}
 
 	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, @Nullable LightCache light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, Vec faceNormal, float shading, BakedQuad quad) {
+		int l0 = light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v0, n0);
+		int l1 = light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v1, n1);
+		int l2 = light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v2, n2);
+		int l3 = light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v3, n3);
+
+//		if ((l0 & 0xFF) == 0 && (l1 & 0xFF) == 0 && (l2 & 0xFF) == 0 && (l3 & 0xFF) == 0)
+//			return;
+
 		uvs.unpackFromQuad(quad, formatSize);
 		uvs.switchForDirection(direction);
 
@@ -266,10 +274,15 @@ public final class MeshRenderer {
 		float x = renderOffset.getX();
 		float y = renderOffset.getY();
 		float z = renderOffset.getZ();
-		bufferbuilder.vertex(x + v0.x, y + v0.y, z + v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v0, n0)).normal(n0.x, n0.y, n0.z).endVertex();
-		bufferbuilder.vertex(x + v1.x, y + v1.y, z + v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v1, n1)).normal(n1.x, n1.y, n1.z).endVertex();
-		bufferbuilder.vertex(x + v2.x, y + v2.y, z + v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v2, n2)).normal(n2.x, n2.y, n2.z).endVertex();
-		bufferbuilder.vertex(x + v3.x, y + v3.y, z + v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(light == null ? LightTexture.MAX_BRIGHTNESS : light.get(areaStart, v3, n3)).normal(n3.x, n3.y, n3.z).endVertex();
+		bufferbuilder.vertex(x + v0.x, y + v0.y, z + v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(l0).normal(n0.x, n0.y, n0.z).endVertex();
+		bufferbuilder.vertex(x + v1.x, y + v1.y, z + v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(l1).normal(n1.x, n1.y, n1.z).endVertex();
+		bufferbuilder.vertex(x + v2.x, y + v2.y, z + v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(l2).normal(n2.x, n2.y, n2.z).endVertex();
+		bufferbuilder.vertex(x + v3.x, y + v3.y, z + v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(l3).normal(n3.x, n3.y, n3.z).endVertex();
+
+//		bufferbuilder.vertex(x + v3.x, y + v3.y, z + v3.z).color(red, green, blue, alpha).uv(uvs.u3, uvs.v3).uv2(l3).normal(n3.x, n3.y, n3.z).endVertex();
+//		bufferbuilder.vertex(x + v2.x, y + v2.y, z + v2.z).color(red, green, blue, alpha).uv(uvs.u2, uvs.v2).uv2(l2).normal(n2.x, n2.y, n2.z).endVertex();
+//		bufferbuilder.vertex(x + v1.x, y + v1.y, z + v1.z).color(red, green, blue, alpha).uv(uvs.u1, uvs.v1).uv2(l1).normal(n1.x, n1.y, n1.z).endVertex();
+//		bufferbuilder.vertex(x + v0.x, y + v0.y, z + v0.z).color(red, green, blue, alpha).uv(uvs.u0, uvs.v0).uv2(l0).normal(n0.x, n0.y, n0.z).endVertex();
 	}
 
 	static final class TextureInfo {
