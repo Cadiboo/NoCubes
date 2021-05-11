@@ -42,7 +42,7 @@ public class LightCache implements AutoCloseable {
 //		int[] resetArray = ClientUtil.NEGATIVE_1_8000;
 //		int fillLength = resetArray.length;
 //		for (int i = 0; i < length; i += fillLength)
-//			System.arraycopy(resTicketManager.javaetArray, 0, array, i, length);
+//			System.arraycopy(resetArray, 0, array, i, length);
 	}
 
 	/**

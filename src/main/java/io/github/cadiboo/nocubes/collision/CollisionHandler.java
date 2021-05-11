@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
@@ -35,10 +36,14 @@ public final class CollisionHandler {
 			return VoxelShapes.empty();
 		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state))
 			return state.getShape(reader, blockPos);
-		if (context.getEntity() instanceof FallingBlockEntity)
+		Entity entity = context.getEntity();
+//		if (entity instanceof PlayerEntity)
+//			// Noclip for debugging
+//			return VoxelShapes.empty();
+		if (entity instanceof FallingBlockEntity)
 			// Stop sand etc. breaking when it falls
 			return state.getShape(reader, blockPos);
-		if (reader.getBlockState(blockPos) != state)
+		if (entity == null || reader.getBlockState(blockPos) != state)
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			return state.getShape(reader, blockPos);
 
