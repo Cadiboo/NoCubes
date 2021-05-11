@@ -9,7 +9,7 @@ buildscript {
 	}
 	// Buildscript dependency on Forge Gradle
 	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+'
 	}
 }
 
