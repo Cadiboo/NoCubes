@@ -264,10 +264,14 @@ public final class OverlayRenderer {
 
 				// Draw light pos
 				mut.set(0, 0, 0);
-				drawLinePosColorFromTo(start, face.v0, light.lightPos(start, face.v0, faceNormal), mut, lightColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromTo(start, face.v1, light.lightPos(start, face.v1, faceNormal), mut, lightColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromTo(start, face.v2, light.lightPos(start, face.v2, faceNormal), mut, lightColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromTo(start, face.v3, light.lightPos(start, face.v3, faceNormal), mut, lightColor, bufferBuilder, matrix4f, camera);
+				if (light.get(start, face.v0, faceNormal) == 0)
+					drawLinePosColorFromTo(start, face.v0, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+				if (light.get(start, face.v1, faceNormal) == 0)
+					drawLinePosColorFromTo(start, face.v1, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+				if (light.get(start, face.v2, faceNormal) == 0)
+					drawLinePosColorFromTo(start, face.v2, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+				if (light.get(start, face.v3, faceNormal) == 0)
+					drawLinePosColorFromTo(start, face.v3, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
 
 				return true;
 			});

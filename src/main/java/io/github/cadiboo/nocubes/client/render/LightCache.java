@@ -20,7 +20,7 @@ public final class LightCache implements AutoCloseable {
 	public static final int MAX_BRIGHTNESS = LightTexture.pack(15, 15);
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
 
-	private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+	public final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
 	private final ClientWorld world;
 	private final BlockPos start;
 	private final BlockPos size;
@@ -52,9 +52,9 @@ public final class LightCache implements AutoCloseable {
 	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
 	 */
 	private static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
-		float vx = vec.x + MathHelper.clamp(normal.x, -1, 1);
-		float vy = vec.y + MathHelper.clamp(normal.y, -1, 1);
-		float vz = vec.z + MathHelper.clamp(normal.z, -1, 1);
+		float vx = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
+		float vy = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
+		float vz = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
 
 		int x = (int) Math.round(vx);
 		int y = (int) Math.round(vy);
@@ -67,31 +67,107 @@ public final class LightCache implements AutoCloseable {
 	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
 	 */
 	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
-		return get(lightPos(relativeTo, vec, normal));
+		BlockPos.Mutable lightPos = (BlockPos.Mutable) lightPos(relativeTo, vec, normal);
+		int light = get(lightPos);
+		if (light == 0) light = get(lightPos.move(0, -1, 0));
+		if (light == 0) light = get(lightPos.move(0, 2, 0));
+		if (light == 0) light = get(lightPos.move(-1, -1, 0));
+		if (light == 0) light = get(lightPos.move(2, 0, 0));
+		if (light == 0) light = get(lightPos.move(-1, 0, -1));
+		if (light == 0) light = get(lightPos.move(0, 0, 2));
+		return light;
 //		return get((int)(vx), (int)(vy), (int)(vz));
 //		int x = (int) Math.ceil(vx);
 //		int y = (int) Math.ceil(vy);
 //		int z = (int) Math.ceil(vz);
-//		int x = (int) (vx);
-//		int y = (int) (vy);
-//		int z = (int) (vz);
+
+//		BlockPos.Mutable pos = mutablePos;
+//		locateWorldLightPosFor(relativeTo, vec, normal, pos);
+//		int x = pos.getX();
+//		int y = pos.getY();
+//		int z = pos.getZ();
 //
-//		int l000 = get(x + 0, y + 0, z + 0);
-//		int l001 = get(x + 0, y + 0, z + 1);
-//		int l010 = get(x + 0, y + 1, z + 0);
-//		int l011 = get(x + 0, y + 1, z + 1);
-//		int l100 = get(x + 1, y + 0, z + 0);
-//		int l101 = get(x + 1, y + 0, z + 1);
-//		int l110 = get(x + 1, y + 1, z + 0);
-//		int l111 = get(x + 1, y + 1, z + 1);
+//		int l000 = get(pos.set(x + 0, y + 0, z + 0));
+//		int l001 = get(pos.set(x + 0, y + 0, z + 1));
+//		int l010 = get(pos.set(x + 0, y + 1, z + 0));
+//		int l011 = get(pos.set(x + 0, y + 1, z + 1));
+//		int l100 = get(pos.set(x + 1, y + 0, z + 0));
+//		int l101 = get(pos.set(x + 1, y + 0, z + 1));
+//		int l110 = get(pos.set(x + 1, y + 1, z + 0));
+//		int l111 = get(pos.set(x + 1, y + 1, z + 1));
 //
-//		float lerpX = vx - x;
-//		float lerpY = vy - y;
-//		float lerpZ = vz - z;
+//		int s000 = LightTexture.sky(l000);
+//		int s001 = LightTexture.sky(l001);
+//		int s010 = LightTexture.sky(l010);
+//		int s011 = LightTexture.sky(l011);
+//		int s100 = LightTexture.sky(l100);
+//		int s101 = LightTexture.sky(l101);
+//		int s110 = LightTexture.sky(l110);
+//		int s111 = LightTexture.sky(l111);
 //
-//		int skyLight = triLerp(l000 >> 16, l001 >> 16, l010 >> 16, l011 >> 16, l100 >> 16, l101 >> 16, l110 >> 16, l111 >> 16, lerpZ, lerpY, lerpX);
-//		int blockLight = triLerp(l000 & 0xFF, l001 & 0xFF, l010 & 0xFF, l011 & 0xFF, l100 & 0xFF, l101 & 0xFF, l110 & 0xFF, l111 & 0xFF, lerpZ, lerpY, lerpX);
-//		return (skyLight << 16) | blockLight;
+//		int b000 = LightTexture.block(l000);
+//		int b001 = LightTexture.block(l001);
+//		int b010 = LightTexture.block(l010);
+//		int b011 = LightTexture.block(l011);
+//		int b100 = LightTexture.block(l100);
+//		int b101 = LightTexture.block(l101);
+//		int b110 = LightTexture.block(l110);
+//		int b111 = LightTexture.block(l111);
+//
+//		int maxBlock = max(b000, b001, b010, b011, b100, b101, b110, b111);
+//		int maxSky = max(s000, s001, s010, s011, s100, s101, s110, s111);
+//
+//		// Try and remove 0 level lighting from calculations
+//		int minUsableSky = maxSky - 4;
+//		if (s000 < minUsableSky) s000 = minUsableSky;
+//		if (s001 < minUsableSky) s001 = minUsableSky;
+//		if (s010 < minUsableSky) s010 = minUsableSky;
+//		if (s011 < minUsableSky) s011 = minUsableSky;
+//		if (s100 < minUsableSky) s100 = minUsableSky;
+//		if (s101 < minUsableSky) s101 = minUsableSky;
+//		if (s110 < minUsableSky) s110 = minUsableSky;
+//		if (s111 < minUsableSky) s111 = minUsableSky;
+//
+//		int minUsableBlock = maxBlock - 4;
+//		if (b000 < minUsableBlock) b000 = minUsableBlock;
+//		if (b001 < minUsableBlock) b001 = minUsableBlock;
+//		if (b010 < minUsableBlock) b010 = minUsableBlock;
+//		if (b011 < minUsableBlock) b011 = minUsableBlock;
+//		if (b100 < minUsableBlock) b100 = minUsableBlock;
+//		if (b101 < minUsableBlock) b101 = minUsableBlock;
+//		if (b110 < minUsableBlock) b110 = minUsableBlock;
+//		if (b111 < minUsableBlock) b111 = minUsableBlock;
+//
+////		float lerpX = vec.x - (x - start.getX());
+////		float lerpY = vec.y - (y - start.getY());
+////		float lerpZ = vec.z - (z - start.getZ());
+//
+//		float lerpX = normal.x;// - (x - start.getX());
+//		float lerpY = normal.y;// - (y - start.getY());
+//		float lerpZ = normal.z;// - (z - start.getZ());
+//
+//		int block = triLerp(b000, b001, b010, b011, b100, b101, b110, b111, lerpZ, lerpY, lerpX);
+//		int sky = triLerp(s000, s001, s010, s011, s100, s101, s110, s111, lerpZ, lerpY, lerpX);
+//		return LightTexture.pack(block, sky);
+	}
+
+	private int max(int a, int b, int c, int d, int e, int f, int g, int h) {
+		int max = a;
+		if (b > max)
+			max = b;
+		if (c > max)
+			max = c;
+		if (d > max)
+			max = d;
+		if (e > max)
+			max = e;
+		if (f > max)
+			max = f;
+		if (g > max)
+			max = g;
+		if (h > max)
+			max = h;
+		return max;
 	}
 
 	private static int triLerp(
