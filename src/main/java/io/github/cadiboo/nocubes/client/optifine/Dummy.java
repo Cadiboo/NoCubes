@@ -12,25 +12,38 @@ import net.minecraft.world.IBlockDisplayReader;
 
 import javax.annotation.Nullable;
 
+import java.util.Set;
+
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class Dummy implements OptiFineProxy {
 
+	@Override
+	public boolean initialisedAndUsable() {
+		return true;
+	}
+
+	@Override
 	public void preRenderChunk(BlockPos blockpos) {
 	}
 
+	@Override
 	public long getSeed(long originalSeed) {
 		return originalSeed;
 	}
 
-	public void preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos) {
+	@Override
+	public Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos) {
+		return null;
 	}
 
-	public IBakedModel getModel(IBakedModel originalModel, BlockState state) {
+	@Override
+	public IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state) {
 		return originalModel;
 	}
 
-	public void postRenderBlock(BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk) {
+	@Override
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk) {
 	}
 
 	@Nullable
@@ -40,6 +53,13 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderQuad(BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
+	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
+	}
+
+	@Override
+	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
+		// Cast here because OptiFine's ChunkLayerSet replacement of 'hasBlocks' doesn't implement Set
+		// and I want the explicit warning when I accidentally compile against it
+		((Set<RenderType>) compiledChunk.hasBlocks).add(renderType);
 	}
 }

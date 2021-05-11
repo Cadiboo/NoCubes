@@ -1,6 +1,10 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
 public class OptiFineCompatibility {
+
+	private static final OptiFineProxy[] PROXIES = {
+		new HD_U_G8(),
+	};
 	private static OptiFineProxy instance;
 
 	public static OptiFineProxy proxy() {
@@ -15,6 +19,10 @@ public class OptiFineCompatibility {
 	}
 
 	private static OptiFineProxy createProxy() {
+		for (OptiFineProxy proxy : PROXIES) {
+			if (proxy.initialisedAndUsable())
+				return proxy;
+		}
 		return new Dummy();
 	}
 }

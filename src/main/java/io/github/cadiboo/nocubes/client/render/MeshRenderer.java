@@ -28,9 +28,12 @@ import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
+
+import static io.github.cadiboo.nocubes.client.render.LightCache.MAX_BRIGHTNESS;
 
 /**
  * @author Cadiboo
@@ -88,11 +91,11 @@ public final class MeshRenderer {
 
 					matrixstack.pushPose();
 					matrixstack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
-					optiFine.preRenderBlock(chunkRender, builderIn, chunkrendercache, rendertype, bufferbuilder, blockstate, pos);
+					Object renderEnv = optiFine.preRenderBlock(chunkRender, builderIn, chunkrendercache, rendertype, bufferbuilder, blockstate, pos);
 
 					{
 						IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
-						modelIn = optiFine.getModel(modelIn, blockstate);
+						modelIn = optiFine.getModel(renderEnv, modelIn, blockstate);
 						random.setSeed(rand);
 						List<BakedQuad> dirQuads;
 						if (blockstate.hasProperty(BlockStateProperties.SNOWY))
@@ -111,13 +114,13 @@ public final class MeshRenderer {
 						List<BakedQuad> nullQuads = modelIn.getQuads(blockstate, null, random, modelData);
 						if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
 							dirQuads = blockrendererdispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockstate, direction, random, modelData);
-						renderQuads(chunkrendercache, uvs, area.start, diff, pos, face, vertexNormals, faceNormal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads, optiFine);
+						renderQuads(chunkrendercache, uvs, area.start, diff, pos, face, vertexNormals, faceNormal, direction, blockstate, blockColors, formatSize, bufferbuilder, light, dirQuads, nullQuads, optiFine, renderEnv);
 					}
 
-					optiFine.postRenderBlock(bufferbuilder, chunkRender, builderIn, compiledChunkIn);
+					optiFine.postRenderBlock(renderEnv, bufferbuilder, chunkRender, builderIn, compiledChunkIn);
 					if (true) {
 						compiledChunkIn.isCompletelyEmpty = false;
-						compiledChunkIn.hasBlocks.add(rendertype);
+						optiFine.markRenderLayerUsed(compiledChunkIn, rendertype);
 					}
 					matrixstack.popPose();
 				}
@@ -172,7 +175,7 @@ public final class MeshRenderer {
 //		);
 	}
 
-	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Face face, Face vertexNormals, Vec normal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads, OptiFineProxy optiFine) {
+	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Face face, Face vertexNormals, Vec normal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads, OptiFineProxy optiFine, Object renderEnv) {
 		final Vec v0 = face.v0;
 		final Vec v1 = face.v1;
 		final Vec v2 = face.v2;
@@ -190,19 +193,19 @@ public final class MeshRenderer {
 			BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
 			BakedQuad emissiveQuad = optiFine.getQuadEmissive(quad);
 			if (emissiveQuad != null) {
-				optiFine.preRenderQuad(emissiveQuad, blockstate, pos);
-				renderQuad(chunkrendercache, uvs, areaStart, renderOffset, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, LightCache.FULL_LIGHT, v0, v1, v2, v3, n0, n1, n2, n3, normal, shading, emissiveQuad);
+				optiFine.preRenderQuad(renderEnv, emissiveQuad, blockstate, pos);
+				renderQuad(chunkrendercache, uvs, areaStart, renderOffset, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, null, v0, v1, v2, v3, n0, n1, n2, n3, normal, shading, emissiveQuad);
 			}
-			optiFine.preRenderQuad(quad, blockstate, pos);
+			optiFine.preRenderQuad(renderEnv, quad, blockstate, pos);
 			renderQuad(chunkrendercache, uvs, areaStart, renderOffset, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, light, v0, v1, v2, v3, n0, n1, n2, n3, normal, shading, quad);
 		}
 	}
 
-	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, Vec faceNormal, float shading, BakedQuad quad) {
-		int l0 = light.get(areaStart, v0, n0);
-		int l1 = light.get(areaStart, v1, n1);
-		int l2 = light.get(areaStart, v2, n2);
-		int l3 = light.get(areaStart, v3, n3);
+	private static void renderQuad(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, @Nullable LightCache light, Vec v0, Vec v1, Vec v2, Vec v3, Vec n0, Vec n1, Vec n2, Vec n3, Vec faceNormal, float shading, BakedQuad quad) {
+		int l0 = light == null ? MAX_BRIGHTNESS : light.get(areaStart, v0, n0);
+		int l1 = light == null ? MAX_BRIGHTNESS : light.get(areaStart, v1, n1);
+		int l2 = light == null ? MAX_BRIGHTNESS : light.get(areaStart, v2, n2);
+		int l3 = light == null ? MAX_BRIGHTNESS : light.get(areaStart, v3, n3);
 
 //		if ((l0 & 0xFF) == 0 && (l1 & 0xFF) == 0 && (l2 & 0xFF) == 0 && (l3 & 0xFF) == 0)
 //			return;

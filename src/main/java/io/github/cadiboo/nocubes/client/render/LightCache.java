@@ -15,14 +15,9 @@ import java.util.Arrays;
 /**
  * @author Cadiboo
  */
-public class LightCache implements AutoCloseable {
+public final class LightCache implements AutoCloseable {
 
-	public static final LightCache FULL_LIGHT = new LightCache(null, null, null) {
-		@Override
-		public int get(BlockPos relativeTo, Vec vec, Vec normal) {
-			return LightTexture.MAX_BRIGHTNESS;
-		}
-	};
+	public static final int MAX_BRIGHTNESS = LightTexture.pack(15, 15);
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
 
 	private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();

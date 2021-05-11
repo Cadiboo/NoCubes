@@ -17,17 +17,22 @@ import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.Compiled
 
 public interface OptiFineProxy {
 
+	boolean initialisedAndUsable();
+
 	void preRenderChunk(BlockPos blockpos);
 
 	long getSeed(long originalSeed);
 
-	void preRenderBlock(ChunkRenderDispatcher.ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos);
+	/** @return null or the RenderEnv */
+	Object preRenderBlock(ChunkRenderDispatcher.ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos);
 
-	IBakedModel getModel(IBakedModel originalModel, BlockState state);
+	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state);
 
-	void postRenderBlock(BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk);
+	void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk);
 
 	@Nullable BakedQuad getQuadEmissive(BakedQuad quad);
 
-	void preRenderQuad(BakedQuad emissiveQuad, BlockState state, BlockPos pos);
+	void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos);
+
+	void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType);
 }
