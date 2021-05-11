@@ -323,11 +323,11 @@ public final class NoCubesConfig {
 
 				smoothableWhitelistPreference = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelistPreference")
-					.defineList("smoothableWhitelistPreference", Lists::newArrayList, String.class::isInstance);
+					.defineListAllowEmpty(Collections.singletonList("smoothableWhitelistPreference"), Lists::newArrayList, String.class::isInstance);
 
 				smoothableBlacklistPreference = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklistPreference")
-					.defineList("smoothableBlacklistPreference", Lists::newArrayList, String.class::isInstance);
+					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklistPreference"), Lists::newArrayList, String.class::isInstance);
 
 				builder
 					.push("debug");
@@ -402,11 +402,11 @@ public final class NoCubesConfig {
 			private Impl(final ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelist")
-					.defineList("smoothableWhitelist", Lists::newArrayList, String.class::isInstance);
+					.defineListAllowEmpty(Collections.singletonList("smoothableWhitelist"), Lists::newArrayList, String.class::isInstance);
 
 				smoothableBlacklist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklist")
-					.defineList("smoothableBlacklist", Lists::newArrayList, String.class::isInstance);
+					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklist"), Lists::newArrayList, String.class::isInstance);
 
 				collisionsEnabled = builder
 					.translation(NoCubes.MOD_ID + ".config.collisionsEnabled")
