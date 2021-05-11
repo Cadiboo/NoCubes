@@ -39,7 +39,7 @@ public final class NoCubes {
 	 * Add your blocks as being smoothable.
 	 */
 	public static void addSmoothable(Block... blocks) {
-		for (final Block block : blocks)
+		for (Block block : blocks)
 			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
 	}
 
@@ -48,7 +48,7 @@ public final class NoCubes {
 	 * Add your blocks as being smoothable.
 	 */
 	public static void addSmoothable(BlockState... states) {
-		NoCubesConfig.DEFAULT_SMOOTHABLES.addAll(Arrays.asList(states));
+		NoCubesConfig.Smoothables.addDefault(states);
 	}
 
 }
