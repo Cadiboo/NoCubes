@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
+import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3i;
 
@@ -91,6 +92,14 @@ public class Face {
 		v1.multiply(d);
 		v2.multiply(d);
 		v3.multiply(d);
+		return this;
+	}
+
+	public Face transform(Matrix3f matrix) {
+		v0.transform(matrix);
+		v1.transform(matrix);
+		v2.transform(matrix);
+		v3.transform(matrix);
 		return this;
 	}
 

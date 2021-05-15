@@ -24,6 +24,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -57,7 +58,7 @@ public final class MeshRenderer {
 			optiFine.preRenderChunk(blockpos);
 			BlockPos diff = area.start.subtract(blockpos);
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			generator.generate(area, isSmoothable, ((pos, face) -> {
+			generator.generate(area, isSmoothable, (pos, face) -> {
 				if (face.v0.x < 0 || face.v1.x < 0 || face.v2.x < 0 || face.v3.x < 0)// || face.v0.x > 16 || face.v1.x > 16 || face.v2.x > 16 || face.v3.x > 16)
 					return true;
 				if (face.v0.y < 0 || face.v1.y < 0 || face.v2.y < 0 || face.v3.y < 0)// || face.v0.y > 16 || face.v1.y > 16 || face.v2.y > 16 || face.v3.y > 16)
@@ -125,7 +126,7 @@ public final class MeshRenderer {
 					matrixstack.popPose();
 				}
 				return true;
-			}));
+			});
 			ForgeHooksClient.setRenderLayer(null);
 		}
 	}
@@ -134,48 +135,50 @@ public final class MeshRenderer {
 		if (!NoCubesConfig.Client.render)
 			return;
 
-//		final Face normal = new Face(new Vec(), new Vec(), new Vec(), new Vec());
-//		final Vec averageOfNormal = new Vec();
-//		final TextureInfo uvs = new TextureInfo();
-//
-//		long rand = blockStateIn.getPositionRandom(posIn);
-//		Random random = blockRendererDispatcher.random;
-//		IBakedModel model = blockRendererDispatcher.getBlockModelShapes().getModel(blockStateIn);
-//		BlockColors blockColors = Minecraft.getInstance().getBlockColors();
-//
-//		// TODO: This seems suspicious, keep synced with {@link net.minecraft.client.renderer.BlockModelRenderer.renderModel(net.minecraft.world.IBlockDisplayReader, net.minecraft.client.renderer.model.IBakedModel, net.minecraft.block.BlockState, net.minecraft.util.math.BlockPos, com.mojang.blaze3d.matrix.MatrixStack, com.mojang.blaze3d.vertex.IVertexBuilder, boolean, java.util.Random, long, int, net.minecraftforge.client.model.data.IModelData)}
-//		modelData = model.getModelData(lightReaderIn, posIn, blockStateIn, modelData);
-//		final IModelData modelDataFinal = modelData;
-//
-//		Matrix4f matrix4f = matrixStackIn.getLast().getMatrix();
-//		SurfaceNets.generate(
-//			posIn.getX(), posIn.getY(), posIn.getZ(),
-//			1, 1, 1, lightReaderIn, NoCubes.smoothableHandler::isSmoothable, CRACKING,
-//			(pos, mask) -> true,
-//			(pos, face) -> {
-//				face.transform(matrix4f);
-//
-//				face.assignNormalTo(normal);
-//				normal.multiply(-1);
-//				normal.assignAverageTo(averageOfNormal);
-//				Direction direction = averageOfNormal.getDirectionFromNormal();
-//
-//				int light = WorldRenderer.getPackedLightmapCoords(lightReaderIn, blockStateIn, pos.offset(direction));
-//				random.setSeed(rand);
-//				List<BakedQuad> dirQuads = model.getQuads(blockStateIn, direction, random, modelDataFinal);
-//				random.setSeed(rand);
-//				List<BakedQuad> nullQuads = model.getQuads(blockStateIn, null, random, modelDataFinal);
-//				if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
-//					dirQuads = blockRendererDispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(blockStateIn, direction, random, modelDataFinal);
-//
-//				int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
-//				renderQuads(lightReaderIn, uvs, pos, face, normal, direction, blockStateIn, blockColors, formatSize, vertexBuilderIn, light, dirQuads, nullQuads);
-//				return true;
-//			}
-//		);
+		final Face vertexNormals = new Face(new Vec(), new Vec(), new Vec(), new Vec());
+		final Vec faceNormal = new Vec();
+		final TextureInfo uvs = new TextureInfo();
+
+		long rand = blockStateIn.getSeed(posIn);
+		Random random = blockRendererDispatcher.random;
+		IBakedModel model = blockRendererDispatcher.getBlockModelShaper().getBlockModel(blockStateIn);
+		BlockColors blockColors = Minecraft.getInstance().getBlockColors();
+
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+
+		// TODO: This seems suspicious, keep synced with {@link net.minecraft.client.renderer.BlockModelRenderer.renderModel(net.minecraft.world.IBlockDisplayReader, net.minecraft.client.renderer.model.IBakedModel, net.minecraft.block.BlockState, net.minecraft.util.math.BlockPos, com.mojang.blaze3d.matrix.MatrixStack, com.mojang.blaze3d.vertex.IVertexBuilder, boolean, java.util.Random, long, int, net.minecraftforge.client.model.data.IModelData)}
+		modelData = model.getModelData(lightReaderIn, posIn, blockStateIn, modelData);
+		final IModelData modelDataFinal = modelData;
+
+		try (
+			Area area = new Area(Minecraft.getInstance().level, posIn, ModUtil.VEC_ONE, generator);
+		) {
+			BlockPos diff = area.start.subtract(posIn);
+			Matrix4f matrix4f = matrixStackIn.last().pose();
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.multiply(-1).assignAverageTo(faceNormal);
+				Direction direction = faceNormal.getDirectionFromNormal();
+
+				vertexNormals.transform(matrixStackIn.last().normal());
+				faceNormal.transform(matrixStackIn.last().normal());
+				face.transform(matrix4f);
+
+				random.setSeed(rand);
+				List<BakedQuad> dirQuads = model.getQuads(blockStateIn, direction, random, modelDataFinal);
+				random.setSeed(rand);
+				List<BakedQuad> nullQuads = model.getQuads(blockStateIn, null, random, modelDataFinal);
+				if (dirQuads.isEmpty() && nullQuads.isEmpty()) // dirQuads is empty for the Barrier block
+					dirQuads = blockRendererDispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(blockStateIn, direction, random, modelDataFinal);
+
+				int formatSize = DefaultVertexFormats.BLOCK.getIntegerSize();
+				renderQuads(lightReaderIn, uvs, area.start, diff, pos, face, vertexNormals, faceNormal, direction, blockStateIn, blockColors, formatSize, vertexBuilderIn, null, dirQuads, nullQuads, null, null);
+				return true;
+			});
+		}
 	}
 
-	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Face face, Face vertexNormals, Vec normal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads, OptiFineProxy optiFine, Object renderEnv) {
+	private static void renderQuads(IBlockDisplayReader chunkrendercache, TextureInfo uvs, BlockPos areaStart, BlockPos renderOffset, BlockPos pos, Face face, Face vertexNormals, Vec normal, Direction direction, BlockState blockstate, BlockColors blockColors, int formatSize, IVertexBuilder bufferbuilder, LightCache light, List<BakedQuad> dirQuads, List<BakedQuad> nullQuads, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv) {
 		final Vec v0 = face.v0;
 		final Vec v1 = face.v1;
 		final Vec v2 = face.v2;
@@ -191,12 +194,13 @@ public final class MeshRenderer {
 		int dirQuadsSize = dirQuads.size();
 		for (int i1 = 0; i1 < dirQuadsSize + nullQuads.size(); i1++) {
 			BakedQuad quad = i1 < dirQuadsSize ? dirQuads.get(i1) : nullQuads.get(i1 - dirQuadsSize);
-			BakedQuad emissiveQuad = optiFine.getQuadEmissive(quad);
+			BakedQuad emissiveQuad = optiFine == null ? null : optiFine.getQuadEmissive(quad);
 			if (emissiveQuad != null) {
 				optiFine.preRenderQuad(renderEnv, emissiveQuad, blockstate, pos);
 				renderQuad(chunkrendercache, uvs, areaStart, renderOffset, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, null, v0, v1, v2, v3, n0, n1, n2, n3, normal, shading, emissiveQuad);
 			}
-			optiFine.preRenderQuad(renderEnv, quad, blockstate, pos);
+			if (optiFine != null)
+				optiFine.preRenderQuad(renderEnv, quad, blockstate, pos);
 			renderQuad(chunkrendercache, uvs, areaStart, renderOffset, pos, direction, blockstate, blockColors, formatSize, bufferbuilder, light, v0, v1, v2, v3, n0, n1, n2, n3, normal, shading, quad);
 		}
 	}

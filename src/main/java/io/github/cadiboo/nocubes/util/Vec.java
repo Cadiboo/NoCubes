@@ -2,7 +2,9 @@ package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.math.vector.Vector4f;
 
 /**
@@ -137,6 +139,19 @@ public /* inline */ class Vec {
 		toUse.y = z0 * x1 - x0 * z1;
 		toUse.z = x0 * y1 - y0 * x1;
 		return toUse;
+	}
+
+	/**
+	 * Copied from {@link Vector3f#transform(Matrix3f)}
+	 */
+	public Vec transform(Matrix3f matrix) {
+		float x = this.x;
+		float y = this.y;
+		float z = this.z;
+		this.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
+		this.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
+		this.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
+		return this;
 	}
 
 	/**

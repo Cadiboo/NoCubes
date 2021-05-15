@@ -131,20 +131,39 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
-//		"BlockRendererDispatcher#renderBlockDamage": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.client.renderer.BlockRendererDispatcher",
-//				// Forge-added overload
-//				"methodName": "renderBlockDamage",
-//				"methodDesc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V"
-//			},
-//			"transformer": function(methodNode) {
-//				injectRenderBlockDamageHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		},
-
+		"BlockRendererDispatcher#renderBlockDamage": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.client.renderer.BlockRendererDispatcher",
+				// Forge-added overload
+				"methodName": "renderBlockDamage",
+				"methodDesc": "(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if (io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, lightReaderIn, matrixStackIn, vertexBuilderIn, modelData))
+				//		return;
+				//	// NoCubes End
+				// <rest of method>
+				var originalInstructionsLabel = new LabelNode();
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new VarInsnNode(ALOAD, 1), // state
+					new VarInsnNode(ALOAD, 2), // pos
+					new VarInsnNode(ALOAD, 3), // lightReaderIn
+					new VarInsnNode(ALOAD, 4), // matrixStackIn
+					new VarInsnNode(ALOAD, 5), // vertexBuilderIn
+					new VarInsnNode(ALOAD, 6), // modelData
+					callNoCubesHook("renderBlockDamage", "(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z"),
+					new JumpInsnNode(IFEQ, originalInstructionsLabel),
+					new InsnNode(RETURN),
+					originalInstructionsLabel
+				));
+				return methodNode;
+			}
+		},
 		// Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 		"ChunkRender#rebuildChunk": {
 			"target": {
@@ -552,33 +571,6 @@ function injectGenerateCacheHook(instructions) {
 
 	instructions.insert(nextISTORE, ASMAPI.listOf(
 		new JumpInsnNode(GOTO, previousLabel)
-	));
-}
-
-// 1) Find first label
-// 2) Insert right after label
-function injectRenderBlockDamageHook(instructions) {
-//	public void renderBlockDamage(BlockState state, BlockPos pos, TextureAtlasSprite sprite, IEnviromentBlockReader reader) {
-//		// NoCubes Start
-//		if(io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, sprite, reader)){
-//			return;
-//		}
-//		// NoCubes End
-//		if (state.getRenderType() == BlockRenderType.MODEL) {
-
-	var originalInstructionsLabel = new LabelNode();
-	injectAfterFirstLabel(instructions, ASMAPI.listOf(
-		new VarInsnNode(ALOAD, 0), // this
-		new VarInsnNode(ALOAD, 1), // state
-		new VarInsnNode(ALOAD, 2), // pos
-		new VarInsnNode(ALOAD, 3), // lightReaderIn
-		new VarInsnNode(ALOAD, 4), // matrixStackIn
-		new VarInsnNode(ALOAD, 5), // vertexBuilderIn
-		new VarInsnNode(ALOAD, 6), // modelData
-		callNoCubesHook("renderBlockDamage", "(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z"),
-		new JumpInsnNode(IFEQ, originalInstructionsLabel),
-		new InsnNode(RETURN),
-		originalInstructionsLabel
 	));
 }
 

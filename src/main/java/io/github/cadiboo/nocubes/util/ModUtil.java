@@ -22,6 +22,7 @@ public class ModUtil {
 
 	public static final BlockPos VEC_ZERO = new BlockPos(0, 0, 0);
 	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
+	public static final BlockPos VEC_TWO = new BlockPos(2, 2, 2);
 	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
 	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
 		final String target = System.getenv().get("target");
