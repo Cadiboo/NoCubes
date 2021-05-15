@@ -135,7 +135,7 @@ public final class MeshRenderer {
 		if (!NoCubesConfig.Client.render)
 			return;
 
-		final Face vertexNormals = new Face(new Vec(), new Vec(), new Vec(), new Vec());
+		final Face vertexNormals = new Face();
 		final Vec faceNormal = new Vec();
 		final TextureInfo uvs = new TextureInfo();
 

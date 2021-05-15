@@ -18,11 +18,11 @@ public interface MeshGenerator {
 
 	void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
 
-    Vector3i getPositiveAreaExtension();
+	Vector3i getPositiveAreaExtension();
 
-    Vector3i getNegativeAreaExtension();
+	Vector3i getNegativeAreaExtension();
 
-    interface FaceAction {
+	interface FaceAction {
 
 		/**
 		 * Return false if no more faces need to be generated
@@ -34,13 +34,12 @@ public interface MeshGenerator {
 
 	}
 
-    interface VoxelAction {
+	interface VoxelAction {
 
 		/**
-		 * Return false if no more voxels need to iterated over
-		 *
-		 * @param pos  The position of the voxel, positioned relatively to the start of the area
+		 * @param pos                    The position of the voxel, positioned relatively to the start of the area
 		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
+		 * @return false if no more voxels need to iterated over
 		 */
 		boolean apply(BlockPos.Mutable pos, float amountInsideIsosurface);
 
