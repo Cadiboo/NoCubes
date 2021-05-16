@@ -127,7 +127,7 @@ shadowJar {
 reobf {
 	// We want the output of the following tasks to be reobfuscated
 	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-	shadowJar
+	shadowJar {}
 }
 task sourcesJar(type: Jar, dependsOn: classes) {
 	archiveClassifier.set('sources')
