@@ -35,7 +35,7 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link RebuildTask#compile} right before the BlockPos.getAllInBoxMutable iteration
-//	 * Calls: RenderDispatcher.renderChunk to render all our fluids and smooth terrain
+	 * Calls: RenderDispatcher.renderChunk to render our ~~fluids and~~ smooth terrain
 	 * Calls: MeshRenderer.renderChunk to render smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
@@ -116,30 +116,21 @@ public final class Hooks {
 	}
 
 	/**
-	 * Load classes that we modify to get errors sooner.
+	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
+	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
+	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
+	 * and calls ModelManager#func_224742_a(BlockState, BlockState) (needsRenderUpdate, requiresRender)
+	 * This fixes seams that appear when meshes along chunk borders change.
 	 */
-	public static void loadClasses(final Dist dist) {
-		loadClass("net.minecraft.block.AbstractBlock$AbstractBlockState");
-		loadClass("net.minecraft.block.BlockState");
-		if (dist.isClient()) {
-			loadClass("net.minecraft.client.renderer.BlockRendererDispatcher");
-			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
-//		} else {
-
-		}
-	}
-
-	private static void loadClass(final String className) {
-		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		try {
-			Class.forName(className, false, loader);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Failed to load class \"" + className + "\", probably a coremod issue", e);
-		}
-		try {
-			Class.forName(className, true, loader);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Failed to initialise class \"" + className + "\", probably a coremod issue", e);
+	@OnlyIn(Dist.CLIENT)
+	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
+		SelfCheck.markForRerender = true;
+		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
+			int x = pos.getX();
+			int y = pos.getY();
+			int z = pos.getZ();
+			int extension = NoCubesConfig.Client.render ? 2 : 1;
+			worldRenderer.setBlocksDirty(x - extension, y - extension, z - extension, x + extension, y + extension, z + extension);
 		}
 	}
 
@@ -199,25 +190,7 @@ public final class Hooks {
 //	public static void initChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
 //		ClientUtil.setupChunkRenderCache(_this, chunkStartX, chunkStartZ, chunks, start, end);
 //	}
-
-	/**
-	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
-	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
-	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
-	 * and calls ModelManager#func_224742_a(BlockState, BlockState) (needsRenderUpdate, requiresRender)
-	 * This fixes seams that appear when meshes along chunk borders change.
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static void markForRerender(final Minecraft minecraft, final WorldRenderer worldRenderer, final BlockPos pos, final BlockState oldState, final BlockState newState) {
-		SelfCheck.markForRerender = true;
-		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
-			final int x = pos.getX();
-			final int y = pos.getY();
-			final int z = pos.getZ();
-			worldRenderer.setBlocksDirty(x - 2, y - 2, z - 2, x + 2, y + 2, z + 2);
-		}
-	}
-
+//
 //	/**
 //	 * Called from: VoxelShapes.getAllowedOffset(AxisAlignedBB, IWorldReader, double, ISelectionContext, AxisRotation, Stream) before the MutableBlockPos is created
 //	 * Calls: VoxelShapesHandler.getAllowedOffset to handle mesh, repose and vanilla collisions offsets
@@ -225,5 +198,33 @@ public final class Hooks {
 //	public static double getAllowedOffset(final AxisAlignedBB collisionBox, final IWorldReader worldReader, final double desiredOffset, final ISelectionContext selectionContext, final AxisRotation rotationAxis, final Stream<VoxelShape> possibleHits, final AxisRotation reversedRotation, final Direction.Axis rotX, final Direction.Axis rotY, final Direction.Axis rotZ) {
 //		return VoxelShapesHandler.getAllowedOffset(collisionBox, worldReader, desiredOffset, selectionContext, rotationAxis, possibleHits, reversedRotation, rotX, rotY, rotZ);
 //	}
+
+	/**
+	 * Load classes that we modify to get errors sooner.
+	 */
+	public static void loadClasses(final Dist dist) {
+		loadClass("net.minecraft.block.AbstractBlock$AbstractBlockState");
+		loadClass("net.minecraft.block.BlockState");
+		if (dist.isClient()) {
+			loadClass("net.minecraft.client.renderer.BlockRendererDispatcher");
+			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
+//		} else {
+
+		}
+	}
+
+	private static void loadClass(final String className) {
+		final ClassLoader loader = Thread.currentThread().getContextClassLoader();
+		try {
+			Class.forName(className, false, loader);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Failed to load class \"" + className + "\", probably a coremod issue", e);
+		}
+		try {
+			Class.forName(className, true, loader);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException("Failed to initialise class \"" + className + "\", probably a coremod issue", e);
+		}
+	}
 
 }

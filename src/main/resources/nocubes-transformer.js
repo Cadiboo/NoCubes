@@ -131,6 +131,8 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
+
+		// Hooks the cracking/breaking/damage animation rendering so we can make it smooth
 		"BlockRendererDispatcher#renderBlockDamage": {
 			"target": {
 				"type": "METHOD",
@@ -164,6 +166,7 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
+
 		// Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 		"ChunkRender#rebuildChunk": {
 			"target": {
