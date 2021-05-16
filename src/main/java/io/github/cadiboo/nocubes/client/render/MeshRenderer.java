@@ -66,7 +66,7 @@ public final class MeshRenderer {
 //				if (face.v0.z < 0 || face.v1.z < 0 || face.v2.z < 0 || face.v3.z < 0)// || face.v0.z > 16 || face.v1.z > 16 || face.v2.z > 16 || face.v3.z > 16)
 //					return true;
 
-				renderInfo.setup(face, area.start);
+				renderInfo.setup(face, blockpos);
 				BlockPos.Mutable worldPos = relativePos.move(area.start);
 				BlockState blockstate = getTexturePosAndState(worldPos, area, isSmoothable, renderInfo.faceDirection);
 
@@ -124,7 +124,7 @@ public final class MeshRenderer {
 			BlockPos areaMeshOffset = area.start.subtract(posIn);
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				face.addMeshOffset(areaMeshOffset);
-				renderInfo.setup(face, area.start);
+				renderInfo.setup(face, posIn);
 
 				renderInfo.vertexNormals.transform(matrixStackIn.last().normal());
 				renderInfo.faceNormal.transform(matrixStackIn.last().normal());
