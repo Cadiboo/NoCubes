@@ -30,9 +30,8 @@ public interface OptiFineProxy {
 
 	void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk);
 
-	@Nullable BakedQuad getQuadEmissive(BakedQuad quad);
+	@Nullable
+	BakedQuad getQuadEmissive(BakedQuad quad);
 
 	void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos);
-
-	void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType);
 }

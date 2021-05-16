@@ -12,8 +12,6 @@ import net.minecraft.world.IBlockDisplayReader;
 
 import javax.annotation.Nullable;
 
-import java.util.Set;
-
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class Dummy implements OptiFineProxy {
@@ -56,10 +54,4 @@ class Dummy implements OptiFineProxy {
 	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
 	}
 
-	@Override
-	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
-		// Cast here because OptiFine's ChunkLayerSet replacement of 'hasBlocks' doesn't implement Set
-		// and I want the explicit warning when I accidentally compile against it
-		((Set<RenderType>) compiledChunk.hasBlocks).add(renderType);
-	}
 }

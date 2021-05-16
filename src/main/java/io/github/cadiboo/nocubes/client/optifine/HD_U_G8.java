@@ -5,14 +5,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.coremod.api.ASMAPI;
-import net.optifine.render.RenderEnv;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -93,11 +91,6 @@ class HD_U_G8 implements OptiFineProxy {
 	@Override
 	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
 		RenderEnv_reset(renderEnv, state, pos);
-	}
-
-	@Override
-	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
-		ChunkLayerSet_add(CompiledChunk_hasBlocks(compiledChunk), renderType);
 	}
 
 	// All reflection stuff can be null but we check beforehand
