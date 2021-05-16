@@ -263,8 +263,8 @@ public final class OverlayRenderer {
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-				drawLinePosColorFromTo(start, centre, start, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromTo(start, centre, start, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, centre, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, centre, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, bufferBuilder, matrix4f, camera);
 
 				// Draw each vertex normal
 				drawLinePosColorFromAdd(start, face.v0, mutable.set(vertexNormals.v0).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
