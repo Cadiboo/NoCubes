@@ -96,7 +96,7 @@ public final class MeshRenderer {
 					optiFine.postRenderBlock(renderEnv, bufferbuilder, chunkRender, builderIn, compiledChunkIn);
 					if (true) {
 						compiledChunkIn.isCompletelyEmpty = false;
-						compiledChunkIn.hasBlocks.add(rendertype);
+						optiFine.markRenderLayerUsed(compiledChunkIn, rendertype);
 					}
 					matrixstack.popPose();
 				}

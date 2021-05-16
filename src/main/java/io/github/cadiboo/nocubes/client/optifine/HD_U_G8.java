@@ -5,6 +5,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -14,11 +15,11 @@ import net.minecraftforge.coremod.api.ASMAPI;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.*;
+import static io.github.cadiboo.nocubes.client.optifine.Reflector.*;
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class HD_U_G8 implements OptiFineProxy {
@@ -93,63 +94,42 @@ class HD_U_G8 implements OptiFineProxy {
 		RenderEnv_reset(renderEnv, state, pos);
 	}
 
+	@Override
+	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
+		CompiledChunk_hasBlocks(compiledChunk).add(renderType);
+		ChunkLayerSet_add(CompiledChunk_hasBlocks(compiledChunk), renderType);
+	}
+
 	// All reflection stuff can be null but we check beforehand
 	@SuppressWarnings("ConstantConditions")
 	interface Reflect {
 
-		MethodHandle isShaders = getMethod("net.optifine.Config", "isShaders");
-		MethodHandle isAlternateBlocks = getMethod("net.optifine.Config", "isAlternateBlocks");
+		MethodHandle isShaders = tryGetMethod("net.optifine.Config", "isShaders");
+		MethodHandle isAlternateBlocks = tryGetMethod("net.optifine.Config", "isAlternateBlocks");
 
-		Field useMidBlockAttrib = getField("net.optifine.shaders.Shaders", "useMidBlockAttrib");
-		MethodHandle pushEntity = getMethod("net.optifine.shaders.SVertexBuilder", "pushEntity", BlockState.class, IVertexBuilder.class);
-		MethodHandle popEntity = getMethod("net.optifine.shaders.SVertexBuilder", "popEntity", IVertexBuilder.class);
+		Field useMidBlockAttrib = tryGetField("net.optifine.shaders.Shaders", "useMidBlockAttrib");
+		MethodHandle pushEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "pushEntity", BlockState.class, IVertexBuilder.class);
+		MethodHandle popEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "popEntity", IVertexBuilder.class);
 
-		MethodHandle postRenderOverlays = getMethod("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "postRenderOverlays", RegionRenderCacheBuilder.class, CompiledChunk.class);
-		Field regionDX = getField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDX");
-		Field regionDY = getField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDY");
-		Field regionDZ = getField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDZ");
+		MethodHandle postRenderOverlays = tryGetMethod("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "postRenderOverlays", RegionRenderCacheBuilder.class, CompiledChunk.class);
+		Field regionDX = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDX");
+		Field regionDY = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDY");
+		Field regionDZ = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDZ");
 
-		MethodHandle getQuadEmissive = getMethod("net.minecraft.client.renderer.model.BakedQuad", "getQuadEmissive");
-		MethodHandle setBlockLayer = getMethod("net.minecraft.client.renderer.BufferBuilder", "setBlockLayer", RenderType.class);
-		MethodHandle setMidBlock = getMethod("net.minecraft.client.renderer.BufferBuilder", "setMidBlock", float.class, float.class, float.class);
-		MethodHandle getRenderEnv = getMethod("net.minecraft.client.renderer.BufferBuilder", "getRenderEnv", BlockState.class, BlockPos.class);
+		MethodHandle getQuadEmissive = tryGetMethod("net.minecraft.client.renderer.model.BakedQuad", "getQuadEmissive");
+		MethodHandle setBlockLayer = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "setBlockLayer", RenderType.class);
+		MethodHandle setMidBlock = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "setMidBlock", float.class, float.class, float.class);
+		MethodHandle getRenderEnv = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "getRenderEnv", BlockState.class, BlockPos.class);
 
-		MethodHandle reset = getMethod("net.optifine.render.RenderEnv", "reset", BlockState.class, BlockPos.class);
-		MethodHandle setRegionRenderCacheBuilder = getMethod("net.optifine.render.RenderEnv", "setRegionRenderCacheBuilder", RegionRenderCacheBuilder.class);
-		MethodHandle isOverlaysRendered = getMethod("net.optifine.render.RenderEnv", "isOverlaysRendered");
-		MethodHandle setOverlaysRendered = getMethod("net.optifine.render.RenderEnv", "setOverlaysRendered", boolean.class);
-		MethodHandle setRenderEnv = getMethod("net.optifine.override.ChunkCacheOF", "setRenderEnv", "net.optifine.render.RenderEnv");
-		MethodHandle getRenderModel = getMethod("net.optifine.model.BlockModelCustomizer", "getRenderModel", IBakedModel.class, BlockState.class, "net.optifine.render.RenderEnv");
-		MethodHandle chunkLayerSet_add = getMethod("net.optifine.render.ChunkLayerSet", "add", RenderType.class);
+		MethodHandle reset = tryGetMethod("net.optifine.render.RenderEnv", "reset", BlockState.class, BlockPos.class);
+		MethodHandle setRegionRenderCacheBuilder = tryGetMethod("net.optifine.render.RenderEnv", "setRegionRenderCacheBuilder", RegionRenderCacheBuilder.class);
+		MethodHandle isOverlaysRendered = tryGetMethod("net.optifine.render.RenderEnv", "isOverlaysRendered");
+		MethodHandle setOverlaysRendered = tryGetMethod("net.optifine.render.RenderEnv", "setOverlaysRendered", boolean.class);
+		MethodHandle setRenderEnv = tryGetMethod("net.optifine.override.ChunkCacheOF", "setRenderEnv", "net.optifine.render.RenderEnv");
+		MethodHandle getRenderModel = tryGetMethod("net.optifine.model.BlockModelCustomizer", "getRenderModel", IBakedModel.class, BlockState.class, "net.optifine.render.RenderEnv");
+		MethodHandle chunkLayerSet_add = tryGetMethod("net.optifine.render.ChunkLayerSet", "add", RenderType.class);
+
 		Field hasBlocks = getField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$CompiledChunk", ASMAPI.mapField("field_178500_b"));
-
-		@Nullable
-		static MethodHandle getMethod(String clazz, String name, Object... paramClasses) {
-			try {
-				MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-				Class<?> klass = Class.forName(clazz);
-				Class<?>[] params = new Class[paramClasses.length];
-				for (int i = 0; i < paramClasses.length; i++) {
-					Object param = paramClasses[i];
-					params[i] = param instanceof Class<?> ? (Class<?>) param : Class.forName((String) param);
-				}
-				Method method = klass.getDeclaredMethod(name, params);
-				method.setAccessible(true);
-				return lookup.unreflect(method);
-			} catch (Exception e) {
-				return null;
-			}
-		}
-
-		@Nullable
-		static Field getField(String clazz, String name) {
-			try {
-				Class<?> klass = Class.forName(clazz);
-				return klass.getDeclaredField(name);
-			} catch (Exception e) {
-				return null;
-			}
-		}
 
 		static boolean Config_isShaders() {
 			try {
@@ -199,9 +179,9 @@ class HD_U_G8 implements OptiFineProxy {
 			}
 		}
 
-		static Object CompiledChunk_hasBlocks(CompiledChunk compiledChunk) {
+		static Set<RenderType> CompiledChunk_hasBlocks(ChunkRenderDispatcher.CompiledChunk compiledChunk) {
 			try {
-				return hasBlocks.get(compiledChunk);
+				return (Set<RenderType>) hasBlocks.get(compiledChunk);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}

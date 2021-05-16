@@ -12,6 +12,7 @@ import net.minecraft.world.IBlockDisplayReader;
 
 import javax.annotation.Nullable;
 
+import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.CompiledChunk_hasBlocks;
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class Dummy implements OptiFineProxy {
@@ -52,6 +53,11 @@ class Dummy implements OptiFineProxy {
 
 	@Override
 	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
+	}
+
+	@Override
+	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
+		CompiledChunk_hasBlocks(compiledChunk).add(renderType);
 	}
 
 }

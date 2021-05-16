@@ -34,4 +34,7 @@ public interface OptiFineProxy {
 	BakedQuad getQuadEmissive(BakedQuad quad);
 
 	void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos);
+
+	void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType);
+
 }
