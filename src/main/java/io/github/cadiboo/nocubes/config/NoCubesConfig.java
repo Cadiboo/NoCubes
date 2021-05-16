@@ -77,7 +77,7 @@ public final class NoCubesConfig {
 		public static boolean debugRenderCollisions;
 		public static boolean debugRenderMeshCollisions;
 		public static boolean debugRecordMeshPerformance;
-		public static boolean debugRenderNearbyMesh;
+		public static boolean debugOutlineNearbyMesh;
 
 		static {
 			Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -100,7 +100,7 @@ public final class NoCubesConfig {
 			debugRenderCollisions = INSTANCE.debugRenderCollisions.get();
 			debugRenderMeshCollisions = INSTANCE.debugRenderMeshCollisions.get();
 			debugRecordMeshPerformance = INSTANCE.debugRecordMeshPerformance.get();
-			debugRenderNearbyMesh = INSTANCE.debugRenderNearbyMesh.get();
+			debugOutlineNearbyMesh = INSTANCE.debugOutlineNearbyMesh.get();
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelistPreference.get(), INSTANCE.smoothableBlacklistPreference.get());
 		}
 
@@ -134,7 +134,7 @@ public final class NoCubesConfig {
 			final BooleanValue debugRenderCollisions;
 			final BooleanValue debugRenderMeshCollisions;
 			final BooleanValue debugRecordMeshPerformance;
-			final BooleanValue debugRenderNearbyMesh;
+			final BooleanValue debugOutlineNearbyMesh;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
 				render = builder
@@ -182,7 +182,7 @@ public final class NoCubesConfig {
 					debugRenderCollisions = builder.define("debugRenderCollisions", false);
 					debugRenderMeshCollisions = builder.define("debugRenderMeshCollisions", false);
 					debugRecordMeshPerformance = builder.define("debugRecordMeshPerformance", false);
-					debugRenderNearbyMesh = builder.define("debugRenderNearbyMesh", false);
+					debugOutlineNearbyMesh = builder.define("debugOutlineNearbyMesh", false);
 				}
 				builder.pop();
 			}

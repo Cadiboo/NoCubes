@@ -216,7 +216,7 @@ public final class OverlayRenderer {
 		}
 
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
-		if (NoCubesConfig.Client.debugRecordMeshPerformance || NoCubesConfig.Client.debugRenderNearbyMesh) {
+		if (NoCubesConfig.Client.debugRecordMeshPerformance || NoCubesConfig.Client.debugOutlineNearbyMesh) {
 			long startNanos = System.nanoTime();
 			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
 			if (NoCubesConfig.Client.debugRecordMeshPerformance) {
@@ -250,7 +250,7 @@ public final class OverlayRenderer {
 			Color lightColor = new Color(1F, 1F, 0F, 1F);
 
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
-				if (!NoCubesConfig.Client.debugRenderNearbyMesh)
+				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
 				BlockPos start = area.start;
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
