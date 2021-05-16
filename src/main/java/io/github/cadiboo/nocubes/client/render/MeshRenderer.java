@@ -8,7 +8,10 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.*;
+import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -106,8 +109,8 @@ public final class MeshRenderer {
 			});
 			ForgeHooksClient.setRenderLayer(null);
 		}
-		profiler.recordElapsedNanos(start);
-		LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
+		if (profiler.recordElapsedNanos(start))
+			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
 	}
 
 	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
