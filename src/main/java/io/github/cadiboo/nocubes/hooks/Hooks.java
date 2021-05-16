@@ -79,13 +79,6 @@ public final class Hooks {
 		return true;
 	}
 
-	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlockState blockState) {
-		SelfCheck.isCollisionShapeLargerThanFullBlock = true;
-		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
-			return ret;
-		return true;
-	}
-
 	/**
 	 * Hook this so that collisions work for blockstates with a cache.
 	 */
@@ -150,6 +143,16 @@ public final class Hooks {
 		}
 	}
 
+//	/**
+//	 * I've forgotten why we used to hook this, probably related to why collisions on grass paths don't work anymore...
+//	 */
+//	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlockState blockState) {
+//		SelfCheck.isCollisionShapeLargerThanFullBlock = true;
+//		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
+//			return ret;
+//		return true;
+//	}
+//
 //	/**
 //	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
 //	 * Calls: ModUtil.getFluidState to handle extended fluids
