@@ -37,6 +37,7 @@ import org.apache.logging.log4j.LogManager;
 
 import java.util.stream.LongStream;
 
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
 /**
@@ -109,10 +110,24 @@ public final class OverlayRenderer {
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
 		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
+		RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
+		// Where the player is looking at or their position of they're not looking at a block
+		BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
+
+		// Destroy block progress
+		if (false) {
+			BlockPos start = targetedPos.offset(-2, -2, -2);
+			BlockPos end = targetedPos.offset(2, 2, 2);
+			final int[] i = {0};
+			BlockPos.betweenClosed(start, end).forEach(pos -> {
+				minecraft.levelRenderer.destroyBlockProgress(100 + i[0]++, pos, 9);
+			});
+		}
+
 		// Outline nearby smoothable blocks
 		if (NoCubesConfig.Client.debugOutlineSmoothables) {
-			BlockPos start = viewer.blockPosition().offset(-5, -5, -5).subtract(generator.getNegativeAreaExtension());
-			BlockPos end = viewer.blockPosition().offset(5, 5, 5).offset(generator.getPositiveAreaExtension());
+			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
+			BlockPos end = viewer.blockPosition().offset(5, 5, 5);
 			BlockPos.betweenClosed(start, end).forEach(blockPos -> {
 				if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(blockPos)))
 					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), -cameraX + blockPos.getX(), -cameraY + blockPos.getY(), -cameraZ + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
@@ -125,10 +140,6 @@ public final class OverlayRenderer {
 		// at the cost of 1-block formations disappearing
 		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
 			VoxelShape distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
-
-			RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
-			// Where the player is looking at or their position of they're not looking at a block
-			BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
 			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
 				BlockState[] states = area.getAndCacheBlocks();
 				float[] densities = new float[area.numBlocks()];
@@ -228,11 +239,9 @@ public final class OverlayRenderer {
 			Area area = new Area(viewer.level, meshStart, meshSize, generator);
 			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize);
 		) {
-			final Face vertexNormals = new Face();
-			final Vec faceNormal = new Vec();
-			final Vec centre = new Vec();
-			final Vec mut = new Vec();
-			final BlockPos.Mutable mutable = new BlockPos.Mutable();
+			FaceInfo faceInfo = new FaceInfo();
+			Vec centre = new Vec();
+			Vec mutable = new Vec();
 
 			Color faceColor = new Color(0F, 1F, 1F, 1F);
 			Color normalColor = new Color(0F, 0F, 1F, 0.5F);
@@ -246,32 +255,33 @@ public final class OverlayRenderer {
 				BlockPos start = area.start;
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
 
-				face.assignNormalTo(vertexNormals);
-				vertexNormals.multiply(-1).assignAverageTo(faceNormal);
-				Direction direction = faceNormal.getDirectionFromNormal();
+				faceInfo.setup(face, start);
+				Face vertexNormals = faceInfo.vertexNormals;
+				Vec faceNormal = faceInfo.faceNormal;
+				Direction faceDirection = faceInfo.faceDirection;
 				face.assignAverageTo(centre);
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-//				drawLinePosColor(centre, mut.set(faceNormal).multiply(dirMul), camera, start, averageNormalColor, bufferBuilder, matrix4f);
-//				drawLinePosColor(centre, mut.set(direction.getStepX(), direction.getStepY(), direction.getStepZ()).multiply(dirMul), camera, start, normalDirectionColor, bufferBuilder, matrix4f);
+				drawLinePosColorFromTo(start, centre, start, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromTo(start, centre, start, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, bufferBuilder, matrix4f, camera);
 
 				// Draw each vertex normal
-				drawLinePosColorFromAdd(start, face.v0, mut.set(vertexNormals.v0).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v1, mut.set(vertexNormals.v1).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v2, mut.set(vertexNormals.v2).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v3, mut.set(vertexNormals.v3).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, face.v0, mutable.set(vertexNormals.v0).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, face.v1, mutable.set(vertexNormals.v1).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, face.v2, mutable.set(vertexNormals.v2).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
 
 				// Draw light pos
-				mut.set(0, 0, 0);
+				mutable.set(0, 0, 0);
 				if (light.get(start, face.v0, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v0, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+					drawLinePosColorFromTo(start, face.v0, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
 				if (light.get(start, face.v1, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v1, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+					drawLinePosColorFromTo(start, face.v1, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
 				if (light.get(start, face.v2, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v2, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+					drawLinePosColorFromTo(start, face.v2, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
 				if (light.get(start, face.v3, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v3, light.mutablePos, mut, lightColor, bufferBuilder, matrix4f, camera);
+					drawLinePosColorFromTo(start, face.v3, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
 
 				return true;
 			});

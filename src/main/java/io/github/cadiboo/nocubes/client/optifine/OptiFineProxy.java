@@ -24,7 +24,7 @@ public interface OptiFineProxy {
 	long getSeed(long originalSeed);
 
 	/** @return null or the RenderEnv */
-	Object preRenderBlock(ChunkRenderDispatcher.ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos);
+	Object preRenderBlock(ChunkRenderDispatcher.ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos);
 
 	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state);
 

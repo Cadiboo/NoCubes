@@ -67,7 +67,19 @@ public class Face {
 		return this;
 	}
 
-	public Face add(Vector3i pos) {
+	/**
+	 * The vertices in meshes are generated relative to {@link Area#start}.
+	 * {@link Area#start} is not necessarily the
+	 * The difference between the start of the area and the position we are generating for
+	 * This exists because:
+	 * To render a 16x16x16 area you need the data of a 18x18x18 area (+1 voxel on each axis)
+	 * So the area is going to start at pos - 1
+	 * And the vertices are going to be relative to the start of the area
+	 */
+	public Face addMeshOffset(Vector3i pos) {
+		assert Math.abs(pos.getX()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
+		assert Math.abs(pos.getY()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
+		assert Math.abs(pos.getZ()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
 		return add(pos.getX(), pos.getY(), pos.getZ());
 	}
 

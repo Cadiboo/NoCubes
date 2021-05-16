@@ -48,7 +48,7 @@ class HD_U_G8 implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos.Mutable pos) {
+	public Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		BufferBuilder_setBlockLater(buffer, renderType);
 		Object renderEnv = BufferBuilder_getRenderEnv(buffer, state, pos);
 		RenderEnv_setRegionRenderCacheBuilder(renderEnv, builder);
@@ -284,7 +284,7 @@ class HD_U_G8 implements OptiFineProxy {
 			}
 		}
 
-		static Object BufferBuilder_getRenderEnv(BufferBuilder buffer, BlockState state, BlockPos.Mutable pos) {
+		static Object BufferBuilder_getRenderEnv(BufferBuilder buffer, BlockState state, BlockPos pos) {
 //			return buffer.getRenderEnv(state, pos);
 			try {
 				return getRenderEnv.invoke(buffer, state, pos);
