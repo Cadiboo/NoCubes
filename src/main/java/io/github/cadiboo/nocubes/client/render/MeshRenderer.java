@@ -3,14 +3,12 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -27,6 +25,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -39,10 +38,13 @@ import java.util.function.Predicate;
  */
 public final class MeshRenderer {
 
+	private static final RollingProfiler profiler = new RollingProfiler(256);
+
 	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final IBlockDisplayReader chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (!NoCubesConfig.Client.render)
 			return;
 
+		long start = System.nanoTime();
 		FaceInfo renderInfo = new FaceInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		OptiFineProxy optiFine = OptiFineCompatibility.proxy();
@@ -104,6 +106,8 @@ public final class MeshRenderer {
 			});
 			ForgeHooksClient.setRenderLayer(null);
 		}
+		profiler.recordElapsedNanos(start);
+		LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
 	}
 
 	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {

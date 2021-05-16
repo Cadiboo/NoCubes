@@ -3,14 +3,12 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
@@ -35,8 +33,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 
-import java.util.stream.LongStream;
-
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
@@ -46,9 +42,8 @@ import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public final class OverlayRenderer {
 
-	static long[] meshTimings = new long[60 * 10];
-	static int timingsIndex = 0;
-	static long selfCheckInfoPrintedAt = Long.MIN_VALUE;
+	private static final RollingProfiler meshProfiler = new RollingProfiler(600);
+	private static long selfCheckInfoPrintedAt = Long.MIN_VALUE;
 
 	@SubscribeEvent
 	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
@@ -220,10 +215,8 @@ public final class OverlayRenderer {
 			long startNanos = System.nanoTime();
 			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
 			if (NoCubesConfig.Client.debugRecordMeshPerformance) {
-				long elapsedNanos = System.nanoTime() - startNanos;
-				meshTimings[timingsIndex++ % meshTimings.length] = elapsedNanos;
-				if (timingsIndex % meshTimings.length == 0)
-					LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugRenderNearbyMesh ? " & render" : "") + " chunk mesh").debug("Average " + ((LongStream.of(meshTimings).sum() / meshTimings.length) / 1000_000f) + "ms over the past " + meshTimings.length + " frames");
+				if (meshProfiler.recordElapsedNanos(startNanos))
+					LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugOutlineNearbyMesh ? " & outline" : "") + " nearby mesh").debug("Average {}ms over the past {} frames", meshProfiler.average() / 1000_000F, meshProfiler.size());
 			}
 		}
 
