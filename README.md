@@ -12,7 +12,7 @@ A mod for 1.12.2+ by [Cadiboo](https://github.com/Cadiboo) that creates smooth t
 [CurseForge Page](https://minecraft.curseforge.com/projects/nocubes)  
 ![NoCubes](https://cadiboo.github.io/projects/nocubes/sd-images/realistic.png "NoCubes")  
 
-This `master` branch is very in-dev and is subject to force-pushes
+**This `master` branch is very in-dev and is subject to force-pushes**
 
 ### OptiFine compatibility
 OptiFine is a bit hard to work with  
@@ -31,9 +31,10 @@ To be able to also compile against OptiFine (do the above steps first):
 3. Download OptiFineDeobf from [GitHub](https://github.com/Cadiboo/OptiFineDeobf/releases/latest)
 4. Run the OptiFine jar in `NoCubes/run/mods/` and select 'Extract', put the resulting extracted jar somewhere outside the `mods` folder
 5. Run OptiFineDeobf, select the extracted OptiFine jar in `NoCubes/run/mods/` and select the `NoCubes` folder for the project folder
-6. Select 'Make Public' and 'Forge Dev jar' then click 'Deobf'
-7. Put the deobfuscated OptiFine jar into `NoCubes/libs/`
-8. Refresh gradle in your IDE and you should be able to compile against OptiFine's classes (and running OptiFine still works as it did before)
+6. Select a mappings file that maps from SRG to MCP/official (don't use obf -> MCP mappings)
+7. Select 'Make Public' and 'Forge Dev jar' then click 'Deobf'
+8. Put the deobfuscated OptiFine jar into `NoCubes/libs/`
+9. Refresh gradle in your IDE and you should be able to compile against OptiFine's classes (and running OptiFine still works as it did before)
 
 Note: You can replace the normal OptiFine jar with the extracted (non-deobfuscated) one in `NoCubes/run/mods/` (this *may* speed up OptiFine's loading time)
 
