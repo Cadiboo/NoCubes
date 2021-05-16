@@ -170,22 +170,6 @@ public /* inline */ class Vec {
 		return this;
 	}
 
-	public Vec copy() {
-		return new Vec(x, y, z);
-	}
-
-	public void copyFrom(float[] floats) {
-		this.x = floats[0];
-		this.y = floats[1];
-		this.z = floats[2];
-	}
-
-	public void copyFrom(Vec vec) {
-		this.x = vec.x;
-		this.y = vec.y;
-		this.z = vec.z;
-	}
-
 	public Vec interpolate(float t, Vec v0, Vec v1) {
 		this.x = v0.x + t * (v1.x - v0.x);
 		this.y = v0.y + t * (v1.y - v0.y);

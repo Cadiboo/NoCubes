@@ -215,15 +215,15 @@ public class SurfaceNets implements MeshGenerator {
 
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
-							face.v0.copyFrom(verticesBuffer[bufferPointer]);
-							face.v1.copyFrom(verticesBuffer[bufferPointer - dv]);
-							face.v2.copyFrom(verticesBuffer[bufferPointer - du - dv]);
-							face.v3.copyFrom(verticesBuffer[bufferPointer - du]);
+							face.v0.set(verticesBuffer[bufferPointer]);
+							face.v1.set(verticesBuffer[bufferPointer - dv]);
+							face.v2.set(verticesBuffer[bufferPointer - du - dv]);
+							face.v3.set(verticesBuffer[bufferPointer - du]);
 						} else {
-							face.v0.copyFrom(verticesBuffer[bufferPointer]);
-							face.v1.copyFrom(verticesBuffer[bufferPointer - du]);
-							face.v2.copyFrom(verticesBuffer[bufferPointer - du - dv]);
-							face.v3.copyFrom(verticesBuffer[bufferPointer - dv]);
+							face.v0.set(verticesBuffer[bufferPointer]);
+							face.v1.set(verticesBuffer[bufferPointer - du]);
+							face.v2.set(verticesBuffer[bufferPointer - du - dv]);
+							face.v3.set(verticesBuffer[bufferPointer - dv]);
 						}
 						pos.set(x, y, z);
 						if (!faceAction.apply(pos, face))
