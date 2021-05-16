@@ -116,6 +116,14 @@ public final class Hooks {
 	}
 
 	/**
+	 * @return true for vanilla handling, false for the block not being able to occlude.
+	 */
+	public static boolean canOcclude(AbstractBlockState blockState) {
+		SelfCheck.canOcclude = true;
+		return !NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState);
+	}
+
+	/**
 	 * Called from: ClientWorld#func_225319_b(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)
 	 * Calls: WorldRenderer#markForRerender with a range of 2 instead of the normal 1
 	 * Replicates the behaviour of WorldRenderer#func_224746_a(BlockPos, BlockState, BlockState) (markForRerender, setBlocksDirty)

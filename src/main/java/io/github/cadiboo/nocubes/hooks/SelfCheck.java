@@ -9,6 +9,7 @@ public final class SelfCheck {
 	static boolean getCollisionShapeNoContext;
 	static boolean getCollisionShapeWithContext;
 	static boolean isCollisionShapeFullBlock;
+	static boolean canOcclude;
 	static boolean markForRerender;
 
 	public static String[] info() {
@@ -20,6 +21,7 @@ public final class SelfCheck {
 			"getCollisionShape(NoContext) hook called: " + getCollisionShapeNoContext,
 			"getCollisionShape(WithContext) hook called: " + getCollisionShapeWithContext,
 			"isCollisionShapeFullBlock hook called: " + isCollisionShapeFullBlock,
+			"canOcclude hook called: " + canOcclude,
 			"markForRerender hook called: " + markForRerender,
 		};
 	}
