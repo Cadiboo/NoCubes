@@ -1,8 +1,10 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 
@@ -22,8 +24,8 @@ public class S2CUpdateSmoothable {
 	}
 
 	public static S2CUpdateSmoothable decode(PacketBuffer buffer) {
-		final BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
-		final boolean newValue = buffer.readBoolean();
+		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
+		boolean newValue = buffer.readBoolean();
 		return new S2CUpdateSmoothable(state, newValue);
 	}
 
@@ -32,14 +34,13 @@ public class S2CUpdateSmoothable {
 		buffer.writeBoolean(msg.newValue);
 	}
 
-	public static void handle(final S2CUpdateSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(S2CUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
-		NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.state);
+		ctx.enqueueWork(() -> {
+			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.state);
+			ClientUtil.reloadAllChunks(Minecraft.getInstance());
+		});
 		ctx.setPacketHandled(true);
-	}
-
-	public BlockState getState() {
-		return state;
 	}
 
 }

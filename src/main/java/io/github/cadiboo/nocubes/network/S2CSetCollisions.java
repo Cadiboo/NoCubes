@@ -19,7 +19,7 @@ public class S2CSetCollisions {
 	}
 
 	public static S2CSetCollisions decode(PacketBuffer buffer) {
-		final boolean newValue = buffer.readBoolean();
+		boolean newValue = buffer.readBoolean();
 		return new S2CSetCollisions(newValue);
 	}
 
@@ -28,7 +28,7 @@ public class S2CSetCollisions {
 	}
 
 	public static void handle(final S2CSetCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		final NetworkEvent.Context ctx = contextSupplier.get();
+		NetworkEvent.Context ctx = contextSupplier.get();
 		NoCubesConfig.Server.collisionsEnabled = msg.newValue;
 		ctx.setPacketHandled(true);
 	}

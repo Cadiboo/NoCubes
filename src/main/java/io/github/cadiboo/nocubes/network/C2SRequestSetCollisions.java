@@ -25,7 +25,7 @@ public class C2SRequestSetCollisions {
 	}
 
 	public static C2SRequestSetCollisions decode(PacketBuffer buffer) {
-		final boolean newValue = buffer.readBoolean();
+		boolean newValue = buffer.readBoolean();
 		return new C2SRequestSetCollisions(newValue);
 	}
 

@@ -58,19 +58,13 @@ public final class KeybindHandler {
 				keybind.getValue().run();
 	}
 
-	private static void reloadAllChunks(Minecraft minecraft) {
-		WorldRenderer worldRenderer = minecraft.levelRenderer;
-		if (worldRenderer != null)
-			worldRenderer.allChanged();
-	}
-
 	private static void toggleVisuals() {
 		if (NoCubesConfig.Client.render && NoCubesConfig.Server.forceVisuals) {
 			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".visualsForcedByServer").withStyle(TextFormatting.RED), Util.NIL_UUID);
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
-		reloadAllChunks(Minecraft.getInstance());
+		ClientUtil.reloadAllChunks(Minecraft.getInstance());
 	}
 
 	private static void toggleLookedAtSmoothable() {
@@ -86,7 +80,7 @@ public final class KeybindHandler {
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
 			NoCubes.smoothableHandler.setSmoothable(newValue, state);
-			reloadAllChunks(minecraft);
+			Minecraft.getInstance().levelRenderer.allChanged();
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
 			if (!player.hasPermissions(REQUIRED_PERMISSION_LEVEL))

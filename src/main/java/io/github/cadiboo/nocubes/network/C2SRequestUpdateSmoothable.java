@@ -29,8 +29,8 @@ public class C2SRequestUpdateSmoothable {
 	}
 
 	public static C2SRequestUpdateSmoothable decode(PacketBuffer buffer) {
-		final BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
-		final boolean newValue = buffer.readBoolean();
+		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
+		boolean newValue = buffer.readBoolean();
 		return new C2SRequestUpdateSmoothable(state, newValue);
 	}
 
@@ -47,7 +47,7 @@ public class C2SRequestUpdateSmoothable {
 			BlockState state = msg.state;
 			boolean newValue = msg.newValue;
 			// Guards against useless config reload and/or someone spamming these packets to the server and the server spamming all clients
-			if (NoCubesConfig.Server.collisionsEnabled != newValue) {
+			if (NoCubes.smoothableHandler.isSmoothable(state) != newValue) {
 				NoCubesConfig.Server.updateSmoothable(newValue, state);
 				// Send back update to all clients
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(state, newValue));
@@ -57,10 +57,6 @@ public class C2SRequestUpdateSmoothable {
 		} else
 			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".addSmoothableNoPermission"), Util.NIL_UUID);
 		ctx.setPacketHandled(true);
-	}
-
-	public BlockState getState() {
-		return state;
 	}
 
 }
