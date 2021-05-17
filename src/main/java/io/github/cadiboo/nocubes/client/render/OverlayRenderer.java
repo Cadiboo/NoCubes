@@ -4,7 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
-import io.github.cadiboo.nocubes.collision.OOCollisionHandler;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -97,9 +97,6 @@ public final class OverlayRenderer {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
 		final Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
-		double cameraX = camera.x;
-		double cameraY = camera.y;
-		double cameraZ = camera.z;
 		final MatrixStack matrixStack = event.getMatrixStack();
 
 		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
@@ -121,11 +118,12 @@ public final class OverlayRenderer {
 
 		// Outline nearby smoothable blocks
 		if (NoCubesConfig.Client.debugOutlineSmoothables) {
+			Color color = new Color(0, 1, 0, 0.4F);
 			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
 			BlockPos end = viewer.blockPosition().offset(5, 5, 5);
-			BlockPos.betweenClosed(start, end).forEach(blockPos -> {
-				if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(blockPos)))
-					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), -cameraX + blockPos.getX(), -cameraY + blockPos.getY(), -cameraZ + blockPos.getZ(), 0.0F, 1.0F, 1.0F, 0.4F);
+			BlockPos.betweenClosed(start, end).forEach(pos -> {
+				if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(pos)))
+					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), pos, camera, color);
 			});
 		}
 
@@ -135,6 +133,7 @@ public final class OverlayRenderer {
 		// at the cost of 1-block formations disappearing
 		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
 			VoxelShape distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
+			Color densityColor = new Color(0F, 0F, 1F, 0.5F);
 			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
 				BlockState[] states = area.getAndCacheBlocks();
 				float[] densities = new float[area.numBlocks()];
@@ -153,14 +152,16 @@ public final class OverlayRenderer {
 				int maxY = minY + height;
 				int maxX = minX + width;
 				int zyxIndex = 0;
+				BlockPos.Mutable pos = new BlockPos.Mutable();
 				for (int z = minZ; z < maxZ; ++z) {
 					for (int y = minY; y < maxY; ++y) {
 						for (int x = minX; x < maxX; ++x, ++zyxIndex) {
+							pos.set(x, y, z);
 							float density = densities[zyxIndex];
 							float densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
 							if (densityScale > 0.01) {
 								VoxelShape box = VoxelShapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
-								drawShape(matrixStack, bufferBuilder, box, x - cameraX, y - cameraY, z - cameraZ, 0F, 0F, 1F, 0.5F);
+								drawShape(matrixStack, bufferBuilder, box, pos, camera, densityColor);
 							}
 							if (x <= minX || y <= minY || z <= minZ)
 								continue;
@@ -173,7 +174,7 @@ public final class OverlayRenderer {
 										combinedDensity += densities[idx];
 									}
 							float combinedDensityScale = 0.5F + combinedDensity / 16F; // from [-8, 8] -> [0, 1]
-							drawShape(matrixStack, bufferBuilder, distanceIndicator, x - cameraX, y - cameraY, z - cameraZ, combinedDensityScale, 1 - combinedDensityScale, 0F, 0.4F);
+							drawShape(matrixStack, bufferBuilder, distanceIndicator, pos, camera, new Color(combinedDensityScale, 1 - combinedDensityScale, 0F, 0.4F));
 						}
 					}
 				}
@@ -182,30 +183,24 @@ public final class OverlayRenderer {
 
 		// Draw nearby collisions in green and player intersecting collisions in red
 		if (NoCubesConfig.Client.debugRenderCollisions) {
+			Color intersectingColor = new Color(1, 0, 0, 0.4F);
+			Color deviatingColor = new Color(0, 1, 0, 0.4F);
 			VoxelShape viewerShape = VoxelShapes.create(viewer.getBoundingBox());
-			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(5.0D)).forEach(voxelShape -> {
-				boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.OR);
-				float red = intersects ? 1 : 0;
-				float green = intersects ? 0 : 1;
-				drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, red, green, 0.0F, 0.4F);
+			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(1)).forEach(voxelShape -> {
+				boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.AND);
+				drawShape(matrixStack, bufferBuilder, voxelShape, BlockPos.ZERO, camera, intersects ? intersectingColor : deviatingColor);
 			});
 		}
 
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
+			Color color = new Color(1, NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 0, 0.4F);
 			BlockPos size = new BlockPos(10, 10, 10);
 			BlockPos start = viewer.blockPosition().offset(-size.getX() / 2, -size.getY() / 2, -size.getZ() / 2);
-			try (Area area = new Area(world, start, size)) {
-				new OOCollisionHandler(generator).generate(area, (x0, y0, z0, x1, y1, z1) -> {
-					double x = area.start.getX();
-					double y = area.start.getY();
-					double z = area.start.getZ();
-					VoxelShape voxelShape = VoxelShapes.box(
-						x + x0, y + y0, z + z0,
-						x + x1, y + y1, z + z1
-					);
-					float red = NoCubesConfig.Client.debugRenderCollisions ? 1.0F : 0.0F;
-					drawShape(matrixStack, bufferBuilder, voxelShape, -cameraX, -cameraY, -cameraZ, red, 1.0F, 0.0F, 0.4F);
+			try (Area area = new Area(world, start, size, generator)) {
+				CollisionHandler.generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
+					VoxelShape voxelShape = VoxelShapes.box(x0, y0, z0, x1, y1, z1);
+					drawShape(matrixStack, bufferBuilder, voxelShape, area.start, camera, color);
 				});
 			}
 		}
@@ -302,7 +297,7 @@ public final class OverlayRenderer {
 		vertex(buffer, matrix4f, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder bufferBuilder, Matrix4f matrix4f) {
+	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder buffer, Matrix4f matrix) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
@@ -328,32 +323,35 @@ public final class OverlayRenderer {
 		float v1z = (float) (z + v1.z);
 		float v2z = (float) (z + v2.z);
 		float v3z = (float) (z + v3.z);
-		vertex(bufferBuilder, matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		vertex(bufferBuilder, matrix4f, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static IVertexBuilder vertex(IVertexBuilder bufferBuilder, Matrix4f matrix4f, float x, float y, float z) {
-		// Calling 'bufferBuilder.vertex(matrix4f, x, y, z)' allocates a Vector4f
+	private static IVertexBuilder vertex(IVertexBuilder buffer, Matrix4f matrix, float x, float y, float z) {
+		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead
 		float w = 1.0F;
-		float tx = matrix4f.m00 * x + matrix4f.m01 * y + matrix4f.m02 * z + matrix4f.m03 * w;
-		float ty = matrix4f.m10 * x + matrix4f.m11 * y + matrix4f.m12 * z + matrix4f.m13 * w;
-		float tz = matrix4f.m20 * x + matrix4f.m21 * y + matrix4f.m22 * z + matrix4f.m23 * w;
-//		float tw = matrix4f.m30 * x + matrix4f.m31 * y + matrix4f.m32 * z + matrix4f.m33 * w;
-		return bufferBuilder.vertex(tx, ty, tz);
+		float tx = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
+		float ty = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
+		float tz = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
+//		float tw = matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
+		return buffer.vertex(tx, ty, tz);
 	}
 
-	private static void drawShape(MatrixStack matrixStackIn, IVertexBuilder bufferIn, VoxelShape shapeIn, double xIn, double yIn, double zIn, float red, float green, float blue, float alpha) {
-		Matrix4f matrix4f = matrixStackIn.last().pose();
-		shapeIn.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-			vertex(bufferIn, matrix4f, (float) (x0 + xIn), (float) (y0 + yIn), (float) (z0 + zIn)).color(red, green, blue, alpha).endVertex();
-			vertex(bufferIn, matrix4f, (float) (x1 + xIn), (float) (y1 + yIn), (float) (z1 + zIn)).color(red, green, blue, alpha).endVertex();
+	private static void drawShape(MatrixStack stack, IVertexBuilder buffer, VoxelShape shape, BlockPos pos, Vector3d camera, Color color) {
+		Matrix4f pose = stack.last().pose();
+		double x = pos.getX() - camera.x;
+		double y = pos.getY() - camera.y;
+		double z = pos.getZ() - camera.z;
+		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
+			vertex(buffer, pose, (float) (x + x0), (float) (y + y0), (float) (z + z0)).color(color.red, color.green, color.blue, color.alpha).endVertex();
+			vertex(buffer, pose, (float) (x + x1), (float) (y + y1), (float) (z + z1)).color(color.red, color.green, color.blue, color.alpha).endVertex();
 		});
 	}
 

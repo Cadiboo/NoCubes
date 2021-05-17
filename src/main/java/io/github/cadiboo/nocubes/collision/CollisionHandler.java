@@ -3,8 +3,11 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.FallingBlockEntity;
@@ -15,6 +18,8 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+
+import java.util.function.Predicate;
 
 public final class CollisionHandler {
 
@@ -29,8 +34,8 @@ public final class CollisionHandler {
 	}
 
 	// TODO: Why is the 'cache' of every blockstate storing an empty VoxelShape... this is causing issues like
-	// grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
-	// and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
+	//  grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
+	//  and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
 	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		if (!canCollide)
 			return VoxelShapes.empty();
@@ -53,13 +58,13 @@ public final class CollisionHandler {
 			((World) reader).getProfiler().push("NoCubes collisions");
 		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
 			BlockPos diff = area.start.subtract(blockPos);
-			new OOCollisionHandler(generator).generate(area, ((x0, y0, z0, x1, y1, z1) -> {
+			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
 				float dx = diff.getX();
 				float dy = diff.getY();
 				float dz = diff.getZ();
 				VoxelShape shape = VoxelShapes.box(x0 + dx, y0 + dy, z0 + dz, x1 + dx, y1 + dy, z1 + dz);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
-			}));
+			});
 		} finally {
 			if (reader instanceof World)
 				((World) reader).getProfiler().pop();
@@ -67,10 +72,57 @@ public final class CollisionHandler {
 		return ref[0];//.optimize();
 	}
 
-//	static class CollisionCreationData {
-//		final Face normal = new Face(new Vec(), new Vec(), new Vec(), new Vec());
-//		final Vec averageOfNormal = new Vec();
-//		final Vec centre = new Vec();
-//	}
+	public static void generate(Area area, MeshGenerator generator, IShapeConsumer consumer) {
+		Face vertexNormals = new Face();
+		Vec faceNormal = new Vec();
+		Vec centre = new Vec();
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable; // + || isLeavesSmoothable
+		generator.generate(area, isSmoothable, (pos, amount) -> {
+			// Generate collisions for blocks that are fully inside the isosurface
+			// The face handler will generate collisions for the surface
+			if (amount == 1) {
+				float x0 = pos.getX();
+				float y0 = pos.getY();
+				float z0 = pos.getZ();
+				if (generator instanceof SurfaceNets) {
+					// Pretty disgusting, see the comments in SurfaceNets about densities and corners for why this offset exists
+					x0 += 0.5F;
+					y0 += 0.5F;
+					z0 += 0.5F;
+				}
+				consumer.accept(
+					x0, y0, z0,
+					x0 + 1, y0 + 1, z0 + 1
+				);
+			}
+			return true;
+		}, (pos, face) -> {
+			face.assignNormalTo(vertexNormals);
+			face.assignAverageTo(centre);
+			vertexNormals.assignAverageTo(faceNormal);
+
+			generateShape(centre, faceNormal, consumer, face.v0);
+			generateShape(centre, faceNormal, consumer, face.v1);
+			generateShape(centre, faceNormal, consumer, face.v2);
+			generateShape(centre, faceNormal, consumer, face.v3);
+			return true;
+		});
+	}
+
+	private static void generateShape(Vec centre, Vec faceNormal, IShapeConsumer consumer, Vec v) {
+		consumer.accept(
+			v.x, v.y, v.z,
+			centre.x + faceNormal.x, centre.y + faceNormal.y, centre.z + faceNormal.z
+		);
+	}
+
+	public interface IShapeConsumer {
+
+		void accept(
+			float x0, float y0, float z0,
+			float x1, float y1, float z1
+		);
+
+	}
 
 }

@@ -46,6 +46,7 @@ function initializeCoreMod() {
 
 	ACONST_NULL = Opcodes.ACONST_NULL;
 	ICONST_0 = Opcodes.ICONST_0;
+	ICONST_1 = Opcodes.ICONST_1;
 
 	IFEQ = Opcodes.IFEQ;
 	IFNE = Opcodes.IFNE;
@@ -189,8 +190,7 @@ function initializeCoreMod() {
 						isOptiFinePresent ? "getAllInBoxMutable" : ASMAPI.mapMethod("func_218278_a"), // BlockPos#betweenClosed
 						"(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;"
 					);
-					if (!positionsIteratorCall)
-						throw "Error: Couldn't find 'positionsIteratorCall' in " + stringifyInstructions(instructions);
+					assertInstructionFound(positionsIteratorCall, 'positionsIteratorCall', instructions);
 					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, instructions.indexOf(positionsIteratorCall));
 
 					var outerClassFieldName = isOptiFinePresent ? "this$1" : ASMAPI.mapField("field_228939_e_");
@@ -227,13 +227,11 @@ function initializeCoreMod() {
 						getRenderTypeName,
 						"()Lnet/minecraft/block/BlockRenderType;"
 					);
-					if (!getRenderTypeCall)
-						throw "Error: Couldn't find 'getRenderTypeCall' in " + stringifyInstructions(instructions);
+					assertInstructionFound(getRenderTypeCall, 'getRenderTypeCall', instructions);
 					var getRenderTypeCallIndex = instructions.indexOf(getRenderTypeCall);
 					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBefore(instructions, getRenderTypeCallIndex);
 					var branchIfBlockIsInvisibleInstruction = ASMAPI.findFirstInstructionAfter(methodNode, IF_ACMPEQ, getRenderTypeCallIndex);
-					if (!branchIfBlockIsInvisibleInstruction)
-						throw "Error: Couldn't find 'branchIfBlockIsInvisible' instruction in " + stringifyInstructions(instructions);
+					assertInstructionFound(branchIfBlockIsInvisibleInstruction, 'branchIfBlockIsInvisible', instructions);
 					var labelToJumpToIfBlockIsInvisible = branchIfBlockIsInvisibleInstruction.label
 
 					instructions.insert(firstLabelBeforeGetRenderTypeCall, ASMAPI.listOf(
@@ -395,53 +393,36 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
-//		"BlockState#isCollisionShapeLargerThanFullBlock": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-//				"methodName": "func_215704_f",
-//				"methodDesc": "()Z"
-//			},
-//			"transformer": function(methodNode) {
-//				// TODO: Do I even need this?
-//				var instructions = methodNode.instructions;
-//				var firstIRETURN;
-//            	var arrayLength = instructions.size();
-//            	for (var i = 0; i < arrayLength; ++i) {
-//            		var instruction = instructions.get(i);
-//            		if (instruction.getOpcode() == IRETURN) {
-//            			firstIRETURN = instruction;
-//            			print("Found injection point \"first IRETURN\" " + instruction);
-//            			break;
-//            		}
-//            	}
-//            	if (!firstIRETURN) {
-//            		throw "Error: Couldn't find injection point \"first IRETURN\"!";
-//            	}
-//
-//            	var toInject = new InsnList();
-//
-//            	// Make list of instructions to inject
-//            	toInject.add(new InsnNode(Opcodes.DUP)); // ret
-//            	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-//				toInject.add(new MethodInsnNode(
-//						//int opcode
-//						INVOKESTATIC,
-//						//String owner
-//						"io/github/cadiboo/nocubes/hooks/Hooks",
-//						//String name
-//						"isCollisionShapeLargerThanFullBlock",
-//						//String descriptor
-//						"(ZLnet/minecraft/block/AbstractBlock$AbstractBlockState;)Z",
-//						//boolean isInterface
-//						false
-//				));
-//
-//            	// Inject instructions
-//            	instructions.insertBefore(firstIRETURN, toInject);
-//				return methodNode;
-//			}
-//		},
+
+		// Hooking this somehow stops us falling through 1 block wide holes and under the ground
+		"BlockState#hasLargeCollisionShape": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_215704_f",
+				"methodDesc": "()Z"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if (!io.github.cadiboo.nocubes.hooks.Hooks.hasLargeCollisionShape(this))
+				//		return true;
+				//	// NoCubes End
+				// <rest of method>
+				var originalInstructionsLabel = new LabelNode();
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					callNoCubesHook("hasLargeCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;)Z"),
+					new JumpInsnNode(IFNE, originalInstructionsLabel),
+					new InsnNode(ICONST_1),
+					new InsnNode(IRETURN),
+					originalInstructionsLabel
+				));
+				return methodNode;
+			}
+		},
+
 //		"BlockState#causesSuffocation": {
 //			"target": {
 //				"type": "METHOD",
@@ -454,6 +435,8 @@ function initializeCoreMod() {
 //				return methodNode;
 //			}
 //		},
+
+		// Add fields that allow us to very efficiently store/query if a block state is smoothable
 		"BlockState": {
 			"target": {
 				"type": "CLASS",
@@ -499,8 +482,7 @@ function injectInitChunkRenderCacheHook(instructions) {
 		ASMAPI.mapMethod("func_177958_n"), // Vec3i.getX
 		"()I"
 	);
-	if (!getXCall)
-		throw "Error: Couldn't find 'getXCall' in " + stringifyInstructions(instructions);
+	assertInstructionFound(getXCall, 'getXCall', instructions);
 
 	var firstLabelBeforeGetXCall = findFirstLabelBefore(instructions, instructions.indexOf(getXCall));
 	instructions.insert(firstLabelBeforeGetXCall, ASMAPI.listOf(
@@ -555,8 +537,7 @@ function injectGenerateCacheHook(instructions) {
 		}
 		previousInsn = instruction;
 	}
-	if (!firstACONST_NULL_then_ARETURN)
-		throw "Error: Couldn't find ACONST_NULL & ARETURN in " + stringifyInstructions(instructions);
+	assertInstructionFound(firstACONST_NULL_then_ARETURN, 'ACONST_NULL & ARETURN', instructions);
 
 	// 2) Find previous IFEQ
 	var firstIFEQBefore_firstACONST_NULL_then_ARETURN;
@@ -568,8 +549,7 @@ function injectGenerateCacheHook(instructions) {
 			break;
 		}
 	}
-	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN)
-		throw "Error: Couldn't find IFEQ in " + stringifyInstructions(instructions);
+	assertInstructionFound(firstIFEQBefore_firstACONST_NULL_then_ARETURN, 'IFEQ', instructions);
 
 	// 3) Find previous Label
 	var previousLabel = findFirstLabelBefore(instructions, instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN));
@@ -582,13 +562,11 @@ function injectGenerateCacheHook(instructions) {
 		ASMAPI.mapMethod("func_76606_c"), // isEmptyBetween
 		"(II)Z"
 	);
-	if (!isEmptyBetweenCall)
-		throw "Error: Couldn't find 'isEmptyBetween' in " + stringifyInstructions(instructions);
+	assertInstructionFound(isEmptyBetweenCall, 'isEmptyBetween', instructions);
 
 	// 5) Find next ISTORE
 	var nextISTORE = ASMAPI.findFirstInstructionAfter(methodNode, ISTORE, instructions.indexOf(isEmptyBetweenCall));
-	if (!firstIFEQBefore_firstACONST_NULL_then_ARETURN)
-		throw "Error: Couldn't find next 'ISTORE' in " + stringifyInstructions(instructions);
+	assertInstructionFound(nextISTORE, 'next ISTORE', instructions);
 
 	instructions.insert(nextISTORE, ASMAPI.listOf(
 		new JumpInsnNode(GOTO, previousLabel)
@@ -622,8 +600,7 @@ function injectFluidRenderBypass(instructions) {
 		isOptiFinePresent ? ASMAPI.mapMethod("func_204520_s") : ASMAPI.mapMethod("func_204610_c"),
 		isOptiFinePresent ? "()Lnet/minecraft/fluid/IFluidState;" : "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;"
 	);
-	if (!getFluidStateCall)
-		throw "Error: Couldn't find 'getFluidState' call in " + stringifyInstructions(instructions);
+	assertInstructionFound(getFluidStateCall, 'getFluidStateCall', instructions);
 
 	var Fluids_EMPTY_name = ASMAPI.mapField("field_204541_a"); // Fluids.EMPTY
 	var Fluid_getDefaultState_name = ASMAPI.mapMethod("func_207188_f"); // Fluid#getDefaultState
@@ -724,9 +701,7 @@ function injectGetCollisionShapesHook(instructions) {
 			}
 		}
 	}
-	if (!first_NEW_CubeCoordinateIterator) {
-		throw "Error: Couldn't find injection point \"first_NEW_CubeCoordinateIterator\"!";
-	}
+	assertInstructionFound(first_NEW_CubeCoordinateIterator, 'first NEW CubeCoordinateIterator', instructions);
 
 	var firstLabelBefore_first_NEW_CubeCoordinateIterator;
 	for (i = instructions.indexOf(first_NEW_CubeCoordinateIterator); i > 0; --i) {
@@ -737,9 +712,7 @@ function injectGetCollisionShapesHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_NEW_CubeCoordinateIterator) {
-		throw "Error: Couldn't find label \"next Label\"!";
-	}
+	assertInstructionFound(firstLabelBefore_first_NEW_CubeCoordinateIterator, 'next label', instructions);
 
 	var toInject = new InsnList();
 
@@ -867,9 +840,7 @@ function injectGetFluidStateHook(instructions) {
 			}
 		}
 	}
-	if (!first_INVOKEVIRTUAL_World_getChunkAt) {
-		throw "Error: Couldn't find injection point \"first getChunkAt\"!";
-	}
+	assertInstructionFound(first_INVOKEVIRTUAL_World_getChunkAt, 'first World.getChunkAt', instructions);
 
 	var next_ARETURN;
 //	var arrayLength = instructions.size();
@@ -881,9 +852,7 @@ function injectGetFluidStateHook(instructions) {
 			break;
 		}
 	}
-	if (!next_ARETURN) {
-		throw "Error: Couldn't find injection point \"next ARETURN\"!";
-	}
+	assertInstructionFound(next_ARETURN, 'next ARETURN', instructions);
 
 	var toInject = new InsnList();
 
@@ -966,9 +935,7 @@ function injectCausesSuffocationHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabel) {
-		throw "Error: Couldn't find injection point \"first Label\"!";
-	}
+	assertInstructionFound(firstLabel, 'first Label', instructions);
 
 	var toInject = new InsnList();
 
@@ -1076,9 +1043,7 @@ function injectGetAllowedOffsetHook(instructions) {
 			}
 		}
 	}
-	if (!first_NEW_MutableBlockPos) {
-		throw "Error: Couldn't find injection point \"first_NEW_MutableBlockPos\"!";
-	}
+	assertInstructionFound(first_NEW_MutableBlockPos, 'first NEW MutableBlockPos', instructions);
 
 	var firstLabelBefore_first_NEW_MutableBlockPos;
 	for (i = instructions.indexOf(first_NEW_MutableBlockPos); i >= 0; --i) {
@@ -1089,9 +1054,7 @@ function injectGetAllowedOffsetHook(instructions) {
 			break;
 		}
 	}
-	if (!firstLabelBefore_first_NEW_MutableBlockPos) {
-		throw "Error: Couldn't find label \"firstLabelBefore_first_NEW_MutableBlockPos\"!";
-	}
+	assertInstructionFound(firstLabelBefore_first_NEW_MutableBlockPos, 'first label before first NEW MutableBlockPos', instructions);
 
 	var toInject = new InsnList();
 
@@ -1125,6 +1088,11 @@ function injectGetAllowedOffsetHook(instructions) {
 	// Inject instructions
 	instructions.insert(firstLabelBefore_first_NEW_MutableBlockPos, toInject);
 
+}
+
+function assertInstructionFound(instruction, name, instructions) {
+	if (!instruction)
+		throw "Error: Couldn't find '" + name + "' in " + stringifyInstructions(instructions);
 }
 
 function findFirstLabel(instructions, startIndex) {

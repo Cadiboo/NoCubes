@@ -116,6 +116,18 @@ public final class Hooks {
 	}
 
 	/**
+	 * Somehow stops us falling through 1 block wide holes and under the ground.
+	 *
+	 * @return true for vanilla handling, false for the block to be marked as having a large collision shape.
+	 */
+	public static boolean hasLargeCollisionShape(AbstractBlockState blockState) {
+		SelfCheck.hasLargeCollisionShape = true;
+		return !NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState);
+	}
+
+	/**
+	 * Fixes being able to see through the ground near smooth terrain.
+	 *
 	 * @return true for vanilla handling, false for the block not being able to occlude.
 	 */
 	public static boolean canOcclude(AbstractBlockState blockState) {
@@ -142,16 +154,6 @@ public final class Hooks {
 		}
 	}
 
-//	/**
-//	 * I've forgotten why we used to hook this, probably related to why collisions on grass paths don't work anymore...
-//	 */
-//	public static boolean isCollisionShapeLargerThanFullBlock(boolean ret, AbstractBlockState blockState) {
-//		SelfCheck.isCollisionShapeLargerThanFullBlock = true;
-//		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable((BlockState) blockState))
-//			return ret;
-//		return true;
-//	}
-//
 //	/**
 //	 * Called from: World#getFluidState after the bounds check in place of the normal getFluidState logic
 //	 * Calls: ModUtil.getFluidState to handle extended fluids
