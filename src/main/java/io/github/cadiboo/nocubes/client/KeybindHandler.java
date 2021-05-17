@@ -5,10 +5,9 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestSetCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
-import io.github.cadiboo.nocubes.smoothable.ServerSmoothableChangeHandler;
-import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
@@ -27,6 +26,8 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.LinkedList;
 import java.util.List;
+
+import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
@@ -75,22 +76,20 @@ public final class KeybindHandler {
 	private static void toggleLookedAtSmoothable() {
 		Minecraft minecraft = Minecraft.getInstance();
 		ClientWorld world = minecraft.level;
+		ClientPlayerEntity player = minecraft.player;
 		RayTraceResult lookingAt = minecraft.hitResult;
-		if (world == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK)
+		if (world == null || player == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK)
 			return;
 		BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
 		BlockState state = world.getBlockState(lookingAtBlock.getBlockPos());
 		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
-		boolean singleplayer = minecraft.hasSingleplayerServer() && !minecraft.getSingleplayerServer().isPublished();
-		if (singleplayer || !NoCubesNetwork.currentServerHasNoCubes) {
-			// Either we're in singleplayer or the server doesn't have NoCubes
-			// Allow the player to have visuals
-			NoCubesConfig.Client.updateSmoothablePreference(newValue, state);
+		if (!NoCubesNetwork.currentServerHasNoCubes) {
+			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
+			NoCubes.smoothableHandler.setSmoothable(newValue, state);
 			reloadAllChunks(minecraft);
-		}
-		if (singleplayer || NoCubesNetwork.currentServerHasNoCubes) {
-			// We're on a server with NoCubes installed
-			if (!minecraft.player.hasPermissions(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL))
+		} else {
+			// We're on a server (possibly singleplayer) with NoCubes installed
+			if (!player.hasPermissions(REQUIRED_PERMISSION_LEVEL))
 				// Not enough permission, don't send packet that will be denied
 				return;
 			// Send an update request packet

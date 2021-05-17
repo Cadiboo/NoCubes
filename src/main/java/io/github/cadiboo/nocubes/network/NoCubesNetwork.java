@@ -14,6 +14,15 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
  */
 public final class NoCubesNetwork {
 
+	/**
+	 * From the minecraft wiki.
+	 * 1. Ops can bypass spawn protection.
+	 * 2. Ops can use /clear, /difficulty, /effect, /gamemode, /gamerule, /give, /summon, /setblock and /tp, and can edit command blocks.
+	 * 3. Ops can use /ban, /deop, /whitelist, /kick, and /op.
+	 * 4. Ops can use /stop.
+	 */
+	public static final int REQUIRED_PERMISSION_LEVEL = 2;
+
 	private static final String NETWORK_PROTOCOL_VERSION = "1";
 	/**
 	 * Only valid when connected to a server on the client.
@@ -43,13 +52,15 @@ public final class NoCubesNetwork {
 	public static void register() {
 		int networkId = 0;
 		// Client -> Server
-		CHANNEL.registerMessage(networkId,
+		CHANNEL.registerMessage(
+			networkId,
 			C2SRequestUpdateSmoothable.class,
 			C2SRequestUpdateSmoothable::encode,
 			C2SRequestUpdateSmoothable::decode,
 			C2SRequestUpdateSmoothable::handle
 		);
-		CHANNEL.registerMessage(++networkId,
+		CHANNEL.registerMessage(
+			++networkId,
 			C2SRequestSetCollisions.class,
 			C2SRequestSetCollisions::encode,
 			C2SRequestSetCollisions::decode,
@@ -69,13 +80,15 @@ public final class NoCubesNetwork {
 //		);
 
 		// Server -> Client
-		CHANNEL.registerMessage(++networkId,
+		CHANNEL.registerMessage(
+			++networkId,
 			S2CUpdateSmoothable.class,
 			S2CUpdateSmoothable::encode,
 			S2CUpdateSmoothable::decode,
 			S2CUpdateSmoothable::handle
 		);
-		CHANNEL.registerMessage(++networkId,
+		CHANNEL.registerMessage(
+			++networkId,
 			S2CSetCollisions.class,
 			S2CSetCollisions::encode,
 			S2CSetCollisions::decode,

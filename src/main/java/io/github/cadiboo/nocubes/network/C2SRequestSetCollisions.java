@@ -2,9 +2,6 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.smoothable.ServerSmoothableChangeHandler;
-import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Util;
@@ -13,6 +10,8 @@ import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 
 import java.util.function.Supplier;
+
+import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
@@ -34,10 +33,10 @@ public class C2SRequestSetCollisions {
 		buffer.writeBoolean(msg.newValue);
 	}
 
-	public static void handle(final C2SRequestSetCollisions msg, final Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(C2SRequestSetCollisions msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
 		ServerPlayerEntity sender = ctx.getSender();
-		boolean hasPermission = sender.hasPermissions(ServerSmoothableChangeHandler.REQUIRED_PERMISSION_LEVEL);
+		boolean hasPermission = sender.hasPermissions(REQUIRED_PERMISSION_LEVEL);
 		if (hasPermission) {
 			boolean newValue = msg.newValue;
 			// Guards against useless config reload and/or someone spamming these packets to the server and the server spamming all clients

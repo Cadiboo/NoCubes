@@ -414,17 +414,17 @@ public final class NoCubesConfig {
 		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
+			List<String> toAddTo = newValue ? whitelist : blacklist;
+			List<String> toRemoveFrom = newValue ? blacklist : whitelist;
 			for (BlockState state : states) {
 				String string = BlockStateConverter.toString(state);
-				if (newValue) {
-					NoCubes.smoothableHandler.addSmoothable(state);
-					whitelist.add(string);
-					blacklist.remove(string);
-				} else {
-					NoCubes.smoothableHandler.removeSmoothable(state);
-					whitelist.remove(string);
-					blacklist.add(string);
-				}
+				NoCubes.smoothableHandler.setSmoothable(newValue, state);
+				if (!toAddTo.contains(string))
+					toAddTo.add(string);
+				//noinspection StatementWithEmptyBody
+				while (toRemoveFrom.remove(string))
+					// The loop runs until there are no more occurrences of 'string' in the list
+					;
 			}
 		}
 

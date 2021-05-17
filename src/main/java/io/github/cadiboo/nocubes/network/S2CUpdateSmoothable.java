@@ -33,11 +33,8 @@ public class S2CUpdateSmoothable {
 	}
 
 	public static void handle(final S2CUpdateSmoothable msg, final Supplier<NetworkEvent.Context> contextSupplier) {
-		final NetworkEvent.Context ctx = contextSupplier.get();
-		if (msg.newValue)
-			NoCubes.smoothableHandler.addSmoothable(msg.state);
-		else
-			NoCubes.smoothableHandler.removeSmoothable(msg.state);
+		NetworkEvent.Context ctx = contextSupplier.get();
+		NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.state);
 		ctx.setPacketHandled(true);
 	}
 

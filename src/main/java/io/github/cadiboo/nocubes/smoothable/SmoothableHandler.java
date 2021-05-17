@@ -30,6 +30,8 @@ public interface SmoothableHandler {
 
 	boolean isSmoothable(BlockState state);
 
+	void setSmoothable(boolean newValue, BlockState state);
+
 	class ASM implements SmoothableHandler {
 
 		@Override
@@ -47,6 +49,10 @@ public interface SmoothableHandler {
 			return state.nocubes_isTerrainSmoothable;
 		}
 
+		@Override
+		public void setSmoothable(boolean newValue, BlockState state) {
+			state.nocubes_isTerrainSmoothable = newValue;
+		}
 	}
 
 	class Set implements SmoothableHandler {
@@ -66,6 +72,14 @@ public interface SmoothableHandler {
 		@Override
 		public boolean isSmoothable(final BlockState state) {
 			return smoothables.contains(state);
+		}
+
+		@Override
+		public void setSmoothable(boolean newValue, BlockState state) {
+			if (newValue)
+				addSmoothable(state);
+			else
+				removeSmoothable(state);
 		}
 
 	}
