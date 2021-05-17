@@ -158,7 +158,7 @@ public final class NoCubesConfig {
 						"With hexadecimal (case insensitive) RGB (red, green, blue) integers (00-FF): \"0x0ff\" (aqua)",
 						"With hexadecimal (case insensitive) RGBA (red, green, blue, alpha) integers (00-FF): \"#0FF6\" (partially transparent aqua)",
 						"With HSL (hue, saturation, lightness): \"hsl(270, 100%, 100%)\" (a dark purple)",
-						"With HSLA (hue, saturation, lightness, alpha): \"hsl(270, 100%, 100%, 50%)\" (a partially transparent dark purple)"
+						"With HSLA (hue, saturation, lightness, alpha): \"hsla(270, 100%, 100%, 0.5)\" (a partially transparent dark purple)"
 					)
 					.define("selectionBoxColor", "#0006");
 

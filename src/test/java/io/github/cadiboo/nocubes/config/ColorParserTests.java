@@ -62,6 +62,24 @@ public class ColorParserTests {
 	}
 
 	@Test
+	public void parseHslInts() {
+		final Color darkPurple = ColorParser.parse("hsl(270, 100%, 100%)");
+		assertEquals(128, darkPurple.red);
+		assertEquals(0, darkPurple.green);
+		assertEquals(255, darkPurple.blue);
+		assertEquals(255, darkPurple.alpha);
+	}
+
+	@Test
+	public void parseHslaInts() {
+		final Color darkPurple = ColorParser.parse("hsla(270, 100%, 100%, 0.5)");
+		assertEquals(128, darkPurple.red);
+		assertEquals(0, darkPurple.green);
+		assertEquals(255, darkPurple.blue);
+		assertEquals(128, darkPurple.alpha);
+	}
+
+	@Test
 	public void parseRgbHex() {
 		final Color aqua = ColorParser.parse("00FFFF");
 		assertEquals(0, aqua.red);
