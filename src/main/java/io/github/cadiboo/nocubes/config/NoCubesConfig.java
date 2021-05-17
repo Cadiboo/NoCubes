@@ -101,13 +101,6 @@ public final class NoCubesConfig {
 			debugRenderMeshCollisions = INSTANCE.debugRenderMeshCollisions.get();
 			debugRecordMeshPerformance = INSTANCE.debugRecordMeshPerformance.get();
 			debugOutlineNearbyMesh = INSTANCE.debugOutlineNearbyMesh.get();
-			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelistPreference.get(), INSTANCE.smoothableBlacklistPreference.get());
-		}
-
-		public static void updateSmoothablePreference(boolean newValue, BlockState... states) {
-			NoCubesConfig.Client.Impl cfg = NoCubesConfig.Client.INSTANCE;
-			Smoothables.updateSmoothables(newValue, states, (List) cfg.smoothableWhitelistPreference.get(), (List) cfg.smoothableBlacklistPreference.get());
-			saveAndLoad();
 		}
 
 		public static void updateRender(boolean newValue) {
@@ -126,8 +119,6 @@ public final class NoCubesConfig {
 
 			final BooleanValue render;
 			final ConfigValue<String> selectionBoxColor;
-			final ConfigValue<List<? extends String>> smoothableWhitelistPreference;
-			final ConfigValue<List<? extends String>> smoothableBlacklistPreference;
 			final BooleanValue debugEnabled;
 			final BooleanValue debugOutlineSmoothables;
 			final BooleanValue debugVisualiseDensitiesGrid;
@@ -161,14 +152,6 @@ public final class NoCubesConfig {
 						"With HSLA (hue, saturation, lightness, alpha): \"hsla(270, 100%, 100%, 0.5)\" (a partially transparent dark purple)"
 					)
 					.define("selectionBoxColor", "#0006");
-
-				smoothableWhitelistPreference = builder
-					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelistPreference")
-					.defineListAllowEmpty(Collections.singletonList("smoothableWhitelistPreference"), Lists::newArrayList, String.class::isInstance);
-
-				smoothableBlacklistPreference = builder
-					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklistPreference")
-					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklistPreference"), Lists::newArrayList, String.class::isInstance);
 
 				builder
 					.push("debug");
