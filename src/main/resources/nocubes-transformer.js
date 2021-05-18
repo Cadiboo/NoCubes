@@ -323,7 +323,8 @@ function initializeCoreMod() {
 				var originalInstructionsLabel = new LabelNode();
 				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
 					new VarInsnNode(ALOAD, 0), // this
-					callNoCubesHook("canOcclude", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;)Z"),
+					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+					callNoCubesHook("canOcclude", "(Lnet/minecraft/block/BlockState;)Z"),
 					new JumpInsnNode(IFNE, originalInstructionsLabel),
 					new InsnNode(ICONST_0),
 					new InsnNode(IRETURN),
@@ -343,9 +344,10 @@ function initializeCoreMod() {
 				// Redirect execution to our hook
 				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
 					new VarInsnNode(ALOAD, 0), // this
+					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
 					new VarInsnNode(ALOAD, 1), // reader
 					new VarInsnNode(ALOAD, 2), // pos
-					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
+					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
 					new InsnNode(ARETURN),
 					new LabelNode() // Label for original instructions
 				));
@@ -363,10 +365,11 @@ function initializeCoreMod() {
 				// Redirect execution to our hook
 				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
 					new VarInsnNode(ALOAD, 0), // this
+					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
 					new VarInsnNode(ALOAD, 1), // reader
 					new VarInsnNode(ALOAD, 2), // pos
 					new VarInsnNode(ALOAD, 3), // context
-					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
+					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
 					new InsnNode(ARETURN),
 					new LabelNode() // Label for original instructions
 				));
@@ -384,9 +387,10 @@ function initializeCoreMod() {
 				// Redirect execution to our hook
 				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
 					new VarInsnNode(ALOAD, 0), // this
+					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
 					new VarInsnNode(ALOAD, 1), // reader
 					new VarInsnNode(ALOAD, 2), // pos
-					callNoCubesHook("isCollisionShapeFullBlock", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"),
+					callNoCubesHook("isCollisionShapeFullBlock", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"),
 					new InsnNode(IRETURN),
 					new LabelNode() // Label for original instructions
 				));
@@ -413,7 +417,8 @@ function initializeCoreMod() {
 				var originalInstructionsLabel = new LabelNode();
 				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
 					new VarInsnNode(ALOAD, 0), // this
-					callNoCubesHook("hasLargeCollisionShape", "(Lnet/minecraft/block/AbstractBlock$AbstractBlockState;)Z"),
+					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+					callNoCubesHook("hasLargeCollisionShape", "(Lnet/minecraft/block/BlockState;)Z"),
 					new JumpInsnNode(IFNE, originalInstructionsLabel),
 					new InsnNode(ICONST_1),
 					new InsnNode(IRETURN),

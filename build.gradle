@@ -31,7 +31,8 @@ archivesBaseName = modFileName
 if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
 	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.
+// Mojang ships Java 8 to end users, so mods should target this version
+java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 minecraft {
 	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L23-L33"

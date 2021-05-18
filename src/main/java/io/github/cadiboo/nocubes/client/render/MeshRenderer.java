@@ -25,6 +25,8 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -113,30 +115,29 @@ public final class MeshRenderer {
 			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
 	}
 
-	public static void renderBlockDamage(BlockRendererDispatcher blockRendererDispatcher, BlockState blockStateIn, BlockPos posIn, IBlockDisplayReader lightReaderIn, MatrixStack matrixStackIn, IVertexBuilder vertexBuilderIn, IModelData modelData) {
-		if (!NoCubesConfig.Client.render)
-			return;
-
+	public static void renderSmoothBlockDamage(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
 		FaceInfo renderInfo = new FaceInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		Random random = blockRendererDispatcher.random;
+		Random random = dispatcher.random;
 		try (
-			Area area = new Area(Minecraft.getInstance().level, posIn, ModUtil.VEC_ONE, generator);
+			Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator);
 		) {
 			// See the javadoc on Face#addMeshOffset for an explanation of this
-			BlockPos areaMeshOffset = area.start.subtract(posIn);
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+			BlockPos areaMeshOffset = area.start.subtract(pos);
+			Matrix3f normal = matrix.last().normal();
+			Matrix4f pose = matrix.last().pose();
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (ignored, face) -> {
 				face.addMeshOffset(areaMeshOffset);
-				renderInfo.setup(face, posIn);
+				renderInfo.setup(face, pos);
 
-				renderInfo.vertexNormals.transform(matrixStackIn.last().normal());
-				renderInfo.faceNormal.transform(matrixStackIn.last().normal());
-				face.transform(matrixStackIn.last().pose());
+				renderInfo.vertexNormals.transform(normal);
+				renderInfo.faceNormal.transform(normal);
+				face.transform(pose);
 
 				// Don't need textures or lighting because the crumbling texture overwrites them
-				renderInfo.assignMissingQuads(blockStateIn, random, modelData);
+				renderInfo.assignMissingQuads(state, random, modelData);
 				LightCache light = null;
-				renderFace(renderInfo, vertexBuilderIn, lightReaderIn, blockStateIn, posIn, null, null, light, false);
+				renderFace(renderInfo, buffer, world, state, pos, null, null, light, false);
 
 				return true;
 			});
