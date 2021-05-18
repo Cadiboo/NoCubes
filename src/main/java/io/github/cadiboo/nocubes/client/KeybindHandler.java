@@ -8,7 +8,6 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.Util;
@@ -80,7 +79,7 @@ public final class KeybindHandler {
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
 			NoCubes.smoothableHandler.setSmoothable(newValue, state);
-			Minecraft.getInstance().levelRenderer.allChanged();
+			ClientUtil.reloadAllChunks(Minecraft.getInstance());
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
 			if (!player.hasPermissions(REQUIRED_PERMISSION_LEVEL))
