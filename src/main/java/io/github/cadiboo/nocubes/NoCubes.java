@@ -10,10 +10,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLLoader;
-
-import java.util.Arrays;
 
 /**
  * @author Cadiboo
@@ -29,8 +26,6 @@ public final class NoCubes {
 		smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
-		if (ModUtil.IS_DEVELOPER_WORKSPACE.get())
-			TestBlocks.BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
 		Hooks.loadClasses(FMLLoader.getDist());
 	}
 
