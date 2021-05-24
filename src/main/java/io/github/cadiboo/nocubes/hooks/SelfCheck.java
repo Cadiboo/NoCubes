@@ -5,12 +5,12 @@ public final class SelfCheck {
 	static boolean preIteration;
 	static boolean canBlockStateRender;
 	static boolean renderBlockDamage;
-	static boolean getCollisionShapeNoContext;
-	static boolean getCollisionShapeWithContext;
-	static boolean isCollisionShapeFullBlock;
-	static boolean hasLargeCollisionShape;
-	static boolean isNotSuffocating;
-	static boolean canOcclude;
+	static boolean getCollisionShapeNoContextOverride;
+	static boolean getCollisionShapeWithContextOverride;
+	static boolean isCollisionShapeFullBlockOverride;
+	static boolean hasLargeCollisionShapeOverride;
+	static boolean isSuffocatingOverride;
+	static boolean canOccludeOverride;
 	static boolean markForRerender;
 
 	public static String[] info() {
@@ -18,12 +18,12 @@ public final class SelfCheck {
 			"preIteration hook called: " + preIteration,
 			"canBlockStateRender hook called: " + canBlockStateRender,
 			"renderBlockDamage hook called: " + renderBlockDamage,
-			"getCollisionShape(NoContext) hook called: " + getCollisionShapeNoContext,
-			"getCollisionShape(WithContext) hook called: " + getCollisionShapeWithContext,
-			"isCollisionShapeFullBlock hook called: " + isCollisionShapeFullBlock,
-			"hasLargeCollisionShape hook called: " + hasLargeCollisionShape,
-			"isNotSuffocating hook called: " + isNotSuffocating,
-			"canOcclude hook called: " + canOcclude,
+			"getCollisionShapeOverride(NoContext) hook called: " + getCollisionShapeNoContextOverride,
+			"getCollisionShapeOverride(WithContext) hook called: " + getCollisionShapeWithContextOverride,
+			"isCollisionShapeFullBlockOverride hook called: " + isCollisionShapeFullBlockOverride,
+			"hasLargeCollisionShapeOverride hook called: " + hasLargeCollisionShapeOverride,
+			"isSuffocatingOverride hook called: " + isSuffocatingOverride,
+			"canOccludeOverride hook called: " + canOccludeOverride,
 			"markForRerender hook called: " + markForRerender,
 		};
 	}

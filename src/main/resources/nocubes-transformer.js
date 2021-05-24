@@ -43,6 +43,8 @@ function initializeCoreMod() {
 
 	NEW = Opcodes.NEW;
 	CHECKCAST = Opcodes.CHECKCAST;
+	DUP = Opcodes.DUP;
+	POP = Opcodes.POP;
 
 	ACONST_NULL = Opcodes.ACONST_NULL;
 	ICONST_0 = Opcodes.ICONST_0;
@@ -51,6 +53,7 @@ function initializeCoreMod() {
 	IFEQ = Opcodes.IFEQ;
 	IFNE = Opcodes.IFNE;
 	IF_ACMPEQ = Opcodes.IF_ACMPEQ;
+	IFNULL = Opcodes.IFNULL;
 
 	GETFIELD = Opcodes.GETFIELD;
 	GETSTATIC = Opcodes.GETSTATIC;
@@ -133,7 +136,6 @@ function initializeCoreMod() {
 //			}
 //		},
 
-		// Hooks the cracking/breaking/damage animation rendering so we can make it smooth
 		"BlockRendererDispatcher#renderBlockDamage": {
 			"target": {
 				"type": "METHOD",
@@ -236,7 +238,7 @@ function initializeCoreMod() {
 
 					instructions.insert(firstLabelBeforeGetRenderTypeCall, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 20 : 17), // blockstate
-						callNoCubesHook("canBlockStateRender", "(Lnet/minecraft/block/BlockState;)Z"),
+						callNoCubesHook('canBlockStateRender', '(Lnet/minecraft/block/BlockState;)Z'),
                     	new JumpInsnNode(IFEQ, labelToJumpToIfBlockIsInvisible),
 						new LabelNode() // Label for original instructions
 					));
@@ -248,9 +250,6 @@ function initializeCoreMod() {
 			}
 		},
 
-		// Hooks the function that gets called when a block is updated and marked for re-render
-		// We need to extend the range of blocks that get marked for re-render (from vanilla's 1 to 2)
-		// This fixes seams that appear when meshes along chunk borders change
 		"ClientWorld#setBlocksDirty": {
 			"target": {
 				"type": "METHOD",
@@ -303,163 +302,6 @@ function initializeCoreMod() {
 //			}
 //		},
 
-		// Hooks the method that BlockState#shouldSideBeRendered uses so that the faces of
-		// cubic terrain (including fluids) are rendered when they are up against smooth terrain
-		"BlockState#canOcclude": {
-			"target": {
-				"type": "METHOD",
-				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_200132_m",
-				"methodDesc": "()Z"
-			},
-			"transformer": function(methodNode) {
-				// The code that we are trying to inject looks like this:
-				//	<start of method>
-				//	// NoCubes Start
-				//	if (!io.github.cadiboo.nocubes.hooks.Hooks.canOcclude(this))
-				//		return false;
-				//	// NoCubes End
-				// <rest of method>
-				var originalInstructionsLabel = new LabelNode();
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-					callNoCubesHook("canOcclude", "(Lnet/minecraft/block/BlockState;)Z"),
-					new JumpInsnNode(IFNE, originalInstructionsLabel),
-					new InsnNode(ICONST_0),
-					new InsnNode(IRETURN),
-					originalInstructionsLabel
-				));
-				return methodNode;
-			}
-		},
-		"BlockState#getCollisionShape(NoContext)": {
-			"target": {
-				"type": "METHOD",
-				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_196952_d",
-				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
-			},
-			"transformer": function(methodNode) {
-				// Redirect execution to our hook
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-					new VarInsnNode(ALOAD, 1), // reader
-					new VarInsnNode(ALOAD, 2), // pos
-					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
-					new InsnNode(ARETURN),
-					new LabelNode() // Label for original instructions
-				));
-				return methodNode;
-			}
-		},
-		"BlockState#getCollisionShape(WithContext)": {
-			"target": {
-				"type": "METHOD",
-				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_215685_b",
-				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
-			},
-			"transformer": function(methodNode) {
-				// Redirect execution to our hook
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-					new VarInsnNode(ALOAD, 1), // reader
-					new VarInsnNode(ALOAD, 2), // pos
-					new VarInsnNode(ALOAD, 3), // context
-					callNoCubesHook("getCollisionShape", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"),
-					new InsnNode(ARETURN),
-					new LabelNode() // Label for original instructions
-				));
-				return methodNode;
-			}
-		},
-		"BlockState#isCollisionShapeFullBlock": {
-			"target": {
-				"type": "METHOD",
-				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_235785_r_",
-				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
-			},
-			"transformer": function(methodNode) {
-				// Redirect execution to our hook
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-					new VarInsnNode(ALOAD, 1), // reader
-					new VarInsnNode(ALOAD, 2), // pos
-					callNoCubesHook("isCollisionShapeFullBlock", "(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"),
-					new InsnNode(IRETURN),
-					new LabelNode() // Label for original instructions
-				));
-				return methodNode;
-			}
-		},
-
-		// Hooking this somehow stops us falling through 1 block wide holes and under the ground
-		"BlockState#hasLargeCollisionShape": {
-			"target": {
-				"type": "METHOD",
-				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_215704_f",
-				"methodDesc": "()Z"
-			},
-			"transformer": function(methodNode) {
-				// The code that we are trying to inject looks like this:
-				//	<start of method>
-				//	// NoCubes Start
-				//	if (!io.github.cadiboo.nocubes.hooks.Hooks.hasLargeCollisionShape(this))
-				//		return true;
-				//	// NoCubes End
-				// <rest of method>
-				var originalInstructionsLabel = new LabelNode();
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-					callNoCubesHook("hasLargeCollisionShape", "(Lnet/minecraft/block/BlockState;)Z"),
-					new JumpInsnNode(IFNE, originalInstructionsLabel),
-					new InsnNode(ICONST_1),
-					new InsnNode(IRETURN),
-					originalInstructionsLabel
-				));
-				return methodNode;
-			}
-		},
-
-        // Hooking this stops grass path collisions being weird
-        "BlockState#isSuffocating": {
-			"target": {
-                "type": "METHOD",
-                "class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
-				"methodName": "func_229980_m_",
-				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
-			},
-			"transformer": function(methodNode) {
-				// The code that we are trying to inject looks like this:
-                //	<start of method>
-                //	// NoCubes Start
-                //	if (io.github.cadiboo.nocubes.hooks.Hooks.isNotSuffocating(this))
-                //		return false;
-                //	// NoCubes End
-                // <rest of method>
-                var originalInstructionsLabel = new LabelNode();
-                injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-                    new VarInsnNode(ALOAD, 0), // this
-                    new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-                    new VarInsnNode(ALOAD, 1), // world
-                    new VarInsnNode(ALOAD, 2), // pos
-                    callNoCubesHook('isNotSuffocating', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z'),
-                    new JumpInsnNode(IFEQ, originalInstructionsLabel),
-                    new InsnNode(ICONST_0),
-                    new InsnNode(IRETURN),
-                    originalInstructionsLabel
-                ));
-                return methodNode;
-			}
-		},
-
 		// Add fields that allow us to very efficiently store/query if a block state is smoothable
 		"BlockState": {
 			"target": {
@@ -473,20 +315,206 @@ function initializeCoreMod() {
 //				fields.add(new FieldNode(ACC_PUBLIC, "nocubes_isLeavesSmoothable", "Z", null, false));
 				return classNode;
 			}
-		}
-//		,
-//		"VoxelShapes#getAllowedOffset": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.util.math.shapes.VoxelShapes",
-//				"methodName": "func_216386_a",
-//				"methodDesc": "(Lnet/minecraft/util/math/AxisAlignedBB;Lnet/minecraft/world/IWorldReader;DLnet/minecraft/util/math/shapes/ISelectionContext;Lnet/minecraft/util/AxisRotation;Ljava/util/stream/Stream;)D"
-//			},
-//			"transformer": function(methodNode) {
-//				injectGetAllowedOffsetHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		}
+		},
+
+        // Collisions hooks
+		"BlockState#getCollisionShape(NoContext)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_196952_d",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if ((VoxelShape override = io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapeOverride(this, reader, pos)) != null)
+				//		return override;
+				//	// NoCubes End
+				// <rest of method>
+				injectOverrideAtFirstLabel(methodNode.instructions,
+					ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+						new VarInsnNode(ALOAD, 1), // reader
+						new VarInsnNode(ALOAD, 2), // pos
+						callNoCubesHook('getCollisionShapeOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/shapes/VoxelShape;')
+					),
+					ASMAPI.listOf(
+						new InsnNode(ARETURN)
+					)
+				);
+				return methodNode;
+			}
+		},
+		"BlockState#getCollisionShape(WithContext)": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_215685_b",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if ((VoxelShape override = io.github.cadiboo.nocubes.hooks.Hooks.getCollisionShapeOverride(this, reader, pos, context)) != null)
+				//		return override;
+				//	// NoCubes End
+				// <rest of method>
+				injectOverrideAtFirstLabel(methodNode.instructions,
+					ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+						new VarInsnNode(ALOAD, 1), // reader
+						new VarInsnNode(ALOAD, 2), // pos
+						new VarInsnNode(ALOAD, 3), // context
+						callNoCubesHook('getCollisionShapeOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/shapes/ISelectionContext;)Lnet/minecraft/util/math/shapes/VoxelShape;')
+					),
+					ASMAPI.listOf(
+						new InsnNode(ARETURN)
+					)
+				);
+				return methodNode;
+			}
+		},
+		"BlockState#isCollisionShapeFullBlock": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_235785_r_",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.isCollisionShapeFullBlockOverride(this, reader, pos, context)) != null)
+				//		return override.booleanValue();
+				//	// NoCubes End
+				// <rest of method>
+				injectOverrideAtFirstLabel(methodNode.instructions,
+					ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+						new VarInsnNode(ALOAD, 1), // reader
+						new VarInsnNode(ALOAD, 2), // pos
+						callNoCubesHook('isCollisionShapeFullBlockOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Boolean;')
+					),
+					callBooleanValueAndReturn()
+				);
+				return methodNode;
+			}
+		},
+		"BlockState#hasLargeCollisionShape": {
+			"target": {
+				"type": "METHOD",
+				"class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_215704_f",
+				"methodDesc": "()Z"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+				//	// NoCubes Start
+				//	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.hasLargeCollisionShapeOverride(this)) != null)
+				//		return override.booleanValue();
+				//	// NoCubes End
+				// <rest of method>
+				injectOverrideAtFirstLabel(methodNode.instructions,
+					ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+						callNoCubesHook('hasLargeCollisionShapeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
+					),
+					callBooleanValueAndReturn()
+				)
+				return methodNode;
+			}
+		},
+        "BlockState#isSuffocating": {
+			"target": {
+                "type": "METHOD",
+                "class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_229980_m_",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+                //	<start of method>
+                //	// NoCubes Start
+                //	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.isSuffocatingOverride(this, world, pos)) != null)
+                //		return override.booleanValue();
+                //	// NoCubes End
+                // <rest of method>
+                injectOverrideAtFirstLabel(methodNode.instructions,
+                    ASMAPI.listOf(
+                        new VarInsnNode(ALOAD, 0), // this
+                        new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+						new VarInsnNode(ALOAD, 1), // world
+						new VarInsnNode(ALOAD, 2), // pos
+                        callNoCubesHook('isSuffocatingOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Boolean;')
+                    ),
+                    callBooleanValueAndReturn()
+                )
+                return methodNode;
+			}
+		},
+
+		// Occlusion/rendering hooks
+		"BlockState#canOcclude": {
+            "target": {
+                "type": "METHOD",
+                "class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+                "methodName": "func_200132_m",
+                "methodDesc": "()Z"
+            },
+            "transformer": function(methodNode) {
+                // The code that we are trying to inject looks like this:
+                //	<start of method>
+                //	// NoCubes Start
+                //	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.canOccludeOverride(this)) != null)
+                //		return override.booleanValue();
+                //	// NoCubes End
+                // <rest of method>
+                injectOverrideAtFirstLabel(methodNode.instructions,
+                    ASMAPI.listOf(
+                        new VarInsnNode(ALOAD, 0), // this
+                        new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
+                    ),
+                    callBooleanValueAndReturn()
+                );
+                return methodNode;
+            }
+        },
+        // This should fail relatively sliently if OptiFine is not present
+        "BlockState#isCacheOpaqueCube (OptiFine)": {
+            "target": {
+                "type": "METHOD",
+                "class": "net.minecraft.block.BlockState",
+                "methodName": "isCacheOpaqueCube", // Added by OptiFine
+                "methodDesc": "()Z"
+            },
+            "transformer": function(methodNode) {
+                // The code that we are trying to inject looks like this:
+                //	<start of method>
+                //	// NoCubes Start
+                //	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.canOccludeOverride(this)) != null)
+                //		return override.booleanValue();
+                //	// NoCubes End
+                // <rest of method>
+                injectOverrideAtFirstLabel(methodNode.instructions,
+                    ASMAPI.listOf(
+                        new VarInsnNode(ALOAD, 0), // this
+                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
+                    ),
+                    callBooleanValueAndReturn()
+                );
+                return methodNode;
+            }
+        }
 	}));
 }
 
@@ -720,7 +748,6 @@ function injectGetCollisionShapesHook(instructions) {
 		if (instruction.getOpcode() == NEW) {
 			if (instruction.desc == "net/minecraft/util/math/CubeCoordinateIterator") {
 				first_NEW_CubeCoordinateIterator = instruction;
-				print("Found injection point \"first_NEW_CubeCoordinateIterator\" " + instruction);
 				break;
 			}
 		}
@@ -732,7 +759,6 @@ function injectGetCollisionShapesHook(instructions) {
 		var instruction = instructions.get(i);
 		if (instruction.getType() == LABEL) {
 			firstLabelBefore_first_NEW_CubeCoordinateIterator = instruction;
-			print("Found label \"next Label\" " + instruction);
 			break;
 		}
 	}
@@ -856,7 +882,6 @@ function injectGetFluidStateHook(instructions) {
 					if (instruction.desc == "(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;") {
 						if (instruction.itf == false) {
 							first_INVOKEVIRTUAL_World_getChunkAt = instruction;
-							print("Found injection point \"first getChunkAt\" " + instruction);
 							break;
 						}
 					}
@@ -872,7 +897,6 @@ function injectGetFluidStateHook(instructions) {
 		var instruction = instructions.get(i);
 		if (instruction.getOpcode() == ARETURN) {
 			next_ARETURN = instruction;
-			print("Found injection point \"next ARETURN\" " + instruction);
 			break;
 		}
 	}
@@ -1087,6 +1111,38 @@ function injectAfterFirstLabel(instructions, instructionsToInject) {
 	instructions.insert(injectAfter, instructionsToInject);
 }
 
+function injectOverrideAtFirstLabel(instructions, instructionsToCallToGetValue, instructionsToRunIfNotNull) {
+	var injectAfter = findFirstLabel(instructions);
+	injectOverride(instructions, injectAfter, instructionsToCallToGetValue, instructionsToRunIfNotNull);
+}
+
+function injectOverride(instructions, injectAfter, instructionsToCallToGetValue, instructionsToRunIfNotNull) {
+	var instructionsToInject = ASMAPI.listOf();
+	instructionsToInject.add(instructionsToCallToGetValue);
+	// Duplicate the return value of 'instructionsToCallToGetValue' so that it is on the top of the stack for 'instructionsToRunIfNotNull'
+	instructionsToInject.add(new InsnNode(DUP));
+	var originalInstructionsLabel = new LabelNode();
+	instructionsToInject.add(new JumpInsnNode(IFNULL, originalInstructionsLabel))
+	instructionsToInject.add(instructionsToRunIfNotNull);
+	instructionsToInject.add(originalInstructionsLabel);
+	// Pop the return value of 'instructionsToCallToGetValue' off the stack because 'instructionsToRunIfNotNull' wasn't called
+	instructionsToInject.add(new InsnNode(POP));
+	instructions.insert(injectAfter, instructionsToInject);
+}
+
+function callBooleanValueAndReturn() {
+	return ASMAPI.listOf(
+		new MethodInsnNode(
+			INVOKEVIRTUAL, // int opcode
+			'java/lang/Boolean', // String owner
+			'booleanValue', // String name
+			'()Z', // String descriptor
+			false // boolean isInterface
+		),
+		new InsnNode(IRETURN)
+	);
+}
+
 function detectOptiFine(instructions) {
 	var length = instructions.size();
 	var i;
@@ -1243,13 +1299,12 @@ function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, metho
 			methods[i] = methodTransformer(methodNode);
 			return classNode;
 		}
-		var searchedMethods = "[";
+		var searchedMethods = [];
 		for (var i in methods) {
 			var methodNode = methods[i];
-			searchedMethods + "\"" + classNode.name + "." + methodNode.name + " " + methodNode.desc + "\"";
+			searchedMethods.push("\"" + classNode.name + "." + methodNode.name + " " + methodNode.desc + "\"");
 		}
-		searchedMethods += "]";
-		throw new Error("Method transformer did not find a method! Target method was \"" + classNode.name + "." + mappedMethodName + " " + methodDesc + "\". Searched " + searchedMethods + ".")
+		throw new Error("Method transformer did not find a method! Target method was \"" + classNode.name + "." + mappedMethodName + methodDesc + "\". Searched [" + searchedMethods.join(", ") + "].")
 	};
 }
 

@@ -23,7 +23,8 @@ import java.util.function.Predicate;
 
 public final class CollisionHandler {
 
-	public static VoxelShape getCollisionShape(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
+	public static VoxelShape getCollisionShape(BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
+		boolean canCollide = state.getBlock().hasCollision;
 		try {
 			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, context);
 		} catch (Throwable t) {
