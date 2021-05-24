@@ -34,6 +34,14 @@ class HD_U_G8 implements OptiFineProxy {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
 		}
+		try {
+			final String requiredVersion = "OptiFine_1.16.5_HD_U_G8";
+			Object installedVersion = VERSION.get(null);
+			if (!requiredVersion.equals(installedVersion))
+				throw new RuntimeException("NoCubes requires '" + requiredVersion + "', you have '" + installedVersion + "' installed");
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Can't access OptiFine's version", e);
+		}
 		return true;
 	}
 
@@ -104,6 +112,7 @@ class HD_U_G8 implements OptiFineProxy {
 	@SuppressWarnings("ConstantConditions")
 	interface Reflect {
 
+		Field VERSION = tryGetField("net.optifine.Config", "isShaders");
 		MethodHandle isShaders = tryGetMethod("net.optifine.Config", "isShaders");
 		MethodHandle isAlternateBlocks = tryGetMethod("net.optifine.Config", "isAlternateBlocks");
 
