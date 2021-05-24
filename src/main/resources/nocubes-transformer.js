@@ -428,18 +428,37 @@ function initializeCoreMod() {
 			}
 		},
 
-//		"BlockState#causesSuffocation": {
-//			"target": {
-//				"type": "METHOD",
-//				"class": "net.minecraft.block.BlockState",
-//				"methodName": "func_215696_m",
-//				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
-//			},
-//			"transformer": function(methodNode) {
-//				injectCausesSuffocationHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		},
+        // Hooking this stops grass path collisions being weird
+        "BlockState#isSuffocating": {
+			"target": {
+                "type": "METHOD",
+                "class": "net.minecraft.block.AbstractBlock$AbstractBlockState",
+				"methodName": "func_229980_m_",
+				"methodDesc": "(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
+			},
+			"transformer": function(methodNode) {
+				// The code that we are trying to inject looks like this:
+                //	<start of method>
+                //	// NoCubes Start
+                //	if (io.github.cadiboo.nocubes.hooks.Hooks.isNotSuffocating(this))
+                //		return false;
+                //	// NoCubes End
+                // <rest of method>
+                var originalInstructionsLabel = new LabelNode();
+                injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+                    new VarInsnNode(ALOAD, 0), // this
+                    new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+                    new VarInsnNode(ALOAD, 1), // world
+                    new VarInsnNode(ALOAD, 2), // pos
+                    callNoCubesHook('isNotSuffocating', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z'),
+                    new JumpInsnNode(IFEQ, originalInstructionsLabel),
+                    new InsnNode(ICONST_0),
+                    new InsnNode(IRETURN),
+                    originalInstructionsLabel
+                ));
+                return methodNode;
+			}
+		},
 
 		// Add fields that allow us to very efficiently store/query if a block state is smoothable
 		"BlockState": {
@@ -882,95 +901,6 @@ function injectGetFluidStateHook(instructions) {
 	instructions.insertBefore(first_INVOKEVIRTUAL_World_getChunkAt, toInject);
 
 	removeBetweenInclusive(instructions, first_INVOKEVIRTUAL_World_getChunkAt, next_ARETURN);
-
-}
-
-// 1) Find first label
-// 2) inject right after first label
-function injectCausesSuffocationHook(instructions) {
-
-//	return this.getBlock().causesSuffocation(this, worldIn, pos);
-
-//	// NoCubes Start
-//	if (io.github.cadiboo.nocubes.hooks.Hooks.doesNotCauseSuffocation(this, worldIn, pos)) return false;
-//	// NoCubes End
-//	return this.getBlock().causesSuffocation(this, worldIn, pos);
-
-
-//  public default causesSuffocation(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
-//   L0
-//    LINENUMBER 321 L0
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getBlock ()Lnet/minecraft/block/Block;
-//    ALOAD 0
-//    ALOAD 1
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
-//    IRETURN
-
-//  public causesSuffocation(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
-//   L0
-//    LINENUMBER 325 L0
-//    ALOAD 0
-//    ALOAD 1
-//    ALOAD 2
-//    INVOKESTATIC io/github/cadiboo/nocubes/hooks/Hooks.doesNotCauseSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
-//    IFEQ L1
-//    ICONST_0
-//    IRETURN
-//   L1
-//    LINENUMBER 327 L1
-//   FRAME SAME
-//    ALOAD 0
-//    INVOKEVIRTUAL net/minecraft/block/BlockState.getBlock ()Lnet/minecraft/block/Block;
-//    ALOAD 0
-//    ALOAD 1
-//    ALOAD 2
-//    INVOKEVIRTUAL net/minecraft/block/Block.causesSuffocation (Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z
-//    IRETURN
-
-
-	var firstLabel;
-	var arrayLength = instructions.size();
-	for (var i = 0; i < arrayLength; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			firstLabel = instruction;
-			print("Found injection point \"first Label\" " + instruction);
-			break;
-		}
-	}
-	assertInstructionFound(firstLabel, 'first Label', instructions);
-
-	var toInject = new InsnList();
-
-	// Labels n stuff
-	var originalInstructionsLabel = new LabelNode();
-
-	// Make list of instructions to inject
-	toInject.add(new VarInsnNode(ALOAD, 0)); // this
-	toInject.add(new VarInsnNode(ALOAD, 1)); // reader
-	toInject.add(new VarInsnNode(ALOAD, 2)); // pos
-	toInject.add(new MethodInsnNode(
-			//int opcode
-			INVOKESTATIC,
-			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
-			//String name
-			"doesNotCauseSuffocation",
-			//String descriptor
-			"(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z",
-			//boolean isInterface
-			false
-	));
-	toInject.add(new JumpInsnNode(IFEQ, originalInstructionsLabel));
-	toInject.add(new InsnNode(ICONST_0));
-	toInject.add(new InsnNode(IRETURN));
-
-	toInject.add(originalInstructionsLabel);
-
-	// Inject instructions
-	instructions.insert(firstLabel, toInject);
 
 }
 

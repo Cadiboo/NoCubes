@@ -9,6 +9,7 @@ public final class SelfCheck {
 	static boolean getCollisionShapeWithContext;
 	static boolean isCollisionShapeFullBlock;
 	static boolean hasLargeCollisionShape;
+	static boolean isNotSuffocating;
 	static boolean canOcclude;
 	static boolean markForRerender;
 
@@ -21,6 +22,7 @@ public final class SelfCheck {
 			"getCollisionShape(WithContext) hook called: " + getCollisionShapeWithContext,
 			"isCollisionShapeFullBlock hook called: " + isCollisionShapeFullBlock,
 			"hasLargeCollisionShape hook called: " + hasLargeCollisionShape,
+			"isNotSuffocating hook called: " + isNotSuffocating,
 			"canOcclude hook called: " + canOcclude,
 			"markForRerender hook called: " + markForRerender,
 		};
