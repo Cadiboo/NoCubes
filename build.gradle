@@ -23,8 +23,17 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-// We use the version format MCVERSION-MAJOR.MINOR.PATCH
-version = "${modMinecraftVersion}-${modVersion}"
+def getGitCommit = { ->
+    def stdout = new ByteArrayOutputStream()
+    def result = exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+        standardOutput = stdout
+    }
+    return result.getExitValue() != 0 ? 'nogit' : stdout.toString().trim()
+}
+
+// We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
+version = "${modMinecraftVersion}-${modVersion}-${getGitCommit()}"
 group = modGroup
 archivesBaseName = modFileName
 
