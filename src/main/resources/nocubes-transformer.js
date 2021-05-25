@@ -1,6 +1,5 @@
 /**
- * This function is called by Forge before any minecraft classes are loaded to
- * setup the coremod.
+ * This function is called by Forge before any minecraft classes are loaded to setup the coremod.
  *
  * @return {object} All the transformers of this coremod.
  */

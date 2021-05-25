@@ -119,7 +119,7 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link BlockState#canOcclude()} before any other logic
-	 * Called from: {@link BlockState#isCacheOpaqueCube()} (OptiFine) before any other logic
+	 * Called from: BlockState#isCacheOpaqueCube() (OptiFine) before any other logic
 	 * <p>
 	 * Hooking this makes {@link Block#shouldRenderFace(BlockState, IBlockReader, BlockPos, Direction)} return true and
 	 * causes cubic terrain (including fluids) to be rendered when they are up against smooth terrain, stopping us from
