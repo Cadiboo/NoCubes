@@ -17,7 +17,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -45,23 +47,33 @@ public final class MeshRenderer {
 
 	private static final RollingProfiler profiler = new RollingProfiler(256);
 
-	public static void renderChunk(final ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, final ChunkRenderDispatcher.CompiledChunk compiledChunkIn, final RegionRenderCacheBuilder builderIn, final BlockPos blockpos, final IBlockDisplayReader chunkrendercache, final MatrixStack matrixstack, final Random random, final BlockRendererDispatcher blockrendererdispatcher) {
+	public static void renderChunk(
+		RebuildTask rebuildTask,
+		ChunkRender chunkRender,
+		CompiledChunk compiledChunk,
+		RegionRenderCacheBuilder buffers,
+		BlockPos chunkPos,
+		IBlockDisplayReader world,
+		MatrixStack matrix,
+		Random random,
+		BlockRendererDispatcher dispatcher
+	) {
 		if (!NoCubesConfig.Client.render)
 			return;
 
 		long start = System.nanoTime();
-		FaceInfo renderInfo = new FaceInfo();
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		OptiFineProxy optiFine = OptiFineCompatibility.proxy();
+		optiFine.preRenderChunk(chunkPos);
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+		FaceInfo renderInfo = new FaceInfo();
 
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		try (
-			Area area = new Area(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE, generator);
-			LightCache light = new LightCache(Minecraft.getInstance().level, blockpos, ModUtil.CHUNK_SIZE)
+			Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, generator);
+			LightCache light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE)
 		) {
-			optiFine.preRenderChunk(blockpos);
 			// See the javadoc on Face#addMeshOffset for an explanation of this
-			BlockPos areaMeshOffset = area.start.subtract(blockpos);
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+			BlockPos areaMeshOffset = area.start.subtract(chunkPos);
 			generator.generate(area, isSmoothable, (relativePos, face) -> {
 				face.addMeshOffset(areaMeshOffset);
 //				if (face.v0.x < 0 || face.v1.x < 0 || face.v2.x < 0 || face.v3.x < 0)// || face.v0.x > 16 || face.v1.x > 16 || face.v2.x > 16 || face.v3.x > 16)
@@ -71,41 +83,41 @@ public final class MeshRenderer {
 //				if (face.v0.z < 0 || face.v1.z < 0 || face.v2.z < 0 || face.v3.z < 0)// || face.v0.z > 16 || face.v1.z > 16 || face.v2.z > 16 || face.v3.z > 16)
 //					return true;
 
-				renderInfo.setup(face, blockpos);
+				renderInfo.setup(face, chunkPos);
+				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
 				BlockPos.Mutable worldPos = relativePos.move(area.start);
-				BlockState blockstate = getTexturePosAndState(worldPos, area, isSmoothable, renderInfo.faceDirection);
 
-				if (blockstate.getRenderShape() == BlockRenderType.INVISIBLE)
+				if (state.getRenderShape() == BlockRenderType.INVISIBLE)
 					return true;
 
-				long rand = optiFine.getSeed(blockstate.getSeed(worldPos));
+				long rand = optiFine.getSeed(state.getSeed(worldPos));
 				IModelData modelData = rebuildTask.getModelData(worldPos);
 
 				for (RenderType rendertype : RenderType.chunkBufferLayers()) {
-					if (!RenderTypeLookup.canRenderInLayer(blockstate, rendertype))
+					if (!RenderTypeLookup.canRenderInLayer(state, rendertype))
 						continue;
 					ForgeHooksClient.setRenderLayer(rendertype);
-					BufferBuilder bufferbuilder = builderIn.builder(rendertype);
+					BufferBuilder buffer = buffers.builder(rendertype);
 
-					if (compiledChunkIn.hasLayer.add(rendertype))
-						chunkRender.beginLayer(bufferbuilder);
+					if (compiledChunk.hasLayer.add(rendertype))
+						chunkRender.beginLayer(buffer);
 
-					matrixstack.pushPose();
-					matrixstack.translate(worldPos.getX() & 15, worldPos.getY() & 15, worldPos.getZ() & 15);
-					Object renderEnv = optiFine.preRenderBlock(chunkRender, builderIn, chunkrendercache, rendertype, bufferbuilder, blockstate, worldPos);
+					matrix.pushPose();
+					matrix.translate(worldPos.getX() & 15, worldPos.getY() & 15, worldPos.getZ() & 15);
+					Object renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, rendertype, buffer, state, worldPos);
 
-					IBakedModel modelIn = blockrendererdispatcher.getBlockModel(blockstate);
-					modelIn = optiFine.getModel(renderEnv, modelIn, blockstate);
+					IBakedModel modelIn = dispatcher.getBlockModel(state);
+					modelIn = optiFine.getModel(renderEnv, modelIn, state);
 
-					renderInfo.findAndAssignQuads(modelIn, rand, blockstate, random, modelData);
-					renderFace(renderInfo, bufferbuilder, chunkrendercache, blockstate, worldPos, light, optiFine, renderEnv, false);
+					renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
+					renderFace(renderInfo, buffer, world, state, worldPos, light, optiFine, renderEnv, false);
 
-					optiFine.postRenderBlock(renderEnv, bufferbuilder, chunkRender, builderIn, compiledChunkIn);
+					optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
 					if (true) {
-						compiledChunkIn.isCompletelyEmpty = false;
-						optiFine.markRenderLayerUsed(compiledChunkIn, rendertype);
+						compiledChunk.isCompletelyEmpty = false;
+						optiFine.markRenderLayerUsed(compiledChunk, rendertype);
 					}
-					matrixstack.popPose();
+					matrix.popPose();
 				}
 				return true;
 			});
@@ -416,8 +428,9 @@ public final class MeshRenderer {
 	 *
 	 * @return a state
 	 */
-	public static BlockState getTexturePosAndState(BlockPos.Mutable worldPos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
-		BlockState state = area.world.getBlockState(worldPos);
+	public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
+		BlockState[] states = area.getAndCacheBlocks();
+		BlockState state = states[area.index(relativePos)];
 		if (isSmoothable.test(state))
 			return state;
 
@@ -425,27 +438,27 @@ public final class MeshRenderer {
 		// This occurs mostly for positions below, west of and north of the position they are for
 		// Search the opposite of those directions for the actual block
 		// We could also attempt to get the state from the vertex positions
-		int x = worldPos.getX();
-		int y = worldPos.getY();
-		int z = worldPos.getZ();
+		int x = relativePos.getX();
+		int y = relativePos.getY();
+		int z = relativePos.getZ();
 
-		state = area.world.getBlockState(worldPos.move(direction.getOpposite()));
+		state = states[area.index(relativePos.move(direction.getOpposite()))];
 		if (isSmoothable.test(state))
 			return state;
 
 //		for (int[] offset : OFFSETS_ORDERED) {
-//			worldPos.set(
+//			relativePos.set(
 //				x + offset[0],
 //				y + offset[1],
 //				z + offset[2]
 //			);
-//			state = area.world.getBlockState(worldPos);
+//			state = states[area.index(relativePos)];
 //			if (isSmoothable.test(state))
 //				return state;
 //		}
 
 		// Give up
-		worldPos.set(x, y, z);
+		relativePos.set(x, y, z);
 		return Blocks.SCAFFOLDING.defaultBlockState();
 
 //		if (NoCubesConfig.Client.betterTextures) {

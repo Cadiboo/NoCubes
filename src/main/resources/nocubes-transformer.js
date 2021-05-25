@@ -88,7 +88,7 @@ function initializeCoreMod() {
 						'(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;'
 					);
 					assertInstructionFound(positionsIteratorCall, 'positionsIteratorCall', instructions);
-					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, instructions.indexOf(positionsIteratorCall));
+					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, positionsIteratorCall);
 
 					var outerClassFieldName = isOptiFinePresent ? 'this$1' : ASMAPI.mapField('field_228939_e_');
 					instructions.insert(firstLabelBeforePositionsIteratorCall, ASMAPI.listOf(
@@ -108,6 +108,31 @@ function initializeCoreMod() {
 				}
 				print('Done injecting the preIteration hook');
 
+//                // Inject the hook where we change vanilla's fluid rendering
+//                {
+//                    // We are trying to replace this code
+//                    //  FluidState fluidstate = chunkrendercache.getFluidState(blockpos2); // Vanilla
+//                    //  FluidState fluidstate = blockstate.getFluidState(); // OptiFine
+//                    // With this code
+//                    //	FluidState fluidstate = io.github.cadiboo.hooks.Hooks.getRenderFluidState(pos);
+//                    var getFluidStateCall = ASMAPI.findFirstMethodCall(
+//                        methodNode,
+//                        ASMAPI.MethodType.VIRTUAL,
+//                        isOptiFinePresent ? 'net/minecraft/block/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
+//                        ASMAPI.mapMethod(isOptiFinePresent ? 'func_204520_s' : 'func_204610_c'), // getFluidState
+//                        isOptiFinePresent ? '()Lnet/minecraft/fluid/FluidState;' : '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
+//                    );
+//                    assertInstructionFound(getFluidStateCall, 'getFluidStateCall', instructions);
+//                    var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
+//                    removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
+//                    instructions.insert(previousLabel, ASMAPI.listOf(
+//						new VarInsnNode(ALOAD, 7), // blockpos - startPosition
+//                        callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;')
+//                    ));
+//                    // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
+//                }
+//                print('Done injecting the fluid render bypass hook');
+
 				// Inject the hook where we cancel vanilla's block rendering for smoothable blocks
 				{
 					// The code that we are trying to inject looks like this:
@@ -126,7 +151,7 @@ function initializeCoreMod() {
 					);
 					assertInstructionFound(getRenderTypeCall, 'getRenderTypeCall', instructions);
 					var getRenderTypeCallIndex = instructions.indexOf(getRenderTypeCall);
-					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBefore(instructions, getRenderTypeCallIndex);
+					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBeforeIndex(instructions, getRenderTypeCallIndex);
 					var branchIfBlockIsInvisibleInstruction = ASMAPI.findFirstInstructionAfter(methodNode, IF_ACMPEQ, getRenderTypeCallIndex);
 					assertInstructionFound(branchIfBlockIsInvisibleInstruction, 'branchIfBlockIsInvisible', instructions);
 					var labelToJumpToIfBlockIsInvisible = branchIfBlockIsInvisibleInstruction.label
@@ -139,8 +164,6 @@ function initializeCoreMod() {
 					));
 				}
 				print('Done injecting the canBlockStateRender hook');
-
-//				injectFluidRenderBypass(instructions);
 				return methodNode;
 			}
 		},
@@ -436,6 +459,7 @@ function initializeCoreMod() {
                 //		// NoCubes End
                 //		// return this.getChunkAt(pos).getFluidState(pos); // Removed vanilla code
                 //	}
+                //  <end of method>
                 // 1. Find the call to 'getChunkAt'
                 var instructions = methodNode.instructions;
                 var getChunkAtCall = ASMAPI.findFirstMethodCall(
@@ -458,249 +482,19 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		}
-
-//		'ChunkRenderCache#<init>': {
-//			'target': {
-//				'type': 'METHOD',
-//				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderCache',
-//				'methodName': '<init>',
-//				'methodDesc': '(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V'
-//			},
-//			'transformer': function(methodNode) {
-//				// OptiFine makes the BlockState[] and IFluidState[] null.
-//				// Vanilla doesn't use null anywhere in the method.
-//				var instructions = methodNode.instructions;
-//				for (var i = instructions.size() - 1; i >= 0; --i) {
-//					if (instructions.get(i).getOpcode() == ACONST_NULL) {
-//						isOptiFinePresent = true;
-//						print('Found OptiFine - ChunkRenderCache#<init> NULL');
-//						break;
-//					}
-//				}
-//				if (!isOptiFinePresent)
-//					injectInitChunkRenderCacheHook(instructions);
-//				return methodNode;
-//			}
-//		},
-//		'ChunkRenderCache.generateCache': {
-//			'target': {
-//				'type': 'METHOD',
-//				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderCache',
-//				'methodName': 'func_212397_a',
-//				'methodDesc': '(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;I)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;'
-//			},
-//			'transformer': function(methodNode) {
-//				// OptiFine immediately calls another method.
-//				var instructions = methodNode.instructions;
-//				for (var i = instructions.size() - 1; i >= 0; --i) {
-//					var instruction = instructions.get(i)
-//					if (instruction.getOpcode() != INVOKESTATIC)
-//						continue;
-//					if (!instruction.owner.equals('net/minecraft/client/renderer/chunk/ChunkRenderCache'))
-//						continue;
-//					// OptiFine's methods aren't obfuscated and this one has an MCP name
-//					if (!instruction.name.equals('generateCache'))
-//						continue;
-//					// This method has an extra boolean parameter at the end
-//					if (!instruction.desc.equals('(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;'))
-//						continue;
-//					print('Found OptiFine - ChunkRenderCache.generateCache (OptiFine Overload)');
-//					isOptiFinePresent = true;
-//					break;
-//				}
-//				if (!isOptiFinePresent)
-//					injectGenerateCacheHook(instructions);
-//				return methodNode;
-//			}
-//		},
-//		'ChunkRenderCache.generateCache OptiFine': {
-//			'target': {
-//				'type': 'METHOD',
-//				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderCache',
-//				'methodName': 'generateCache',
-//				'methodDesc': '(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;IZ)Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;'
-//			},
-//			'transformer': function(methodNode) {
-//				// OptiFine added method
-//				isOptiFinePresent = true;
-//				print('Found OptiFine - ChunkRenderCache#generateCache OptiFine');
-//				injectGenerateCacheHook(methodNode.instructions);
-//				return methodNode;
-//			}
-//		},
-
 	}));
 }
 
-// 1) Find first INVOKEVIRTUAL net/minecraft/util/math/BlockPos.getX ()I
-// 2) Find first label before
-// 3) inject right after label
-function injectInitChunkRenderCacheHook(instructions) {
-//	this.cacheStartPos = start;
-//	// NoCubes Start
-//	io.github.cadiboo.nocubes.hooks.Hooks.initChunkRenderCache(this, chunkStartX, chunkStartZ, chunks, start, end);
-//	// NoCubes End
 
-	var getXCall = ASMAPI.findFirstMethodCall(
-		methodNode,
-		ASMAPI.MethodType.VIRTUAL,
-		'net/minecraft/util/math/BlockPos',
-		ASMAPI.mapMethod('func_177958_n'), // Vec3i.getX
-		'()I'
-	);
-	assertInstructionFound(getXCall, 'getXCall', instructions);
 
-	var firstLabelBeforeGetXCall = findFirstLabelBefore(instructions, instructions.indexOf(getXCall));
-	instructions.insert(firstLabelBeforeGetXCall, ASMAPI.listOf(
-		new VarInsnNode(ALOAD, 0), // this
-		new VarInsnNode(ILOAD, 2), // chunkStartX
-		new VarInsnNode(ILOAD, 3), // chunkStartZ
-		new VarInsnNode(ALOAD, 4), // chunks
-		new VarInsnNode(ALOAD, 5), // start
-		new VarInsnNode(ALOAD, 6), // end
-		callNoCubesHook('initChunkRenderCache', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderCache;II[[Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V'),
-		new InsnNode(RETURN),
-		new LabelNode() // Label for original instructions
-	));
-}
 
-// 1) Find last ACONST_NULL then ARETURN
-// 2) Find previous IFEQ
-// 3) Find previous label
-// 4) Find previous INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween
-// 5) Find next ISTORE
-// 6) Inject GOTO to label after ISTORE
-function injectGenerateCacheHook(instructions) {
-//	// NoCubes Start
-//	IS_EMPTY:
-//	// NoCubes End
-//	for (int x = start.getX() >> 4; x <= end.getX() >> 4; ++x) {
-//		for (int z = start.getZ() >> 4; z <= end.getZ() >> 4; ++z) {
-//			Chunk chunk = chunks[x - chunkStartX][z - chunkStartZ];
-//			if (!chunk.isEmptyBetween(start.getY(), end.getY())) {
-//				empty = false;
-//				// NoCubes Start
-//				break IS_EMPTY;
-//				// NoCubes End
-//			}
-//		}
-//	}
 
-	// 1) Find last ACONST_NULL then ARETURN
-	var firstACONST_NULL_then_ARETURN;
-	var previousInsn; // The previous insn that was checked (technically the next insn in the list)
-	var length = instructions.size();
-	for (var i = length - 1; i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == ACONST_NULL) {
-			if (!previousInsn)
-				continue;
-			if (previousInsn.getOpcode() == ARETURN) {
-				firstACONST_NULL_then_ARETURN = instruction;
-				print('Found ACONST_NULL & ARETURN');
-				break;
-			}
-		}
-		previousInsn = instruction;
-	}
-	assertInstructionFound(firstACONST_NULL_then_ARETURN, 'ACONST_NULL & ARETURN', instructions);
 
-	// 2) Find previous IFEQ
-	var firstIFEQBefore_firstACONST_NULL_then_ARETURN;
-	for (i = instructions.indexOf(firstACONST_NULL_then_ARETURN); i >= 0; --i) {
-		var instruction = instructions.get(i);
-		if (instruction.getOpcode() == IFEQ) {
-			firstIFEQBefore_firstACONST_NULL_then_ARETURN = instruction;
-			print('Found IFEQ');
-			break;
-		}
-	}
-	assertInstructionFound(firstIFEQBefore_firstACONST_NULL_then_ARETURN, 'IFEQ', instructions);
 
-	// 3) Find previous Label
-	var previousLabel = findFirstLabelBefore(instructions, instructions.indexOf(firstIFEQBefore_firstACONST_NULL_then_ARETURN));
 
-	// 4) Find previous INVOKEVIRTUAL net/minecraft/world/chunk/Chunk.isEmptyBetween
-	var isEmptyBetweenCall = ASMAPI.findFirstMethodCallBefore(
-		methodNode,
-		ASMAPI.MethodType.VIRTUAL,
-		'net/minecraft/world/chunk/Chunk',
-		ASMAPI.mapMethod('func_76606_c'), // isEmptyBetween
-		'(II)Z'
-	);
-	assertInstructionFound(isEmptyBetweenCall, 'isEmptyBetween', instructions);
 
-	// 5) Find next ISTORE
-	var nextISTORE = ASMAPI.findFirstInstructionAfter(methodNode, ISTORE, instructions.indexOf(isEmptyBetweenCall));
-	assertInstructionFound(nextISTORE, 'next ISTORE', instructions);
 
-	instructions.insert(nextISTORE, ASMAPI.listOf(
-		new JumpInsnNode(GOTO, previousLabel)
-	));
-}
-
-// 1) Finds the first instruction INVOKEVIRTUAL ChunkRenderCache.getFluidState
-// 2) Then injects
-// 3) Then removes the two previous instructions and then the instruction
-function injectFluidRenderBypass(instructions) {
-// Forge/Vanilla/Patched
-//	// NoCubes Start
-////	IFluidState ifluidstate = lvt_12_1_.getFluidState(blockpos2);
-//	IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
-//	// NoCubes End
-//	net.minecraftforge.client.model.data.IModelData modelData = generator.getModelData(blockpos2);
-
-// Forge/OptiFine/Patched
-//	// NoCubes Start
-////	IFluidState ifluidstate = blockstate.getFluidState();
-//	IFluidState ifluidstate = net.minecraft.fluid.Fluids.EMPTY.getDefaultState();
-//	// NoCubes End
-//		if (!ifluidstate.isEmpty()) {
-
-	var isOptiFinePresent = detectOptiFine(instructions);
-	var getFluidStateCall = ASMAPI.findFirstMethodCall(
-		methodNode,
-		ASMAPI.MethodType.VIRTUAL,
-		isOptiFinePresent ? 'net/minecraft/block/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
-		// isOptiFinePresent ? BlockState#getFluidState : ChunkRenderCache#getFluidState
-		isOptiFinePresent ? ASMAPI.mapMethod('func_204520_s') : ASMAPI.mapMethod('func_204610_c'),
-		isOptiFinePresent ? '()Lnet/minecraft/fluid/IFluidState;' : '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/IFluidState;'
-	);
-	assertInstructionFound(getFluidStateCall, 'getFluidStateCall', instructions);
-
-	var Fluids_EMPTY_name = ASMAPI.mapField('field_204541_a'); // Fluids.EMPTY
-	var Fluid_getDefaultState_name = ASMAPI.mapMethod('func_207188_f'); // Fluid#getDefaultState
-	instructions.insert(first_INVOKEVIRTUAL_getFluidState, ASMAPI.listOf(
-		new FieldInsnNode(GETSTATIC, 'net/minecraft/fluid/Fluids', Fluids_EMPTY_name, 'Lnet/minecraft/fluid/Fluid;'),
-		new MethodInsnNode(
-			//int opcode
-			INVOKEVIRTUAL,
-			//String owner
-			'net/minecraft/fluid/Fluid',
-			//String name
-			Fluid_getDefaultState_name,
-			//String descriptor
-			'()Lnet/minecraft/fluid/IFluidState;',
-			//boolean isInterface
-			false
-		)
-	));
-
-	// Remove old instructions
-	if (!isOptiFinePresent) {
-		// ALOAD 12 (ChunkRenderCache)
-		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious().getPrevious());
-		// ALOAD 17 (BlockPos)
-		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
-		// INVOKEVIRTUAL ChunkRenderCache#getFluidState
-		instructions.remove(first_INVOKEVIRTUAL_getFluidState);
-	} else {
-		// ALOAD 20 (BlockState)
-		instructions.remove(first_INVOKEVIRTUAL_getFluidState.getPrevious());
-		// INVOKEVIRTUAL BlockState#getFluidState
-		instructions.remove(first_INVOKEVIRTUAL_getFluidState);
-	}
-}
+// Utility functions
 
 function assertInstructionFound(instruction, name, instructions) {
 	if (!instruction)
@@ -722,7 +516,11 @@ function findFirstLabel(instructions, startIndex) {
 	throw "Error: Couldn't find first label after index " + startIndex + ' in ' + stringifyInstructions(instructions);
 }
 
-function findFirstLabelBefore(instructions, startIndex) {
+function findFirstLabelBefore(instructions, start) {
+    return findFirstLabelBeforeIndex(instructions, instructions.indexOf(start));
+}
+
+function findFirstLabelBeforeIndex(instructions, startIndex) {
 	var length = instructions.size();
 	if (!startIndex)
 		startIndex = length - 1;
@@ -796,6 +594,29 @@ function callBooleanValueAndReturn() {
 	);
 }
 
+/**
+ * Utility function for removing multiple instructions
+ *
+ * @param {InsnList} instructions The list of instructions to modify
+ * @param {InsnList} start The first instruction in the list to be removed
+ * @param {InsnList} end The last instruction in the list to be removed
+ */
+function removeBetweenInclusive(instructions, start, end) {
+	removeBetweenIndicesInclusive(instructions.indexOf(start), instructions.indexOf(end));
+}
+
+/**
+ * Utility function for removing multiple instructions
+ *
+ * @param {InsnList} instructions The list of instructions to modify
+ * @param {number} start The index of the first instruction in the list to be removed
+ * @param {number} end The index of the last instruction in the list to be removed
+ */
+function removeBetweenIndicesInclusive(instructions, start, end) {
+	for (var i = start; i <= end; ++i)
+		instructions.remove(instructions.get(start));
+}
+
 function detectOptiFine(instructions) {
 	var length = instructions.size();
 	var i;
@@ -822,13 +643,7 @@ function detectOptiFine(instructions) {
 
 
 
-
-
-
-
-
-
-
+// Wrappers
 
 /**
  * Utility function to wrap all transformers in transformers that have logging
@@ -978,20 +793,7 @@ function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, metho
 
 
 
-
-/**
- * Utility function for removing multiple instructions
- *
- * @param {InsnList} instructions The list of instructions to modify
- * @param {InsnList} startInstruction The first instruction of instructions to be removed
- * @param {InsnList} endInstruction The last instruction of instructions to be removed
- */
-function removeBetweenInclusive(instructions, startInstruction, endInstruction) {
-	var start = instructions.indexOf(startInstruction);
-	var end = instructions.indexOf(endInstruction);
-	for (var i = start; i <= end; ++i)
-		instructions.remove(instructions.get(start));
-}
+// Debugging
 
 /**
  * Util function to print a list of instructions for debugging
@@ -1332,3 +1134,5 @@ OPCODES = [
 	'IFNULL', // 198 (0xc6)
 	'IFNONNULL' // 199 (0xc7)
 ];
+
+// endregion Debugging

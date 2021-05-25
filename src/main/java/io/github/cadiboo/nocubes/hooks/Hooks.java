@@ -12,10 +12,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -38,9 +40,10 @@ import java.util.Random;
 public final class Hooks {
 
 	// region Rendering
+
 	/**
 	 * Called from: {@link RebuildTask#compile} right before the BlockPos.getAllInBoxMutable iteration
-	 * Calls: {@link MeshRenderer#renderChunk} to render our <del>fluids and</del> smooth terrain
+	 * Calls: {@link MeshRenderer#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, RegionRenderCacheBuilder builderIn, BlockPos blockpos, IBlockDisplayReader chunkrendercache, MatrixStack matrixstack, Random random, BlockRendererDispatcher blockrendererdispatcher) {
@@ -48,8 +51,25 @@ public final class Hooks {
 		MeshRenderer.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
 
+//	/**
+//	 * Called from: {@link RebuildTask#compile} instead of {@link ChunkRenderCache#getFluidState(BlockPos)}
+//	 * <p>
+//	 * Hooking this allows us to control vanilla's fluids rendering which lets us cancel it and do our own rendering or
+//	 * change where fluids are rendered (to make extended fluids work).
+//	 */
+//	@OnlyIn(Dist.CLIENT)
+//	public static FluidState getRenderFluidState(BlockPos pos) {
+//		SelfCheck.getRenderFluidState = true;
+//		ClientWorld world = Minecraft.getInstance().level;
+//		if (world == null)
+//			return Fluids.EMPTY.defaultFluidState();
+//		if (!NoCubesConfig.Client.render)
+//			return world.getChunkAt(pos).getFluidState(pos);
+//		return getFluidState(world, pos);
+//	}
+
 	/**
-	 * Called from: {@link RebuildTask#compile} right before BlockState#getRenderType is called
+	 * Called from: {@link RebuildTask#compile} right before {@link BlockState#getRenderShape()} is called
 	 * <p>
 	 * Hooking this disables vanilla rendering for smoothable BlockStates.
 	 *
@@ -116,6 +136,7 @@ public final class Hooks {
 	// endregion Rendering
 
 	// region Collisions
+
 	/**
 	 * Called from: {@link BlockState#getCollisionShape(IBlockReader, BlockPos)}} before any other logic
 	 * <p>
@@ -193,66 +214,67 @@ public final class Hooks {
 
 	/**
 	 * Called from: World#getFluidState after the world bounds check in place of the normal getFluidState logic
-	 * Calls: ModUtil.getFluidState to handle extended fluids
+	 *
+	 * @return a fluid state that may not actually exist in the position
 	 */
 	public static FluidState getFluidState(World world, BlockPos pos) {
-//		return world.getChunkAt(pos).getFluidState(pos);
-		final int posX = pos.getX();
-		final int posY = pos.getY();
-		final int posZ = pos.getZ();
-
-		int currentChunkPosX = posX >> 4;
-		int currentChunkPosZ = posZ >> 4;
-		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-
-		final int extendRange = 1;//Config.extendFluidsRange.getRange();
-
-		if (extendRange == 0)
-			return currentChunk.getFluidState(posX, posY, posZ);
-
-		final BlockState state = currentChunk.getBlockState(pos);
-
-		// Do not extend if not terrain smoothable
-		if (!NoCubes.smoothableHandler.isSmoothable(state))
-			return state.getFluidState();
-
-		final FluidState fluidState = state.getFluidState();
-		if (!fluidState.isEmpty())
-			return fluidState;
-
-		// For offset = -1 or -2 to offset = 1 or 2;
-		final int maxXOffset = extendRange;
-		final int maxZOffset = extendRange;
-
-		// Check up
-		{
-			final FluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
-			if (state1.isSource())
-				return state1;
-		}
-
-		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
-			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
-
-				// No point in checking myself
-				if (xOffset == 0 && zOffset == 0)
-					continue;
-
-				final int checkX = posX + xOffset;
-				final int checkZ = posZ + zOffset;
-
-				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
-					currentChunkPosX = checkX >> 4;
-					currentChunkPosZ = checkZ >> 4;
-					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-				}
-
-				final FluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
-				if (state1.isSource())
-					return state1;
-			}
-		}
-		return fluidState;
+		return world.getChunkAt(pos).getFluidState(pos);
+//		final int posX = pos.getX();
+//		final int posY = pos.getY();
+//		final int posZ = pos.getZ();
+//
+//		int currentChunkPosX = posX >> 4;
+//		int currentChunkPosZ = posZ >> 4;
+//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//
+//		final int extendRange = 1;//Config.extendFluidsRange.getRange();
+//
+//		if (extendRange == 0)
+//			return currentChunk.getFluidState(posX, posY, posZ);
+//
+//		final BlockState state = currentChunk.getBlockState(pos);
+//
+//		// Do not extend if not terrain smoothable
+//		if (!NoCubes.smoothableHandler.isSmoothable(state))
+//			return state.getFluidState();
+//
+//		final FluidState fluidState = state.getFluidState();
+//		if (!fluidState.isEmpty())
+//			return fluidState;
+//
+//		// For offset = -1 or -2 to offset = 1 or 2;
+//		final int maxXOffset = extendRange;
+//		final int maxZOffset = extendRange;
+//
+//		// Check up
+//		{
+//			final FluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
+//			if (state1.isSource())
+//				return state1;
+//		}
+//
+//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
+//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
+//
+//				// No point in checking myself
+//				if (xOffset == 0 && zOffset == 0)
+//					continue;
+//
+//				final int checkX = posX + xOffset;
+//				final int checkZ = posZ + zOffset;
+//
+//				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
+//					currentChunkPosX = checkX >> 4;
+//					currentChunkPosZ = checkZ >> 4;
+//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
+//				}
+//
+//				final FluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
+//				if (state1.isSource())
+//					return state1;
+//			}
+//		}
+//		return fluidState;
 	}
 
 //

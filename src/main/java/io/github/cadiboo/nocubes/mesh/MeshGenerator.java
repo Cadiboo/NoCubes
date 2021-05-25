@@ -25,22 +25,22 @@ public interface MeshGenerator {
 	interface FaceAction {
 
 		/**
-		 * @param pos  The position of the face, positioned relatively to the start of the area
+		 * @param relativePos  The position of the face, positioned relatively to the start of the area
 		 * @param face The face, positioned relatively to the start of the area
 		 * @return false if no more faces need to be generated
 		 */
-		boolean apply(BlockPos.Mutable pos, Face face);
+		boolean apply(BlockPos.Mutable relativePos, Face face);
 
 	}
 
 	interface VoxelAction {
 
 		/**
-		 * @param pos                    The position of the voxel, positioned relatively to the start of the area
+		 * @param relativePos                    The position of the voxel, positioned relatively to the start of the area
 		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
 		 * @return false if no more voxels need to iterated over
 		 */
-		boolean apply(BlockPos.Mutable pos, float amountInsideIsosurface);
+		boolean apply(BlockPos.Mutable relativePos, float amountInsideIsosurface);
 
 	}
 

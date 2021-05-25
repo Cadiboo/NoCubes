@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.hooks;
 public final class SelfCheck {
 
 	static boolean preIteration;
+	static boolean getRenderFluidState;
 	static boolean canBlockStateRender;
 	static boolean renderBlockDamage;
 	static boolean setBlocksDirty;
@@ -19,6 +20,7 @@ public final class SelfCheck {
 	public static String[] info() {
 		return new String[]{
 			"preIteration hook called: " + preIteration,
+			"getRenderFluidState hook called: " + getRenderFluidState,
 			"canBlockStateRender hook called: " + canBlockStateRender,
 			"renderBlockDamage hook called: " + renderBlockDamage,
 			"setBlocksDirty hook called: " + setBlocksDirty,
