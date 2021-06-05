@@ -196,7 +196,7 @@ public final class OverlayRenderer {
 
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
-			Color color = new Color(1, NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 0, 0.4F);
+			Color color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 			BlockPos size = new BlockPos(10, 10, 10);
 			BlockPos start = viewer.blockPosition().offset(-size.getX() / 2, -size.getY() / 2, -size.getZ() / 2);
 			try (Area area = new Area(world, start, size, generator)) {
