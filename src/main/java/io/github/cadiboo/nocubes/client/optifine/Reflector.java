@@ -44,7 +44,9 @@ public interface Reflector {
 	static Field tryGetField(String clazz, String name) {
 		try {
 			Class<?> klass = Class.forName(clazz);
-			return klass.getDeclaredField(name);
+			Field field = klass.getDeclaredField(name);
+			field.setAccessible(true);
+			return field;
 		} catch (Exception e) {
 			return null;
 		}
