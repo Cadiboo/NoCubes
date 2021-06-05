@@ -192,7 +192,7 @@ public final class Hooks {
 	public static @Nullable Boolean hasLargeCollisionShapeOverride(BlockState state) {
 		SelfCheck.hasLargeCollisionShapeOverride = true;
 		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
-			return false;
+			return true;
 		return null;
 	}
 
