@@ -31,13 +31,13 @@ public class ClientUtil {
 		Matrix4f pose = currentTransform.pose();
 		Matrix3f normal = currentTransform.normal();
 
-		float transformedX = x;//pose.getTransformX(x, y, z, 1);
-		float transformedY = y;//pose.getTransformY(x, y, z, 1);
-		float transformedZ = z;//pose.getTransformZ(x, y, z, 1);
+		float transformedX = pose.getTransformX(x, y, z, 1);
+		float transformedY = pose.getTransformY(x, y, z, 1);
+		float transformedZ = pose.getTransformZ(x, y, z, 1);
 
-		float transformedNormalX = normal.getTransformX(x, y, z);
-		float transformedNormalY = normal.getTransformY(x, y, z);
-		float transformedNormalZ = normal.getTransformZ(x, y, z);
+		float transformedNormalX = normal.getTransformX(normalX, normalY, normalZ);
+		float transformedNormalY = normal.getTransformY(normalX, normalY, normalZ);
+		float transformedNormalZ = normal.getTransformZ(normalX, normalY, normalZ);
 
 		buffer.vertex(transformedX, transformedY, transformedZ, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, transformedNormalX, transformedNormalY, transformedNormalZ);
 	}
