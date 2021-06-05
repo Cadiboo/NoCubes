@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -23,7 +24,7 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderChunk(BlockPos blockpos) {
+	public void preRenderChunk(ChunkRender chunkRender, BlockPos chunkPos, MatrixStack matrix) {
 	}
 
 	@Override

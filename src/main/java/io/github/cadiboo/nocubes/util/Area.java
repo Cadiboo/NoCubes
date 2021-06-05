@@ -108,4 +108,7 @@ public class Area implements AutoCloseable {
 	public void close() {
 	}
 
+    public BlockPos getDifferenceBetweenStartAnd(BlockPos chunkPos) {
+		return start.subtract(chunkPos);
+    }
 }

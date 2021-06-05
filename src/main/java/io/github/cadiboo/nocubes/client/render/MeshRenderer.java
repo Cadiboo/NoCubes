@@ -27,8 +27,6 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Matrix3f;
-import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
@@ -39,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
+
+import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 
 /**
  * @author Cadiboo
@@ -62,26 +62,22 @@ public final class MeshRenderer {
 			return;
 
 		long start = System.nanoTime();
-		OptiFineProxy optiFine = OptiFineCompatibility.proxy();
-		optiFine.preRenderChunk(chunkPos);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		FaceInfo renderInfo = new FaceInfo();
 
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		matrix.pushPose();
 		try (
 			Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, generator);
 			LightCache light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE)
 		) {
-			// See the javadoc on Face#addMeshOffset for an explanation of this
-			BlockPos areaMeshOffset = area.start.subtract(chunkPos);
+			OptiFineProxy optiFine = OptiFineCompatibility.proxy();
+			optiFine.preRenderChunk(chunkRender, chunkPos, matrix);
+
 			generator.generate(area, isSmoothable, (relativePos, face) -> {
-				face.addMeshOffset(areaMeshOffset);
-//				if (face.v0.x < 0 || face.v1.x < 0 || face.v2.x < 0 || face.v3.x < 0)// || face.v0.x > 16 || face.v1.x > 16 || face.v2.x > 16 || face.v3.x > 16)
-//					return true;
-//				if (face.v0.y < 0 || face.v1.y < 0 || face.v2.y < 0 || face.v3.y < 0)// || face.v0.y > 16 || face.v1.y > 16 || face.v2.y > 16 || face.v3.y > 16)
-//					return true;
-//				if (face.v0.z < 0 || face.v1.z < 0 || face.v2.z < 0 || face.v3.z < 0)// || face.v0.z > 16 || face.v1.z > 16 || face.v2.z > 16 || face.v3.z > 16)
-//					return true;
+				face.addMeshOffset(area, chunkPos);
+				if (leavesChunkBounds(face))
+					return true;
 
 				renderInfo.setup(face, chunkPos);
 				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
@@ -102,76 +98,76 @@ public final class MeshRenderer {
 					if (compiledChunk.hasLayer.add(rendertype))
 						chunkRender.beginLayer(buffer);
 
-					matrix.pushPose();
-					matrix.translate(worldPos.getX() & 15, worldPos.getY() & 15, worldPos.getZ() & 15);
+					// The vertices we get from the mesh generator are relative to the start of the chunk so we don't need to do any offsetting
+					// matrix.pushPose();
 					Object renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, rendertype, buffer, state, worldPos);
 
 					IBakedModel modelIn = dispatcher.getBlockModel(state);
 					modelIn = optiFine.getModel(renderEnv, modelIn, state);
 
 					renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-					renderFace(renderInfo, buffer, world, state, worldPos, light, optiFine, renderEnv, false);
+					renderFace(renderInfo, buffer, matrix, world, state, worldPos, light, optiFine, renderEnv, false);
 
 					optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
-					if (true) {
-						compiledChunk.isCompletelyEmpty = false;
-						optiFine.markRenderLayerUsed(compiledChunk, rendertype);
-					}
-					matrix.popPose();
+					compiledChunk.isCompletelyEmpty = false;
+					optiFine.markRenderLayerUsed(compiledChunk, rendertype);
+					// matrix.popPose();
 				}
 				return true;
 			});
 			ForgeHooksClient.setRenderLayer(null);
+		} finally {
+			matrix.popPose();
 		}
 		if (profiler.recordElapsedNanos(start))
 			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
+	}
+
+	private static boolean leavesChunkBounds(Face face) {
+//		if (face.v0.x < 0 || face.v1.x < 0 || face.v2.x < 0 || face.v3.x < 0)// || face.v0.x > 16 || face.v1.x > 16 || face.v2.x > 16 || face.v3.x > 16)
+//			return true;
+//		if (face.v0.y < 0 || face.v1.y < 0 || face.v2.y < 0 || face.v3.y < 0)// || face.v0.y > 16 || face.v1.y > 16 || face.v2.y > 16 || face.v3.y > 16)
+//			return true;
+//		if (face.v0.z < 0 || face.v1.z < 0 || face.v2.z < 0 || face.v3.z < 0)// || face.v0.z > 16 || face.v1.z > 16 || face.v2.z > 16 || face.v3.z > 16)
+//			return true;
+		return false;
 	}
 
 	public static void renderSmoothBlockDamage(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
 		FaceInfo renderInfo = new FaceInfo();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		Random random = dispatcher.random;
-		try (
-			Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator);
-		) {
-			// See the javadoc on Face#addMeshOffset for an explanation of this
-			BlockPos areaMeshOffset = area.start.subtract(pos);
-			Matrix3f normal = matrix.last().normal();
-			Matrix4f pose = matrix.last().pose();
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (ignored, face) -> {
-				face.addMeshOffset(areaMeshOffset);
+		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
+			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
+				face.addMeshOffset(area, pos);
 				renderInfo.setup(face, pos);
-
-				renderInfo.vertexNormals.transform(normal);
-				renderInfo.faceNormal.transform(normal);
-				face.transform(pose);
 
 				// Don't need textures or lighting because the crumbling texture overwrites them
 				renderInfo.assignMissingQuads(state, random, modelData);
 				LightCache light = null;
-				renderFace(renderInfo, buffer, world, state, pos, null, null, light, false);
+				renderFace(renderInfo, buffer, matrix, world, state, pos, null, null, light, false);
 
 				return true;
 			});
 		}
 	}
 
-	private static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
+	private static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
 		List<BakedQuad> quads = renderInfo.quads;
 		for (int i = 0, l = quads.size(); i < l; ++i) {
 			BakedQuad quad = quads.get(i);
 			BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
 			if (emissive != null) {
 				optiFine.preRenderQuad(renderEnv, emissive, state, pos);
-				renderQuad(renderInfo, quad, buffer, world, state, pos, null, doubleSided);
+				renderQuad(renderInfo, quad, buffer, matrix, world, state, pos, null, doubleSided);
 			}
 			if (optiFine != null)
 				optiFine.preRenderQuad(renderEnv, quad, state, pos);
-			renderQuad(renderInfo, quad, buffer, world, state, pos, light, doubleSided);
+			renderQuad(renderInfo, quad, buffer, matrix, world, state, pos, light, doubleSided);
 		}
 	}
 
-	private static void renderQuad(FaceInfo renderInfo, BakedQuad quad, IVertexBuilder buffer, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, boolean doubleSided) {
+	private static void renderQuad(FaceInfo renderInfo, BakedQuad quad, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, boolean doubleSided) {
 		// Pos
 		Face face = renderInfo.face;
 		Vec v0 = face.v0;
@@ -205,15 +201,15 @@ public final class MeshRenderer {
 		Vec n3 = renderInfo.faceNormal;
 
 		// Draw
-		buffer.vertex(v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
-		buffer.vertex(v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
-		buffer.vertex(v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
-		buffer.vertex(v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
+		vertex(buffer, matrix, v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
+		vertex(buffer, matrix, v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
+		vertex(buffer, matrix, v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
+		vertex(buffer, matrix, v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
 		if (doubleSided) {
-			buffer.vertex(v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
-			buffer.vertex(v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
-			buffer.vertex(v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
-			buffer.vertex(v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
+			vertex(buffer, matrix, v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
+			vertex(buffer, matrix, v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
+			vertex(buffer, matrix, v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
+			vertex(buffer, matrix, v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
 		}
 	}
 

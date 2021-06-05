@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.coremod.api.ASMAPI;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -28,8 +30,10 @@ class HD_U_G8 implements OptiFineProxy {
 	public boolean initialisedAndUsable() {
 		for (Field field : Reflect.class.getDeclaredFields()) {
 			try {
-				if (field.get(null) == null)
+				if (field.get(null) == null) {
+					LogManager.getLogger("NoCubes OptiFine Compatibility").info("{}: Proxy not usable because reflection was unable to find field {}", getClass().getSimpleName(), field.getName());
 					return false;
+				}
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
@@ -40,13 +44,19 @@ class HD_U_G8 implements OptiFineProxy {
 			if (!requiredVersion.equals(installedVersion))
 				throw new RuntimeException("NoCubes requires '" + requiredVersion + "', you have '" + installedVersion + "' installed");
 		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Can't access OptiFine's version", e);
+			throw new RuntimeException("Can't access OptiFine's vpreRenderChunkersion", e);
 		}
 		return true;
 	}
 
 	@Override
-	public void preRenderChunk(BlockPos blockpos) {
+	public void preRenderChunk(ChunkRender chunkRender, BlockPos chunkPos, MatrixStack matrix) {
+		// Support Render Regions
+		matrix.translate(
+			ChunkRender_regionDX(chunkRender),
+			ChunkRender_regionDY(chunkRender),
+			ChunkRender_regionDZ(chunkRender)
+		);
 	}
 
 	@Override
@@ -56,7 +66,7 @@ class HD_U_G8 implements OptiFineProxy {
 
 	@Override
 	public Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
-		BufferBuilder_setBlockLater(buffer, renderType);
+		BufferBuilder_setBlockLayer(buffer, renderType);
 		Object renderEnv = BufferBuilder_getRenderEnv(buffer, state, pos);
 		RenderEnv_setRegionRenderCacheBuilder(renderEnv, builder);
 		ChunkCacheOF_setRenderEnv(chunkCacheOF, renderEnv);
@@ -275,7 +285,7 @@ class HD_U_G8 implements OptiFineProxy {
 			}
 		}
 
-		static void BufferBuilder_setBlockLater(BufferBuilder buffer, RenderType renderType) {
+		static void BufferBuilder_setBlockLayer(BufferBuilder buffer, RenderType renderType) {
 //			buffer.setBlockLayer(renderType);
 			try {
 				setBlockLayer.invokeExact(buffer, renderType);

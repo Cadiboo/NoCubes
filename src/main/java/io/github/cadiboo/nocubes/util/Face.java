@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector3i;
@@ -69,18 +70,26 @@ public class Face {
 
 	/**
 	 * The vertices in meshes are generated relative to {@link Area#start}.
-	 * {@link Area#start} is not necessarily the
+	 * {@link Area#start} is not necessarily the place where the final mesh should be rendered.
 	 * The difference between the start of the area and the position we are generating for
 	 * This exists because:
 	 * To render a 16x16x16 area you need the data of a 18x18x18 area (+1 voxel on each axis)
-	 * So the area is going to start at pos - 1
+	 * So the area is going to start at chunkPos - 1 (and extend 18 blocks)
 	 * And the vertices are going to be relative to the start of the area
+	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
 	 */
-	public Face addMeshOffset(Vector3i pos) {
-		assert Math.abs(pos.getX()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		assert Math.abs(pos.getY()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		assert Math.abs(pos.getZ()) < 10 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		return add(pos.getX(), pos.getY(), pos.getZ());
+	public Face addMeshOffset(Area area, Vector3i renderStartPos) {
+		BlockPos areaStart = area.start;
+		int x = areaStart.getX() - renderStartPos.getX();
+		int y = areaStart.getY() - renderStartPos.getY();
+		int z = areaStart.getZ() - renderStartPos.getZ();
+		assert x >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
+		assert y >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
+		assert z >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
+		assert x < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
+		assert y < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
+		assert z < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
+		return add(x, y, z);
 	}
 
 	public Face add(float x, float y, float z) {

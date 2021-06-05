@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import org.apache.logging.log4j.LogManager;
+
 public class OptiFineCompatibility {
 
 	private static final OptiFineProxy[] PROXIES = {
@@ -12,6 +14,7 @@ public class OptiFineCompatibility {
 			synchronized (OptiFineCompatibility.class) {
 				if (instance == null) {
 					instance = createProxy();
+					LogManager.getLogger("NoCubes OptiFine Compatibility").info("Using {} proxy", instance.getClass().getSimpleName());
 				}
 			}
 		}

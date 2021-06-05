@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -19,12 +20,12 @@ public interface OptiFineProxy {
 
 	boolean initialisedAndUsable();
 
-	void preRenderChunk(BlockPos blockpos);
+	void preRenderChunk(ChunkRender chunkRender, BlockPos chunkPos, MatrixStack matrix);
 
 	long getSeed(long originalSeed);
 
 	/** @return null or the RenderEnv */
-	Object preRenderBlock(ChunkRenderDispatcher.ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos);
+	Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos);
 
 	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state);
 

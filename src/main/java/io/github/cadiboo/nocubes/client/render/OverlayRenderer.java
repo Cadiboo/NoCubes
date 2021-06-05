@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -33,6 +34,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.*;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
@@ -331,17 +333,6 @@ public final class OverlayRenderer {
 		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
 		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
 		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
-	}
-
-	private static IVertexBuilder vertex(IVertexBuilder buffer, Matrix4f matrix, float x, float y, float z) {
-		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
-		// To avoid allocating so many short lived vectors we do the transform ourselves instead
-		float w = 1.0F;
-		float tx = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
-		float ty = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
-		float tz = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
-//		float tw = matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
-		return buffer.vertex(tx, ty, tz);
 	}
 
 	private static void drawShape(MatrixStack stack, IVertexBuilder buffer, VoxelShape shape, BlockPos pos, Vector3d camera, Color color) {
