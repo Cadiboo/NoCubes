@@ -122,7 +122,7 @@ class HD_U_G8 implements OptiFineProxy {
 	@SuppressWarnings("ConstantConditions")
 	interface Reflect {
 
-		Field VERSION = tryGetField("net.optifine.Config", "isShaders");
+		Field VERSION = tryGetField("net.optifine.Config", "VERSION");
 		MethodHandle isShaders = tryGetMethod("net.optifine.Config", "isShaders");
 		MethodHandle isAlternateBlocks = tryGetMethod("net.optifine.Config", "isAlternateBlocks");
 
