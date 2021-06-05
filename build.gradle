@@ -54,6 +54,7 @@ minecraft {
 	runs {
 		client {
 			workingDirectory project.file('run')
+			jvmArg '-ea' // Enable assertions
 			property 'forge.logging.markers', 'XFORM'
 //			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
 			property 'forge.logging.console.level', 'debug'
@@ -71,6 +72,7 @@ minecraft {
 
 		server {
 			workingDirectory project.file('run/server')
+			jvmArg '-ea' // Enable assertions
 			property 'forge.logging.markers', 'XFORM'
 			property 'forge.logging.console.level', 'debug'
 
