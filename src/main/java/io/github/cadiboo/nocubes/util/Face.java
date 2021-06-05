@@ -80,16 +80,17 @@ public class Face {
 	 */
 	public Face addMeshOffset(Area area, Vector3i renderStartPos) {
 		BlockPos areaStart = area.start;
-		int x = areaStart.getX() - renderStartPos.getX();
-		int y = areaStart.getY() - renderStartPos.getY();
-		int z = areaStart.getZ() - renderStartPos.getZ();
-		assert x >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert y >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert z >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert x < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		assert y < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		assert z < 4 : "This method should only be used for small offsets, floats can't support world-space offsets";
-		return add(x, y, z);
+		return add(
+			validateMeshOffset(renderStartPos.getX() - areaStart.getX()),
+			validateMeshOffset(renderStartPos.getY() - areaStart.getY()),
+			validateMeshOffset(renderStartPos.getZ() - areaStart.getZ())
+		);
+	}
+
+	public static int validateMeshOffset(int meshOffset) {
+		assert meshOffset >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
+		assert meshOffset < 4 : "Mesh offsets should only be small values, floats can't support world-space offsets";
+		return meshOffset;
 	}
 
 	public Face add(float x, float y, float z) {

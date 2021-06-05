@@ -58,11 +58,15 @@ public final class CollisionHandler {
 		if (reader instanceof World)
 			((World) reader).getProfiler().push("NoCubes collisions");
 		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
-			BlockPos diff = area.start.subtract(blockPos);
+			// See Face#addMeshOffset for an explanation of this
+			BlockPos meshOffset = area.start.subtract(blockPos);
+			Face.validateMeshOffset(meshOffset.getX());
+			Face.validateMeshOffset(meshOffset.getY());
+			Face.validateMeshOffset(meshOffset.getZ());
 			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
-				float dx = diff.getX();
-				float dy = diff.getY();
-				float dz = diff.getZ();
+				float dx = meshOffset.getX();
+				float dy = meshOffset.getY();
+				float dz = meshOffset.getZ();
 				VoxelShape shape = VoxelShapes.box(x0 + dx, y0 + dy, z0 + dz, x1 + dx, y1 + dy, z1 + dz);
 				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
 			});
