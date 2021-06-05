@@ -81,15 +81,15 @@ public class Face {
 	public Face addMeshOffset(Area area, Vector3i renderStartPos) {
 		BlockPos areaStart = area.start;
 		return add(
-			validateMeshOffset(renderStartPos.getX() - areaStart.getX()),
-			validateMeshOffset(renderStartPos.getY() - areaStart.getY()),
-			validateMeshOffset(renderStartPos.getZ() - areaStart.getZ())
+			validateMeshOffset(areaStart.getX() - renderStartPos.getX()),
+			validateMeshOffset(areaStart.getY() - renderStartPos.getY()),
+			validateMeshOffset(areaStart.getZ() - renderStartPos.getZ())
 		);
 	}
 
 	public static int validateMeshOffset(int meshOffset) {
-		assert meshOffset >= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert meshOffset < 4 : "Mesh offsets should only be small values, floats can't support world-space offsets";
+		assert meshOffset <= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
+		assert meshOffset > -4 : "Mesh offsets should only be small values, floats can't support world-space offsets";
 		return meshOffset;
 	}
 
