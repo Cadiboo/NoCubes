@@ -18,9 +18,9 @@ public class ClientUtil {
 	public static IVertexBuilder vertex(IVertexBuilder buffer, Matrix4f matrix, float x, float y, float z) {
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead
-		float transformedX = matrix.getTransformX(x, y, z, 1);
-		float transformedY = matrix.getTransformY(x, y, z, 1);
-		float transformedZ = matrix.getTransformZ(x, y, z, 1);
+		float transformedX = getTransformX(matrix, x, y, z, 1);
+		float transformedY = getTransformY(matrix, x, y, z, 1);
+		float transformedZ = getTransformZ(matrix, x, y, z, 1);
 		return buffer.vertex(transformedX, transformedY, transformedZ);
 	}
 
@@ -31,14 +31,42 @@ public class ClientUtil {
 		Matrix4f pose = currentTransform.pose();
 		Matrix3f normal = currentTransform.normal();
 
-		float transformedX = pose.getTransformX(x, y, z, 1);
-		float transformedY = pose.getTransformY(x, y, z, 1);
-		float transformedZ = pose.getTransformZ(x, y, z, 1);
+		float transformedX = getTransformX(pose, x, y, z, 1);
+		float transformedY = getTransformY(pose, x, y, z, 1);
+		float transformedZ = getTransformZ(pose, x, y, z, 1);
 
-		float transformedNormalX = normal.getTransformX(normalX, normalY, normalZ);
-		float transformedNormalY = normal.getTransformY(normalX, normalY, normalZ);
-		float transformedNormalZ = normal.getTransformZ(normalX, normalY, normalZ);
+		float transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
+		float transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
+		float transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
 
 		buffer.vertex(transformedX, transformedY, transformedZ, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, transformedNormalX, transformedNormalY, transformedNormalZ);
+	}
+
+	public static float getTransformX(Matrix3f matrix, float x, float y, float z) {
+		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
+	}
+
+	public static float getTransformY(Matrix3f matrix, float x, float y, float z) {
+		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
+	}
+
+	public static float getTransformZ(Matrix3f matrix, float x, float y, float z) {
+		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
+	}
+
+	public static float getTransformX(Matrix4f matrix, float x, float y, float z, float w) {
+		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
+	}
+
+	public static float getTransformY(Matrix4f matrix, float x, float y, float z, float w) {
+		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
+	}
+
+	public static float getTransformZ(Matrix4f matrix, float x, float y, float z, float w) {
+		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
+	}
+
+	public static float getTransformW(Matrix4f matrix, float x, float y, float z, float w) {
+		return matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
 	}
 }
