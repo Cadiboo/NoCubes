@@ -68,31 +68,6 @@ public class Face {
 		return this;
 	}
 
-	/**
-	 * The vertices in meshes are generated relative to {@link Area#start}.
-	 * {@link Area#start} is not necessarily the place where the final mesh should be rendered.
-	 * The difference between the start of the area and the position we are generating for
-	 * This exists because:
-	 * To render a 16x16x16 area you need the data of a 18x18x18 area (+1 voxel on each axis)
-	 * So the area is going to start at chunkPos - 1 (and extend 18 blocks)
-	 * And the vertices are going to be relative to the start of the area
-	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
-	 */
-	public Face addMeshOffset(Area area, Vector3i renderStartPos) {
-		BlockPos areaStart = area.start;
-		return add(
-			validateMeshOffset(areaStart.getX() - renderStartPos.getX()),
-			validateMeshOffset(areaStart.getY() - renderStartPos.getY()),
-			validateMeshOffset(areaStart.getZ() - renderStartPos.getZ())
-		);
-	}
-
-	public static int validateMeshOffset(int meshOffset) {
-		assert meshOffset <= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert meshOffset > -4 : "Mesh offsets should only be small values, floats can't support world-space offsets";
-		return meshOffset;
-	}
-
 	public Face add(float x, float y, float z) {
 		v0.add(x, y, z);
 		v1.add(x, y, z);

@@ -21,9 +21,9 @@ public final class LightCache implements AutoCloseable {
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
 
 	public final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+	public final BlockPos start;
+	public final BlockPos size;
 	private final ClientWorld world;
-	private final BlockPos start;
-	private final BlockPos size;
 	private int[] array;
 
 	public LightCache(ClientWorld world, BlockPos meshStart, BlockPos meshSize) {
@@ -41,40 +41,34 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	/**
-	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
-	 * @return The position in world space to use to get light values for this vertex
+	 * Gets the position in world space to use to get light values for this vertex
 	 */
-	public BlockPos lightPos(BlockPos relativeTo, Vec vec, Vec normal) {
-		return locateWorldLightPosFor(relativeTo, vec, normal, this.mutablePos);
-	}
-
-	/**
-	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
-	 */
-	private static BlockPos locateWorldLightPosFor(BlockPos relativeTo, Vec vec, Vec normal, BlockPos.Mutable toMove) {
+	public BlockPos.Mutable lightWorldPos(BlockPos relativeTo, Vec vec, Vec normal) {
 		float vx = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
 		float vy = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
 		float vz = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
 
-		int x = (int) Math.round(vx);
-		int y = (int) Math.round(vy);
-		int z = (int) Math.round(vz);
-		toMove.set(relativeTo).move(x, y, z);
-		return toMove;
+		int x = Math.round(vx);
+		int y = Math.round(vy);
+		int z = Math.round(vz);
+		return mutablePos.set(relativeTo).move(x, y, z);
 	}
 
-	/**
-	 * @param relativeTo Where this vertex/normal is relative to in world space (i.e. relativeTo + vec = worldPosOfVec)
-	 */
 	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
-		BlockPos.Mutable lightPos = (BlockPos.Mutable) lightPos(relativeTo, vec, normal);
-		int light = get(lightPos);
-		if (light == 0) light = get(lightPos.move(0, -1, 0));
-		if (light == 0) light = get(lightPos.move(0, 2, 0));
-		if (light == 0) light = get(lightPos.move(-1, -1, 0));
-		if (light == 0) light = get(lightPos.move(2, 0, 0));
-		if (light == 0) light = get(lightPos.move(-1, 0, -1));
-		if (light == 0) light = get(lightPos.move(0, 0, 2));
+		BlockPos.Mutable lightWorldPos = lightWorldPos(relativeTo, vec, normal);
+		int light = get(lightWorldPos);
+		if (light == 0)
+			light = get(lightWorldPos.move(0, -1, 0));
+		if (light == 0)
+			light = get(lightWorldPos.move(0, 2, 0));
+		if (light == 0)
+			light = get(lightWorldPos.move(-1, -1, 0));
+		if (light == 0)
+			light = get(lightWorldPos.move(2, 0, 0));
+		if (light == 0)
+			light = get(lightWorldPos.move(-1, 0, -1));
+		if (light == 0)
+			light = get(lightWorldPos.move(0, 0, 2));
 		return light;
 //		return get((int)(vx), (int)(vy), (int)(vz));
 //		int x = (int) Math.ceil(vx);
@@ -191,16 +185,15 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	private static int lerp(int a, int b, float t) {
-		return Math.round(a + t * (a - b));
+		return Math.round(a + t * (b - a));
 	}
 
 	private int get(BlockPos worldPos) {
-		int index = index(worldPos);
-		int[] array = getArray();
-
-		if (index < 0 || index >= numBlocks()) // TODO: Shouldn't need this
+		int index = indexIfInsideCache(worldPos);
+		if (index == -1)
 			return fetchCombinedLight(worldPos);
 
+		int[] array = getArray();
 		int light = array[index];
 		if (light == -1)
 			array[index] = light = fetchCombinedLight(worldPos);
@@ -225,7 +218,7 @@ public final class LightCache implements AutoCloseable {
 		return size.getX() * size.getY() * size.getZ();
 	}
 
-	private int index(BlockPos worldPos) {
+	private int indexIfInsideCache(BlockPos worldPos) {
 		BlockPos start = this.start;
 		BlockPos size = this.size;
 		int x = worldPos.getX() - start.getX();

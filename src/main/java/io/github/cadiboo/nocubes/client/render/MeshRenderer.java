@@ -71,15 +71,15 @@ public final class MeshRenderer {
 			Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, generator);
 			LightCache light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE)
 		) {
+			MeshGenerator.translateToMeshStart(matrix, area.start, chunkPos);
 			OptiFineProxy optiFine = OptiFineCompatibility.proxy();
 			optiFine.preRenderChunk(chunkRender, chunkPos, matrix);
 
 			generator.generate(area, isSmoothable, (relativePos, face) -> {
-				face.addMeshOffset(area, chunkPos);
-				if (leavesChunkBounds(face))
-					return true;
+//				if (leavesBounds(chunkPos, ModUtil.CHUNK_SIZE, area.start, face))
+//					return true;
 
-				renderInfo.setup(face);
+				renderInfo.setup(face, area.start);
 				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
 				BlockPos.Mutable worldPos = relativePos.move(area.start);
 
@@ -98,8 +98,6 @@ public final class MeshRenderer {
 					if (compiledChunk.hasLayer.add(rendertype))
 						chunkRender.beginLayer(buffer);
 
-					// The vertices we get from the mesh generator are relative to the start of the chunk so we don't need to do any offsetting
-					// matrix.pushPose();
 					Object renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, rendertype, buffer, state, worldPos);
 
 					IBakedModel modelIn = dispatcher.getBlockModel(state);
@@ -111,7 +109,6 @@ public final class MeshRenderer {
 					optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
 					compiledChunk.isCompletelyEmpty = false;
 					optiFine.markRenderLayerUsed(compiledChunk, rendertype);
-					// matrix.popPose();
 				}
 				return true;
 			});
@@ -123,16 +120,47 @@ public final class MeshRenderer {
 			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
 	}
 
-	private static boolean leavesChunkBounds(Face face) {
-//		final float min = -0.5F;
-//		final float max = 16.5F;
-//		if (face.v0.x < min || face.v1.x < min || face.v2.x < min || face.v3.x < min || face.v0.x >= max || face.v1.x >= max || face.v2.x >= max || face.v3.x >= max)
-//			return true;
-//		if (face.v0.y < min || face.v1.y < min || face.v2.y < min || face.v3.y < min || face.v0.y >= max || face.v1.y >= max || face.v2.y >= max || face.v3.y >= max)
-//			return true;
-//		if (face.v0.z < min || face.v1.z < min || face.v2.z < min || face.v3.z < min || face.v0.z >= max || face.v1.z >= max || face.v2.z >= max || face.v3.z >= max)
-//			return true;
-		return false;
+	private static boolean leavesBounds(BlockPos boundsStart, BlockPos boundsSize, BlockPos worldPos, Face face) {
+		double x = worldPos.getX() - boundsStart.getX();
+		double y = worldPos.getY() - boundsStart.getY();
+		double z = worldPos.getZ() - boundsStart.getZ();
+
+		Vec v0 = face.v0;
+		Vec v1 = face.v1;
+		Vec v2 = face.v2;
+		Vec v3 = face.v3;
+
+		double v0x = x + v0.x;
+		double v0y = y + v0.y;
+		double v0z = z + v0.z;
+		double v1x = x + v1.x;
+		double v1y = y + v1.y;
+		double v1z = z + v1.z;
+		double v2x = x + v2.x;
+		double v2y = y + v2.y;
+		double v2z = z + v2.z;
+		double v3x = x + v3.x;
+		double v3y = y + v3.y;
+		double v3z = z + v3.z;
+
+		int minX = 0;
+		if (v0x < minX || v1x < minX || v2x < minX || v3x < minX)
+			return true;
+		int minY = 0;
+		if (v0y < minY || v1y < minY || v2y < minY || v3y < minY)
+			return true;
+		int minZ = 0;
+		if (v0z < minZ || v1z < minZ || v2z < minZ || v3z < minZ)
+			return true;
+
+		int maxX = boundsSize.getX();
+		if (v0x >= maxX || v1x >= maxX || v2x >= maxX || v3x >= maxX)
+			return true;
+		int maxY = boundsSize.getY();
+		if (v0y >= maxY || v1y >= maxY || v2y >= maxY || v3y >= maxY)
+			return true;
+		int maxZ = boundsSize.getZ();
+		return v0z >= maxZ || v1z >= maxZ || v2z >= maxZ || v3z >= maxZ;
 	}
 
 	public static void renderSmoothBlockDamage(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
@@ -140,9 +168,9 @@ public final class MeshRenderer {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		Random random = dispatcher.random;
 		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
+			MeshGenerator.translateToMeshStart(matrix, area.start, pos);
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
-				face.addMeshOffset(area, pos);
-				renderInfo.setup(face);
+				renderInfo.setup(face, area.start);
 
 				// Don't need textures or lighting because the crumbling texture overwrites them
 				renderInfo.assignMissingQuads(state, random, modelData);
@@ -217,6 +245,7 @@ public final class MeshRenderer {
 
 	static final /* inline? */ class FaceInfo {
 		public Face face;
+		public BlockPos faceRelativeToWorldPos;
 		public final Face vertexNormals = new Face();
 		public final Vec faceNormal = new Vec();
 		public Direction faceDirection;
@@ -224,8 +253,9 @@ public final class MeshRenderer {
 		public final ColorInfo color = new ColorInfo();
 		public final List<BakedQuad> quads = new ArrayList<>();
 
-		public void setup(Face face) {
+		public void setup(Face face, BlockPos faceRelativeToWorldPos) {
 			this.face = face;
+			this.faceRelativeToWorldPos = faceRelativeToWorldPos;
 			face.assignNormalTo(vertexNormals);
 			vertexNormals.multiply(-1).assignAverageTo(faceNormal);
 			faceDirection = faceNormal.getDirectionFromNormal();
@@ -267,7 +297,7 @@ public final class MeshRenderer {
 		}
 
 		public int getLight(LightCache light, Vec vec) {
-			return light == null ? LightCache.MAX_BRIGHTNESS : light.get(faceOffsetPos, vec, faceNormal);
+			return light == null ? LightCache.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, vec, faceNormal);
 		}
 
 		public ColorInfo getColor(BakedQuad quad, BlockState state, IBlockDisplayReader world, BlockPos pos) {

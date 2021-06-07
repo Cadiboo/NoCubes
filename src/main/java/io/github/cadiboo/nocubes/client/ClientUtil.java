@@ -15,6 +15,10 @@ public class ClientUtil {
 			worldRenderer.allChanged();
 	}
 
+	public static IVertexBuilder vertex(IVertexBuilder buffer, MatrixStack matrix, float x, float y, float z) {
+		return vertex(buffer, matrix.last().pose(), x, y, z);
+	}
+
 	public static IVertexBuilder vertex(IVertexBuilder buffer, Matrix4f matrix, float x, float y, float z) {
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead

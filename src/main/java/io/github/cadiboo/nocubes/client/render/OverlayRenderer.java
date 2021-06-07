@@ -3,13 +3,15 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.*;
+import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
@@ -34,7 +36,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.*;
+import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
@@ -61,13 +63,13 @@ public final class OverlayRenderer {
 
 		event.setCanceled(true);
 
-		final Vector3d camera = event.getInfo().getPosition();
-		final Matrix4f matrix4f = event.getMatrix().last().pose();
-		final IVertexBuilder bufferBuilder = event.getBuffers().getBuffer(RenderType.lines());
+		Vector3d camera = event.getInfo().getPosition();
+		MatrixStack matrix = event.getMatrix();
+		IVertexBuilder buffer = event.getBuffers().getBuffer(RenderType.lines());
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
-				drawFacePosColor(face, camera, area.start, NoCubesConfig.Client.selectionBoxColor, bufferBuilder, matrix4f);
+				drawFacePosColor(face, camera, area.start, NoCubesConfig.Client.selectionBoxColor, buffer, matrix);
 				return true;
 			});
 		}
@@ -210,7 +212,7 @@ public final class OverlayRenderer {
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
 		if (NoCubesConfig.Client.debugRecordMeshPerformance || NoCubesConfig.Client.debugOutlineNearbyMesh) {
 			long startNanos = System.nanoTime();
-			drawNearbyMesh(viewer, matrixStack.last().pose(), camera, bufferBuilder);
+			drawNearbyMesh(viewer, matrixStack, camera, bufferBuilder);
 			if (NoCubesConfig.Client.debugRecordMeshPerformance) {
 				if (meshProfiler.recordElapsedNanos(startNanos))
 					LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugOutlineNearbyMesh ? " & outline" : "") + " nearby mesh").debug("Average {}ms over the past {} frames", meshProfiler.average() / 1000_000F, meshProfiler.size());
@@ -221,13 +223,13 @@ public final class OverlayRenderer {
 		bufferSource.endBatch(RenderType.lines());
 	}
 
-	private static void drawNearbyMesh(Entity viewer, Matrix4f matrix4f, Vector3d camera, IVertexBuilder bufferBuilder) {
+	private static void drawNearbyMesh(Entity viewer, MatrixStack matrix, Vector3d camera, IVertexBuilder buffer) {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		BlockPos meshSize = new BlockPos(16, 16, 16);
 		BlockPos meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
 			Area area = new Area(viewer.level, meshStart, meshSize, generator);
-			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize);
+			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize)
 		) {
 			FaceInfo faceInfo = new FaceInfo();
 			Vec centre = new Vec();
@@ -242,11 +244,9 @@ public final class OverlayRenderer {
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
-				BlockPos start = meshStart;
-				face.addMeshOffset(area, start);
-				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
+				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);
 
-				faceInfo.setup(face);
+				faceInfo.setup(face, area.start);
 				Face vertexNormals = faceInfo.vertexNormals;
 				Vec faceNormal = faceInfo.faceNormal;
 				Direction faceDirection = faceInfo.faceDirection;
@@ -254,32 +254,32 @@ public final class OverlayRenderer {
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-				drawLinePosColorFromAdd(start, centre, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, centre, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(area.start, centre, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, centre, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, buffer, matrix, camera);
 
 				// Draw each vertex normal
-				drawLinePosColorFromAdd(start, face.v0, mutable.set(vertexNormals.v0).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v1, mutable.set(vertexNormals.v1).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v2, mutable.set(vertexNormals.v2).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
-				drawLinePosColorFromAdd(start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, bufferBuilder, matrix4f, camera);
+				drawLinePosColorFromAdd(area.start, face.v0, mutable.set(vertexNormals.v0).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v1, mutable.set(vertexNormals.v1).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v2, mutable.set(vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
 				// Draw light pos
 				mutable.set(0, 0, 0);
-				if (light.get(start, face.v0, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v0, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
-				if (light.get(start, face.v1, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v1, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
-				if (light.get(start, face.v2, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v2, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
-				if (light.get(start, face.v3, faceNormal) == 0)
-					drawLinePosColorFromTo(start, face.v3, light.mutablePos, mutable, lightColor, bufferBuilder, matrix4f, camera);
+				if (faceInfo.getLight(light, face.v0) == 0)
+					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v1) == 0)
+					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v2) == 0)
+					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v3) == 0)
+					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
 
 				return true;
 			});
 		}
 	}
 
-	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, IVertexBuilder buffer, Matrix4f matrix4f, Vector3d camera) {
+	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
@@ -287,20 +287,20 @@ public final class OverlayRenderer {
 		float startX = (float) (offset.getX() - camera.x + start.x);
 		float startY = (float) (offset.getY() - camera.y + start.y);
 		float startZ = (float) (offset.getZ() - camera.z + start.z);
-		vertex(buffer, matrix4f, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix4f, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, IVertexBuilder buffer, Matrix4f matrix4f, Vector3d camera) {
+	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
 		int alpha = color.alpha;
-		vertex(buffer, matrix4f, (float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z)).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix4f, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, (float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z)).color(red, green, blue, alpha).endVertex();
+		vertex(buffer, matrix, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder buffer, Matrix4f matrix) {
+	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder buffer, MatrixStack matrix) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
