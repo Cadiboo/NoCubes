@@ -93,6 +93,7 @@ public class Area implements AutoCloseable {
 	}
 
 	public int numBlocks() {
+		BlockPos size = this.size;
 		return size.getX() * size.getY() * size.getZ();
 	}
 

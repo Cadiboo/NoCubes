@@ -12,6 +12,7 @@ import net.minecraft.block.BlockState;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import net.minecraftforge.common.ForgeConfigSpec.IntValue;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -200,6 +201,7 @@ public final class NoCubesConfig {
 		public static MeshGenerator meshGenerator = new SurfaceNets();
 		public static boolean collisionsEnabled;
 		public static boolean forceVisuals;
+		public static int extendFluidsRange;
 
 		static {
 			Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -217,6 +219,9 @@ public final class NoCubesConfig {
 			if (forceVisuals)
 				// Directly setting the baked field - won't cause a NPE on the dedicated server
 				Client.render = true;
+			extendFluidsRange = INSTANCE.extendFluidsRange.get();
+			if (extendFluidsRange > 2)
+				throw new IllegalStateException("Config was not validated! 'extendFluidsRange' cannot be greater than 2!");
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
 		}
 
@@ -251,6 +256,7 @@ public final class NoCubesConfig {
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
 			final BooleanValue collisionsEnabled;
 			final BooleanValue forceVisuals;
+			final IntValue extendFluidsRange;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
@@ -275,6 +281,13 @@ public final class NoCubesConfig {
 						"If you enable this make sure that you've manually checked that every chunk is navigable!"
 					)
 					.define("forceVisuals", false);
+
+				extendFluidsRange = builder
+					.translation(NoCubes.MOD_ID + ".config.extendFluidsRange")
+					.comment(
+						"The range at which to extend fluids into smoothable blocks"
+					)
+					.defineInRange("extendFluidsRange", 1, 0, 2);
 			}
 
 		}

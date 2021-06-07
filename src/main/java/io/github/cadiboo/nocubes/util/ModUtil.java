@@ -1,14 +1,20 @@
 package io.github.cadiboo.nocubes.util;
 
 import com.google.common.collect.ImmutableList;
+import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IWorldReader;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
@@ -129,6 +135,47 @@ public class ModUtil {
 	 */
 	public static int get3dIndexInto1dArray(int x, int y, int z, int xSize, int ySize) {
 		return (xSize * ySize * z) + (xSize * y) + x;
+	}
+
+	public static FluidState getExtendedFluidState(World world, BlockPos pos) {
+		// Check NoCubesConfig.Server.extendFluidsRange fluid states around pos and return a fluid state if there is one
+		int extendRange = NoCubesConfig.Server.extendFluidsRange;
+		assert extendRange > 0;
+
+		int x = pos.getX();
+		int y = pos.getY();
+		int z = pos.getZ();
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+		Chunk chunk = world.getChunk(chunkX, chunkZ);
+
+		FluidState fluid = chunk.getFluidState(x, y, z);
+		if (!fluid.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(chunk.getBlockState(pos)))
+			return fluid;
+
+		// Check up
+		fluid = chunk.getFluidState(x, y + 1, z);
+		if (fluid.isSource())
+			return fluid;
+
+		// Check around
+		for (int extendX = z - extendRange; extendX <= z + extendRange; ++extendX) {
+			for (int extendZ = x - extendRange; extendZ <= x + extendRange; ++extendZ) {
+				if (extendX == z && extendZ == x)
+					continue; // We already checked ourself above
+
+				if (chunkX != extendX >> 4 || chunkZ != extendZ >> 4) {
+					chunkX = extendX >> 4;
+					chunkZ = extendZ >> 4;
+					chunk = world.getChunk(chunkX, chunkZ);
+				}
+
+				fluid = chunk.getFluidState(extendZ, y, extendX);
+				if (fluid.isSource())
+					return fluid;
+			}
+		}
+		return Fluids.EMPTY.defaultFluidState();
 	}
 
 }

@@ -40,7 +40,7 @@ public final class ClientEventSubscriber {
 			// Only print once every 10 seconds, don't spam the log
 			if (time - 10 * 20 > selfCheckInfoPrintedAt) {
 				selfCheckInfoPrintedAt = time;
-				LogManager.getLogger("SelfCheck").debug(String.join("\n", SelfCheck.info()));
+				LogManager.getLogger("NoCubes Hooks SelfCheck").debug(String.join("\n", SelfCheck.info()));
 			}
 		}
 
