@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
 
-public class ClientUtil {
+public final class ClientUtil {
 
 	public static void reloadAllChunks(Minecraft minecraft) {
 		WorldRenderer worldRenderer = minecraft.levelRenderer;

@@ -6,7 +6,6 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -14,7 +13,6 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
@@ -47,17 +45,16 @@ import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 public final class OverlayRenderer {
 
 	private static final RollingProfiler meshProfiler = new RollingProfiler(600);
-	private static long selfCheckInfoPrintedAt = Long.MIN_VALUE;
 
 	@SubscribeEvent
-	public static void onHighlightBlock(final DrawHighlightEvent.HighlightBlock event) {
+	public static void onHighlightBlock(DrawHighlightEvent.HighlightBlock event) {
 		if (!NoCubesConfig.Client.render)
 			return;
-		final ClientWorld world = Minecraft.getInstance().level;
+		ClientWorld world = Minecraft.getInstance().level;
 		if (world == null)
 			return;
-		final BlockPos lookingAtPos = event.getTarget().getBlockPos();
-		final BlockState state = world.getBlockState(lookingAtPos);
+		BlockPos lookingAtPos = event.getTarget().getBlockPos();
+		BlockState state = world.getBlockState(lookingAtPos);
 		if (!NoCubes.smoothableHandler.isSmoothable(state))
 			return;
 
@@ -76,23 +73,14 @@ public final class OverlayRenderer {
 	}
 
 	@SubscribeEvent
-	public static void onRenderWorldLastEvent(final RenderWorldLastEvent event) {
+	public static void onRenderWorldLastEvent(RenderWorldLastEvent event) {
 		if (!NoCubesConfig.Client.debugEnabled)
 			return;
 
-		final Minecraft minecraft = Minecraft.getInstance();
-		final World world = minecraft.level;
+		Minecraft minecraft = Minecraft.getInstance();
+		World world = minecraft.level;
 		if (world == null)
 			return;
-
-		if (Screen.hasAltDown()) {
-			long time = world.getGameTime();
-			// Only print once every 10 seconds, don't spam the log
-			if (time - 10 * 20 > selfCheckInfoPrintedAt) {
-				selfCheckInfoPrintedAt = time;
-				LogManager.getLogger("SelfCheck").debug(String.join("\n", SelfCheck.info()));
-			}
-		}
 
 		Entity viewer = minecraft.gameRenderer.getMainCamera().getEntity();
 		if (viewer == null)
@@ -100,11 +88,11 @@ public final class OverlayRenderer {
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		final Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
-		final MatrixStack matrixStack = event.getMatrixStack();
+		Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
+		MatrixStack matrixStack = event.getMatrixStack();
 
-		final IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
-		final IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
+		IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
+		IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
 		RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
 		// Where the player is looking at or their position of they're not looking at a block
@@ -114,7 +102,7 @@ public final class OverlayRenderer {
 		if (false) {
 			BlockPos start = targetedPos.offset(-2, -2, -2);
 			BlockPos end = targetedPos.offset(2, 2, 2);
-			final int[] i = {0};
+			int[] i = {0};
 			BlockPos.betweenClosed(start, end).forEach(pos -> {
 				minecraft.levelRenderer.destroyBlockProgress(100 + i[0]++, pos, 9);
 			});
