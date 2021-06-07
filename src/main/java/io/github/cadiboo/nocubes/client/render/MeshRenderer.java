@@ -219,11 +219,10 @@ public final class MeshRenderer {
 		uvs.rearangeForDirection(renderInfo.faceDirection);
 
 		// UV2 (light)
-		PackedFaceLight faceLight = renderInfo.getLight(light);
-		int l0 = faceLight.v0;
-		int l1 = faceLight.v1;
-		int l2 = faceLight.v2;
-		int l3 = faceLight.v3;
+		int l0 = renderInfo.getLight(light, v0);
+		int l1 = renderInfo.getLight(light, v1);
+		int l2 = renderInfo.getLight(light, v2);
+		int l3 = renderInfo.getLight(light, v3);
 
 		// Normal
 		Vec n0 = renderInfo.faceNormal;
@@ -252,7 +251,6 @@ public final class MeshRenderer {
 		public Direction faceDirection;
 		public final TextureInfo texture = new TextureInfo();
 		public final ColorInfo color = new ColorInfo();
-		public final PackedFaceLight light = new PackedFaceLight(0, 0, 0, 0);
 		public final List<BakedQuad> quads = new ArrayList<>();
 
 		public void setup(Face face, BlockPos faceRelativeToWorldPos) {
@@ -298,8 +296,8 @@ public final class MeshRenderer {
 			quads.addAll(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getModelManager().getMissingModel().getQuads(state, faceDirection, random, modelData));
 		}
 
-		public PackedFaceLight getLight(LightCache light) {
-			return light == null ? PackedFaceLight.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, face, faceNormal, this.light);
+		public int getLight(LightCache light, Vec vec) {
+			return light == null ? LightCache.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, vec, faceNormal);
 		}
 
 		public ColorInfo getColor(BakedQuad quad, BlockState state, IBlockDisplayReader world, BlockPos pos) {
@@ -414,21 +412,6 @@ public final class MeshRenderer {
 			red *= shading;
 			green *= shading;
 			blue *= shading;
-		}
-	}
-
-	public static final /* inline */ class PackedFaceLight {
-		public static final PackedFaceLight MAX_BRIGHTNESS = new PackedFaceLight(LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS);
-		public int v0;
-		public int v1;
-		public int v2;
-		public int v3;
-
-		public PackedFaceLight(int v0, int v1, int v2, int v3) {
-			this.v0 = v0;
-			this.v1 = v1;
-			this.v2 = v2;
-			this.v3 = v3;
 		}
 	}
 

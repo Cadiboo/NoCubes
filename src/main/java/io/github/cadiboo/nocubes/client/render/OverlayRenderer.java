@@ -16,14 +16,12 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
@@ -242,7 +240,6 @@ public final class OverlayRenderer {
 			Color averageNormalColor = new Color(1F, 0F, 0F, 1F);
 			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
 			Color lightColor = new Color(1F, 1F, 0F, 1F);
-			Color lightColor1 = new Color(1F, 1F, 0F, 0.2F);
 
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
@@ -267,26 +264,15 @@ public final class OverlayRenderer {
 				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
 				// Draw light pos
-				{
-					MeshRenderer.PackedFaceLight faceLight = faceInfo.getLight(light);
-					if (LightTexture.block(faceLight.v0) < 5 && LightTexture.sky(faceLight.v0) < 5) {
-						Vec vec = face.v0;
-						Vec normal = faceNormal;
-						BlockPos relativeTo = area.start;
-
-						float posX = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
-						float posY = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
-						float posZ = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
-						int relX = (int) (posX);
-						int relY = (int) (posY);
-						int relZ = (int) (posZ);
-						int x = relativeTo.getX() + relX;
-						int y = relativeTo.getY() + relY;
-						int z = relativeTo.getZ() + relZ;
-						drawLinePosColorFromTo(area.start, vec, area.start, mutable.set(posX, posY, posZ), lightColor, buffer, matrix, camera);
-						drawShape(matrix, buffer, VoxelShapes.block(), light.mutablePos.set(x, y, z), camera, lightColor1);
-					}
-				}
+				mutable.set(0, 0, 0);
+				if (faceInfo.getLight(light, face.v0) == 0)
+					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v1) == 0)
+					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v2) == 0)
+					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				if (faceInfo.getLight(light, face.v3) == 0)
+					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
 
 				return true;
 			});
