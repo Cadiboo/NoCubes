@@ -5,6 +5,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IWorldReader;
@@ -24,6 +25,7 @@ public class ModUtil {
 	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
 	public static final BlockPos VEC_TWO = new BlockPos(2, 2, 2);
 	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
+	public static final Direction[] DIRECTIONS = Direction.values();
 	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
 		final String target = System.getenv().get("target");
 		if (target == null)

@@ -119,7 +119,7 @@ public final class OldNoCubes implements MeshGenerator {
 					if (!voxelAction.apply(pos.set(x, y, z), amountInside))
 						return;
 
-					Direction[] directions = Direction.VALUES;
+					Direction[] directions = ModUtil.DIRECTIONS;
 					for (int i = 0, l = directions.length; i < l; ++i) {
 						Direction direction = directions[i];
 						pos.set(x, y, z).move(direction);
