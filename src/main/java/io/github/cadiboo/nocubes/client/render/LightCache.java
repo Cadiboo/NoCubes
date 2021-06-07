@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -40,112 +41,109 @@ public final class LightCache implements AutoCloseable {
 //			System.arraycopy(resetArray, 0, array, i, length);
 	}
 
-	/**
-	 * Gets the position in world space to use to get light values for this vertex
-	 */
-	public BlockPos.Mutable lightWorldPos(BlockPos relativeTo, Vec vec, Vec normal) {
-		float vx = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
-		float vy = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
-		float vz = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
-
-		int x = Math.round(vx);
-		int y = Math.round(vy);
-		int z = Math.round(vz);
-		return mutablePos.set(relativeTo).move(x, y, z);
+	public MeshRenderer.PackedFaceLight get(BlockPos relativeTo, Face face, Vec normal, MeshRenderer.PackedFaceLight light) {
+		light.v0 = get(relativeTo, face.v0, normal);
+		light.v1 = get(relativeTo, face.v1, normal);
+		light.v2 = get(relativeTo, face.v2, normal);
+		light.v3 = get(relativeTo, face.v3, normal);
+		return light;
 	}
 
 	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
-		BlockPos.Mutable lightWorldPos = lightWorldPos(relativeTo, vec, normal);
-		int light = get(lightWorldPos);
-		if (light == 0)
-			light = get(lightWorldPos.move(0, -1, 0));
-		if (light == 0)
-			light = get(lightWorldPos.move(0, 2, 0));
-		if (light == 0)
-			light = get(lightWorldPos.move(-1, -1, 0));
-		if (light == 0)
-			light = get(lightWorldPos.move(2, 0, 0));
-		if (light == 0)
-			light = get(lightWorldPos.move(-1, 0, -1));
-		if (light == 0)
-			light = get(lightWorldPos.move(0, 0, 2));
-		return light;
-//		return get((int)(vx), (int)(vy), (int)(vz));
-//		int x = (int) Math.ceil(vx);
-//		int y = (int) Math.ceil(vy);
-//		int z = (int) Math.ceil(vz);
+		BlockPos.Mutable pos = mutablePos;
 
-//		BlockPos.Mutable pos = mutablePos;
-//		locateWorldLightPosFor(relativeTo, vec, normal, pos);
-//		int x = pos.getX();
-//		int y = pos.getY();
-//		int z = pos.getZ();
-//
-//		int l000 = get(pos.set(x + 0, y + 0, z + 0));
-//		int l001 = get(pos.set(x + 0, y + 0, z + 1));
-//		int l010 = get(pos.set(x + 0, y + 1, z + 0));
-//		int l011 = get(pos.set(x + 0, y + 1, z + 1));
-//		int l100 = get(pos.set(x + 1, y + 0, z + 0));
-//		int l101 = get(pos.set(x + 1, y + 0, z + 1));
-//		int l110 = get(pos.set(x + 1, y + 1, z + 0));
-//		int l111 = get(pos.set(x + 1, y + 1, z + 1));
-//
-//		int s000 = LightTexture.sky(l000);
-//		int s001 = LightTexture.sky(l001);
-//		int s010 = LightTexture.sky(l010);
-//		int s011 = LightTexture.sky(l011);
-//		int s100 = LightTexture.sky(l100);
-//		int s101 = LightTexture.sky(l101);
-//		int s110 = LightTexture.sky(l110);
-//		int s111 = LightTexture.sky(l111);
-//
-//		int b000 = LightTexture.block(l000);
-//		int b001 = LightTexture.block(l001);
-//		int b010 = LightTexture.block(l010);
-//		int b011 = LightTexture.block(l011);
-//		int b100 = LightTexture.block(l100);
-//		int b101 = LightTexture.block(l101);
-//		int b110 = LightTexture.block(l110);
-//		int b111 = LightTexture.block(l111);
-//
-//		int maxBlock = max(b000, b001, b010, b011, b100, b101, b110, b111);
-//		int maxSky = max(s000, s001, s010, s011, s100, s101, s110, s111);
-//
+		float posX = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
+		float posY = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
+		float posZ = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
+		int relX = (int) (posX);
+		int relY = (int) (posY);
+		int relZ = (int) (posZ);
+		int x = relativeTo.getX() + relX;
+		int y = relativeTo.getY() + relY;
+		int z = relativeTo.getZ() + relZ;
+
+		int l000 = get(pos.set(x + 0, y + 0, z + 0));
+		int l001 = get(pos.set(x + 0, y + 0, z + 1));
+		int l010 = get(pos.set(x + 0, y + 1, z + 0));
+		int l011 = get(pos.set(x + 0, y + 1, z + 1));
+		int l100 = get(pos.set(x + 1, y + 0, z + 0));
+		int l101 = get(pos.set(x + 1, y + 0, z + 1));
+		int l110 = get(pos.set(x + 1, y + 1, z + 0));
+		int l111 = get(pos.set(x + 1, y + 1, z + 1));
+
+		// For debugging
+		pos.set(x + 0, y + 0, z + 0);
+
+		int s000 = LightTexture.sky(l000);
+		int s001 = LightTexture.sky(l001);
+		int s010 = LightTexture.sky(l010);
+		int s011 = LightTexture.sky(l011);
+		int s100 = LightTexture.sky(l100);
+		int s101 = LightTexture.sky(l101);
+		int s110 = LightTexture.sky(l110);
+		int s111 = LightTexture.sky(l111);
+
+		int b000 = LightTexture.block(l000);
+		int b001 = LightTexture.block(l001);
+		int b010 = LightTexture.block(l010);
+		int b011 = LightTexture.block(l011);
+		int b100 = LightTexture.block(l100);
+		int b101 = LightTexture.block(l101);
+		int b110 = LightTexture.block(l110);
+		int b111 = LightTexture.block(l111);
+
+		int maxBlock = max(b000, b001, b010, b011, b100, b101, b110, b111);
+		int maxSky = max(s000, s001, s010, s011, s100, s101, s110, s111);
+
+		return LightTexture.pack(maxBlock, maxSky);
+
 //		// Try and remove 0 level lighting from calculations
-//		int minUsableSky = maxSky - 4;
-//		if (s000 < minUsableSky) s000 = minUsableSky;
-//		if (s001 < minUsableSky) s001 = minUsableSky;
-//		if (s010 < minUsableSky) s010 = minUsableSky;
-//		if (s011 < minUsableSky) s011 = minUsableSky;
-//		if (s100 < minUsableSky) s100 = minUsableSky;
-//		if (s101 < minUsableSky) s101 = minUsableSky;
-//		if (s110 < minUsableSky) s110 = minUsableSky;
-//		if (s111 < minUsableSky) s111 = minUsableSky;
+//		int minUsableSky = maxSky - 1;
+//		if (s000 < minUsableSky)
+//			s000 = minUsableSky;
+//		if (s001 < minUsableSky)
+//			s001 = minUsableSky;
+//		if (s010 < minUsableSky)
+//			s010 = minUsableSky;
+//		if (s011 < minUsableSky)
+//			s011 = minUsableSky;
+//		if (s100 < minUsableSky)
+//			s100 = minUsableSky;
+//		if (s101 < minUsableSky)
+//			s101 = minUsableSky;
+//		if (s110 < minUsableSky)
+//			s110 = minUsableSky;
+//		if (s111 < minUsableSky)
+//			s111 = minUsableSky;
 //
-//		int minUsableBlock = maxBlock - 4;
-//		if (b000 < minUsableBlock) b000 = minUsableBlock;
-//		if (b001 < minUsableBlock) b001 = minUsableBlock;
-//		if (b010 < minUsableBlock) b010 = minUsableBlock;
-//		if (b011 < minUsableBlock) b011 = minUsableBlock;
-//		if (b100 < minUsableBlock) b100 = minUsableBlock;
-//		if (b101 < minUsableBlock) b101 = minUsableBlock;
-//		if (b110 < minUsableBlock) b110 = minUsableBlock;
-//		if (b111 < minUsableBlock) b111 = minUsableBlock;
+//		int minUsableBlock = maxBlock - 1;
+//		if (b000 < minUsableBlock)
+//			b000 = minUsableBlock;
+//		if (b001 < minUsableBlock)
+//			b001 = minUsableBlock;
+//		if (b010 < minUsableBlock)
+//			b010 = minUsableBlock;
+//		if (b011 < minUsableBlock)
+//			b011 = minUsableBlock;
+//		if (b100 < minUsableBlock)
+//			b100 = minUsableBlock;
+//		if (b101 < minUsableBlock)
+//			b101 = minUsableBlock;
+//		if (b110 < minUsableBlock)
+//			b110 = minUsableBlock;
+//		if (b111 < minUsableBlock)
+//			b111 = minUsableBlock;
 //
-////		float lerpX = vec.x - (x - start.getX());
-////		float lerpY = vec.y - (y - start.getY());
-////		float lerpZ = vec.z - (z - start.getZ());
-//
-//		float lerpX = normal.x;// - (x - start.getX());
-//		float lerpY = normal.y;// - (y - start.getY());
-//		float lerpZ = normal.z;// - (z - start.getZ());
+//		float lerpX = posX - relX;
+//		float lerpY = posY - relY;
+//		float lerpZ = posZ - relZ;
 //
 //		int block = triLerp(b000, b001, b010, b011, b100, b101, b110, b111, lerpZ, lerpY, lerpX);
 //		int sky = triLerp(s000, s001, s010, s011, s100, s101, s110, s111, lerpZ, lerpY, lerpX);
 //		return LightTexture.pack(block, sky);
 	}
 
-	private int max(int a, int b, int c, int d, int e, int f, int g, int h) {
+	private static int max(int a, int b, int c, int d, int e, int f, int g, int h) {
 		int max = a;
 		if (b > max)
 			max = b;
