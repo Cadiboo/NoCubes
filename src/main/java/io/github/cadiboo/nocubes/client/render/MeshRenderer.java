@@ -79,7 +79,7 @@ public final class MeshRenderer {
 				if (leavesChunkBounds(face))
 					return true;
 
-				renderInfo.setup(face, chunkPos);
+				renderInfo.setup(face);
 				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
 				BlockPos.Mutable worldPos = relativePos.move(area.start);
 
@@ -124,11 +124,13 @@ public final class MeshRenderer {
 	}
 
 	private static boolean leavesChunkBounds(Face face) {
-//		if (face.v0.x < 0 || face.v1.x < 0 || face.v2.x < 0 || face.v3.x < 0)// || face.v0.x > 16 || face.v1.x > 16 || face.v2.x > 16 || face.v3.x > 16)
+//		final float min = -0.5F;
+//		final float max = 16.5F;
+//		if (face.v0.x < min || face.v1.x < min || face.v2.x < min || face.v3.x < min || face.v0.x >= max || face.v1.x >= max || face.v2.x >= max || face.v3.x >= max)
 //			return true;
-//		if (face.v0.y < 0 || face.v1.y < 0 || face.v2.y < 0 || face.v3.y < 0)// || face.v0.y > 16 || face.v1.y > 16 || face.v2.y > 16 || face.v3.y > 16)
+//		if (face.v0.y < min || face.v1.y < min || face.v2.y < min || face.v3.y < min || face.v0.y >= max || face.v1.y >= max || face.v2.y >= max || face.v3.y >= max)
 //			return true;
-//		if (face.v0.z < 0 || face.v1.z < 0 || face.v2.z < 0 || face.v3.z < 0)// || face.v0.z > 16 || face.v1.z > 16 || face.v2.z > 16 || face.v3.z > 16)
+//		if (face.v0.z < min || face.v1.z < min || face.v2.z < min || face.v3.z < min || face.v0.z >= max || face.v1.z >= max || face.v2.z >= max || face.v3.z >= max)
 //			return true;
 		return false;
 	}
@@ -140,7 +142,7 @@ public final class MeshRenderer {
 		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
 				face.addMeshOffset(area, pos);
-				renderInfo.setup(face, pos);
+				renderInfo.setup(face);
 
 				// Don't need textures or lighting because the crumbling texture overwrites them
 				renderInfo.assignMissingQuads(state, random, modelData);
@@ -215,8 +217,6 @@ public final class MeshRenderer {
 
 	static final /* inline? */ class FaceInfo {
 		public Face face;
-		/** faceOffsetPos + face = worldPosOfFace */
-		public BlockPos faceOffsetPos;
 		public final Face vertexNormals = new Face();
 		public final Vec faceNormal = new Vec();
 		public Direction faceDirection;
@@ -224,9 +224,8 @@ public final class MeshRenderer {
 		public final ColorInfo color = new ColorInfo();
 		public final List<BakedQuad> quads = new ArrayList<>();
 
-		public void setup(Face face, BlockPos faceOffsetPos) {
+		public void setup(Face face) {
 			this.face = face;
-			this.faceOffsetPos = faceOffsetPos;
 			face.assignNormalTo(vertexNormals);
 			vertexNormals.multiply(-1).assignAverageTo(faceNormal);
 			faceDirection = faceNormal.getDirectionFromNormal();
@@ -425,8 +424,7 @@ public final class MeshRenderer {
 	 * @return a state
 	 */
 	public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
-		BlockState[] states = area.getAndCacheBlocks();
-		BlockState state = states[area.index(relativePos)];
+		BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
 		if (isSmoothable.test(state))
 			return state;
 
@@ -438,7 +436,7 @@ public final class MeshRenderer {
 		int y = relativePos.getY();
 		int z = relativePos.getZ();
 
-		state = states[area.index(relativePos.move(direction.getOpposite()))];
+		state = area.getBlockState(relativePos.move(direction.getOpposite()));
 		if (isSmoothable.test(state))
 			return state;
 

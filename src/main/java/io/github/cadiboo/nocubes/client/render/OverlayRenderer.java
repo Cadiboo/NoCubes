@@ -242,10 +242,11 @@ public final class OverlayRenderer {
 			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
-				BlockPos start = area.start;
+				BlockPos start = meshStart;
+				face.addMeshOffset(area, start);
 				drawFacePosColor(face, camera, start, faceColor, bufferBuilder, matrix4f);
 
-				faceInfo.setup(face, start);
+				faceInfo.setup(face);
 				Face vertexNormals = faceInfo.vertexNormals;
 				Vec faceNormal = faceInfo.faceNormal;
 				Direction faceDirection = faceInfo.faceDirection;

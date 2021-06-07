@@ -97,15 +97,39 @@ public class Area implements AutoCloseable {
 	}
 
 	public int index(BlockPos relativePos) {
-		return index(relativePos.getX(), relativePos.getY(), relativePos.getZ());
+		int index = indexIfInsideCache(relativePos);
+		if (index == -1)
+			throw new IndexOutOfBoundsException("relativePos was " + relativePos + " but should have been within " + ModUtil.VEC_ZERO + " and " + size);
+		return index;
 	}
 
-	public int index(int relativeX, int relativeY, int relativeZ) {
-		return ModUtil.get3dIndexInto1dArray(relativeX, relativeY, relativeZ, size.getX(), size.getY());
+	public int indexIfInsideCache(BlockPos relativePos) {
+		BlockPos size = this.size;
+		int relativeX = relativePos.getX();
+		int relativeY = relativePos.getY();
+		int relativeZ = relativePos.getZ();
+		int sizeX = size.getX();
+		int sizeY = size.getY();
+		if (relativeX < 0 || relativeX >= sizeX || relativeY < 0 || relativeY >= sizeY || relativeZ < 0 || relativeZ >= size.getZ())
+			return -1; // Outside cache
+		return ModUtil.get3dIndexInto1dArray(relativeX, relativeY, relativeZ, sizeX, sizeY);
 	}
 
 	@Override
 	public void close() {
+	}
+
+	public BlockState getBlockState(BlockPos.Mutable relativePos) {
+		int index = indexIfInsideCache(relativePos);
+		if (index == -1) {
+			int x = relativePos.getX();
+			int y = relativePos.getY();
+			int z = relativePos.getZ();
+			BlockState state = world.getBlockState(relativePos.move(start));
+			relativePos.set(x, y, z);
+			return state;
+		}
+		return getAndCacheBlocks()[index];
 	}
 
 }

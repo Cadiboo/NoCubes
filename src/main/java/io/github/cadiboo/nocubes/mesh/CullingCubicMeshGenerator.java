@@ -40,8 +40,7 @@ public class CullingCubicMeshGenerator implements MeshGenerator {
 		for (int z = 0; z < depth; ++z) {
 			for (int y = 0; y < height; ++y) {
 				for (int x = 0; x < width; ++x, ++index) {
-					if (y >= height - 1 || y <= 0 || z >= depth - 1 || z <= 0 || x >= width - 1 || x <= 0)
-						// Block is outside where we are generating it for, we only query it for its neighbouring faces
+					if (isOutsideMesh(x, y, z, size))
 						continue;
 
 					boolean smoothable = isSmoothable.test(blocks[index]);

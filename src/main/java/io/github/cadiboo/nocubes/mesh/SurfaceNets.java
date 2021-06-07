@@ -45,6 +45,10 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+		generateOrThrow2(generateDistanceField(area, isSmoothable), area.size, voxelAction, faceAction);
+	}
+
+	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
@@ -60,7 +64,7 @@ public class SurfaceNets implements MeshGenerator {
 			boolean isStateSmoothable = isSmoothable.test(state);
 			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
 		}
-		generateOrThrow2(densityField, area.size, voxelAction, faceAction);
+		return densityField;
 
 //		int index = 0;
 //		int maxX = area.size.getX() - 1;
