@@ -117,9 +117,9 @@ public class ModUtil {
 		return 1;
 	}
 
-	/** Map snow height between 0-8 to between 0.25F and 1. */
+	/** Map snow height between 1-8 to between -1 and 1. */
 	private static float mapSnowHeight(int value) {
-		return (value - 1) * 0.125F;
+		return -1 + (value - 1) * 0.25F;
 	}
 
 	/**
