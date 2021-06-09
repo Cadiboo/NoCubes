@@ -1,9 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3i;
 
 /**
  * @author Cadiboo

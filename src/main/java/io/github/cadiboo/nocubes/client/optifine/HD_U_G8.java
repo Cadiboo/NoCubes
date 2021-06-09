@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.coremod.api.ASMAPI;
@@ -86,6 +87,11 @@ class HD_U_G8 implements OptiFineProxy {
 	}
 
 	@Override
+	public Object preRenderFluid(ChunkRender chunkRender, RegionRenderCacheBuilder buffers, IBlockDisplayReader chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+		return this.preRenderBlock(chunkRender, buffers, chunkCache, layer, buffer, block, worldPos);
+	}
+
+	@Override
 	public IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state) {
 		return BlockModelCustomizer_getRenderModel(originalModel, state, renderEnv);
 	}
@@ -99,6 +105,11 @@ class HD_U_G8 implements OptiFineProxy {
 			ChunkRender_postRenderOverlays(chunkRender, builder, compiledChunk);
 			RenderEnv_setOverlaysRendered(renderEnv, false);
 		}
+	}
+
+	@Override
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk) {
+		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, compiledChunk);
 	}
 
 	@Nullable

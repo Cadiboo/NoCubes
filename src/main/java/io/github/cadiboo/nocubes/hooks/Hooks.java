@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.hooks;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.MeshRenderer;
+import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -42,12 +42,12 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link RebuildTask#compile} right before the BlockPos.getAllInBoxMutable iteration
-	 * Calls: {@link MeshRenderer#renderChunk} to render our fluids and smooth terrain
+	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, RegionRenderCacheBuilder builderIn, BlockPos blockpos, IBlockDisplayReader chunkrendercache, MatrixStack matrixstack, Random random, BlockRendererDispatcher blockrendererdispatcher) {
 		SelfCheck.preIteration = true;
-		MeshRenderer.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
+		RendererDispatcher.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
 
 	/**
@@ -82,7 +82,7 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link BlockRendererDispatcher#renderBlockDamage} before any other logic
-	 * Calls: {@link MeshRenderer#renderSmoothBlockDamage} if the blockstate is smoothable
+	 * Calls: {@link RendererDispatcher#renderBreakingTexture} if the blockstate is smoothable
 	 * <p>
 	 * Renders our own smoothed cracking/breaking/damage animation.
 	 *
@@ -93,7 +93,7 @@ public final class Hooks {
 		SelfCheck.renderBlockDamage = true;
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
 			return false;
-		MeshRenderer.renderSmoothBlockDamage(dispatcher, state, pos, world, matrix, buffer, modelData);
+		RendererDispatcher.renderBreakingTexture(dispatcher, state, pos, world, matrix, buffer, modelData);
 		return true;
 	}
 

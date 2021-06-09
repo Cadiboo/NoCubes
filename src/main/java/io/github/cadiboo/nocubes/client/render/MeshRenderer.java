@@ -3,34 +3,26 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.RollingProfiler;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
-import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
-import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,89 +30,27 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
+import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 
-/**
- * @author Cadiboo
- */
 public final class MeshRenderer {
 
-	private static final RollingProfiler profiler = new RollingProfiler(256);
-
-	public static void renderChunk(
-		RebuildTask rebuildTask,
-		ChunkRender chunkRender,
-		CompiledChunk compiledChunk,
-		RegionRenderCacheBuilder buffers,
-		BlockPos chunkPos,
-		IBlockDisplayReader world,
-		MatrixStack matrix,
-		Random random,
-		BlockRendererDispatcher dispatcher
-	) {
-		if (!NoCubesConfig.Client.render)
-			return;
-
-		long start = System.nanoTime();
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+	static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, MeshGenerator generator, Area area) {
 		FaceInfo renderInfo = new FaceInfo();
+		Random random = dispatcher.random;
+		MeshGenerator.translateToMeshStart(matrix, area.start, pos);
+		generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
+			renderInfo.setup(face, area.start);
 
-		matrix.pushPose();
-		try (
-			Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, generator);
-			LightCache light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE)
-		) {
-			MeshGenerator.translateToMeshStart(matrix, area.start, chunkPos);
-			OptiFineProxy optiFine = OptiFineCompatibility.proxy();
-			optiFine.preRenderChunk(chunkRender, chunkPos, matrix);
+			// Don't need textures or lighting because the crumbling texture overwrites them
+			renderInfo.assignMissingQuads(state, random, modelData);
+			LightCache light = null;
+			renderFace(renderInfo, buffer, matrix, world, state, pos, null, null, light, false);
 
-			generator.generate(area, isSmoothable, (relativePos, face) -> {
-//				if (leavesBounds(chunkPos, ModUtil.CHUNK_SIZE, area.start, face))
-//					return true;
-
-				renderInfo.setup(face, area.start);
-				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
-				BlockPos.Mutable worldPos = relativePos.move(area.start);
-
-				if (state.getRenderShape() == BlockRenderType.INVISIBLE)
-					return true;
-
-				long rand = optiFine.getSeed(state.getSeed(worldPos));
-				IModelData modelData = rebuildTask.getModelData(worldPos);
-
-				for (RenderType rendertype : RenderType.chunkBufferLayers()) {
-					if (!RenderTypeLookup.canRenderInLayer(state, rendertype))
-						continue;
-					ForgeHooksClient.setRenderLayer(rendertype);
-					BufferBuilder buffer = buffers.builder(rendertype);
-
-					if (compiledChunk.hasLayer.add(rendertype))
-						chunkRender.beginLayer(buffer);
-
-					Object renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, rendertype, buffer, state, worldPos);
-
-					IBakedModel modelIn = dispatcher.getBlockModel(state);
-					modelIn = optiFine.getModel(renderEnv, modelIn, state);
-
-					renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-					renderFace(renderInfo, buffer, matrix, world, state, worldPos, light, optiFine, renderEnv, false);
-
-					optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
-					compiledChunk.isCompletelyEmpty = false;
-					optiFine.markRenderLayerUsed(compiledChunk, rendertype);
-				}
-				return true;
-			});
-			ForgeHooksClient.setRenderLayer(null);
-		} finally {
-			matrix.popPose();
-		}
-		if (profiler.recordElapsedNanos(start))
-			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", profiler.average() / 1000_000F, profiler.size());
+			return true;
+		});
 	}
 
-	private static boolean leavesBounds(BlockPos boundsStart, BlockPos boundsSize, BlockPos worldPos, Face face) {
+	static boolean leavesBounds(BlockPos boundsStart, BlockPos boundsSize, BlockPos worldPos, Face face) {
 		double x = worldPos.getX() - boundsStart.getX();
 		double y = worldPos.getY() - boundsStart.getY();
 		double z = worldPos.getZ() - boundsStart.getZ();
@@ -143,46 +73,35 @@ public final class MeshRenderer {
 		double v3y = y + v3.y;
 		double v3z = z + v3.z;
 
-		int minX = 0;
-		if (v0x < minX || v1x < minX || v2x < minX || v3x < minX)
+		final float epsilon = 3f;
+		float minX = -epsilon;
+		if (v0x < minX && v1x < minX && v2x < minX && v3x < minX)
 			return true;
-		int minY = 0;
-		if (v0y < minY || v1y < minY || v2y < minY || v3y < minY)
+		float minY = -epsilon;
+		if (v0y < minY && v1y < minY && v2y < minY && v3y < minY)
 			return true;
-		int minZ = 0;
-		if (v0z < minZ || v1z < minZ || v2z < minZ || v3z < minZ)
+		float minZ = -epsilon;
+		if (v0z < minZ && v1z < minZ && v2z < minZ && v3z < minZ)
 			return true;
 
-		int maxX = boundsSize.getX();
-		if (v0x >= maxX || v1x >= maxX || v2x >= maxX || v3x >= maxX)
+		float maxX = boundsSize.getX() + epsilon;
+		if (v0x >= maxX && v1x >= maxX && v2x >= maxX && v3x >= maxX)
 			return true;
-		int maxY = boundsSize.getY();
-		if (v0y >= maxY || v1y >= maxY || v2y >= maxY || v3y >= maxY)
+		float maxY = boundsSize.getY() + epsilon;
+		if (v0y >= maxY && v1y >= maxY && v2y >= maxY && v3y >= maxY)
 			return true;
-		int maxZ = boundsSize.getZ();
-		return v0z >= maxZ || v1z >= maxZ || v2z >= maxZ || v3z >= maxZ;
+		float maxZ = boundsSize.getZ() + epsilon;
+		return v0z >= maxZ && v1z >= maxZ && v2z >= maxZ && v3z >= maxZ;
 	}
 
-	public static void renderSmoothBlockDamage(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
-		FaceInfo renderInfo = new FaceInfo();
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		Random random = dispatcher.random;
-		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
-			MeshGenerator.translateToMeshStart(matrix, area.start, pos);
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
-				renderInfo.setup(face, area.start);
-
-				// Don't need textures or lighting because the crumbling texture overwrites them
-				renderInfo.assignMissingQuads(state, random, modelData);
-				LightCache light = null;
-				renderFace(renderInfo, buffer, matrix, world, state, pos, null, null, light, false);
-
-				return true;
-			});
-		}
+	static void renderFaceForLayer(IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, OptiFineProxy optiFine, FaceInfo renderInfo, BlockState state, BlockPos.Mutable worldPos, long rand, IModelData modelData, BufferBuilder buffer, Object renderEnv) {
+		IBakedModel modelIn = dispatcher.getBlockModel(state);
+		modelIn = optiFine.getModel(renderEnv, modelIn, state);
+		renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
+		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, false);
 	}
 
-	private static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
+	static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
 		List<BakedQuad> quads = renderInfo.quads;
 		for (int i = 0, l = quads.size(); i < l; ++i) {
 			BakedQuad quad = quads.get(i);
@@ -198,49 +117,23 @@ public final class MeshRenderer {
 	}
 
 	private static void renderQuad(FaceInfo renderInfo, BakedQuad quad, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, boolean doubleSided) {
-		// Pos
-		Face face = renderInfo.face;
-		Vec v0 = face.v0;
-		Vec v1 = face.v1;
-		Vec v2 = face.v2;
-		Vec v3 = face.v3;
-
-		// Color
-		ColorInfo color = renderInfo.getColor(quad, state, world, pos);
+		Color color = renderInfo.getColor(quad, state, world, pos);
 		color.multiply(world.getShade(renderInfo.faceDirection, true));
-		float red = color.red;
-		float blue = color.blue;
-		float green = color.green;
-		float alpha = color.alpha;
 
-		// UV (tex)
-		TextureInfo uvs = renderInfo.texture;
+		Texture uvs = renderInfo.texture;
 		uvs.unpackFromQuad(quad);
 		uvs.rearangeForDirection(renderInfo.faceDirection);
 
-		// UV2 (light)
-		int l0 = renderInfo.getLight(light, v0);
-		int l1 = renderInfo.getLight(light, v1);
-		int l2 = renderInfo.getLight(light, v2);
-		int l3 = renderInfo.getLight(light, v3);
+		Face face = renderInfo.face;
+		int light0 = renderInfo.getLight(light, face.v0);
+		int light1 = renderInfo.getLight(light, face.v1);
+		int light2 = renderInfo.getLight(light, face.v2);
+		int light3 = renderInfo.getLight(light, face.v3);
 
-		// Normal
-		Vec n0 = renderInfo.faceNormal;
-		Vec n1 = renderInfo.faceNormal;
-		Vec n2 = renderInfo.faceNormal;
-		Vec n3 = renderInfo.faceNormal;
-
-		// Draw
-		vertex(buffer, matrix, v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
-		vertex(buffer, matrix, v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
-		vertex(buffer, matrix, v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
-		vertex(buffer, matrix, v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
-		if (doubleSided) {
-			vertex(buffer, matrix, v3.x, v3.y, v3.z, red, green, blue, alpha, uvs.u3, uvs.v3, OverlayTexture.NO_OVERLAY, l3, n3.x, n3.y, n3.z);
-			vertex(buffer, matrix, v2.x, v2.y, v2.z, red, green, blue, alpha, uvs.u2, uvs.v2, OverlayTexture.NO_OVERLAY, l2, n2.x, n2.y, n2.z);
-			vertex(buffer, matrix, v1.x, v1.y, v1.z, red, green, blue, alpha, uvs.u1, uvs.v1, OverlayTexture.NO_OVERLAY, l1, n1.x, n1.y, n1.z);
-			vertex(buffer, matrix, v0.x, v0.y, v0.z, red, green, blue, alpha, uvs.u0, uvs.v0, OverlayTexture.NO_OVERLAY, l0, n0.x, n0.y, n0.z);
-		}
+		quad(
+			buffer, matrix, doubleSided,
+			face, color, uvs, OverlayTexture.NO_OVERLAY, light0, light1, light2, light3, renderInfo.faceNormal
+		);
 	}
 
 	static final /* inline? */ class FaceInfo {
@@ -249,8 +142,8 @@ public final class MeshRenderer {
 		public final Face vertexNormals = new Face();
 		public final Vec faceNormal = new Vec();
 		public Direction faceDirection;
-		public final TextureInfo texture = new TextureInfo();
-		public final ColorInfo color = new ColorInfo();
+		public final Texture texture = new Texture();
+		public final Color color = new Color();
 		public final List<BakedQuad> quads = new ArrayList<>();
 
 		public void setup(Face face, BlockPos faceRelativeToWorldPos) {
@@ -300,8 +193,8 @@ public final class MeshRenderer {
 			return light == null ? LightCache.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, vec, faceNormal);
 		}
 
-		public ColorInfo getColor(BakedQuad quad, BlockState state, IBlockDisplayReader world, BlockPos pos) {
-			ColorInfo color = this.color;
+		public Color getColor(BakedQuad quad, BlockState state, IBlockDisplayReader world, BlockPos pos) {
+			Color color = this.color;
 			if (!quad.isTinted()) {
 				color.red = 1.0F;
 				color.green = 1.0F;
@@ -320,102 +213,7 @@ public final class MeshRenderer {
 	}
 
 
-	static final /* inline */ class TextureInfo {
-		public float u0;
-		public float v0;
-		public float u1;
-		public float v1;
-		public float u2;
-		public float v2;
-		public float u3;
-		public float v3;
-
-		public void unpackFromQuad(BakedQuad quad) {
-			int formatSize = getFormatSize(quad);
-			int[] vertexData = quad.getVertices();
-			// Quads are packed xyz|argb|u|v|ts
-			u0 = Float.intBitsToFloat(vertexData[4]);
-			v0 = Float.intBitsToFloat(vertexData[5]);
-			u1 = Float.intBitsToFloat(vertexData[formatSize + 4]);
-			v1 = Float.intBitsToFloat(vertexData[formatSize + 5]);
-			u2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
-			v2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
-			u3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
-			v3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
-		}
-
-		private static int getFormatSize(BakedQuad quad) {
-			return DefaultVertexFormats.BLOCK.getIntegerSize();
-		}
-
-		public void rearangeForDirection(Direction direction) {
-			switch (direction) {
-				case NORTH:
-				case EAST:
-					break;
-				case DOWN:
-				case SOUTH:
-				case WEST: {
-					float u0 = this.u0;
-					float v0 = this.v0;
-					float u1 = this.u1;
-					float v1 = this.v1;
-					float u2 = this.u2;
-					float v2 = this.v2;
-					float u3 = this.u3;
-					float v3 = this.v3;
-
-					this.u0 = u3;
-					this.v0 = v3;
-					this.u1 = u0;
-					this.v1 = v0;
-					this.u2 = u1;
-					this.v2 = v1;
-					this.u3 = u2;
-					this.v3 = v2;
-					break;
-				}
-				case UP: {
-					float u0 = this.u0;
-					float v0 = this.v0;
-					float u1 = this.u1;
-					float v1 = this.v1;
-					float u2 = this.u2;
-					float v2 = this.v2;
-					float u3 = this.u3;
-					float v3 = this.v3;
-
-					this.u0 = u2;
-					this.v0 = v2;
-					this.u1 = u3;
-					this.v1 = v3;
-					this.u2 = u0;
-					this.v2 = v0;
-					this.u3 = u1;
-					this.v3 = v1;
-					break;
-				}
-				default:
-					throw new IllegalStateException("Unexpected value: " + direction);
-			}
-		}
-
-	}
-
-	static final /* inline */ class ColorInfo {
-		public float red;
-		public float green;
-		public float blue;
-		public final float alpha = 1.0F;
-
-		public void multiply(float shading) {
-			red *= shading;
-			green *= shading;
-			blue *= shading;
-		}
-	}
-
-//	private static final int[][] OFFSETS_ORDERED = {
+	//	private static final int[][] OFFSETS_ORDERED = {
 //		// check 6 immediate neighbours
 //		{+0, -1, +0},
 //		{+0, +1, +0},

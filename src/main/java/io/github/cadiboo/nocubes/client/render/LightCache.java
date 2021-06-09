@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -52,6 +54,14 @@ public final class LightCache implements AutoCloseable {
 		int y = Math.round(vy);
 		int z = Math.round(vz);
 		return mutablePos.set(relativeTo).move(x, y, z);
+	}
+
+	public PackedLight get(BlockPos relativeTo, Face face, Vec normal, PackedLight light) {
+		light.v0 = get(relativeTo, face.v0, normal);
+		light.v1 = get(relativeTo, face.v0, normal);
+		light.v2 = get(relativeTo, face.v0, normal);
+		light.v3 = get(relativeTo, face.v0, normal);
+		return light;
 	}
 
 	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
