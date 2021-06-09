@@ -253,13 +253,14 @@ public final class OverlayRenderer {
 
 				// Draw light pos
 				mutable.set(0, 0, 0);
-				if (faceInfo.getLight(light, face.v0) == 0)
+				BlockPos faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
+				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
 					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (faceInfo.getLight(light, face.v1) == 0)
+				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
 					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (faceInfo.getLight(light, face.v2) == 0)
+				if (light.get(faceRelativeToWorldPos, face.v2, faceNormal) == 0)
 					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (faceInfo.getLight(light, face.v3) == 0)
+				if (light.get(faceRelativeToWorldPos, face.v3, faceNormal) == 0)
 					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
 
 				return true;

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
@@ -124,15 +125,11 @@ public final class MeshRenderer {
 		uvs.unpackFromQuad(quad);
 		uvs.rearangeForDirection(renderInfo.faceDirection);
 
-		Face face = renderInfo.face;
-		int light0 = renderInfo.getLight(light, face.v0);
-		int light1 = renderInfo.getLight(light, face.v1);
-		int light2 = renderInfo.getLight(light, face.v2);
-		int light3 = renderInfo.getLight(light, face.v3);
+		PackedLight packedLight = renderInfo.getPackedLight(light);
 
 		quad(
 			buffer, matrix, doubleSided,
-			face, color, uvs, OverlayTexture.NO_OVERLAY, light0, light1, light2, light3, renderInfo.faceNormal
+			renderInfo.face, color, uvs, OverlayTexture.NO_OVERLAY, packedLight, renderInfo.faceNormal
 		);
 	}
 
@@ -144,6 +141,7 @@ public final class MeshRenderer {
 		public Direction faceDirection;
 		public final Texture texture = new Texture();
 		public final Color color = new Color();
+		public final PackedLight packedLight = new PackedLight(0, 0, 0, 0);
 		public final List<BakedQuad> quads = new ArrayList<>();
 
 		public void setup(Face face, BlockPos faceRelativeToWorldPos) {
@@ -189,8 +187,8 @@ public final class MeshRenderer {
 			quads.addAll(Minecraft.getInstance().getBlockRenderer().getBlockModelShaper().getModelManager().getMissingModel().getQuads(state, faceDirection, random, modelData));
 		}
 
-		public int getLight(LightCache light, Vec vec) {
-			return light == null ? LightCache.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, vec, faceNormal);
+		public PackedLight getPackedLight(LightCache light) {
+			return light == null ? PackedLight.MAX_BRIGHTNESS : light.get(faceRelativeToWorldPos, face, faceNormal, packedLight);
 		}
 
 		public Color getColor(BakedQuad quad, BlockState state, IBlockDisplayReader world, BlockPos pos) {
@@ -213,38 +211,38 @@ public final class MeshRenderer {
 	}
 
 
-	//	private static final int[][] OFFSETS_ORDERED = {
-//		// check 6 immediate neighbours
-//		{+0, -1, +0},
-//		{+0, +1, +0},
-//		{-1, +0, +0},
-//		{+1, +0, +0},
-//		{+0, +0, -1},
-//		{+0, +0, +1},
-//		// check 12 non-immediate, non-corner neighbours
-//		{-1, -1, +0},
-//		{-1, +0, -1},
-//		{-1, +0, +1},
-//		{-1, +1, +0},
-//		{+0, -1, -1},
-//		{+0, -1, +1},
-//		// {+0, +0, +0}, // Don't check self
-//		{+0, +1, -1},
-//		{+0, +1, +1},
-//		{+1, -1, +0},
-//		{+1, +0, -1},
-//		{+1, +0, +1},
-//		{+1, +1, +0},
-//		// check 8 corner neighbours
-//		{+1, +1, +1},
-//		{+1, +1, -1},
-//		{-1, +1, +1},
-//		{-1, +1, -1},
-//		{+1, -1, +1},
-//		{+1, -1, -1},
-//		{-1, -1, +1},
-//		{-1, -1, -1},
-//	};
+		private static final BlockPos[] OFFSETS_ORDERED = {
+		// check 6 immediate neighbours
+		new BlockPos(+0, -1, +0),
+		new BlockPos(+0, +1, +0),
+		new BlockPos(-1, +0, +0),
+		new BlockPos(+1, +0, +0),
+		new BlockPos(+0, +0, -1),
+		new BlockPos(+0, +0, +1),
+		// check 12 non-immediate, non-corner neighbours
+		new BlockPos(-1, -1, +0),
+		new BlockPos(-1, +0, -1),
+		new BlockPos(-1, +0, +1),
+		new BlockPos(-1, +1, +0),
+		new BlockPos(+0, -1, -1),
+		new BlockPos(+0, -1, +1),
+		// new BlockPos(+0, +0, +0), // Don't check self
+		new BlockPos(+0, +1, -1),
+		new BlockPos(+0, +1, +1),
+		new BlockPos(+1, -1, +0),
+		new BlockPos(+1, +0, -1),
+		new BlockPos(+1, +0, +1),
+		new BlockPos(+1, +1, +0),
+		// check 8 corner neighbours
+		new BlockPos(+1, +1, +1),
+		new BlockPos(+1, +1, -1),
+		new BlockPos(-1, +1, +1),
+		new BlockPos(-1, +1, -1),
+		new BlockPos(+1, -1, +1),
+		new BlockPos(+1, -1, -1),
+		new BlockPos(-1, -1, +1),
+		new BlockPos(-1, -1, -1),
+	};
 
 	/**
 	 * Returns a state and sets the texturePooledMutablePos to the pos it found
@@ -253,6 +251,13 @@ public final class MeshRenderer {
 	 */
 	public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
 		BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
+
+		boolean tryFindSnow = true;
+		if (tryFindSnow) {
+			Predicate<BlockState> oldIsSmoothable = isSmoothable;
+			isSmoothable = s -> oldIsSmoothable.test(s) || isSnow(s);
+		}
+
 		if (isSmoothable.test(state))
 			return state;
 
@@ -268,16 +273,12 @@ public final class MeshRenderer {
 		if (isSmoothable.test(state))
 			return state;
 
-//		for (int[] offset : OFFSETS_ORDERED) {
-//			relativePos.set(
-//				x + offset[0],
-//				y + offset[1],
-//				z + offset[2]
-//			);
-//			state = states[area.index(relativePos)];
-//			if (isSmoothable.test(state))
-//				return state;
-//		}
+		for (BlockPos offset : OFFSETS_ORDERED) {
+			relativePos.set(x, y, z).offset(offset);
+			state = area.getBlockState(relativePos);
+			if (isSmoothable.test(state))
+				return state;
+		}
 
 		// Give up
 		relativePos.set(x, y, z);
@@ -336,6 +337,10 @@ public final class MeshRenderer {
 //				}
 //			}
 //		}
+	}
+
+	private static boolean isSnow(BlockState s) {
+		return s.getBlock() == Blocks.SNOW || s.getBlock() == Blocks.SNOW_BLOCK;
 	}
 
 }

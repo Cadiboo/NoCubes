@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -177,14 +178,14 @@ public final class RendererDispatcher {
 
 	static void quad(
 		IVertexBuilder buffer, MatrixStack matrix, boolean doubleSided,
-		Face face, Color color, Texture texture, int overlay, int light0, int light1, int light2, int light3, Vec normal
+		Face face, Color color, Texture texture, int overlay, PackedLight light, Vec normal
 	) {
 		quad(
 			buffer, matrix, doubleSided,
-			face.v0, color, texture.u0, texture.v0, overlay, light0, normal,
-			face.v1, color, texture.u1, texture.v1, overlay, light1, normal,
-			face.v2, color, texture.u2, texture.v2, overlay, light2, normal,
-			face.v3, color, texture.u3, texture.v3, overlay, light3, normal
+			face.v0, color, texture.u0, texture.v0, overlay, light.v0, normal,
+			face.v1, color, texture.u1, texture.v1, overlay, light.v1, normal,
+			face.v2, color, texture.u2, texture.v2, overlay, light.v2, normal,
+			face.v3, color, texture.u3, texture.v3, overlay, light.v3, normal
 		);
 	}
 
