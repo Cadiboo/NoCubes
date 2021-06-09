@@ -219,7 +219,7 @@ public final class NoCubesConfig {
 			if (forceVisuals)
 				// Directly setting the baked field - won't cause a NPE on the dedicated server
 				Client.render = true;
-			extendFluidsRange = INSTANCE.extendFluidsRange.get();
+//			extendFluidsRange = INSTANCE.extendFluidsRange.get();
 			if (extendFluidsRange > 2)
 				throw new IllegalStateException("Config was not validated! 'extendFluidsRange' cannot be greater than 2!");
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
@@ -256,7 +256,7 @@ public final class NoCubesConfig {
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
 			final BooleanValue collisionsEnabled;
 			final BooleanValue forceVisuals;
-			final IntValue extendFluidsRange;
+//			final IntValue extendFluidsRange;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
@@ -282,12 +282,12 @@ public final class NoCubesConfig {
 					)
 					.define("forceVisuals", false);
 
-				extendFluidsRange = builder
-					.translation(NoCubes.MOD_ID + ".config.extendFluidsRange")
-					.comment(
-						"The range at which to extend fluids into smoothable blocks"
-					)
-					.defineInRange("extendFluidsRange", 1, 0, 2);
+//				extendFluidsRange = builder
+//					.translation(NoCubes.MOD_ID + ".config.extendFluidsRange")
+//					.comment(
+//						"The range at which to extend fluids into smoothable blocks"
+//					)
+//					.defineInRange("extendFluidsRange", 1, 0, 2);
 			}
 
 		}
