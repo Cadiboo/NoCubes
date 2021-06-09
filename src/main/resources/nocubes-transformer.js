@@ -55,6 +55,7 @@ function initializeCoreMod() {
 	IFNULL = Opcodes.IFNULL;
 
 	GETFIELD = Opcodes.GETFIELD;
+	PUTFIELD = Opcodes.PUTFIELD;
 	GETSTATIC = Opcodes.GETSTATIC;
 
 	GOTO = Opcodes.GOTO;
@@ -79,14 +80,13 @@ function initializeCoreMod() {
 				// Inject the hook where we do our rendering
 				// We inject right above where vanilla loops (iterates) through all the the blocks
 				{
-					var positionsIteratorCall = ASMAPI.findFirstMethodCall(
+					var positionsIteratorCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.STATIC,
 						isOptiFinePresent ? 'net/optifine/BlockPosM' : 'net/minecraft/util/math/BlockPos',
 						isOptiFinePresent ? 'getAllInBoxMutable' : ASMAPI.mapMethod('func_218278_a'), // BlockPos#betweenClosed
 						'(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;'
 					);
-					assertInstructionFound(positionsIteratorCall, 'positionsIteratorCall', instructions);
 					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, positionsIteratorCall);
 
 					var outerClassFieldName = isOptiFinePresent ? 'this$1' : ASMAPI.mapField('field_228939_e_');
@@ -107,30 +107,29 @@ function initializeCoreMod() {
 				}
 				print('Done injecting the preIteration hook');
 
-//                // Inject the hook where we change vanilla's fluid rendering
-//                {
-//                    // We are trying to replace this code
-//                    //  FluidState fluidstate = chunkrendercache.getFluidState(blockpos2); // Vanilla
-//                    //  FluidState fluidstate = blockstate.getFluidState(); // OptiFine
-//                    // With this code
-//                    //	FluidState fluidstate = io.github.cadiboo.hooks.Hooks.getRenderFluidState(pos);
-//                    var getFluidStateCall = ASMAPI.findFirstMethodCall(
-//                        methodNode,
-//                        ASMAPI.MethodType.VIRTUAL,
-//                        isOptiFinePresent ? 'net/minecraft/block/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
-//                        ASMAPI.mapMethod(isOptiFinePresent ? 'func_204520_s' : 'func_204610_c'), // getFluidState
-//                        isOptiFinePresent ? '()Lnet/minecraft/fluid/FluidState;' : '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
-//                    );
-//                    assertInstructionFound(getFluidStateCall, 'getFluidStateCall', instructions);
-//                    var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
-//                    removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
-//                    instructions.insert(previousLabel, ASMAPI.listOf(
-//						new VarInsnNode(ALOAD, 7), // blockpos - startPosition
-//                        callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;')
-//                    ));
-//                    // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
-//                }
-//                print('Done injecting the fluid render bypass hook');
+                // Inject the hook where we change vanilla's fluid rendering
+                {
+                    // We are trying to replace this code
+                    //  FluidState fluidstate = chunkrendercache.getFluidState(blockpos2); // Vanilla
+                    //  FluidState fluidstate = blockstate.getFluidState(); // OptiFine
+                    // With this code
+                    //	FluidState fluidstate = io.github.cadiboo.hooks.Hooks.getRenderFluidState(pos);
+                    var getFluidStateCall = findFirstMethodCall(
+                        methodNode,
+                        ASMAPI.MethodType.VIRTUAL,
+                        isOptiFinePresent ? 'net/minecraft/block/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
+                        ASMAPI.mapMethod(isOptiFinePresent ? 'func_204520_s' : 'func_204610_c'), // getFluidState
+                        isOptiFinePresent ? '()Lnet/minecraft/fluid/FluidState;' : '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
+                    );
+                    var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
+                    removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
+                    instructions.insert(previousLabel, ASMAPI.listOf(
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 19 : 16), // blockpos2 - blockPos
+                        callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;')
+                    ));
+                    // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
+                }
+                print('Done injecting the fluid render bypass hook');
 
 				// Inject the hook where we cancel vanilla's block rendering for smoothable blocks
 				{
@@ -141,14 +140,13 @@ function initializeCoreMod() {
                     //	if (iblockstate.getRenderType() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
 
 					var getRenderTypeName = ASMAPI.mapMethod('func_185901_i'); // getRenderType
-					var getRenderTypeCall = ASMAPI.findFirstMethodCall(
+					var getRenderTypeCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.VIRTUAL,
 						'net/minecraft/block/BlockState',
 						getRenderTypeName,
 						'()Lnet/minecraft/block/BlockRenderType;'
 					);
-					assertInstructionFound(getRenderTypeCall, 'getRenderTypeCall', instructions);
 					var getRenderTypeCallIndex = instructions.indexOf(getRenderTypeCall);
 					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBeforeIndex(instructions, getRenderTypeCallIndex);
 					var branchIfBlockIsInvisibleInstruction = ASMAPI.findFirstInstructionAfter(methodNode, IF_ACMPEQ, getRenderTypeCallIndex);
@@ -406,7 +404,7 @@ function initializeCoreMod() {
 						callNoCubesHook('hasLargeCollisionShapeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
 					),
 					callBooleanValueAndReturn()
-				)
+				);
 				return methodNode;
 			}
 		},
@@ -434,12 +432,13 @@ function initializeCoreMod() {
                         callNoCubesHook('isSuffocatingOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Boolean;')
                     ),
                     callBooleanValueAndReturn()
-                )
+                );
                 return methodNode;
 			}
 		},
         // endregion Collisions
 
+		// region Extended Fluids
 		'World#getFluidState': {
 			'target': {
 				'type': 'METHOD',
@@ -448,39 +447,83 @@ function initializeCoreMod() {
 				'methodDesc': '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
 			},
 			'transformer': function(methodNode) {
-                // The code that we are trying to change looks like this:
-                //  <start of method>
-                //	if (isOutsideBuildHeight(pos)) {
+				// The code that we are trying to inject looks like this:
+				//	<start of method>
+                //	if (isOutsideBuildHeight(pos))
                 //		return Fluids.EMPTY.getDefaultState();
-                //	} else {
-                //		// NoCubes Start
-                //		return io.github.cadiboo.nocubes.hooks.Hooks.getFluidState(this, pos);
-                //		// NoCubes End
-                //		// return this.getChunkAt(pos).getFluidState(pos); // Removed vanilla code
+				//	// NoCubes Start
+				//	if ((FluidState override = io.github.cadiboo.nocubes.hooks.Hooks.getFluidState(this, pos)) != null)
+				//		return override;
+				//	// NoCubes End
+				//	return this.getChunkAt(pos).getFluidState(pos);
                 //	}
                 //  <end of method>
-                // 1. Find the call to 'getChunkAt'
                 var instructions = methodNode.instructions;
-                var getChunkAtCall = ASMAPI.findFirstMethodCall(
+                var getChunkAtCall = findFirstMethodCall(
                     methodNode,
                     ASMAPI.MethodType.VIRTUAL,
                     'net/minecraft/world/World',
                     ASMAPI.mapMethod('func_175726_f'), // World.getChunkAt
                     '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/chunk/Chunk;'
                 );
-                assertInstructionFound(getChunkAtCall, 'getChunkAtCall', instructions);
-                // 2. Inject a call to our hook right before it (our hook has the same parameters)
-                instructions.insertBefore(getChunkAtCall, ASMAPI.listOf(
-                    callNoCubesHook('getFluidState', '(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'),
-                    new InsnNode(ARETURN)
-                ));
-                // 3. Remove all instructions between (and including) the old 'getChunkAt' call and the following ARETURN instruction
-                var nextARETURN = ASMAPI.findFirstInstructionAfter(methodNode, ARETURN, instructions.indexOf(getChunkAtCall));
-                assertInstructionFound(nextARETURN, 'next ARETURN', instructions);
-                removeBetweenInclusive(instructions, getChunkAtCall, nextARETURN);
+
+                injectOverride(instructions,
+                	findFirstLabelBefore(instructions, getChunkAtCall),
+					ASMAPI.listOf(
+						new VarInsnNode(ALOAD, 0), // this
+						new VarInsnNode(ALOAD, 1), // pos
+						callNoCubesHook('getFluidStateOverride', '(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;')
+					),
+					ASMAPI.listOf(
+						new InsnNode(ARETURN)
+					)
+				);
+				return methodNode;
+			}
+		},
+		'ChunkRenderCache#getFluidState': {
+			'target': {
+				'type': 'METHOD',
+				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderCache',
+				'methodName': 'func_204610_c',
+				'methodDesc': '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
+			},
+			'transformer': function(methodNode) {
+				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 1), // pos
+					callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'),
+					new InsnNode(ARETURN)
+				));
+				return methodNode;
+			}
+		},
+		'BlockRendererDispatcher#<init>': {
+			'target': {
+				'type': 'METHOD',
+				'class': 'net.minecraft.client.renderer.BlockRendererDispatcher',
+				'methodName': '<init>',
+				'methodDesc': '(Lnet/minecraft/client/renderer/BlockModelShapes;Lnet/minecraft/client/renderer/color/BlockColors;)V'
+			},
+			'transformer': function(methodNode) {
+				// We are trying to change this code
+				//	this.liquidBlockRenderer = new FluidBlockRenderer();
+				// To this code
+				//	this.liquidBlockRenderer = io.github.cadiboo.nocubes.hooks.Hooks.createFluidBlockRenderer(new FluidBlockRenderer());
+				var instructions = methodNode.instructions;
+				var liquidBlockRendererPut = findFirstFieldInstruction(
+					instructions,
+					PUTFIELD,
+					'net/minecraft/client/renderer/BlockRendererDispatcher',
+					ASMAPI.mapField('field_175025_e'), // liquidBlockRenderer
+					'Lnet/minecraft/client/renderer/FluidBlockRenderer;'
+				);
+				instructions.insertBefore(liquidBlockRendererPut, ASMAPI.listOf(
+					callNoCubesHook('createFluidBlockRenderer', '(Lnet/minecraft/client/renderer/FluidBlockRenderer;)Lnet/minecraft/client/renderer/FluidBlockRenderer;')
+				));
 				return methodNode;
 			}
 		}
+		// endregion Extended Fluids
 	}));
 }
 
@@ -497,7 +540,7 @@ function initializeCoreMod() {
 
 function assertInstructionFound(instruction, name, instructions) {
 	if (!instruction)
-		throw "Error: Couldn't find '" + name + "' in " + stringifyInstructions(instructions);
+		throw "Error: Couldn't find '" + name + "' in instructions:\n" + stringifyInstructions(instructions);
 }
 
 function findFirstLabel(instructions, startIndex) {
@@ -532,6 +575,22 @@ function findFirstLabelBeforeIndex(instructions, startIndex) {
 		}
 	}
 	throw "Error: Couldn't find first label before index " + startIndex + ' in ' + stringifyInstructions(instructions);
+}
+
+function findFirstMethodCall(methodNode, methodType, owner, name, desc) {
+	var instruction = ASMAPI.findFirstMethodCall(methodNode, methodType, owner, name, desc);
+	assertInstructionFound(instruction, name + 'Call', methodNode.instructions);
+	return instruction;
+}
+
+function findFirstFieldInstruction(instructions, opcode, owner, name, desc) {
+	for (var i = 0, length = instructions.size(); i < length; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.opcode != opcode || instruction.owner != owner || instruction.name != name || instruction.desc != desc)
+			continue;
+		return instruction;
+	}
+	assertInstructionFound(null, name + 'FieldInsn', instructions);
 }
 
 /**
@@ -800,11 +859,10 @@ function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, metho
  * @param {InsnList} instructions The list of instructions to print
  */
 function printInstructions(instructions) {
-	var arrayLength = instructions.size();
 	var labelNames = {
 		length: 0
 	};
-	for (var i = 0; i < arrayLength; ++i) {
+	for (var i = 0, length = instructions.size(); i < length; ++i) {
 		var text = getInstructionText(instructions.get(i), labelNames);
 		if (text.length > 0) // Some instructions are ignored
 			print(text);

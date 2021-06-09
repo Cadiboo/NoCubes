@@ -8,6 +8,7 @@ public final class SelfCheck {
 	static boolean renderBlockDamage;
 	static boolean setBlocksDirty;
 	static boolean canOccludeOverride;
+	static boolean createFluidBlockRenderer;
 
 	static boolean getCollisionShapeNoContextOverride;
 	static boolean getCollisionShapeWithContextOverride;
@@ -15,7 +16,7 @@ public final class SelfCheck {
 	static boolean hasLargeCollisionShapeOverride;
 	static boolean isSuffocatingOverride;
 
-	static boolean getFluidState;
+	static boolean getFluidStateOverride;
 
 	public static String[] info() {
 		return new String[]{
@@ -25,6 +26,7 @@ public final class SelfCheck {
 			"renderBlockDamage hook called: " + renderBlockDamage,
 			"setBlocksDirty hook called: " + setBlocksDirty,
 			"canOccludeOverride hook called: " + canOccludeOverride,
+			"createFluidBlockRenderer hook called: " + createFluidBlockRenderer,
 
 			"getCollisionShapeOverride(NoContext) hook called: " + getCollisionShapeNoContextOverride,
 			"getCollisionShapeOverride(WithContext) hook called: " + getCollisionShapeWithContextOverride,
@@ -32,7 +34,7 @@ public final class SelfCheck {
 			"hasLargeCollisionShapeOverride hook called: " + hasLargeCollisionShapeOverride,
 			"isSuffocatingOverride hook called: " + isSuffocatingOverride,
 
-			"getFluidState hook called: " + getFluidState,
+			"getFluidStateOverride hook called: " + getFluidStateOverride,
 		};
 	}
 

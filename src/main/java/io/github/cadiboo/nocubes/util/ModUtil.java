@@ -159,18 +159,18 @@ public class ModUtil {
 			return fluid;
 
 		// Check around
-		for (int extendX = z - extendRange; extendX <= z + extendRange; ++extendX) {
-			for (int extendZ = x - extendRange; extendZ <= x + extendRange; ++extendZ) {
-				if (extendX == z && extendZ == x)
+		for (int extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
+			for (int extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
+				if (extendZ == z && extendX == x)
 					continue; // We already checked ourself above
 
-				if (chunkX != extendX >> 4 || chunkZ != extendZ >> 4) {
-					chunkX = extendX >> 4;
+				if (chunkX != extendZ >> 4 || chunkZ != extendX >> 4) {
 					chunkZ = extendZ >> 4;
+					chunkX = extendX >> 4;
 					chunk = world.getChunk(chunkX, chunkZ);
 				}
 
-				fluid = chunk.getFluidState(extendZ, y, extendX);
+				fluid = chunk.getFluidState(extendX, y, extendZ);
 				if (fluid.isSource())
 					return fluid;
 			}

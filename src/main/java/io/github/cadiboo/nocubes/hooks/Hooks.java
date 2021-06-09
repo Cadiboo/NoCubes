@@ -6,15 +6,15 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
+import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
@@ -25,7 +25,6 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
@@ -51,22 +50,22 @@ public final class Hooks {
 		MeshRenderer.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
 
-//	/**
-//	 * Called from: {@link RebuildTask#compile} instead of {@link ChunkRenderCache#getFluidState(BlockPos)}
-//	 * <p>
-//	 * Hooking this allows us to control vanilla's fluids rendering which lets us cancel it and do our own rendering or
-//	 * change where fluids are rendered (to make extended fluids work).
-//	 */
-//	@OnlyIn(Dist.CLIENT)
-//	public static FluidState getRenderFluidState(BlockPos pos) {
-//		SelfCheck.getRenderFluidState = true;
-//		ClientWorld world = Minecraft.getInstance().level;
-//		if (world == null)
-//			return Fluids.EMPTY.defaultFluidState();
-//		if (!NoCubesConfig.Client.render)
-//			return world.getChunkAt(pos).getFluidState(pos);
-//		return getFluidState(world, pos);
-//	}
+	/**
+	 * Called from: {@link RebuildTask#compile} instead of {@link ChunkRenderCache#getFluidState(BlockPos)}
+	 * Called from: {@link ChunkRenderCache#getFluidState(BlockPos)} instead of {@link BlockState#getFluidState()}
+	 * <p>
+	 * Hooking this allows us to control vanilla's fluids rendering which lets us cancel it and do our own rendering or
+	 * change where fluids are rendered (to make extended fluids work).
+	 */
+	@OnlyIn(Dist.CLIENT)
+	public static FluidState getRenderFluidState(BlockPos pos) {
+		SelfCheck.getRenderFluidState = true;
+		ClientWorld world = Minecraft.getInstance().level;
+		if (world == null)
+			return Fluids.EMPTY.defaultFluidState();
+		// We hook this too, see 'getFluidStateOverride' below
+ 		return world.getFluidState(pos);
+	}
 
 	/**
 	 * Called from: {@link RebuildTask#compile} right before {@link BlockState#getRenderShape()} is called
@@ -132,6 +131,24 @@ public final class Hooks {
 		if (NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state))
 			return false;
 		return null;
+	}
+
+	/**
+	 * Called from: {@link BlockRendererDispatcher#BlockRendererDispatcher(BlockModelShapes, BlockColors)} before the FluidBlockRenderer is stored in the field
+	 * <p>
+	 * Hooking this lets us have extended fluids when OptiFine is installed.
+	 *
+	 * @return A fluid block renderer that works
+	 */
+	@OnlyIn(Dist.CLIENT)
+	public static FluidBlockRenderer createFluidBlockRenderer(FluidBlockRenderer original) {
+		SelfCheck.createFluidBlockRenderer = true;
+		return new FluidBlockRenderer() {
+			@Override
+			public boolean tesselate(IBlockDisplayReader ignored, BlockPos posIn, IVertexBuilder vertexBuilderIn, FluidState fluidStateIn) {
+				return super.tesselate(Minecraft.getInstance().level, posIn, vertexBuilderIn, fluidStateIn);
+			}
+		};
 	}
 	// endregion Rendering
 
@@ -217,64 +234,11 @@ public final class Hooks {
 	 *
 	 * @return a fluid state that may not actually exist in the position
 	 */
-	public static FluidState getFluidState(World world, BlockPos pos) {
-		return world.getChunkAt(pos).getFluidState(pos);
-//		final int posX = pos.getX();
-//		final int posY = pos.getY();
-//		final int posZ = pos.getZ();
-//
-//		int currentChunkPosX = posX >> 4;
-//		int currentChunkPosZ = posZ >> 4;
-//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//
-//		final int extendRange = 1;//Config.extendFluidsRange.getRange();
-//
-//		if (extendRange == 0)
-//			return currentChunk.getFluidState(posX, posY, posZ);
-//
-//		final BlockState state = currentChunk.getBlockState(pos);
-//
-//		// Do not extend if not terrain smoothable
-//		if (!NoCubes.smoothableHandler.isSmoothable(state))
-//			return state.getFluidState();
-//
-//		final FluidState fluidState = state.getFluidState();
-//		if (!fluidState.isEmpty())
-//			return fluidState;
-//
-//		// For offset = -1 or -2 to offset = 1 or 2;
-//		final int maxXOffset = extendRange;
-//		final int maxZOffset = extendRange;
-//
-//		// Check up
-//		{
-//			final FluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
-//			if (state1.isSource())
-//				return state1;
-//		}
-//
-//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
-//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
-//
-//				// No point in checking myself
-//				if (xOffset == 0 && zOffset == 0)
-//					continue;
-//
-//				final int checkX = posX + xOffset;
-//				final int checkZ = posZ + zOffset;
-//
-//				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
-//					currentChunkPosX = checkX >> 4;
-//					currentChunkPosZ = checkZ >> 4;
-//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//				}
-//
-//				final FluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
-//				if (state1.isSource())
-//					return state1;
-//			}
-//		}
-//		return fluidState;
+	public static @Nullable FluidState getFluidStateOverride(World world, BlockPos pos) {
+		SelfCheck.getFluidStateOverride = true;
+		if (NoCubesConfig.Server.extendFluidsRange <= 0)
+			return null;
+		return ModUtil.getExtendedFluidState(world, pos);
 	}
 
 //
@@ -293,10 +257,12 @@ public final class Hooks {
 	public static void loadClasses(Dist dist) {
 		loadClass("net.minecraft.block.AbstractBlock$AbstractBlockState");
 		loadClass("net.minecraft.block.BlockState");
+		loadClass("net.minecraft.world.World");
 		if (dist.isClient()) {
 			loadClass("net.minecraft.client.renderer.BlockRendererDispatcher");
 			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
 			loadClass("net.minecraft.client.world.ClientWorld");
+			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderCache");
 //		} else {
 
 		}
