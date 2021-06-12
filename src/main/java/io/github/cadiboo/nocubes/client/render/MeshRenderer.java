@@ -281,13 +281,13 @@ public final class MeshRenderer {
 
 		public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) {
 			BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
-			if (state.isAir()) {
+			if (!isSmoothable.test(state)) {
 				// Vertices can generate at positions different to the position of the block they are for
 				// This occurs mostly for positions below, west of and north of the position they are for
 				// Search the opposite of those directions for the actual block
 				// We could also attempt to get the starting position from the vertex positions
 				state = area.getBlockState(relativePos.move(direction.getOpposite()));
-				if (state.isAir())
+				if (!isSmoothable.test(state))
 					// Move it back to where it was, we're not using the new pos
 					relativePos.move(direction);
 			}

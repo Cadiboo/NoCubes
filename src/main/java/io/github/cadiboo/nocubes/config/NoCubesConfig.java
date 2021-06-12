@@ -4,11 +4,13 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -106,10 +108,16 @@ public final class NoCubesConfig {
 		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 		 */
 		public static void bake() {
+			boolean oldRender = render;
+			boolean oldBetterGrassAndSnow = betterGrassAndSnow;
+
 			// Directly querying the baked field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 			betterGrassAndSnow = INSTANCE.betterGrassAndSnow.get();
+
+			if (oldRender != render || oldBetterGrassAndSnow != betterGrassAndSnow)
+				ClientUtil.reloadAllChunks(Minecraft.getInstance());
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -178,10 +186,11 @@ public final class NoCubesConfig {
 				betterGrassAndSnow = builder
 					.translation(NoCubes.MOD_ID + ".config.betterGrassAndSnow")
 					.comment(
-						"OFF - the sides of grass blocks have the default texture, the sides of blocks next to snow have their texture",
-						"ON - the sides of grass blocks have the texture of the top of the block, the sides of blocks next to snow have the snow texture"
+						"Similar to OptiFine's 'Better Grass' and 'Better Snow' features",
+						"OFF - The sides of grass blocks have the default texture, the sides of blocks next to snow have their texture",
+						"ON - The sides of grass blocks have the texture of the top of the block, the sides of blocks next to snow have the snow texture"
 					)
-					.define("betterGrassAndSnow", true);
+					.define("betterGrassAndSnow", false);
 
 				builder
 					.push("debug");
@@ -233,8 +242,8 @@ public final class NoCubesConfig {
 				// Directly setting the baked field - won't cause a NPE on the dedicated server
 				Client.render = true;
 			extendFluidsRange = INSTANCE.extendFluidsRange.get();
-			if (extendFluidsRange > 2)
-				throw new IllegalStateException("Config was not validated! 'extendFluidsRange' cannot be greater than 2!");
+			if (extendFluidsRange < 0 || extendFluidsRange > 2)
+				throw new IllegalStateException("Config was not validated! 'extendFluidsRange' must be between 0 and 2 but was " + extendFluidsRange);
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
 		}
 
