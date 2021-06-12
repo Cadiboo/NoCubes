@@ -34,6 +34,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 
+import java.util.function.Predicate;
+
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
@@ -64,13 +66,13 @@ public final class OverlayRenderer {
 		MatrixStack matrix = event.getMatrix();
 		IVertexBuilder buffer = event.getBuffers().getBuffer(RenderType.lines());
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		boolean stateSolidity = RendererDispatcher.isNotSeeThrough(state);
 		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
 			Color color = NoCubesConfig.Client.selectionBoxColor;
-			RendererDispatcher.runForSolidAndSeeThrough(NoCubes.smoothableHandler::isSmoothable, isSmoothable -> {
-				generator.generate(area, isSmoothable, (pos, face) -> {
-					drawFacePosColor(face, camera, area.start, color, buffer, matrix);
-					return true;
-				});
+			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+			generator.generate(area, s -> isSmoothable.test(s) && RendererDispatcher.isNotSeeThrough(s) == stateSolidity, (pos, face) -> {
+				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
+				return true;
 			});
 		}
 	}
