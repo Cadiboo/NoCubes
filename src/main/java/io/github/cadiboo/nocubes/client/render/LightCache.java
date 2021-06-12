@@ -58,9 +58,9 @@ public final class LightCache implements AutoCloseable {
 
 	public PackedLight get(BlockPos relativeTo, Face face, Vec normal, PackedLight light) {
 		light.v0 = get(relativeTo, face.v0, normal);
-		light.v1 = get(relativeTo, face.v0, normal);
-		light.v2 = get(relativeTo, face.v0, normal);
-		light.v3 = get(relativeTo, face.v0, normal);
+		light.v1 = get(relativeTo, face.v1, normal);
+		light.v2 = get(relativeTo, face.v2, normal);
+		light.v3 = get(relativeTo, face.v3, normal);
 		return light;
 	}
 
