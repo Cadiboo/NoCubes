@@ -85,6 +85,8 @@ public final class NoCubesConfig {
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
 		public static ColorParser.Color selectionBoxColor;
+		public static boolean betterGrassAndSnow;
+
 		public static boolean debugEnabled;
 		public static boolean debugOutlineSmoothables;
 		public static boolean debugVisualiseDensitiesGrid;
@@ -107,6 +109,7 @@ public final class NoCubesConfig {
 			// Directly querying the baked field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
+			betterGrassAndSnow = INSTANCE.betterGrassAndSnow.get();
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -136,6 +139,7 @@ public final class NoCubesConfig {
 
 			final BooleanValue render;
 			final ConfigValue<String> selectionBoxColor;
+			final BooleanValue betterGrassAndSnow;
 			final BooleanValue debugEnabled;
 			final BooleanValue debugOutlineSmoothables;
 			final BooleanValue debugVisualiseDensitiesGrid;
@@ -147,6 +151,7 @@ public final class NoCubesConfig {
 			private Impl(ForgeConfigSpec.Builder builder) {
 				render = builder
 					.translation(NoCubes.MOD_ID + ".config.render")
+					.comment("If NoCubes' custom rendering is enabled")
 					.define("render", true);
 
 				// Stable, doesn't need refactoring
@@ -169,6 +174,14 @@ public final class NoCubesConfig {
 						"With HSLA (hue, saturation, lightness, alpha): \"hsla(270, 100%, 100%, 0.5)\" (a partially transparent dark purple)"
 					)
 					.define("selectionBoxColor", "#0006");
+
+				betterGrassAndSnow = builder
+					.translation(NoCubes.MOD_ID + ".config.betterGrassAndSnow")
+					.comment(
+						"OFF - the sides of grass blocks have the default texture, the sides of blocks next to snow have their texture",
+						"ON - the sides of grass blocks have the texture of the top of the block, the sides of blocks next to snow have the snow texture"
+					)
+					.define("betterGrassAndSnow", true);
 
 				builder
 					.push("debug");

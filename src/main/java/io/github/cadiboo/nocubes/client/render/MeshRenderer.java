@@ -7,10 +7,12 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
@@ -166,7 +168,7 @@ public final class MeshRenderer {
 				// Make grass/snow/mycilium side faces be rendered with their top texture
 				// Equivalent to OptiFine's Better Grass feature
 				if (!state.getValue(BlockStateProperties.SNOWY))
-					dirQuads = model.getQuads(state, faceDirection, random, modelData);
+					dirQuads = model.getQuads(state, NoCubesConfig.Client.betterGrassAndSnow ? Direction.UP : faceDirection, random, modelData);
 				else {
 					// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 					BlockState snow = Blocks.SNOW.defaultBlockState();
@@ -210,137 +212,97 @@ public final class MeshRenderer {
 		}
 	}
 
+	static class TextureLocator {
 
 		private static final BlockPos[] OFFSETS_ORDERED = {
-		// check 6 immediate neighbours
-		new BlockPos(+0, -1, +0),
-		new BlockPos(+0, +1, +0),
-		new BlockPos(-1, +0, +0),
-		new BlockPos(+1, +0, +0),
-		new BlockPos(+0, +0, -1),
-		new BlockPos(+0, +0, +1),
-		// check 12 non-immediate, non-corner neighbours
-		new BlockPos(-1, -1, +0),
-		new BlockPos(-1, +0, -1),
-		new BlockPos(-1, +0, +1),
-		new BlockPos(-1, +1, +0),
-		new BlockPos(+0, -1, -1),
-		new BlockPos(+0, -1, +1),
-		// new BlockPos(+0, +0, +0), // Don't check self
-		new BlockPos(+0, +1, -1),
-		new BlockPos(+0, +1, +1),
-		new BlockPos(+1, -1, +0),
-		new BlockPos(+1, +0, -1),
-		new BlockPos(+1, +0, +1),
-		new BlockPos(+1, +1, +0),
-		// check 8 corner neighbours
-		new BlockPos(+1, +1, +1),
-		new BlockPos(+1, +1, -1),
-		new BlockPos(-1, +1, +1),
-		new BlockPos(-1, +1, -1),
-		new BlockPos(+1, -1, +1),
-		new BlockPos(+1, -1, -1),
-		new BlockPos(-1, -1, +1),
-		new BlockPos(-1, -1, -1),
-	};
+			// check 6 immediate neighbours
+			new BlockPos(+0, -1, +0),
+			new BlockPos(+0, +1, +0),
+			new BlockPos(-1, +0, +0),
+			new BlockPos(+1, +0, +0),
+			new BlockPos(+0, +0, -1),
+			new BlockPos(+0, +0, +1),
+			// check 12 non-immediate, non-corner neighbours
+			new BlockPos(-1, -1, +0),
+			new BlockPos(-1, +0, -1),
+			new BlockPos(-1, +0, +1),
+			new BlockPos(-1, +1, +0),
+			new BlockPos(+0, -1, -1),
+			new BlockPos(+0, -1, +1),
+			// new BlockPos(+0, +0, +0), // Don't check self
+			new BlockPos(+0, +1, -1),
+			new BlockPos(+0, +1, +1),
+			new BlockPos(+1, -1, +0),
+			new BlockPos(+1, +0, -1),
+			new BlockPos(+1, +0, +1),
+			new BlockPos(+1, +1, +0),
+			// check 8 corner neighbours
+			new BlockPos(+1, +1, +1),
+			new BlockPos(+1, +1, -1),
+			new BlockPos(-1, +1, +1),
+			new BlockPos(-1, +1, -1),
+			new BlockPos(+1, -1, +1),
+			new BlockPos(+1, -1, -1),
+			new BlockPos(-1, -1, +1),
+			new BlockPos(-1, -1, -1),
+		};
 
-	/**
-	 * Returns a state and sets the texturePooledMutablePos to the pos it found
-	 *
-	 * @return a state
-	 */
-	public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) { //, boolean tryForBetterTexturesSnow, boolean tryForBetterTexturesGrass) {
-		BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
-
-		boolean tryFindSnow = true;
-		if (tryFindSnow) {
-			Predicate<BlockState> oldIsSmoothable = isSmoothable;
-			isSmoothable = s -> oldIsSmoothable.test(s) || isSnow(s);
-		}
-
-		if (isSmoothable.test(state))
-			return state;
-
-		// Vertices can generate at positions different to the position of the block they are for
-		// This occurs mostly for positions below, west of and north of the position they are for
-		// Search the opposite of those directions for the actual block
-		// We could also attempt to get the state from the vertex positions
-		int x = relativePos.getX();
-		int y = relativePos.getY();
-		int z = relativePos.getZ();
-
-		state = area.getBlockState(relativePos.move(direction.getOpposite()));
-		if (isSmoothable.test(state))
-			return state;
-
-		for (BlockPos offset : OFFSETS_ORDERED) {
-			relativePos.set(x, y, z).offset(offset);
-			state = area.getBlockState(relativePos);
+		private static @Nullable BlockState tryFindTexturePosAndState(
+			BlockState state,
+			int relativeX, int relativeY, int relativeZ,
+			BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable
+		) {
 			if (isSmoothable.test(state))
 				return state;
+
+			for (int i = 0, offsets_orderedLength = OFFSETS_ORDERED.length; i < offsets_orderedLength; i++) {
+				BlockPos offset = OFFSETS_ORDERED[i];
+				relativePos.set(relativeX, relativeY, relativeZ).move(offset);
+				state = area.getBlockState(relativePos);
+				if (isSmoothable.test(state))
+					return state;
+			}
+			return null;
 		}
 
-		// Give up
-		relativePos.set(x, y, z);
-		return Blocks.SCAFFOLDING.defaultBlockState();
+		public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) {
+			BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
+			if (state.isAir()) {
+				// Vertices can generate at positions different to the position of the block they are for
+				// This occurs mostly for positions below, west of and north of the position they are for
+				// Search the opposite of those directions for the actual block
+				// We could also attempt to get the starting position from the vertex positions
+				state = area.getBlockState(relativePos.move(direction.getOpposite()));
+				if (state.isAir())
+					// Move it back to where it was, we're not using the new pos
+					relativePos.move(direction);
+			}
 
-//		if (NoCubesConfig.Client.betterTextures) {
-//			if (tryForBetterTexturesSnow) {
-//					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-//						relativePosX + stateCacheStartPaddingX,
-//						relativePosY + stateCacheStartPaddingY,
-//						relativePosZ + stateCacheStartPaddingZ,
-//						stateCacheSizeX, stateCacheSizeY
-//					)];
-//
-//					if (isStateSnow(betterTextureState)) {
-//						texturePooledMutablePos.setPos(posX, posY, posZ);
-//						return betterTextureState;
-//					}
-//					for (int[] offset : OFFSETS_ORDERED) {
-//						betterTextureState = blockCacheArray[stateCache.getIndex(
-//							relativePosX + offset[0] + stateCacheStartPaddingX,
-//							relativePosY + offset[1] + stateCacheStartPaddingY,
-//							relativePosZ + offset[2] + stateCacheStartPaddingZ,
-//							stateCacheSizeX, stateCacheSizeY
-//						)];
-//						if (isStateSnow(betterTextureState)) {
-//							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
-//							return betterTextureState;
-//						}
-//					}
-//			}
-//			if (tryForBetterTexturesGrass) {
-//					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
-//						relativePosX + stateCacheStartPaddingX,
-//						relativePosY + stateCacheStartPaddingY,
-//						relativePosZ + stateCacheStartPaddingZ,
-//						stateCacheSizeX, stateCacheSizeY
-//					)];
-//
-//					if (isStateGrass(betterTextureState)) {
-//						texturePooledMutablePos.setPos(posX, posY, posZ);
-//						return betterTextureState;
-//					}
-//					for (int[] offset : OFFSETS_ORDERED) {
-//						betterTextureState = blockCacheArray[stateCache.getIndex(
-//							relativePosX + offset[0] + stateCacheStartPaddingX,
-//							relativePosY + offset[1] + stateCacheStartPaddingY,
-//							relativePosZ + offset[2] + stateCacheStartPaddingZ,
-//							stateCacheSizeX, stateCacheSizeY
-//						)];
-//						if (isStateGrass(betterTextureState)) {
-//							texturePooledMutablePos.setPos(posX + offset[0], posY + offset[1], posZ + offset[2]);
-//							return betterTextureState;
-//						}
-//					}
-//				}
-//			}
-//		}
-	}
+			int x = relativePos.getX();
+			int y = relativePos.getY();
+			int z = relativePos.getZ();
+			BlockState textureState = null;
 
-	private static boolean isSnow(BlockState s) {
-		return s.getBlock() == Blocks.SNOW || s.getBlock() == Blocks.SNOW_BLOCK;
+			boolean tryFindSnow = direction == Direction.UP || NoCubesConfig.Client.betterGrassAndSnow;
+			if (tryFindSnow)
+				textureState = tryFindTexturePosAndState(state, x, y, z, relativePos, area, TextureLocator::isSnow);
+			if (textureState != null)
+				return textureState;
+
+			textureState = tryFindTexturePosAndState(state, x, y, z, relativePos, area, isSmoothable);
+			if (textureState != null)
+				return textureState;
+
+			// We couldn't find a smoothable state, give up and return a dummy
+			relativePos.set(x, y, z);
+			return Blocks.SCAFFOLDING.defaultBlockState();
+		}
+
+		private static boolean isSnow(BlockState state) {
+			Block block = state.getBlock();
+			return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
+		}
+
 	}
 
 }

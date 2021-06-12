@@ -114,7 +114,7 @@ public final class RendererDispatcher {
 //					return true;
 
 				renderInfo.setup(face, area.start);
-				BlockState state = getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
+				BlockState state = MeshRenderer.TextureLocator.getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
 				BlockPos.Mutable worldPos = relativePos.move(area.start);
 
 				if (state.getRenderShape() == BlockRenderType.INVISIBLE)
