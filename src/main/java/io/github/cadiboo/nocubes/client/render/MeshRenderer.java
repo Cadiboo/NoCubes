@@ -103,7 +103,7 @@ public final class MeshRenderer {
 		IBakedModel modelIn = dispatcher.getBlockModel(state);
 		modelIn = optiFine.getModel(renderEnv, modelIn, state);
 		renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, false);
+		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, state.hasProperty(BlockStateProperties.DISTANCE));
 	}
 
 	static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
