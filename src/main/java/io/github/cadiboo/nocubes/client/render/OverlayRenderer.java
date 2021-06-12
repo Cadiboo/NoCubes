@@ -66,11 +66,11 @@ public final class OverlayRenderer {
 		MatrixStack matrix = event.getMatrix();
 		IVertexBuilder buffer = event.getBuffers().getBuffer(RenderType.lines());
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		boolean stateSolidity = RendererDispatcher.isNotSeeThrough(state);
+		boolean stateSolidity = MeshRenderer.isNotSeeThrough(state);
 		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
 			Color color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			generator.generate(area, s -> isSmoothable.test(s) && RendererDispatcher.isNotSeeThrough(s) == stateSolidity, (pos, face) -> {
+			generator.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isNotSeeThrough(s) == stateSolidity, (pos, face) -> {
 				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
 				return true;
 			});

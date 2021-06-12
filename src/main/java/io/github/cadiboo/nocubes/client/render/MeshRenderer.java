@@ -18,6 +18,8 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -31,19 +33,29 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 
 public final class MeshRenderer {
 
+	public static boolean isNotSeeThrough(BlockState state) {
+		return RenderTypeLookup.canRenderInLayer(state, RenderType.solid()) || state.hasProperty(BlockStateProperties.SNOWY);
+	}
+
+	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
+		action.accept(state -> isSmoothable.test(state) && isNotSeeThrough(state));
+		action.accept(state -> isSmoothable.test(state) && !isNotSeeThrough(state));
+	}
+
 	static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, MeshGenerator generator, Area area) {
 		FaceInfo renderInfo = new FaceInfo();
 		Random random = dispatcher.random;
 		MeshGenerator.translateToMeshStart(matrix, area.start, pos);
-		boolean stateSolidity = RendererDispatcher.isNotSeeThrough(state);
+		boolean stateSolidity = isNotSeeThrough(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		generator.generate(area, s -> isSmoothable.test(s) && RendererDispatcher.isNotSeeThrough(s) == stateSolidity, (relativePos, face) -> {
+		generator.generate(area, s -> isSmoothable.test(s) && isNotSeeThrough(s) == stateSolidity, (relativePos, face) -> {
 			renderInfo.setup(face, area.start);
 
 			// Don't need textures or lighting because the crumbling texture overwrites them
