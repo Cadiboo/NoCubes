@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
