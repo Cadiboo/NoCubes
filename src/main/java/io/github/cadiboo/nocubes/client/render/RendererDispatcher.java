@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
@@ -32,10 +33,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.*;
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.renderFaceForLayer;
 
 /**
  * @author Cadiboo
@@ -44,6 +47,15 @@ public final class RendererDispatcher {
 
 	private static final RollingProfiler fluidsProfiler = new RollingProfiler(256);
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
+
+	public static boolean isNotSeeThrough(BlockState state) {
+		return RenderTypeLookup.canRenderInLayer(state, RenderType.solid()) || state.hasProperty(BlockStateProperties.SNOWY);
+	}
+
+	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
+		action.accept(state -> isSmoothable.test(state) && RendererDispatcher.isNotSeeThrough(state));
+		action.accept(state -> isSmoothable.test(state) && !RendererDispatcher.isNotSeeThrough(state));
+	}
 
 	public static void renderChunk(
 		RebuildTask rebuildTask,
@@ -100,7 +112,7 @@ public final class RendererDispatcher {
 //			LogManager.getLogger("Render chunk fluids").debug("Average {}ms over the past {} chunks", fluidsProfiler.average() / 1000_000F, fluidsProfiler.size());
 	}
 
-	private static void renderChunkMesh(RebuildTask rebuildTask, ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, Predicate<BlockState> isSmoothable, OptiFineProxy optiFine) {
+	private static void renderChunkMesh(RebuildTask rebuildTask, ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, Predicate<BlockState> isSmoothableIn, OptiFineProxy optiFine) {
 		long start = System.nanoTime();
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		try (
@@ -109,29 +121,31 @@ public final class RendererDispatcher {
 		) {
 			FaceInfo renderInfo = new FaceInfo();
 			MeshGenerator.translateToMeshStart(matrix.matrix, area.start, chunkPos);
-			generator.generate(area, isSmoothable, (relativePos, face) -> {
-//				if (leavesBounds(chunkPos, ModUtil.CHUNK_SIZE, area.start, face))
-//					return true;
+			runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
+				generator.generate(area, isSmoothable, (relativePos, face) -> {
+//					if (leavesBounds(chunkPos, ModUtil.CHUNK_SIZE, area.start, face))
+//						return true;
 
-				renderInfo.setup(face, area.start);
-				BlockState state = MeshRenderer.TextureLocator.getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
-				BlockPos.Mutable worldPos = relativePos.move(area.start);
+					renderInfo.setup(face, area.start);
+					BlockState state = MeshRenderer.TextureLocator.getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
+					BlockPos.Mutable worldPos = relativePos.move(area.start);
 
-				if (state.getRenderShape() == BlockRenderType.INVISIBLE)
-					return true;
-				long rand = optiFine.getSeed(state.getSeed(worldPos));
-				IModelData modelData = rebuildTask.getModelData(worldPos);
-				renderInLayers(
-					chunkRender, compiledChunk, buffers, optiFine,
-					layer -> RenderTypeLookup.canRenderInLayer(state, layer),
-					(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-					(buffer, renderEnv) -> {
-						renderFaceForLayer(world, random, dispatcher, matrix, light, optiFine, renderInfo, state, worldPos, rand, modelData, buffer, renderEnv);
+					if (state.getRenderShape() == BlockRenderType.INVISIBLE)
 						return true;
-					},
-					(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
-				);
-				return true;
+					long rand = optiFine.getSeed(state.getSeed(worldPos));
+					IModelData modelData = rebuildTask.getModelData(worldPos);
+					renderInLayers(
+						chunkRender, compiledChunk, buffers, optiFine,
+						layer -> RenderTypeLookup.canRenderInLayer(state, layer),
+						(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
+						(buffer, renderEnv) -> {
+							renderFaceForLayer(world, random, dispatcher, matrix, light, optiFine, renderInfo, state, worldPos, rand, modelData, buffer, renderEnv);
+							return true;
+						},
+						(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
+					);
+					return true;
+				});
 			});
 			ForgeHooksClient.setRenderLayer(null);
 		}

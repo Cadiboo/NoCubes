@@ -7,7 +7,6 @@ import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -34,6 +33,7 @@ import java.util.Random;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
+import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.runForSolidAndSeeThrough;
 
 public final class MeshRenderer {
 
@@ -41,15 +41,17 @@ public final class MeshRenderer {
 		FaceInfo renderInfo = new FaceInfo();
 		Random random = dispatcher.random;
 		MeshGenerator.translateToMeshStart(matrix, area.start, pos);
-		generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
-			renderInfo.setup(face, area.start);
+		runForSolidAndSeeThrough(NoCubes.smoothableHandler::isSmoothable, isSmoothable -> {
+			generator.generate(area, isSmoothable, (relativePos, face) -> {
+				renderInfo.setup(face, area.start);
 
-			// Don't need textures or lighting because the crumbling texture overwrites them
-			renderInfo.assignMissingQuads(state, random, modelData);
-			LightCache light = null;
-			renderFace(renderInfo, buffer, matrix, world, state, pos, null, null, light, false);
+				// Don't need textures or lighting because the crumbling texture overwrites them
+				renderInfo.assignMissingQuads(state, random, modelData);
+				LightCache light = null;
+				renderFace(renderInfo, buffer, matrix, world, state, pos, null, null, light, false);
 
-			return true;
+				return true;
+			});
 		});
 	}
 
