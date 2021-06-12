@@ -9,8 +9,10 @@ import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Direction;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -358,7 +360,7 @@ public final class NoCubesConfig {
 		private static final Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
 
 		static {
-			BlockState[] vanilla = {
+			List<BlockState> vanilla = Lists.newArrayList(
 				STONE.defaultBlockState(),
 				GRASS_BLOCK.defaultBlockState().setValue(SNOWY, false),
 				GRASS_BLOCK.defaultBlockState().setValue(SNOWY, true),
@@ -392,6 +394,7 @@ public final class NoCubesConfig {
 				LAPIS_ORE.defaultBlockState(),
 				EMERALD_ORE.defaultBlockState(),
 				NETHER_QUARTZ_ORE.defaultBlockState(),
+				NETHER_GOLD_ORE.defaultBlockState(),
 
 				INFESTED_STONE.defaultBlockState(),
 				BONE_BLOCK.defaultBlockState(),
@@ -440,9 +443,19 @@ public final class NoCubesConfig {
 				END_STONE.defaultBlockState(),
 
 				MYCELIUM.defaultBlockState().setValue(SNOWY, false),
-				MYCELIUM.defaultBlockState().setValue(SNOWY, true),
+				MYCELIUM.defaultBlockState().setValue(SNOWY, true)
+			);
 
-			};
+			for (Block log : new Block[]{OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG}) {
+				for (Direction.Axis axis : Direction.Axis.values())
+					vanilla.add(log.defaultBlockState().setValue(AXIS, axis));
+			}
+
+			for (Block leaves : new Block[]{OAK_LEAVES, SPRUCE_LEAVES, BIRCH_LEAVES, JUNGLE_LEAVES, ACACIA_LEAVES, DARK_OAK_LEAVES}) {
+				for (int distance = 1; distance <= 7; ++distance)
+					vanilla.add(leaves.defaultBlockState().setValue(DISTANCE, distance));
+			}
+
 			String[] modded = {
 				"biomesoplenty:grass[snowy=false,variant=sandy]",
 				"biomesoplenty:dirt[coarse=false,variant=sandy]",
@@ -466,7 +479,7 @@ public final class NoCubesConfig {
 				"notenoughroofs:copper_ore",
 				"rustic:slate",
 			};
-			DEFAULT_SMOOTHABLES.addAll(Arrays.asList(vanilla));
+			DEFAULT_SMOOTHABLES.addAll(vanilla);
 			DEFAULT_SMOOTHABLES.addAll(parseBlockstates(Arrays.asList(modded)));
 		}
 
