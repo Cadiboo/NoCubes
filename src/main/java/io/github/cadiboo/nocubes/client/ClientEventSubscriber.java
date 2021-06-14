@@ -49,7 +49,7 @@ public final class ClientEventSubscriber {
 			return;
 
 		if (NoCubesConfig.Server.collisionsEnabled && !NoCubesNetwork.currentServerHasNoCubes) {
-			player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".notification.nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(TextFormatting.RED), Util.NIL_UUID);
 			NoCubesConfig.Server.collisionsEnabled = false;
 		}
 	}

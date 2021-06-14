@@ -55,7 +55,7 @@ public class C2SRequestUpdateSmoothable {
 				// Somehow the client is out of sync, just notify them
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CUpdateSmoothable(state, newValue));
 		} else
-			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".addSmoothableNoPermission"), Util.NIL_UUID);
+			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".command.addSmoothableNoPermission"), Util.NIL_UUID);
 		ctx.setPacketHandled(true);
 	}
 

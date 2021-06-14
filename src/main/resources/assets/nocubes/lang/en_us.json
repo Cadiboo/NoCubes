@@ -1,0 +1,18 @@
+{
+	"nocubes.config.render": "Custom rendering",
+	"nocubes.config.selectionBoxColor": "Selection box color",
+	"nocubes.config.betterGrassAndSnow": "Better grass and snow",
+	"nocubes.config.debugEnabled": "Debug mode",
+
+	"nocubes.config.smoothableWhitelist": "Whitelist of smoothable blocks",
+	"nocubes.config.smoothableBlacklist": "Blacklist of non-smoothable blocks",
+	"nocubes.config.collisionsEnabled": "Custom collisions",
+	"nocubes.config.forceVisuals": "Force custom rendering for players",
+	"nocubes.config.extendFluidsRange": "Extended fluids range",
+
+	"nocubes.command.setCollisionsNoPermission": "You do not have permission to change if custom collisions are enabled",
+	"nocubes.command.addSmoothableNoPermission": "You do not have permission to change if a block is smoothable or not",
+
+	"nocubes.notification.nocubesNotInstalledOnServerCollisionsUnavailable": "Because NoCubes is not installed on this server NoCubes' custom collisions cannot work properly and have been temporarily disabled",
+	"nocubes.notification.visualsForcedByServer": "This server forces NoCubes' visuals to be enabled at all times while playing to ensure a 'proper' player experience"
+}

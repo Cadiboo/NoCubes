@@ -48,7 +48,7 @@ public class C2SRequestSetCollisions {
 				// Somehow the client is out of sync, just notify them
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CSetCollisions(newValue));
 		} else
-			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".setCollisionsNoPermission"), Util.NIL_UUID);
+			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".command.setCollisionsNoPermission"), Util.NIL_UUID);
 		ctx.setPacketHandled(true);
 	}
 

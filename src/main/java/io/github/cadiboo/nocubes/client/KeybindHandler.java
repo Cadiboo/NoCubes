@@ -59,7 +59,7 @@ public final class KeybindHandler {
 
 	private static void toggleVisuals() {
 		if (NoCubesConfig.Client.render && NoCubesConfig.Server.forceVisuals) {
-			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".visualsForcedByServer").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".notification.visualsForcedByServer").withStyle(TextFormatting.RED), Util.NIL_UUID);
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
@@ -92,7 +92,7 @@ public final class KeybindHandler {
 
 	private static void toggleCollisions() {
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
-			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".notification.nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(TextFormatting.RED), Util.NIL_UUID);
 			return;
 		}
 		// Send an update request packet
