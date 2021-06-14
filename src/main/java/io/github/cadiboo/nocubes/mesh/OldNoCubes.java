@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.client.render.LightCache;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -78,6 +77,9 @@ public final class OldNoCubes implements MeshGenerator {
 		// The 8 points that make the block.
 		// 1 point for each corner
 		Vec[] points = {new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
+		Direction[] directions = ModUtil.DIRECTIONS;
+		int directionsLength = directions.length;
+		boolean[] smoothableNeighbours = new boolean[directionsLength];
 
 //		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 		float roughness = 0.5F;
@@ -113,18 +115,24 @@ public final class OldNoCubes implements MeshGenerator {
 						}
 					}
 
-					float max = max(points[0].y, points[1].y, points[2].y, points[3].y, points[4].y, points[5].y, points[6].y, points[7].y);
-					float min = min(points[0].y, points[1].y, points[2].y, points[3].y, points[4].y, points[5].y, points[6].y, points[7].y);
-					float amountInside = (max - min - 0.5F) * 2;
-					if (!voxelAction.apply(pos.set(x, y, z), amountInside))
-						return;
-
-					Direction[] directions = ModUtil.DIRECTIONS;
-					for (int i = 0, l = directions.length; i < l; ++i) {
+					int numSmoothableNeighbours = 0;
+					for (int i = 0; i < directionsLength; ++i) {
 						Direction direction = directions[i];
 						pos.set(x, y, z).move(direction);
 
-						if (isSmoothable.test(blocks[area.index(pos)]))
+						boolean smoothable = isSmoothable.test(blocks[area.index(pos)]);
+						smoothableNeighbours[i] = smoothable;
+						if (smoothable)
+							++numSmoothableNeighbours;
+					}
+
+					if (!voxelAction.apply(pos.set(x, y, z), (float) numSmoothableNeighbours / directionsLength))
+						return;
+
+					for (int i = 0; i < directionsLength; ++i) {
+						Direction direction = directions[i];
+
+						if (smoothableNeighbours[i])
 							continue;
 
 						//0-3
@@ -134,16 +142,16 @@ public final class OldNoCubes implements MeshGenerator {
 						switch (direction) {
 							default:
 							case DOWN:
-								face.v0.set(points[X0Y0Z1]);
-								face.v1.set(points[X0Y0Z0]);
-								face.v2.set(points[X1Y0Z0]);
-								face.v3.set(points[X1Y0Z1]);
+								face.v0.set(points[X1Y0Z1]);
+								face.v1.set(points[X0Y0Z1]);
+								face.v2.set(points[X0Y0Z0]);
+								face.v3.set(points[X1Y0Z0]);
 								break;
 							case UP:
-								face.v0.set(points[X0Y1Z0]);
-								face.v1.set(points[X0Y1Z1]);
-								face.v2.set(points[X1Y1Z1]);
-								face.v3.set(points[X1Y1Z0]);
+								face.v0.set(points[X1Y1Z1]);
+								face.v1.set(points[X1Y1Z0]);
+								face.v2.set(points[X0Y1Z0]);
+								face.v3.set(points[X0Y1Z1]);
 								break;
 							case NORTH:
 								face.v0.set(points[X1Y1Z0]);
@@ -152,16 +160,16 @@ public final class OldNoCubes implements MeshGenerator {
 								face.v3.set(points[X0Y1Z0]);
 								break;
 							case SOUTH:
-								face.v0.set(points[X0Y1Z1]);
-								face.v1.set(points[X0Y0Z1]);
-								face.v2.set(points[X1Y0Z1]);
-								face.v3.set(points[X1Y1Z1]);
+								face.v0.set(points[X1Y1Z1]);
+								face.v1.set(points[X0Y1Z1]);
+								face.v2.set(points[X0Y0Z1]);
+								face.v3.set(points[X1Y0Z1]);
 								break;
 							case WEST:
-								face.v0.set(points[X0Y1Z0]);
-								face.v1.set(points[X0Y0Z0]);
-								face.v2.set(points[X0Y0Z1]);
-								face.v3.set(points[X0Y1Z1]);
+								face.v0.set(points[X0Y1Z1]);
+								face.v1.set(points[X0Y1Z0]);
+								face.v2.set(points[X0Y0Z0]);
+								face.v3.set(points[X0Y0Z1]);
 								break;
 							case EAST:
 								face.v0.set(points[X1Y1Z1]);
@@ -171,7 +179,7 @@ public final class OldNoCubes implements MeshGenerator {
 								break;
 						}
 
-						if (!faceAction.apply(pos, face))
+						if (!faceAction.apply(pos.set(x, y, z).move(direction), face))
 							return;
 
 					}

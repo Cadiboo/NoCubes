@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -98,9 +99,13 @@ public final class CollisionHandler {
 			}
 			return true;
 		}, (pos, face) -> {
-			face.assignNormalTo(vertexNormals);
 			face.assignAverageTo(centre);
-			vertexNormals.assignAverageTo(faceNormal);
+			if (!(generator instanceof OldNoCubes)) {
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.assignAverageTo(faceNormal);
+//			} else {
+//				faceNormal.set(0, 0, 0); // We don't run this because faceNormal is already set to (0, 0, 0)
+			}
 
 			generateShape(centre, faceNormal, consumer, face.v0);
 			generateShape(centre, faceNormal, consumer, face.v1);
