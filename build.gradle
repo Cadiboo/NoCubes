@@ -23,6 +23,15 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
+repositories {
+	maven {
+		url "https://www.cursemaven.com"
+		content {
+			includeGroup "curse.maven"
+		}
+	}
+}
+
 def getGitCommit = { ->
     def stdout = new ByteArrayOutputStream()
     def result = exec {
@@ -59,6 +68,7 @@ minecraft {
 //			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
 			property 'forge.logging.console.level', 'debug'
 //			property 'forge.logging.console.level', 'trace' // For ASM classdump
+			property 'mixin.env.disableRefMap', 'true' // To allow BetterFoliage to load
 
 			mods {
 				nocubes {
@@ -107,6 +117,9 @@ dependencies {
 
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	shadow implementation('org.beryx:awt-color-factory:1.0.2')
+
+	implementation fg.deobf("curse.maven:KotlinForForge-351264:3331341")
+	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-all:1.10.19'

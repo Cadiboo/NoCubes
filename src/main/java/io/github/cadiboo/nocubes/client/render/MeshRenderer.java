@@ -18,14 +18,13 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EmptyBlockReader;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.model.data.IModelData;
 
@@ -40,22 +39,22 @@ import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 
 public final class MeshRenderer {
 
-	public static boolean isNotSeeThrough(BlockState state) {
-		return RenderTypeLookup.canRenderInLayer(state, RenderType.solid()) || state.hasProperty(BlockStateProperties.SNOWY);
+	public static boolean isSolidRender(BlockState state) {
+		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO);
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
-		action.accept(state -> isSmoothable.test(state) && isNotSeeThrough(state));
-		action.accept(state -> isSmoothable.test(state) && !isNotSeeThrough(state));
+		action.accept(state -> isSmoothable.test(state) && isSolidRender(state));
+		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
 	}
 
 	static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, MeshGenerator generator, Area area) {
 		FaceInfo renderInfo = new FaceInfo();
 		Random random = dispatcher.random;
 		MeshGenerator.translateToMeshStart(matrix, area.start, pos);
-		boolean stateSolidity = isNotSeeThrough(state);
+		boolean stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		generator.generate(area, s -> isSmoothable.test(s) && isNotSeeThrough(s) == stateSolidity, (relativePos, face) -> {
+		generator.generate(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			renderInfo.setup(face, area.start);
 
 			// Don't need textures or lighting because the crumbling texture overwrites them
