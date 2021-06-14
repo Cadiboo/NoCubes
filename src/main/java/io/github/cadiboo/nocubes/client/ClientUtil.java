@@ -10,9 +10,11 @@ import net.minecraft.util.math.vector.Matrix4f;
 public final class ClientUtil {
 
 	public static void reloadAllChunks(Minecraft minecraft) {
-		WorldRenderer worldRenderer = minecraft.levelRenderer;
-		if (worldRenderer != null)
-			worldRenderer.allChanged();
+		minecraft.execute(() -> {
+			WorldRenderer worldRenderer = minecraft.levelRenderer;
+			if (worldRenderer != null)
+				worldRenderer.allChanged();
+		});
 	}
 
 	public static IVertexBuilder vertex(IVertexBuilder buffer, MatrixStack matrix, float x, float y, float z) {
