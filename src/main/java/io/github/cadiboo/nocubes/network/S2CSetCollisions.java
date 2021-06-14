@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import net.minecraft.block.BlockState;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 

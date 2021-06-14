@@ -41,17 +41,19 @@ public final class CollisionHandler {
 	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
 		if (!canCollide)
 			return VoxelShapes.empty();
-		if (!NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state))
-			return state.getShape(reader, blockPos);
-		Entity entity = context.getEntity();
-//		if (entity instanceof PlayerEntity)
+
+		assert NoCubesConfig.Server.collisionsEnabled;
+		assert NoCubes.smoothableHandler.isSmoothable(state);
+
+//		if (context.getEntity( instanceof PlayerEntity)
 //			// Noclip for debugging
 //			return VoxelShapes.empty();
-		if (entity instanceof FallingBlockEntity)
-			// Stop sand etc. breaking when it falls
-			return state.getShape(reader, blockPos);
-		if (entity == null || reader.getBlockState(blockPos) != state)
+
+		Entity entity = context.getEntity();
+		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
+			entity == null || reader.getBlockState(blockPos) != state
+		)
 			return state.getShape(reader, blockPos);
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
