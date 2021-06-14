@@ -21,6 +21,7 @@ import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.common.util.Lazy;
 
 import javax.annotation.Nullable;
+import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
@@ -38,6 +39,8 @@ public class ModUtil {
 			return false;
 		return target.contains("userdev");
 	});
+	public static final float FULLY_SMOOTHABLE = 1;
+	public static final float NOT_SMOOTHABLE = -FULLY_SMOOTHABLE;
 
 	public static ImmutableList<BlockState> getStates(Block block) {
 		return block.getStateDefinition().getPossibleStates();
@@ -113,16 +116,24 @@ public class ModUtil {
 		}
 	}
 
+	public static float getBlockDensity(Predicate<BlockState> isSmoothable, BlockState state) {
+		return getBlockDensity(isSmoothable.test(state), state);
+	}
+
 	/**
 	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
 	 */
 	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
 		if (!shouldSmooth)
-			return -1;
-		if (state.getBlock() == Blocks.SNOW)
+			return NOT_SMOOTHABLE;
+		if (isSnowLayer(state))
 			// Snow layer, not the actual whole snow block
 			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
-		return 1;
+		return FULLY_SMOOTHABLE;
+	}
+
+	public static boolean isSnowLayer(BlockState state) {
+		return state.hasProperty(SnowBlock.LAYERS);
 	}
 
 	/** Map snow height between 1-8 to between -1 and 1. */

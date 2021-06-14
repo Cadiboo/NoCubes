@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -79,10 +80,9 @@ public final class OldNoCubes implements MeshGenerator {
 		Vec[] points = {new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
 		Direction[] directions = ModUtil.DIRECTIONS;
 		int directionsLength = directions.length;
-		boolean[] smoothableNeighbours = new boolean[directionsLength];
+		float[] neighboursSmoothability = new float[directionsLength];
 
-//		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
-		float roughness = 0.5F;
+		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {
@@ -91,8 +91,24 @@ public final class OldNoCubes implements MeshGenerator {
 					if (isOutsideMesh(x, y, z, size))
 						continue;
 
-					if (!isSmoothable.test(blocks[index]))
+					BlockState state = blocks[index];
+					if (!isSmoothable.test(state))
 						// We aren't smoothable
+						continue;
+
+					float combinedNeighboursSmoothability = 0;
+					for (int i = 0; i < directionsLength; ++i) {
+						Direction direction = directions[i];
+						pos.set(x, y, z).move(direction);
+						BlockState neighbour = blocks[area.index(pos)];
+						float density = ModUtil.getBlockDensity(isSmoothable, neighbour);
+						neighboursSmoothability[i] = density;
+					}
+
+					float amountInsideIsosurface = (combinedNeighboursSmoothability / directionsLength) / 2 + 0.5F;
+					if (!voxelAction.apply(pos.set(x, y, z), amountInsideIsosurface))
+						return;
+					if (amountInsideIsosurface == 0 || ModUtil.isSnowLayer(state))
 						continue;
 
 					resetPoints(points);
@@ -115,24 +131,10 @@ public final class OldNoCubes implements MeshGenerator {
 						}
 					}
 
-					int numSmoothableNeighbours = 0;
-					for (int i = 0; i < directionsLength; ++i) {
-						Direction direction = directions[i];
-						pos.set(x, y, z).move(direction);
-
-						boolean smoothable = isSmoothable.test(blocks[area.index(pos)]);
-						smoothableNeighbours[i] = smoothable;
-						if (smoothable)
-							++numSmoothableNeighbours;
-					}
-
-					if (!voxelAction.apply(pos.set(x, y, z), (float) numSmoothableNeighbours / directionsLength))
-						return;
-
 					for (int i = 0; i < directionsLength; ++i) {
 						Direction direction = directions[i];
 
-						if (smoothableNeighbours[i])
+						if (neighboursSmoothability[i] == ModUtil.FULLY_SMOOTHABLE)
 							continue;
 
 						//0-3
@@ -245,7 +247,9 @@ public final class OldNoCubes implements MeshGenerator {
 	 * @param state the state
 	 * @return if the state is AIR or PLANT or VINE
 	 */
-	public static boolean isBlockAirOrPlant(BlockState state) {
+	public static boolean isBlockAirPlantOrSnowLayer(BlockState state) {
+		if (ModUtil.isSnowLayer(state))
+			return true;
 		Material material = state.getMaterial();
 		return material == Material.AIR ||
 			material == Material.PLANT ||
@@ -264,9 +268,9 @@ public final class OldNoCubes implements MeshGenerator {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirOrPlant(area.getBlockState(pos.set(x, y, z))))
+			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y, z))))
 				return false;
-			if (isBlockAirOrPlant(area.getBlockState(pos.set(x, y - 1, z))))
+			if (isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y - 1, z))))
 				intersects = true;
 		}
 		return intersects;
@@ -279,11 +283,11 @@ public final class OldNoCubes implements MeshGenerator {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirOrPlant(area.getBlockState(pos.set(x, y - 1, z))))
+			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y - 1, z))))
 				return false;
-			if (!isBlockAirOrPlant(area.getBlockState(pos.set(x, y + 1, z))))
+			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y + 1, z))))
 				notOnly = true;
-			if (isBlockAirOrPlant(area.getBlockState(pos.set(x, y, z))))
+			if (isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y, z))))
 				intersects = true;
 		}
 		return intersects && notOnly;
@@ -295,10 +299,10 @@ public final class OldNoCubes implements MeshGenerator {
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
 			BlockState state0 = area.getBlockState(pos.set(x, y, z));
-			if (!isBlockAirOrPlant(state0) && !isSmoothable.test(state0))
+			if (!isBlockAirPlantOrSnowLayer(state0) && !isSmoothable.test(state0))
 				return true;
 			BlockState state1 = area.getBlockState(pos.set(x, y - 1, z));
-			if (!isBlockAirOrPlant(state1) && !isSmoothable.test(state1))
+			if (!isBlockAirPlantOrSnowLayer(state1) && !isSmoothable.test(state1))
 				return true;
 		}
 		return false;

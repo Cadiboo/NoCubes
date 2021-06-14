@@ -102,6 +102,7 @@ public final class OverlayRenderer {
 		RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
 		// Where the player is looking at or their position of they're not looking at a block
 		BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
 		// Destroy block progress
 		if (false) {
@@ -119,7 +120,7 @@ public final class OverlayRenderer {
 			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
 			BlockPos end = viewer.blockPosition().offset(5, 5, 5);
 			BlockPos.betweenClosed(start, end).forEach(pos -> {
-				if (NoCubes.smoothableHandler.isSmoothable(viewer.level.getBlockState(pos)))
+				if (isSmoothable.test(viewer.level.getBlockState(pos)))
 					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), pos, camera, color);
 			});
 		}
@@ -134,11 +135,8 @@ public final class OverlayRenderer {
 			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
 				BlockState[] states = area.getAndCacheBlocks();
 				float[] densities = new float[area.numBlocks()];
-				for (int i = 0; i < densities.length; ++i) {
-					BlockState state = states[i];
-					boolean smoothable = NoCubes.smoothableHandler.isSmoothable(state);
-					densities[i] = ModUtil.getBlockDensity(smoothable, state);
-				}
+				for (int i = 0; i < densities.length; ++i)
+					densities[i] = ModUtil.getBlockDensity(isSmoothable, states[i]);
 
 				int minZ = area.start.getZ();
 				int minY = area.start.getY();
