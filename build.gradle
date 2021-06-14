@@ -126,6 +126,28 @@ dependencies {
 	testImplementation 'junit:junit:4.13'
 }
 
+processResources {
+	def properties = [
+		'version' : project.version,
+		// E.g. '36.1.31' -> '36'
+		'modMajorForgeVersion': project.modForgeVersion.split("\\.")[0],
+		'modMinecraftVersion': project.modMinecraftVersion
+	]
+	// Only run this task when the properties change
+	inputs.properties(properties)
+
+	// Copy over mods.toml, replacing any '${}' variables in it
+	from(sourceSets.main.resources.srcDirs) {
+		include 'META-INF/mods.toml'
+		expand properties
+	}
+
+	// Copy everything else (without doing any replacement)
+	from(sourceSets.main.resources.srcDirs) {
+		exclude 'META-INF/mods.toml'
+	}
+}
+
 jar {
 	classifier 'dev'
 	manifest {
