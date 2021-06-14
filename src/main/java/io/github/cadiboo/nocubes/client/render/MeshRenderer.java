@@ -139,7 +139,7 @@ public final class MeshRenderer {
 
 		Texture uvs = renderInfo.texture;
 		uvs.unpackFromQuad(quad);
-		uvs.rearangeForDirection(renderInfo.faceDirection);
+		uvs.rearrangeForDirection(renderInfo.faceDirection);
 
 		PackedLight packedLight = renderInfo.getPackedLight(light);
 

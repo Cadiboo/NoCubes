@@ -32,7 +32,7 @@ public final /* inline record */ class Texture {
 		return DefaultVertexFormats.BLOCK.getIntegerSize();
 	}
 
-	public void rearangeForDirection(Direction direction) {
+	public void rearrangeForDirection(Direction direction) {
 		switch (direction) {
 			case NORTH:
 			case EAST:
