@@ -7,6 +7,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SnowBlock;
+import net.minecraft.block.material.Material;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.Direction;
@@ -132,13 +133,25 @@ public class ModUtil {
 		return FULLY_SMOOTHABLE;
 	}
 
+	/** Map snow height between 1-8 to between -1 and 1. */
+	private static float mapSnowHeight(int value) {
+		return -1 + (value - 1) * 0.25F;
+	}
+
 	public static boolean isSnowLayer(BlockState state) {
 		return state.hasProperty(SnowBlock.LAYERS);
 	}
 
-	/** Map snow height between 1-8 to between -1 and 1. */
-	private static float mapSnowHeight(int value) {
-		return -1 + (value - 1) * 0.25F;
+	public static boolean isPlant(BlockState state) {
+		Material material = state.getMaterial();
+		return material == Material.PLANT ||
+			material == Material.WATER_PLANT ||
+			material == Material.REPLACEABLE_PLANT ||
+			material == Material.REPLACEABLE_FIREPROOF_PLANT ||
+			material == Material.REPLACEABLE_WATER_PLANT ||
+			material == Material.BAMBOO_SAPLING ||
+			material == Material.BAMBOO ||
+			material == Material.VEGETABLE;
 	}
 
 	/**

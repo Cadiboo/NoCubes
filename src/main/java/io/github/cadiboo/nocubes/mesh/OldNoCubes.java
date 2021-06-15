@@ -241,25 +241,8 @@ public final class OldNoCubes implements MeshGenerator {
 		point.z += ((float) (i >> 24 & 0xF) / 15.0F - 0.5F) * roughness;
 	}
 
-	/**
-	 * Check if the state is AIR or PLANT or VINE
-	 *
-	 * @param state the state
-	 * @return if the state is AIR or PLANT or VINE
-	 */
 	public static boolean isBlockAirPlantOrSnowLayer(BlockState state) {
-		if (ModUtil.isSnowLayer(state))
-			return true;
-		Material material = state.getMaterial();
-		return material == Material.AIR ||
-			material == Material.PLANT ||
-			material == Material.WATER_PLANT ||
-			material == Material.REPLACEABLE_PLANT ||
-			material == Material.REPLACEABLE_FIREPROOF_PLANT ||
-			material == Material.REPLACEABLE_WATER_PLANT ||
-			material == Material.BAMBOO_SAPLING ||
-			material == Material.BAMBOO ||
-			material == Material.VEGETABLE;
+		return state.getMaterial() == Material.AIR || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
 	}
 
 	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, BlockPos.Mutable pos) {
