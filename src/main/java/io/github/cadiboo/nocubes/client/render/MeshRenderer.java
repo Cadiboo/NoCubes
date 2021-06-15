@@ -11,10 +11,12 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.GrassBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -25,6 +27,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.EmptyBlockReader;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.model.data.IModelData;
@@ -112,12 +115,57 @@ public final class MeshRenderer {
 	}
 
 	static void renderFaceForLayer(IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, OptiFineProxy optiFine, FaceInfo renderInfo, BlockState state, BlockPos.Mutable worldPos, long rand, IModelData modelData, BufferBuilder buffer, Object renderEnv) {
-		IBakedModel modelIn = dispatcher.getBlockModel(state);
-		modelIn = optiFine.getModel(renderEnv, modelIn, state);
-		renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-		Material material = state.getMaterial();
-		boolean renderBothSides = material != Material.GLASS && material != Material.TOP_SNOW && !isSolidRender(state);
-		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+		{
+			IBakedModel modelIn = dispatcher.getBlockModel(state);
+			modelIn = optiFine.getModel(renderEnv, modelIn, state);
+			renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
+			Material material = state.getMaterial();
+			boolean renderBothSides = material != Material.GLASS && material != Material.TOP_SNOW && !isSolidRender(state);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+		}
+
+		// Render plants at the proper height
+		BlockPos posAbove = worldPos.above();
+		BlockState stateAbove = world.getBlockState(posAbove);
+		if (renderInfo.faceDirection == Direction.UP && ModUtil.isPlant(stateAbove)) {
+			try (FluentMatrixStack ignored = matrix.push()) {
+				Vec centre = renderInfo.faceCentre;
+				matrix.matrix.translate((int) centre.x, centre.y, (int) centre.z);
+				dispatcher.renderModel(stateAbove, posAbove, world, matrix.matrix, buffer, true, random, modelData);
+			}
+			// If we've rendered a plant on the face don't render grass tufts
+			return;
+		}
+
+		// Render grass tufts
+		if (renderInfo.faceDirection == Direction.UP && state.hasProperty(GrassBlock.SNOWY)) {
+			state = Blocks.GRASS.defaultBlockState();
+			IBakedModel modelIn = dispatcher.getBlockModel(state);
+			modelIn = optiFine.getModel(renderEnv, modelIn, state);
+			renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
+			boolean renderBothSides = true;
+
+			Vector3d offset = state.getOffset(world, worldPos);
+			Face face = renderInfo.face;
+			face.add((float) offset.x, (float) offset.y, (float) offset.z);
+			// Disgustingly store the face's values in its normals to avoid allocating an object
+			// Hopefully this doesn't come back to bite me
+			Face original = renderInfo.vertexNormals;
+			original.setValuesFrom(face);
+			float yExt = 0.4F;
+
+			face.v0.set(original.v0);
+			face.v1.set(original.v0).add(0, yExt, 0);
+			face.v2.set(original.v2).add(0, yExt, 0);
+			face.v3.set(original.v2);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+
+			face.v0.set(original.v1);
+			face.v1.set(original.v1).add(0, yExt, 0);
+			face.v2.set(original.v3).add(0, yExt, 0);
+			face.v3.set(original.v3);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+		}
 	}
 
 	static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
@@ -154,6 +202,7 @@ public final class MeshRenderer {
 	static final /* inline? */ class FaceInfo {
 		public Face face;
 		public BlockPos faceRelativeToWorldPos;
+		public final Vec faceCentre = new Vec();
 		public final Face vertexNormals = new Face();
 		public final Vec faceNormal = new Vec();
 		public Direction faceDirection;
@@ -165,6 +214,7 @@ public final class MeshRenderer {
 		public void setup(Face face, BlockPos faceRelativeToWorldPos) {
 			this.face = face;
 			this.faceRelativeToWorldPos = faceRelativeToWorldPos;
+			face.assignAverageTo(faceCentre);
 			face.assignNormalTo(vertexNormals);
 			vertexNormals.multiply(-1).assignAverageTo(faceNormal);
 			faceDirection = faceNormal.getDirectionFromNormal();
