@@ -15,6 +15,7 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -114,7 +115,9 @@ public final class MeshRenderer {
 		IBakedModel modelIn = dispatcher.getBlockModel(state);
 		modelIn = optiFine.getModel(renderEnv, modelIn, state);
 		renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, state.hasProperty(BlockStateProperties.DISTANCE));
+		Material material = state.getMaterial();
+		boolean renderBothSides = material != Material.GLASS && material != Material.TOP_SNOW && !isSolidRender(state);
+		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
 	}
 
 	static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
