@@ -409,7 +409,9 @@ public final class NoCubesConfig {
 				NETHER_GOLD_ORE.defaultBlockState(),
 
 				INFESTED_STONE.defaultBlockState(),
-				BONE_BLOCK.defaultBlockState(),
+				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.X),
+				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.Y),
+				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.Z),
 
 				GRASS_PATH.defaultBlockState(),
 
@@ -449,8 +451,15 @@ public final class NoCubesConfig {
 
 				NETHERRACK.defaultBlockState(),
 				SOUL_SAND.defaultBlockState(),
+				SOUL_SOIL.defaultBlockState(),
+				BASALT.defaultBlockState(),
 				MAGMA_BLOCK.defaultBlockState(),
 				GLOWSTONE.defaultBlockState(),
+				NETHER_WART_BLOCK.defaultBlockState(),
+				CRIMSON_STEM.defaultBlockState(),
+				WARPED_NYLIUM.defaultBlockState(),
+				WARPED_WART_BLOCK.defaultBlockState(),
+				WARPED_STEM.defaultBlockState(),
 
 				END_STONE.defaultBlockState(),
 
