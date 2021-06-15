@@ -77,7 +77,7 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(BlockState state) {
 		SelfCheck.canBlockStateRender = true;
-		return (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state)) && !ModUtil.isPlant(state);
+		return !NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state);
 	}
 
 	/**
