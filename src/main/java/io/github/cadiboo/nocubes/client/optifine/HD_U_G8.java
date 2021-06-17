@@ -119,7 +119,7 @@ class HD_U_G8 implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos) {
+	public void preRenderQuad(Object renderEnv, BakedQuad quad, BlockState state, BlockPos pos) {
 		RenderEnv_reset(renderEnv, state, pos);
 	}
 
