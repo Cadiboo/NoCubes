@@ -120,7 +120,7 @@ public final class NoCubesConfig {
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 			betterGrassAndSnow = INSTANCE.betterGrassAndSnow.get();
 
-			if (oldRender != render || oldBetterGrassAndSnow != betterGrassAndSnow)
+			if (oldRender != render || (render && oldBetterGrassAndSnow != betterGrassAndSnow))
 				ClientUtil.reloadAllChunks(Minecraft.getInstance());
 
 			debugEnabled = INSTANCE.debugEnabled.get();

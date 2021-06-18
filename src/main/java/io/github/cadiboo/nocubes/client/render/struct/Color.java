@@ -20,7 +20,7 @@ public final /* inline record */ class Color {
 //		this.alpha = alpha;
 	}
 
-	public Color multiply(float shading) {
+	public Color multiplyUNSAFENEEDSVALHALLA(float shading) {
 		red *= shading;
 		green *= shading;
 		blue *= shading;
@@ -32,5 +32,13 @@ public final /* inline record */ class Color {
 		red = (color >> 16 & 0xFF) / 255.0F;
 		green = (color >> 8 & 0xFF) / 255.0F;
 		blue = (color >> 0 & 0xFF) / 255.0F;
+	}
+
+	public int packToARGB() {
+		return
+		((int) (alpha * 255.0F) & 0xFF) << 24 |
+		((int) (red * 255.0F) & 0xFF) << 16 |
+		((int) (green * 255.0F) & 0xFF) << 8 |
+		((int) (blue * 255.0F) & 0xFF) << 0;
 	}
 }

@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
@@ -18,27 +17,22 @@ import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.EmptyBlockReader;
-import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.model.data.IModelData;
 import net.optifine.render.RenderTypes;
 
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 import static net.minecraft.block.GrassBlock.SNOWY;
 
-// /tp @p 83.63 64.26 -112.34 -90.10 -6.33
 public final class MeshRenderer {
 
 	// From OptiFine's BlockModelRenderer
@@ -149,7 +143,7 @@ public final class MeshRenderer {
 
 	}
 
-	public static void renderArea(RendererDispatcher.ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, MeshGenerator generator, Area area) {
+	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, MeshGenerator generator, Area area) {
 		FaceInfo faceInfo = new FaceInfo();
 		MeshGenerator.translateToMeshStart(renderer.matrix.matrix, area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
@@ -172,7 +166,7 @@ public final class MeshRenderer {
 		ForgeHooksClient.setRenderLayer(null);
 	}
 
-	static void renderFaceWithConnectedTextures(RendererDispatcher.ChunkRenderInfo renderer, Area area, FaceInfo faceInfo, RenderableState renderState) {
+	static void renderFaceWithConnectedTextures(ChunkRenderInfo renderer, Area area, FaceInfo faceInfo, RenderableState renderState) {
 		BlockState state = renderState.state;
 		BlockPos worldPos = MUTABLE.get().set(renderState.relativePos()).move(area.start);
 
@@ -180,16 +174,19 @@ public final class MeshRenderer {
 		boolean renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
 
 		FaceLight light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, FACE_LIGHT.get());
-		float shade = renderer.world.getShade(faceInfo.approximateDirection, true);
+		float shade = renderer.getShade(faceInfo.approximateDirection);
 
-		renderer.forEachQuad(state, worldPos, faceInfo.approximateDirection, (renderEnv, layer, buffer, quad, emissive) -> {
-			Color color = renderer.getColor(quad, state, worldPos).multiply(shade);
-			Texture texture = Texture.forQuadRearranged(quad, faceInfo.approximateDirection);
-			renderQuad(buffer, renderer.matrix.matrix, faceInfo, color, texture, light, renderBothSides);
-		});
+		renderer.forEachQuad(
+			state, worldPos, faceInfo.approximateDirection,
+			(colorState, colorWorldPos, quad) -> renderer.getColor(quad, colorState, colorWorldPos, shade),
+			(layer, buffer, quad, color, emissive) -> {
+				Texture texture = Texture.forQuadRearranged(quad, faceInfo.approximateDirection);
+				renderQuad(buffer, renderer.matrix.matrix, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+			}
+		);
 	}
 
-	static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos worldPos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, MeshGenerator generator, Area area) {
+	static void renderBreakingTexture(BlockState state, BlockPos worldPos, MatrixStack matrix, IVertexBuilder buffer, MeshGenerator generator, Area area) {
 		MeshGenerator.translateToMeshStart(matrix, area.start, worldPos);
 		boolean stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
@@ -203,7 +200,7 @@ public final class MeshRenderer {
 		});
 	}
 
-	static void renderExtras(RendererDispatcher.ChunkRenderInfo renderer, Area area, RenderableState foundState, FaceInfo faceInfo) {
+	static void renderExtras(ChunkRenderInfo renderer, Area area, RenderableState foundState, FaceInfo faceInfo) {
 		if (faceInfo.approximateDirection != Direction.UP)
 			return;
 
@@ -236,18 +233,31 @@ public final class MeshRenderer {
 			FaceInfo grassTuft0 = GRASS_TUFT_0.get();
 			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
 			FaceLight light0 = renderer.light.get(area.start, grassTuft0, GRASS_TUFT_0_LIGHT.get());
+			float shade0 = renderer.getShade(grassTuft0.approximateDirection);
 
 			FaceInfo grassTuft1 = GRASS_TUFT_1.get();
 			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
 			FaceLight light1 = renderer.light.get(area.start, grassTuft1, GRASS_TUFT_1_LIGHT.get());
+			float shade1 = renderer.getShade(grassTuft1.approximateDirection);
 
 			MatrixStack matrix = renderer.matrix.matrix;
-			renderer.forEachQuad(grass, worldAbove, null, (renderEnv, layer, buffer, quad, emissive) -> {
-				Color color = isSnow ? Color.WHITE : renderer.getColor(quad, grass, worldAbove);
-				Texture uvs = Texture.forQuad(quad);
-				renderQuad(buffer, matrix, grassTuft0, color, uvs, emissive ? FaceLight.MAX_BRIGHTNESS : light0, renderBothSides);
-				renderQuad(buffer, matrix, grassTuft1, color, uvs, emissive ? FaceLight.MAX_BRIGHTNESS : light1, renderBothSides);
-			});
+			renderer.forEachQuad(
+				grass, worldAbove, null,
+				isSnow ? (state, worldPos, quad) -> Color.WHITE : (state, worldPos, quad) -> renderer.getColor(quad, grass, worldAbove, 1F),
+				(layer, buffer, quad, color, emissive) -> {
+					// This is super ugly because Color is mutable. Will be fixed by Valhalla (color will be an inline type)
+					int argbTEMP = color.packToARGB();
+
+					color.multiplyUNSAFENEEDSVALHALLA(shade0);
+					renderQuad(buffer, matrix, grassTuft0, color, Texture.forQuadRearranged(quad, grassTuft0.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light0, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+					color.multiplyUNSAFENEEDSVALHALLA(shade1);
+					renderQuad(buffer, matrix, grassTuft1, color, Texture.forQuadRearranged(quad, grassTuft1.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light1, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+				}
+			);
 		}
 
 	}
@@ -257,30 +267,6 @@ public final class MeshRenderer {
 		face.v1.y += yExt;
 		face.v2.y += yExt;
 		face.add(xOff, 0, zOff);
-	}
-
-	static void renderFace(
-		RendererDispatcher.ChunkRenderInfo renderer,
-		BlockState state, BlockPos worldPos,
-		FaceInfo faceInfo,
-		IVertexBuilder buffer, MatrixStack matrix,
-		float shade, FaceLight light,
-		Object renderEnv, List<BakedQuad> quads, boolean doubleSided
-	) {
-		OptiFineProxy optiFine = renderer.optiFine;
-		for (int i = 0, l = quads.size(); i < l; ++i) {
-			BakedQuad quad = quads.get(i);
-			Color color = renderer.getColor(quad, state, worldPos).multiply(shade);
-
-			BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
-			if (emissive != null) {
-				optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
-				renderQuad(buffer, matrix, faceInfo, color, Texture.forQuadRearranged(quad, faceInfo.approximateDirection), FaceLight.MAX_BRIGHTNESS, doubleSided);
-			}
-			if (optiFine != null)
-				optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
-			renderQuad(buffer, matrix, faceInfo, color, Texture.forQuadRearranged(quad, faceInfo.approximateDirection), light, doubleSided);
-		}
 	}
 
 	private static void renderQuad(

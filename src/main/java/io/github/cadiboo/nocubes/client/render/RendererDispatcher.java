@@ -122,14 +122,21 @@ public final class RendererDispatcher {
 			);
 		}
 
-		public Color getColor(BakedQuad quad, BlockState state, BlockPos pos) {
-			if (!quad.isTinted())
-				return Color.WHITE;
+		public Color getColor(BakedQuad quad, BlockState state, BlockPos pos, float shade) {
 			Color color = Color.VALHALLA_SOON_PLS.get();
+			if (!quad.isTinted()) {
+				if (shade == 1F)
+					return Color.WHITE;
+				color.red = 1F;
+				color.green = 1F;
+				color.blue = 1F;
+//				color.alpha = 1.0F;
+				return color;
+			}
 			int packedColor = blockColors.getColor(state, world, pos, quad.getTintIndex());
-			color.red = (float) (packedColor >> 16 & 255) / 255.0F;
-			color.green = (float) (packedColor >> 8 & 255) / 255.0F;
-			color.blue = (float) (packedColor & 255) / 255.0F;
+			color.red = (float) (packedColor >> 16 & 255) / 255.0F * shade;
+			color.green = (float) (packedColor >> 8 & 255) / 255.0F * shade;
+			color.blue = (float) (packedColor & 255) / 255.0F * shade;
 //			color.alpha = 1.0F;
 			return color;
 		}
@@ -145,14 +152,21 @@ public final class RendererDispatcher {
 			);
 		}
 
-		interface QuadConsumer {
-			void accept(Object renderEnv, RenderType layer, IVertexBuilder buffer, BakedQuad quad, boolean emissive);
+		public float getShade(Direction direction) {
+			return world.getShade(direction, true);
 		}
 
-		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, QuadConsumer action) {
+		interface ColorSupplier {
+			Color apply(BlockState state, BlockPos worldPos, BakedQuad quad);
+		}
+
+		interface QuadConsumer {
+			void accept(RenderType layer, IVertexBuilder buffer, BakedQuad quad, Color color, boolean emissive);
+		}
+
+		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
 			long rand = optiFine.getSeed(state.getSeed(worldPos));
 			IModelData modelData = rebuildTask.getModelData(worldPos);
-
 			renderInLayers(
 				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
@@ -163,7 +177,7 @@ public final class RendererDispatcher {
 					random.setSeed(rand);
 					List<BakedQuad> nullQuads = model.getQuads(state, null, random, modelData);
 					nullQuads = BlockModelCustomizer.getRenderQuads(nullQuads, world, state, worldPos, null, layer, rand, (RenderEnv) renderEnv);
-					boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, layer, buffer, renderEnv, action);
+					boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
 					random.setSeed(rand);
 					Direction renderDir;
@@ -182,25 +196,25 @@ public final class RendererDispatcher {
 						}
 					}
 					dirQuads = BlockModelCustomizer.getRenderQuads(dirQuads, world, state, worldPos, renderDir, layer, rand, (RenderEnv) renderEnv);
-					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, layer, buffer, renderEnv, action);
+					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
 					for (int i = 0; i < OVERLAY_LAYERS.length; i++) {
 						RenderType overlayLayer = OVERLAY_LAYERS[i];
 						ListQuadsOverlay listQuadsOverlay = ((RenderEnv) renderEnv).getListQuadsOverlay(overlayLayer);
 						int size = listQuadsOverlay.size();
-						if (size == 0)
+						if (size <= 0)
 							continue;
-						BufferBuilder overlayBuffer = getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
+						BufferBuilder overlayBuffer = getAndStartBuffer(chunkRender, compiledChunk, buffers, overlayLayer);
 						for (int j = 0; j < size; ++j) {
 							List<BakedQuad> quads = listQuadsOverlay.getListQuadsSingle(listQuadsOverlay.getQuad(j));
-							anyQuadsFound |= forEachQuad(quads, state, worldPos, overlayLayer, overlayBuffer, renderEnv, action);
+							anyQuadsFound |= forEachQuad(quads, listQuadsOverlay.getBlockState(j), worldPos, colorSupplier, overlayLayer, overlayBuffer, renderEnv, action);
 							((RenderEnv) renderEnv).reset(state, worldPos);
 						}
 						listQuadsOverlay.clear();
 					}
 
 					if (!anyQuadsFound)
-						forEachQuad(getMissingQuads(), state, worldPos, layer, buffer, renderEnv, action);
+						forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 					return true;
 				},
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
@@ -208,56 +222,21 @@ public final class RendererDispatcher {
 
 		}
 
-		private boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
+		private boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
 			int i = 0;
 			for (; i < quads.size(); i++) {
 				BakedQuad quad = quads.get(i);
+				Color color = colorSupplier.apply(state, worldPos, quad);
 				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
 				if (emissive != null) {
 					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
-					action.accept(renderEnv, layer, buffer, quad, true);
+					action.accept(layer, buffer, quad, color, true);
 				}
 				if (optiFine != null)
 					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
-				action.accept(renderEnv, layer, buffer, quad, false);
+				action.accept(layer, buffer, quad, color, false);
 			}
 			return i > 0;
-		}
-
-		public List<BakedQuad> findQuadsAndStoreOverlays(Object renderEnv, BlockState state, BlockPos worldPos, RenderType layer, Direction faceDirection, long rand, IModelData modelData) {
-			IBakedModel model = dispatcher.getBlockModel(state);
-			model = optiFine.getModel(renderEnv, model, state);
-
-			List<BakedQuad> quads = QUADS.get();
-			quads.clear();
-
-			random.setSeed(rand);
-			List<BakedQuad> nullQuads = model.getQuads(state, null, random, modelData);
-			nullQuads = BlockModelCustomizer.getRenderQuads(nullQuads, world, state, worldPos, null, layer, rand, (RenderEnv) renderEnv);
-			quads.addAll(nullQuads);
-
-			Direction renderDir;
-			random.setSeed(rand);
-			List<BakedQuad> dirQuads;
-			if (!state.hasProperty(SNOWY))
-				dirQuads = model.getQuads(state, renderDir = faceDirection, random, modelData);
-			else {
-				// Make grass/snow/mycilium side faces be rendered with their top texture
-				// Equivalent to OptiFine's Better Grass feature
-				if (!state.getValue(SNOWY))
-					dirQuads = model.getQuads(state, (renderDir = NoCubesConfig.Client.betterGrassAndSnow ? Direction.UP : faceDirection), random, modelData);
-				else {
-					// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-					BlockState snow = Blocks.SNOW.defaultBlockState();
-					dirQuads = Minecraft.getInstance().getBlockRenderer().getBlockModel(snow).getQuads(snow, renderDir = null, random, modelData);
-				}
-			}
-			dirQuads = BlockModelCustomizer.getRenderQuads(dirQuads, world, state, worldPos, renderDir, layer, rand, (RenderEnv) renderEnv);
-			quads.addAll(dirQuads);
-
-			if (quads.isEmpty())
-				quads = getMissingQuads();
-			return quads;
 		}
 
 		private List<BakedQuad> getMissingQuads() {
@@ -299,7 +278,7 @@ public final class RendererDispatcher {
 	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
-			MeshRenderer.renderBreakingTexture(dispatcher, state, pos, world, matrix, buffer, modelData, generator, area);
+			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, generator, area);
 		}
 	}
 
