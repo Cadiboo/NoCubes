@@ -159,7 +159,7 @@ public final class MeshRenderer {
 				renderFaceWithConnectedTextures(renderer, area, faceInfo, renderState);
 
 				// Draw grass tufts, plants etc.
-				renderExtras(renderer, area, foundState, faceInfo);
+				renderExtras(renderer, area, foundState, renderState, faceInfo);
 				return true;
 			});
 		});
@@ -200,7 +200,7 @@ public final class MeshRenderer {
 		});
 	}
 
-	static void renderExtras(ChunkRenderInfo renderer, Area area, RenderableState foundState, FaceInfo faceInfo) {
+	static void renderExtras(ChunkRenderInfo renderer, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo) {
 		if (faceInfo.approximateDirection != Direction.UP)
 			return;
 
@@ -227,7 +227,7 @@ public final class MeshRenderer {
 			float xOff = (float) offset.x;
 			float zOff = (float) offset.z;
 			float yExt = 0.4F;
-			boolean isSnow = foundState.state.getValue(SNOWY);
+			boolean snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
 			Face face = faceInfo.face;
 
 			FaceInfo grassTuft0 = GRASS_TUFT_0.get();
@@ -243,7 +243,7 @@ public final class MeshRenderer {
 			MatrixStack matrix = renderer.matrix.matrix;
 			renderer.forEachQuad(
 				grass, worldAbove, null,
-				isSnow ? (state, worldPos, quad) -> Color.WHITE : (state, worldPos, quad) -> renderer.getColor(quad, grass, worldAbove, 1F),
+				snowy ? (state, worldPos, quad) -> Color.WHITE : (state, worldPos, quad) -> renderer.getColor(quad, grass, worldAbove, 1F),
 				(layer, buffer, quad, color, emissive) -> {
 					// This is super ugly because Color is mutable. Will be fixed by Valhalla (color will be an inline type)
 					int argbTEMP = color.packToARGB();

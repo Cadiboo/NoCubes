@@ -127,9 +127,9 @@ public final class RendererDispatcher {
 			if (!quad.isTinted()) {
 				if (shade == 1F)
 					return Color.WHITE;
-				color.red = 1F;
-				color.green = 1F;
-				color.blue = 1F;
+				color.red = shade;
+				color.green = shade;
+				color.blue = shade;
 //				color.alpha = 1.0F;
 				return color;
 			}
