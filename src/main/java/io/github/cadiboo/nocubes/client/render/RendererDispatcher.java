@@ -15,7 +15,6 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
@@ -35,8 +34,6 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.renderFaceForLayer;
 
 /**
  * @author Cadiboo
@@ -108,46 +105,21 @@ public final class RendererDispatcher {
 			Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, generator);
 			FluentMatrixStack ignored = matrix.push()
 		) {
-			FaceInfo renderInfo = new FaceInfo();
-			MeshGenerator.translateToMeshStart(matrix.matrix, area.start, chunkPos);
-			// The below code should be moved to MeshRenderer
-			MeshRenderer.runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
-				generator.generate(area, isSmoothable, (relativePos, face) -> {
-//					if (leavesBounds(chunkPos, ModUtil.CHUNK_SIZE, area.start, face))
-//						return true;
-
-					renderInfo.setup(face, area.start);
-					BlockState state = MeshRenderer.TextureLocator.getTexturePosAndState(relativePos, area, isSmoothable, renderInfo.faceDirection);
-					BlockPos.Mutable worldPos = relativePos.move(area.start);
-
-					if (state.getRenderShape() == BlockRenderType.INVISIBLE)
-						return true;
-					long rand = optiFine.getSeed(state.getSeed(worldPos));
-					IModelData modelData = rebuildTask.getModelData(worldPos);
-					renderInLayers(
-						chunkRender, compiledChunk, buffers, optiFine,
-						layer -> RenderTypeLookup.canRenderInLayer(state, layer),
-						(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-						(buffer, renderEnv) -> {
-							renderFaceForLayer(world, random, dispatcher, matrix, light, optiFine, renderInfo, state, worldPos, rand, modelData, buffer, renderEnv);
-							return true;
-						},
-						(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
-					);
-					return true;
-				});
-			});
-			ForgeHooksClient.setRenderLayer(null);
+			MeshRenderer.renderArea(rebuildTask, chunkRender, compiledChunk, buffers, chunkPos, world, random, dispatcher, matrix, light, isSmoothableIn, optiFine, generator, area);
 		}
 		if (meshProfiler.recordElapsedNanos(start))
 			LogManager.getLogger("Render chunk mesh").debug("Average {}ms over the past {} chunks", meshProfiler.average() / 1000_000F, meshProfiler.size());
 	}
 
-	private static void renderInLayers(
+	interface RenderInLayer {
+		boolean render(RenderType layer, BufferBuilder buffer, Object renderEnv);
+	}
+
+	public static void renderInLayers(
 		ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, OptiFineProxy optiFine,
 		Predicate<RenderType> predicate,
 		BiFunction<RenderType, BufferBuilder, Object> preRender,
-		BiFunction<BufferBuilder, Object, Boolean> render,
+		RenderInLayer render,
 		BiConsumer<BufferBuilder, Object> postRender
 	) {
 		List<RenderType> chunkBufferLayers = RenderType.chunkBufferLayers();
@@ -158,7 +130,7 @@ public final class RendererDispatcher {
 
 			BufferBuilder buffer = getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
 			Object renderEnv = preRender.apply(layer, buffer);
-			boolean used = render.apply(buffer, renderEnv);
+			boolean used = render.render(layer, buffer, renderEnv);
 
 			postRender.accept(buffer, renderEnv);
 			if (used)

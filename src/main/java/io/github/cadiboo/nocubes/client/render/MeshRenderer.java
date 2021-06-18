@@ -11,23 +11,30 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.EmptyBlockReader;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
+import net.optifine.model.BlockModelCustomizer;
+import net.optifine.model.ListQuadsOverlay;
+import net.optifine.render.RenderEnv;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,6 +45,7 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 
+// /tp @p 83.63 64.26 -112.34 -90.10 -6.33
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
@@ -47,6 +55,35 @@ public final class MeshRenderer {
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
 		action.accept(state -> isSmoothable.test(state) && isSolidRender(state));
 		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
+	}
+
+	public static void renderArea(ChunkRenderDispatcher.ChunkRender.RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, Predicate<BlockState> isSmoothableIn, OptiFineProxy optiFine, MeshGenerator generator, Area area) {
+		FaceInfo renderInfo = new FaceInfo();
+		MeshGenerator.translateToMeshStart(matrix.matrix, area.start, chunkPos);
+		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
+			generator.generate(area, isSmoothable, (relativePos, face) -> {
+				renderInfo.setup(face, area.start);
+				BlockState state = TextureLocator.getTexturePosAndState(area, isSmoothable, renderInfo, relativePos);
+				BlockPos.Mutable worldPos = relativePos.move(area.start);
+
+				if (state.getRenderShape() == BlockRenderType.INVISIBLE)
+					return true;
+				long rand = optiFine.getSeed(state.getSeed(worldPos));
+				IModelData modelData = rebuildTask.getModelData(worldPos);
+				RendererDispatcher.renderInLayers(
+					chunkRender, compiledChunk, buffers, optiFine,
+					layer -> true,//RenderTypeLookup.canRenderInLayer(state, layer),
+					(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
+					(layer, buffer, renderEnv) -> {
+						renderFaceForLayer(world, random, dispatcher, matrix, light, optiFine, renderInfo, state, worldPos, rand, modelData, layer, buffer, renderEnv);
+						return true;
+					},
+					(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
+				);
+				return true;
+			});
+		});
+		ForgeHooksClient.setRenderLayer(null);
 	}
 
 	static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, MeshGenerator generator, Area area) {
@@ -67,57 +104,50 @@ public final class MeshRenderer {
 		});
 	}
 
-	static boolean leavesBounds(BlockPos boundsStart, BlockPos boundsSize, BlockPos worldPos, Face face) {
-		double x = worldPos.getX() - boundsStart.getX();
-		double y = worldPos.getY() - boundsStart.getY();
-		double z = worldPos.getZ() - boundsStart.getZ();
+	static void renderFaceForLayer(IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, OptiFineProxy optiFine, FaceInfo renderInfo, BlockState state, BlockPos.Mutable worldPos, long rand, IModelData modelData, RenderType layer, BufferBuilder buffer, Object renderEnv) {
+		{
+			IBakedModel modelIn = dispatcher.getBlockModel(state);
+			modelIn = optiFine.getModel(renderEnv, modelIn, state);
+			renderInfo.findAndAssignQuads(modelIn, rand, world, state, worldPos, random, modelData, layer, renderEnv);
+			Material material = state.getMaterial();
+			boolean renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !isSolidRender(state);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+		}
 
-		Vec v0 = face.v0;
-		Vec v1 = face.v1;
-		Vec v2 = face.v2;
-		Vec v3 = face.v3;
+		// Render grass tufts
+		if ((layer == RenderType.cutout() || layer == RenderType.cutoutMipped()) && renderInfo.faceDirection == Direction.UP && state.hasProperty(GrassBlock.SNOWY) && !ModUtil.isPlant(world.getBlockState(worldPos.above()))) {
+			state = Blocks.GRASS.defaultBlockState();
+//			worldPos = worldPos.above().mutable();
+			IBakedModel modelIn = dispatcher.getBlockModel(state);
+			modelIn = optiFine.getModel(renderEnv, modelIn, state);
+			renderInfo.findAndAssignQuads(modelIn, rand, world, state, worldPos, random, modelData, layer, renderEnv);
+			boolean renderBothSides = true;
 
-		double v0x = x + v0.x;
-		double v0y = y + v0.y;
-		double v0z = z + v0.z;
-		double v1x = x + v1.x;
-		double v1y = y + v1.y;
-		double v1z = z + v1.z;
-		double v2x = x + v2.x;
-		double v2y = y + v2.y;
-		double v2z = z + v2.z;
-		double v3x = x + v3.x;
-		double v3y = y + v3.y;
-		double v3z = z + v3.z;
+			Vector3d offset = state.getOffset(world, worldPos);
+			Face face = renderInfo.face;
+			face.add((float) offset.x, 0, (float) offset.z);
+			// Disgustingly store the face's values in its normals to avoid allocating an object
+			// Hopefully this doesn't come back to bite me
+			Face original = renderInfo.vertexNormals;
+			original.setValuesFrom(face);
+			float yExt = 0.4F;
 
-		final float epsilon = 3f;
-		float minX = -epsilon;
-		if (v0x < minX && v1x < minX && v2x < minX && v3x < minX)
-			return true;
-		float minY = -epsilon;
-		if (v0y < minY && v1y < minY && v2y < minY && v3y < minY)
-			return true;
-		float minZ = -epsilon;
-		if (v0z < minZ && v1z < minZ && v2z < minZ && v3z < minZ)
-			return true;
+			face.v0.set(original.v0);
+			face.v1.set(original.v0).add(0, yExt, 0);
+			face.v2.set(original.v2).add(0, yExt, 0);
+			face.v3.set(original.v2);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
 
-		float maxX = boundsSize.getX() + epsilon;
-		if (v0x >= maxX && v1x >= maxX && v2x >= maxX && v3x >= maxX)
-			return true;
-		float maxY = boundsSize.getY() + epsilon;
-		if (v0y >= maxY && v1y >= maxY && v2y >= maxY && v3y >= maxY)
-			return true;
-		float maxZ = boundsSize.getZ() + epsilon;
-		return v0z >= maxZ && v1z >= maxZ && v2z >= maxZ && v3z >= maxZ;
-	}
+			face.v0.set(original.v1);
+			face.v1.set(original.v1).add(0, yExt, 0);
+			face.v2.set(original.v3).add(0, yExt, 0);
+			face.v3.set(original.v3);
+			renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
 
-	static void renderFaceForLayer(IBlockDisplayReader world, Random random, BlockRendererDispatcher dispatcher, FluentMatrixStack matrix, LightCache light, OptiFineProxy optiFine, FaceInfo renderInfo, BlockState state, BlockPos.Mutable worldPos, long rand, IModelData modelData, BufferBuilder buffer, Object renderEnv) {
-		IBakedModel modelIn = dispatcher.getBlockModel(state);
-		modelIn = optiFine.getModel(renderEnv, modelIn, state);
-		renderInfo.findAndAssignQuads(modelIn, rand, state, random, modelData);
-		Material material = state.getMaterial();
-		boolean renderBothSides = material != Material.GLASS && material != Material.TOP_SNOW && !isSolidRender(state);
-		renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
+			face.setValuesFrom(original);
+			face.subtract((float) offset.x, 0, (float) offset.z);
+		}
+
 	}
 
 	static void renderFace(FaceInfo renderInfo, IVertexBuilder buffer, MatrixStack matrix, IBlockDisplayReader world, BlockState state, BlockPos pos, @Nullable LightCache light, @Nullable OptiFineProxy optiFine, @Nullable Object renderEnv, boolean doubleSided) {
@@ -170,35 +200,43 @@ public final class MeshRenderer {
 			faceDirection = faceNormal.getDirectionFromNormal();
 		}
 
-		public void findAndAssignQuads(IBakedModel model, long rand, BlockState state, Random random, IModelData modelData) {
+		public void findAndAssignQuads(IBakedModel model, long rand, IBlockDisplayReader world, BlockState state, BlockPos pos, Random random, IModelData modelData, RenderType layer, Object renderEnv) {
 			quads.clear();
 
 			random.setSeed(rand);
 			List<BakedQuad> nullQuads = model.getQuads(state, null, random, modelData);
+			nullQuads = BlockModelCustomizer.getRenderQuads(nullQuads, world, state, pos, null, layer, rand, (RenderEnv) renderEnv);
+			quads.addAll(nullQuads);
 
+			Direction direction;
 			random.setSeed(rand);
 			List<BakedQuad> dirQuads;
 			if (!state.hasProperty(BlockStateProperties.SNOWY))
-				dirQuads = model.getQuads(state, faceDirection, random, modelData);
+				dirQuads = model.getQuads(state, direction = faceDirection, random, modelData);
 			else {
 				// Make grass/snow/mycilium side faces be rendered with their top texture
 				// Equivalent to OptiFine's Better Grass feature
 				if (!state.getValue(BlockStateProperties.SNOWY))
-					dirQuads = model.getQuads(state, NoCubesConfig.Client.betterGrassAndSnow ? Direction.UP : faceDirection, random, modelData);
+					dirQuads = model.getQuads(state, (direction = NoCubesConfig.Client.betterGrassAndSnow ? Direction.UP : faceDirection), random, modelData);
 				else {
 					// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 					BlockState snow = Blocks.SNOW.defaultBlockState();
-					dirQuads = Minecraft.getInstance().getBlockRenderer().getBlockModel(snow).getQuads(snow, null, random, modelData);
+					dirQuads = Minecraft.getInstance().getBlockRenderer().getBlockModel(snow).getQuads(snow, direction = null, random, modelData);
 				}
 			}
+			dirQuads = BlockModelCustomizer.getRenderQuads(dirQuads, world, state, pos, direction, layer, rand, (RenderEnv) renderEnv);
+			quads.addAll(dirQuads);
 
-			if (dirQuads.isEmpty() && nullQuads.isEmpty()) {
-				// dirQuads is empty for the Barrier block
-				assignMissingQuads(state, random, modelData);
-			} else {
-				quads.addAll(dirQuads);
-				quads.addAll(nullQuads);
+			for (RenderType layer1 : RenderType.CHUNK_RENDER_TYPES) {
+				ListQuadsOverlay listQuadsOverlay = ((RenderEnv) renderEnv).getListQuadsOverlay(layer1);
+				int size = listQuadsOverlay.size();
+				for (int i = 0; i < size; ++i)
+					quads.add(listQuadsOverlay.getQuad(i));
+				listQuadsOverlay.clear();
 			}
+
+			if (quads.isEmpty())
+				assignMissingQuads(state, random, modelData);
 		}
 
 		public void assignMissingQuads(BlockState state, Random random, IModelData modelData) {
@@ -263,7 +301,7 @@ public final class MeshRenderer {
 			new BlockPos(-1, -1, -1),
 		};
 
-		private static @Nullable BlockState tryFindTexturePosAndState(
+		private static @Nullable BlockState tryFindNearbyPosAndState(
 			BlockState state,
 			int relativeX, int relativeY, int relativeZ,
 			BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable
@@ -281,37 +319,39 @@ public final class MeshRenderer {
 			return null;
 		}
 
-		public static BlockState getTexturePosAndState(BlockPos.Mutable relativePos, Area area, Predicate<BlockState> isSmoothable, Direction direction) {
-			BlockState state = area.getAndCacheBlocks()[area.index(relativePos)];
-			if (!isSmoothable.test(state)) {
-				// Vertices can generate at positions different to the position of the block they are for
-				// This occurs mostly for positions below, west of and north of the position they are for
-				// Search the opposite of those directions for the actual block
-				// We could also attempt to get the starting position from the vertex positions
-				state = area.getBlockState(relativePos.move(direction.getOpposite()));
-				if (!isSmoothable.test(state))
-					// Move it back to where it was, we're not using the new pos
-					relativePos.move(direction);
-			}
+		public static BlockState getTexturePosAndState(Area area, Predicate<BlockState> isSmoothable, FaceInfo faceInfo, BlockPos.Mutable relativePos) {
+			Vec texturePos = calcTexturePos(faceInfo);
+			relativePos.set(texturePos.x, texturePos.y, texturePos.z);
+			BlockState state = area.getBlockState(relativePos);
+
+			// Has always been true in testing so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
+			// This HAS failed due to a race condition with the mesh being generated and then this getting called after
+			// the state has been toggled to being un-smoothable with the keybind (so the state WAS smoothable).
+			assert isSmoothable.test(state);
+
+			boolean tryFindSnow = faceInfo.faceDirection == Direction.UP || NoCubesConfig.Client.betterGrassAndSnow;
+			if (!tryFindSnow)
+				return state;
 
 			int x = relativePos.getX();
 			int y = relativePos.getY();
 			int z = relativePos.getZ();
-			BlockState textureState = null;
+			BlockState overrideState = tryFindNearbyPosAndState(state, x, y, z, relativePos, area, TextureLocator::isSnow);
+			if (overrideState != null)
+				return overrideState;
 
-			boolean tryFindSnow = direction == Direction.UP || NoCubesConfig.Client.betterGrassAndSnow;
-			if (tryFindSnow)
-				textureState = tryFindTexturePosAndState(state, x, y, z, relativePos, area, TextureLocator::isSnow);
-			if (textureState != null)
-				return textureState;
-
-			textureState = tryFindTexturePosAndState(state, x, y, z, relativePos, area, isSmoothable);
-			if (textureState != null)
-				return textureState;
-
-			// We couldn't find a smoothable state, give up and return a dummy
+			// This will have been moved around by tryFindNearbyPosAndState, reset it
 			relativePos.set(x, y, z);
-			return Blocks.SCAFFOLDING.defaultBlockState();
+			return state;
+		}
+
+		public static Vec calcTexturePos(FaceInfo faceInfo) {
+			// TODO: Remove allocations
+			Vec pos = new Vec();
+			faceInfo.face.assignAverageTo(pos);
+			Vec offset = new Vec(faceInfo.faceNormal).normalise().multiply(0.5F);
+			pos.subtract(offset);
+			return pos;
 		}
 
 		private static boolean isSnow(BlockState state) {

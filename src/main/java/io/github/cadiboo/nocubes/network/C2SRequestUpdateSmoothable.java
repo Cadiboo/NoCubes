@@ -48,7 +48,7 @@ public class C2SRequestUpdateSmoothable {
 			boolean newValue = msg.newValue;
 			// Guards against useless config reload and/or someone spamming these packets to the server and the server spamming all clients
 			if (NoCubes.smoothableHandler.isSmoothable(state) != newValue) {
-				NoCubesConfig.Server.updateSmoothable(newValue, state);
+				ctx.enqueueWork(() -> NoCubesConfig.Server.updateSmoothable(newValue, state));
 				// Send back update to all clients
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(state, newValue));
 			} else

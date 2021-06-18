@@ -226,13 +226,14 @@ public final class OverlayRenderer {
 			Vec centre = new Vec();
 			Vec mutable = new Vec();
 
-			Color faceColor = new Color(0F, 1F, 1F, 1F);
-			Color normalColor = new Color(0F, 0F, 1F, 0.5F);
-			Color averageNormalColor = new Color(1F, 0F, 0F, 1F);
+			Color faceColor = new Color(0F, 1F, 1F, 0.4F);
+			Color normalColor = new Color(0F, 0F, 1F, 0.2F);
+			Color averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
 			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
 			Color lightColor = new Color(1F, 1F, 0F, 1F);
 
-			generator.generate(area, NoCubes.smoothableHandler::isSmoothable, (pos, face) -> {
+			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+			generator.generate(area, isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
 				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);
@@ -254,17 +255,23 @@ public final class OverlayRenderer {
 				drawLinePosColorFromAdd(area.start, face.v2, mutable.set(vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
 				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
-				// Draw light pos
-				mutable.set(0, 0, 0);
-				BlockPos faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
-				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
-					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
-					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (light.get(faceRelativeToWorldPos, face.v2, faceNormal) == 0)
-					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
-				if (light.get(faceRelativeToWorldPos, face.v3, faceNormal) == 0)
-					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
+				// Draw texture pos
+				mutable.set(0.5F, 0.5F, 0.5F);
+				MeshRenderer.TextureLocator.getTexturePosAndState(area, isSmoothable, faceInfo, pos);
+				pos.move(area.start);
+				drawLinePosColorFromTo(area.start, centre, pos, mutable, lightColor, buffer, matrix, camera);
+
+//				// Draw light pos
+//				mutable.set(0, 0, 0);
+//				BlockPos faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
+//				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
+//					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
+//				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
+//					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
+//				if (light.get(faceRelativeToWorldPos, face.v2, faceNormal) == 0)
+//					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
+//				if (light.get(faceRelativeToWorldPos, face.v3, faceNormal) == 0)
+//					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
 
 				return true;
 			});
