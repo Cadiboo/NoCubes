@@ -71,13 +71,15 @@ public final class Hooks {
 	 * Called from: {@link RebuildTask#compile} right before {@link BlockState#getRenderShape()} is called
 	 * <p>
 	 * Hooking this disables vanilla rendering for smoothable BlockStates.
+	 * Also disables vanilla's rendering for plans (grass, flowers) so that we can make
+	 * them render at the proper height in the smooth ground
 	 *
 	 * @return If the state can render
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(BlockState state) {
 		SelfCheck.canBlockStateRender = true;
-		return !NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state);
+		return !NoCubesConfig.Client.render || (!NoCubes.smoothableHandler.isSmoothable(state) && !ModUtil.isPlant(state));
 	}
 
 	/**

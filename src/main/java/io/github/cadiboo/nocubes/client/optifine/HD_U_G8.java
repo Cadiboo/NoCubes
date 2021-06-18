@@ -112,9 +112,8 @@ class HD_U_G8 implements OptiFineProxy {
 		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, compiledChunk);
 	}
 
-	@Nullable
 	@Override
-	public BakedQuad getQuadEmissive(BakedQuad quad) {
+	public @Nullable BakedQuad getQuadEmissive(BakedQuad quad) {
 		return BakedQuad_getQuadEmissive(quad);
 	}
 
@@ -217,8 +216,7 @@ class HD_U_G8 implements OptiFineProxy {
 			}
 		}
 
-		@Nullable
-		static BakedQuad BakedQuad_getQuadEmissive(BakedQuad quad) {
+		static @Nullable BakedQuad BakedQuad_getQuadEmissive(BakedQuad quad) {
 			try {
 				return (BakedQuad) getQuadEmissive.invokeExact(quad);
 			} catch (Throwable t) {

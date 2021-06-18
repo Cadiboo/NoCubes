@@ -22,8 +22,7 @@ public interface Reflector {
 		throw new NullPointerException(String.format("Could not find field '%s' on class '%s'.", name, clazz));
 	}
 
-	@Nullable
-	static MethodHandle tryGetMethod(String clazz, String name, Object... paramClasses) {
+	@Nullable static MethodHandle tryGetMethod(String clazz, String name, Object... paramClasses) {
 		try {
 			MethodHandles.Lookup lookup = MethodHandles.publicLookup();
 			Class<?> klass = Class.forName(clazz);
@@ -40,8 +39,7 @@ public interface Reflector {
 		}
 	}
 
-	@Nullable
-	static Field tryGetField(String clazz, String name) {
+	@Nullable static Field tryGetField(String clazz, String name) {
 		try {
 			Class<?> klass = Class.forName(clazz);
 			Field field = klass.getDeclaredField(name);

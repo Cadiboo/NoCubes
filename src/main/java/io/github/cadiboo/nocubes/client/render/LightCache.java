@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.render.struct.PackedLight;
+import io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
+import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
@@ -56,16 +57,20 @@ public final class LightCache implements AutoCloseable {
 		return mutablePos.set(relativeTo).move(x, y, z);
 	}
 
-	public PackedLight get(BlockPos relativeTo, Face face, Vec normal, PackedLight light) {
-		light.v0 = get(relativeTo, face.v0, normal);
-		light.v1 = get(relativeTo, face.v1, normal);
-		light.v2 = get(relativeTo, face.v2, normal);
-		light.v3 = get(relativeTo, face.v3, normal);
-		return light;
+	public FaceLight get(BlockPos relativeTo, FaceInfo faceInfo, FaceLight faceLight) {
+		return get(relativeTo, faceInfo.face, faceInfo.normal, faceLight);
 	}
 
-	public int get(BlockPos relativeTo, Vec vec, Vec normal) {
-		BlockPos.Mutable lightWorldPos = lightWorldPos(relativeTo, vec, normal);
+	public FaceLight get(BlockPos relativeTo, Face face, Vec faceNormal, FaceLight faceLight) {
+		faceLight.v0 = get(relativeTo, face.v0, faceNormal);
+		faceLight.v1 = get(relativeTo, face.v1, faceNormal);
+		faceLight.v2 = get(relativeTo, face.v2, faceNormal);
+		faceLight.v3 = get(relativeTo, face.v3, faceNormal);
+		return faceLight;
+	}
+
+	public int get(BlockPos relativeTo, Vec vec, Vec faceNormal) {
+		BlockPos.Mutable lightWorldPos = lightWorldPos(relativeTo, vec, faceNormal);
 		int light = get(lightWorldPos);
 		if (light == 0)
 			light = get(lightWorldPos.move(0, -1, 0));
@@ -86,7 +91,7 @@ public final class LightCache implements AutoCloseable {
 //		int z = (int) Math.ceil(vz);
 
 //		BlockPos.Mutable pos = mutablePos;
-//		locateWorldLightPosFor(relativeTo, vec, normal, pos);
+//		locateWorldLightPosFor(relativeTo, vec, faceNormal, pos);
 //		int x = pos.getX();
 //		int y = pos.getY();
 //		int z = pos.getZ();
@@ -146,9 +151,9 @@ public final class LightCache implements AutoCloseable {
 ////		float lerpY = vec.y - (y - start.getY());
 ////		float lerpZ = vec.z - (z - start.getZ());
 //
-//		float lerpX = normal.x;// - (x - start.getX());
-//		float lerpY = normal.y;// - (y - start.getY());
-//		float lerpZ = normal.z;// - (z - start.getZ());
+//		float lerpX = faceNormal.x;// - (x - start.getX());
+//		float lerpY = faceNormal.y;// - (y - start.getY());
+//		float lerpZ = faceNormal.z;// - (z - start.getZ());
 //
 //		int block = triLerp(b000, b001, b010, b011, b100, b101, b110, b111, lerpZ, lerpY, lerpX);
 //		int sky = triLerp(s000, s001, s010, s011, s100, s101, s110, s111, lerpZ, lerpY, lerpX);

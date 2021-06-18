@@ -17,7 +17,6 @@ import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
@@ -223,7 +222,6 @@ public final class OverlayRenderer {
 			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize)
 		) {
 			FaceInfo faceInfo = new FaceInfo();
-			Vec centre = new Vec();
 			Vec mutable = new Vec();
 
 			Color faceColor = new Color(0F, 1F, 1F, 0.4F);
@@ -238,28 +236,24 @@ public final class OverlayRenderer {
 					return true;
 				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);
 
-				faceInfo.setup(face, area.start);
-				Face vertexNormals = faceInfo.vertexNormals;
-				Vec faceNormal = faceInfo.faceNormal;
-				Direction faceDirection = faceInfo.faceDirection;
-				face.assignAverageTo(centre);
+				faceInfo.setup(face);
 
 				// Draw face normal vec + resulting direction
 				final float dirMul = 0.2F;
-				drawLinePosColorFromAdd(area.start, centre, mutable.set(faceNormal).multiply(dirMul), averageNormalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, centre, mutable.set(faceDirection.getStepX(), faceDirection.getStepY(), faceDirection.getStepZ()).multiply(dirMul), normalDirectionColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, faceInfo.centre, mutable.set(faceInfo.normal).multiply(dirMul), averageNormalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, faceInfo.centre, mutable.set(faceInfo.approximateDirection.getStepX(), faceInfo.approximateDirection.getStepY(), faceInfo.approximateDirection.getStepZ()).multiply(dirMul), normalDirectionColor, buffer, matrix, camera);
 
 				// Draw each vertex normal
-				drawLinePosColorFromAdd(area.start, face.v0, mutable.set(vertexNormals.v0).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v1, mutable.set(vertexNormals.v1).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v2, mutable.set(vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v0, mutable.set(faceInfo.vertexNormals.v0).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v1, mutable.set(faceInfo.vertexNormals.v1).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v2, mutable.set(faceInfo.vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
+				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(faceInfo.vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
 				// Draw texture pos
 				mutable.set(0.5F, 0.5F, 0.5F);
-				MeshRenderer.TextureLocator.getTexturePosAndState(area, isSmoothable, faceInfo, pos);
+				MeshRenderer.RenderableState.findAt(area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				pos.move(area.start);
-				drawLinePosColorFromTo(area.start, centre, pos, mutable, lightColor, buffer, matrix, camera);
+				drawLinePosColorFromTo(area.start, faceInfo.centre, pos, mutable, lightColor, buffer, matrix, camera);
 
 //				// Draw light pos
 //				mutable.set(0, 0, 0);

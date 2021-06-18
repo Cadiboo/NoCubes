@@ -33,12 +33,11 @@ public interface OptiFineProxy {
 
 	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state);
 
-	void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk);
+	void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder buffers, CompiledChunk compiledChunk);
 
-	void postRenderFluid(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk);
+	void postRenderFluid(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder buffers, CompiledChunk compiledChunk);
 
-	@Nullable
-	BakedQuad getQuadEmissive(BakedQuad quad);
+	@Nullable BakedQuad getQuadEmissive(BakedQuad quad);
 
 	void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, BlockState state, BlockPos pos);
 

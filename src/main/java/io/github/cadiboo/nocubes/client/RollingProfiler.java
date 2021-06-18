@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,4 +42,8 @@ public final class RollingProfiler {
 		return records.length;
 	}
 
+	public void recordAndLogElapsedNanosChunk(long start, String description) {
+		if (recordElapsedNanos(start))
+			LogManager.getLogger("Render chunk " + description).debug("Average {}ms over the past {} chunks", average() / 1000_000F, size());
+	}
 }

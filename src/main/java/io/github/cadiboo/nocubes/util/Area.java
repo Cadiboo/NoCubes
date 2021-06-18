@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
@@ -105,10 +106,11 @@ public class Area implements AutoCloseable {
 	}
 
 	public int indexIfInsideCache(BlockPos relativePos) {
+		return indexIfInsideCache(relativePos.getX(), relativePos.getY(), relativePos.getZ());
+	}
+
+	public int indexIfInsideCache(int relativeX, int relativeY, int relativeZ) {
 		BlockPos size = this.size;
-		int relativeX = relativePos.getX();
-		int relativeY = relativePos.getY();
-		int relativeZ = relativePos.getZ();
 		int sizeX = size.getX();
 		int sizeY = size.getY();
 		if (relativeX < 0 || relativeX >= sizeX || relativeY < 0 || relativeY >= sizeY || relativeZ < 0 || relativeZ >= size.getZ())
@@ -132,5 +134,27 @@ public class Area implements AutoCloseable {
 		}
 		return getAndCacheBlocks()[index];
 	}
+
+//	public BlockState getBlockState(BlockPos.Mutable relativePos) {
+//		return getBlockState(relativePos, relativePos.getX(), relativePos.getY(), relativePos.getZ());
+//	}
+//
+//	public BlockState getBlockState(BlockPos.Mutable relativePos, Direction direction) {
+//		return getBlockState(relativePos, relativePos.getX() + direction.getStepX(), relativePos.getY() + direction.getStepY(), relativePos.getZ() + direction.getStepZ());
+//	}
+//
+//	private BlockState getBlockState(BlockPos.Mutable pos, int relativeX, int relativeY, int relativeZ) {
+//		int index = indexIfInsideCache(relativeX, relativeY, relativeZ);
+//		if (index == -1) {
+//			int x = pos.getX();
+//			int y = pos.getY();
+//			int z = pos.getZ();
+//			pos.set(relativeX, relativeY, relativeZ).move(start);
+//			BlockState state = world.getBlockState(pos);
+//			pos.set(x, y, z);
+//			return state;
+//		}
+//		return getAndCacheBlocks()[index];
+//	}
 
 }

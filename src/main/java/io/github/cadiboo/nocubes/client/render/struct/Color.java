@@ -1,15 +1,30 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
 public final /* inline record */ class Color {
-	public float red;
-	public float green;
-	public float blue;
+	public static final Color WHITE = new Color(1F, 1F, 1F, 1F);
+	public static final ThreadLocal<Color> VALHALLA_SOON_PLS = ThreadLocal.withInitial(Color::new);
+
+	public /* final */ float red;
+	public /* final */ float green;
+	public /* final */ float blue;
 	public final float alpha = 1.0F;
 
-	public void multiply(float shading) {
+	public Color() {
+		this(0, 0, 0, 0);
+	}
+
+	public Color(float red, float green, float blue, float alpha) {
+		this.red = red;
+		this.green = green;
+		this.blue = blue;
+//		this.alpha = alpha;
+	}
+
+	public Color multiply(float shading) {
 		red *= shading;
 		green *= shading;
 		blue *= shading;
+		return this;
 	}
 
 	public void unpackFromARGB(int color) {

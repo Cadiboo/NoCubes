@@ -79,10 +79,8 @@ public class ModUtil {
 				int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
 				int chunkX = blockChunkX >> 4;
 				int chunkZ = blockChunkZ >> 4;
-				@Nullable
-				IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
-				@Nullable
-				ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
+				@Nullable IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
+				@Nullable ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
@@ -91,8 +89,7 @@ public class ModUtil {
 //					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
 					// If chunkSectionIndex is out of range we want to continue supplying air to the func
 					// No clue how this will work with cubic chunks...
-					@Nullable
-					ChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					@Nullable ChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
 					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
 					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
 					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);

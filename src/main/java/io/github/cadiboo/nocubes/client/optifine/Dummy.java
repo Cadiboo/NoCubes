@@ -57,9 +57,8 @@ class Dummy implements OptiFineProxy {
 
 	}
 
-	@Nullable
 	@Override
-	public BakedQuad getQuadEmissive(BakedQuad quad) {
+	public @Nullable BakedQuad getQuadEmissive(BakedQuad quad) {
 		return null;
 	}
 

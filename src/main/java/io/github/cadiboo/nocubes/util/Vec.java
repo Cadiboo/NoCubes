@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Matrix3f;
 import net.minecraft.util.math.vector.Matrix4f;
@@ -175,6 +176,10 @@ public /* inline */ class Vec {
 		this.y = v0.y + t * (v1.y - v0.y);
 		this.z = v0.z + t * (v1.z - v0.z);
 		return this;
+	}
+
+	public BlockPos.Mutable assignTo(BlockPos.Mutable pos) {
+		return pos.set(x, y, z);
 	}
 
 }
