@@ -17,13 +17,11 @@ import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.EmptyBlockReader;
 import net.minecraftforge.client.ForgeHooksClient;
-import net.optifine.render.RenderTypes;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -32,10 +30,9 @@ import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRe
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 import static net.minecraft.block.GrassBlock.SNOWY;
 
+// /tp @p 83.63 64.26 -112.34 -90.10 -6.33 Wall
+// /tp @p 87.64 75.43 -180.15 -158.48 33.15 Hillside
 public final class MeshRenderer {
-
-	// From OptiFine's BlockModelRenderer
-	public static final RenderType[] OVERLAY_LAYERS = new RenderType[]{RenderTypes.CUTOUT, RenderTypes.CUTOUT_MIPPED, RenderTypes.TRANSLUCENT};
 
 	public static boolean isSolidRender(BlockState state) {
 		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO);

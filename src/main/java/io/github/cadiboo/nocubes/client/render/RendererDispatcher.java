@@ -15,10 +15,8 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
@@ -33,11 +31,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
-import net.optifine.model.BlockModelCustomizer;
-import net.optifine.model.ListQuadsOverlay;
-import net.optifine.render.RenderEnv;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.BiConsumer;
@@ -45,7 +39,6 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.OVERLAY_LAYERS;
 import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
 
 /**
@@ -132,62 +125,53 @@ public final class RendererDispatcher {
 			return world.getShade(direction, true);
 		}
 
-		interface ColorSupplier {
+		public BufferBuilder getAndStartBuffer(RenderType layer) {
+			return RendererDispatcher.getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
+		}
+
+		public interface ColorSupplier {
 			Color apply(BlockState state, BlockPos worldPos, BakedQuad quad);
 		}
 
-		interface QuadConsumer {
+		public interface QuadConsumer {
 			void accept(RenderType layer, IVertexBuilder buffer, BakedQuad quad, Color color, boolean emissive);
 		}
 
 		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
+			int[] numQuadsRendered = {0};
 			long rand = optiFine.getSeed(state.getSeed(worldPos));
 			IModelData modelData = rebuildTask.getModelData(worldPos);
 			renderInLayers(
 				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
 				(layer, buffer, renderEnv) -> {
-					IBakedModel model = dispatcher.getBlockModel(state);
-					model = optiFine.getModel(renderEnv, model, state);
+					IBakedModel model = getModel(state, renderEnv);
 
-					random.setSeed(rand);
-					List<BakedQuad> nullQuads = model.getQuads(state, null, random, modelData);
-					nullQuads = BlockModelCustomizer.getRenderQuads(nullQuads, world, state, worldPos, null, layer, rand, (RenderEnv) renderEnv);
+					List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
 					boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+					numQuadsRendered[0] += nullQuads.size();
 
-					random.setSeed(rand);
-					Direction renderDir;
 					List<BakedQuad> dirQuads;
 					if (!state.hasProperty(SNOWY))
-						dirQuads = model.getQuads(state, renderDir = direction, random, modelData);
+						dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, direction);
 					else {
 						// Make grass/snow/mycilium side faces be rendered with their top texture
 						// Equivalent to OptiFine's Better Grass feature
 						if (!state.getValue(SNOWY))
-							dirQuads = model.getQuads(state, (renderDir = NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction), random, modelData);
+							dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 							BlockState snow = Blocks.SNOW.defaultBlockState();
-							dirQuads = Minecraft.getInstance().getBlockRenderer().getBlockModel(snow).getQuads(snow, renderDir = null, random, modelData);
+							IBakedModel snowModel = getModel(snow, renderEnv);
+							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, Direction.UP);
 						}
 					}
-					dirQuads = BlockModelCustomizer.getRenderQuads(dirQuads, world, state, worldPos, renderDir, layer, rand, (RenderEnv) renderEnv);
 					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+					numQuadsRendered[0] += dirQuads.size();
 
-					for (int i = 0; i < OVERLAY_LAYERS.length; i++) {
-						RenderType overlayLayer = OVERLAY_LAYERS[i];
-						ListQuadsOverlay listQuadsOverlay = ((RenderEnv) renderEnv).getListQuadsOverlay(overlayLayer);
-						int size = listQuadsOverlay.size();
-						if (size <= 0)
-							continue;
-						BufferBuilder overlayBuffer = getAndStartBuffer(chunkRender, compiledChunk, buffers, overlayLayer);
-						for (int j = 0; j < size; ++j) {
-							List<BakedQuad> quads = listQuadsOverlay.getListQuadsSingle(listQuadsOverlay.getQuad(j));
-							anyQuadsFound |= forEachQuad(quads, listQuadsOverlay.getBlockState(j), worldPos, colorSupplier, overlayLayer, overlayBuffer, renderEnv, action);
-							((RenderEnv) renderEnv).reset(state, worldPos);
-						}
-						listQuadsOverlay.clear();
-					}
+					int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
+					numQuadsRendered[0] += numOverlaysRendered;
+					anyQuadsFound |= numOverlaysRendered > 0;
 
 					if (!anyQuadsFound)
 						forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
@@ -195,10 +179,24 @@ public final class RendererDispatcher {
 				},
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
 			);
+			int quadsRendered = numQuadsRendered[0];
 
 		}
 
-		private boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
+		private IBakedModel getModel(BlockState state, Object renderEnv) {
+			IBakedModel model = dispatcher.getBlockModel(state);
+			model = optiFine.getModel(renderEnv, model, state);
+			return model;
+		}
+
+		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, IModelData modelData, RenderType layer, Object renderEnv, IBakedModel model, Direction direction) {
+			random.setSeed(rand);
+			List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
+			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
+			return quads;
+		}
+
+		public boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
 			int i = 0;
 			for (; i < quads.size(); i++) {
 				BakedQuad quad = quads.get(i);
@@ -318,7 +316,7 @@ public final class RendererDispatcher {
 		}
 	}
 
-	static BufferBuilder getAndStartBuffer(ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, RenderType layer) {
+	public static BufferBuilder getAndStartBuffer(ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, RenderType layer) {
 		ForgeHooksClient.setRenderLayer(layer);
 		BufferBuilder buffer = buffers.builder(layer);
 

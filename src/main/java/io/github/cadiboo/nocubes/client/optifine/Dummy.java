@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -9,10 +10,12 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.CompiledChunk_hasBlocks;
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
@@ -69,6 +72,16 @@ class Dummy implements OptiFineProxy {
 	@Override
 	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
 		CompiledChunk_hasBlocks(compiledChunk).add(renderType);
+	}
+
+    @Override
+	public List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, IBlockDisplayReader world, BlockState state, BlockPos worldPos, Direction direction, RenderType layer, long rand, Object renderEnv) {
+        return quads;
+    }
+
+	@Override
+	public int forEachOverlayQuad(RendererDispatcher.ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, RendererDispatcher.ChunkRenderInfo.ColorSupplier colorSupplier, RendererDispatcher.ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
+		return 0;
 	}
 
 }
