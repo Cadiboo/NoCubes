@@ -3,10 +3,7 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SnowBlock;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
@@ -137,6 +134,11 @@ public class ModUtil {
 
 	public static boolean isSnowLayer(BlockState state) {
 		return state.hasProperty(SnowBlock.LAYERS);
+	}
+
+	public static boolean isShortPlant(BlockState state) {
+		Block block = state.getBlock();
+		return block instanceof BushBlock && !(block instanceof DoublePlantBlock);
 	}
 
 	public static boolean isPlant(BlockState state) {

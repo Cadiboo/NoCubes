@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
@@ -57,7 +58,6 @@ public final class RendererDispatcher {
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
 
 	public static class ChunkRenderInfo {
-		private static final ThreadLocal<List<BakedQuad>> QUADS = ThreadLocal.withInitial(ArrayList::new);
 		public final RebuildTask rebuildTask;
 		public final ChunkRender chunkRender;
 		public final CompiledChunk compiledChunk;
@@ -86,27 +86,6 @@ public final class RendererDispatcher {
 			this.blockColors = Minecraft.getInstance().getBlockColors();
 		}
 
-		public void renderModel(BlockState state, BlockPos worldPos, FaceLight faceLight) {
-			assert state.getRenderShape() != BlockRenderType.INVISIBLE : "We shouldn't be rendering air";
-
-			long rand = optiFine.getSeed(state.getSeed(worldPos));
-			IModelData modelData = rebuildTask.getModelData(worldPos);
-			renderInLayers(
-				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
-				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-				(layer, buffer, renderEnv) -> {
-					IBakedModel modelIn = dispatcher.getBlockModel(state);
-					modelIn = optiFine.getModel(renderEnv, modelIn, state);
-//					List<BakedQuad> quads = findQuadsAndStoreOverlays(modelIn, rand, state, worldPos, modelData, layer, renderEnv);
-					Material material = state.getMaterial();
-					boolean renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
-//					renderFace(renderInfo, buffer, matrix.matrix, world, state, worldPos, light, optiFine, renderEnv, renderBothSides);
-					return true;
-				},
-				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
-			);
-		}
-
 		public void renderInLayers(
 			Predicate<RenderType> predicate,
 			BiFunction<RenderType, BufferBuilder, Object> preRender,
@@ -122,11 +101,8 @@ public final class RendererDispatcher {
 			);
 		}
 
-		public Color getColor(BakedQuad quad, BlockState state, BlockPos pos, float shade) {
-			Color color = Color.VALHALLA_SOON_PLS.get();
+		public Color getColor(Color color, BakedQuad quad, BlockState state, BlockPos pos, float shade) {
 			if (!quad.isTinted()) {
-				if (shade == 1F)
-					return Color.WHITE;
 				color.red = shade;
 				color.green = shade;
 				color.blue = shade;
@@ -188,7 +164,7 @@ public final class RendererDispatcher {
 						// Make grass/snow/mycilium side faces be rendered with their top texture
 						// Equivalent to OptiFine's Better Grass feature
 						if (!state.getValue(SNOWY))
-							dirQuads = model.getQuads(state, (renderDir = NoCubesConfig.Client.betterGrassAndSnow ? Direction.UP : direction), random, modelData);
+							dirQuads = model.getQuads(state, (renderDir = NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction), random, modelData);
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 							BlockState snow = Blocks.SNOW.defaultBlockState();
@@ -354,6 +330,20 @@ public final class RendererDispatcher {
 	static void markLayerUsed(CompiledChunk compiledChunk, OptiFineProxy optiFine, RenderType layer) {
 		compiledChunk.isCompletelyEmpty = false;
 		optiFine.markRenderLayerUsed(compiledChunk, layer);
+	}
+
+	static void quad(
+		IVertexBuilder buffer, MatrixStack matrix,
+		Face face, Vec faceNormal,
+		Color color,
+		Texture uvs,
+		FaceLight light,
+		boolean doubleSided
+	) {
+		quad(
+			buffer, matrix, doubleSided,
+			face, color, uvs, OverlayTexture.NO_OVERLAY, light, faceNormal
+		);
 	}
 
 	static void quad(

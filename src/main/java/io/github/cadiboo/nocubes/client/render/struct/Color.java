@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render.struct;
 
 public final /* inline record */ class Color {
 	public static final Color WHITE = new Color(1F, 1F, 1F, 1F);
-	public static final ThreadLocal<Color> VALHALLA_SOON_PLS = ThreadLocal.withInitial(Color::new);
 
 	public /* final */ float red;
 	public /* final */ float green;

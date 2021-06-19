@@ -91,7 +91,10 @@ public final class NoCubesConfig {
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
 		public static ColorParser.Color selectionBoxColor;
-		public static boolean betterGrassAndSnow;
+		public static boolean betterGrassSides;
+		public static boolean moreSnow;
+		public static boolean fixPlantHeight;
+		public static boolean grassTufts;
 
 		public static boolean debugEnabled;
 		public static boolean debugOutlineSmoothables;
@@ -113,14 +116,17 @@ public final class NoCubesConfig {
 		 */
 		public static void bake() {
 			boolean oldRender = render;
-			boolean oldBetterGrassAndSnow = betterGrassAndSnow;
+			int oldRenderSettingsHash = hashChunkRenderSettings();
 
-			// Directly querying the baked field - won't cause a NPE on the client when there is no server
+			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
-			betterGrassAndSnow = INSTANCE.betterGrassAndSnow.get();
+			betterGrassSides = INSTANCE.betterGrassSides.get();
+			moreSnow = INSTANCE.moreSnow.get();
+			fixPlantHeight = INSTANCE.fixPlantHeight.get();
+			grassTufts = INSTANCE.grassTufts.get();
 
-			if (oldRender != render || (render && oldBetterGrassAndSnow != betterGrassAndSnow))
+			if (oldRender != render || (render && oldRenderSettingsHash != hashChunkRenderSettings()))
 				ClientUtil.reloadAllChunks(Minecraft.getInstance());
 
 			debugEnabled = INSTANCE.debugEnabled.get();
@@ -130,6 +136,10 @@ public final class NoCubesConfig {
 			debugRenderMeshCollisions = INSTANCE.debugRenderMeshCollisions.get();
 			debugRecordMeshPerformance = INSTANCE.debugRecordMeshPerformance.get();
 			debugOutlineNearbyMesh = INSTANCE.debugOutlineNearbyMesh.get();
+		}
+
+		private static int hashChunkRenderSettings() {
+			return Objects.hash(betterGrassSides, moreSnow, fixPlantHeight, grassTufts);
 		}
 
 		public static void updateRender(boolean newValue) {
@@ -151,7 +161,11 @@ public final class NoCubesConfig {
 
 			final BooleanValue render;
 			final ConfigValue<String> selectionBoxColor;
-			final BooleanValue betterGrassAndSnow;
+			final BooleanValue betterGrassSides;
+			final BooleanValue moreSnow;
+			final BooleanValue fixPlantHeight;
+			final BooleanValue grassTufts;
+
 			final BooleanValue debugEnabled;
 			final BooleanValue debugOutlineSmoothables;
 			final BooleanValue debugVisualiseDensitiesGrid;
@@ -186,14 +200,33 @@ public final class NoCubesConfig {
 					)
 					.define("selectionBoxColor", "#0006");
 
-				betterGrassAndSnow = builder
-					.translation(NoCubes.MOD_ID + ".config.betterGrassAndSnow")
+				betterGrassSides = builder
+					.translation(NoCubes.MOD_ID + ".config.betterGrassSides")
 					.comment(
-						"Similar to OptiFine's 'Better Grass' and 'Better Snow' features",
-						"OFF - The sides of grass blocks have the default texture, the sides of blocks next to snow have their texture",
-						"ON - The sides of grass blocks have the texture of the top of the block, the sides of blocks next to snow have the snow texture"
+						"Similar to OptiFine's 'Better Grass' feature",
+						"OFF - The sides of grass blocks have the default texture",
+						"ON - The sides of grass blocks have the texture of the top of the block"
 					)
-					.define("betterGrassAndSnow", false);
+					.define("betterGrassSides", false);
+
+				moreSnow = builder
+					.translation(NoCubes.MOD_ID + ".config.moreSnow")
+					.comment(
+						"Similar to OptiFine's 'Better Snow' feature",
+						"OFF - The sides of blocks nearby snow have their own texture",
+						"ON - The sides of blocks nearby snow have the snow texture"
+					)
+					.define("moreSnow", false);
+
+				fixPlantHeight = builder
+					.translation(NoCubes.MOD_ID + ".config.fixPlantHeight")
+					.comment("If small plants like flowers and grass should be moved onto NoCubes' terrain")
+					.define("fixPlantHeight", false);
+
+				grassTufts = builder
+					.translation(NoCubes.MOD_ID + ".config.grassTufts")
+					.comment("If small tufts of grass should be rendered on top of grass blocks, similar to BetterFoliage's 'Short Grass' feature")
+					.define("grassTufts", false);
 
 				builder
 					.push("debug");

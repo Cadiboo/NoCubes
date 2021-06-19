@@ -7,7 +7,6 @@ import net.minecraft.util.Direction;
 public final /* inline record */ class Texture {
 
 	public static final Texture EVERYTHING = new Texture(0, 0, 1, 0, 1, 1, 0, 1);
-	private static final ThreadLocal<Texture> VALHALLA_SOON_PLS = ThreadLocal.withInitial(Texture::new);
 
 	public /* final */ float u0;
 	public /* final */ float v0;
@@ -33,16 +32,15 @@ public final /* inline record */ class Texture {
 		this.v3 = v3;
 	}
 
-	public static Texture forQuadRearranged(BakedQuad quad, Direction faceDirection) {
-		Texture texture = forQuad(quad);
-		texture.rearrangeForDirection(faceDirection);
-		return texture;
+	public static Texture forQuadRearranged(Texture valhallaPls, BakedQuad quad, Direction faceDirection) {
+		valhallaPls = forQuad(valhallaPls, quad);
+		valhallaPls.rearrangeForDirection(faceDirection);
+		return valhallaPls;
 	}
 
-	public static Texture forQuad(BakedQuad quad) {
-		Texture texture = VALHALLA_SOON_PLS.get();
-		texture.unpackFromQuad(quad);
-		return texture;
+	public static Texture forQuad(Texture valhallaPls, BakedQuad quad) {
+		valhallaPls.unpackFromQuad(quad);
+		return valhallaPls;
 	}
 
 	private void unpackFromQuad(BakedQuad quad) {

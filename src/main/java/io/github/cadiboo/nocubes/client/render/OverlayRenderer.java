@@ -4,6 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
+import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
@@ -222,6 +223,7 @@ public final class OverlayRenderer {
 			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize)
 		) {
 			FaceInfo faceInfo = new FaceInfo();
+			MutableObjects objects = new MutableObjects();
 			Vec mutable = new Vec();
 
 			Color faceColor = new Color(0F, 1F, 1F, 0.4F);
@@ -251,7 +253,7 @@ public final class OverlayRenderer {
 
 				// Draw texture pos
 				mutable.set(0.5F, 0.5F, 0.5F);
-				MeshRenderer.RenderableState.findAt(area, faceInfo.normal, faceInfo.centre, isSmoothable);
+				MeshRenderer.RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				pos.move(area.start);
 				drawLinePosColorFromTo(area.start, faceInfo.centre, pos, mutable, lightColor, buffer, matrix, camera);
 
