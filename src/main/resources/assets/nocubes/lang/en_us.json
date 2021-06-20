@@ -1,6 +1,7 @@
 {
-	"nocubes.key.toggleVisuals": "Toggle NoCubes' rendering",
-	"nocubes.key.toggleSmoothable": "Toggle if the targeted block is smoothable",
+	"nocubes.keycategory": "NoCubes",
+	"nocubes.key.toggleVisuals": "Toggle rendering",
+	"nocubes.key.toggleSmoothable": "Toggle block smoothablility",
 
 	"nocubes.config.render": "NoCubes rendering",
 	"nocubes.config.selectionBoxColor": "Selection box color",
