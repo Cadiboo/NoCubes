@@ -13,10 +13,7 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
@@ -36,7 +33,7 @@ import static net.minecraft.block.GrassBlock.SNOWY;
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
-		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO);
+		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof GrassPathBlock;
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
