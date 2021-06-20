@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.mesh;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
@@ -17,7 +18,17 @@ public interface MeshGenerator {
 		generate(area, isSmoothable, DEFAULT_VOXEL_ACTION, action);
 	}
 
-	void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
+	default void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+		try {
+			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
+		} catch (Throwable t) {
+			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
+				throw t;
+			t.getCause();
+		}
+	}
+
+	void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
 
 	Vector3i getPositiveAreaExtension();
 

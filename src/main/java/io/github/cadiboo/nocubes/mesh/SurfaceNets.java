@@ -22,19 +22,8 @@ public class SurfaceNets implements MeshGenerator {
 	private static final ThreadLocalArrayCache<float[]> DENSITY_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
 
 	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		try {
-			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
-		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			t.getCause();
-		}
-	}
-
-	@Override
 	public Vector3i getPositiveAreaExtension() {
-		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
+		// Needed otherwise seams appear in the meshes because surface nets generates a mesh 1 smaller than it "should"
 		return ModUtil.VEC_ONE;
 	}
 
@@ -44,8 +33,9 @@ public class SurfaceNets implements MeshGenerator {
 		return ModUtil.VEC_ONE;
 	}
 
-	private static void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		generateOrThrow2(generateDistanceField(area, isSmoothable), area.size, voxelAction, faceAction);
+	@Override
+	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+		generateOrThrow(generateDistanceField(area, isSmoothable), area.size, voxelAction, faceAction);
 	}
 
 	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
@@ -86,10 +76,10 @@ public class SurfaceNets implements MeshGenerator {
 //				}
 //			}
 //		}
-//		generateOrThrow2(densityField, area.size.offset(-1, -1, -1), voxelAction, faceAction);
+//		generateOrThrow(densityField, area.size.offset(-1, -1, -1), voxelAction, faceAction);
 	}
 
-	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
+	private static void generateOrThrow(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		final Face face = new Face();

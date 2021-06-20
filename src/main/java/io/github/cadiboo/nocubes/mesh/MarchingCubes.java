@@ -16,17 +16,6 @@ import java.util.function.Predicate;
 public class MarchingCubes implements MeshGenerator {
 
 	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		try {
-			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
-		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			t.getCause();
-		}
-	}
-
-	@Override
 	public BlockPos getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
@@ -38,6 +27,7 @@ public class MarchingCubes implements MeshGenerator {
 		return ModUtil.VEC_ONE;
 	}
 
+	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos dims = area.size;
 		BlockPos.Mutable pos = new BlockPos.Mutable();

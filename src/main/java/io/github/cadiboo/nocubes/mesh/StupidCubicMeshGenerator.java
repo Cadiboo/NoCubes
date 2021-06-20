@@ -22,7 +22,7 @@ public class StupidCubicMeshGenerator implements MeshGenerator {
 	}
 
 	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos size = area.size;
 		int depth = size.getZ();
 		int height = size.getY();

@@ -29,17 +29,6 @@ public final class OldNoCubes implements MeshGenerator {
 	public static final int X1Y1Z1 = 6;
 	public static final int X0Y1Z1 = 7;
 
-	@Override
-	public void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		try {
-			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
-		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			t.getCause();
-		}
-	}
-
 	private static void resetPoints(Vec[] points) {
 		// The 8 points that make the block.
 		// 1 point for each corner
@@ -65,6 +54,7 @@ public final class OldNoCubes implements MeshGenerator {
 		return ModUtil.VEC_ONE;
 	}
 
+	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos size = area.size;
 		int depth = size.getZ();
