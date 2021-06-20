@@ -18,9 +18,14 @@ public class S2CUpdateSmoothable {
 	private final BlockState state;
 	private final boolean newValue;
 
-	public S2CUpdateSmoothable(final BlockState state, boolean newValue) {
+	public S2CUpdateSmoothable(BlockState state, boolean newValue) {
 		this.state = state;
 		this.newValue = newValue;
+	}
+
+	public static void encode(S2CUpdateSmoothable msg, PacketBuffer buffer) {
+		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
+		buffer.writeBoolean(msg.newValue);
 	}
 
 	public static S2CUpdateSmoothable decode(PacketBuffer buffer) {
@@ -29,16 +34,11 @@ public class S2CUpdateSmoothable {
 		return new S2CUpdateSmoothable(state, newValue);
 	}
 
-	public static void encode(S2CUpdateSmoothable msg, PacketBuffer buffer) {
-		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
-		buffer.writeBoolean(msg.newValue);
-	}
-
 	public static void handle(S2CUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
 		ctx.enqueueWork(() -> {
 			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.state);
-			ClientUtil.reloadAllChunks(Minecraft.getInstance());
+			ClientUtil.reloadAllChunks();
 		});
 		ctx.setPacketHandled(true);
 	}

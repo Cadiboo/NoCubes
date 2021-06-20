@@ -9,7 +9,8 @@ import net.minecraft.util.math.vector.Matrix4f;
 
 public final class ClientUtil {
 
-	public static void reloadAllChunks(Minecraft minecraft) {
+	public static void reloadAllChunks() {
+		Minecraft minecraft = Minecraft.getInstance();
 		minecraft.execute(() -> {
 			WorldRenderer worldRenderer = minecraft.levelRenderer;
 			if (worldRenderer != null)

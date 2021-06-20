@@ -9,7 +9,7 @@ import net.minecraft.util.math.vector.Vector3i;
 
 import java.util.function.Predicate;
 
-public class CullingCubicMeshGenerator implements MeshGenerator {
+public class CullingCubic implements MeshGenerator {
 
 	@Override
 	public Vector3i getPositiveAreaExtension() {

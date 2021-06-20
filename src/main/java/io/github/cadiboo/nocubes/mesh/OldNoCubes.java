@@ -171,7 +171,7 @@ public final class OldNoCubes implements MeshGenerator {
 								break;
 						}
 
-						if (!faceAction.apply(pos.set(x, y, z).move(direction), face))
+						if (!faceAction.apply(pos.set(x, y, z), face))
 							return;
 
 					}

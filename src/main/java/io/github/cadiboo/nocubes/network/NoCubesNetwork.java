@@ -59,25 +59,6 @@ public final class NoCubesNetwork {
 			C2SRequestUpdateSmoothable::decode,
 			C2SRequestUpdateSmoothable::handle
 		);
-		CHANNEL.registerMessage(
-			++networkId,
-			C2SRequestSetCollisions.class,
-			C2SRequestSetCollisions::encode,
-			C2SRequestSetCollisions::decode,
-			C2SRequestSetCollisions::handle
-		);
-//		CHANNEL.registerMessage(++networkId,
-//			C2SRequestSetExtendFluidsRange.class,
-//			C2SRequestSetExtendFluidsRange::encode,
-//			C2SRequestSetExtendFluidsRange::decode,
-//			C2SRequestSetExtendFluidsRange::handle
-//		);
-//		CHANNEL.registerMessage(++networkId,
-//			C2SRequestSetTerrainMeshGenerator.class,
-//			C2SRequestSetTerrainMeshGenerator::encode,
-//			C2SRequestSetTerrainMeshGenerator::decode,
-//			C2SRequestSetTerrainMeshGenerator::handle
-//		);
 
 		// Server -> Client
 		CHANNEL.registerMessage(
@@ -89,23 +70,11 @@ public final class NoCubesNetwork {
 		);
 		CHANNEL.registerMessage(
 			++networkId,
-			S2CSetCollisions.class,
-			S2CSetCollisions::encode,
-			S2CSetCollisions::decode,
-			S2CSetCollisions::handle
+			S2CUpdateServerConfig.class,
+			S2CUpdateServerConfig::encode,
+			S2CUpdateServerConfig::decode,
+			S2CUpdateServerConfig::handle
 		);
-//		CHANNEL.registerMessage(++networkId,
-//			S2CSetExtendFluidsRange.class,
-//			S2CSetExtendFluidsRange::encode,
-//			S2CSetExtendFluidsRange::decode,
-//			S2CSetExtendFluidsRange::handle
-//		);
-//		CHANNEL.registerMessage(++networkId,
-//			S2CSetTerrainMeshGenerator.class,
-//			S2CSetTerrainMeshGenerator::encode,
-//			S2CSetTerrainMeshGenerator::decode,
-//			S2CSetTerrainMeshGenerator::handle
-//		);
 	}
 
 }

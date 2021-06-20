@@ -1,14 +1,12 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.mesh.CullingCubicMeshGenerator;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MeshGeneratorEnum;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.ModList;
 
 import java.util.Collections;
 import java.util.List;
@@ -62,8 +60,8 @@ public class NoCubesTest {
 				// No-op
 			}
 		};
-		new SurfaceNets().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
-		new CullingCubicMeshGenerator().generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+		for (MeshGeneratorEnum generator : MeshGeneratorEnum.values())
+			generator.generator.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
 	private static boolean checkAndMutate(BlockPos.Mutable pos, Face face) {

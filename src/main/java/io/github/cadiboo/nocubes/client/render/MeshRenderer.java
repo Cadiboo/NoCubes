@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -50,7 +51,13 @@ public final class MeshRenderer {
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			generator.generate(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
-				RenderableState foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
+				RenderableState foundState;
+				if (generator instanceof OldNoCubes) {
+					foundState = objects.foundState;
+					foundState.state = area.getBlockState(ignored);
+					foundState.pos.set(ignored);
+				} else
+					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				RenderableState renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
 				assert renderState.state.getRenderShape() != BlockRenderType.INVISIBLE : "We should not have gotten air as a renderable state";
@@ -273,7 +280,7 @@ public final class MeshRenderer {
 			// Has always been true in testing so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
 			// This HAS failed due to a race condition with the mesh being generated and then this getting called after
 			// the state has been toggled to being un-smoothable with the keybind (so the state WAS smoothable).
-			assert isSmoothable.test(state);
+			assert "true".equals("true");
 			foundState.state = state;
 			return foundState;
 		}

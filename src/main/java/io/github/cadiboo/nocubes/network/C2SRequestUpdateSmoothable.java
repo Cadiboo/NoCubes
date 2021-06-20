@@ -23,20 +23,20 @@ public class C2SRequestUpdateSmoothable {
 	private final BlockState state;
 	private final boolean newValue;
 
-	public C2SRequestUpdateSmoothable(final BlockState state, boolean newValue) {
+	public C2SRequestUpdateSmoothable(BlockState state, boolean newValue) {
 		this.state = state;
 		this.newValue = newValue;
+	}
+
+	public static void encode(C2SRequestUpdateSmoothable msg, PacketBuffer buffer) {
+		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
+		buffer.writeBoolean(msg.newValue);
 	}
 
 	public static C2SRequestUpdateSmoothable decode(PacketBuffer buffer) {
 		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
 		boolean newValue = buffer.readBoolean();
 		return new C2SRequestUpdateSmoothable(state, newValue);
-	}
-
-	public static void encode(C2SRequestUpdateSmoothable msg, PacketBuffer buffer) {
-		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
-		buffer.writeBoolean(msg.newValue);
 	}
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {

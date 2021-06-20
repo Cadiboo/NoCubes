@@ -1,16 +1,23 @@
 {
-	"nocubes.config.render": "Custom rendering",
+	"nocubes.key.toggleVisuals": "Toggle NoCubes' rendering",
+	"nocubes.key.toggleSmoothable": "Toggle if the targeted block is smoothable",
+
+	"nocubes.config.render": "NoCubes rendering",
 	"nocubes.config.selectionBoxColor": "Selection box color",
-	"nocubes.config.betterGrassAndSnow": "Better grass and snow",
+	"nocubes.config.betterGrassSides": "Better grass sides",
+	"nocubes.config.moreSnow": "More snow",
+	"nocubes.config.fixPlantHeight": "Fix plant height",
+	"nocubes.config.grassTufts": "Grass tufts",
 	"nocubes.config.debugEnabled": "Debug mode",
 
 	"nocubes.config.smoothableWhitelist": "Whitelist of smoothable blocks",
 	"nocubes.config.smoothableBlacklist": "Blacklist of non-smoothable blocks",
+	"nocubes.config.meshGenerator": "Mesh generator",
 	"nocubes.config.collisionsEnabled": "Custom collisions",
 	"nocubes.config.forceVisuals": "Force custom rendering for players",
 	"nocubes.config.extendFluidsRange": "Extended fluids range",
+	"nocubes.config.oldNoCubesRoughness": "OldNoCubes roughness",
 
-	"nocubes.command.setCollisionsNoPermission": "You do not have permission to change if custom collisions are enabled",
 	"nocubes.command.addSmoothableNoPermission": "You do not have permission to change if a block is smoothable or not",
 
 	"nocubes.notification.nocubesNotInstalledOnServerCollisionsUnavailable": "Because NoCubes is not installed on this server NoCubes' custom collisions cannot work properly and have been temporarily disabled",

@@ -1,24 +1,26 @@
 package io.github.cadiboo.nocubes.config;
 
+import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
+import io.github.cadiboo.nocubes.mesh.*;
+import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.Direction;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
-import net.minecraftforge.common.ForgeConfigSpec.DoubleValue;
-import net.minecraftforge.common.ForgeConfigSpec.IntValue;
+import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -26,10 +28,14 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 
 import static net.minecraft.block.Blocks.*;
@@ -62,16 +68,17 @@ public final class NoCubesConfig {
 	@SubscribeEvent
 	public static void onModConfigEvent(ModConfig.ModConfigEvent configEvent) {
 		// TODO: Check if file modification time is smaller than 'lastSavedConfigAt' and reject if TRUE and file is not null
-		ForgeConfigSpec spec = configEvent.getConfig().getSpec();
+		ModConfig config = configEvent.getConfig();
+		ForgeConfigSpec spec = config.getSpec();
 //		if (spec == Common.SPEC && didNotSaveConfigRecently(lastSavedCommonConfigAt)) {
 //			Common.bake();
 //			lastSavedCommonConfigAt = -1;
 //		} else
 		if (spec == Client.SPEC && didNotSaveConfigRecently(lastSavedClientConfigAt)) {
-			Client.bake();
+			Client.bake(config);
 			lastSavedClientConfigAt = -1;
 		} else if (spec == Server.SPEC && didNotSaveConfigRecently(lastSavedServerConfigAt)) {
-			Server.bake();
+			Server.bake(config);
 			lastSavedServerConfigAt = -1;
 		}
 	}
@@ -114,9 +121,9 @@ public final class NoCubesConfig {
 		 * Each time our config changes we get the values from it and store them in our own fields ('baking' them)
 		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 		 */
-		public static void bake() {
+		public static void bake(ModConfig config) {
 			boolean oldRender = render;
-			int oldRenderSettingsHash = hashChunkRenderSettings();
+			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
 			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
@@ -126,8 +133,8 @@ public final class NoCubesConfig {
 			fixPlantHeight = INSTANCE.fixPlantHeight.get();
 			grassTufts = INSTANCE.grassTufts.get();
 
-			if (oldRender != render || (render && oldRenderSettingsHash != hashChunkRenderSettings()))
-				ClientUtil.reloadAllChunks(Minecraft.getInstance());
+			if (oldRender != render || (render && oldChunkRenderSettingsHash != hashChunkRenderSettings()))
+				ClientUtil.reloadAllChunks();
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -257,7 +264,7 @@ public final class NoCubesConfig {
 
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
-		public static MeshGenerator meshGenerator = new SurfaceNets();
+		public static MeshGenerator meshGenerator;
 		public static boolean collisionsEnabled;
 		public static boolean forceVisuals;
 		public static int extendFluidsRange;
@@ -273,9 +280,13 @@ public final class NoCubesConfig {
 		 * Each time our config changes we get the values from it and store them in our own fields ('baking' them)
 		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 		 */
-		public static void bake() {
+		public static void bake(ModConfig config) {
 			// TODO: How are these values changing handled on the client?
 			//  Does forge auto sync the config when it changes, if not I need to
+			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
+
+			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
+			meshGenerator = INSTANCE.meshGenerator.get().generator;
 			collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			forceVisuals = INSTANCE.forceVisuals.get();
 			if (forceVisuals)
@@ -287,16 +298,18 @@ public final class NoCubesConfig {
 			oldNoCubesRoughness = INSTANCE.oldNoCubesRoughness.get().floatValue();
 			if (oldNoCubesRoughness < 0 || oldNoCubesRoughness > 1)
 				throw new IllegalStateException("Config was not validated! 'oldNoCubesRoughness' must be between 0 and 1 but was " + oldNoCubesRoughness);
-			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
+			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
+				DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ClientUtil::reloadAllChunks);
+			if (FMLEnvironment.dist.isDedicatedServer())
+				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
+		}
+
+		private static int hashChunkRenderSettings() {
+			return Objects.hash(meshGenerator, forceVisuals);
 		}
 
 		public static void updateSmoothable(boolean newValue, BlockState... states) {
 			Smoothables.updateSmoothables(newValue, states, (List) INSTANCE.smoothableWhitelist.get(), (List) INSTANCE.smoothableBlacklist.get());
-			saveAndLoad();
-		}
-
-		public static void updateCollisions(boolean newValue) {
-			Server.INSTANCE.collisionsEnabled.set(newValue);
 			saveAndLoad();
 		}
 
@@ -305,6 +318,21 @@ public final class NoCubesConfig {
 			lastSavedServerConfigAt = -1;
 			ReloadHacks.saveAndLoad(ModConfig.Type.SERVER);
 			lastSavedServerConfigAt = System.nanoTime();
+		}
+
+		public enum MeshGeneratorEnum {
+			SurfaceNets(new SurfaceNets()),
+			OldNoCubes(new OldNoCubes()),
+			Debug_MarchingCubes(new MarchingCubes()),
+			Debug_CullingCubic(new CullingCubic()),
+			Debug_StupidCubic(new StupidCubic()),
+			;
+
+			public final MeshGenerator generator;
+
+			MeshGeneratorEnum(MeshGenerator generator) {
+				this.generator = generator;
+			}
 		}
 
 		/**
@@ -319,6 +347,7 @@ public final class NoCubesConfig {
 			 */
 			final ConfigValue<List<? extends String>> smoothableWhitelist;
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
+			final EnumValue<MeshGeneratorEnum> meshGenerator;
 			final BooleanValue collisionsEnabled;
 			final BooleanValue forceVisuals;
 			final IntValue extendFluidsRange;
@@ -339,6 +368,11 @@ public final class NoCubesConfig {
 					.translation(NoCubes.MOD_ID + ".config.collisionsEnabled")
 					.comment("If players should be able to walk up the smooth slopes generated by NoCubes")
 					.define("collisionsEnabled", true);
+
+				meshGenerator = builder
+					.translation(NoCubes.MOD_ID + ".config.meshGenerator")
+					.comment("meshGenerator")
+					.defineEnum("meshGenerator", MeshGeneratorEnum.SurfaceNets);
 
 				forceVisuals = builder
 					.translation(NoCubes.MOD_ID + ".config.forceVisuals")
@@ -364,12 +398,12 @@ public final class NoCubesConfig {
 	}
 
 	/**
-	 * Utils to allow us to save & load our config when we programmatically change its values (i.e. from keybinds and packets)
+	 * Utils to allow us to save and load our config when we programmatically change its values (i.e. from keybinds and packets)
 	 */
-	static class ReloadHacks {
+	public static class ReloadHacks {
 
 		// Only call with correct type.
-		public static void saveAndLoad(ModConfig.Type type) {
+		static void saveAndLoad(ModConfig.Type type) {
 			ConfigTracker_getConfig(NoCubes.MOD_ID, type).ifPresent(modConfig -> {
 				modConfig.save();
 				((CommentedFileConfig) modConfig.getConfigData()).load();
@@ -384,6 +418,16 @@ public final class NoCubesConfig {
 			return Optional.ofNullable(configsByMod.getOrDefault(modId, Collections.emptyMap()).getOrDefault(type, null));
 		}
 
+
+		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
+			Method setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
+			try {
+				setConfigData.invoke(modConfig, data);
+			} catch (IllegalAccessException | InvocationTargetException e) {
+				throw new RuntimeException("Could not set config data for config " + modConfig, e);
+			}
+		}
+
 		private static void fireReloadEvent(ModConfig modConfig) {
 			ModContainer modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
 			ModConfig.Reloading event;
@@ -393,6 +437,14 @@ public final class NoCubesConfig {
 				throw new RuntimeException(e);
 			}
 			modContainer.dispatchConfigEvent(event);
+		}
+
+		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
+			assert FMLEnvironment.dist.isClient();
+			ModConfig modConfig = ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).get();
+			ConfigParser<CommentedConfig> parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
+			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
+			fireReloadEvent(modConfig);
 		}
 	}
 
@@ -534,7 +586,7 @@ public final class NoCubesConfig {
 				"rustic:slate",
 			};
 			DEFAULT_SMOOTHABLES.addAll(vanilla);
-			DEFAULT_SMOOTHABLES.addAll(parseBlockstates(Arrays.asList(modded)));
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(modded)));
 		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
@@ -553,8 +605,8 @@ public final class NoCubesConfig {
 		}
 
 		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist) {
-			Set<BlockState> whitelisted = parseBlockstates(whitelist);
-			Set<BlockState> blacklisted = parseBlockstates(blacklist);
+			Set<BlockState> whitelisted = parseBlockStates(whitelist);
+			Set<BlockState> blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
@@ -565,7 +617,7 @@ public final class NoCubesConfig {
 				});
 		}
 
-		static Set<BlockState> parseBlockstates(List<? extends String> list) {
+		static Set<BlockState> parseBlockStates(List<? extends String> list) {
 			Set<BlockState> set = Sets.newIdentityHashSet();
 			list.parallelStream()
 				.map(BlockStateConverter::fromStringOrNull)
