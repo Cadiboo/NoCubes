@@ -138,7 +138,7 @@ public class ModUtil {
 
 	public static boolean isShortPlant(BlockState state) {
 		Block block = state.getBlock();
-		return block instanceof BushBlock && !(block instanceof DoublePlantBlock);
+		return block instanceof BushBlock && !(block instanceof DoublePlantBlock || block instanceof CropsBlock || block instanceof StemBlock);
 	}
 
 	public static boolean isPlant(BlockState state) {
