@@ -520,7 +520,12 @@ public final class NoCubesConfig {
 				RED_TERRACOTTA.defaultBlockState(),
 				BLACK_TERRACOTTA.defaultBlockState(),
 
+				ICE.defaultBlockState(),
 				PACKED_ICE.defaultBlockState(),
+				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 0),
+				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 1),
+				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 2),
+				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 3),
 
 				SNOW.defaultBlockState().setValue(LAYERS, 1),
 				SNOW.defaultBlockState().setValue(LAYERS, 2),
