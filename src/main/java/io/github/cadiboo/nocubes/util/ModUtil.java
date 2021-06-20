@@ -10,6 +10,7 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.EmptyBlockReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -118,13 +119,25 @@ public class ModUtil {
 	/**
 	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
 	 */
-	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
+	public static float getBlockDensityOld(boolean shouldSmooth, BlockState state) {
 		if (!shouldSmooth)
 			return NOT_SMOOTHABLE;
 		if (isSnowLayer(state))
 			// Snow layer, not the actual whole snow block
 			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
 		return FULLY_SMOOTHABLE;
+	}
+
+	/**
+	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
+	 */
+	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
+		if (!shouldSmooth)
+			return state.isCollisionShapeFullBlock(EmptyBlockReader.INSTANCE, BlockPos.ZERO) ? NOT_SMOOTHABLE * 0.125F : NOT_SMOOTHABLE;
+		if (isSnowLayer(state))
+			// Snow layer, not the actual whole snow block
+			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
+		return state.getBlock() == Blocks.BEDROCK ? FULLY_SMOOTHABLE + 0.0005F : FULLY_SMOOTHABLE;
 	}
 
 	/** Map snow height between 1-8 to between -1 and 1. */
