@@ -20,6 +20,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
 
@@ -36,7 +37,9 @@ public final class KeybindHandler {
 
 	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
 
-	static {
+	@SubscribeEvent
+	public static void onClientSetupEvent(FMLClientSetupEvent event) {
+		KEYBINDS.clear();
 		KEYBINDS.add(makeKeybind("toggleVisuals", GLFW.GLFW_KEY_O, KeybindHandler::toggleVisuals));
 		KEYBINDS.add(makeKeybind("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindHandler::toggleLookedAtSmoothable));
 		KEYBINDS.add(makeKeybind("toggleCollisions", GLFW.GLFW_KEY_C, KeybindHandler::toggleCollisions));
