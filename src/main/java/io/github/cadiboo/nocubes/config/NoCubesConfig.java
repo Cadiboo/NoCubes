@@ -326,6 +326,7 @@ public final class NoCubesConfig {
 			Debug_MarchingCubes(new MarchingCubes()),
 			Debug_CullingCubic(new CullingCubic()),
 			Debug_StupidCubic(new StupidCubic()),
+			Debug_CullingChamfer(new CullingChamfer()),
 			;
 
 			public final MeshGenerator generator;
