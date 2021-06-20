@@ -113,20 +113,17 @@ public final class MeshRenderer {
 			return;
 
 		BlockPos.Mutable relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
-		if (renderPlantsOffset) {
-			BlockState stateAbove = area.getBlockState(relativeAbove);
-			if (ModUtil.isShortPlant(stateAbove)) {
-				try (FluentMatrixStack ignored = renderer.matrix.push()) {
-					BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
-					Vec center = faceInfo.centre;
-					renderer.matrix.matrix.translate(center.x - 0.5F, center.y, center.z - 0.5F);
-					renderer.renderBlock(stateAbove, worldAbove);
-					return; // Don't want grass tufts rendering under the plants
-				}
+		BlockState stateAbove = area.getBlockState(relativeAbove);
+		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
+			try (FluentMatrixStack ignored = renderer.matrix.push()) {
+				BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
+				Vec center = faceInfo.centre;
+				renderer.matrix.matrix.translate(center.x - 0.5F, center.y, center.z - 0.5F);
+				renderer.renderBlock(stateAbove, worldAbove);
 			}
 		}
 
-		if (renderGrassTufts && foundState.state.hasProperty(SNOWY)) {
+		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
 			BlockState grass = Blocks.GRASS.defaultBlockState();
 			BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
 			boolean renderBothSides = true;
