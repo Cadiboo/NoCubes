@@ -163,7 +163,7 @@ public final class RendererDispatcher {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 							BlockState snow = Blocks.SNOW.defaultBlockState();
 							IBakedModel snowModel = getModel(snow, renderEnv);
-							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, Direction.UP);
+							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
 						}
 					}
 					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
