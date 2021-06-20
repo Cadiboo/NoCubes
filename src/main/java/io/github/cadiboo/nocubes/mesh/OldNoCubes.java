@@ -92,6 +92,7 @@ public final class OldNoCubes implements MeshGenerator {
 						pos.set(x, y, z).move(direction);
 						BlockState neighbour = blocks[area.index(pos)];
 						float density = ModUtil.getBlockDensity(isSmoothable, neighbour);
+						combinedNeighboursSmoothability += density;
 						neighboursSmoothability[i] = density;
 					}
 
