@@ -11,11 +11,11 @@ import net.minecraft.util.math.vector.Vector4f;
 /**
  * @author Cadiboo
  */
-public /* inline */ class Vec {
+public final /* inline */ class Vec {
 
-	public float x;
-	public float y;
-	public float z;
+	public /* final */ float x;
+	public /* final */ float y;
+	public /* final */ float z;
 
 	public Vec() {
 	}

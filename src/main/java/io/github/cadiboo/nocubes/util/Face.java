@@ -6,12 +6,12 @@ import net.minecraft.util.math.vector.Matrix4f;
 /**
  * @author Cadiboo
  */
-public class Face {
+public final /* inline */ class Face {
 
-	public Vec v0;
-	public Vec v1;
-	public Vec v2;
-	public Vec v3;
+	public /* final */ Vec v0;
+	public /* final */ Vec v1;
+	public /* final */ Vec v2;
+	public /* final */ Vec v3;
 
 	public Face() {
 		this(new Vec(), new Vec(), new Vec(), new Vec());

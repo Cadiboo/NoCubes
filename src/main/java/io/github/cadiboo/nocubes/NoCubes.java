@@ -19,11 +19,10 @@ import net.minecraftforge.fml.loading.FMLLoader;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	public static SmoothableHandler smoothableHandler;
+	// Blocks is safe to use here, it gets inited before mods are constructed
+	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 
 	public NoCubes() {
-		// Blocks is safe to use here, it gets inited before mods are constructed
-		smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 		NoCubesConfig.register(ModLoadingContext.get());
 		NoCubesNetwork.register();
 		Hooks.loadClasses(FMLLoader.getDist());
