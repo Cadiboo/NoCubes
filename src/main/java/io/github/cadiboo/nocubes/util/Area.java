@@ -66,33 +66,6 @@ public class Area implements AutoCloseable {
 		return blocks;
 	}
 
-	public FluidState[] getAndCacheFluids() {
-		if (fluids == null) {
-			int numBlocks = this.numBlocks();
-			// TODO: This can be improved to use the blockstate[] and compute extended fluids efficiently
-			FluidState[] array = fluids = FLUIDS_CACHE.takeArray(numBlocks);
-//			BlockState[] andCacheBlocks = getAndCacheBlocks();
-//			for (int i = 0; i < numBlocks; ++i)
-//				array[i] = andCacheBlocks[i].getFluidState();
-			BlockPos start = this.start;
-			int startX = start.getX();
-			int startY = start.getY();
-			int startZ = start.getZ();
-			BlockPos size = this.size;
-			int endX = startX + size.getX();
-			int endY = startY + size.getY();
-			int endZ = startZ + size.getZ();
-			IBlockReader world = this.world;
-			BlockPos.Mutable pos = new BlockPos.Mutable();
-			int zyxIndex = 0;
-			for (int z = startZ; z < endZ; ++z)
-				for (int y = startY; y < endY; ++y)
-					for (int x = startX; x < endX; ++x, ++zyxIndex)
-						array[zyxIndex] = world.getFluidState(pos.set(x, y, z));
-		}
-		return fluids;
-	}
-
 	public int numBlocks() {
 		BlockPos size = this.size;
 		return size.getX() * size.getY() * size.getZ();

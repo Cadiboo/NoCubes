@@ -156,6 +156,7 @@ class HD_U_G8 implements OptiFineProxy {
 				RenderEnv_reset(renderEnv, overlayState, worldPos);
 			}
 			ListQuadsOverlay_clear(overlay);
+			renderer.markLayerUsed(overlayLayer);
 		}
 		return totalSize;
 	}

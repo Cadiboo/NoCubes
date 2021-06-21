@@ -42,6 +42,7 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
 
 /**
+ * Calls the {@link MeshRenderer} or {@link FluidRenderer and provides utility code for both.
  * @author Cadiboo
  */
 public final class RendererDispatcher {
@@ -50,6 +51,10 @@ public final class RendererDispatcher {
 	private static final RollingProfiler fluidsProfiler = new RollingProfiler(256);
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
 
+	/**
+	 * A big blob of objects related to vanilla chunk rendering.
+	 * Stops every method having lots of parameters.
+	 */
 	public static class ChunkRenderInfo {
 		public final RebuildTask rebuildTask;
 		public final ChunkRender chunkRender;
@@ -85,13 +90,20 @@ public final class RendererDispatcher {
 			RenderInLayer render,
 			BiConsumer<BufferBuilder, Object> postRender
 		) {
-			RendererDispatcher.renderInLayers(
-				chunkRender, compiledChunk, buffers, optiFine,
-				predicate,
-				preRender,
-				render,
-				postRender
-			);
+			List<RenderType> layers = RenderType.chunkBufferLayers();
+			for (int i = 0, size = layers.size(); i < size; ++i) {
+				RenderType layer = layers.get(i);
+				if (!predicate.test(layer))
+					continue;
+
+				BufferBuilder buffer = getAndStartBuffer(layer);
+				Object renderEnv = preRender.apply(layer, buffer);
+				boolean used = render.render(layer, buffer, renderEnv);
+
+				postRender.accept(buffer, renderEnv);
+				if (used)
+					markLayerUsed(layer);
+			}
 		}
 
 		public Color getColor(Color color, BakedQuad quad, BlockState state, BlockPos pos, float shade) {
@@ -112,8 +124,7 @@ public final class RendererDispatcher {
 
 		public void renderBlock(BlockState state, BlockPos.Mutable worldPos) {
 			IModelData modelData = rebuildTask.getModelData(worldPos);
-			RendererDispatcher.renderInLayers(
-				chunkRender, compiledChunk, buffers, optiFine,
+			renderInLayers(
 				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
 				(layer, buffer, renderEnv) -> dispatcher.renderModel(state, worldPos, world, matrix.matrix, buffer, false, random, modelData),
@@ -127,6 +138,10 @@ public final class RendererDispatcher {
 
 		public BufferBuilder getAndStartBuffer(RenderType layer) {
 			return RendererDispatcher.getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
+		}
+
+		public void markLayerUsed(RenderType layer) {
+			RendererDispatcher.markLayerUsed(compiledChunk, optiFine, layer);
 		}
 
 		public interface ColorSupplier {
@@ -179,8 +194,9 @@ public final class RendererDispatcher {
 				},
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
 			);
+			// TODO: Remove
+			// For debugging because it seems like I'm rendering multiple quads for each block
 			int quadsRendered = numQuadsRendered[0];
-
 		}
 
 		private IBakedModel getModel(BlockState state, Object renderEnv) {
@@ -218,17 +234,7 @@ public final class RendererDispatcher {
 		}
 	}
 
-	public static void renderChunk(
-		RebuildTask rebuildTask,
-		ChunkRender chunkRender,
-		CompiledChunk compiledChunk,
-		RegionRenderCacheBuilder buffers,
-		BlockPos chunkPos,
-		IBlockDisplayReader world,
-		MatrixStack matrixStack,
-		Random random,
-		BlockRendererDispatcher dispatcher
-	) {
+	public static void renderChunk(RebuildTask rebuildTask, ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, MatrixStack matrixStack, Random random, BlockRendererDispatcher dispatcher) {
 		long start = System.nanoTime();
 		FluentMatrixStack matrix = new FluentMatrixStack(matrixStack);
 		try (
@@ -258,21 +264,8 @@ public final class RendererDispatcher {
 
 	private static void renderChunkFluids(ChunkRenderInfo renderer) {
 //		long start = System.nanoTime();
-//		try (Area area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE)) {
-//			FluidRenderer.render(area, light, (relativePos, fluid, block, fluidRenderer) -> {
-//				renderInLayers(
-//					chunkRender, compiledChunk, buffers, world, matrix, light, optiFine,
-//					layer -> RenderTypeLookup.canRenderInLayer(fluid, layer),
-//					(layer, buffer) -> optiFine.preRenderFluid(chunkRender, buffers, world, layer, buffer, fluid, block, worldPos),
-//					(buffer, renderEnv) -> fluidRenderer.calcFaces((face, uvs) -> {
-//						quad(
-//							buffer, matrix, false,
-//							face.v0.x, face.v0.y, face.v0.z
-//						);
-//					},
-//					(buffer, renderEnv) -> optiFine.postRenderFluid(renderEnv, buffer, chunkRender, buffers, compiledChunk)
-//				);
-//			});
+//		try (Area area = new Area(Minecraft.getInstance().level, renderer.chunkPos.subtract(ModUtil.VEC_ONE), ModUtil.CHUNK_SIZE.offset(ModUtil.VEC_TWO))) {
+//			FluidRenderer.render(renderer, area);
 //		}
 //		fluidsProfiler.recordAndLogElapsedNanosChunk(start, "fluids");
 	}
@@ -291,29 +284,6 @@ public final class RendererDispatcher {
 
 	interface RenderInLayer {
 		boolean render(RenderType layer, BufferBuilder buffer, Object renderEnv);
-	}
-
-	public static void renderInLayers(
-		ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, OptiFineProxy optiFine,
-		Predicate<RenderType> predicate,
-		BiFunction<RenderType, BufferBuilder, Object> preRender,
-		RenderInLayer render,
-		BiConsumer<BufferBuilder, Object> postRender
-	) {
-		List<RenderType> chunkBufferLayers = RenderType.chunkBufferLayers();
-		for (int i = 0, chunkBufferLayersSize = chunkBufferLayers.size(); i < chunkBufferLayersSize; i++) {
-			RenderType layer = chunkBufferLayers.get(i);
-			if (!predicate.test(layer))
-				continue;
-
-			BufferBuilder buffer = getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
-			Object renderEnv = preRender.apply(layer, buffer);
-			boolean used = render.render(layer, buffer, renderEnv);
-
-			postRender.accept(buffer, renderEnv);
-			if (used)
-				markLayerUsed(compiledChunk, optiFine, layer);
-		}
 	}
 
 	public static BufferBuilder getAndStartBuffer(ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, RenderType layer) {
