@@ -230,7 +230,7 @@ public final class RendererDispatcher {
 		}
 
 		private List<BakedQuad> getMissingQuads() {
-			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), null, random);
+			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
 		}
 	}
 

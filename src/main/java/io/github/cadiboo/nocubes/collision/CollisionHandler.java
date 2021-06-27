@@ -88,7 +88,7 @@ public final class CollisionHandler {
 				float x0 = pos.getX();
 				float y0 = pos.getY();
 				float z0 = pos.getZ();
-				if (generator instanceof SurfaceNets) {
+				if (!NoCubesConfig.Server.extraSmoothMesh && generator instanceof SurfaceNets) {
 					// Pretty disgusting, see the comments in SurfaceNets about densities and corners for why this offset exists
 					x0 += 0.5F;
 					y0 += 0.5F;

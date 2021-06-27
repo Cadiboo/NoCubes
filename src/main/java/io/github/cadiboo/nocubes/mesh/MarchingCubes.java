@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -18,7 +19,7 @@ public class MarchingCubes implements MeshGenerator {
 	@Override
 	public BlockPos getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
-		return ModUtil.VEC_ONE;
+		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
@@ -29,10 +30,11 @@ public class MarchingCubes implements MeshGenerator {
 
 	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos dims = area.size;
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 		Face face = new Face();
-		float[] data = SurfaceNets.generateDistanceField(area, isSmoothable);
+		boolean smoother = NoCubesConfig.Server.extraSmoothMesh;
+		float[] data = SurfaceNets.generateDistanceField(area, isSmoothable, smoother);
+		BlockPos dims = smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
 
 		byte[][] cubeVerts = Lookup.CUBE_VERTS;
 		short[] edgeTable = Lookup.EDGE_TABLE;

@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.util;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
@@ -12,7 +11,6 @@ import net.minecraft.world.IWorldReader;
 public class Area implements AutoCloseable {
 
 	private static final ThreadLocalArrayCache<BlockState[]> BLOCKS_CACHE = new ThreadLocalArrayCache<>(BlockState[]::new, array -> array.length);
-	private static final ThreadLocalArrayCache<FluidState[]> FLUIDS_CACHE = new ThreadLocalArrayCache<>(FluidState[]::new, array -> array.length);
 
 	public final BlockPos start;
 	public final BlockPos size;
@@ -67,8 +65,7 @@ public class Area implements AutoCloseable {
 	}
 
 	public int numBlocks() {
-		BlockPos size = this.size;
-		return size.getX() * size.getY() * size.getZ();
+		return ModUtil.length(size);
 	}
 
 	public int index(BlockPos relativePos) {

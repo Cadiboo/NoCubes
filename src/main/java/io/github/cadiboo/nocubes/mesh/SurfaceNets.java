@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
@@ -19,26 +20,36 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  */
 public class SurfaceNets implements MeshGenerator {
 
-	private static final ThreadLocalArrayCache<float[]> DENSITY_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
+	private static final ThreadLocalArrayCache<float[]> DISTANCE_FIELD_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
 
 	@Override
 	public Vector3i getPositiveAreaExtension() {
 		// Needed otherwise seams appear in the meshes because surface nets generates a mesh 1 smaller than it "should"
-		return ModUtil.VEC_ONE;
+		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public Vector3i getNegativeAreaExtension() {
 		// I'm not sure why it's needed but it is needed very much
-		return ModUtil.VEC_ONE;
+		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		generateOrThrow(generateDistanceField(area, isSmoothable), area.size, voxelAction, faceAction);
+		boolean smoother = NoCubesConfig.Server.extraSmoothMesh;
+		float[] distanceField = generateDistanceField(area, isSmoothable, smoother);
+		BlockPos dims = getDimensions(area, smoother);
+//		TestData.TestMesh testMesh = TestData.SPHERE;
+//		float[] distanceField = testMesh.generateDistanceField(area.start.getX(), area.start.getY(), area.start.getZ());
+//		BlockPos dims = testMesh.dimensions;
+		generateOrThrow(distanceField, dims, smoother, voxelAction, faceAction);
 	}
 
-	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
+	public static BlockPos getDimensions(Area area, boolean smoother) {
+		return smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
+	}
+
+	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable, boolean smoother) {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
 		BlockState[] states = area.getAndCacheBlocks();
@@ -47,39 +58,52 @@ public class SurfaceNets implements MeshGenerator {
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
 		// Because we want to preserve these features, we feed SurfaceNets the block densities, pretending that they
 		// are the corner distances and then offset the resulting mesh by 0.5
-		int length = area.numBlocks();
-		float[] densityField = DENSITY_CACHE.takeArray(length);
-		for (int i = 0; i < length; ++i) {
-			BlockState state = states[i];
-			boolean isStateSmoothable = isSmoothable.test(state);
-			densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
-		}
-		return densityField;
-
-//		int index = 0;
-//		int maxX = area.size.getX() - 1;
-//		int maxY = area.size.getY() - 1;
-//		int maxZ = area.size.getZ() - 1;
-//		for (int z = 0; z < maxZ; ++z) {
-//			for (int y = 0; y < maxY; ++y) {
-//				for (int x = 0; x < maxX; ++x, ++index) {
-//					float density = 0;
-//					int idx = ModUtil.get3dIndexInto1dArray(x, y, z, maxX + 1, maxY + 1);
-//					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, idx += maxX * (maxY - 2))
-//						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, idx += maxX - 2)
-//							for (byte neighbourX = 0; neighbourX < 2; ++neighbourX, ++idx) {
-//								BlockState state = states[idx];
-//								boolean isStateSmoothable = isSmoothable.test(state);
-//								density += ModUtil.getBlockDensity(isStateSmoothable, state);
-//							}
-//					densityField[index] = density / 8F;
-//				}
-//			}
-//		}
-//		generateOrThrow(densityField, area.size.offset(-1, -1, -1), voxelAction, faceAction);
+		return smoother ? generateDistanceField(area, isSmoothable, states) : generateDensityField(area, isSmoothable, states);
 	}
 
-	private static void generateOrThrow(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {
+	private static float[] generateDensityField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
+		int length = area.numBlocks();
+		float[] densityField = DISTANCE_FIELD_CACHE.takeArray(length);
+		for (int i = 0; i < length; ++i) {
+		   BlockState state = states[i];
+		   boolean isStateSmoothable = isSmoothable.test(state);
+		   densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
+	   }
+		return densityField;
+	}
+
+	private static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
+		int areaX = area.size.getX();
+		int areaY = area.size.getY();
+		int areaZ = area.size.getZ();
+
+		int distanceFieldSizeX = areaX - 1;
+		int distanceFieldSizeY = areaY - 1;
+		int distanceFieldSizeZ = areaZ - 1;
+		int distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
+		float[] distanceField = DISTANCE_FIELD_CACHE.takeArray(distanceFieldSize);
+
+		int index = 0;
+		for (int z = 0; z < areaZ; ++z) {
+			for (int y = 0; y < areaY; ++y) {
+				for (int x = 0; x < areaX; ++x, ++index) {
+					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
+						continue;
+					float density = 0;
+					int neighbourIndex = index;
+					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
+						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
+							for (int neighbourX = 0; neighbourX < 2; ++neighbourX, ++neighbourIndex)
+								density += ModUtil.getBlockDensity(isSmoothable, states[neighbourIndex]);
+					int distanceFieldIndex = ModUtil.get3dIndexInto1dArray(x, y, z, distanceFieldSizeX, distanceFieldSizeY);
+					distanceField[distanceFieldIndex] = density / 8F;
+				}
+			}
+		}
+		return distanceField;
+	}
+
+	private static void generateOrThrow(float[] distanceField, BlockPos dims, boolean smoother, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		final Face face = new Face();
@@ -119,7 +143,7 @@ public class SurfaceNets implements MeshGenerator {
 					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, idx += dims.getX() * (dims.getY() - 2))
 						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, idx += dims.getX() - 2)
 							for (byte neighbourX = 0; neighbourX < 2; ++neighbourX, ++corner, ++idx) {
-								float signedDistance = densityField[idx];
+								float signedDistance = distanceField[idx];
 								grid[corner] = signedDistance;
 								// Signed distance field values are negative when they fall inside the shape
 								boolean insideIsosurface = signedDistance < 0;
@@ -182,8 +206,12 @@ public class SurfaceNets implements MeshGenerator {
 					vertex.x = x + s * vertex.x;
 					vertex.y = y + s * vertex.y;
 					vertex.z = z + s * vertex.z;
-					// Because we are passing block densities instead of corner distances (see the NB comment above) we need to offset the mesh
-					vertex.add(0.5F, 0.5F, 0.5F);
+					if (!smoother) {
+						// Because we are passing block densities instead of corner distances (see the NB comment above) we need to offset the mesh
+						vertex.add(0.5F, 0.5F, 0.5F);
+					} else {
+						vertex.add(1, 1, 1);
+					}
 					//Add vertex to buffer
 					verticesBuffer[bufferPointer] = vertex;
 
@@ -209,15 +237,19 @@ public class SurfaceNets implements MeshGenerator {
 
 						//Remember to flip orientation depending on the sign of the corner.
 						if ((mask & 1) != 0) {
-							face.v0.set(verticesBuffer[bufferPointer]);
-							face.v1.set(verticesBuffer[bufferPointer - dv]);
-							face.v2.set(verticesBuffer[bufferPointer - du - dv]);
-							face.v3.set(verticesBuffer[bufferPointer - du]);
+							face.set(
+								verticesBuffer[bufferPointer],
+								verticesBuffer[bufferPointer - dv],
+								verticesBuffer[bufferPointer - du - dv],
+								verticesBuffer[bufferPointer - du]
+							);
 						} else {
-							face.v0.set(verticesBuffer[bufferPointer]);
-							face.v1.set(verticesBuffer[bufferPointer - du]);
-							face.v2.set(verticesBuffer[bufferPointer - du - dv]);
-							face.v3.set(verticesBuffer[bufferPointer - dv]);
+							face.set(
+								verticesBuffer[bufferPointer],
+								verticesBuffer[bufferPointer - du],
+								verticesBuffer[bufferPointer - du - dv],
+								verticesBuffer[bufferPointer - dv]
+							);
 						}
 						pos.set(x, y, z);
 						if (!faceAction.apply(pos, face))

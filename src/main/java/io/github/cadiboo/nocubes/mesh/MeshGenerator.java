@@ -87,7 +87,7 @@ public interface MeshGenerator {
 	/* private */
 	static int validateMeshOffset(int meshOffset) {
 		assert meshOffset <= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert meshOffset > -2 : "Mesh generators won't require more than 2 extra blocks on each axis";
+		assert meshOffset > -3 : "Mesh generators won't require more than 2 extra blocks on each axis";
 		return meshOffset;
 	}
 

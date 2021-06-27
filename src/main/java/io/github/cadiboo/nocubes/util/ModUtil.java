@@ -44,6 +44,10 @@ public class ModUtil {
 		return block.getStateDefinition().getPossibleStates();
 	}
 
+	public static int length(BlockPos size) {
+		return size.getX() * size.getY() * size.getZ();
+	}
+
 	public interface Traverser {
 		void accept(BlockState state, BlockPos.Mutable pos, int zyxIndex);
 	}
