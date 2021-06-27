@@ -14,7 +14,6 @@ import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
@@ -36,9 +35,9 @@ import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static net.minecraft.block.Blocks.*;
-import static net.minecraft.state.properties.BlockStateProperties.*;
 
 /**
  * The Config for NoCubes.
@@ -467,117 +466,33 @@ public final class NoCubesConfig {
 		private static final Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
 
 		static {
-			List<BlockState> vanilla = Lists.newArrayList(
-				STONE.defaultBlockState(),
-				GRASS_BLOCK.defaultBlockState().setValue(SNOWY, false),
-				GRASS_BLOCK.defaultBlockState().setValue(SNOWY, true),
+			// Add all possible BlockStates for these blocks
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[]{
+				STONE, GRANITE, DIORITE, ANDESITE,
+				DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
+				BEDROCK,
+				SAND, RED_SAND,
+				SANDSTONE, RED_SANDSTONE,
+				GRAVEL,
+				COAL_ORE, IRON_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
+				INFESTED_STONE,
+				BONE_BLOCK,
+				GRASS_PATH,
+				CLAY, TERRACOTTA, WHITE_TERRACOTTA, ORANGE_TERRACOTTA, MAGENTA_TERRACOTTA, LIGHT_BLUE_TERRACOTTA, YELLOW_TERRACOTTA, LIME_TERRACOTTA, PINK_TERRACOTTA, GRAY_TERRACOTTA, LIGHT_GRAY_TERRACOTTA, CYAN_TERRACOTTA, PURPLE_TERRACOTTA, BLUE_TERRACOTTA, BROWN_TERRACOTTA, GREEN_TERRACOTTA, RED_TERRACOTTA, BLACK_TERRACOTTA,
+				SNOW, SNOW_BLOCK, ICE, PACKED_ICE, FROSTED_ICE,
+				NETHERRACK, SOUL_SAND, SOUL_SOIL, BASALT, MAGMA_BLOCK, GLOWSTONE, NETHER_WART_BLOCK, CRIMSON_STEM, WARPED_NYLIUM, WARPED_WART_BLOCK, WARPED_STEM,
+				END_STONE,
+				OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG,
+				OAK_LEAVES, SPRUCE_LEAVES, BIRCH_LEAVES, JUNGLE_LEAVES, ACACIA_LEAVES, DARK_OAK_LEAVES,
+			}).flatMap(block -> ModUtil.getStates(block).stream()).collect(Collectors.toList()));
 
-				STONE.defaultBlockState(),
-				GRANITE.defaultBlockState(),
-				DIORITE.defaultBlockState(),
-				ANDESITE.defaultBlockState(),
+			// Add each of these individual BlockStates
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new BlockState[]{
 
-				DIRT.defaultBlockState(),
-				COARSE_DIRT.defaultBlockState(),
+			}).collect(Collectors.toList()));
 
-				PODZOL.defaultBlockState().setValue(SNOWY, false),
-				PODZOL.defaultBlockState().setValue(SNOWY, true),
-
-				SAND.defaultBlockState(),
-				RED_SAND.defaultBlockState(),
-
-				SANDSTONE.defaultBlockState(),
-
-				RED_SANDSTONE.defaultBlockState(),
-
-				GRAVEL.defaultBlockState(),
-
-				COAL_ORE.defaultBlockState(),
-				IRON_ORE.defaultBlockState(),
-				GOLD_ORE.defaultBlockState(),
-				REDSTONE_ORE.defaultBlockState().setValue(LIT, false),
-				REDSTONE_ORE.defaultBlockState().setValue(LIT, true),
-				DIAMOND_ORE.defaultBlockState(),
-				LAPIS_ORE.defaultBlockState(),
-				EMERALD_ORE.defaultBlockState(),
-				NETHER_QUARTZ_ORE.defaultBlockState(),
-				NETHER_GOLD_ORE.defaultBlockState(),
-
-				INFESTED_STONE.defaultBlockState(),
-				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.X),
-				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.Y),
-				BONE_BLOCK.defaultBlockState().setValue(AXIS, Direction.Axis.Z),
-
-				GRASS_PATH.defaultBlockState(),
-
-				CLAY.defaultBlockState(),
-				TERRACOTTA.defaultBlockState(),
-
-				WHITE_TERRACOTTA.defaultBlockState(),
-				ORANGE_TERRACOTTA.defaultBlockState(),
-				MAGENTA_TERRACOTTA.defaultBlockState(),
-				LIGHT_BLUE_TERRACOTTA.defaultBlockState(),
-				YELLOW_TERRACOTTA.defaultBlockState(),
-				LIME_TERRACOTTA.defaultBlockState(),
-				PINK_TERRACOTTA.defaultBlockState(),
-				GRAY_TERRACOTTA.defaultBlockState(),
-				LIGHT_GRAY_TERRACOTTA.defaultBlockState(),
-				CYAN_TERRACOTTA.defaultBlockState(),
-				PURPLE_TERRACOTTA.defaultBlockState(),
-				BLUE_TERRACOTTA.defaultBlockState(),
-				BROWN_TERRACOTTA.defaultBlockState(),
-				GREEN_TERRACOTTA.defaultBlockState(),
-				RED_TERRACOTTA.defaultBlockState(),
-				BLACK_TERRACOTTA.defaultBlockState(),
-
-				ICE.defaultBlockState(),
-				PACKED_ICE.defaultBlockState(),
-				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 0),
-				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 1),
-				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 2),
-				FROSTED_ICE.defaultBlockState().setValue(AGE_3, 3),
-
-				SNOW.defaultBlockState().setValue(LAYERS, 1),
-				SNOW.defaultBlockState().setValue(LAYERS, 2),
-				SNOW.defaultBlockState().setValue(LAYERS, 3),
-				SNOW.defaultBlockState().setValue(LAYERS, 4),
-				SNOW.defaultBlockState().setValue(LAYERS, 5),
-				SNOW.defaultBlockState().setValue(LAYERS, 6),
-				SNOW.defaultBlockState().setValue(LAYERS, 7),
-				SNOW.defaultBlockState().setValue(LAYERS, 8),
-				SNOW_BLOCK.defaultBlockState(),
-
-				BEDROCK.defaultBlockState(),
-
-				NETHERRACK.defaultBlockState(),
-				SOUL_SAND.defaultBlockState(),
-				SOUL_SOIL.defaultBlockState(),
-				BASALT.defaultBlockState(),
-				MAGMA_BLOCK.defaultBlockState(),
-				GLOWSTONE.defaultBlockState(),
-				NETHER_WART_BLOCK.defaultBlockState(),
-				CRIMSON_STEM.defaultBlockState(),
-				WARPED_NYLIUM.defaultBlockState(),
-				WARPED_WART_BLOCK.defaultBlockState(),
-				WARPED_STEM.defaultBlockState(),
-
-				END_STONE.defaultBlockState(),
-
-				MYCELIUM.defaultBlockState().setValue(SNOWY, false),
-				MYCELIUM.defaultBlockState().setValue(SNOWY, true)
-			);
-
-			for (Block log : new Block[]{OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG}) {
-				for (Direction.Axis axis : Direction.Axis.values())
-					vanilla.add(log.defaultBlockState().setValue(AXIS, axis));
-			}
-
-			for (Block leaves : new Block[]{OAK_LEAVES, SPRUCE_LEAVES, BIRCH_LEAVES, JUNGLE_LEAVES, ACACIA_LEAVES, DARK_OAK_LEAVES}) {
-				for (int distance = 1; distance <= 7; ++distance)
-					vanilla.add(leaves.defaultBlockState().setValue(DISTANCE, distance));
-			}
-
-			String[] modded = {
+			// Add these modded BlockStates
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(
 				"biomesoplenty:grass[snowy=false,variant=sandy]",
 				"biomesoplenty:dirt[coarse=false,variant=sandy]",
 				"biomesoplenty:white_sand",
@@ -598,10 +513,8 @@ public final class NoCubesConfig {
 				"iceandfire:chared_stone",
 				"iceandfire:frozen_grass_path",
 				"notenoughroofs:copper_ore",
-				"rustic:slate",
-			};
-			DEFAULT_SMOOTHABLES.addAll(vanilla);
-			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(modded)));
+				"rustic:slate"
+			)));
 		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
