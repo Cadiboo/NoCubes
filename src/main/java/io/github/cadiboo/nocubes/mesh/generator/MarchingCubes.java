@@ -3,16 +3,12 @@ package io.github.cadiboo.nocubes.mesh.generator;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.IBlockAccess;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.function.Predicate;
 
 /**
@@ -21,20 +17,20 @@ import java.util.function.Predicate;
 public final class MarchingCubes implements MeshGenerator {
 
 	@Override
-	public Vec3i getPositiveAreaExtension() {
+	public BlockPos getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public Vec3i getNegativeAreaExtension() {
+	public BlockPos getNegativeAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		byte[] dims = {(byte) (area.end.getX() - area.start.getX()), (byte) (area.end.getY() - area.start.getY()), (byte) (area.end.getZ() - area.start.getZ())};
+		byte[] dims = {(byte) (area.size.getX()), (byte) (area.size.getY()), (byte) (area.size.getZ())};
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		Face face = new Face();
 		float[] data = MeshGenerator.generateCornerDistanceField(area, isSmoothable);
@@ -58,7 +54,7 @@ public final class MarchingCubes implements MeshGenerator {
 					short cube_index = 0;
 					for (byte i = 0; i < 8; ++i) {
 						byte[] v = cubeVerts[i];
-						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+						float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
 					}
@@ -68,9 +64,8 @@ public final class MarchingCubes implements MeshGenerator {
 						continue;
 					}
 					for (byte i = 0; i < 12; ++i) {
-						if ((edge_mask & (1 << i)) == 0) {
+						if ((edge_mask & (1 << i)) == 0)
 							continue;
-						}
 						edges[i] = vertices.size();
 						float[] nv = {0, 0, 0};
 
@@ -105,7 +100,7 @@ public final class MarchingCubes implements MeshGenerator {
 				}
 	}
 
-	private static interface Lookup {
+	private interface Lookup {
 
 
 		short[] EDGE_TABLE = {

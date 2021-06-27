@@ -10,7 +10,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
@@ -49,13 +48,13 @@ public final class OldNoCubes implements MeshGenerator {
 	}
 
 	@Override
-	public Vec3i getPositiveAreaExtension() {
+	public BlockPos getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public Vec3i getNegativeAreaExtension() {
+	public BlockPos getNegativeAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
@@ -69,7 +68,7 @@ public final class OldNoCubes implements MeshGenerator {
 		Face face = new Face();
 		IBlockAccess world = area.world;
 
-		for (MutableBlockPos pos : BlockPos.getAllInBoxMutable(area.start, area.end.add(-1, -1, -1))) {
+		for (MutableBlockPos pos : BlockPos.getAllInBoxMutable(area.start, area.start.add(area.size).add(-1, -1, -1))) {
 			IBlockState state = world.getBlockState(pos);
 
 			int y = pos.getY();

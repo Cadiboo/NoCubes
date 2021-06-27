@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
@@ -22,9 +23,9 @@ public interface MeshGenerator {
 
 	void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
 
-	Vec3i getPositiveAreaExtension();
+	BlockPos getPositiveAreaExtension();
 
-	Vec3i getNegativeAreaExtension();
+	BlockPos getNegativeAreaExtension();
 
 	interface FaceAction {
 
@@ -54,9 +55,9 @@ public interface MeshGenerator {
 		int startX = area.start.getX();
 		int startY = area.start.getY();
 		int startZ = area.start.getZ();
-		int maxX = area.end.getX() - startX + 1;
-		int maxY = area.end.getY() - startY + 1;
-		int maxZ = area.end.getZ() - startZ + 1;
+		int maxX = area.size.getX() + 1;
+		int maxY = area.size.getY() + 1;
+		int maxZ = area.size.getZ() + 1;
 		MutableBlockPos pos = new MutableBlockPos();
 
 		final float[] scalarFieldData = new float[maxX * maxY * maxZ];
