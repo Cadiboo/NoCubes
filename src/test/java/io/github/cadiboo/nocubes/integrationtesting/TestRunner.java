@@ -21,9 +21,9 @@ public final class TestRunner {
 
 	@SubscribeEvent
 	public static void runTests(FMLServerStartedEvent event) {
-		final TestRepository testRepository = new TestRepository();
-		final MinecraftServer server = event.getServer();
-		final long fails = testRepository.tests.parallelStream()
+		TestRepository testRepository = new TestRepository();
+		MinecraftServer server = event.getServer();
+		long fails = testRepository.tests.parallelStream()
 			.filter(test -> runTestWithCatch(test, server))
 			.count();
 		if (fails > 0)
@@ -38,7 +38,7 @@ public final class TestRunner {
 			event.getServer().halt(false);
 	}
 
-	private static void log(final MinecraftServer server, final ITextComponent component) {
+	private static void log(MinecraftServer server, ITextComponent component) {
 		server.sendMessage(component, Util.NIL_UUID);
 		LOGGER.info(component.getString());
 	}
@@ -46,12 +46,14 @@ public final class TestRunner {
 	/**
 	 * @return if the test FAILED
 	 */
-	private static boolean runTestWithCatch(final Test test, final MinecraftServer server) {
+	private static boolean runTestWithCatch(Test test, MinecraftServer server) {
 		try {
 			test.action.run();
-		} catch (Exception e) {
+		} catch (OutOfMemoryError | InternalError e) {
+			throw e;
+		} catch (Throwable t) {
 			log(server, new StringTextComponent("TEST FAILED: " + test.name).withStyle(TextFormatting.RED));
-			e.printStackTrace();
+			t.printStackTrace();
 			return true;
 		}
 		return false;
