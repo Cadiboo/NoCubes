@@ -56,19 +56,16 @@ public class SurfaceNets implements MeshGenerator {
 		// NB: SurfaceNets expects to be working on the signed distance at the corner of each block
 		// To get this we would have to average the densities of each block & its neighbours
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
-		// Because we want to preserve these features, we feed SurfaceNets the block densities, pretending that they
+		// Because we want to preserve these features, we feed SurfaceNets the inverted block densities, pretending that they
 		// are the corner distances and then offset the resulting mesh by 0.5
-		return smoother ? generateDistanceField(area, isSmoothable, states) : generateDensityField(area, isSmoothable, states);
+		return smoother ? generateDistanceField(area, isSmoothable, states) : generateNegativeDensityField(area, isSmoothable, states);
 	}
 
-	private static float[] generateDensityField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
+	private static float[] generateNegativeDensityField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
 		int length = area.numBlocks();
 		float[] densityField = DISTANCE_FIELD_CACHE.takeArray(length);
-		for (int i = 0; i < length; ++i) {
-		   BlockState state = states[i];
-		   boolean isStateSmoothable = isSmoothable.test(state);
-		   densityField[i] = ModUtil.getBlockDensity(isStateSmoothable, state);
-	   }
+		for (int i = 0; i < length; ++i)
+			densityField[i] = -ModUtil.getBlockDensity(isSmoothable, states[i]);
 		return densityField;
 	}
 
@@ -89,14 +86,14 @@ public class SurfaceNets implements MeshGenerator {
 				for (int x = 0; x < areaX; ++x, ++index) {
 					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
 						continue;
-					float density = 0;
+					float combinedDensity = 0;
 					int neighbourIndex = index;
 					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
 						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
 							for (int neighbourX = 0; neighbourX < 2; ++neighbourX, ++neighbourIndex)
-								density += ModUtil.getBlockDensity(isSmoothable, states[neighbourIndex]);
+								combinedDensity += ModUtil.getBlockDensity(isSmoothable, states[neighbourIndex]);
 					int distanceFieldIndex = ModUtil.get3dIndexInto1dArray(x, y, z, distanceFieldSizeX, distanceFieldSizeY);
-					distanceField[distanceFieldIndex] = density / 8F;
+					distanceField[distanceFieldIndex] = -combinedDensity / 8F;
 				}
 			}
 		}
