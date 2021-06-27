@@ -118,10 +118,10 @@ public final /* inline */ class Face {
 
 	public void flip() {
 		set(
+			v0.x, v0.y, v0.z,
 			v3.x, v3.y, v3.z,
 			v2.x, v2.y, v2.z,
-			v1.x, v1.y, v1.z,
-			v0.x, v0.y, v0.z
+			v1.x, v1.y, v1.z
 		);
 	}
 }
