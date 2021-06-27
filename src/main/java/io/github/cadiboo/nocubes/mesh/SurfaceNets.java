@@ -183,19 +183,20 @@ public class SurfaceNets implements MeshGenerator {
 						final float edgeEndValue = grid[edgeEnd];
 						//Compute point of intersection (the point where the isosurface is and the vertex is)
 						float t = edgeStartValue - edgeEndValue;
-						if (Math.abs(t) > 0.00000001F)
-							t = edgeStartValue / t;
-						else
+						if (Math.abs(t) <= 0.00000001F)
 							continue;
+						t = edgeStartValue / t;
 
 						//Interpolate vertices and add up intersections (this can be done without multiplying)
-						for (int j = 0, k = 1; j < 3; ++j, k <<= 1) {
-							final int a = edgeStart & k;
-							final int b = edgeEnd & k;
-							if (a != b)
-								vertexUntilIFigureOutTheInterpolationAndIntersection[j] += a != 0 ? 1F - t : t;
+						for (int axis = 0, axisMask = 1; axis < 3; ++axis, axisMask <<= 1) {
+							int startAxisValue = edgeStart & axisMask;
+							int endAxisValue = edgeEnd & axisMask;
+							float axisInterpValue;
+							if (startAxisValue != endAxisValue)
+								axisInterpValue = startAxisValue != 0 ? 1F - t : t;
 							else
-								vertexUntilIFigureOutTheInterpolationAndIntersection[j] += a != 0 ? 1F : 0;
+								axisInterpValue = startAxisValue != 0 ? 1F : 0;
+							vertexUntilIFigureOutTheInterpolationAndIntersection[axis] += axisInterpValue;
 						}
 					}
 
