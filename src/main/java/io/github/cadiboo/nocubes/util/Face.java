@@ -8,10 +8,10 @@ import net.minecraft.util.math.vector.Matrix4f;
  */
 public final /* inline */ class Face {
 
-	public /* final */ Vec v0;
-	public /* final */ Vec v1;
-	public /* final */ Vec v2;
-	public /* final */ Vec v3;
+	public final Vec v0;
+	public final Vec v1;
+	public final Vec v2;
+	public final Vec v3;
 
 	public Face() {
 		this(new Vec(), new Vec(), new Vec(), new Vec());
@@ -68,7 +68,7 @@ public final /* inline */ class Face {
 		return this;
 	}
 
-	public Face set(Vec v0,Vec v1,Vec v2,Vec v3	) {
+	public Face set(Vec v0, Vec v1, Vec v2, Vec v3) {
 		this.v0.set(v0);
 		this.v1.set(v1);
 		this.v2.set(v2);
@@ -116,4 +116,12 @@ public final /* inline */ class Face {
 		return this;
 	}
 
+	public void flip() {
+		set(
+			v3.x, v3.y, v3.z,
+			v2.x, v2.y, v2.z,
+			v1.x, v1.y, v1.z,
+			v0.x, v0.y, v0.z
+		);
+	}
 }

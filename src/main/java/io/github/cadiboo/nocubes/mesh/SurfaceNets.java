@@ -249,6 +249,7 @@ public class SurfaceNets implements MeshGenerator {
 								verticesBuffer[bufferPointer - dv]
 							);
 						}
+						face.flip(); // TODO: I should probably fix this at some point
 						pos.set(x, y, z);
 						if (!faceAction.apply(pos, face))
 							return;
