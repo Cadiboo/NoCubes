@@ -25,7 +25,7 @@ public class SurfaceNets implements MeshGenerator {
 	@Override
 	public Vector3i getPositiveAreaExtension() {
 		// Needed otherwise seams appear in the meshes because surface nets generates a mesh 1 smaller than it "should"
-		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
+		return ModUtil.VEC_ONE;
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class SurfaceNets implements MeshGenerator {
 		// (x, y, z) -> [z * fieldSizeX * fieldSizeY + y * fieldSizeX + x]
 		// So the multiplier for X is 1, the multiplier for Y is fieldSizeX and the multiplier for z is fieldSizeX * fieldSizeY
 		final int[] axisMultipliers = {1, (dims.getX() + 1), (dims.getX() + 1) * (dims.getY() + 1)};
-		final float[] grid = new float[8];
+		final float[] cornerDistances = new float[8];
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
 
@@ -124,7 +124,7 @@ public class SurfaceNets implements MeshGenerator {
 		final Vec[] verticesBuffer = new Vec[axisMultipliers[2] * 2];
 		final float[] vertexUntilIFigureOutTheInterpolationAndIntersection = {0, 0, 0};
 
-		//March over the voxel grid
+		//March over the voxel cornerDistances
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX(), buf_no ^= 1, axisMultipliers[2] = -axisMultipliers[2]) {
 
 			//bufferPointer is the pointer into the buffer we are going to use.
@@ -136,18 +136,18 @@ public class SurfaceNets implements MeshGenerator {
 
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-					int mask = 0, corner = 0, idx = n;
-					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, idx += dims.getX() * (dims.getY() - 2))
-						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, idx += dims.getX() - 2)
-							for (byte neighbourX = 0; neighbourX < 2; ++neighbourX, ++corner, ++idx) {
-								float signedDistance = distanceField[idx];
-								grid[corner] = signedDistance;
+					int mask = 0, corner = 0, cornerIndex = n;
+					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, cornerIndex += dims.getX() * (dims.getY() - 2))
+						for (int cornerY = 0; cornerY < 2; ++cornerY, cornerIndex += dims.getX() - 2)
+							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++cornerIndex) {
+								float signedDistance = distanceField[cornerIndex];
+								cornerDistances[corner] = signedDistance;
 								// Signed distance field values are negative when they fall inside the shape
 								boolean insideIsosurface = signedDistance < 0;
 								mask |= insideIsosurface ? (1 << corner) : 0;
 							}
 
-					if (mask == 0 && !voxelAction.apply(pos.set(x, y, z), (grid[0] + 1) / 2F))
+					if (mask == 0 && !voxelAction.apply(pos.set(x, y, z), getAmountInsideIsosurface(smoother, cornerDistances)))
 						return;
 
 					// Check for early termination if cell does not intersect boundary
@@ -175,9 +175,9 @@ public class SurfaceNets implements MeshGenerator {
 						// They are also the indices of which corner the vertex is for
 						final int edgeStart = CUBE_EDGES[edge << 1];
 						final int edgeEnd = CUBE_EDGES[(edge << 1) + 1];
-						//Unpack grid values
-						final float edgeStartValue = grid[edgeStart];
-						final float edgeEndValue = grid[edgeEnd];
+						//Unpack cornerDistances values
+						final float edgeStartValue = cornerDistances[edgeStart];
+						final float edgeEndValue = cornerDistances[edgeEnd];
 						//Compute point of intersection (the point where the isosurface is and the vertex is)
 						float t = edgeStartValue - edgeEndValue;
 						if (Math.abs(t) <= 0.00000001F)
@@ -257,6 +257,21 @@ public class SurfaceNets implements MeshGenerator {
 				}
 			}
 		}
+	}
+
+	private static float getAmountInsideIsosurface(boolean smoother, float[] cornerDistances) {
+		if (!smoother) {
+			// cornerDistances is not actually the values of the corners, it's the values of the neighbouring cubes
+			float voxelDistance = cornerDistances[0];
+			float voxelDensity = -voxelDistance;
+			return (voxelDensity + 1) / 2F;
+		}
+		float combinedDistance = 0;
+		for (int corner = 0; corner < 8; ++corner)
+			combinedDistance += cornerDistances[corner];
+		float averageDistance = combinedDistance / 8F;
+		float voxelDensity = -averageDistance;
+		return (voxelDensity + 1) / 2F;
 	}
 
 	static final class Lookup {
