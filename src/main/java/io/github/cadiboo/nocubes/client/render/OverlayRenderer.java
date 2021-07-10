@@ -176,12 +176,14 @@ public final class OverlayRenderer {
 			}
 		}
 
+		final int collisionsRenderRadius = 10;
+
 		// Draw nearby collisions in green and player intersecting collisions in red
 		if (NoCubesConfig.Client.debugRenderCollisions) {
 			Color intersectingColor = new Color(1, 0, 0, 0.4F);
 			Color deviatingColor = new Color(0, 1, 0, 0.4F);
 			VoxelShape viewerShape = VoxelShapes.create(viewer.getBoundingBox());
-			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(1)).forEach(voxelShape -> {
+			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(collisionsRenderRadius)).forEach(voxelShape -> {
 				boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.AND);
 				drawShape(matrixStack, bufferBuilder, voxelShape, BlockPos.ZERO, camera, intersects ? intersectingColor : deviatingColor);
 			});
@@ -190,14 +192,16 @@ public final class OverlayRenderer {
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
 			Color color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
-			BlockPos size = new BlockPos(10, 10, 10);
-			BlockPos start = viewer.blockPosition().offset(-size.getX() / 2, -size.getY() / 2, -size.getZ() / 2);
-			try (Area area = new Area(world, start, size, generator)) {
-				CollisionHandler.generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
-					VoxelShape voxelShape = VoxelShapes.box(x0, y0, z0, x1, y1, z1);
-					drawShape(matrixStack, bufferBuilder, voxelShape, area.start, camera, color);
-				});
-			}
+			BlockPos start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
+			CollisionHandler.forEachCollisionRelativeToStart(world, new BlockPos.Mutable(),
+				start.getX(), start.getX() + collisionsRenderRadius * 2,
+				start.getY(), start.getY() + collisionsRenderRadius * 2,
+				start.getZ(), start.getZ() + collisionsRenderRadius * 2,
+				shape -> {
+					drawShape(matrixStack, bufferBuilder, shape, start, camera, color);
+					return true;
+				}
+			);
 		}
 
 		// Measure the performance of meshing nearby blocks (and maybe render the result)

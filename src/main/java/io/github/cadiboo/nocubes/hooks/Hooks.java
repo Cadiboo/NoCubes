@@ -18,18 +18,23 @@ import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.util.AxisRotation;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockDisplayReader;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.util.math.shapes.VoxelShapeSpliterator;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nullable;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Random;
 
 /**
@@ -157,62 +162,54 @@ public final class Hooks {
 	// region Collisions
 
 	/**
-	 * Called from: {@link BlockState#getCollisionShape(IBlockReader, BlockPos)}} before any other logic
+	 * Called from: {@link VoxelShapes#collide} right before {@link BlockState#hasLargeCollisionShape()} is called
+	 * Called from: {@link VoxelShapeSpliterator#tryAdvance} right before {@link BlockState#hasLargeCollisionShape()} is called
 	 * <p>
-	 * Hooking this makes that collisions work for blockstates with a cache.
+	 * Hooking this disables vanilla collisions for smoothable BlockStates.
 	 *
-	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 * @return If the state can be collided with
 	 */
-	public static @Nullable VoxelShape getCollisionShapeOverride(BlockState state, IBlockReader world, BlockPos pos) {
-		SelfCheck.getCollisionShapeNoContextOverride = true;
-		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
-			return CollisionHandler.getCollisionShape(state, world, pos, ISelectionContext.empty());
-		return null;
+	@OnlyIn(Dist.CLIENT)
+	public static boolean canBlockStateCollide(BlockState state) {
+//		SelfCheck.canBlockStateCollide = true;
+		return !NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state);
 	}
 
 	/**
-	 * Called from: {@link BlockState#getCollisionShape(IBlockReader, BlockPos, ISelectionContext)}} before any other logic
+	 * Called from: {@link VoxelShapes#collide} right before {@link BlockState#hasLargeCollisionShape()} is called
 	 * <p>
-	 * Hooking this makes collisions work.
+	 * Hooking this disables vanilla collisions for smoothable BlockStates.
 	 *
-	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 * @return If the state can be collided with
 	 */
-	public static @Nullable VoxelShape getCollisionShapeOverride(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context) {
-		SelfCheck.getCollisionShapeWithContextOverride = true;
-		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
-			return CollisionHandler.getCollisionShape(state, world, pos, context);
-		return null;
+	public static double collide(
+		AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx,
+		AxisRotation rotation, AxisRotation inverseRotation, BlockPos.Mutable pos,
+		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
+	) {
+		if (!NoCubesConfig.Server.collisionsEnabled)
+			return motion;
+		// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
+		return CollisionHandler.collideAxisInArea(
+			aabb, world, motion, ctx,
+			rotation, inverseRotation, pos,
+			minX, maxX, minY, maxY, minZ, maxZ
+		);
 	}
 
-	/**
-	 * Called from: {@link BlockState#isCollisionShapeFullBlock(IBlockReader, BlockPos)}} before any other logic
-	 * <p>
-	 * Hooking this makes collisions work for normally solid blocks like stone.
-	 * <p>
-	 * TODO: This is used by {@link Block#getShadeBrightness(BlockState, IBlockReader, BlockPos)} so always returning false breaks AO when collisions are on.
-	 * Possible fix: Check if we are on the server or the client thread before running the check?
-	 *
-	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
-	 */
-	public static @Nullable Boolean isCollisionShapeFullBlockOverride(BlockState state, IBlockReader reader, BlockPos pos) {
-		SelfCheck.isCollisionShapeFullBlockOverride = true;
-		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
-			return false;
-		return null;
-	}
-
-	/**
-	 * Called from: {@link BlockState#hasLargeCollisionShape()} before any other logic
-	 * <p>
-	 * Hooking this somehow stops us falling through 1 block wide holes and under the ground.
-	 *
-	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
-	 */
-	public static @Nullable Boolean hasLargeCollisionShapeOverride(BlockState state) {
-		SelfCheck.hasLargeCollisionShapeOverride = true;
-		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
+	public static Deque<VoxelShape> createNoCubesCollisionList(ICollisionReader world, AxisAlignedBB area, BlockPos.Mutable pos) {
+		Deque<VoxelShape> shapes = new ArrayDeque<>();
+		int i = MathHelper.floor(area.minX - 1.0E-7D) - 1;
+		int j = MathHelper.floor(area.maxX + 1.0E-7D) + 1;
+		int k = MathHelper.floor(area.minY - 1.0E-7D) - 1;
+		int l = MathHelper.floor(area.maxY + 1.0E-7D) + 1;
+		int i1 = MathHelper.floor(area.minZ - 1.0E-7D) - 1;
+		int j1 = MathHelper.floor(area.maxZ + 1.0E-7D) + 1;
+		CollisionHandler.forEachCollisionRelativeToStart(world, pos, i, j, k, l, i1, j1, shape -> {
+			shapes.add(shape.move(i, k, i1));
 			return true;
-		return null;
+		});
+		return shapes;
 	}
 
 	/**

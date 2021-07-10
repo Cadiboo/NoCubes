@@ -12,68 +12,79 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.FallingBlockEntity;
+import net.minecraft.util.AxisRotation;
+import net.minecraft.util.Direction.Axis;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.world.IBlockReader;
+import net.minecraft.world.ICollisionReader;
+import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 
 import java.util.function.Predicate;
 
+import static net.minecraft.util.math.BlockPos.*;
+
 public final class CollisionHandler {
 
-	public static VoxelShape getCollisionShape(BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
-		boolean canCollide = state.getBlock().hasCollision;
+	public static double collideAxisInArea(
+		AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx,
+		AxisRotation rotation, AxisRotation inverseRotation, Mutable pos,
+		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
+	) {
+		if (world instanceof World)
+			((World) world).getProfiler().push("NoCubes collisions");
 		try {
-			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, context);
+			double[] motionRef = {motion};
+			Axis axis = inverseRotation.cycle(Axis.Z);
+			Predicate<VoxelShape> predicate = shape -> {
+				assert Math.abs(motionRef[0]) >= 1.0E-7D;
+				motionRef[0] = shape.collide(axis, aabb, motionRef[0]);
+				if (Math.abs(motionRef[0]) < 1.0E-7D) {
+					motionRef[0] = 0;
+					return false;
+				}
+				return true;
+			};
+
+			// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
+			forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
+			return motionRef[0];
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
-			return canCollide ? VoxelShapes.block() : VoxelShapes.empty();
+			return motion;
+		} finally {
+			if (world instanceof World)
+				((World) world).getProfiler().pop();
 		}
 	}
 
-	// TODO: Why is the 'cache' of every blockstate storing an empty VoxelShape... this is causing issues like
-	//  grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
-	//  and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
-	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, IBlockReader reader, BlockPos blockPos, ISelectionContext context) {
-		if (!canCollide)
-			return VoxelShapes.empty();
-
+	public static void forEachCollisionRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
 		assert NoCubesConfig.Server.collisionsEnabled;
-		assert NoCubes.smoothableHandler.isSmoothable(state);
-
-//		if (context.getEntity( instanceof PlayerEntity)
-//			// Noclip for debugging
-//			return VoxelShapes.empty();
-
-		Entity entity = context.getEntity();
-		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
-			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
-			entity == null || reader.getBlockState(blockPos) != state
-		)
-			return state.getShape(reader, blockPos);
-
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		VoxelShape[] ref = {VoxelShapes.empty()};
-		if (reader instanceof World)
-			((World) reader).getProfiler().push("NoCubes collisions");
-		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
+
+		BlockPos start = new BlockPos(minX, minY, minZ);
+		// Size is mutable and only correct until the Area constructor call
+		BlockPos size = pos.set(
+			maxX - minX,
+			maxY - minY,
+			maxZ - minZ
+		);
+		try (Area area = new Area(world, start, size, generator)) {
 			// See MeshGenerator#translateToMeshStart for an explanation of this
-			float dx = MeshGenerator.validateMeshOffset(area.start.getX() - blockPos.getX());
-			float dy = MeshGenerator.validateMeshOffset(area.start.getY() - blockPos.getY());
-			float dz = MeshGenerator.validateMeshOffset(area.start.getZ() - blockPos.getZ());
-			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
-				VoxelShape shape = VoxelShapes.box(x0 + dx, y0 + dy, z0 + dz, x1 + dx, y1 + dy, z1 + dz);
-				ref[0] = VoxelShapes.joinUnoptimized(ref[0], shape, IBooleanFunction.OR);
-			});
-		} finally {
-			if (reader instanceof World)
-				((World) reader).getProfiler().pop();
+			double dx = MeshGenerator.validateMeshOffset(area.start.getX() - start.getX());
+			double dy = MeshGenerator.validateMeshOffset(area.start.getY() - start.getY());
+			double dz = MeshGenerator.validateMeshOffset(area.start.getZ() - start.getZ());
+			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> predicate.test(VoxelShapes.box(
+				x0 + dx, y0 + dy, z0 + dz,
+				x1 + dx, y1 + dy, z1 + dz
+			)));
 		}
-		return ref[0];//.optimize();
 	}
 
 	public static void generate(Area area, MeshGenerator generator, IShapeConsumer consumer) {
@@ -94,7 +105,7 @@ public final class CollisionHandler {
 					y0 += 0.5F;
 					z0 += 0.5F;
 				}
-				consumer.accept(
+				return consumer.accept(
 					x0, y0, z0,
 					x0 + 1, y0 + 1, z0 + 1
 				);
@@ -108,16 +119,30 @@ public final class CollisionHandler {
 				// Keeps flat surfaces collidable but also allows super rough terrain
 				faceNormal.multiply(0.00001F);
 
-			generateShape(centre, faceNormal, consumer, face.v0);
-			generateShape(centre, faceNormal, consumer, face.v1);
-			generateShape(centre, faceNormal, consumer, face.v2);
-			generateShape(centre, faceNormal, consumer, face.v3);
+			if (isSmoothable.test(area.getBlockState(pos))) {
+				int x0 = pos.getX();
+				int y0 = pos.getY();
+				int z0 = pos.getZ();
+				return consumer.accept(
+					x0, y0, z0,
+					x0 + 1, y0 + 1, z0 + 1
+				);
+			}
+
+//			if (!generateShape(centre, faceNormal, consumer, face.v0))
+//				return false;
+//			if (!generateShape(centre, faceNormal, consumer, face.v1))
+//				return false;
+//			if (!generateShape(centre, faceNormal, consumer, face.v2))
+//				return false;
+//			if (!generateShape(centre, faceNormal, consumer, face.v3))
+//				return false;
 			return true;
 		});
 	}
 
-	private static void generateShape(Vec centre, Vec faceNormal, IShapeConsumer consumer, Vec v) {
-		consumer.accept(
+	private static boolean generateShape(Vec centre, Vec faceNormal, IShapeConsumer consumer, Vec v) {
+		return consumer.accept(
 			v.x, v.y, v.z,
 			centre.x + faceNormal.x, centre.y + faceNormal.y, centre.z + faceNormal.z
 		);
@@ -125,9 +150,12 @@ public final class CollisionHandler {
 
 	public interface IShapeConsumer {
 
-		void accept(
-			float x0, float y0, float z0,
-			float x1, float y1, float z1
+		/**
+		 * Return if more shapes should be generated.
+		 */
+		boolean accept(
+			double x0, double y0, double z0,
+			double x1, double y1, double z1
 		);
 
 	}
