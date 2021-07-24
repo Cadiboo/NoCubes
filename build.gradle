@@ -1,27 +1,26 @@
 // Forge buildscript - necessary for Forge to be setup
 buildscript {
 	repositories {
-		// Forge Maven
+		// These repositories are only for Gradle plugins, put any other repositories in the repository block further below
 		maven { url = 'https://maven.minecraftforge.net' }
-		// Other useful Mavens
-		jcenter()
 		mavenCentral()
 	}
 	// Buildscript dependency on Forge Gradle
 	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+'
+		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
 	}
 }
 
 plugins {
 	// Shadow jar includes our libraries into our final jar
-	id 'com.github.johnrengelman.shadow' version '6.1.0'
+	id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 // Necessary for Forge to be setup
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
+apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
 repositories {
 	maven {
@@ -49,8 +48,9 @@ archivesBaseName = modFileName
 if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
 	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
 
-// Mojang ships Java 8 to end users, so mods should target this version
-java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+// Mojang ships Java 16 to end users in 1.17+, so mods should target this version
+java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 minecraft {
 	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L23-L33"
@@ -58,12 +58,13 @@ minecraft {
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	// We have an access transformer because we reach into some of Minecraft's private/protected rendering internals
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Currently, this location cannot be changed from the default.
 
 	runs {
 		client {
 			workingDirectory project.file('run')
 			jvmArg '-ea' // Enable assertions
+			// The markers can be added/removed as needed (separated by commas)
 			property 'forge.logging.markers', 'XFORM'
 //			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
 			property 'forge.logging.console.level', 'debug'
@@ -83,6 +84,7 @@ minecraft {
 		server {
 			workingDirectory project.file('run/server')
 			jvmArg '-ea' // Enable assertions
+			// The markers can be added/removed as needed (separated by commas)
 			property 'forge.logging.markers', 'XFORM'
 			property 'forge.logging.console.level', 'debug'
 
@@ -107,9 +109,9 @@ dependencies {
 	// OptiFine is the first dependency because so that we can compile against its version of vanilla's classes, not Forge's
 	compileOnly fileTree(include: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
 
-	// Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-	// that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-	// The userdev artifact is a special name and will get all sorts of transformations applied to it.
+	// Specify the version of Minecraft to use
+	// If this is any group other than 'net.minecraft' it is assumed that the dep is a ForgeGradle 'patcher' dependency and its patches will be applied
+	// The userdev artifact is a special name and will get all sorts of transformations applied to it
 	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
 
 	// Add a compile/implementation dependency on all .jar files in ./libs
@@ -177,7 +179,7 @@ artifacts {
 }
 
 // Sign all the jars
-import net.minecraftforge.gradle.common.task.SignJar
+import net.minecraftforge.gradle.common.tasks.SignJar
 [
 	jar,
 	shadowJar,
