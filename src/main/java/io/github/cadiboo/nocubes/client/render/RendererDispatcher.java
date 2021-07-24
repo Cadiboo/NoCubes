@@ -45,7 +45,7 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 
 /**
- * Calls the {@link MeshRenderer} or {@link FluidRenderer and provides utility code for both.
+ * Calls the {@link MeshRenderer} or {@link FluidRenderer} and provides utility code for both.
  * @author Cadiboo
  */
 public final class RendererDispatcher {
