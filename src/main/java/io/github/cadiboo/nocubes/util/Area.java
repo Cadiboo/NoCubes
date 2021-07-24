@@ -49,7 +49,8 @@ public class Area implements AutoCloseable {
 			int endY = startY + size.getY();
 			int endZ = startZ + size.getZ();
 			BlockGetter world = this.world;
-			if (world instanceof LevelReader) {
+			// TODO: traverseArea doesn't work with the 1.18 preview data pack which many people will likely be using
+			if (false && world instanceof LevelReader) {
 				BlockPos endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
 				ModUtil.traverseArea(start, endInclusive, new BlockPos.MutableBlockPos(), (LevelReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
 			} else {

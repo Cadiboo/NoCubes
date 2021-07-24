@@ -171,7 +171,7 @@ public final class Hooks {
 	}
 	// endregion Rendering
 
-	// region Collisions
+	// region Indev-Collisions
 
 	/**
 	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before {@link BlockState#hasLargeCollisionShape()} is called
@@ -199,6 +199,7 @@ public final class Hooks {
 		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.MutableBlockPos pos,
 		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
 	) {
+//		SelfCheck.collide = true;
 		if (!NoCubesConfig.Server.collisionsEnabled)
 			return motion;
 		// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
@@ -209,26 +210,67 @@ public final class Hooks {
 		);
 	}
 
-	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, BlockPos.MutableBlockPos pos) {
-		Deque<VoxelShape> shapes = new ArrayDeque<>();
-		int minX = Mth.floor(area.minX - 1.0E-7D) - 1;
-		int maxX = Mth.floor(area.maxX + 1.0E-7D) + 1;
-		int minY = Mth.floor(area.minY - 1.0E-7D) - 1;
-		int maxY = Mth.floor(area.maxY + 1.0E-7D) + 1;
-		int minZ = Mth.floor(area.minZ - 1.0E-7D) - 1;
-		int maxZ = Mth.floor(area.maxZ + 1.0E-7D) + 1;
-		CollisionHandler.forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, minZ, maxZ, (x0, y0, z0, x1, y1, z1) -> {
-			x0 += minX;
-			x1 += minX;
-			y0 += minY;
-			y1 += minY;
-			z0 += minZ;
-			z1 += minZ;
-			if (area.intersects(x0, y0, z0, x1, y1, z1))
-				shapes.add(Shapes.box(x0, y0, z0, x1, y1, z1));
+	// endregion Indev-Collisions
+
+	// region Collisions
+
+	/**
+	 * Called from: {@link BlockState#getCollisionShape(BlockGetter, BlockPos)}} before any other logic
+	 * <p>
+	 * Hooking this makes that collisions work for blockstates with a cache.
+	 *
+	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 */
+	public static @Nullable VoxelShape getCollisionShapeOverride(BlockState state, BlockGetter world, BlockPos pos) {
+		SelfCheck.getCollisionShapeNoContextOverride = true;
+		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
+			return CollisionHandler.getCollisionShape(state, world, pos, CollisionContext.empty());
+		return null;
+	}
+
+	/**
+	 * Called from: {@link BlockState#getCollisionShape(BlockGetter, BlockPos, CollisionContext)}} before any other logic
+	 * <p>
+	 * Hooking this makes collisions work.
+	 *
+	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 */
+	public static @Nullable VoxelShape getCollisionShapeOverride(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		SelfCheck.getCollisionShapeWithContextOverride = true;
+		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
+			return CollisionHandler.getCollisionShape(state, world, pos, context);
+		return null;
+	}
+
+	/**
+	 * Called from: {@link BlockState#isCollisionShapeFullBlock(BlockGetter, BlockPos)}} before any other logic
+	 * <p>
+	 * Hooking this makes collisions work for normally solid blocks like stone.
+	 * <p>
+	 * TODO: This is used by {@link Block#getShadeBrightness(BlockState, BlockGetter, BlockPos)} so always returning false breaks AO when collisions are on.
+	 * Possible fix: Check if we are on the server or the client thread before running the check?
+	 *
+	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 */
+	public static @Nullable Boolean isCollisionShapeFullBlockOverride(BlockState state, BlockGetter reader, BlockPos pos) {
+		SelfCheck.isCollisionShapeFullBlockOverride = true;
+		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
+			return false;
+		return null;
+	}
+
+	/**
+	 * Called from: {@link BlockState#hasLargeCollisionShape()} before any other logic
+	 * <p>
+	 * Hooking this somehow stops us falling through 1 block wide holes and under the ground.
+	 *
+	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
+	 */
+	public static @Nullable Boolean hasLargeCollisionShapeOverride(BlockState state) {
+		SelfCheck.hasLargeCollisionShapeOverride = true;
+		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
 			return true;
-		});
-		return shapes;
+		return null;
 	}
 
 	/**
