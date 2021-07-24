@@ -281,13 +281,31 @@ function initializeCoreMod() {
 		'BlockState': {
 			'target': {
 				'type': 'CLASS',
-				'name': 'net.minecraft.block.BlockState'
+				'name': 'net.minecraft.world.level.block.state.BlockState'
 			},
 			'transformer': function(classNode) {
 				var fields = classNode.fields;
 				// Params: int access, String name, String descriptor, String signature, Object value
-				fields.add(new FieldNode(ACC_PUBLIC, 'nocubes_isTerrainSmoothable', 'Z', null, false));
-//				fields.add(new FieldNode(ACC_PUBLIC, 'nocubes_isLeavesSmoothable', 'Z', null, false));
+				var field = new FieldNode(ACC_PUBLIC, 'nocubes_isTerrainSmoothable', 'Z', null, false)
+				fields.add(field);
+
+				// Params: int access, String name, String descriptor, @Nullable String signature, @Nullable String[] exceptions
+				var setTerrainSmoothable = new MethodNode(ACC_PUBLIC, 'setTerrainSmoothable', '(Z)V', null, null)
+				var isTerrainSmoothable = new MethodNode(ACC_PUBLIC, 'isTerrainSmoothable', '()Z', null, null)
+				setTerrainSmoothable.instructions = ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new VarInsnNode(ILOAD, 1), // value
+					new FieldInsnNode(PUTFIELD, 'net/minecraft/world/level/block/state/BlockState', field.name, field.desc)
+				);
+				isTerrainSmoothable.instructions = ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // this
+					new FieldInsnNode(GETFIELD, 'net/minecraft/world/level/block/state/BlockState', field.name, field.desc),
+					new InsnNode(IRETURN)
+				);
+				classNode.methods.add(setTerrainSmoothable);
+				classNode.methods.add(isTerrainSmoothable);
+				classNode.interfaces.add('io/github/cadiboo/nocubes/hooks/INoCubesBlockState');
+
 				return classNode;
 			}
 		},

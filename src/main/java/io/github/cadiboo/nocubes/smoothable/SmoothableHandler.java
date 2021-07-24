@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.smoothable;
 
 import com.google.common.collect.Sets;
+import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.logging.log4j.LogManager;
 
@@ -18,7 +19,7 @@ public interface SmoothableHandler {
 			SmoothableHandler asm = new ASM();
 			asm.isSmoothable(test);
 			return asm;
-		} catch (NoSuchFieldError e) {
+		} catch (NoSuchFieldError | ClassCastException e) {
 			LogManager.getLogger().warn("Failed to create optimised ASM based handler, falling back to Set implementation, performance may suffer slightly", e);
 			return new Set();
 		}
@@ -35,23 +36,23 @@ public interface SmoothableHandler {
 	class ASM implements SmoothableHandler {
 
 		@Override
-		public void addSmoothable(final BlockState state) {
-			state.nocubes_isTerrainSmoothable = true;
+		public void addSmoothable(BlockState state) {
+			setSmoothable(true, state);
 		}
 
 		@Override
-		public void removeSmoothable(final BlockState state) {
-			state.nocubes_isTerrainSmoothable = false;
+		public void removeSmoothable(BlockState state) {
+			setSmoothable(false, state);
 		}
 
 		@Override
-		public boolean isSmoothable(final BlockState state) {
-			return state.nocubes_isTerrainSmoothable;
+		public boolean isSmoothable(BlockState state) {
+			return ((INoCubesBlockState) state).isTerrainSmoothable();
 		}
 
 		@Override
 		public void setSmoothable(boolean newValue, BlockState state) {
-			state.nocubes_isTerrainSmoothable = newValue;
+			((INoCubesBlockState) state).setTerrainSmoothable(true);
 		}
 	}
 
@@ -60,17 +61,17 @@ public interface SmoothableHandler {
 		private final java.util.Set<BlockState> smoothables = Sets.newIdentityHashSet();
 
 		@Override
-		public void addSmoothable(final BlockState state) {
+		public void addSmoothable(BlockState state) {
 			smoothables.add(state);
 		}
 
 		@Override
-		public void removeSmoothable(final BlockState state) {
+		public void removeSmoothable(BlockState state) {
 			smoothables.remove(state);
 		}
 
 		@Override
-		public boolean isSmoothable(final BlockState state) {
+		public boolean isSmoothable(BlockState state) {
 			return smoothables.contains(state);
 		}
 
