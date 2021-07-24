@@ -2,10 +2,11 @@ package io.github.cadiboo.nocubes.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import io.github.cadiboo.nocubes.config.ColorParser;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 
 public final class ClientUtil {
 
@@ -18,17 +19,18 @@ public final class ClientUtil {
 		});
 	}
 
-	public static VertexConsumer vertex(VertexConsumer buffer, PoseStack matrix, float x, float y, float z) {
-		return vertex(buffer, matrix.last().pose(), x, y, z);
-	}
-
-	public static VertexConsumer vertex(VertexConsumer buffer, Matrix4f matrix, float x, float y, float z) {
+	public static void lineVertex(VertexConsumer buffer, PoseStack stack, float x, float y, float z, ColorParser.Color color) {
+		var matrix = stack.last().pose();
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead
 		float transformedX = getTransformX(matrix, x, y, z, 1);
 		float transformedY = getTransformY(matrix, x, y, z, 1);
 		float transformedZ = getTransformZ(matrix, x, y, z, 1);
-		return buffer.vertex(transformedX, transformedY, transformedZ);
+		buffer
+			.vertex(transformedX, transformedY, transformedZ)
+			.color(color.red, color.green, color.blue, color.alpha)
+			.normal(0, 0, 0)
+			.endVertex();
 	}
 
 	public static void vertex(VertexConsumer buffer, PoseStack matrix, float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {

@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
@@ -37,7 +36,7 @@ import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
+import static io.github.cadiboo.nocubes.client.ClientUtil.lineVertex;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 
 /**
@@ -280,32 +279,19 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
-		int red = color.red;
-		int blue = color.blue;
-		int green = color.green;
-		int alpha = color.alpha;
 		float startX = (float) (offset.getX() - camera.x + start.x);
 		float startY = (float) (offset.getY() - camera.y + start.y);
 		float startZ = (float) (offset.getZ() - camera.z + start.z);
-		vertex(buffer, matrix, startX, startY, startZ).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
+		lineVertex(buffer, matrix, startX, startY, startZ, color);
+		lineVertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z, color);
 	}
 
 	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
-		int red = color.red;
-		int blue = color.blue;
-		int green = color.green;
-		int alpha = color.alpha;
-		vertex(buffer, matrix, (float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z)).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)).color(red, green, blue, alpha).endVertex();
+		lineVertex(buffer, matrix, (float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z), color);
+		lineVertex(buffer, matrix, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z), color);
 	}
 
 	private static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, Color color, VertexConsumer buffer, PoseStack matrix) {
-		int red = color.red;
-		int blue = color.blue;
-		int green = color.green;
-		int alpha = color.alpha;
-
 		Vec v0 = face.v0;
 		Vec v1 = face.v1;
 		Vec v2 = face.v2;
@@ -326,24 +312,23 @@ public final class OverlayRenderer {
 		float v1z = (float) (z + v1.z);
 		float v2z = (float) (z + v2.z);
 		float v3z = (float) (z + v3.z);
-		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v1x, v1y, v1z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v2x, v2y, v2z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v3x, v3y, v3z).color(red, green, blue, alpha).endVertex();
-		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
+		lineVertex(buffer, matrix, v0x, v0y, v0z, color);
+		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
+		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
+		lineVertex(buffer, matrix, v2x, v2y, v2z, color);
+		lineVertex(buffer, matrix, v2x, v2y, v2z, color);
+		lineVertex(buffer, matrix, v3x, v3y, v3z, color);
+		lineVertex(buffer, matrix, v3x, v3y, v3z, color);
+		lineVertex(buffer, matrix, v0x, v0y, v0z, color);
 	}
 
 	private static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, Color color) {
-		Matrix4f pose = stack.last().pose();
 		double x = pos.getX() - camera.x;
 		double y = pos.getY() - camera.y;
 		double z = pos.getZ() - camera.z;
 		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-			vertex(buffer, pose, (float) (x + x0), (float) (y + y0), (float) (z + z0)).color(color.red, color.green, color.blue, color.alpha).endVertex();
-			vertex(buffer, pose, (float) (x + x1), (float) (y + y1), (float) (z + z1)).color(color.red, color.green, color.blue, color.alpha).endVertex();
+			lineVertex(buffer, stack, (float) (x + x0), (float) (y + y0), (float) (z + z0), color);
+			lineVertex(buffer, stack, (float) (x + x1), (float) (y + y1), (float) (z + z1), color);
 		});
 	}
 

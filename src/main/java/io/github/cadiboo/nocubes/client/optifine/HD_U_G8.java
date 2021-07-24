@@ -202,7 +202,7 @@ class HD_U_G8 implements OptiFineProxy {
 		MethodHandle getRenderQuads = tryGetMethod("net.optifine.model.BlockModelCustomizer", "getRenderQuads", List.class, BlockAndTintGetter.class, BlockState.class, BlockPos.class, Direction.class, RenderType.class, long.class, "net.optifine.render.RenderEnv");
 		MethodHandle chunkLayerSet_add = tryGetMethod("net.optifine.render.ChunkLayerSet", "add", RenderType.class);
 
-		Field hasBlocks = getField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$CompiledChunk", ASMAPI.mapField("field_178500_b"));
+		Field hasBlocks = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$CompiledChunk", ASMAPI.mapField("f_112749_"));
 
 		static boolean Config_isShaders() {
 			try {

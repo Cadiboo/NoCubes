@@ -89,7 +89,14 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(BlockState state) {
 		SelfCheck.canBlockStateRender = true;
-		return !NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state) && (!NoCubesConfig.Client.fixPlantHeight || !ModUtil.isShortPlant(state));
+		if (!NoCubesConfig.Client.render) return true;
+		if (!NoCubes.smoothableHandler.isSmoothable(state)) {
+			if (!NoCubesConfig.Client.fixPlantHeight) return true;
+			if (!ModUtil.isShortPlant(state)) return true;
+//			if (!Minecraft.getInstance().level.getBlockState(pos.down()).isSmoothable()) return true;
+			return false;
+		}
+		return false;
 	}
 
 	/**
@@ -266,14 +273,14 @@ public final class Hooks {
 	 * Load classes that we modify to get errors sooner.
 	 */
 	public static void loadClasses(Dist dist) {
-		loadClass("net.minecraft.block.AbstractBlock$AbstractBlockState");
-		loadClass("net.minecraft.block.BlockState");
-		loadClass("net.minecraft.world.World");
+		loadClass("net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase");
+		loadClass("net.minecraft.world.level.block.state.BlockState");
+		loadClass("net.minecraft.world.level.Level");
 		if (dist.isClient()) {
-			loadClass("net.minecraft.client.renderer.BlockRendererDispatcher");
-			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask");
-			loadClass("net.minecraft.client.world.ClientWorld");
-			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderCache");
+			loadClass("net.minecraft.client.renderer.block.BlockRenderDispatcher");
+			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask");
+			loadClass("net.minecraft.client.multiplayer.ClientLevel");
+			loadClass("net.minecraft.client.renderer.chunk.RenderChunkRegion");
 //		} else {
 
 		}
