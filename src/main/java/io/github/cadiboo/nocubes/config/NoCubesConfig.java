@@ -464,7 +464,7 @@ public final class NoCubesConfig {
 			// Add all possible BlockStates for these blocks
 			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[]{
 				STONE, GRANITE, DIORITE, ANDESITE,
-				DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
+				GRASS_BLOCK, DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
 				BEDROCK,
 				SAND, RED_SAND,
 				SANDSTONE, RED_SANDSTONE,
