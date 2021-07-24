@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes;
 
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mockito.Mockito;
 
 /**

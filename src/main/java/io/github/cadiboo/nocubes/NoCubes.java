@@ -40,7 +40,7 @@ public final class NoCubes {
 	 * Add your blocks as being smoothable.
 	 */
 	public static void addSmoothable(Block... blocks) {
-		for (Block block : blocks)
+		for (var block : blocks)
 			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
 	}
 

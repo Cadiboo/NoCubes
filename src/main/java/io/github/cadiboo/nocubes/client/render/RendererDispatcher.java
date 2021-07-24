@@ -39,7 +39,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
-import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
+import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -130,7 +130,7 @@ public final class RendererDispatcher {
 			renderInLayers(
 				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-				(layer, buffer, renderEnv) -> dispatcher.renderModel(state, worldPos, world, matrix.matrix, buffer, false, random, modelData),
+				(layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix, buffer, false, random, modelData),
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
 			);
 		}

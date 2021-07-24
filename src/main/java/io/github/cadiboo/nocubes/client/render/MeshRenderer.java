@@ -13,12 +13,16 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.*;
-import net.minecraft.world.level.material.Material;
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DirtPathBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.function.Consumer;
@@ -26,20 +30,14 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
-import static net.minecraft.block.GrassBlock.SNOWY;
+import static net.minecraft.world.level.block.GrassBlock.SNOWY;
 
-// /tp @p 83import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.GrassPathBlock;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.state.BlockState;
-
-net.minecraft.world.level.block.GrassBlock Wall
+// /tp @p 83.63 64.26 -112.34 -90.10 -6.33 Wall
 // /tp @p 87.64 75.43 -180.15 -158.48 33.15 Hillside
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
-		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof GrassPathBlock;
+		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof DirtPathBlock;
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
@@ -300,12 +298,11 @@ public final class MeshRenderer {
 			if (isSmoothable.test(original.state))
 				return original;
 
-			BlockPos.MutableBlockPos origin = original.pos;
-			BlockPos.MutableBlockPos relativePos = toUse.pos;
+			var relativePos = toUse.pos;
 			for (int i = 0, offsets_orderedLength = OFFSETS_ORDERED.length; i < offsets_orderedLength; i++) {
-				BlockPos offset = OFFSETS_ORDERED[i];
-				relativePos.set(origin).move(offset);
-				BlockState state = area.getBlockState(relativePos);
+				var offset = OFFSETS_ORDERED[i];
+				relativePos.set(original.pos).move(offset);
+				var state = area.getBlockState(relativePos);
 				if (isSmoothable.test(state)) {
 					toUse.state = state;
 					return toUse;

@@ -1,20 +1,12 @@
 package io.github.cadiboo.nocubes.network;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
-import com.electronwill.nightconfig.toml.TomlFormat;
-import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import net.minecraft.block.BlockState;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.common.thread.EffectiveSide;
-import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fmllegacy.network.NetworkEvent;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

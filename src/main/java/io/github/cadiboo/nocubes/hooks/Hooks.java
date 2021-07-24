@@ -7,27 +7,31 @@ import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.chunk.ChunkRenderCache;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
-import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.AxisCycle;
-import net.minecraft.util.Direction;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapeSpliterator;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.*;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
@@ -36,14 +40,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Random;
-
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.CollisionGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
+import java.util.stream.Stream;
 
 /**
  * @author Cadiboo
@@ -58,14 +55,14 @@ public final class Hooks {
 	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.RenderChunk chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, ChunkBufferBuilderPack builderIn, BlockPos blockpos, BlockAndTintGetter chunkrendercache, PoseStack matrixstack, Random random, BlockRenderDispatcher blockrendererdispatcher) {
+	public static void preIteration(RebuildTask rebuildTask, RenderChunk chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, ChunkBufferBuilderPack builderIn, BlockPos blockpos, BlockAndTintGetter chunkrendercache, PoseStack matrixstack, Random random, BlockRenderDispatcher blockrendererdispatcher) {
 		SelfCheck.preIteration = true;
 		RendererDispatcher.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
 
 	/**
-	 * Called from: {@link RebuildTask#compile} instead of {@link ChunkRenderCache#getFluidState(BlockPos)}
-	 * Called from: {@link ChunkRenderCache#getFluidState(BlockPos)} instead of {@link BlockState#getFluidState()}
+	 * Called from: {@link RebuildTask#compile} instead of {@link RenderChunkRegion#getFluidState(BlockPos)}
+	 * Called from: {@link RenderChunkRegion#getFluidState(BlockPos)} instead of {@link BlockState#getFluidState()}
 	 * <p>
 	 * Hooking this allows us to control vanilla's fluids rendering which lets us cancel it and do our own rendering or
 	 * change where fluids are rendered (to make extended fluids work).
@@ -96,7 +93,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link BlockRendererDispatcher#renderBlockDamage} before any other logic
+	 * Called from: {@link BlockRenderDispatcher#renderBreakingTexture} before any other logic
 	 * Calls: {@link RendererDispatcher#renderBreakingTexture} if the blockstate is smoothable
 	 * <p>
 	 * Renders our own smoothed cracking/breaking/damage animation.
@@ -113,10 +110,10 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link ClientWorld#setBlocksDirty(BlockPos, BlockState, BlockState)} before any other logic
+	 * Called from: {@link ClientLevel#setBlocksDirty(BlockPos, BlockState, BlockState)} before any other logic
 	 * <p>
 	 * The method 'setBlocksDirty' gets called when a block is updated and marked for re-render.
-	 * Calls {@link WorldRenderer#setBlocksDirty(int, int, int, int, int, int)}  with a range of 2 instead of the normal 1.
+	 * Calls {@link LevelRenderer#setBlocksDirty(int, int, int, int, int, int)}  with a range of 2 instead of the normal 1.
 	 * This fixes seams that appear when meshes along chunk borders change.
 	 */
 	@OnlyIn(Dist.CLIENT)
@@ -135,7 +132,7 @@ public final class Hooks {
 	 * Called from: {@link BlockState#canOcclude()} before any other logic
 	 * Called from: BlockState#isCacheOpaqueCube() (OptiFine) before any other logic
 	 * <p>
-	 * Hooking this makes {@link Block#shouldRenderFace(BlockState, IBlockReader, BlockPos, Direction)} return true and
+	 * Hooking this makes {@link Block#shouldRenderFace} return true and
 	 * causes cubic terrain (including fluids) to be rendered when they are up against smooth terrain, stopping us from
 	 * being able to see through the ground near smooth terrain.
 	 *
@@ -149,7 +146,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link BlockRendererDispatcher#BlockRendererDispatcher(BlockModelShapes, BlockColors)} before the FluidBlockRenderer is stored in the field
+	 * Called from: {@link BlockRenderDispatcher#BlockRenderDispatcher(BlockModelShaper, BlockEntityWithoutLevelRenderer, BlockColors)} before the FluidBlockRenderer is stored in the field
 	 * <p>
 	 * Hooking this lets us have extended fluids when OptiFine is installed.
 	 *
@@ -170,8 +167,8 @@ public final class Hooks {
 	// region Collisions
 
 	/**
-	 * Called from: {@link VoxelShapes#collide} right before {@link BlockState#hasLargeCollisionShape()} is called
-	 * Called from: {@link VoxelShapeSpliterator#tryAdvance} right before {@link BlockState#hasLargeCollisionShape()} is called
+	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before {@link BlockState#hasLargeCollisionShape()} is called
+	 * Called from: {@link CollisionSpliterator#tryAdvance} right before {@link BlockState#hasLargeCollisionShape()} is called
 	 * <p>
 	 * Hooking this disables vanilla collisions for smoothable BlockStates.
 	 *
@@ -184,7 +181,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link VoxelShapes#collide} right before {@link BlockState#hasLargeCollisionShape()} is called
+	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before the first invocation of {@link Shapes#lastC}
 	 * <p>
 	 * Hooking this disables vanilla collisions for smoothable BlockStates.
 	 *
@@ -228,7 +225,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link BlockState#isSuffocating(IBlockReader, BlockPos)} before any other logic
+	 * Called from: {@link BlockState#isSuffocating(BlockGetter, BlockPos)} before any other logic
 	 * <p>
 	 * Hooking this stops grass path collisions being broken.
 	 *

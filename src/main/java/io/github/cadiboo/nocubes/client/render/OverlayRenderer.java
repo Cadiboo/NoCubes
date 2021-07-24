@@ -2,33 +2,34 @@ package io.github.cadiboo.nocubes.client.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Matrix4f;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.config.ColorParser.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.phys.shapes.Shapes;
-import com.mojang.math.Matrix4f;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.DrawHighlightEvent;
+import net.minecraftforge.client.event.DrawSelectionEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -38,9 +39,6 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
-import static io.github.cadiboo.nocubes.config.ColorParser.Color;
-
-import io.github.cadiboo.nocubes.config.ColorParser.Color;
 
 /**
  * @author Cadiboo
@@ -51,7 +49,7 @@ public final class OverlayRenderer {
 	private static final RollingProfiler meshProfiler = new RollingProfiler(600);
 
 	@SubscribeEvent
-	public static void onHighlightBlock(DrawHighlightEvent.HighlightBlock event) {
+	public static void onHighlightBlock(DrawSelectionEvent.HighlightBlock event) {
 		if (!NoCubesConfig.Client.render)
 			return;
 		ClientLevel world = Minecraft.getInstance().level;
@@ -89,13 +87,14 @@ public final class OverlayRenderer {
 		if (world == null)
 			return;
 
-		Entity viewer = minecraft.gameRenderer.getMainCamera().getEntity();
+		var cameraInfo = minecraft.gameRenderer.getMainCamera();
+		var viewer = cameraInfo.getEntity();
 		if (viewer == null)
 			return;
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
+		var camera = cameraInfo.getPosition();
 		PoseStack matrixStack = event.getMatrixStack();
 
 		MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();

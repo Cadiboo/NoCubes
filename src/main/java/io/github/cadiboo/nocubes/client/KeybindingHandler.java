@@ -4,21 +4,19 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fmlclient.registry.ClientRegistry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
 
@@ -42,9 +40,9 @@ public final class KeybindingHandler {
 	}
 
 	private static Pair<KeyMapping, Runnable> makeKeybinding(String name, int key, Runnable action) {
-		KeyMapping keyBinding = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
-		ClientRegistry.registerKeyBinding(keyBinding);
-		return Pair.of(keyBinding, action);
+		var mapping = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		ClientRegistry.registerKeyBinding(mapping);
+		return Pair.of(mapping, action);
 	}
 
 	@SubscribeEvent
@@ -66,10 +64,10 @@ public final class KeybindingHandler {
 	}
 
 	private static void toggleLookedAtSmoothable() {
-		Minecraft minecraft = Minecraft.getInstance();
-		ClientLevel world = minecraft.level;
-		LocalPlayer player = minecraft.player;
-		HitResult lookingAt = minecraft.hitResult;
+		var minecraft = Minecraft.getInstance();
+		var world = minecraft.level;
+		var player = minecraft.player;
+		var lookingAt = minecraft.hitResult;
 		if (world == null || player == null || lookingAt == null || lookingAt.getType() != HitResult.Type.BLOCK)
 			return;
 		BlockHitResult lookingAtBlock = ((BlockHitResult) lookingAt);

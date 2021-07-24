@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.util;
 
+import com.mojang.math.Vector3f;
+import com.mojang.math.Vector4f;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
-import net.minecraft.util.math.vector.Vector3f;
-import net.minecraft.util.math.vector.Vector4f;
 
 /**
  * @author Cadiboo

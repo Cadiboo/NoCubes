@@ -4,13 +4,15 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MeshGeneratorEnum;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
+
+import static net.minecraft.world.level.block.Blocks.*;
 
 /**
  * @author Cadiboo
@@ -20,11 +22,11 @@ public class NoCubesTest {
 	public static void addTests(List<Test> tests) {
 		Collections.addAll(tests,
 //			new Test("the version in mods.toml should have been replaced by gradle", () -> assertFalse(0 == ModList.get().getModFileById(NoCubes.MOD_ID).getMods().get(0).getVersion().getMajorVersion())),
-			new Test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.STONE.defaultBlockState()))),
-			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.DIRT.defaultBlockState()))),
-			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(Blocks.AIR.defaultBlockState()))),
+			new Test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(STONE.defaultBlockState()))),
+			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(DIRT.defaultBlockState()))),
+			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(AIR.defaultBlockState()))),
 			new Test("removing smoothable should work", () -> {
-				BlockState dirt = Blocks.DIRT.defaultBlockState();
+				BlockState dirt = DIRT.defaultBlockState();
 				boolean oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
 				NoCubes.smoothableHandler.removeSmoothable(dirt);
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));
@@ -43,7 +45,7 @@ public class NoCubesTest {
 	}
 
 	private static void meshGeneratorsSanityCheck() {
-		Predicate<BlockState> isSmoothable = $ -> $ == Blocks.STONE.defaultBlockState();
+		Predicate<BlockState> isSmoothable = $ -> $ == STONE.defaultBlockState();
 
 		BlockPos start = new BlockPos(100, 50, 25);
 		Area area = new Area(null, start, new BlockPos(5, 5, 5)) {
@@ -51,7 +53,7 @@ public class NoCubesTest {
 			public BlockState[] getAndCacheBlocks() {
 				BlockState[] states = new BlockState[numBlocks()];
 				for (int i = 0; i < states.length; i++)
-					states[i] = i % 2 == 0 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
+					states[i] = i % 2 == 0 ? STONE.defaultBlockState() : AIR.defaultBlockState();
 				return states;
 			}
 
@@ -64,7 +66,7 @@ public class NoCubesTest {
 			generator.generator.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
-	private static boolean checkAndMutate(BlockPos.Mutable pos, Face face) {
+	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {
 		assertFalse(pos.getX() < 0);
 		assertFalse(pos.getX() >= 5);
 		pos.move(1000, 1000, 1000);

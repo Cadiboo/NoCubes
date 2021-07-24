@@ -1,20 +1,18 @@
-package net.minecraft.block;
+package net.minecraft.world.level.block.state;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
-import net.minecraft.state.Property;
-import net.minecraft.util.registry.Registry;
-
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.properties.Property;
 /**
  * This is a copy and stub of the original minecraft BlockState class with a couple modifications so that NoCubes
  * can compile against it's ASM-added 'nocubes_isTerrainSmoothable' field and the BlockState class in unit tests.
  */
-public class BlockState extends AbstractBlock.AbstractBlockState implements net.minecraftforge.common.extensions.IForgeBlockState {
+public class BlockState extends BlockBehaviour.BlockStateBase implements net.minecraftforge.common.extensions.IForgeBlockState {
 //	/* Commented out for unit tests to work */ public static final Codec<BlockState> CODEC = codec(Registry.BLOCK, Block::defaultBlockState).stable();
 
-	public BlockState(Block p_i231876_1_, ImmutableMap<Property<?>, Comparable<?>> p_i231876_2_, MapCodec<BlockState> p_i231876_3_) {
-		super(p_i231876_1_, p_i231876_2_, p_i231876_3_);
+	public BlockState(Block p_61042_, ImmutableMap<Property<?>, Comparable<?>> p_61043_, MapCodec<BlockState> p_61044_) {
+		super(p_61042_, p_61043_, p_61044_);
 	}
 
 	protected BlockState asState() {

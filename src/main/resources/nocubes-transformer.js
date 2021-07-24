@@ -117,7 +117,7 @@ function initializeCoreMod() {
                     var getFluidStateCall = findFirstMethodCall(
                         methodNode,
                         ASMAPI.MethodType.VIRTUAL,
-                        isOptiFinePresent ? 'net/minecraft/block/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
+                        isOptiFinePresent ? 'net/minecraft/world/level/block/state/BlockState' : 'net/minecraft/client/renderer/chunk/ChunkRenderCache',
                         ASMAPI.mapMethod(isOptiFinePresent ? 'func_204520_s' : 'func_204610_c'), // getFluidState
                         isOptiFinePresent ? '()Lnet/minecraft/fluid/FluidState;' : '(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/fluid/FluidState;'
                     );
@@ -143,7 +143,7 @@ function initializeCoreMod() {
 					var getRenderTypeCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.VIRTUAL,
-						'net/minecraft/block/BlockState',
+						'net/minecraft/world/level/block/state/BlockState',
 						getRenderTypeName,
 						'()Lnet/minecraft/block/BlockRenderType;'
 					);
@@ -155,7 +155,7 @@ function initializeCoreMod() {
 
 					instructions.insert(firstLabelBeforeGetRenderTypeCall, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 20 : 17), // blockstate
-						callNoCubesHook('canBlockStateRender', '(Lnet/minecraft/block/BlockState;)Z'),
+						callNoCubesHook('canBlockStateRender', '(Lnet/minecraft/world/level/block/state/BlockState;)Z'),
                     	new JumpInsnNode(IFEQ, labelToJumpToIfBlockIsInvisible),
 						new LabelNode() // Label for original instructions
 					));
@@ -170,7 +170,7 @@ function initializeCoreMod() {
 				'class': 'net.minecraft.client.renderer.BlockRendererDispatcher',
 				// Forge-added overload
 				'methodName': 'renderBlockDamage',
-				'methodDesc': '(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V'
+				'methodDesc': '(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V'
 			},
 			'transformer': function(methodNode) {
 				// The code that we are trying to inject looks like this:
@@ -189,7 +189,7 @@ function initializeCoreMod() {
 					new VarInsnNode(ALOAD, 4), // matrixStackIn
 					new VarInsnNode(ALOAD, 5), // vertexBuilderIn
 					new VarInsnNode(ALOAD, 6), // modelData
-					callNoCubesHook('renderBlockDamage', '(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z'),
+					callNoCubesHook('renderBlockDamage', '(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)Z'),
 					new JumpInsnNode(IFEQ, originalInstructionsLabel),
 					new InsnNode(RETURN),
 					originalInstructionsLabel
@@ -202,7 +202,7 @@ function initializeCoreMod() {
 				'type': 'METHOD',
 				'class': 'net.minecraft.client.world.ClientWorld',
 				'methodName': 'func_225319_b',
-				'methodDesc': '(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V'
+				'methodDesc': '(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V'
 			},
 			'transformer': function(methodNode) {
 				// Redirect execution to our hook
@@ -216,7 +216,7 @@ function initializeCoreMod() {
 					new VarInsnNode(ALOAD, 1), // pos
 					new VarInsnNode(ALOAD, 2), // oldState
 					new VarInsnNode(ALOAD, 3), // newState
-					callNoCubesHook('setBlocksDirty', '(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V'),
+					callNoCubesHook('setBlocksDirty', '(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/WorldRenderer;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V'),
 					new InsnNode(RETURN),
 					new LabelNode() // Label for original instructions
 				));
@@ -226,7 +226,7 @@ function initializeCoreMod() {
 		'BlockState#canOcclude': {
             'target': {
                 'type': 'METHOD',
-                'class': 'net.minecraft.block.AbstractBlock$AbstractBlockState',
+                'class': 'net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase',
                 'methodName': 'func_200132_m',
                 'methodDesc': '()Z'
             },
@@ -241,8 +241,8 @@ function initializeCoreMod() {
                 injectOverrideAtFirstLabel(methodNode.instructions,
                     ASMAPI.listOf(
                         new VarInsnNode(ALOAD, 0), // this
-                        new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
-                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
+                        new TypeInsnNode(CHECKCAST, 'net/minecraft/world/level/block/state/BlockState'),
+                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/lang/Boolean;')
                     ),
                     callBooleanValueAndReturn()
                 );
@@ -268,7 +268,7 @@ function initializeCoreMod() {
                 injectOverrideAtFirstLabel(methodNode.instructions,
                     ASMAPI.listOf(
                         new VarInsnNode(ALOAD, 0), // this
-                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/block/BlockState;)Ljava/lang/Boolean;')
+                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/lang/Boolean;')
                     ),
                     callBooleanValueAndReturn()
                 );
@@ -311,10 +311,10 @@ function initializeCoreMod() {
                 injectOverrideAtFirstLabel(methodNode.instructions,
                     ASMAPI.listOf(
                         new VarInsnNode(ALOAD, 0), // this
-                        new TypeInsnNode(CHECKCAST, 'net/minecraft/block/BlockState'),
+                        new TypeInsnNode(CHECKCAST, 'net/minecraft/world/level/block/state/BlockState'),
 						new VarInsnNode(ALOAD, 1), // world
 						new VarInsnNode(ALOAD, 2), // pos
-                        callNoCubesHook('isSuffocatingOverride', '(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Boolean;')
+                        callNoCubesHook('isSuffocatingOverride', '(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Boolean;')
                     ),
                     callBooleanValueAndReturn()
                 );

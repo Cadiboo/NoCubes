@@ -23,11 +23,12 @@ import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraftforge.fmllegacy.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -64,10 +65,10 @@ public final class NoCubesConfig {
 	}
 
 	@SubscribeEvent
-	public static void onModConfigEvent(ModConfig.ModConfigEvent configEvent) {
+	public static void onModConfigEvent(ModConfigEvent configEvent) {
 		// TODO: Check if file modification time is smaller than 'lastSavedConfigAt' and reject if TRUE and file is not null
-		ModConfig config = configEvent.getConfig();
-		ForgeConfigSpec spec = config.getSpec();
+		var config = configEvent.getConfig();
+		var spec = config.getSpec();
 //		if (spec == Common.SPEC && didNotSaveConfigRecently(lastSavedCommonConfigAt)) {
 //			Common.bake();
 //			lastSavedCommonConfigAt = -1;
@@ -439,13 +440,7 @@ public final class NoCubesConfig {
 
 		private static void fireReloadEvent(ModConfig modConfig) {
 			ModContainer modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
-			ModConfig.Reloading event;
-			try {
-				event = ObfuscationReflectionHelper.findConstructor(ModConfig.Reloading.class, ModConfig.class).newInstance(modConfig);
-			} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-				throw new RuntimeException(e);
-			}
-			modContainer.dispatchConfigEvent(event);
+			modContainer.dispatchConfigEvent(new ModConfigEvent.Reloading(modConfig));
 		}
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
@@ -477,7 +472,7 @@ public final class NoCubesConfig {
 				COAL_ORE, IRON_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
 				INFESTED_STONE,
 				BONE_BLOCK,
-				GRASS_PATH,
+				DIRT_PATH,
 				CLAY, TERRACOTTA, WHITE_TERRACOTTA, ORANGE_TERRACOTTA, MAGENTA_TERRACOTTA, LIGHT_BLUE_TERRACOTTA, YELLOW_TERRACOTTA, LIME_TERRACOTTA, PINK_TERRACOTTA, GRAY_TERRACOTTA, LIGHT_GRAY_TERRACOTTA, CYAN_TERRACOTTA, PURPLE_TERRACOTTA, BLUE_TERRACOTTA, BROWN_TERRACOTTA, GREEN_TERRACOTTA, RED_TERRACOTTA, BLACK_TERRACOTTA,
 				SNOW, SNOW_BLOCK, ICE, PACKED_ICE, FROSTED_ICE,
 				NETHERRACK, SOUL_SAND, SOUL_SOIL, BASALT, MAGMA_BLOCK, GLOWSTONE, NETHER_WART_BLOCK, CRIMSON_STEM, WARPED_NYLIUM, WARPED_WART_BLOCK, WARPED_STEM,

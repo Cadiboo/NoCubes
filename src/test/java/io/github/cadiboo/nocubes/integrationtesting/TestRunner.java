@@ -1,15 +1,18 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
+import net.minecraft.Util;
+import net.minecraft.network.chat.BaseComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.server.FMLServerStartedEvent;
+import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import static net.minecraft.ChatFormatting.GREEN;
+import static net.minecraft.ChatFormatting.RED;
 
 /**
  * @author Cadiboo
@@ -27,9 +30,9 @@ public final class TestRunner {
 			.filter(test -> runTestWithCatch(test, server))
 			.count();
 		if (fails > 0)
-			log(server, new StringTextComponent(fails + " TESTS FAILED").withStyle(TextFormatting.RED));
+			log(server, new TextComponent(fails + " TESTS FAILED").withStyle(RED));
 		else
-			log(server, new StringTextComponent("ALL TESTS PASSED").withStyle(TextFormatting.GREEN));
+			log(server, new TextComponent("ALL TESTS PASSED").withStyle(GREEN));
 		if (!TestUtil.IS_CI_ENVIRONMENT.get())
 			return;
 		if (fails > 0)
@@ -38,7 +41,7 @@ public final class TestRunner {
 			event.getServer().halt(false);
 	}
 
-	private static void log(MinecraftServer server, ITextComponent component) {
+	private static void log(MinecraftServer server, Component component) {
 		server.sendMessage(component, Util.NIL_UUID);
 		LOGGER.info(component.getString());
 	}
@@ -52,7 +55,7 @@ public final class TestRunner {
 		} catch (OutOfMemoryError | InternalError e) {
 			throw e;
 		} catch (Throwable t) {
-			log(server, new StringTextComponent("TEST FAILED: " + test.name).withStyle(TextFormatting.RED));
+			log(server, new TextComponent("TEST FAILED: " + test.name).withStyle(RED));
 			t.printStackTrace();
 			return true;
 		}

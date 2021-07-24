@@ -1,12 +1,9 @@
 package io.github.cadiboo.nocubes.smoothable;
 
 import io.github.cadiboo.nocubes.TestUtils;
-import net.minecraft.block.BlockState;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Cadiboo
@@ -26,7 +23,7 @@ public class SmoothableHandlerTests {
 	}
 
 	private void shouldWork(final SmoothableHandler handler) {
-		BlockState test = TestUtils.TEST_1;
+		var test = TestUtils.TEST_1;
 		assertFalse(handler.isSmoothable(test));
 		handler.addSmoothable(test);
 		assertTrue(handler.isSmoothable(test));
