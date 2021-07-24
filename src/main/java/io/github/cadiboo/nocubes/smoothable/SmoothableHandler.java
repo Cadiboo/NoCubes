@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.smoothable;
 
 import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 import org.apache.logging.log4j.LogManager;
 
 /**
@@ -14,9 +14,9 @@ import org.apache.logging.log4j.LogManager;
  */
 public interface SmoothableHandler {
 
-	static SmoothableHandler create(BlockState test) {
+	static SmoothableHandler create(BlockStateBase test) {
 		try {
-			SmoothableHandler asm = new ASM();
+			var asm = new ASM();
 			asm.isSmoothable(test);
 			return asm;
 		} catch (NoSuchFieldError | ClassCastException e) {
@@ -25,58 +25,58 @@ public interface SmoothableHandler {
 		}
 	}
 
-	void addSmoothable(BlockState state);
+	void addSmoothable(BlockStateBase state);
 
-	void removeSmoothable(BlockState state);
+	void removeSmoothable(BlockStateBase state);
 
-	boolean isSmoothable(BlockState state);
+	boolean isSmoothable(BlockStateBase state);
 
-	void setSmoothable(boolean newValue, BlockState state);
+	void setSmoothable(boolean newValue, BlockStateBase state);
 
 	class ASM implements SmoothableHandler {
 
 		@Override
-		public void addSmoothable(BlockState state) {
+		public void addSmoothable(BlockStateBase state) {
 			setSmoothable(true, state);
 		}
 
 		@Override
-		public void removeSmoothable(BlockState state) {
+		public void removeSmoothable(BlockStateBase state) {
 			setSmoothable(false, state);
 		}
 
 		@Override
-		public boolean isSmoothable(BlockState state) {
+		public boolean isSmoothable(BlockStateBase state) {
 			return ((INoCubesBlockState) state).isTerrainSmoothable();
 		}
 
 		@Override
-		public void setSmoothable(boolean newValue, BlockState state) {
+		public void setSmoothable(boolean newValue, BlockStateBase state) {
 			((INoCubesBlockState) state).setTerrainSmoothable(newValue);
 		}
 	}
 
 	class Set implements SmoothableHandler {
 
-		private final java.util.Set<BlockState> smoothables = Sets.newIdentityHashSet();
+		private final java.util.Set<BlockStateBase> smoothables = Sets.newIdentityHashSet();
 
 		@Override
-		public void addSmoothable(BlockState state) {
+		public void addSmoothable(BlockStateBase state) {
 			smoothables.add(state);
 		}
 
 		@Override
-		public void removeSmoothable(BlockState state) {
+		public void removeSmoothable(BlockStateBase state) {
 			smoothables.remove(state);
 		}
 
 		@Override
-		public boolean isSmoothable(BlockState state) {
+		public boolean isSmoothable(BlockStateBase state) {
 			return smoothables.contains(state);
 		}
 
 		@Override
-		public void setSmoothable(boolean newValue, BlockState state) {
+		public void setSmoothable(boolean newValue, BlockStateBase state) {
 			if (newValue)
 				addSmoothable(state);
 			else
