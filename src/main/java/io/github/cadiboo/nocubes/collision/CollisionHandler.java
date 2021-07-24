@@ -180,7 +180,7 @@ public final class CollisionHandler {
 		Face vertexNormals = new Face();
 		Vec faceNormal = new Vec();
 		Vec centre = new Vec();
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable; // + || isLeavesSmoothable
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 		generator.generate(area, isSmoothable, (pos, amount) -> {
 			// Generate collisions for blocks that are fully inside the isosurface
 			// The face handler will generate collisions for the surface

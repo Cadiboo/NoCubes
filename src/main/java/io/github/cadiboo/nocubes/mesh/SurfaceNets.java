@@ -20,6 +20,8 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  */
 public class SurfaceNets implements MeshGenerator {
 
+	public static final int COMPLETELY_OUTSIDE_ISOSURFACE = 0;
+	public static final int COMPLETELY_INSIDE_ISOSURFACE = 0xFF;
 	private static final ThreadLocalArrayCache<float[]> DISTANCE_FIELD_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
 
 	@Override
@@ -147,12 +149,11 @@ public class SurfaceNets implements MeshGenerator {
 								mask |= insideIsosurface ? (1 << corner) : 0;
 							}
 
-					if (mask == 0 && !voxelAction.apply(pos.set(x, y, z), getAmountInsideIsosurface(smoother, cornerDistances)))
+					if (!voxelAction.apply(pos.set(x, y, z), getAmountInsideIsosurface(smoother, cornerDistances)))
 						return;
 
 					// Check for early termination if cell does not intersect boundary
-					// This cell is either entirely inside or entirely outside the isosurface
-					if (mask == 0 || mask == 0xff)
+					if (mask == COMPLETELY_OUTSIDE_ISOSURFACE || mask == COMPLETELY_INSIDE_ISOSURFACE)
 						continue;
 
 					// Sum up edge intersections
@@ -262,9 +263,13 @@ public class SurfaceNets implements MeshGenerator {
 	private static float getAmountInsideIsosurface(boolean smoother, float[] cornerDistances) {
 		if (!smoother) {
 			// cornerDistances is not actually the values of the corners, it's the values of the neighbouring cubes
-			float voxelDistance = cornerDistances[0];
-			float voxelDensity = -voxelDistance;
-			return (voxelDensity + 1) / 2F;
+			// The values will be between -1 and 1 (-1 for inside isosurface, +1 for outside isosurface)
+			float voxelDensity = 0;
+			for (int corner = 0; corner < 8; ++corner) {
+				float cornerDensity = -cornerDistances[corner];
+				voxelDensity += (cornerDensity + 1) / 2F;
+			}
+			return voxelDensity / 8;
 		}
 		float combinedDistance = 0;
 		for (int corner = 0; corner < 8; ++corner)
