@@ -8,7 +8,6 @@ import javax.annotation.Nullable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.Direction;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.CubeCoordinateIterator;
@@ -59,7 +58,7 @@ public class VoxelShapeSpliterator extends AbstractSpliterator<VoxelShape> {
 	   if (this.needsBorderCheck) if (this.worldBorderCheck(p_tryAdvance_1_))
 	   	return true;
 	   if (this.nocubesShapes == null)
-		   this.nocubesShapes = io.github.cadiboo.nocubes.hooks.Hooks.createNoCubesCollisionList(this.collisionGetter, this.box, this.pos);
+		   this.nocubesShapes = io.github.cadiboo.nocubes.hooks.Hooks.createNoCubesIntersectingCollisionList(this.collisionGetter, this.box, this.pos);
 	   while (!this.nocubesShapes.isEmpty()) {
 		   VoxelShape shape = this.nocubesShapes.pop();
 //		   if (!this.box.intersects(
@@ -81,8 +80,8 @@ public class VoxelShapeSpliterator extends AbstractSpliterator<VoxelShape> {
             int i = this.cursor.nextX();
             int j = this.cursor.nextY();
             int k = this.cursor.nextZ();
-            int l = this.cursor.getNextType();
-            if (l == 3) {
+            int numBoundariesTouched = this.cursor.getNextType();
+            if (numBoundariesTouched == 3) {
                continue;
             }
 
@@ -93,9 +92,14 @@ public class VoxelShapeSpliterator extends AbstractSpliterator<VoxelShape> {
 
             this.pos.set(i, j, k);
             BlockState blockstate = iblockreader.getBlockState(this.pos);
-            if (!this.predicate.test(blockstate, this.pos) || !io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateCollide(blockstate) || l == 1 && !blockstate.hasLargeCollisionShape() || l == 2 && !blockstate.is(Blocks.MOVING_PISTON)) {
-               continue;
-            }
+			 if (!this.predicate.test(blockstate, this.pos))
+				 continue;
+			 if (!io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateCollide(blockstate))
+				 continue;
+			 if (numBoundariesTouched == 1 && !blockstate.hasLargeCollisionShape())
+				 continue;
+			 if (numBoundariesTouched == 2 && !blockstate.is(Blocks.MOVING_PISTON))
+				 continue;
 
             VoxelShape voxelshape = blockstate.getCollisionShape(this.collisionGetter, this.pos, this.context);
 //            if (voxelshape == VoxelShapes.block()) {

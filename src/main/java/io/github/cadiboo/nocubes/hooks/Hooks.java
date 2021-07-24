@@ -197,16 +197,23 @@ public final class Hooks {
 		);
 	}
 
-	public static Deque<VoxelShape> createNoCubesCollisionList(ICollisionReader world, AxisAlignedBB area, BlockPos.Mutable pos) {
+	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(ICollisionReader world, AxisAlignedBB area, BlockPos.Mutable pos) {
 		Deque<VoxelShape> shapes = new ArrayDeque<>();
-		int i = MathHelper.floor(area.minX - 1.0E-7D) - 1;
-		int j = MathHelper.floor(area.maxX + 1.0E-7D) + 1;
-		int k = MathHelper.floor(area.minY - 1.0E-7D) - 1;
-		int l = MathHelper.floor(area.maxY + 1.0E-7D) + 1;
-		int i1 = MathHelper.floor(area.minZ - 1.0E-7D) - 1;
-		int j1 = MathHelper.floor(area.maxZ + 1.0E-7D) + 1;
-		CollisionHandler.forEachCollisionRelativeToStart(world, pos, i, j, k, l, i1, j1, shape -> {
-			shapes.add(shape.move(i, k, i1));
+		int minX = MathHelper.floor(area.minX - 1.0E-7D) - 1;
+		int maxX = MathHelper.floor(area.maxX + 1.0E-7D) + 1;
+		int minY = MathHelper.floor(area.minY - 1.0E-7D) - 1;
+		int maxY = MathHelper.floor(area.maxY + 1.0E-7D) + 1;
+		int minZ = MathHelper.floor(area.minZ - 1.0E-7D) - 1;
+		int maxZ = MathHelper.floor(area.maxZ + 1.0E-7D) + 1;
+		CollisionHandler.forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, minZ, maxZ, (x0, y0, z0, x1, y1, z1) -> {
+			x0 += minX;
+			x1 += minX;
+			y0 += minY;
+			y1 += minY;
+			z0 += minZ;
+			z1 += minZ;
+			if (area.intersects(x0, y0, z0, x1, y1, z1))
+				shapes.add(VoxelShapes.box(x0, y0, z0, x1, y1, z1));
 			return true;
 		});
 		return shapes;

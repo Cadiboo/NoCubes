@@ -193,7 +193,7 @@ public final class OverlayRenderer {
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
 			Color color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 			BlockPos start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-			CollisionHandler.forEachCollisionRelativeToStart(world, new BlockPos.Mutable(),
+			CollisionHandler.forEachCollisionShapeRelativeToStart(world, new BlockPos.Mutable(),
 				start.getX(), start.getX() + collisionsRenderRadius * 2,
 				start.getY(), start.getY() + collisionsRenderRadius * 2,
 				start.getZ(), start.getZ() + collisionsRenderRadius * 2,

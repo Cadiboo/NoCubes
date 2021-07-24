@@ -172,98 +172,88 @@ public final class VoxelShapes {
       });
    }
 
-   public static double collide(Direction.Axis p_212437_0_, AxisAlignedBB p_212437_1_, Stream<VoxelShape> p_212437_2_, double p_212437_3_) {
-      for(Iterator<VoxelShape> iterator = p_212437_2_.iterator(); iterator.hasNext(); p_212437_3_ = iterator.next().collide(p_212437_0_, p_212437_1_, p_212437_3_)) {
-         if (Math.abs(p_212437_3_) < 1.0E-7D) {
+   public static double collide(Direction.Axis axis, AxisAlignedBB aabb, Stream<VoxelShape> allShapes, double motion) {
+      Iterator<VoxelShape> iterator = allShapes.iterator();
+      while (iterator.hasNext()) {
+         if (Math.abs(motion) < 0.0000001)
             return 0.0D;
-         }
+         motion = iterator.next().collide(axis, aabb, motion);
       }
-
-      return p_212437_3_;
+      return motion;
    }
 
-   public static double collide(Direction.Axis p_216383_0_, AxisAlignedBB p_216383_1_, IWorldReader p_216383_2_, double p_216383_3_, ISelectionContext p_216383_5_, Stream<VoxelShape> p_216383_6_) {
-      return collide(p_216383_1_, p_216383_2_, p_216383_3_, p_216383_5_, AxisRotation.between(p_216383_0_, Direction.Axis.Z), p_216383_6_);
+   public static double collide(Direction.Axis axis, AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx, Stream<VoxelShape> nonBlockShapes) {
+      return collide(aabb, world, motion, ctx, AxisRotation.between(axis, Direction.Axis.Z), nonBlockShapes);
    }
 
-   private static double collide(AxisAlignedBB p_216386_0_, IWorldReader p_216386_1_, double p_216386_2_, ISelectionContext p_216386_4_, AxisRotation p_216386_5_, Stream<VoxelShape> p_216386_6_) {
-      if (!(p_216386_0_.getXsize() < 1.0E-6D) && !(p_216386_0_.getYsize() < 1.0E-6D) && !(p_216386_0_.getZsize() < 1.0E-6D)) {
-         if (Math.abs(p_216386_2_) < 1.0E-7D) {
-            return 0.0D;
-         } else {
-            AxisRotation axisrotation = p_216386_5_.inverse();
-            Direction.Axis direction$axis = axisrotation.cycle(Direction.Axis.X);
-            Direction.Axis direction$axis1 = axisrotation.cycle(Direction.Axis.Y);
-            Direction.Axis direction$axis2 = axisrotation.cycle(Direction.Axis.Z);
-            BlockPos.Mutable blockpos$mutable = new BlockPos.Mutable();
-            int i = MathHelper.floor(p_216386_0_.min(direction$axis) - 1.0E-7D) - 1;
-            int j = MathHelper.floor(p_216386_0_.max(direction$axis) + 1.0E-7D) + 1;
-            int k = MathHelper.floor(p_216386_0_.min(direction$axis1) - 1.0E-7D) - 1;
-            int l = MathHelper.floor(p_216386_0_.max(direction$axis1) + 1.0E-7D) + 1;
-            double d0 = p_216386_0_.min(direction$axis2) - 1.0E-7D;
-            double d1 = p_216386_0_.max(direction$axis2) + 1.0E-7D;
-            boolean flag = p_216386_2_ > 0.0D;
-            int i1 = flag ? MathHelper.floor(p_216386_0_.max(direction$axis2) - 1.0E-7D) - 1 : MathHelper.floor(p_216386_0_.min(direction$axis2) + 1.0E-7D) + 1;
-             int j1 = lastC(p_216386_2_, d0, d1);
-            int k1 = flag ? 1 : -1;
-            int l1 = i1;
+   private static double collide(AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx, AxisRotation _rotation_, Stream<VoxelShape> nonBlockShapes) {
+      if (aabb.getXsize() < 0.000001 || aabb.getYsize() < 0.000001 || aabb.getZsize() < 0.000001)
+         return motion;
+      if (Math.abs(motion) < 0.0000001)
+         return 0.0D;
 
-		 	p_216386_2_ = io.github.cadiboo.nocubes.hooks.Hooks.collide(p_216386_0_, p_216386_1_, p_216386_2_, p_216386_4_, p_216386_5_, axisrotation, blockpos$mutable, i, j, k, l, i1, j1);
-		 	if (Math.abs(p_216386_2_) < 1.0E-7D)
-		 		return 0.0D;
+      AxisRotation _inverse_ = _rotation_.inverse();
+      Direction.Axis cycledX = _inverse_.cycle(Direction.Axis.X);
+      Direction.Axis cycledY = _inverse_.cycle(Direction.Axis.Y);
+      Direction.Axis cycledZ = _inverse_.cycle(Direction.Axis.Z);
+      BlockPos.Mutable pos = new BlockPos.Mutable();
 
-            while(true) {
-               if (flag) {
-                  if (l1 > j1) {
-                     break;
-                  }
-               } else if (l1 < j1) {
-                  break;
-               }
+      int minX = MathHelper.floor(aabb.min(cycledX) - 0.0000001) - 1;
+      int maxX = MathHelper.floor(aabb.max(cycledX) + 0.0000001) + 1;
+      int minY = MathHelper.floor(aabb.min(cycledY) - 0.0000001) - 1;
+      int maxY = MathHelper.floor(aabb.max(cycledY) + 0.0000001) + 1;
+      double d0 = aabb.min(cycledZ) - 0.0000001;
+      double d1 = aabb.max(cycledZ) + 0.0000001;
+      boolean motionInitiallyPositive = motion > 0.0D;
+      int minZ = motionInitiallyPositive ? MathHelper.floor(aabb.max(cycledZ) - 0.0000001) - 1 : MathHelper.floor(aabb.min(cycledZ) + 0.0000001) + 1;
+      int maxZ = lastC(motion, d0, d1);
+      int zIncrement = motionInitiallyPositive ? 1 : -1;
+      int z = minZ;
 
-               for(int i2 = i; i2 <= j; ++i2) {
-                  for(int j2 = k; j2 <= l; ++j2) {
-                     int k2 = 0;
-                     if (i2 == i || i2 == j) {
-                        ++k2;
-                     }
+	   motion = io.github.cadiboo.nocubes.hooks.Hooks.collide(aabb, world, motion, ctx, _rotation_, _inverse_, pos, minX, maxX, minY, maxY, minZ, maxZ);
+	   if (Math.abs(motion) < 1.0E-7D)
+		   return 0.0D;
 
-                     if (j2 == k || j2 == l) {
-                        ++k2;
-                     }
+	   while (true) {
+         if (motionInitiallyPositive) {
+            if (z > maxZ)
+               break;
+         } else if (z < maxZ)
+            break;
 
-                     if (l1 == i1 || l1 == j1) {
-                        ++k2;
-                     }
+         for (int x = minX; x <= maxX; ++x) {
+            for (int y = minY; y <= maxY; ++y) {
+               int boundariesTouched = 0;
+               if (x == minX || x == maxX)
+                  ++boundariesTouched;
+               if (y == minY || y == maxY)
+                  ++boundariesTouched;
+               if (z == minZ || z == maxZ)
+                  ++boundariesTouched;
+               if (boundariesTouched >= 3)
+                  continue;
 
-                     if (k2 < 3) {
-                        blockpos$mutable.set(axisrotation, i2, j2, l1);
-                        BlockState blockstate = p_216386_1_.getBlockState(blockpos$mutable);
-                        if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateCollide(blockstate))
-                        if ((k2 != 1 || blockstate.hasLargeCollisionShape()) && (k2 != 2 || blockstate.is(Blocks.MOVING_PISTON))) {
-                           p_216386_2_ = blockstate.getCollisionShape(p_216386_1_, blockpos$mutable, p_216386_4_).collide(direction$axis2, p_216386_0_.move((double)(-blockpos$mutable.getX()), (double)(-blockpos$mutable.getY()), (double)(-blockpos$mutable.getZ())), p_216386_2_);
-                           if (Math.abs(p_216386_2_) < 1.0E-7D) {
-                              return 0.0D;
-                           }
+               pos.set(_inverse_, x, y, z);
+               BlockState blockstate = world.getBlockState(pos);
+               if (!io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateCollide(blockstate))
+                  continue;
+               if (boundariesTouched == 1 && !blockstate.hasLargeCollisionShape())
+                  continue;
+               if (boundariesTouched == 2 && !blockstate.is(Blocks.MOVING_PISTON))
+                  continue;
 
-                           j1 = lastC(p_216386_2_, d0, d1);
-                        }
-                     }
-                  }
-               }
-
-               l1 += k1;
+               motion = blockstate.getCollisionShape(world, pos, ctx).collide(cycledZ, aabb.move(-pos.getX(), -pos.getY(), -pos.getZ()), motion);
+               if (Math.abs(motion) < 0.0000001)
+                  return 0.0D;
+               maxZ = lastC(motion, d0, d1);
             }
-
-            double[] adouble = new double[]{p_216386_2_};
-            p_216386_6_.forEach((p_216388_3_) -> {
-               adouble[0] = p_216388_3_.collide(direction$axis2, p_216386_0_, adouble[0]);
-            });
-            return adouble[0];
          }
-      } else {
-         return p_216386_2_;
+         z += zIncrement;
       }
+
+      double[] motionRef = {motion};
+      nonBlockShapes.forEach((shape) -> motionRef[0] = shape.collide(cycledZ, aabb, motionRef[0]));
+      return motionRef[0];
    }
 
    private static int lastC(double p_216385_0_, double p_216385_2_, double p_216385_4_) {

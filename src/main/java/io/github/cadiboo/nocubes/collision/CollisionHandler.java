@@ -10,17 +10,13 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraft.util.AxisRotation;
 import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IBlockReader;
 import net.minecraft.world.ICollisionReader;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
@@ -52,7 +48,7 @@ public final class CollisionHandler {
 			};
 
 			// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
-			forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
+			forEachCollisionShapeRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
 			return motionRef[0];
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
@@ -64,7 +60,13 @@ public final class CollisionHandler {
 		}
 	}
 
-	public static void forEachCollisionRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
+	public static void forEachCollisionShapeRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
+		forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, minZ, maxZ,
+			(x0, y0, z0, x1, y1, z1) -> predicate.test(VoxelShapes.box(x0, y0, z0, x1, y1, z1))
+		);
+	}
+
+	public static void forEachCollisionRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
 		assert NoCubesConfig.Server.collisionsEnabled;
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
@@ -80,10 +82,10 @@ public final class CollisionHandler {
 			double dx = MeshGenerator.validateMeshOffset(area.start.getX() - start.getX());
 			double dy = MeshGenerator.validateMeshOffset(area.start.getY() - start.getY());
 			double dz = MeshGenerator.validateMeshOffset(area.start.getZ() - start.getZ());
-			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> predicate.test(VoxelShapes.box(
+			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> consumer.accept(
 				x0 + dx, y0 + dy, z0 + dz,
 				x1 + dx, y1 + dy, z1 + dz
-			)));
+			));
 		}
 	}
 
