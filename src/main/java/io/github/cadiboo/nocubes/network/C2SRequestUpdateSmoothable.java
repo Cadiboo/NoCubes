@@ -3,11 +3,11 @@ package io.github.cadiboo.nocubes.network;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.Util;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.PacketDistributor;
 
@@ -28,12 +28,12 @@ public class C2SRequestUpdateSmoothable {
 		this.newValue = newValue;
 	}
 
-	public static void encode(C2SRequestUpdateSmoothable msg, PacketBuffer buffer) {
+	public static void encode(C2SRequestUpdateSmoothable msg, FriendlyByteBuf buffer) {
 		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
 		buffer.writeBoolean(msg.newValue);
 	}
 
-	public static C2SRequestUpdateSmoothable decode(PacketBuffer buffer) {
+	public static C2SRequestUpdateSmoothable decode(FriendlyByteBuf buffer) {
 		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
 		boolean newValue = buffer.readBoolean();
 		return new C2SRequestUpdateSmoothable(state, newValue);
@@ -41,7 +41,7 @@ public class C2SRequestUpdateSmoothable {
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
-		ServerPlayerEntity sender = ctx.getSender();
+		ServerPlayer sender = ctx.getSender();
 		boolean hasPermission = sender.hasPermissions(REQUIRED_PERMISSION_LEVEL);
 		if (hasPermission) {
 			BlockState state = msg.state;
@@ -55,7 +55,7 @@ public class C2SRequestUpdateSmoothable {
 				// Somehow the client is out of sync, just notify them
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CUpdateSmoothable(state, newValue));
 		} else
-			sender.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".command.addSmoothableNoPermission"), Util.NIL_UUID);
+			sender.sendMessage(new TranslatableComponent(NoCubes.MOD_ID + ".command.addSmoothableNoPermission"), Util.NIL_UUID);
 		ctx.setPacketHandled(true);
 	}
 

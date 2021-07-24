@@ -1,32 +1,32 @@
 package io.github.cadiboo.nocubes.hooks;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.ChunkRenderCache;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.util.AxisRotation;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.core.AxisCycle;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapeSpliterator;
-import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -36,6 +36,14 @@ import javax.annotation.Nullable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Random;
+
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 
 /**
  * @author Cadiboo
@@ -50,7 +58,7 @@ public final class Hooks {
 	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, RegionRenderCacheBuilder builderIn, BlockPos blockpos, IBlockDisplayReader chunkrendercache, MatrixStack matrixstack, Random random, BlockRendererDispatcher blockrendererdispatcher) {
+	public static void preIteration(RebuildTask rebuildTask, ChunkRenderDispatcher.RenderChunk chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, ChunkBufferBuilderPack builderIn, BlockPos blockpos, BlockAndTintGetter chunkrendercache, PoseStack matrixstack, Random random, BlockRenderDispatcher blockrendererdispatcher) {
 		SelfCheck.preIteration = true;
 		RendererDispatcher.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
@@ -65,7 +73,7 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static FluidState getRenderFluidState(BlockPos pos) {
 		SelfCheck.getRenderFluidState = true;
-		ClientWorld world = Minecraft.getInstance().level;
+		ClientLevel world = Minecraft.getInstance().level;
 		if (world == null)
 			return Fluids.EMPTY.defaultFluidState();
 		// We hook this too, see 'getFluidStateOverride' below
@@ -96,7 +104,7 @@ public final class Hooks {
 	 * @return If normal rendering should be cancelled (i.e. normal rendering should NOT happen)
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static boolean renderBlockDamage(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
+	public static boolean renderBlockDamage(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
 		SelfCheck.renderBlockDamage = true;
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
 			return false;
@@ -112,7 +120,7 @@ public final class Hooks {
 	 * This fixes seams that appear when meshes along chunk borders change.
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void setBlocksDirty(Minecraft minecraft, WorldRenderer worldRenderer, BlockPos pos, BlockState oldState, BlockState newState) {
+	public static void setBlocksDirty(Minecraft minecraft, LevelRenderer worldRenderer, BlockPos pos, BlockState oldState, BlockState newState) {
 		SelfCheck.setBlocksDirty = true;
 		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
 			int x = pos.getX();
@@ -148,11 +156,11 @@ public final class Hooks {
 	 * @return A fluid block renderer that works
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static FluidBlockRenderer createFluidBlockRenderer(FluidBlockRenderer original) {
+	public static LiquidBlockRenderer createFluidBlockRenderer(LiquidBlockRenderer original) {
 		SelfCheck.createFluidBlockRenderer = true;
-		return new FluidBlockRenderer() {
+		return new LiquidBlockRenderer() {
 			@Override
-			public boolean tesselate(IBlockDisplayReader ignored, BlockPos posIn, IVertexBuilder vertexBuilderIn, FluidState fluidStateIn) {
+			public boolean tesselate(BlockAndTintGetter ignored, BlockPos posIn, VertexConsumer vertexBuilderIn, FluidState fluidStateIn) {
 				return super.tesselate(Minecraft.getInstance().level, posIn, vertexBuilderIn, fluidStateIn);
 			}
 		};
@@ -183,8 +191,8 @@ public final class Hooks {
 	 * @return If the state can be collided with
 	 */
 	public static double collide(
-		AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx,
-		AxisRotation rotation, AxisRotation inverseRotation, BlockPos.Mutable pos,
+		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
+		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.MutableBlockPos pos,
 		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
 	) {
 		if (!NoCubesConfig.Server.collisionsEnabled)
@@ -197,14 +205,14 @@ public final class Hooks {
 		);
 	}
 
-	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(ICollisionReader world, AxisAlignedBB area, BlockPos.Mutable pos) {
+	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, BlockPos.MutableBlockPos pos) {
 		Deque<VoxelShape> shapes = new ArrayDeque<>();
-		int minX = MathHelper.floor(area.minX - 1.0E-7D) - 1;
-		int maxX = MathHelper.floor(area.maxX + 1.0E-7D) + 1;
-		int minY = MathHelper.floor(area.minY - 1.0E-7D) - 1;
-		int maxY = MathHelper.floor(area.maxY + 1.0E-7D) + 1;
-		int minZ = MathHelper.floor(area.minZ - 1.0E-7D) - 1;
-		int maxZ = MathHelper.floor(area.maxZ + 1.0E-7D) + 1;
+		int minX = Mth.floor(area.minX - 1.0E-7D) - 1;
+		int maxX = Mth.floor(area.maxX + 1.0E-7D) + 1;
+		int minY = Mth.floor(area.minY - 1.0E-7D) - 1;
+		int maxY = Mth.floor(area.maxY + 1.0E-7D) + 1;
+		int minZ = Mth.floor(area.minZ - 1.0E-7D) - 1;
+		int maxZ = Mth.floor(area.maxZ + 1.0E-7D) + 1;
 		CollisionHandler.forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, minZ, maxZ, (x0, y0, z0, x1, y1, z1) -> {
 			x0 += minX;
 			x1 += minX;
@@ -213,7 +221,7 @@ public final class Hooks {
 			z0 += minZ;
 			z1 += minZ;
 			if (area.intersects(x0, y0, z0, x1, y1, z1))
-				shapes.add(VoxelShapes.box(x0, y0, z0, x1, y1, z1));
+				shapes.add(Shapes.box(x0, y0, z0, x1, y1, z1));
 			return true;
 		});
 		return shapes;
@@ -226,7 +234,7 @@ public final class Hooks {
 	 *
 	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
 	 */
-	public static @Nullable Boolean isSuffocatingOverride(BlockState state, IBlockReader world, BlockPos pos) {
+	public static @Nullable Boolean isSuffocatingOverride(BlockState state, BlockGetter world, BlockPos pos) {
 		SelfCheck.isSuffocatingOverride = true;
 		if (NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state))
 			return false;
@@ -240,7 +248,7 @@ public final class Hooks {
 	 *
 	 * @return a fluid state that may not actually exist in the position
 	 */
-	public static @Nullable FluidState getFluidStateOverride(World world, BlockPos pos) {
+	public static @Nullable FluidState getFluidStateOverride(Level world, BlockPos pos) {
 		SelfCheck.getFluidStateOverride = true;
 		if (NoCubesConfig.Server.extendFluidsRange <= 0)
 			return null;

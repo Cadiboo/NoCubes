@@ -5,10 +5,10 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.material.Material;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 
 import java.util.function.Predicate;
 
@@ -62,7 +62,7 @@ public final class OldNoCubes implements MeshGenerator {
 		int width = size.getX();
 
 		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
 		Face face = new Face();
 		// The 8 points that make the block.
@@ -236,7 +236,7 @@ public final class OldNoCubes implements MeshGenerator {
 		return state.getMaterial() == Material.AIR || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
 	}
 
-	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, BlockPos.Mutable pos) {
+	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, BlockPos.MutableBlockPos pos) {
 		boolean intersects = false;
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
@@ -250,7 +250,7 @@ public final class OldNoCubes implements MeshGenerator {
 		return intersects;
 	}
 
-	public static boolean doesPointBottomIntersectWithAir(Area area, Vec point, BlockPos.Mutable pos) {
+	public static boolean doesPointBottomIntersectWithAir(Area area, Vec point, BlockPos.MutableBlockPos pos) {
 		boolean intersects = false;
 		boolean notOnly = false;
 		for (int i = 0; i < 4; i++) {
@@ -267,7 +267,7 @@ public final class OldNoCubes implements MeshGenerator {
 		return intersects && notOnly;
 	}
 
-	public static boolean doesPointIntersectWithManufactured(Area area, Vec point, Predicate<BlockState> isSmoothable, BlockPos.Mutable pos) {
+	public static boolean doesPointIntersectWithManufactured(Area area, Vec point, Predicate<BlockState> isSmoothable, BlockPos.MutableBlockPos pos) {
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;

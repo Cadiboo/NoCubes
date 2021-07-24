@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
@@ -12,21 +12,21 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.shapes.IBooleanFunction;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.util.math.vector.Matrix4f;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import com.mojang.math.Matrix4f;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.DrawHighlightEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -40,6 +40,8 @@ import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import static io.github.cadiboo.nocubes.config.ColorParser.Color;
 
+import io.github.cadiboo.nocubes.config.ColorParser.Color;
+
 /**
  * @author Cadiboo
  */
@@ -52,7 +54,7 @@ public final class OverlayRenderer {
 	public static void onHighlightBlock(DrawHighlightEvent.HighlightBlock event) {
 		if (!NoCubesConfig.Client.render)
 			return;
-		ClientWorld world = Minecraft.getInstance().level;
+		ClientLevel world = Minecraft.getInstance().level;
 		if (world == null)
 			return;
 		BlockPos lookingAtPos = event.getTarget().getBlockPos();
@@ -62,9 +64,9 @@ public final class OverlayRenderer {
 
 		event.setCanceled(true);
 
-		Vector3d camera = event.getInfo().getPosition();
-		MatrixStack matrix = event.getMatrix();
-		IVertexBuilder buffer = event.getBuffers().getBuffer(RenderType.lines());
+		Vec3 camera = event.getInfo().getPosition();
+		PoseStack matrix = event.getMatrix();
+		VertexConsumer buffer = event.getBuffers().getBuffer(RenderType.lines());
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		boolean stateSolidity = MeshRenderer.isSolidRender(state);
 		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
@@ -83,7 +85,7 @@ public final class OverlayRenderer {
 			return;
 
 		Minecraft minecraft = Minecraft.getInstance();
-		World world = minecraft.level;
+		Level world = minecraft.level;
 		if (world == null)
 			return;
 
@@ -93,15 +95,15 @@ public final class OverlayRenderer {
 
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 
-		Vector3d camera = minecraft.gameRenderer.getMainCamera().getPosition();
-		MatrixStack matrixStack = event.getMatrixStack();
+		Vec3 camera = minecraft.gameRenderer.getMainCamera().getPosition();
+		PoseStack matrixStack = event.getMatrixStack();
 
-		IRenderTypeBuffer.Impl bufferSource = minecraft.renderBuffers().bufferSource();
-		IVertexBuilder bufferBuilder = bufferSource.getBuffer(RenderType.lines());
+		MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
+		VertexConsumer bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
-		RayTraceResult targeted = viewer.pick(20.0D, 0.0F, false);
+		HitResult targeted = viewer.pick(20.0D, 0.0F, false);
 		// Where the player is looking at or their position of they're not looking at a block
-		BlockPos targetedPos = targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
+		BlockPos targetedPos = targeted.getType() != HitResult.Type.BLOCK ? viewer.blockPosition() : ((BlockHitResult) targeted).getBlockPos();
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
 		// Destroy block progress
@@ -121,7 +123,7 @@ public final class OverlayRenderer {
 			BlockPos end = viewer.blockPosition().offset(5, 5, 5);
 			BlockPos.betweenClosed(start, end).forEach(pos -> {
 				if (isSmoothable.test(viewer.level.getBlockState(pos)))
-					drawShape(matrixStack, bufferBuilder, VoxelShapes.block(), pos, camera, color);
+					drawShape(matrixStack, bufferBuilder, Shapes.block(), pos, camera, color);
 			});
 		}
 
@@ -130,7 +132,7 @@ public final class OverlayRenderer {
 		// It made me understand why feeding it the 'proper' corner info results in much smoother terrain
 		// at the cost of 1-block formations disappearing
 		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
-			VoxelShape distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
+			VoxelShape distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 			Color densityColor = new Color(0F, 0F, 1F, 0.5F);
 			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
 				BlockState[] states = area.getAndCacheBlocks();
@@ -147,7 +149,7 @@ public final class OverlayRenderer {
 				int maxY = minY + height;
 				int maxX = minX + width;
 				int zyxIndex = 0;
-				BlockPos.Mutable pos = new BlockPos.Mutable();
+				BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 				for (int z = minZ; z < maxZ; ++z) {
 					for (int y = minY; y < maxY; ++y) {
 						for (int x = minX; x < maxX; ++x, ++zyxIndex) {
@@ -155,7 +157,7 @@ public final class OverlayRenderer {
 							float density = densities[zyxIndex];
 							float densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
 							if (densityScale > 0.01) {
-								VoxelShape box = VoxelShapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
+								VoxelShape box = Shapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
 								drawShape(matrixStack, bufferBuilder, box, pos, camera, densityColor);
 							}
 							if (x <= minX || y <= minY || z <= minZ)
@@ -182,9 +184,9 @@ public final class OverlayRenderer {
 		if (NoCubesConfig.Client.debugRenderCollisions) {
 			Color intersectingColor = new Color(1, 0, 0, 0.4F);
 			Color deviatingColor = new Color(0, 1, 0, 0.4F);
-			VoxelShape viewerShape = VoxelShapes.create(viewer.getBoundingBox());
+			VoxelShape viewerShape = Shapes.create(viewer.getBoundingBox());
 			world.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(collisionsRenderRadius)).forEach(voxelShape -> {
-				boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.AND);
+				boolean intersects = Shapes.joinIsNotEmpty(voxelShape, viewerShape, BooleanOp.AND);
 				drawShape(matrixStack, bufferBuilder, voxelShape, BlockPos.ZERO, camera, intersects ? intersectingColor : deviatingColor);
 			});
 		}
@@ -193,7 +195,7 @@ public final class OverlayRenderer {
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
 			Color color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 			BlockPos start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-			CollisionHandler.forEachCollisionShapeRelativeToStart(world, new BlockPos.Mutable(),
+			CollisionHandler.forEachCollisionShapeRelativeToStart(world, new BlockPos.MutableBlockPos(),
 				start.getX(), start.getX() + collisionsRenderRadius * 2,
 				start.getY(), start.getY() + collisionsRenderRadius * 2,
 				start.getZ(), start.getZ() + collisionsRenderRadius * 2,
@@ -218,13 +220,13 @@ public final class OverlayRenderer {
 		bufferSource.endBatch(RenderType.lines());
 	}
 
-	private static void drawNearbyMesh(Entity viewer, MatrixStack matrix, Vector3d camera, IVertexBuilder buffer) {
+	private static void drawNearbyMesh(Entity viewer, PoseStack matrix, Vec3 camera, VertexConsumer buffer) {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		BlockPos meshSize = new BlockPos(16, 16, 16);
 		BlockPos meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
 			Area area = new Area(viewer.level, meshStart, meshSize, generator);
-			LightCache light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize)
+			LightCache light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
 		) {
 			FaceInfo faceInfo = new FaceInfo();
 			MutableObjects objects = new MutableObjects();
@@ -278,7 +280,7 @@ public final class OverlayRenderer {
 		}
 	}
 
-	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
+	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
@@ -290,7 +292,7 @@ public final class OverlayRenderer {
 		vertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
+	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
@@ -299,7 +301,7 @@ public final class OverlayRenderer {
 		vertex(buffer, matrix, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, Color color, IVertexBuilder buffer, MatrixStack matrix) {
+	private static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, Color color, VertexConsumer buffer, PoseStack matrix) {
 		int red = color.red;
 		int blue = color.blue;
 		int green = color.green;
@@ -335,7 +337,7 @@ public final class OverlayRenderer {
 		vertex(buffer, matrix, v0x, v0y, v0z).color(red, green, blue, alpha).endVertex();
 	}
 
-	private static void drawShape(MatrixStack stack, IVertexBuilder buffer, VoxelShape shape, BlockPos pos, Vector3d camera, Color color) {
+	private static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, Color color) {
 		Matrix4f pose = stack.last().pose();
 		double x = pos.getX() - camera.x;
 		double y = pos.getY() - camera.y;

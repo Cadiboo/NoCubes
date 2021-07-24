@@ -5,12 +5,12 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
-import net.minecraft.world.World;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.Util;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,7 +31,7 @@ public final class ClientEventSubscriber {
 			return;
 
 		Minecraft minecraft = Minecraft.getInstance();
-		World world = minecraft.level;
+		Level world = minecraft.level;
 		if (world == null)
 			return;
 
@@ -44,12 +44,12 @@ public final class ClientEventSubscriber {
 			}
 		}
 
-		ClientPlayerEntity player = Minecraft.getInstance().player;
+		LocalPlayer player = Minecraft.getInstance().player;
 		if (player == null)
 			return;
 
 		if (NoCubesConfig.Server.collisionsEnabled && !NoCubesNetwork.currentServerHasNoCubes) {
-			player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".notification.nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			player.sendMessage(new TranslatableComponent(NoCubes.MOD_ID + ".notification.nocubesNotInstalledOnServerCollisionsUnavailable").withStyle(ChatFormatting.RED), Util.NIL_UUID);
 			NoCubesConfig.Server.collisionsEnabled = false;
 		}
 	}

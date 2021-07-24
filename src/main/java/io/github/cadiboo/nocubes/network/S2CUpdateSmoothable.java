@@ -3,9 +3,9 @@ package io.github.cadiboo.nocubes.network;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.network.NetworkEvent;
 
 import java.util.function.Supplier;
@@ -23,12 +23,12 @@ public class S2CUpdateSmoothable {
 		this.newValue = newValue;
 	}
 
-	public static void encode(S2CUpdateSmoothable msg, PacketBuffer buffer) {
+	public static void encode(S2CUpdateSmoothable msg, FriendlyByteBuf buffer) {
 		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
 		buffer.writeBoolean(msg.newValue);
 	}
 
-	public static S2CUpdateSmoothable decode(PacketBuffer buffer) {
+	public static S2CUpdateSmoothable decode(FriendlyByteBuf buffer) {
 		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
 		boolean newValue = buffer.readBoolean();
 		return new S2CUpdateSmoothable(state, newValue);

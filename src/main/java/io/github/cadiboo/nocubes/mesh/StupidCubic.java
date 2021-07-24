@@ -3,21 +3,21 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
 public class StupidCubic implements MeshGenerator {
 
 	@Override
-	public Vector3i getPositiveAreaExtension() {
+	public Vec3i getPositiveAreaExtension() {
 		return ModUtil.VEC_ZERO;
 	}
 
 	@Override
-	public Vector3i getNegativeAreaExtension() {
+	public Vec3i getNegativeAreaExtension() {
 		return ModUtil.VEC_ZERO;
 	}
 
@@ -32,7 +32,7 @@ public class StupidCubic implements MeshGenerator {
 		final float max = 1F - min;
 
 		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		Face face = new Face();
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {

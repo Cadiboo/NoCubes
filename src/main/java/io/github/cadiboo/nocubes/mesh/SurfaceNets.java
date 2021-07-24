@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.*;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
@@ -23,13 +23,13 @@ public class SurfaceNets implements MeshGenerator {
 	private static final ThreadLocalArrayCache<float[]> DISTANCE_FIELD_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
 
 	@Override
-	public Vector3i getPositiveAreaExtension() {
+	public Vec3i getPositiveAreaExtension() {
 		// Needed otherwise seams appear in the meshes because surface nets generates a mesh 1 smaller than it "should"
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public Vector3i getNegativeAreaExtension() {
+	public Vec3i getNegativeAreaExtension() {
 		// I'm not sure why it's needed but it is needed very much
 		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
@@ -101,7 +101,7 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	private static void generateOrThrow(float[] distanceField, BlockPos dims, boolean smoother, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
 		final Face face = new Face();
 		int n = 0;

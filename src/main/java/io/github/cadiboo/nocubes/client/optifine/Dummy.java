@@ -1,24 +1,26 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
+import net.minecraft.world.level.block.state.BlockState;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.CompiledChunk_hasBlocks;
 import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class Dummy implements OptiFineProxy {
 
@@ -28,7 +30,7 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderChunk(ChunkRender chunkRender, BlockPos chunkPos, MatrixStack matrix) {
+	public void preRenderChunk(RenderChunk chunkRender, BlockPos chunkPos, PoseStack matrix) {
 	}
 
 	@Override
@@ -37,26 +39,26 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(ChunkRender chunkRender, RegionRenderCacheBuilder builder, IBlockDisplayReader chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
+	public Object preRenderBlock(RenderChunk chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		return null;
 	}
 
 	@Override
-	public Object preRenderFluid(ChunkRender chunkRender, RegionRenderCacheBuilder buffers, IBlockDisplayReader chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+	public Object preRenderFluid(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return null;
 	}
 
 	@Override
-	public IBakedModel getModel(Object renderEnv, IBakedModel originalModel, BlockState state) {
+	public BakedModel getModel(Object renderEnv, BakedModel originalModel, BlockState state) {
 		return originalModel;
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompiledChunk compiledChunk) {
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, ChunkRender chunkRender, RegionRenderCacheBuilder builder, CompiledChunk compiledChunk) {
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompiledChunk compiledChunk) {
 
 	}
 
@@ -75,7 +77,7 @@ class Dummy implements OptiFineProxy {
 	}
 
     @Override
-	public List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, IBlockDisplayReader world, BlockState state, BlockPos worldPos, Direction direction, RenderType layer, long rand, Object renderEnv) {
+	public List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, BlockAndTintGetter world, BlockState state, BlockPos worldPos, Direction direction, RenderType layer, long rand, Object renderEnv) {
         return quads;
     }
 

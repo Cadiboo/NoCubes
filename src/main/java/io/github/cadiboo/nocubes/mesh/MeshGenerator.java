@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
@@ -30,9 +30,9 @@ public interface MeshGenerator {
 
 	void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
 
-	Vector3i getPositiveAreaExtension();
+	Vec3i getPositiveAreaExtension();
 
-	Vector3i getNegativeAreaExtension();
+	Vec3i getNegativeAreaExtension();
 
 	interface FaceAction {
 
@@ -41,7 +41,7 @@ public interface MeshGenerator {
 		 * @param face        The face, positioned relatively to the start of the area
 		 * @return false if no more faces need to be generated
 		 */
-		boolean apply(BlockPos.Mutable relativePos, Face face);
+		boolean apply(BlockPos.MutableBlockPos relativePos, Face face);
 
 	}
 
@@ -52,14 +52,14 @@ public interface MeshGenerator {
 		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
 		 * @return false if no more voxels need to iterated over
 		 */
-		boolean apply(BlockPos.Mutable relativePos, float amountInsideIsosurface);
+		boolean apply(BlockPos.MutableBlockPos relativePos, float amountInsideIsosurface);
 
 	}
 
 	/* protected */
 	default boolean isOutsideMesh(int x, int y, int z, BlockPos size) {
-		Vector3i negativeExtension = getNegativeAreaExtension();
-		Vector3i positiveExtension = getPositiveAreaExtension();
+		Vec3i negativeExtension = getNegativeAreaExtension();
+		Vec3i positiveExtension = getPositiveAreaExtension();
 		// Block is outside where we are generating it for, we only query it for its neighbouring faces
 		return x >= size.getX() - positiveExtension.getX() || x < negativeExtension.getX() ||
 			y >= size.getY() - positiveExtension.getY() || y < negativeExtension.getY() ||
@@ -76,7 +76,7 @@ public interface MeshGenerator {
 	 * And the vertices are going to be relative to the start of the area
 	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
 	 */
-	static void translateToMeshStart(MatrixStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
+	static void translateToMeshStart(PoseStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
 		matrix.translate(
 			validateMeshOffset(areaStart.getX() - renderStartPos.getX()),
 			validateMeshOffset(areaStart.getY() - renderStartPos.getY()),

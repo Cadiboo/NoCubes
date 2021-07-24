@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import net.minecraft.block.BlockState;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
 
 public class Area implements AutoCloseable {
 
@@ -14,21 +14,21 @@ public class Area implements AutoCloseable {
 
 	public final BlockPos start;
 	public final BlockPos size;
-	private final IBlockReader world;
+	private final BlockGetter world;
 	// Arrays are indexed [z][y][x] for cache locality
 	private BlockState[] blocks;
 	private FluidState[] fluids;
 
-	public /* for testing */ Area(IBlockReader world, BlockPos startInclusive, BlockPos size) {
+	public /* for testing */ Area(BlockGetter world, BlockPos startInclusive, BlockPos size) {
 		this.world = world;
 		this.start = startInclusive.immutable();
 		this.size = size.immutable();
 	}
 
-	public Area(IBlockReader world, BlockPos startInclusive, BlockPos size, MeshGenerator generator) {
+	public Area(BlockGetter world, BlockPos startInclusive, BlockPos size, MeshGenerator generator) {
 		this.world = world;
-		Vector3i negativeExtension = generator.getNegativeAreaExtension();
-		Vector3i positiveExtension = generator.getPositiveAreaExtension();
+		Vec3i negativeExtension = generator.getNegativeAreaExtension();
+		Vec3i positiveExtension = generator.getPositiveAreaExtension();
 		this.start = startInclusive.subtract(negativeExtension).immutable();
 		this.size = new BlockPos(
 			size.getX() + negativeExtension.getX() + positiveExtension.getX(),
@@ -48,12 +48,12 @@ public class Area implements AutoCloseable {
 			int endX = startX + size.getX();
 			int endY = startY + size.getY();
 			int endZ = startZ + size.getZ();
-			IBlockReader world = this.world;
-			if (world instanceof IWorldReader) {
+			BlockGetter world = this.world;
+			if (world instanceof LevelReader) {
 				BlockPos endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
-				ModUtil.traverseArea(start, endInclusive, new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
+				ModUtil.traverseArea(start, endInclusive, new BlockPos.MutableBlockPos(), (LevelReader) world, (state, pos, zyxIndex) -> array[zyxIndex] = state);
 			} else {
-				BlockPos.Mutable pos = new BlockPos.Mutable();
+				BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 				int zyxIndex = 0;
 				for (int z = startZ; z < endZ; ++z)
 					for (int y = startY; y < endY; ++y)
@@ -92,7 +92,7 @@ public class Area implements AutoCloseable {
 	public void close() {
 	}
 
-	public BlockState getBlockState(BlockPos.Mutable relativePos) {
+	public BlockState getBlockState(BlockPos.MutableBlockPos relativePos) {
 		int index = indexIfInsideCache(relativePos);
 		if (index == -1) {
 			int x = relativePos.getX();

@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
@@ -15,20 +15,20 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
-import net.minecraft.client.renderer.color.BlockColors;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
 
@@ -40,6 +40,9 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static net.minecraft.state.properties.BlockStateProperties.SNOWY;
+
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 
 /**
  * Calls the {@link MeshRenderer} or {@link FluidRenderer and provides utility code for both.
@@ -57,19 +60,19 @@ public final class RendererDispatcher {
 	 */
 	public static class ChunkRenderInfo {
 		public final RebuildTask rebuildTask;
-		public final ChunkRender chunkRender;
+		public final RenderChunk chunkRender;
 		public final CompiledChunk compiledChunk;
-		public final RegionRenderCacheBuilder buffers;
+		public final ChunkBufferBuilderPack buffers;
 		public final BlockPos chunkPos;
-		public final IBlockDisplayReader world;
+		public final BlockAndTintGetter world;
 		public final FluentMatrixStack matrix;
 		public final Random random;
-		public final BlockRendererDispatcher dispatcher;
+		public final BlockRenderDispatcher dispatcher;
 		public final LightCache light;
 		public final OptiFineProxy optiFine;
 		public final BlockColors blockColors;
 
-		public ChunkRenderInfo(RebuildTask rebuildTask, ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, FluentMatrixStack matrix, Random random, BlockRendererDispatcher dispatcher, LightCache light, OptiFineProxy optiFine) {
+		public ChunkRenderInfo(RebuildTask rebuildTask, RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, BlockPos chunkPos, BlockAndTintGetter world, FluentMatrixStack matrix, Random random, BlockRenderDispatcher dispatcher, LightCache light, OptiFineProxy optiFine) {
 			this.rebuildTask = rebuildTask;
 			this.chunkRender = chunkRender;
 			this.compiledChunk = compiledChunk;
@@ -122,10 +125,10 @@ public final class RendererDispatcher {
 			return color;
 		}
 
-		public void renderBlock(BlockState state, BlockPos.Mutable worldPos) {
+		public void renderBlock(BlockState state, BlockPos.MutableBlockPos worldPos) {
 			IModelData modelData = rebuildTask.getModelData(worldPos);
 			renderInLayers(
-				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
+				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
 				(layer, buffer, renderEnv) -> dispatcher.renderModel(state, worldPos, world, matrix.matrix, buffer, false, random, modelData),
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
@@ -149,7 +152,7 @@ public final class RendererDispatcher {
 		}
 
 		public interface QuadConsumer {
-			void accept(RenderType layer, IVertexBuilder buffer, BakedQuad quad, Color color, boolean emissive);
+			void accept(RenderType layer, VertexConsumer buffer, BakedQuad quad, Color color, boolean emissive);
 		}
 
 		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
@@ -157,10 +160,10 @@ public final class RendererDispatcher {
 			long rand = optiFine.getSeed(state.getSeed(worldPos));
 			IModelData modelData = rebuildTask.getModelData(worldPos);
 			renderInLayers(
-				layer -> RenderTypeLookup.canRenderInLayer(state, layer),
+				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
 				(layer, buffer, renderEnv) -> {
-					IBakedModel model = getModel(state, renderEnv);
+					BakedModel model = getModel(state, renderEnv);
 
 					List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
 					boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
@@ -177,7 +180,7 @@ public final class RendererDispatcher {
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 							BlockState snow = Blocks.SNOW.defaultBlockState();
-							IBakedModel snowModel = getModel(snow, renderEnv);
+							BakedModel snowModel = getModel(snow, renderEnv);
 							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
 						}
 					}
@@ -199,13 +202,13 @@ public final class RendererDispatcher {
 			int quadsRendered = numQuadsRendered[0];
 		}
 
-		private IBakedModel getModel(BlockState state, Object renderEnv) {
-			IBakedModel model = dispatcher.getBlockModel(state);
+		private BakedModel getModel(BlockState state, Object renderEnv) {
+			BakedModel model = dispatcher.getBlockModel(state);
 			model = optiFine.getModel(renderEnv, model, state);
 			return model;
 		}
 
-		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, IModelData modelData, RenderType layer, Object renderEnv, IBakedModel model, Direction direction) {
+		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, IModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
 			random.setSeed(rand);
 			List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
 			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
@@ -234,7 +237,7 @@ public final class RendererDispatcher {
 		}
 	}
 
-	public static void renderChunk(RebuildTask rebuildTask, ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, BlockPos chunkPos, IBlockDisplayReader world, MatrixStack matrixStack, Random random, BlockRendererDispatcher dispatcher) {
+	public static void renderChunk(RebuildTask rebuildTask, RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack, Random random, BlockRenderDispatcher dispatcher) {
 		long start = System.nanoTime();
 		FluentMatrixStack matrix = new FluentMatrixStack(matrixStack);
 		try (
@@ -255,7 +258,7 @@ public final class RendererDispatcher {
 		totalProfiler.recordAndLogElapsedNanosChunk(start, "total");
 	}
 
-	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher, BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData) {
+	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
 			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, generator, area);
@@ -286,7 +289,7 @@ public final class RendererDispatcher {
 		boolean render(RenderType layer, BufferBuilder buffer, Object renderEnv);
 	}
 
-	public static BufferBuilder getAndStartBuffer(ChunkRender chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, RenderType layer) {
+	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, RenderType layer) {
 		ForgeHooksClient.setRenderLayer(layer);
 		BufferBuilder buffer = buffers.builder(layer);
 
@@ -301,7 +304,7 @@ public final class RendererDispatcher {
 	}
 
 	static void quad(
-		IVertexBuilder buffer, MatrixStack matrix,
+		VertexConsumer buffer, PoseStack matrix,
 		Face face, Vec faceNormal,
 		Color color,
 		Texture uvs,
@@ -315,7 +318,7 @@ public final class RendererDispatcher {
 	}
 
 	static void quad(
-		IVertexBuilder buffer, MatrixStack matrix, boolean doubleSided,
+		VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
 		Face face, Color color, Texture texture, int overlay, FaceLight light, Vec normal
 	) {
 		quad(
@@ -328,7 +331,7 @@ public final class RendererDispatcher {
 	}
 
 	static void quad(
-		IVertexBuilder buffer, MatrixStack matrix, boolean doubleSided,
+		VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
 		Vec vec0, Color color0, float u0, float v0, int overlay0, int light0, Vec normal0,
 		Vec vec1, Color color1, float u1, float v1, int overlay1, int light1, Vec normal1,
 		Vec vec2, Color color2, float u2, float v2, int overlay2, int light2, Vec normal2,
@@ -344,7 +347,7 @@ public final class RendererDispatcher {
 	}
 
 	static void quad(
-		IVertexBuilder buffer, MatrixStack matrix, boolean doubleSided,
+		VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
 		float v0x, float v0y, float v0z, float red0, float green0, float blue0, float alpha0, float u0, float v0, int overlay0, int light0, float n0x, float n0y, float n0z,
 		float v1x, float v1y, float v1z, float red1, float green1, float blue1, float alpha1, float u1, float v1, int overlay1, int light1, float n1x, float n1y, float n1z,
 		float v2x, float v2y, float v2z, float red2, float green2, float blue2, float alpha2, float u2, float v2, int overlay2, int light2, float n2x, float n2y, float n2z,

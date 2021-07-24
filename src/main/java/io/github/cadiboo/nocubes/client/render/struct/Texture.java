@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.Direction;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.core.Direction;
 
 public final /* inline record */ class Texture {
 
@@ -58,7 +58,7 @@ public final /* inline record */ class Texture {
 	}
 
 	private static int getFormatSize(BakedQuad quad) {
-		return DefaultVertexFormats.BLOCK.getIntegerSize();
+		return DefaultVertexFormat.BLOCK.getIntegerSize();
 	}
 
 	private void rearrangeForDirection(Direction direction) {

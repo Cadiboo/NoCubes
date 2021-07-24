@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.smoothable;
 
 import com.google.common.collect.Sets;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import org.apache.logging.log4j.LogManager;
 
 /**

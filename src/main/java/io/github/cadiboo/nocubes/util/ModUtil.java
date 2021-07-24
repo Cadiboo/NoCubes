@@ -4,22 +4,31 @@ import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3i;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.chunk.IChunk;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraftforge.common.util.Lazy;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
+
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.SnowLayerBlock;
+import net.minecraft.world.level.block.StemBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * @author Cadiboo
@@ -49,10 +58,10 @@ public class ModUtil {
 	}
 
 	public interface Traverser {
-		void accept(BlockState state, BlockPos.Mutable pos, int zyxIndex);
+		void accept(BlockState state, BlockPos.MutableBlockPos pos, int zyxIndex);
 	}
 
-	public static void traverseArea(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, IWorldReader world, Traverser func) {
+	public static void traverseArea(Vec3i startInclusive, Vec3i endInclusive, BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func) {
 		traverseArea(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
@@ -60,7 +69,7 @@ public class ModUtil {
 	public static void traverseArea(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.Mutable currentPosition, IWorldReader world, Traverser func
+		BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func
 	) {
 		final BlockState air = Blocks.AIR.defaultBlockState();
 		int endXPlus1 = endXInclusive + 1;
@@ -80,8 +89,8 @@ public class ModUtil {
 				int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
 				int chunkX = blockChunkX >> 4;
 				int chunkZ = blockChunkZ >> 4;
-				@Nullable IChunk chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
-				@Nullable ChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
+				@Nullable ChunkAccess chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
+				@Nullable LevelChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
@@ -90,7 +99,7 @@ public class ModUtil {
 //					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
 					// If chunkSectionIndex is out of range we want to continue supplying air to the func
 					// No clue how this will work with cubic chunks...
-					@Nullable ChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					@Nullable LevelChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
 					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
 					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
 					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);
@@ -127,7 +136,7 @@ public class ModUtil {
 			return NOT_SMOOTHABLE;
 		if (isSnowLayer(state))
 			// Snow layer, not the actual whole snow block
-			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
+			return mapSnowHeight(state.getValue(SnowLayerBlock.LAYERS));
 		return FULLY_SMOOTHABLE;
 	}
 
@@ -137,12 +146,12 @@ public class ModUtil {
 	}
 
 	public static boolean isSnowLayer(BlockState state) {
-		return state.hasProperty(SnowBlock.LAYERS);
+		return state.hasProperty(SnowLayerBlock.LAYERS);
 	}
 
 	public static boolean isShortPlant(BlockState state) {
 		Block block = state.getBlock();
-		return block instanceof BushBlock && !(block instanceof DoublePlantBlock || block instanceof CropsBlock || block instanceof StemBlock);
+		return block instanceof BushBlock && !(block instanceof DoublePlantBlock || block instanceof CropBlock || block instanceof StemBlock);
 	}
 
 	public static boolean isPlant(BlockState state) {
@@ -164,7 +173,7 @@ public class ModUtil {
 		return (xSize * ySize * z) + (xSize * y) + x;
 	}
 
-	public static FluidState getExtendedFluidState(World world, BlockPos pos) {
+	public static FluidState getExtendedFluidState(Level world, BlockPos pos) {
 		// Check NoCubesConfig.Server.extendFluidsRange fluid states around pos and return a fluid state if there is one
 		int extendRange = NoCubesConfig.Server.extendFluidsRange;
 		assert extendRange > 0;
@@ -174,7 +183,7 @@ public class ModUtil {
 		int z = pos.getZ();
 		int chunkX = x >> 4;
 		int chunkZ = z >> 4;
-		Chunk chunk = world.getChunk(chunkX, chunkZ);
+		LevelChunk chunk = world.getChunk(chunkX, chunkZ);
 
 		FluidState fluid = chunk.getFluidState(x, y, z);
 		if (!fluid.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(chunk.getBlockState(pos)))

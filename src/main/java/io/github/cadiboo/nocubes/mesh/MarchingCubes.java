@@ -5,8 +5,8 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
@@ -30,7 +30,7 @@ public class MarchingCubes implements MeshGenerator {
 
 	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos.Mutable pos = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		Face face = new Face();
 		boolean smoother = NoCubesConfig.Server.extraSmoothMesh;
 		float[] data = SurfaceNets.generateDistanceField(area, isSmoothable, smoother);

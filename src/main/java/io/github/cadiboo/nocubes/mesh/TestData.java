@@ -2,8 +2,8 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.gen.SimplexNoiseGenerator;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
 import java.util.Random;
 
@@ -44,7 +44,7 @@ public interface TestData {
 
 		static final class NoiseConfig {
 			int offsetX, offsetY, offsetZ;
-			SimplexNoiseGenerator generator = new SimplexNoiseGenerator(new Random(0));
+			SimplexNoise generator = new SimplexNoise(new Random(0));
 		}
 
 		private static final ThreadLocal<NoiseConfig> CONFIG = ThreadLocal.withInitial(NoiseConfig::new);

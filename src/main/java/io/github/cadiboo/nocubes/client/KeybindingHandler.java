@@ -4,16 +4,16 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
-import net.minecraft.block.BlockState;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.Util;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -33,7 +33,7 @@ import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSI
 @Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = Dist.CLIENT)
 public final class KeybindingHandler {
 
-	private static final List<Pair<KeyBinding, Runnable>> KEYBINDS = new LinkedList<>();
+	private static final List<Pair<KeyMapping, Runnable>> KEYBINDS = new LinkedList<>();
 
 	public static void registerKeybindings() {
 		KEYBINDS.clear();
@@ -41,8 +41,8 @@ public final class KeybindingHandler {
 		KEYBINDS.add(makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindingHandler::toggleLookedAtSmoothable));
 	}
 
-	private static Pair<KeyBinding, Runnable> makeKeybinding(String name, int key, Runnable action) {
-		KeyBinding keyBinding = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+	private static Pair<KeyMapping, Runnable> makeKeybinding(String name, int key, Runnable action) {
+		KeyMapping keyBinding = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
 		ClientRegistry.registerKeyBinding(keyBinding);
 		return Pair.of(keyBinding, action);
 	}
@@ -51,14 +51,14 @@ public final class KeybindingHandler {
 	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
 		if (event.phase != TickEvent.Phase.END)
 			return;
-		for (Pair<KeyBinding, Runnable> keybind : KEYBINDS)
+		for (Pair<KeyMapping, Runnable> keybind : KEYBINDS)
 			if (keybind.getKey().consumeClick())
 				keybind.getValue().run();
 	}
 
 	private static void toggleVisuals() {
 		if (NoCubesConfig.Client.render && NoCubesConfig.Server.forceVisuals) {
-			Minecraft.getInstance().player.sendMessage(new TranslationTextComponent(NoCubes.MOD_ID + ".notification.visualsForcedByServer").withStyle(TextFormatting.RED), Util.NIL_UUID);
+			Minecraft.getInstance().player.sendMessage(new TranslatableComponent(NoCubes.MOD_ID + ".notification.visualsForcedByServer").withStyle(ChatFormatting.RED), Util.NIL_UUID);
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
@@ -67,12 +67,12 @@ public final class KeybindingHandler {
 
 	private static void toggleLookedAtSmoothable() {
 		Minecraft minecraft = Minecraft.getInstance();
-		ClientWorld world = minecraft.level;
-		ClientPlayerEntity player = minecraft.player;
-		RayTraceResult lookingAt = minecraft.hitResult;
-		if (world == null || player == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK)
+		ClientLevel world = minecraft.level;
+		LocalPlayer player = minecraft.player;
+		HitResult lookingAt = minecraft.hitResult;
+		if (world == null || player == null || lookingAt == null || lookingAt.getType() != HitResult.Type.BLOCK)
 			return;
-		BlockRayTraceResult lookingAtBlock = ((BlockRayTraceResult) lookingAt);
+		BlockHitResult lookingAtBlock = ((BlockHitResult) lookingAt);
 		BlockState state = world.getBlockState(lookingAtBlock.getBlockPos());
 		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
 		if (!NoCubesNetwork.currentServerHasNoCubes) {

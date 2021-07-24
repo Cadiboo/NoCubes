@@ -9,31 +9,33 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.AxisRotation;
-import net.minecraft.util.Direction.Axis;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.ICollisionReader;
-import net.minecraft.world.IWorldReader;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.AxisCycle;
+import net.minecraft.core.Direction.Axis;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.Level;
 
 import java.util.function.Predicate;
 
-import static net.minecraft.util.math.BlockPos.*;
+import static net.minecraft.core.BlockPos.*;
+
+import net.minecraft.core.BlockPos.MutableBlockPos;
 
 public final class CollisionHandler {
 
 	public static double collideAxisInArea(
-		AxisAlignedBB aabb, IWorldReader world, double motion, ISelectionContext ctx,
-		AxisRotation rotation, AxisRotation inverseRotation, Mutable pos,
+		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
+		AxisCycle rotation, AxisCycle inverseRotation, MutableBlockPos pos,
 		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
 	) {
-		if (world instanceof World)
-			((World) world).getProfiler().push("NoCubes collisions");
+		if (world instanceof Level)
+			((Level) world).getProfiler().push("NoCubes collisions");
 		try {
 			double[] motionRef = {motion};
 			Axis axis = inverseRotation.cycle(Axis.Z);
@@ -55,18 +57,18 @@ public final class CollisionHandler {
 				throw t;
 			return motion;
 		} finally {
-			if (world instanceof World)
-				((World) world).getProfiler().pop();
+			if (world instanceof Level)
+				((Level) world).getProfiler().pop();
 		}
 	}
 
-	public static void forEachCollisionShapeRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
+	public static void forEachCollisionShapeRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
 		forEachCollisionRelativeToStart(world, pos, minX, maxX, minY, maxY, minZ, maxZ,
-			(x0, y0, z0, x1, y1, z1) -> predicate.test(VoxelShapes.box(x0, y0, z0, x1, y1, z1))
+			(x0, y0, z0, x1, y1, z1) -> predicate.test(Shapes.box(x0, y0, z0, x1, y1, z1))
 		);
 	}
 
-	public static void forEachCollisionRelativeToStart(ICollisionReader world, Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
+	public static void forEachCollisionRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
 		assert NoCubesConfig.Server.collisionsEnabled;
 		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
 

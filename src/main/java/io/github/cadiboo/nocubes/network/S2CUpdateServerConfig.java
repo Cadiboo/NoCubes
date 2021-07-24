@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import net.minecraft.block.BlockState;
-import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ModConfig;
@@ -42,11 +42,11 @@ public class S2CUpdateServerConfig {
 		this.data = data;
 	}
 
-	public static void encode(S2CUpdateServerConfig msg, PacketBuffer buffer) {
+	public static void encode(S2CUpdateServerConfig msg, FriendlyByteBuf buffer) {
 		buffer.writeByteArray(msg.data);
 	}
 
-	public static S2CUpdateServerConfig decode(PacketBuffer buffer) {
+	public static S2CUpdateServerConfig decode(FriendlyByteBuf buffer) {
 		byte[] data = buffer.readByteArray();
 		return new S2CUpdateServerConfig(data);
 	}

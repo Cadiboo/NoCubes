@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
@@ -14,11 +14,11 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.EmptyBlockReader;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.function.Consumer;
@@ -28,12 +28,18 @@ import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRe
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 import static net.minecraft.block.GrassBlock.SNOWY;
 
-// /tp @p 83.63 64.26 -112.34 -90.10 -6.33 Wall
+// /tp @p 83import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.GrassPathBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+
+net.minecraft.world.level.block.GrassBlock Wall
 // /tp @p 87.64 75.43 -180.15 -158.48 33.15 Hillside
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
-		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof GrassPathBlock;
+		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof GrassPathBlock;
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
@@ -57,7 +63,7 @@ public final class MeshRenderer {
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				RenderableState renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
-				assert renderState.state.getRenderShape() != BlockRenderType.INVISIBLE : "We should not have gotten air as a renderable state";
+				assert renderState.state.getRenderShape() != RenderShape.INVISIBLE : "We should not have gotten air as a renderable state";
 
 				renderFaceWithConnectedTextures(renderer, objects, area, faceInfo, renderState);
 
@@ -69,7 +75,7 @@ public final class MeshRenderer {
 		ForgeHooksClient.setRenderLayer(null);
 	}
 
-	static void renderBreakingTexture(BlockState state, BlockPos worldPos, MatrixStack matrix, IVertexBuilder buffer, MeshGenerator generator, Area area) {
+	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, MeshGenerator generator, Area area) {
 		MeshGenerator.translateToMeshStart(matrix, area.start, worldPos);
 		boolean stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
@@ -112,11 +118,11 @@ public final class MeshRenderer {
 		if (faceInfo.approximateDirection != Direction.UP)
 			return;
 
-		BlockPos.Mutable relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
+		BlockPos.MutableBlockPos relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
 		BlockState stateAbove = area.getBlockState(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
 			try (FluentMatrixStack ignored = renderer.matrix.push()) {
-				BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
+				BlockPos.MutableBlockPos worldAbove = relativeAbove.move(area.start);
 				Vec center = faceInfo.centre;
 				renderer.matrix.matrix.translate(center.x - 0.5F, center.y, center.z - 0.5F);
 				renderer.renderBlock(stateAbove, worldAbove);
@@ -125,10 +131,10 @@ public final class MeshRenderer {
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
 			BlockState grass = Blocks.GRASS.defaultBlockState();
-			BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
+			BlockPos.MutableBlockPos worldAbove = relativeAbove.move(area.start);
 			boolean renderBothSides = true;
 
-			Vector3d offset = grass.getOffset(renderer.world, worldAbove);
+			Vec3 offset = grass.getOffset(renderer.world, worldAbove);
 			float xOff = (float) offset.x;
 			float zOff = (float) offset.z;
 			float yExt = 0.4F;
@@ -145,7 +151,7 @@ public final class MeshRenderer {
 			FaceLight light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
 			float shade1 = renderer.getShade(grassTuft1.approximateDirection);
 
-			MatrixStack matrix = renderer.matrix.matrix;
+			PoseStack matrix = renderer.matrix.matrix;
 			renderer.forEachQuad(
 				grass, worldAbove, null,
 				(state, worldPos, quad) -> snowy ? Color.WHITE : renderer.getColor(objects.color, quad, grass, worldAbove, 1F),
@@ -175,7 +181,7 @@ public final class MeshRenderer {
 	}
 
 	private static void renderQuad(
-		IVertexBuilder buffer, MatrixStack matrix,
+		VertexConsumer buffer, PoseStack matrix,
 		FaceInfo faceInfo,
 		Color color,
 		Texture uvs,
@@ -219,7 +225,7 @@ public final class MeshRenderer {
 		final FaceLight grassTuft0Light = new FaceLight();
 		final FaceInfo grassTuft1 = FaceInfo.withFace();
 		final FaceLight grassTuft1Light = new FaceLight();
-		final BlockPos.Mutable pos = new BlockPos.Mutable();
+		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		final Color color = new Color();
 		final Texture texture = new Texture();
 	}
@@ -259,7 +265,7 @@ public final class MeshRenderer {
 			new BlockPos(-1, -1, -1),
 		};
 
-		private final BlockPos.Mutable pos = new BlockPos.Mutable();
+		private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockState state;
 
 		public BlockPos relativePos() {
@@ -268,7 +274,7 @@ public final class MeshRenderer {
 
 		public static RenderableState findAt(MutableObjects objects, Area area, Vec faceNormal, Vec faceCentre, Predicate<BlockState> isSmoothable) {
 			RenderableState foundState = objects.foundState;
-			BlockPos.Mutable faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
+			BlockPos.MutableBlockPos faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
 			BlockState state = area.getBlockState(faceBlockPos);
 
 			// Has always been true in testing so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
@@ -294,8 +300,8 @@ public final class MeshRenderer {
 			if (isSmoothable.test(original.state))
 				return original;
 
-			BlockPos.Mutable origin = original.pos;
-			BlockPos.Mutable relativePos = toUse.pos;
+			BlockPos.MutableBlockPos origin = original.pos;
+			BlockPos.MutableBlockPos relativePos = toUse.pos;
 			for (int i = 0, offsets_orderedLength = OFFSETS_ORDERED.length; i < offsets_orderedLength; i++) {
 				BlockPos offset = OFFSETS_ORDERED[i];
 				relativePos.set(origin).move(offset);
