@@ -52,7 +52,7 @@ public interface SmoothableHandler {
 
 		@Override
 		public void setSmoothable(boolean newValue, BlockState state) {
-			((INoCubesBlockState) state).setTerrainSmoothable(true);
+			((INoCubesBlockState) state).setTerrainSmoothable(newValue);
 		}
 	}
 
