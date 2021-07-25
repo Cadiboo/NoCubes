@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.Level;
@@ -50,20 +51,20 @@ public class ModUtil {
 	}
 
 	public interface Traverser {
-		void accept(BlockState state, BlockPos.MutableBlockPos pos, int zyxIndex);
+		void accept(BlockState state, MutableBlockPos pos, int zyxIndex);
 	}
 
-	public static void traverseArea(Vec3i startInclusive, Vec3i endInclusive, BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func) {
+	public static void traverseArea(Vec3i startInclusive, Vec3i endInclusive, MutableBlockPos currentPosition, LevelReader world, Traverser func) {
 		traverseArea(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
-	/** Copied and tweaked from "https://github.com/Cadiboo/BiggerReactors/blob/1f0e0c48cdd16b8ecc0d2bc5f6c41db272dd8b7c/Phosphophyllite/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L76-L104". */
+	/** Copied and tweaked from "https://github.com/BiggerSeries/Phosphophyllite/blob/a5c07fa7a5fd52db4aadcadb4b1a9273c5d65cda/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L62-L94". */
 	public static void traverseArea(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func
+		MutableBlockPos currentPosition, LevelReader world, Traverser func
 	) {
-		final BlockState air = Blocks.AIR.defaultBlockState();
+		final var air = Blocks.AIR.defaultBlockState();
 		int endXPlus1 = endXInclusive + 1;
 		int endYPlus1 = endYInclusive + 1;
 		int endZPlus1 = endZInclusive + 1;
@@ -73,41 +74,42 @@ public class ModUtil {
 		int width = endXPlus1 - startXInclusive;
 		int height = endYPlus1 - startYInclusive;
 		int widthMulHeight = width * height;
-		for (int blockChunkX = startXInclusive; blockChunkX < maxX; blockChunkX += 16) {
-			int maskedBlockChunkX = blockChunkX & 0xFFFFFFF0;
-			int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
-			for (int blockChunkZ = startZInclusive; blockChunkZ < maxZ; blockChunkZ += 16) {
-				int maskedBlockChunkZ = blockChunkZ & 0xFFFFFFF0;
-				int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
+		// ChunkSource implementations are indexed [z][x] so iterate in that order (cache locality gain?)
+		for (int blockChunkZ = startZInclusive; blockChunkZ < maxZ; blockChunkZ += 16) {
+			int maskedBlockChunkZ = blockChunkZ & 0xFFFFFFF0;
+			int maskedNextBlockChunkZ = (blockChunkZ + 16) & 0xFFFFFFF0;
+			for (int blockChunkX = startXInclusive; blockChunkX < maxX; blockChunkX += 16) {
+				int maskedBlockChunkX = blockChunkX & 0xFFFFFFF0;
+				int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
 				int chunkX = blockChunkX >> 4;
 				int chunkZ = blockChunkZ >> 4;
-				@Nullable ChunkAccess chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
-				@Nullable LevelChunkSection[] chunkSections = chunk == null ? null : chunk.getSections();
+				@Nullable var chunk = world.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY, false);
+				@Nullable var sections = chunk == null ? null : chunk.getSections();
+				int chunkMinSection = chunk != null ? chunk.getMinSection() : 0;
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;
-					int chunkSectionIndex = blockChunkY >> 4;
-//					@Nullable
-//					ChunkSection chunkSection = chunkSections == null ? null : chunkSections[chunkSectionIndex];
-					// If chunkSectionIndex is out of range we want to continue supplying air to the func
+					int sectionIndex = (blockChunkY >> 4) - chunkMinSection;
+//					@Nullable var section = sections == null ? null : sections[sectionIndex];
+					// If sectionIndex is out of range we want to continue supplying air to the func
 					// No clue how this will work with cubic chunks...
-					@Nullable LevelChunkSection chunkSection = chunkSections == null || (chunkSectionIndex < 0 || chunkSectionIndex >= chunkSections.length) ? null : chunkSections[chunkSectionIndex];
+					@Nullable var section = sections == null || (sectionIndex < 0 || sectionIndex >= sections.length) ? null : sections[sectionIndex];
 					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
 					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
 					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);
 					int sectionMaxX = Math.min(maskedNextBlockChunkX, endXPlus1);
 					int sectionMaxY = Math.min(maskedNextBlockChunkY, endYPlus1);
 					int sectionMaxZ = Math.min(maskedNextBlockChunkZ, endZPlus1);
-					// PalettedContainers are indexed [y][z][x] so lets iterate in that order (cache locality gain?)
+					// PalettedContainers are indexed [y][z][x] so iterate in that order (cache locality gain?)
 					for (int y = sectionMinY; y < sectionMaxY; ++y) {
 						int maskedY = y & 15;
 						for (int z = sectionMinZ; z < sectionMaxZ; ++z) {
 							int maskedZ = z & 15;
 							for (int x = sectionMinX; x < sectionMaxX; ++x) {
-								BlockState blockState = chunkSection == null ? air : chunkSection.getBlockState(x & 15, maskedY, maskedZ);
+								var state = section == null ? air : section.getBlockState(x & 15, maskedY, maskedZ);
 								currentPosition.set(x, y, z);
 								int zyxIndex = (z - startZInclusive) * widthMulHeight + (y - startYInclusive) * width + (x - startXInclusive);
-								func.accept(blockState, currentPosition, zyxIndex);
+								func.accept(state, currentPosition, zyxIndex);
 							}
 						}
 					}
