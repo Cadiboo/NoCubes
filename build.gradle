@@ -12,6 +12,7 @@ buildscript {
 }
 
 plugins {
+	id 'java'
 	// Shadow jar includes our libraries into our final jar
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
@@ -99,6 +100,17 @@ minecraft {
 			property 'nocubes.testing.integration', 'true'
 			setForceExit(false)
 		}
+	}
+}
+
+configurations {
+	library
+	implementation.extendsFrom library
+	shadow.extendsFrom library
+}
+minecraft.runs.all {
+	lazyToken('minecraft_classpath') {
+		configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
 	}
 }
 
