@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.Reb
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.Connection;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,6 +35,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.fmllegacy.network.NetworkHooks;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.Random;
@@ -298,6 +301,21 @@ public final class Hooks {
 		return ModUtil.getExtendedFluidState(world, pos);
 	}
 
+	/**
+	 * Called from: The end of {@link NetworkHooks#handleClientLoginSuccess(Connection)}
+	 *
+	 * Hooking this lets NoCubes load properly on modded servers that don't have it installed
+	 */
+	public static void afterClientLoginSuccess(Connection manager) {
+		SelfCheck.afterClientLoginSuccess = true;
+		if (NetworkHooks.isVanillaConnection(manager))
+			return; // Forge loads the default server configs for us
+		var logger = LogManager.getLogger("NoCubes Client-only features");
+		logger.info("Connected to a modded server that doesn't have NoCubes installed, loading default server config");
+		NoCubesConfig.Hacks.loadDefaultServerConfig();
+		logger.debug("Done loading default server config");
+	}
+
 //
 //	/**
 //	 * Called from: ChunkRenderCache#<init> right after ChunkRenderCache#cacheStartPos is set
@@ -315,6 +333,7 @@ public final class Hooks {
 		loadClass("net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase");
 		loadClass("net.minecraft.world.level.block.state.BlockState");
 		loadClass("net.minecraft.world.level.Level");
+		loadClass("net.minecraftforge.fmllegacy.network.NetworkHooks");
 		if (dist.isClient()) {
 			loadClass("net.minecraft.client.renderer.block.BlockRenderDispatcher");
 			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask");

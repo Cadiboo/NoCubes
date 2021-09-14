@@ -542,8 +542,27 @@ function initializeCoreMod() {
 				));
 				return methodNode;
 			}
-		}
+		},
 		// endregion Extended Fluids
+
+		'NetworkHooks#handleClientLoginSuccess (Forge)': {
+			'target': {
+				'type': 'METHOD',
+				'class': 'net.minecraftforge.fmllegacy.network.NetworkHooks',
+				'methodName': 'handleClientLoginSuccess', // Forge added method
+				'methodDesc': '(Lnet/minecraft/network/Connection;)V'
+			},
+			'transformer': function(methodNode) {
+				var instructions = methodNode.instructions;
+				var end = ASMAPI.findFirstInstruction(methodNode, RETURN);
+				assertInstructionFound(end, 'end of method', instructions);
+				instructions.insertBefore(end, ASMAPI.listOf(
+					new VarInsnNode(ALOAD, 0), // manager
+					callNoCubesHook('afterClientLoginSuccess', '(Lnet/minecraft/network/Connection;)V')
+				));
+				return methodNode;
+			}
+		}
 	});
 }
 

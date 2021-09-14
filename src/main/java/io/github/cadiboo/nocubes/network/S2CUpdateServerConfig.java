@@ -45,7 +45,7 @@ public class S2CUpdateServerConfig {
 
 	public static void handle(S2CUpdateServerConfig msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		NetworkEvent.Context ctx = contextSupplier.get();
-		NoCubesConfig.ReloadHacks.receiveSyncedServerConfig(msg);
+		NoCubesConfig.Hacks.receiveSyncedServerConfig(msg);
 		ctx.setPacketHandled(true);
 	}
 

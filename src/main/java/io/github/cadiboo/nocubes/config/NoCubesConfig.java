@@ -19,11 +19,12 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ConfigTracker;
+import net.minecraftforge.fml.config.IConfigEvent;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -34,7 +35,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -156,7 +156,7 @@ public final class NoCubesConfig {
 		private static void saveAndLoad() {
 			// Allow our bake method to run with the new values
 			lastSavedClientConfigAt = -1;
-			ReloadHacks.saveAndLoad(ModConfig.Type.CLIENT);
+			Hacks.saveAndLoad(ModConfig.Type.CLIENT);
 			lastSavedClientConfigAt = System.nanoTime();
 		}
 
@@ -319,7 +319,7 @@ public final class NoCubesConfig {
 		private static void saveAndLoad() {
 			// Allow our bake method to run with the new values
 			lastSavedServerConfigAt = -1;
-			ReloadHacks.saveAndLoad(ModConfig.Type.SERVER);
+			Hacks.saveAndLoad(ModConfig.Type.SERVER);
 			lastSavedServerConfigAt = System.nanoTime();
 		}
 
@@ -410,27 +410,47 @@ public final class NoCubesConfig {
 	/**
 	 * Utils to allow us to save and load our config when we programmatically change its values (i.e. from keybinds and packets)
 	 */
-	public static class ReloadHacks {
+	public static class Hacks {
 
-		// Only call with correct type.
+		/**
+		 * Only call with correct type!
+		 * Similar to {@link ConfigFileTypeHandler.ConfigWatcher#run()}
+		 */
 		static void saveAndLoad(ModConfig.Type type) {
 			ConfigTracker_getConfig(NoCubes.MOD_ID, type).ifPresent(modConfig -> {
 				modConfig.save();
 				((CommentedFileConfig) modConfig.getConfigData()).load();
 				modConfig.getSpec().afterReload();
-//				modConfig.fireEvent(new ModConfig.Reloading(modConfig));
-				fireReloadEvent(modConfig);
+//				modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
+				ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
 			});
 		}
 
+		/**
+		 * Similar to {@link ConfigTracker#loadDefaultServerConfigs}
+		 */
+		public static void loadDefaultServerConfig() {
+			ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).ifPresent(modConfig -> {
+				var config = CommentedConfig.inMemory();
+				modConfig.getSpec().correct(config);
+//				modConfig.setConfigData(config);
+				ModConfig_setConfigData(modConfig, config);
+//				modConfig.fireEvent(IConfigEvent.loading(modConfig));
+				ModConfig_fireEvent(modConfig, IConfigEvent.loading(modConfig));
+			});
+
+		}
+
+		/**
+		 * Similar to {@link ConfigTracker#getConfigFileName}
+		 */
 		private static Optional<ModConfig> ConfigTracker_getConfig(String modId, ModConfig.Type type) {
 			Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configsByMod");
 			return Optional.ofNullable(configsByMod.getOrDefault(modId, Collections.emptyMap()).getOrDefault(type, null));
 		}
 
-
 		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
-			Method setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
+			var setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
 			try {
 				setConfigData.invoke(modConfig, data);
 			} catch (IllegalAccessException | InvocationTargetException e) {
@@ -438,17 +458,17 @@ public final class NoCubesConfig {
 			}
 		}
 
-		private static void fireReloadEvent(ModConfig modConfig) {
-			ModContainer modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
-			modContainer.dispatchConfigEvent(new ModConfigEvent.Reloading(modConfig));
+		private static void ModConfig_fireEvent(ModConfig modConfig, IConfigEvent event) {
+//			modConfig.fireEvent(event);
+			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
 		}
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
 			assert FMLEnvironment.dist.isClient();
-			ModConfig modConfig = ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).get();
-			ConfigParser<CommentedConfig> parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
+			var modConfig = ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).get();
+			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
-			fireReloadEvent(modConfig);
+			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
 		}
 	}
 

@@ -17,6 +17,7 @@ public final class SelfCheck {
 	static boolean isSuffocatingOverride;
 
 	static boolean getFluidStateOverride;
+	static boolean afterClientLoginSuccess;
 
 	public static String[] info() {
 		return new String[]{
@@ -35,6 +36,7 @@ public final class SelfCheck {
 			"isSuffocatingOverride hook called: " + isSuffocatingOverride,
 
 			"getFluidStateOverride hook called: " + getFluidStateOverride,
+			"afterClientLoginSuccess hook called: " + afterClientLoginSuccess,
 		};
 	}
 
