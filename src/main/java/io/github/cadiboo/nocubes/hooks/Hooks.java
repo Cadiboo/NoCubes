@@ -22,7 +22,6 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.Reb
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -37,8 +36,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nullable;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Random;
 import java.util.stream.Stream;
 
@@ -108,8 +105,8 @@ public final class Hooks {
 	 * @return If normal rendering should be cancelled (i.e. normal rendering should NOT happen)
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static boolean renderBlockDamage(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
-		SelfCheck.renderBlockDamage = true;
+	public static boolean renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
+		SelfCheck.renderBreakingTexture = true;
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
 			return false;
 		RendererDispatcher.renderBreakingTexture(dispatcher, state, pos, world, matrix, buffer, modelData);

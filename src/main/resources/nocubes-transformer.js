@@ -168,10 +168,10 @@ function initializeCoreMod() {
         'BlockRendererDispatcher#renderBlockDamage': {
 			'target': {
 				'type': 'METHOD',
-				'class': 'net.minecraft.client.renderer.block.renderBatched',
+				'class': 'net.minecraft.client.renderer.block.BlockRenderDispatcher',
 				// Forge-added overload
-				'methodName': 'renderBlockDamage',
-				'methodDesc': '(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLjava/util/Random;Lnet/minecraftforge/client/model/data/IModelData;)Z'
+				'methodName': 'renderBreakingTexture',
+				'methodDesc': '(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)V'
 			},
 			'transformer': function(methodNode) {
 				// The code that we are trying to inject looks like this:
@@ -189,10 +189,8 @@ function initializeCoreMod() {
 					new VarInsnNode(ALOAD, 3), // lightReaderIn
 					new VarInsnNode(ALOAD, 4), // matrixStackIn
 					new VarInsnNode(ALOAD, 5), // vertexBuilderIn
-					new VarInsnNode(ILOAD, 6), // checkSides
-					new VarInsnNode(ALOAD, 7), // random
-					new VarInsnNode(ALOAD, 8), // modelData
-					callNoCubesHook('renderBlockDamage', '(Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;ZLjava/util/Random;Lnet/minecraftforge/client/model/data/IModelData;)Z'),
+					new VarInsnNode(ALOAD, 6), // modelData
+					callNoCubesHook('renderBreakingTexture', '(Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)Z'),
 					new JumpInsnNode(IFEQ, originalInstructionsLabel),
 					new InsnNode(RETURN),
 					originalInstructionsLabel

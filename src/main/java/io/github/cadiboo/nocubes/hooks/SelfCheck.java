@@ -5,7 +5,7 @@ public final class SelfCheck {
 	static boolean preIteration;
 	static boolean getRenderFluidState;
 	static boolean canBlockStateRender;
-	static boolean renderBlockDamage;
+	static boolean renderBreakingTexture;
 	static boolean setBlocksDirty;
 	static boolean canOccludeOverride;
 	static boolean createFluidBlockRenderer;
@@ -23,7 +23,7 @@ public final class SelfCheck {
 			"preIteration hook called: " + preIteration,
 			"getRenderFluidState hook called: " + getRenderFluidState,
 			"canBlockStateRender hook called: " + canBlockStateRender,
-			"renderBlockDamage hook called: " + renderBlockDamage,
+			"renderBreakingTexture hook called: " + renderBreakingTexture,
 			"setBlocksDirty hook called: " + setBlocksDirty,
 			"canOccludeOverride hook called: " + canOccludeOverride,
 			"createFluidBlockRenderer hook called: " + createFluidBlockRenderer,
