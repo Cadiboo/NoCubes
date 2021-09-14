@@ -63,7 +63,7 @@ function initializeCoreMod() {
 	LABEL = AbstractInsnNode.LABEL;
 	METHOD_INSN = AbstractInsnNode.METHOD_INSN;
 
-	return wrapWithLogging(wrapMethodTransformers({
+	return wrapWithLogging({
         // region Rendering
 		// Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 		'ChunkRender#rebuildChunk': {
@@ -546,7 +546,7 @@ function initializeCoreMod() {
 			}
 		}
 		// endregion Extended Fluids
-	}));
+	});
 }
 
 
@@ -770,89 +770,6 @@ function makeLoggingTransformerFunction(transformerObjName, transformer) {
 		print('Finished Transform');
 		currentPrintTransformer = null;
 		return obj;
-	};
-}
-
-/**
- * Utility function to wrap all method transformers in class transformers
- * to make them run after OptiFine's class transformers
- *
- * @param {object} transformersObj All the transformers of this coremod
- * @return {object} The transformersObj with all method transformers wrapped
- */
-function wrapMethodTransformers(transformersObj) {
-	for (var transformerObjName in transformersObj) {
-		var transformerObj = transformersObj[transformerObjName];
-
-		var target = transformerObj.target;
-		if (!target)
-			continue;
-
-		var type = target.type;
-		if (!type || !type.equals('METHOD'))
-			continue;
-
-		var clazz = target.class;
-		if (!clazz)
-			continue;
-
-		var methodName = target.methodName;
-		if (!methodName)
-			continue;
-
-		var mappedMethodName = ASMAPI.mapMethod(methodName);
-
-		var methodDesc = target.methodDesc;
-		if (!methodDesc)
-			continue;
-
-		var methodTransformer = transformerObj.transformer;
-		if (!methodTransformer)
-			continue;
-
-		var newTransformerObjName = '(Method2ClassTransformerWrapper) ' + transformerObjName;
-		var newTransformerObj = {
-			'target': {
-				'type': 'CLASS',
-				'name': clazz,
-			},
-			'transformer': makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, methodTransformer)
-		};
-
-		transformersObj[newTransformerObjName] = newTransformerObj;
-		delete transformersObj[transformerObjName];
-	}
-	return transformersObj;
-}
-
-/**
- * Utility function for making the wrapper class transformer function
- * Not part of {@link #wrapMethodTransformers) because of scoping issues (Nashhorn
- * doesn't support 'let' which would fix the issues)
- *
- * @param {string} mappedMethodName The (mapped) name of the target method
- * @param {string} methodDesc The description of the target method
- * @param {methodTransformer} transformer The method transformer function
- * @return {function} A class transformer that wraps the methodTransformer
- */
-function makeClass2MethodTransformerFunction(mappedMethodName, methodDesc, methodTransformer) {
-	return function(classNode) {
-		var methods = classNode.methods;
-		for (var i in methods) {
-			var methodNode = methods[i];
-			if (!methodNode.name.equals(mappedMethodName))
-				continue;
-			if (!methodNode.desc.equals(methodDesc))
-				continue;
-			methods[i] = methodTransformer(methodNode);
-			return classNode;
-		}
-		var searchedMethods = [];
-		for (var i in methods) {
-			var methodNode = methods[i];
-			searchedMethods.push('"' + classNode.name + '.' + methodNode.name + ' ' + methodNode.desc + '"');
-		}
-		throw new Error('Method transformer did not find a method! Target method was "' + classNode.name + '.' + mappedMethodName + methodDesc + '". Searched [' + searchedMethods.join(', ') + '].');
 	};
 }
 
