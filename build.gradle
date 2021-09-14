@@ -130,7 +130,7 @@ dependencies {
 	implementation fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
 
 	// For the config color picker (we include it in our production jar with ShadowJar)
-	shadow implementation('org.beryx:awt-color-factory:1.0.2')
+	library 'org.beryx:awt-color-factory:1.0.2'
 
 //	implementation fg.deobf("curse.maven:KotlinForForge-351264:3331341")
 //	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
