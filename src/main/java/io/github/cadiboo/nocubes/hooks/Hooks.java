@@ -179,43 +179,43 @@ public final class Hooks {
 	// endregion Rendering
 
 	// region Indev-Collisions
-
-	/**
-	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before {@link BlockState#hasLargeCollisionShape()} is called
-	 * Called from: {@link CollisionSpliterator#tryAdvance} right before {@link BlockState#hasLargeCollisionShape()} is called
-	 * <p>
-	 * Hooking this disables vanilla collisions for smoothable BlockStates.
-	 *
-	 * @return If the state can be collided with
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static boolean canBlockStateCollide(BlockState state) {
-//		SelfCheck.canBlockStateCollide = true;
-		return !NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state);
-	}
-
-	/**
-	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before the first invocation of {@link Shapes#lastC}
-	 * <p>
-	 * Hooking this disables vanilla collisions for smoothable BlockStates.
-	 *
-	 * @return If the state can be collided with
-	 */
-	public static double collide(
-		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
-		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.MutableBlockPos pos,
-		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
-	) {
-//		SelfCheck.collide = true;
-		if (!NoCubesConfig.Server.collisionsEnabled)
-			return motion;
-		// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
-		return CollisionHandler.collideAxisInArea(
-			aabb, world, motion, ctx,
-			rotation, inverseRotation, pos,
-			minX, maxX, minY, maxY, minZ, maxZ
-		);
-	}
+//
+//	/**
+//	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before {@link BlockState#hasLargeCollisionShape()} is called
+//	 * Called from: {@link CollisionSpliterator#tryAdvance} right before {@link BlockState#hasLargeCollisionShape()} is called
+//	 * <p>
+//	 * Hooking this disables vanilla collisions for smoothable BlockStates.
+//	 *
+//	 * @return If the state can be collided with
+//	 */
+//	@OnlyIn(Dist.CLIENT)
+//	public static boolean canBlockStateCollide(BlockState state) {
+////		SelfCheck.canBlockStateCollide = true;
+//		return !NoCubesConfig.Server.collisionsEnabled || !NoCubes.smoothableHandler.isSmoothable(state);
+//	}
+//
+//	/**
+//	 * Called from: {@link Shapes#collide(AABB, LevelReader, double, CollisionContext, AxisCycle, Stream)} right before the first invocation of {@link Shapes#lastC}
+//	 * <p>
+//	 * Hooking this disables vanilla collisions for smoothable BlockStates.
+//	 *
+//	 * @return If the state can be collided with
+//	 */
+//	public static double collide(
+//		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
+//		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.MutableBlockPos pos,
+//		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
+//	) {
+////		SelfCheck.collide = true;
+//		if (!NoCubesConfig.Server.collisionsEnabled)
+//			return motion;
+//		// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
+//		return CollisionHandler.collideAxisInArea(
+//			aabb, world, motion, ctx,
+//			rotation, inverseRotation, pos,
+//			minX, maxX, minY, maxY, minZ, maxZ
+//		);
+//	}
 
 	// endregion Indev-Collisions
 
