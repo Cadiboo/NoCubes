@@ -16,13 +16,11 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DirtPathBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.function.Consumer;
@@ -48,7 +46,7 @@ public final class MeshRenderer {
 	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, MeshGenerator generator, Area area) {
 		FaceInfo faceInfo = new FaceInfo();
 		MutableObjects objects = new MutableObjects();
-		MeshGenerator.translateToMeshStart(renderer.matrix.matrix, area.start, renderer.chunkPos);
+		MeshGenerator.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			generator.generate(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
@@ -70,17 +68,17 @@ public final class MeshRenderer {
 				return true;
 			});
 		});
-		ForgeHooksClient.setRenderLayer(null);
+		ForgeHooksClient.setRenderType(null);
 	}
 
 	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, MeshGenerator generator, Area area) {
 		MeshGenerator.translateToMeshStart(matrix, area.start, worldPos);
-		boolean stateSolidity = isSolidRender(state);
+		var stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		FaceInfo faceInfo = new FaceInfo();
+		var faceInfo = new FaceInfo();
 		generator.generate(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
-			boolean renderBothSides = false;
+			var renderBothSides = false;
 			// Don't need textures or lighting because the crumbling texture overwrites them
 			renderQuad(buffer, matrix, faceInfo, Color.WHITE, Texture.EVERYTHING, FaceLight.MAX_BRIGHTNESS, renderBothSides);
 			return true;
@@ -88,68 +86,68 @@ public final class MeshRenderer {
 	}
 
 	static void renderFaceWithConnectedTextures(ChunkRenderInfo renderer, MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState) {
-		BlockState state = renderState.state;
-		BlockPos worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
+		var state = renderState.state;
+		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
 
-		Material material = state.getMaterial();
-		boolean renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
+		var material = state.getMaterial();
+		var renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
 
-		FaceLight light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
-		float shade = renderer.getShade(faceInfo.approximateDirection);
+		var light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
+		var shade = renderer.getShade(faceInfo.approximateDirection);
 
 		renderer.forEachQuad(
 			state, worldPos, faceInfo.approximateDirection,
 			(colorState, colorWorldPos, quad) -> renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
 			(layer, buffer, quad, color, emissive) -> {
-				Texture texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
-				renderQuad(buffer, renderer.matrix.matrix, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+				var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+				renderQuad(buffer, renderer.matrix.matrix(), faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
 			}
 		);
 	}
 
 	static void renderExtras(ChunkRenderInfo renderer, MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo) {
-		boolean renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
-		boolean renderGrassTufts = NoCubesConfig.Client.grassTufts;
+		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
+		var renderGrassTufts = NoCubesConfig.Client.grassTufts;
 		if (!renderPlantsOffset && !renderGrassTufts)
 			return;
 
 		if (faceInfo.approximateDirection != Direction.UP)
 			return;
 
-		BlockPos.MutableBlockPos relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
-		BlockState stateAbove = area.getBlockState(relativeAbove);
+		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
+		var stateAbove = area.getBlockState(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
 			try (FluentMatrixStack ignored = renderer.matrix.push()) {
 				BlockPos.MutableBlockPos worldAbove = relativeAbove.move(area.start);
 				Vec center = faceInfo.centre;
-				renderer.matrix.matrix.translate(center.x - 0.5F, center.y, center.z - 0.5F);
+				renderer.matrix.matrix().translate(center.x - 0.5F, center.y, center.z - 0.5F);
 				renderer.renderBlock(stateAbove, worldAbove);
 			}
 		}
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
-			BlockState grass = Blocks.GRASS.defaultBlockState();
-			BlockPos.MutableBlockPos worldAbove = relativeAbove.move(area.start);
-			boolean renderBothSides = true;
+			var grass = Blocks.GRASS.defaultBlockState();
+			var worldAbove = relativeAbove.move(area.start);
+			var renderBothSides = true;
 
-			Vec3 offset = grass.getOffset(renderer.world, worldAbove);
-			float xOff = (float) offset.x;
-			float zOff = (float) offset.z;
-			float yExt = 0.4F;
-			boolean snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
-			Face face = faceInfo.face;
+			var offset = grass.getOffset(renderer.world, worldAbove);
+			var xOff = (float) offset.x;
+			var zOff = (float) offset.z;
+			var yExt = 0.4F;
+			var snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
+			var face = faceInfo.face;
 
-			FaceInfo grassTuft0 = objects.grassTuft0;
+			var grassTuft0 = objects.grassTuft0;
 			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
-			FaceLight light0 = renderer.light.get(area.start, grassTuft0, objects.grassTuft0Light);
-			float shade0 = renderer.getShade(grassTuft0.approximateDirection);
+			var light0 = renderer.light.get(area.start, grassTuft0, objects.grassTuft0Light);
+			var shade0 = renderer.getShade(grassTuft0.approximateDirection);
 
-			FaceInfo grassTuft1 = objects.grassTuft1;
+			var grassTuft1 = objects.grassTuft1;
 			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
-			FaceLight light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
-			float shade1 = renderer.getShade(grassTuft1.approximateDirection);
+			var light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
+			var shade1 = renderer.getShade(grassTuft1.approximateDirection);
 
-			PoseStack matrix = renderer.matrix.matrix;
+			var matrix = renderer.matrix.matrix();
 			renderer.forEachQuad(
 				grass, worldAbove, null,
 				(state, worldPos, quad) -> snowy ? Color.WHITE : renderer.getColor(objects.color, quad, grass, worldAbove, 1F),
@@ -205,7 +203,7 @@ public final class MeshRenderer {
 		}
 
 		public static FaceInfo withFace() {
-			FaceInfo faceInfo = new FaceInfo();
+			var faceInfo = new FaceInfo();
 			faceInfo.setup(new Face());
 			return faceInfo;
 		}
@@ -314,7 +312,7 @@ public final class MeshRenderer {
 	}
 
 	private static boolean isSnow(BlockState state) {
-		Block block = state.getBlock();
+		var block = state.getBlock();
 		return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
 	}
 

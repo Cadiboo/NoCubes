@@ -32,18 +32,18 @@ public class SurfaceNets implements MeshGenerator {
 
 	@Override
 	public Vec3i getNegativeAreaExtension() {
-		// I'm not sure why it's needed but it is needed very much
+		// I'm not sure why it's needed, but it is needed very much
 		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		boolean smoother = NoCubesConfig.Server.extraSmoothMesh;
-		float[] distanceField = generateDistanceField(area, isSmoothable, smoother);
-		BlockPos dims = getDimensions(area, smoother);
-//		TestData.TestMesh testMesh = TestData.SPHERE;
-//		float[] distanceField = testMesh.generateDistanceField(area.start.getX(), area.start.getY(), area.start.getZ());
-//		BlockPos dims = testMesh.dimensions;
+		var smoother = NoCubesConfig.Server.extraSmoothMesh;
+		var distanceField = generateDistanceField(area, isSmoothable, smoother);
+		var dims = getDimensions(area, smoother);
+//		var testMesh = TestData.SPHERE;
+//		var distanceField = testMesh.generateDistanceField(area.start.getX(), area.start.getY(), area.start.getZ());
+//		var dims = testMesh.dimensions;
 		generateOrThrow(distanceField, dims, smoother, voxelAction, faceAction);
 	}
 
@@ -54,7 +54,7 @@ public class SurfaceNets implements MeshGenerator {
 	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable, boolean smoother) {
 		// The area, converted from a BlockState[] to an isSmoothable[]
 		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		BlockState[] states = area.getAndCacheBlocks();
+		var states = area.getAndCacheBlocks();
 		// NB: SurfaceNets expects to be working on the signed distance at the corner of each block
 		// To get this we would have to average the densities of each block & its neighbours
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
@@ -65,7 +65,7 @@ public class SurfaceNets implements MeshGenerator {
 
 	private static float[] generateNegativeDensityField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
 		int length = area.numBlocks();
-		float[] densityField = DISTANCE_FIELD_CACHE.takeArray(length);
+		var densityField = DISTANCE_FIELD_CACHE.takeArray(length);
 		for (int i = 0; i < length; ++i)
 			densityField[i] = -ModUtil.getBlockDensity(isSmoothable, states[i]);
 		return densityField;
@@ -80,7 +80,7 @@ public class SurfaceNets implements MeshGenerator {
 		int distanceFieldSizeY = areaY - 1;
 		int distanceFieldSizeZ = areaZ - 1;
 		int distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
-		float[] distanceField = DISTANCE_FIELD_CACHE.takeArray(distanceFieldSize);
+		var distanceField = DISTANCE_FIELD_CACHE.takeArray(distanceFieldSize);
 
 		int index = 0;
 		for (int z = 0; z < areaZ; ++z) {
@@ -88,7 +88,7 @@ public class SurfaceNets implements MeshGenerator {
 				for (int x = 0; x < areaX; ++x, ++index) {
 					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
 						continue;
-					float combinedDensity = 0;
+					var combinedDensity = 0;
 					int neighbourIndex = index;
 					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
 						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
@@ -103,7 +103,7 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	private static void generateOrThrow(float[] distanceField, BlockPos dims, boolean smoother, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		var pos = new BlockPos.MutableBlockPos();
 
 		final Face face = new Face();
 		int n = 0;

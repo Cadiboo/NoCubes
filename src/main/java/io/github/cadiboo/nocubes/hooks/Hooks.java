@@ -23,7 +23,10 @@ import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
-import net.minecraft.world.level.*;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -35,7 +38,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
-import net.minecraftforge.fmllegacy.network.NetworkHooks;
+import net.minecraftforge.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
@@ -70,7 +73,7 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static FluidState getRenderFluidState(BlockPos pos) {
 		SelfCheck.getRenderFluidState = true;
-		ClientLevel world = Minecraft.getInstance().level;
+		var world = Minecraft.getInstance().level;
 		if (world == null)
 			return Fluids.EMPTY.defaultFluidState();
 		// We hook this too, see 'getFluidStateOverride' below
@@ -89,11 +92,15 @@ public final class Hooks {
 	@OnlyIn(Dist.CLIENT)
 	public static boolean canBlockStateRender(BlockState state) {
 		SelfCheck.canBlockStateRender = true;
-		if (!NoCubesConfig.Client.render) return true;
+		if (!NoCubesConfig.Client.render)
+			return true;
 		if (!NoCubes.smoothableHandler.isSmoothable(state)) {
-			if (!NoCubesConfig.Client.fixPlantHeight) return true;
-			if (!ModUtil.isShortPlant(state)) return true;
-//			if (!Minecraft.getInstance().level.getBlockState(pos.down()).isSmoothable()) return true;
+			if (!NoCubesConfig.Client.fixPlantHeight)
+				return true;
+			if (!ModUtil.isShortPlant(state))
+				return true;
+//			if (!Minecraft.getInstance().level.getBlockState(pos.down()).isSmoothable())
+//				return true;
 			return false;
 		}
 		return false;
@@ -333,7 +340,7 @@ public final class Hooks {
 		loadClass("net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase");
 		loadClass("net.minecraft.world.level.block.state.BlockState");
 		loadClass("net.minecraft.world.level.Level");
-		loadClass("net.minecraftforge.fmllegacy.network.NetworkHooks");
+		loadClass("net.minecraftforge.network.NetworkHooks");
 		if (dist.isClient()) {
 			loadClass("net.minecraft.client.renderer.block.BlockRenderDispatcher");
 			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask");

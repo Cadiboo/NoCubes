@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
@@ -10,25 +11,27 @@ import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.color.block.BlockColors;
+import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
-import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.Direction;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.model.data.IModelData;
 
@@ -40,9 +43,6 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
-
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 
 /**
  * Calls the {@link MeshRenderer} or {@link FluidRenderer} and provides utility code for both.
@@ -93,14 +93,14 @@ public final class RendererDispatcher {
 			RenderInLayer render,
 			BiConsumer<BufferBuilder, Object> postRender
 		) {
-			List<RenderType> layers = RenderType.chunkBufferLayers();
+			var layers = RenderType.chunkBufferLayers();
 			for (int i = 0, size = layers.size(); i < size; ++i) {
-				RenderType layer = layers.get(i);
+				var layer = layers.get(i);
 				if (!predicate.test(layer))
 					continue;
 
-				BufferBuilder buffer = getAndStartBuffer(layer);
-				Object renderEnv = preRender.apply(layer, buffer);
+				var buffer = getAndStartBuffer(layer);
+				var renderEnv = preRender.apply(layer, buffer);
 				boolean used = render.render(layer, buffer, renderEnv);
 
 				postRender.accept(buffer, renderEnv);
@@ -126,11 +126,11 @@ public final class RendererDispatcher {
 		}
 
 		public void renderBlock(BlockState state, BlockPos.MutableBlockPos worldPos) {
-			IModelData modelData = rebuildTask.getModelData(worldPos);
+			var modelData = rebuildTask.getModelData(worldPos);
 			renderInLayers(
 				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-				(layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix, buffer, false, random, modelData),
+				(layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData),
 				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
 			);
 		}
@@ -156,17 +156,17 @@ public final class RendererDispatcher {
 		}
 
 		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
-			int[] numQuadsRendered = {0};
-			long rand = optiFine.getSeed(state.getSeed(worldPos));
-			IModelData modelData = rebuildTask.getModelData(worldPos);
+			var numQuadsRendered = new int[] {0};
+			var rand = optiFine.getSeed(state.getSeed(worldPos));
+			var modelData = rebuildTask.getModelData(worldPos);
 			renderInLayers(
 				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
 				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
 				(layer, buffer, renderEnv) -> {
-					BakedModel model = getModel(state, renderEnv);
+					var model = getModel(state, renderEnv);
 
-					List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
-					boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+					var nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
+					var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 					numQuadsRendered[0] += nullQuads.size();
 
 					List<BakedQuad> dirQuads;
@@ -203,14 +203,14 @@ public final class RendererDispatcher {
 		}
 
 		private BakedModel getModel(BlockState state, Object renderEnv) {
-			BakedModel model = dispatcher.getBlockModel(state);
+			var model = dispatcher.getBlockModel(state);
 			model = optiFine.getModel(renderEnv, model, state);
 			return model;
 		}
 
 		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, IModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
 			random.setSeed(rand);
-			List<BakedQuad> quads = model.getQuads(state, direction, random, modelData);
+			var quads = model.getQuads(state, direction, random, modelData);
 			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
 			return quads;
 		}
@@ -218,9 +218,9 @@ public final class RendererDispatcher {
 		public boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
 			int i = 0;
 			for (; i < quads.size(); i++) {
-				BakedQuad quad = quads.get(i);
-				Color color = colorSupplier.apply(state, worldPos, quad);
-				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
+				var quad = quads.get(i);
+				var color = colorSupplier.apply(state, worldPos, quad);
+				var emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
 				if (emissive != null) {
 					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
 					action.accept(layer, buffer, quad, color, true);
@@ -238,16 +238,16 @@ public final class RendererDispatcher {
 	}
 
 	public static void renderChunk(RebuildTask rebuildTask, RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack, Random random, BlockRenderDispatcher dispatcher) {
-		long start = System.nanoTime();
-		FluentMatrixStack matrix = new FluentMatrixStack(matrixStack);
+		var start = System.nanoTime();
+		var matrix = new FluentMatrixStack(matrixStack);
 		try (
-			LightCache light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE);
-			FluentMatrixStack ignored = matrix.push()
+			var light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE);
+			var ignored = matrix.push()
 		) {
-			OptiFineProxy optiFine = OptiFineCompatibility.proxy();
+			var optiFine = OptiFineCompatibility.proxy();
 			// Matrix stack is translated to the start of the chunk
 			optiFine.preRenderChunk(chunkRender, chunkPos, matrixStack);
-			ChunkRenderInfo renderer = new ChunkRenderInfo(rebuildTask, chunkRender, compiledChunk, buffers, chunkPos, world, matrix, random, dispatcher, light, optiFine);
+			var renderer = new ChunkRenderInfo(rebuildTask, chunkRender, compiledChunk, buffers, chunkPos, world, matrix, random, dispatcher, light, optiFine);
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
 			renderChunkFluids(renderer);
@@ -259,26 +259,26 @@ public final class RendererDispatcher {
 	}
 
 	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		try (Area area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
+		var generator = NoCubesConfig.Server.meshGenerator;
+		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
 			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, generator, area);
 		}
 	}
 
 	private static void renderChunkFluids(ChunkRenderInfo renderer) {
-//		long start = System.nanoTime();
-//		try (Area area = new Area(Minecraft.getInstance().level, renderer.chunkPos.subtract(ModUtil.VEC_ONE), ModUtil.CHUNK_SIZE.offset(ModUtil.VEC_TWO))) {
+//		var start = System.nanoTime();
+//		try (var area = new Area(Minecraft.getInstance().level, renderer.chunkPos.subtract(ModUtil.VEC_ONE), ModUtil.CHUNK_SIZE.offset(ModUtil.VEC_TWO))) {
 //			FluidRenderer.render(renderer, area);
 //		}
 //		fluidsProfiler.recordAndLogElapsedNanosChunk(start, "fluids");
 	}
 
 	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothable) {
-		long start = System.nanoTime();
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		var start = System.nanoTime();
+		var generator = NoCubesConfig.Server.meshGenerator;
 		try (
-			Area area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, generator);
-			FluentMatrixStack ignored = renderer.matrix.push()
+			var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, generator);
+			var ignored = renderer.matrix.push()
 		) {
 			MeshRenderer.renderArea(renderer, isSmoothable, generator, area);
 		}
@@ -290,8 +290,8 @@ public final class RendererDispatcher {
 	}
 
 	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, RenderType layer) {
-		ForgeHooksClient.setRenderLayer(layer);
-		BufferBuilder buffer = buffers.builder(layer);
+		ForgeHooksClient.setRenderType(layer);
+		var buffer = buffers.builder(layer);
 
 		if (compiledChunk.hasLayer.add(layer))
 			chunkRender.beginLayer(buffer);

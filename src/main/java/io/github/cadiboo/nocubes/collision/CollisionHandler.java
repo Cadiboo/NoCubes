@@ -53,11 +53,11 @@ public final class CollisionHandler {
 		assert NoCubesConfig.Server.collisionsEnabled;
 		assert NoCubes.smoothableHandler.isSmoothable(state);
 
-//		if (context.getEntity( instanceof PlayerEntity)
+//		if (context.getEntity() instanceof PlayerEntity)
 //			// Noclip for debugging
 //			return VoxelShapes.empty();
 
-		Entity entity = context.getEntity().orElse(null);
+		var entity = context.getEntity();
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			entity == null || reader.getBlockState(blockPos) != state

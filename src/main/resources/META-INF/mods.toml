@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[37,)"
+loaderVersion="[38,)"
 license="LGPLv3"
 issueTrackerURL="https://github.com/Cadiboo/NoCubes/issues"
 [[mods]]
@@ -19,13 +19,13 @@ It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.
 [[dependencies.nocubes]]
 modId="forge"
 mandatory=true
-versionRange="[37,)"
+versionRange="[38,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.nocubes]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.17.1]"
+versionRange="[1.18]"
 ordering="NONE"
 side="BOTH"

@@ -44,13 +44,13 @@ public final class OldNoCubes implements MeshGenerator {
 
 	@Override
 	public BlockPos getPositiveAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
+		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public BlockPos getNegativeAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
+		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 

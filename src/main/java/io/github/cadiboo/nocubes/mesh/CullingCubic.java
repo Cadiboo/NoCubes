@@ -13,13 +13,13 @@ public class CullingCubic implements MeshGenerator {
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
+		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public Vec3i getNegativeAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
+		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
@@ -33,9 +33,9 @@ public class CullingCubic implements MeshGenerator {
 		final float min = 0F;
 		final float max = 1F - min;
 
-		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		Face face = new Face();
+		var blocks = area.getAndCacheBlocks();
+		var pos = new BlockPos.MutableBlockPos();
+		var face = new Face();
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {
 			for (int y = 0; y < height; ++y) {

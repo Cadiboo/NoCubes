@@ -5,9 +5,9 @@ import net.minecraft.network.chat.BaseComponent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fmlserverevents.FMLServerStartedEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -23,10 +23,10 @@ public final class TestRunner {
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	@SubscribeEvent
-	public static void runTests(FMLServerStartedEvent event) {
-		TestRepository testRepository = new TestRepository();
-		MinecraftServer server = event.getServer();
-		long fails = testRepository.tests.parallelStream()
+	public static void runTests(ServerStartedEvent event) {
+		var testRepository = new TestRepository();
+		var server = event.getServer();
+		var fails = testRepository.tests.parallelStream()
 			.filter(test -> runTestWithCatch(test, server))
 			.count();
 		if (fails > 0)

@@ -3,13 +3,12 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.Util;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.Util;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**

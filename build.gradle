@@ -21,7 +21,6 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
-apply from: 'https://raw.githubusercontent.com/SizableShrimp/Forge-Class-Remapper/main/classremapper.gradle'
 
 repositories {
 	maven {
@@ -30,6 +29,7 @@ repositories {
 			includeGroup "curse.maven"
 		}
 	}
+	mavenCentral()
 }
 
 def getGitCommit = { ->
@@ -49,8 +49,8 @@ archivesBaseName = modFileName
 if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
 	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
 
-// Mojang ships Java 16 to end users in 1.17+, so mods should target this version
-java.toolchain.languageVersion = JavaLanguageVersion.of(16)
+// Mojang ships Java 17 to end users in 1.18+, so mods should target this version
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 minecraft {
@@ -136,8 +136,8 @@ dependencies {
 //	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
 
 	// For unit tests
-	testImplementation 'org.mockito:mockito-core:3.11.2'
-	testImplementation 'junit:junit:4.13'
+	testImplementation 'org.mockito:mockito-core:4.1.0'
+	testImplementation 'junit:junit:4.13.2'
 }
 
 jar {

@@ -8,18 +8,15 @@ import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ColorParser.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -29,7 +26,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.DrawSelectionEvent;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
@@ -51,23 +48,23 @@ public final class OverlayRenderer {
 	public static void onHighlightBlock(DrawSelectionEvent.HighlightBlock event) {
 		if (!NoCubesConfig.Client.render)
 			return;
-		ClientLevel world = Minecraft.getInstance().level;
+		var world = Minecraft.getInstance().level;
 		if (world == null)
 			return;
-		BlockPos lookingAtPos = event.getTarget().getBlockPos();
-		BlockState state = world.getBlockState(lookingAtPos);
+		var lookingAtPos = event.getTarget().getBlockPos();
+		var state = world.getBlockState(lookingAtPos);
 		if (!NoCubes.smoothableHandler.isSmoothable(state))
 			return;
 
 		event.setCanceled(true);
 
-		Vec3 camera = event.getInfo().getPosition();
-		PoseStack matrix = event.getMatrix();
-		VertexConsumer buffer = event.getBuffers().getBuffer(RenderType.lines());
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		var camera = event.getCamera().getPosition();
+		var matrix = event.getPoseStack();
+		var buffer = event.getMultiBufferSource().getBuffer(RenderType.lines());
+		var generator = NoCubesConfig.Server.meshGenerator;
 		boolean stateSolidity = MeshRenderer.isSolidRender(state);
 		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
-			Color color = NoCubesConfig.Client.selectionBoxColor;
+			var color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 			generator.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
 				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
@@ -77,12 +74,12 @@ public final class OverlayRenderer {
 	}
 
 	@SubscribeEvent
-	public static void onRenderWorldLastEvent(RenderWorldLastEvent event) {
+	public static void onRenderLevelLastEvent(RenderLevelLastEvent event) {
 		if (!NoCubesConfig.Client.debugEnabled)
 			return;
 
-		Minecraft minecraft = Minecraft.getInstance();
-		Level world = minecraft.level;
+		var minecraft = Minecraft.getInstance();
+		var world = minecraft.level;
 		if (world == null)
 			return;
 
@@ -91,24 +88,24 @@ public final class OverlayRenderer {
 		if (viewer == null)
 			return;
 
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		var generator = NoCubesConfig.Server.meshGenerator;
 
 		var camera = cameraInfo.getPosition();
-		PoseStack matrixStack = event.getMatrixStack();
+		var matrixStack = event.getPoseStack();
 
-		MultiBufferSource.BufferSource bufferSource = minecraft.renderBuffers().bufferSource();
-		VertexConsumer bufferBuilder = bufferSource.getBuffer(RenderType.lines());
+		var bufferSource = minecraft.renderBuffers().bufferSource();
+		var bufferBuilder = bufferSource.getBuffer(RenderType.lines());
 
-		HitResult targeted = viewer.pick(20.0D, 0.0F, false);
+		var targeted = viewer.pick(20.0D, 0.0F, false);
 		// Where the player is looking at or their position of they're not looking at a block
-		BlockPos targetedPos = targeted.getType() != HitResult.Type.BLOCK ? viewer.blockPosition() : ((BlockHitResult) targeted).getBlockPos();
+		var targetedPos = targeted.getType() != HitResult.Type.BLOCK ? viewer.blockPosition() : ((BlockHitResult) targeted).getBlockPos();
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
 		// Destroy block progress
 		if (false) {
-			BlockPos start = targetedPos.offset(-2, -2, -2);
-			BlockPos end = targetedPos.offset(2, 2, 2);
-			int[] i = {0};
+			var start = targetedPos.offset(-2, -2, -2);
+			var end = targetedPos.offset(2, 2, 2);
+			var i = new int[] {0};
 			BlockPos.betweenClosed(start, end).forEach(pos -> {
 				minecraft.levelRenderer.destroyBlockProgress(100 + i[0]++, pos, 9);
 			});
@@ -116,9 +113,9 @@ public final class OverlayRenderer {
 
 		// Outline nearby smoothable blocks
 		if (NoCubesConfig.Client.debugOutlineSmoothables) {
-			Color color = new Color(0, 1, 0, 0.4F);
-			BlockPos start = viewer.blockPosition().offset(-5, -5, -5);
-			BlockPos end = viewer.blockPosition().offset(5, 5, 5);
+			var color = new Color(0, 1, 0, 0.4F);
+			var start = viewer.blockPosition().offset(-5, -5, -5);
+			var end = viewer.blockPosition().offset(5, 5, 5);
 			BlockPos.betweenClosed(start, end).forEach(pos -> {
 				if (isSmoothable.test(viewer.level.getBlockState(pos)))
 					drawShape(matrixStack, bufferBuilder, Shapes.block(), pos, camera, color);
@@ -130,11 +127,11 @@ public final class OverlayRenderer {
 		// It made me understand why feeding it the 'proper' corner info results in much smoother terrain
 		// at the cost of 1-block formations disappearing
 		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
-			VoxelShape distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
-			Color densityColor = new Color(0F, 0F, 1F, 0.5F);
-			try (Area area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
-				BlockState[] states = area.getAndCacheBlocks();
-				float[] densities = new float[area.numBlocks()];
+			var distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
+			var densityColor = new Color(0F, 0F, 1F, 0.5F);
+			try (var area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
+				var states = area.getAndCacheBlocks();
+				var densities = new float[area.numBlocks()];
 				for (int i = 0; i < densities.length; ++i)
 					densities[i] = ModUtil.getBlockDensity(isSmoothable, states[i]);
 
@@ -147,15 +144,15 @@ public final class OverlayRenderer {
 				int maxY = minY + height;
 				int maxX = minX + width;
 				int zyxIndex = 0;
-				BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+				var pos = new BlockPos.MutableBlockPos();
 				for (int z = minZ; z < maxZ; ++z) {
 					for (int y = minY; y < maxY; ++y) {
 						for (int x = minX; x < maxX; ++x, ++zyxIndex) {
 							pos.set(x, y, z);
-							float density = densities[zyxIndex];
-							float densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
+							var density = densities[zyxIndex];
+							var densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
 							if (densityScale > 0.01) {
-								VoxelShape box = Shapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
+								var box = Shapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
 								drawShape(matrixStack, bufferBuilder, box, pos, camera, densityColor);
 							}
 							if (x <= minX || y <= minY || z <= minZ)
@@ -191,8 +188,8 @@ public final class OverlayRenderer {
 
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (NoCubesConfig.Client.debugRenderMeshCollisions) {
-			Color color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
-			BlockPos start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
+			var color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
+			var start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
 			CollisionHandler.forEachCollisionShapeRelativeToStart(world, new BlockPos.MutableBlockPos(),
 				start.getX(), start.getX() + collisionsRenderRadius * 2,
 				start.getY(), start.getY() + collisionsRenderRadius * 2,
@@ -206,12 +203,10 @@ public final class OverlayRenderer {
 
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
 		if (NoCubesConfig.Client.debugRecordMeshPerformance || NoCubesConfig.Client.debugOutlineNearbyMesh) {
-			long startNanos = System.nanoTime();
+			var startNanos = System.nanoTime();
 			drawNearbyMesh(viewer, matrixStack, camera, bufferBuilder);
-			if (NoCubesConfig.Client.debugRecordMeshPerformance) {
-				if (meshProfiler.recordElapsedNanos(startNanos))
-					LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugOutlineNearbyMesh ? " & outline" : "") + " nearby mesh").debug("Average {}ms over the past {} frames", meshProfiler.average() / 1000_000F, meshProfiler.size());
-			}
+			if (NoCubesConfig.Client.debugRecordMeshPerformance && meshProfiler.recordElapsedNanos(startNanos))
+				LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugOutlineNearbyMesh ? " & outline" : "") + " nearby mesh").debug("Average {}ms over the past {} frames", meshProfiler.average() / 1000_000F, meshProfiler.size());
 		}
 
 		// Hack to finish buffer because RenderWorldLastEvent seems to fire after vanilla normally finishes them
@@ -219,22 +214,22 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, PoseStack matrix, Vec3 camera, VertexConsumer buffer) {
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		BlockPos meshSize = new BlockPos(16, 16, 16);
-		BlockPos meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
+		var generator = NoCubesConfig.Server.meshGenerator;
+		var meshSize = new BlockPos(16, 16, 16);
+		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
-			Area area = new Area(viewer.level, meshStart, meshSize, generator);
-			LightCache light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
+			var area = new Area(viewer.level, meshStart, meshSize, generator);
+			var light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
 		) {
-			FaceInfo faceInfo = new FaceInfo();
-			MutableObjects objects = new MutableObjects();
-			Vec mutable = new Vec();
+			var faceInfo = new FaceInfo();
+			var objects = new MutableObjects();
+			var mutable = new Vec();
 
-			Color faceColor = new Color(0F, 1F, 1F, 0.4F);
-			Color normalColor = new Color(0F, 0F, 1F, 0.2F);
-			Color averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
-			Color normalDirectionColor = new Color(0F, 1F, 0F, 1F);
-			Color lightColor = new Color(1F, 1F, 0F, 1F);
+			var faceColor = new Color(0F, 1F, 1F, 0.4F);
+			var normalColor = new Color(0F, 0F, 1F, 0.2F);
+			var averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
+			var normalDirectionColor = new Color(0F, 1F, 0F, 1F);
+			var lightColor = new Color(1F, 1F, 0F, 1F);
 
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 			generator.generate(area, isSmoothable, (pos, face) -> {
@@ -263,7 +258,7 @@ public final class OverlayRenderer {
 
 //				// Draw light pos
 //				mutable.set(0, 0, 0);
-//				BlockPos faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
+//				var faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
 //				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
 //					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
 //				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
@@ -279,9 +274,9 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
-		float startX = (float) (offset.getX() - camera.x + start.x);
-		float startY = (float) (offset.getY() - camera.y + start.y);
-		float startZ = (float) (offset.getZ() - camera.z + start.z);
+		var startX = (float) (offset.getX() - camera.x + start.x);
+		var startY = (float) (offset.getY() - camera.y + start.y);
+		var startZ = (float) (offset.getZ() - camera.z + start.z);
 		lineVertex(buffer, matrix, startX, startY, startZ, color);
 		lineVertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z, color);
 	}
@@ -292,26 +287,26 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, Color color, VertexConsumer buffer, PoseStack matrix) {
-		Vec v0 = face.v0;
-		Vec v1 = face.v1;
-		Vec v2 = face.v2;
-		Vec v3 = face.v3;
-		double x = pos.getX() - camera.x;
-		double y = pos.getY() - camera.y;
-		double z = pos.getZ() - camera.z;
+		var v0 = face.v0;
+		var v1 = face.v1;
+		var v2 = face.v2;
+		var v3 = face.v3;
+		var x = pos.getX() - camera.x;
+		var y = pos.getY() - camera.y;
+		var z = pos.getZ() - camera.z;
 
-		float v0x = (float) (x + v0.x);
-		float v1x = (float) (x + v1.x);
-		float v2x = (float) (x + v2.x);
-		float v3x = (float) (x + v3.x);
-		float v0y = (float) (y + v0.y);
-		float v1y = (float) (y + v1.y);
-		float v2y = (float) (y + v2.y);
-		float v3y = (float) (y + v3.y);
-		float v0z = (float) (z + v0.z);
-		float v1z = (float) (z + v1.z);
-		float v2z = (float) (z + v2.z);
-		float v3z = (float) (z + v3.z);
+		var v0x = (float) (x + v0.x);
+		var v1x = (float) (x + v1.x);
+		var v2x = (float) (x + v2.x);
+		var v3x = (float) (x + v3.x);
+		var v0y = (float) (y + v0.y);
+		var v1y = (float) (y + v1.y);
+		var v2y = (float) (y + v2.y);
+		var v3y = (float) (y + v3.y);
+		var v0z = (float) (z + v0.z);
+		var v1z = (float) (z + v1.z);
+		var v2z = (float) (z + v2.z);
+		var v3z = (float) (z + v3.z);
 		lineVertex(buffer, matrix, v0x, v0y, v0z, color);
 		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
 		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
@@ -323,9 +318,9 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, Color color) {
-		double x = pos.getX() - camera.x;
-		double y = pos.getY() - camera.y;
-		double z = pos.getZ() - camera.z;
+		var x = pos.getX() - camera.x;
+		var y = pos.getY() - camera.y;
+		var z = pos.getZ() - camera.z;
 		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
 			lineVertex(buffer, stack, (float) (x + x0), (float) (y + y0), (float) (z + z0), color);
 			lineVertex(buffer, stack, (float) (x + x1), (float) (y + y1), (float) (z + z1), color);

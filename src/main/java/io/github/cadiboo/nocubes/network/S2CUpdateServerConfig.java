@@ -5,7 +5,7 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +15,9 @@ import java.util.function.Supplier;
 /**
  * @author Cadiboo
  */
-public class S2CUpdateServerConfig {
-
-	private final byte[] data;
+public record S2CUpdateServerConfig(
+	byte[] data
+) {
 
 	public static S2CUpdateServerConfig create(ModConfig serverConfig) {
 		assert FMLEnvironment.dist.isDedicatedServer();
@@ -30,21 +30,17 @@ public class S2CUpdateServerConfig {
 		}
 	}
 
-	private S2CUpdateServerConfig(byte[] data) {
-		this.data = data;
-	}
-
 	public static void encode(S2CUpdateServerConfig msg, FriendlyByteBuf buffer) {
 		buffer.writeByteArray(msg.data);
 	}
 
 	public static S2CUpdateServerConfig decode(FriendlyByteBuf buffer) {
-		byte[] data = buffer.readByteArray();
+		var data = buffer.readByteArray();
 		return new S2CUpdateServerConfig(data);
 	}
 
 	public static void handle(S2CUpdateServerConfig msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context ctx = contextSupplier.get();
+		var ctx = contextSupplier.get();
 		NoCubesConfig.Hacks.receiveSyncedServerConfig(msg);
 		ctx.setPacketHandled(true);
 	}

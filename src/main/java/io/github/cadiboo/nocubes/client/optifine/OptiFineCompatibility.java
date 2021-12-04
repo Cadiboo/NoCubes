@@ -7,7 +7,7 @@ public class OptiFineCompatibility {
 	private static final OptiFineProxy[] PROXIES = {
 		new HD_U_G8(),
 	};
-	private static OptiFineProxy instance;
+	private static volatile OptiFineProxy instance;
 
 	public static OptiFineProxy proxy() {
 		if (instance == null) {

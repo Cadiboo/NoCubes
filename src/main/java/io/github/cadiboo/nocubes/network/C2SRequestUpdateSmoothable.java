@@ -6,10 +6,9 @@ import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import net.minecraft.Util;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.fmllegacy.network.NetworkEvent;
-import net.minecraftforge.fmllegacy.network.PacketDistributor;
+import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.function.Supplier;
 
@@ -18,15 +17,10 @@ import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSI
 /**
  * @author Cadiboo
  */
-public class C2SRequestUpdateSmoothable {
-
-	private final BlockState state;
-	private final boolean newValue;
-
-	public C2SRequestUpdateSmoothable(BlockState state, boolean newValue) {
-		this.state = state;
-		this.newValue = newValue;
-	}
+public record C2SRequestUpdateSmoothable(
+	BlockState state,
+	boolean newValue
+) {
 
 	public static void encode(C2SRequestUpdateSmoothable msg, FriendlyByteBuf buffer) {
 		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
@@ -34,14 +28,14 @@ public class C2SRequestUpdateSmoothable {
 	}
 
 	public static C2SRequestUpdateSmoothable decode(FriendlyByteBuf buffer) {
-		BlockState state = BlockStateConverter.fromId(buffer.readVarInt());
-		boolean newValue = buffer.readBoolean();
+		var state = BlockStateConverter.fromId(buffer.readVarInt());
+		var newValue = buffer.readBoolean();
 		return new C2SRequestUpdateSmoothable(state, newValue);
 	}
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context ctx = contextSupplier.get();
-		ServerPlayer sender = ctx.getSender();
+		var ctx = contextSupplier.get();
+		var sender = ctx.getSender();
 		boolean hasPermission = sender.hasPermissions(REQUIRED_PERMISSION_LEVEL);
 		if (hasPermission) {
 			BlockState state = msg.state;

@@ -548,7 +548,7 @@ function initializeCoreMod() {
 		'NetworkHooks#handleClientLoginSuccess (Forge)': {
 			'target': {
 				'type': 'METHOD',
-				'class': 'net.minecraftforge.fmllegacy.network.NetworkHooks',
+				'class': 'net.minecraftforge.network.NetworkHooks',
 				'methodName': 'handleClientLoginSuccess', // Forge added method
 				'methodDesc': '(Lnet/minecraft/network/Connection;)V'
 			},
