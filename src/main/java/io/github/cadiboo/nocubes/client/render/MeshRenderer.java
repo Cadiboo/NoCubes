@@ -88,7 +88,7 @@ public final class MeshRenderer {
 	}
 
 	static void renderFaceWithConnectedTextures(ChunkRenderInfo renderer, MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState) {
-		BlockState state = Blocks.GLASS.defaultBlockState();//renderState.state;
+		BlockState state = renderState.state;
 		BlockPos worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
 
 		Material material = state.getMaterial();
