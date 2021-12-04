@@ -296,6 +296,7 @@ public final class NoCubesConfig {
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 			extraSmoothMesh = INSTANCE.extraSmoothMesh.get();
 			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
+				// TODO: This seems to be broken and never gets called in singleplayer
 				DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ClientUtil::reloadAllChunks);
 			if (FMLEnvironment.dist.isDedicatedServer())
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
