@@ -123,9 +123,9 @@ public final class CollisionHandler {
 			double[] motionRef = {motion};
 			Axis axis = inverseRotation.cycle(Axis.Z);
 			Predicate<VoxelShape> predicate = shape -> {
-				assert Math.abs(motionRef[0]) >= 1.0E-7D;
+				assert Math.abs(motionRef[0]) >= 0.0000001;
 				motionRef[0] = shape.collide(axis, aabb, motionRef[0]);
-				if (Math.abs(motionRef[0]) < 1.0E-7D) {
+				if (Math.abs(motionRef[0]) < 0.0000001) {
 					motionRef[0] = 0;
 					return false;
 				}
