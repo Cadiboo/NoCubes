@@ -33,7 +33,7 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 class HD_U_G8 implements OptiFineProxy {
 
 	// From OptiFine's BlockModelRenderer
-	private static final RenderType[] OVERLAY_LAYERS = new RenderType[]{RenderType.cutout(), RenderType.cutoutMipped(), RenderType.translucent()};
+	static final RenderType[] OVERLAY_LAYERS = new RenderType[]{RenderType.cutout(), RenderType.cutoutMipped(), RenderType.translucent()};
 
 	@Override
 	public boolean initialisedAndUsable() {
@@ -46,14 +46,6 @@ class HD_U_G8 implements OptiFineProxy {
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
-		}
-		try {
-			final String requiredVersion = "OptiFine_1.16.5_HD_U_G8";
-			Object installedVersion = VERSION.get(null);
-			if (!requiredVersion.equals(installedVersion))
-				throw new RuntimeException("NoCubes requires '" + requiredVersion + "', you have '" + installedVersion + "' installed");
-		} catch (IllegalAccessException e) {
-			throw new RuntimeException("Can't access OptiFine's version", e);
 		}
 		return true;
 	}

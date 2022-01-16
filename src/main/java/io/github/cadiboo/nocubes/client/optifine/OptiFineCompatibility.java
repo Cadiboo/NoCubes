@@ -2,9 +2,14 @@ package io.github.cadiboo.nocubes.client.optifine;
 
 import org.apache.logging.log4j.LogManager;
 
+/**
+ * This compatibility system isn't perfect and leads to a lot of code duplication
+ * However, it's a lot better than the previous system.
+ */
 public class OptiFineCompatibility {
 
 	private static final OptiFineProxy[] PROXIES = {
+		new HD_U_H5(),
 		new HD_U_G8(),
 	};
 	private static volatile OptiFineProxy instance;

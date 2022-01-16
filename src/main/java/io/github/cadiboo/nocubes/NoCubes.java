@@ -23,7 +23,7 @@ import net.minecraftforge.fml.loading.FMLLoader;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	// Blocks is safe to use here, it gets inited before mods are constructed
+	// Blocks is safe to use here, it gets initialised before mods are constructed
 	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 
 	public NoCubes() {
