@@ -26,8 +26,8 @@ public class NoCubesTest {
 			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(DIRT.defaultBlockState()))),
 			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(AIR.defaultBlockState()))),
 			new Test("removing smoothable should work", () -> {
-				BlockState dirt = DIRT.defaultBlockState();
-				boolean oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
+				var dirt = DIRT.defaultBlockState();
+				var oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
 				NoCubes.smoothableHandler.removeSmoothable(dirt);
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));
 				if (oldValue)
@@ -47,8 +47,8 @@ public class NoCubesTest {
 	private static void meshGeneratorsSanityCheck() {
 		Predicate<BlockState> isSmoothable = $ -> $ == STONE.defaultBlockState();
 
-		BlockPos start = new BlockPos(100, 50, 25);
-		Area area = new Area(null, start, new BlockPos(5, 5, 5)) {
+		var start = new BlockPos(100, 50, 25);
+		var area = new Area(null, start, new BlockPos(5, 5, 5)) {
 			@Override
 			public BlockState[] getAndCacheBlocks() {
 				BlockState[] states = new BlockState[numBlocks()];
@@ -62,7 +62,7 @@ public class NoCubesTest {
 				// No-op
 			}
 		};
-		for (MeshGeneratorEnum generator : MeshGeneratorEnum.values())
+		for (var generator : MeshGeneratorEnum.values())
 			generator.generator.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 

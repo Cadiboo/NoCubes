@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
@@ -47,45 +48,27 @@ import static net.minecraft.world.level.block.Blocks.*;
  *
  * @author Cadiboo
  */
-@Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class NoCubesConfig {
-
-	private static long lastSavedClientConfigAt = -1;
-	private static long lastSavedServerConfigAt = -1;
 
 	/**
 	 * Called from inside the mod constructor.
 	 *
 	 * @param context The ModLoadingContext to register the configs to
 	 */
-	public static void register(ModLoadingContext context) {
-//		context.registerConfig(ModConfig.Type.COMMON, Common.SPEC);
-		context.registerConfig(ModConfig.Type.CLIENT, Client.SPEC);
-		context.registerConfig(ModConfig.Type.SERVER, Server.SPEC);
-	}
-
-	@SubscribeEvent
-	public static void onModConfigEvent(ModConfigEvent configEvent) {
-		// TODO: Check if file modification time is smaller than 'lastSavedConfigAt' and reject if TRUE and file is not null
-		var config = configEvent.getConfig();
-		var spec = config.getSpec();
-//		if (spec == Common.SPEC && didNotSaveConfigRecently(lastSavedCommonConfigAt)) {
-//			Common.bake();
-//			lastSavedCommonConfigAt = -1;
-//		} else
-		if (spec == Client.SPEC && didNotSaveConfigRecently(lastSavedClientConfigAt)) {
-			Client.bake(config);
-			lastSavedClientConfigAt = -1;
-		} else if (spec == Server.SPEC && didNotSaveConfigRecently(lastSavedServerConfigAt)) {
-			Server.bake(config);
-			lastSavedServerConfigAt = -1;
-		}
-	}
-
-	static boolean didNotSaveConfigRecently(long lastSavedConfigAt) {
-		final long ten_seconds = 10L * 1000_000_000;
-		long now = System.nanoTime();
-		return now - ten_seconds > lastSavedConfigAt;
+	public static void register(ModLoadingContext context, IEventBus modBus) {
+		Lists.newArrayList(
+//			Pair.of(ModConfig.Type.COMMON, Common.SPEC),
+			Pair.of(ModConfig.Type.CLIENT, Client.SPEC),
+			Pair.of(ModConfig.Type.SERVER, Server.SPEC)
+		).forEach(pair -> context.registerConfig(pair.getKey(), pair.getValue()));
+		modBus.addListener((ModConfigEvent event) -> {
+			var config = event.getConfig();
+			var spec = config.getSpec();
+			if (spec == Client.SPEC)
+				Client.bake(config);
+			else if (spec == Server.SPEC)
+				Server.bake(config);
+		});
 	}
 
 	/**
@@ -154,10 +137,7 @@ public final class NoCubesConfig {
 		}
 
 		private static void saveAndLoad() {
-			// Allow our bake method to run with the new values
-			lastSavedClientConfigAt = -1;
 			Hacks.saveAndLoad(ModConfig.Type.CLIENT);
-			lastSavedClientConfigAt = System.nanoTime();
 		}
 
 		/**
@@ -318,10 +298,7 @@ public final class NoCubesConfig {
 		}
 
 		private static void saveAndLoad() {
-			// Allow our bake method to run with the new values
-			lastSavedServerConfigAt = -1;
 			Hacks.saveAndLoad(ModConfig.Type.SERVER);
-			lastSavedServerConfigAt = System.nanoTime();
 		}
 
 		public enum MeshGeneratorEnum {
@@ -418,7 +395,7 @@ public final class NoCubesConfig {
 		 * Similar to {@link ConfigFileTypeHandler.ConfigWatcher#run()}
 		 */
 		static void saveAndLoad(ModConfig.Type type) {
-			ConfigTracker_getConfig(NoCubes.MOD_ID, type).ifPresent(modConfig -> {
+			ConfigTracker_getConfig(type).ifPresent(modConfig -> {
 				modConfig.save();
 				((CommentedFileConfig) modConfig.getConfigData()).load();
 				modConfig.getSpec().afterReload();
@@ -431,7 +408,7 @@ public final class NoCubesConfig {
 		 * Similar to {@link ConfigTracker#loadDefaultServerConfigs}
 		 */
 		public static void loadDefaultServerConfig() {
-			ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).ifPresent(modConfig -> {
+			ConfigTracker_getConfig(ModConfig.Type.SERVER).ifPresent(modConfig -> {
 				var config = CommentedConfig.inMemory();
 				modConfig.getSpec().correct(config);
 //				modConfig.setConfigData(config);
@@ -445,9 +422,10 @@ public final class NoCubesConfig {
 		/**
 		 * Similar to {@link ConfigTracker#getConfigFileName}
 		 */
-		private static Optional<ModConfig> ConfigTracker_getConfig(String modId, ModConfig.Type type) {
-			Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configsByMod");
-			return Optional.ofNullable(configsByMod.getOrDefault(modId, Collections.emptyMap()).getOrDefault(type, null));
+		private static Optional<ModConfig> ConfigTracker_getConfig(ModConfig.Type type) {
+			return ConfigTracker.INSTANCE.configSets().get(type).stream()
+				.filter(modConfig -> modConfig.getModId().equals(NoCubes.MOD_ID))
+				.findFirst();
 		}
 
 		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
@@ -466,7 +444,7 @@ public final class NoCubesConfig {
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
 			assert FMLEnvironment.dist.isClient();
-			var modConfig = ConfigTracker_getConfig(NoCubes.MOD_ID, ModConfig.Type.SERVER).get();
+			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
 			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
 			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));

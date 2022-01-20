@@ -1,9 +1,11 @@
 package io.github.cadiboo.nocubes.client;
 
+import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.KeyMapping;
@@ -15,6 +17,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,30 +31,26 @@ import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSI
 /**
  * @author Cadiboo
  */
-@Mod.EventBusSubscriber(modid = NoCubes.MOD_ID, value = Dist.CLIENT)
 public final class KeybindingHandler {
 
-	private static final List<Pair<KeyMapping, Runnable>> KEYBINDS = new LinkedList<>();
-
-	public static void registerKeybindings() {
-		KEYBINDS.clear();
-		KEYBINDS.add(makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, KeybindingHandler::toggleVisuals));
-		KEYBINDS.add(makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindingHandler::toggleLookedAtSmoothable));
+	public static void registerKeybindings(IEventBus bus) {
+		var keybindings = Lists.newArrayList(
+			makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, KeybindingHandler::toggleVisuals),
+			makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindingHandler::toggleLookedAtSmoothable)
+		);
+		bus.addListener((TickEvent.ClientTickEvent event) -> {
+			if (event.phase != TickEvent.Phase.END)
+				return;
+			for (var keybinding : keybindings)
+				if (keybinding.getKey().consumeClick())
+					keybinding.getValue().run();
+		});
 	}
 
 	private static Pair<KeyMapping, Runnable> makeKeybinding(String name, int key, Runnable action) {
 		var mapping = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
 		ClientRegistry.registerKeyBinding(mapping);
 		return Pair.of(mapping, action);
-	}
-
-	@SubscribeEvent
-	public static void onClientTickEvent(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END)
-			return;
-		for (Pair<KeyMapping, Runnable> keybind : KEYBINDS)
-			if (keybind.getKey().consumeClick())
-				keybind.getValue().run();
 	}
 
 	private static void toggleVisuals() {

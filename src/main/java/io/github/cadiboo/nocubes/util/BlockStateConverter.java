@@ -20,7 +20,7 @@ public interface BlockStateConverter {
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")
-		BlockState state = Block.BLOCK_STATE_REGISTRY.byId(id);
+		var state = Block.BLOCK_STATE_REGISTRY.byId(id);
 		if (state == null)
 			throw new IllegalStateException("Unknown blockstate id" + id);
 		return state;
@@ -28,7 +28,7 @@ public interface BlockStateConverter {
 
 	static int toId(BlockState state) {
 		@SuppressWarnings("deprecation")
-		int id = Block.BLOCK_STATE_REGISTRY.getId(state);
+		var id = Block.BLOCK_STATE_REGISTRY.getId(state);
 		if (id == -1)
 			throw new IllegalStateException("Unknown blockstate " + state);
 		return id;
@@ -44,8 +44,8 @@ public interface BlockStateConverter {
 	}
 
 	static String toString(BlockState state) {
-		String block = state.getBlock().getRegistryName().toString();
-		final ImmutableMap<Property<?>, Comparable<?>> values = state.getValues();
+		var block = state.getBlock().getRegistryName().toString();
+		var values = state.getValues();
 		if (values.isEmpty())
 			return block;
 		return values.entrySet().stream()

@@ -11,9 +11,9 @@ import net.minecraft.client.renderer.LevelRenderer;
 public final class ClientUtil {
 
 	public static void reloadAllChunks() {
-		Minecraft minecraft = Minecraft.getInstance();
+		var minecraft = Minecraft.getInstance();
 		minecraft.execute(() -> {
-			LevelRenderer worldRenderer = minecraft.levelRenderer;
+			var worldRenderer = minecraft.levelRenderer;
 			if (worldRenderer != null)
 				worldRenderer.allChanged();
 		});
@@ -23,9 +23,9 @@ public final class ClientUtil {
 		var matrix = stack.last().pose();
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead
-		float transformedX = getTransformX(matrix, x, y, z, 1);
-		float transformedY = getTransformY(matrix, x, y, z, 1);
-		float transformedZ = getTransformZ(matrix, x, y, z, 1);
+		var transformedX = getTransformX(matrix, x, y, z, 1);
+		var transformedY = getTransformY(matrix, x, y, z, 1);
+		var transformedZ = getTransformZ(matrix, x, y, z, 1);
 		buffer
 			.vertex(transformedX, transformedY, transformedZ)
 			.color(color.red, color.green, color.blue, color.alpha)
@@ -36,17 +36,17 @@ public final class ClientUtil {
 	public static void vertex(VertexConsumer buffer, PoseStack matrix, float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short lived vectors we do the transform ourselves instead
-		PoseStack.Pose currentTransform = matrix.last();
-		Matrix4f pose = currentTransform.pose();
-		Matrix3f normal = currentTransform.normal();
+		var currentTransform = matrix.last();
+		var pose = currentTransform.pose();
+		var normal = currentTransform.normal();
 
-		float transformedX = getTransformX(pose, x, y, z, 1);
-		float transformedY = getTransformY(pose, x, y, z, 1);
-		float transformedZ = getTransformZ(pose, x, y, z, 1);
+		var transformedX = getTransformX(pose, x, y, z, 1);
+		var transformedY = getTransformY(pose, x, y, z, 1);
+		var transformedZ = getTransformZ(pose, x, y, z, 1);
 
-		float transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
-		float transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
-		float transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
+		var transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
+		var transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
+		var transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
 
 		buffer.vertex(transformedX, transformedY, transformedZ, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, transformedNormalX, transformedNormalY, transformedNormalZ);
 	}

@@ -9,6 +9,8 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.EventBus;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -27,10 +29,12 @@ public final class NoCubes {
 	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
 
 	public NoCubes() {
-		NoCubesConfig.register(ModLoadingContext.get());
+		var modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		NoCubesConfig.register(ModLoadingContext.get(), modBus);
 		NoCubesNetwork.register();
-		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-		modBus.addListener((FMLClientSetupEvent event) -> KeybindingHandler.registerKeybindings());
+		modBus.addListener((FMLClientSetupEvent event) -> {
+			KeybindingHandler.registerKeybindings(MinecraftForge.EVENT_BUS);
+		});
 		Hooks.loadClasses(FMLLoader.getDist());
 	}
 
