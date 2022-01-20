@@ -24,8 +24,8 @@ public record C2SRequestUpdateSmoothable(
 ) {
 
 	public static void encode(C2SRequestUpdateSmoothable msg, FriendlyByteBuf buffer) {
-		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 		buffer.writeBoolean(msg.newValue);
+		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 	}
 
 	public static C2SRequestUpdateSmoothable decode(FriendlyByteBuf buffer) {

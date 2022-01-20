@@ -18,8 +18,8 @@ public record S2CUpdateSmoothable(
 ) {
 
 	public static void encode(S2CUpdateSmoothable msg, FriendlyByteBuf buffer) {
-		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 		buffer.writeBoolean(msg.newValue);
+		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 	}
 
 	public static S2CUpdateSmoothable decode(FriendlyByteBuf buffer) {

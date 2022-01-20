@@ -44,8 +44,8 @@ public final class MeshRenderer {
 	}
 
 	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, MeshGenerator generator, Area area) {
-		FaceInfo faceInfo = new FaceInfo();
-		MutableObjects objects = new MutableObjects();
+		var faceInfo = new FaceInfo();
+		var objects = new MutableObjects();
 		MeshGenerator.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			generator.generate(area, isSmoothable, (ignored, face) -> {
@@ -270,14 +270,15 @@ public final class MeshRenderer {
 		}
 
 		public static RenderableState findAt(MutableObjects objects, Area area, Vec faceNormal, Vec faceCentre, Predicate<BlockState> isSmoothable) {
-			RenderableState foundState = objects.foundState;
-			BlockPos.MutableBlockPos faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
-			BlockState state = area.getBlockState(faceBlockPos);
+			var foundState = objects.foundState;
+			var faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
+			var state = area.getBlockState(faceBlockPos);
 
-			// Has always been true in testing so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
+			// Has always been true in testing, so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
 			// This HAS failed due to a race condition with the mesh being generated and then this getting called after
 			// the state has been toggled to being un-smoothable with the keybind (so the state WAS smoothable).
-			assert "true".equals("true");
+			// assert isSmoothable.test(state)
+
 			foundState.state = state;
 			return foundState;
 		}

@@ -98,7 +98,7 @@ public class Area implements AutoCloseable {
 			int x = relativePos.getX();
 			int y = relativePos.getY();
 			int z = relativePos.getZ();
-			BlockState state = world.getBlockState(relativePos.move(start));
+			var state = world.getBlockState(relativePos.move(start));
 			relativePos.set(x, y, z);
 			return state;
 		}
