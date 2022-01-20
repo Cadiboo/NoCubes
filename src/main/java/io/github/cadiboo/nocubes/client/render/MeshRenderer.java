@@ -57,9 +57,10 @@ public final class MeshRenderer {
 					foundState.pos.set(ignored);
 				} else
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
-				RenderableState renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
+				var renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
-				assert renderState.state.getRenderShape() != RenderShape.INVISIBLE : "We should not have gotten air as a renderable state";
+				if (renderState.state.getRenderShape() == RenderShape.INVISIBLE)
+					return true; // How?
 
 				renderFaceWithConnectedTextures(renderer, objects, area, faceInfo, renderState);
 

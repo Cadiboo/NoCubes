@@ -1,27 +1,24 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo.ColorSupplier;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo.QuadConsumer;
-import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.util.List;
-
-import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
-
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 public interface OptiFineProxy {
 

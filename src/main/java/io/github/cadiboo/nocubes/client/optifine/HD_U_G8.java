@@ -1,20 +1,21 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
-import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.coremod.api.ASMAPI;
 import org.apache.logging.log4j.LogManager;
 
@@ -25,10 +26,8 @@ import java.util.List;
 import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.*;
-import static io.github.cadiboo.nocubes.client.optifine.Reflector.*;
-import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
-
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetField;
+import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetMethod;
 
 class HD_U_G8 implements OptiFineProxy {
 

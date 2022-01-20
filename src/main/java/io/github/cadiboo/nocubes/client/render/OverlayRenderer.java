@@ -62,8 +62,8 @@ public final class OverlayRenderer {
 		var matrix = event.getPoseStack();
 		var buffer = event.getMultiBufferSource().getBuffer(RenderType.lines());
 		var generator = NoCubesConfig.Server.meshGenerator;
-		boolean stateSolidity = MeshRenderer.isSolidRender(state);
-		try (Area area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
+		var stateSolidity = MeshRenderer.isSolidRender(state);
+		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
 			var color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 			generator.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {

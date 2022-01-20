@@ -28,10 +28,10 @@ public class NoCubesTest {
 			new Test("removing smoothable should work", () -> {
 				var dirt = DIRT.defaultBlockState();
 				var oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
-				NoCubes.smoothableHandler.removeSmoothable(dirt);
+				NoCubes.smoothableHandler.setSmoothable(false, dirt);
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));
 				if (oldValue)
-					NoCubes.smoothableHandler.addSmoothable(dirt);
+					NoCubes.smoothableHandler.setSmoothable(true, dirt);
 			}),
 			new Test("area sanity check", NoCubesTest::areaSanityCheck),
 			new Test("mesh generators sanity check", NoCubesTest::meshGeneratorsSanityCheck)

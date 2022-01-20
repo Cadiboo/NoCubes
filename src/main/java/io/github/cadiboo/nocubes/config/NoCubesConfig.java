@@ -18,11 +18,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.IConfigEvent;
@@ -529,20 +527,18 @@ public final class NoCubesConfig {
 		}
 
 		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist) {
-			Set<BlockState> whitelisted = parseBlockStates(whitelist);
-			Set<BlockState> blacklisted = parseBlockStates(blacklist);
+			var whitelisted = parseBlockStates(whitelist);
+			var blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
-					if (blacklisted.contains(state))
-						NoCubes.smoothableHandler.removeSmoothable(state);
-					else if (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state))
-						NoCubes.smoothableHandler.addSmoothable(state);
+					var smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
+					NoCubes.smoothableHandler.setSmoothable(smoothable, state);
 				});
 		}
 
 		static Set<BlockState> parseBlockStates(List<? extends String> list) {
-			Set<BlockState> set = Sets.newIdentityHashSet();
+			var set = Sets.<BlockState>newIdentityHashSet();
 			list.parallelStream()
 				.map(BlockStateConverter::fromStringOrNull)
 				.filter(Objects::nonNull)

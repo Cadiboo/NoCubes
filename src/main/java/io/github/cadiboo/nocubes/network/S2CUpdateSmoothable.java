@@ -13,25 +13,26 @@ import java.util.function.Supplier;
  * @author Cadiboo
  */
 public record S2CUpdateSmoothable(
-	BlockState state,
-	boolean newValue
+	boolean newValue,
+	BlockState[] states
 ) {
 
 	public static void encode(S2CUpdateSmoothable msg, FriendlyByteBuf buffer) {
-		buffer.writeVarInt(BlockStateConverter.toId(msg.state));
+		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 		buffer.writeBoolean(msg.newValue);
 	}
 
 	public static S2CUpdateSmoothable decode(FriendlyByteBuf buffer) {
-		var state = BlockStateConverter.fromId(buffer.readVarInt());
-		var newValue = buffer.readBoolean();
-		return new S2CUpdateSmoothable(state, newValue);
+		return new S2CUpdateSmoothable(
+			buffer.readBoolean(),
+			BlockStateConverter.readBlockStatesFrom(buffer)
+		);
 	}
 
 	public static void handle(S2CUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		var ctx = contextSupplier.get();
 		ctx.enqueueWork(() -> {
-			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.state);
+			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.states);
 			ClientUtil.reloadAllChunks();
 		});
 		ctx.setPacketHandled(true);

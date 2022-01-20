@@ -25,25 +25,16 @@ public interface SmoothableHandler {
 		}
 	}
 
-	void addSmoothable(BlockStateBase state);
-
-	void removeSmoothable(BlockStateBase state);
-
 	boolean isSmoothable(BlockStateBase state);
 
 	void setSmoothable(boolean newValue, BlockStateBase state);
 
+	default void setSmoothable(boolean newValue, BlockStateBase[] states) {
+		for (var state : states)
+			setSmoothable(newValue, state);
+	}
+
 	class ASM implements SmoothableHandler {
-
-		@Override
-		public void addSmoothable(BlockStateBase state) {
-			setSmoothable(true, state);
-		}
-
-		@Override
-		public void removeSmoothable(BlockStateBase state) {
-			setSmoothable(false, state);
-		}
 
 		@Override
 		public boolean isSmoothable(BlockStateBase state) {
@@ -61,16 +52,6 @@ public interface SmoothableHandler {
 		private final java.util.Set<BlockStateBase> smoothables = Sets.newIdentityHashSet();
 
 		@Override
-		public void addSmoothable(BlockStateBase state) {
-			smoothables.add(state);
-		}
-
-		@Override
-		public void removeSmoothable(BlockStateBase state) {
-			smoothables.remove(state);
-		}
-
-		@Override
 		public boolean isSmoothable(BlockStateBase state) {
 			return smoothables.contains(state);
 		}
@@ -78,9 +59,9 @@ public interface SmoothableHandler {
 		@Override
 		public void setSmoothable(boolean newValue, BlockStateBase state) {
 			if (newValue)
-				addSmoothable(state);
+				smoothables.add(state);
 			else
-				removeSmoothable(state);
+				smoothables.remove(state);
 		}
 
 	}

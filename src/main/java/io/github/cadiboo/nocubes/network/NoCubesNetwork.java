@@ -23,7 +23,7 @@ public final class NoCubesNetwork {
 	 */
 	public static final int REQUIRED_PERMISSION_LEVEL = 2;
 
-	private static final String NETWORK_PROTOCOL_VERSION = "1";
+	private static final String NETWORK_PROTOCOL_VERSION = "2";
 	/**
 	 * Only valid when connected to a server on the client.
 	 * Contains random values from the most recently pinged server otherwise.

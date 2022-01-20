@@ -6,12 +6,12 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
 
@@ -22,8 +22,8 @@ public final class LightCache implements AutoCloseable {
 
 	public static final int MAX_BRIGHTNESS = LightTexture.pack(15, 15);
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
+	private static final ThreadLocal<BlockPos.MutableBlockPos> POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
 
-	public final BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
 	public final BlockPos start;
 	public final BlockPos size;
 	private final ClientLevel world;
@@ -54,7 +54,7 @@ public final class LightCache implements AutoCloseable {
 		int x = Math.round(vx);
 		int y = Math.round(vy);
 		int z = Math.round(vz);
-		return mutablePos.set(relativeTo).move(x, y, z);
+		return POS.get().set(relativeTo).move(x, y, z);
 	}
 
 	public FaceLight get(BlockPos relativeTo, FaceInfo faceInfo, FaceLight faceLight) {

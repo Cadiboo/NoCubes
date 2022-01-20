@@ -14,17 +14,11 @@ import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
-
-import java.util.LinkedList;
-import java.util.List;
 
 import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
 
@@ -69,12 +63,16 @@ public final class KeybindingHandler {
 		var lookingAt = minecraft.hitResult;
 		if (world == null || player == null || lookingAt == null || lookingAt.getType() != HitResult.Type.BLOCK)
 			return;
-		BlockHitResult lookingAtBlock = ((BlockHitResult) lookingAt);
-		BlockState state = world.getBlockState(lookingAtBlock.getBlockPos());
-		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(state);
+
+		var targeted = ((BlockHitResult) lookingAt);
+		var targetedState = world.getBlockState(targeted.getBlockPos());
+		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
+		// Add all states if the player is pressing shift (to make it east to toggle on/off all leaves)
+		var states = player.isShiftKeyDown() ? ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new): new BlockState[] {targetedState};
+
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
-			NoCubes.smoothableHandler.setSmoothable(newValue, state);
+			NoCubes.smoothableHandler.setSmoothable(newValue, states);
 			ClientUtil.reloadAllChunks();
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
@@ -82,7 +80,7 @@ public final class KeybindingHandler {
 				// Not enough permission, don't send packet that will be denied
 				return;
 			// Send an update request packet
-			NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(state, newValue));
+			NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(newValue, states));
 		}
 	}
 

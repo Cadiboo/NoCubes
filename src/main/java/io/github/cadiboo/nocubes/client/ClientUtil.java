@@ -6,23 +6,18 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 
 public final class ClientUtil {
 
 	public static void reloadAllChunks() {
 		var minecraft = Minecraft.getInstance();
-		minecraft.execute(() -> {
-			var worldRenderer = minecraft.levelRenderer;
-			if (worldRenderer != null)
-				worldRenderer.allChanged();
-		});
+		minecraft.execute(minecraft.levelRenderer::allChanged);
 	}
 
 	public static void lineVertex(VertexConsumer buffer, PoseStack stack, float x, float y, float z, ColorParser.Color color) {
 		var matrix = stack.last().pose();
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
-		// To avoid allocating so many short lived vectors we do the transform ourselves instead
+		// To avoid allocating so many short-lived vectors we do the transform ourselves instead
 		var transformedX = getTransformX(matrix, x, y, z, 1);
 		var transformedY = getTransformY(matrix, x, y, z, 1);
 		var transformedZ = getTransformZ(matrix, x, y, z, 1);
@@ -35,7 +30,7 @@ public final class ClientUtil {
 
 	public static void vertex(VertexConsumer buffer, PoseStack matrix, float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {
 		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
-		// To avoid allocating so many short lived vectors we do the transform ourselves instead
+		// To avoid allocating so many short-lived vectors we do the transform ourselves instead
 		var currentTransform = matrix.last();
 		var pose = currentTransform.pose();
 		var normal = currentTransform.normal();

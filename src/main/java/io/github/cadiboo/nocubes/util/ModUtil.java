@@ -34,7 +34,7 @@ public class ModUtil {
 	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
 	public static final Direction[] DIRECTIONS = Direction.values();
 	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
-		final String target = System.getenv().get("target");
+		var target = System.getenv().get("target");
 		if (target == null)
 			return false;
 		return target.contains("userdev");

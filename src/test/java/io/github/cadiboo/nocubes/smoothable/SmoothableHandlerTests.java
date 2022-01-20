@@ -40,9 +40,9 @@ public class SmoothableHandlerTests {
 
 	private void shouldWork(SmoothableHandler handler, BlockStateBase state) {
 		assertFalse(handler.isSmoothable(state));
-		handler.addSmoothable(state);
+		handler.setSmoothable(true, state);
 		assertTrue(handler.isSmoothable(state));
-		handler.removeSmoothable(state);
+		handler.setSmoothable(false, state);
 		assertFalse(handler.isSmoothable(state));
 	}
 

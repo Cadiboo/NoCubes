@@ -1,26 +1,24 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
-import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.CompiledChunk_hasBlocks;
-import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
-
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 
 class Dummy implements OptiFineProxy {
 

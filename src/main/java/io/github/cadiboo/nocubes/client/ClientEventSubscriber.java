@@ -44,6 +44,11 @@ public final class ClientEventSubscriber {
 	}
 
 	@SubscribeEvent
+	public static void onClientJoinServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
+		loadDefaultServerConfigIfWeAreOnAVanillaServer(event);
+		disableCollisionsIfServerDoesNotHaveNoCubes(event);
+	}
+
 	public static void disableCollisionsIfServerDoesNotHaveNoCubes(ClientPlayerNetworkEvent.LoggedInEvent event) {
 		if (NoCubesNetwork.currentServerHasNoCubes || !NoCubesConfig.Server.collisionsEnabled)
 			return;
@@ -60,7 +65,6 @@ public final class ClientEventSubscriber {
 	/**
 	 * This lets NoCubes load properly on modded servers that don't have it installed
 	 */
-	@SubscribeEvent
 	public static void loadDefaultServerConfigIfWeAreOnAVanillaServer(ClientPlayerNetworkEvent.LoggedInEvent event) {
 		if (NoCubesNetwork.currentServerHasNoCubes)
 			return; // Forge has synced the server config to us, no need to load the default (see ConfigSync.syncConfigs)
