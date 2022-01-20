@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
@@ -306,21 +307,6 @@ public final class Hooks {
 		if (NoCubesConfig.Server.extendFluidsRange <= 0)
 			return null;
 		return ModUtil.getExtendedFluidState(world, pos);
-	}
-
-	/**
-	 * Called from: The end of {@link NetworkHooks#handleClientLoginSuccess(Connection)}
-	 *
-	 * Hooking this lets NoCubes load properly on modded servers that don't have it installed
-	 */
-	public static void afterClientLoginSuccess(Connection manager) {
-		SelfCheck.afterClientLoginSuccess = true;
-		if (NetworkHooks.isVanillaConnection(manager))
-			return; // Forge loads the default server configs for us
-		var logger = LogManager.getLogger("NoCubes Client-only features");
-		logger.info("Connected to a modded server that doesn't have NoCubes installed, loading default server config");
-		NoCubesConfig.Hacks.loadDefaultServerConfig();
-		logger.debug("Done loading default server config");
 	}
 
 //
