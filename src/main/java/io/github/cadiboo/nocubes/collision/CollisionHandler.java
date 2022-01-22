@@ -64,17 +64,17 @@ public final class CollisionHandler {
 		)
 			return state.getShape(reader, blockPos);
 
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
-		VoxelShape[] ref = {Shapes.empty()};
+		var generator = NoCubesConfig.Server.meshGenerator;
+		var ref = new VoxelShape[]{Shapes.empty()};
 		if (reader instanceof Level)
 			((Level) reader).getProfiler().push("NoCubes collisions");
-		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
+		try (var area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
 			// See MeshGenerator#translateToMeshStart for an explanation of this
-			float dx = MeshGenerator.validateMeshOffset(area.start.getX() - blockPos.getX());
-			float dy = MeshGenerator.validateMeshOffset(area.start.getY() - blockPos.getY());
-			float dz = MeshGenerator.validateMeshOffset(area.start.getZ() - blockPos.getZ());
+			var dx = MeshGenerator.validateMeshOffset(area.start.getX() - blockPos.getX());
+			var dy = MeshGenerator.validateMeshOffset(area.start.getY() - blockPos.getY());
+			var dz = MeshGenerator.validateMeshOffset(area.start.getZ() - blockPos.getZ());
 			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
-				VoxelShape shape = Shapes.box(
+				var shape = Shapes.box(
 					dx + x0, dy + y0, dz + z0,
 					dx + x1, dy + y1, dz + z1
 				);

@@ -118,9 +118,9 @@ public final class MeshRenderer {
 		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
 		var stateAbove = area.getBlockState(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
-			try (FluentMatrixStack ignored = renderer.matrix.push()) {
-				BlockPos.MutableBlockPos worldAbove = relativeAbove.move(area.start);
-				Vec center = faceInfo.centre;
+			try (var ignored = renderer.matrix.push()) {
+				var worldAbove = relativeAbove.move(area.start);
+				var center = faceInfo.centre;
 				renderer.matrix.matrix().translate(center.x - 0.5F, center.y, center.z - 0.5F);
 				renderer.renderBlock(stateAbove, worldAbove);
 			}
