@@ -19,8 +19,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
-
 /**
  * @author Cadiboo
  */
@@ -67,7 +65,7 @@ public final class KeybindingHandler {
 		var player = minecraft.player;
 		var lookingAt = minecraft.hitResult;
 		if (world == null || player == null || lookingAt == null || lookingAt.getType() != HitResult.Type.BLOCK) {
-
+			LOG.debug("toggleLookedAtSmoothable preconditions not met (world={}, player={}, lookingAt={})", world, player, lookingAt);
 			return;
 		}
 
