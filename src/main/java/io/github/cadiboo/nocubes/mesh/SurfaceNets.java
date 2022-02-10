@@ -18,7 +18,7 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  * @see "https://github.com/mikolalysenko/isosurface/blob/master/lib/surfacenets.js"
  * @see "https://github.com/mikolalysenko/mikolalysenko.github.com/blob/master/Isosurface/js/surfacenets.js"
  */
-public class SurfaceNets implements MeshGenerator {
+public class SurfaceNets implements Mesher {
 
 	public static final int COMPLETELY_OUTSIDE_ISOSURFACE = 0;
 	public static final int COMPLETELY_INSIDE_ISOSURFACE = 0xFF;

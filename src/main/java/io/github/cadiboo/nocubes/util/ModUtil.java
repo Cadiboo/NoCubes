@@ -3,10 +3,15 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
@@ -19,6 +24,7 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.util.Lazy;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
@@ -48,6 +54,13 @@ public class ModUtil {
 
 	public static int length(BlockPos size) {
 		return size.getX() * size.getY() * size.getZ();
+	}
+
+	public static void warnPlayer(@Nullable Player player, String translationKey, Object... formatArgs) {
+		if (player != null)
+			player.sendMessage(new TranslatableComponent(translationKey, formatArgs).withStyle(ChatFormatting.RED), Util.NIL_UUID);
+		else
+			LogManager.getLogger("NoCubes notification fallback").warn(I18n.get(translationKey, formatArgs));
 	}
 
 	public interface Traverser {

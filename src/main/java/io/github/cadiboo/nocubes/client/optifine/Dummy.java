@@ -14,6 +14,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,8 +24,8 @@ import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.Compiled
 class Dummy implements OptiFineProxy {
 
 	@Override
-	public boolean initialisedAndUsable() {
-		return true;
+	public @Nullable String notUsableBecause() {
+		return null;
 	}
 
 	@Override

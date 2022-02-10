@@ -33,7 +33,7 @@ public record S2CUpdateSmoothable(
 		var ctx = contextSupplier.get();
 		ctx.enqueueWork(() -> {
 			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.states);
-			ClientUtil.reloadAllChunks();
+			ClientUtil.reloadAllChunks("The server told us that the smoothness of some states changed");
 		});
 		ctx.setPacketHandled(true);
 	}

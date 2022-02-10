@@ -1,8 +1,17 @@
 package io.github.cadiboo.nocubes.network;
 
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.IndexedMessageCodec;
 import net.minecraftforge.network.simple.SimpleChannel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 
@@ -13,6 +22,8 @@ import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
  * @author Cadiboo
  */
 public final class NoCubesNetwork {
+
+	private static final Logger LOG = LogManager.getLogger();
 
 	/**
 	 * From the minecraft wiki.
@@ -52,7 +63,7 @@ public final class NoCubesNetwork {
 	public static void register() {
 		int networkId = 0;
 		// Client -> Server
-		CHANNEL.registerMessage(
+		register(
 			networkId,
 			C2SRequestUpdateSmoothable.class,
 			C2SRequestUpdateSmoothable::encode,
@@ -61,19 +72,38 @@ public final class NoCubesNetwork {
 		);
 
 		// Server -> Client
-		CHANNEL.registerMessage(
+		register(
 			++networkId,
 			S2CUpdateSmoothable.class,
 			S2CUpdateSmoothable::encode,
 			S2CUpdateSmoothable::decode,
 			S2CUpdateSmoothable::handle
 		);
-		CHANNEL.registerMessage(
+		register(
 			++networkId,
 			S2CUpdateServerConfig.class,
 			S2CUpdateServerConfig::encode,
 			S2CUpdateServerConfig::decode,
 			S2CUpdateServerConfig::handle
+		);
+	}
+
+	static <MSG> void register(int index, Class<MSG> messageType, BiConsumer<MSG, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
+		CHANNEL.registerMessage(
+			index,
+			messageType,
+			(msg, buffer) -> {
+				LOG.debug("Encoding {}", messageType.getSimpleName());
+				encoder.accept(msg, buffer);
+			},
+			buffer -> {
+				LOG.debug("Decoding {}", messageType.getSimpleName());
+				return decoder.apply(buffer);
+			},
+			(msg, ctx) -> {
+				LOG.debug("Handling {}", messageType.getSimpleName());
+				handler.accept(msg, ctx);
+			}
 		);
 	}
 

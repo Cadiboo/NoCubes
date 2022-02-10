@@ -10,7 +10,7 @@ import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
-public interface MeshGenerator {
+public interface Mesher {
 
 	VoxelAction DEFAULT_VOXEL_ACTION = (pos, amount) -> true;
 
@@ -86,8 +86,8 @@ public interface MeshGenerator {
 
 	/* private */
 	static int validateMeshOffset(int meshOffset) {
-		assert meshOffset <= 0 : "Mesh generators won't require a smaller area than they are generating a mesh for";
-		assert meshOffset > -3 : "Mesh generators won't require more than 2 extra blocks on each axis";
+		assert meshOffset <= 0 : "Meshers won't require a smaller area than they are generating a mesh for";
+		assert meshOffset > -3 : "Meshers won't require more than 2 extra blocks on each axis";
 		return meshOffset;
 	}
 

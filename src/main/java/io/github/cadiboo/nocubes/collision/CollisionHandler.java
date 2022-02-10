@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
@@ -10,7 +10,6 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
@@ -27,8 +26,6 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Predicate;
-
-import static net.minecraft.core.BlockPos.*;
 
 import net.minecraft.core.BlockPos.MutableBlockPos;
 
@@ -66,16 +63,16 @@ public final class CollisionHandler {
 		)
 			return state.getShape(reader, blockPos);
 
-		var generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 		var ref = new VoxelShape[]{Shapes.empty()};
 		if (reader instanceof Level)
 			((Level) reader).getProfiler().push("NoCubes collisions");
-		try (var area = new Area(reader, blockPos, ModUtil.VEC_ONE, generator)) {
-			// See MeshGenerator#translateToMeshStart for an explanation of this
-			var dx = MeshGenerator.validateMeshOffset(area.start.getX() - blockPos.getX());
-			var dy = MeshGenerator.validateMeshOffset(area.start.getY() - blockPos.getY());
-			var dz = MeshGenerator.validateMeshOffset(area.start.getZ() - blockPos.getZ());
-			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> {
+		try (var area = new Area(reader, blockPos, ModUtil.VEC_ONE, mesher)) {
+			// See Mesher#translateToMeshStart for an explanation of this
+			var dx = Mesher.validateMeshOffset(area.start.getX() - blockPos.getX());
+			var dy = Mesher.validateMeshOffset(area.start.getY() - blockPos.getY());
+			var dz = Mesher.validateMeshOffset(area.start.getZ() - blockPos.getZ());
+			generate(area, mesher, (x0, y0, z0, x1, y1, z1) -> {
 				var shape = Shapes.box(
 					dx + x0, dy + y0, dz + z0,
 					dx + x1, dy + y1, dz + z1
@@ -155,21 +152,21 @@ public final class CollisionHandler {
 
 	public static void forEachCollisionRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
 		assert NoCubesConfig.Server.collisionsEnabled;
-		MeshGenerator generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 
-		BlockPos start = new BlockPos(minX, minY, minZ);
+		var start = new BlockPos(minX, minY, minZ);
 		// Size is mutable and only correct until the Area constructor call
-		BlockPos size = pos.set(
+		var size = pos.set(
 			maxX - minX,
 			maxY - minY,
 			maxZ - minZ
 		);
-		try (Area area = new Area(world, start, size, generator)) {
-			// See MeshGenerator#translateToMeshStart for an explanation of this
-			double dx = MeshGenerator.validateMeshOffset(area.start.getX() - start.getX());
-			double dy = MeshGenerator.validateMeshOffset(area.start.getY() - start.getY());
-			double dz = MeshGenerator.validateMeshOffset(area.start.getZ() - start.getZ());
-			generate(area, generator, (x0, y0, z0, x1, y1, z1) -> consumer.accept(
+		try (var area = new Area(world, start, size, mesher)) {
+			// See Mesher#translateToMeshStart for an explanation of this
+			var dx = Mesher.validateMeshOffset(area.start.getX() - start.getX());
+			var dy = Mesher.validateMeshOffset(area.start.getY() - start.getY());
+			var dz = Mesher.validateMeshOffset(area.start.getZ() - start.getZ());
+			generate(area, mesher, (x0, y0, z0, x1, y1, z1) -> consumer.accept(
 				dx + x0, dy + y0, dz + z0,
 				dx + x1, dy + y1, dz + z1
 			));
@@ -178,19 +175,19 @@ public final class CollisionHandler {
 
 	// endregion indev
 
-	public static void generate(Area area, MeshGenerator generator, IShapeConsumer consumer) {
-		Face vertexNormals = new Face();
-		Vec faceNormal = new Vec();
-		Vec centre = new Vec();
+	public static void generate(Area area, Mesher mesher, IShapeConsumer consumer) {
+		var vertexNormals = new Face();
+		var faceNormal = new Vec();
+		var centre = new Vec();
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		generator.generate(area, isSmoothable, (pos, amount) -> {
+		mesher.generate(area, isSmoothable, (pos, amount) -> {
 			// Generate collisions for blocks that are fully inside the isosurface
 			// The face handler will generate collisions for the surface
 			if (amount == 1) {
-				float x0 = pos.getX();
-				float y0 = pos.getY();
-				float z0 = pos.getZ();
-				if (!NoCubesConfig.Server.extraSmoothMesh && generator instanceof SurfaceNets) {
+				var x0 = pos.getX();
+				var y0 = pos.getY();
+				var z0 = pos.getZ();
+				if (!NoCubesConfig.Server.extraSmoothMesh && mesher instanceof SurfaceNets) {
 					// Pretty disgusting, see the comments in SurfaceNets about densities and corners for why this offset exists
 					x0 += 0.5F;
 					y0 += 0.5F;
@@ -206,7 +203,7 @@ public final class CollisionHandler {
 			face.assignAverageTo(centre);
 			face.assignNormalTo(vertexNormals);
 			vertexNormals.assignAverageTo(faceNormal);
-			if (generator instanceof OldNoCubes)
+			if (mesher instanceof OldNoCubes)
 				// Keeps flat surfaces collidable but also allows super rough terrain
 				faceNormal.multiply(0.00001F);
 
@@ -233,12 +230,12 @@ public final class CollisionHandler {
 	}
 
 	private static boolean generateShape(Vec centre, Vec faceNormal, IShapeConsumer consumer, Vec v) {
-		float vX = v.x;
-		float vY = v.y;
-		float vZ = v.z;
-		float extX = centre.x + faceNormal.x;
-		float extY = centre.y + faceNormal.y;
-		float extZ = centre.z + faceNormal.z;
+		var vX = v.x;
+		var vY = v.y;
+		var vZ = v.z;
+		var extX = centre.x + faceNormal.x;
+		var extY = centre.y + faceNormal.y;
+		var extZ = centre.z + faceNormal.z;
 		return consumer.accept(
 			Math.min(vX, extX), Math.min(vY, extY), Math.min(vZ, extZ),
 			Math.max(vX, extX), Math.max(vY, extY), Math.max(vZ, extZ)

@@ -9,7 +9,7 @@ import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
-public class StupidCubic implements MeshGenerator {
+public class StupidCubic implements Mesher {
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {

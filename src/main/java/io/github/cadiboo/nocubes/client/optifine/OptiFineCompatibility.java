@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This compatibility system isn't perfect and leads to a lot of code duplication
@@ -18,18 +19,21 @@ public class OptiFineCompatibility {
 		if (instance == null) {
 			synchronized (OptiFineCompatibility.class) {
 				if (instance == null) {
-					instance = createProxy();
-					LogManager.getLogger("NoCubes OptiFine Compatibility").info("Using {} proxy", instance.getClass().getSimpleName());
+					var log = LogManager.getLogger("NoCubes OptiFine Compatibility");
+					instance = createProxy(log);
+					log.info("Using {} proxy", instance.getClass().getSimpleName());
 				}
 			}
 		}
 		return instance;
 	}
 
-	private static OptiFineProxy createProxy() {
-		for (OptiFineProxy proxy : PROXIES) {
-			if (proxy.initialisedAndUsable())
+	private static OptiFineProxy createProxy(Logger log) {
+		for (var proxy : PROXIES) {
+			var because = proxy.notUsableBecause();
+			if (because == null)
 				return proxy;
+			log.info("{} proxy not usable because {}", proxy.getClass().getSimpleName(), because);
 		}
 		return new Dummy();
 	}

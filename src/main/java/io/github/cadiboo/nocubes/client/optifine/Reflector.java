@@ -9,29 +9,29 @@ import java.lang.reflect.Method;
 public interface Reflector {
 
 	static MethodHandle getMethod(String clazz, String name, Object... paramClasses) {
-		MethodHandle method = tryGetMethod(clazz, name, paramClasses);
+		var method = tryGetMethod(clazz, name, paramClasses);
 		if (method != null)
 			return method;
 		throw new NullPointerException(String.format("Could not find method '%s' on class '%s'.", name, clazz));
 	}
 
 	static Field getField(String clazz, String name) {
-		Field field = tryGetField(clazz, name);
+		var field = tryGetField(clazz, name);
 		if (field != null)
 			return field;
 		throw new NullPointerException(String.format("Could not find field '%s' on class '%s'.", name, clazz));
 	}
 
-	@Nullable static MethodHandle tryGetMethod(String clazz, String name, Object... paramClasses) {
+	static @Nullable MethodHandle tryGetMethod(String clazz, String name, Object... paramClasses) {
 		try {
-			MethodHandles.Lookup lookup = MethodHandles.publicLookup();
-			Class<?> klass = Class.forName(clazz);
-			Class<?>[] params = new Class[paramClasses.length];
+			var lookup = MethodHandles.publicLookup();
+			var klass = Class.forName(clazz);
+			var params = new Class[paramClasses.length];
 			for (int i = 0; i < paramClasses.length; i++) {
-				Object param = paramClasses[i];
+				var param = paramClasses[i];
 				params[i] = param instanceof Class<?> ? (Class<?>) param : Class.forName((String) param);
 			}
-			Method method = klass.getDeclaredMethod(name, params);
+			var method = klass.getDeclaredMethod(name, params);
 			method.setAccessible(true);
 			return lookup.unreflect(method);
 		} catch (Exception e) {
@@ -39,10 +39,10 @@ public interface Reflector {
 		}
 	}
 
-	@Nullable static Field tryGetField(String clazz, String name) {
+	static @Nullable Field tryGetField(String clazz, String name) {
 		try {
-			Class<?> klass = Class.forName(clazz);
-			Field field = klass.getDeclaredField(name);
+			var klass = Class.forName(clazz);
+			var field = klass.getDeclaredField(name);
 			field.setAccessible(true);
 			return field;
 		} catch (Exception e) {

@@ -31,6 +31,8 @@ import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -48,6 +50,8 @@ import static net.minecraft.world.level.block.Blocks.*;
  */
 public final class NoCubesConfig {
 
+	private static final Logger LOG = LogManager.getLogger();
+
 	/**
 	 * Called from inside the mod constructor.
 	 *
@@ -62,6 +66,7 @@ public final class NoCubesConfig {
 		modBus.addListener((ModConfigEvent event) -> {
 			var config = event.getConfig();
 			var spec = config.getSpec();
+			LOG.debug("Received config event for {}", config.getFileName());
 			if (spec == Client.SPEC)
 				Client.bake(config);
 			else if (spec == Server.SPEC)
@@ -102,6 +107,7 @@ public final class NoCubesConfig {
 		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 		 */
 		public static void bake(ModConfig config) {
+			LOG.debug("Baking config {}", config.getFileName());
 			boolean oldRender = render;
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
@@ -114,7 +120,7 @@ public final class NoCubesConfig {
 			grassTufts = INSTANCE.grassTufts.get();
 
 			if (oldRender != render || (render && oldChunkRenderSettingsHash != hashChunkRenderSettings()))
-				ClientUtil.reloadAllChunks();
+				ClientUtil.reloadAllChunks("Client chunk rendering settings changed");
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -241,7 +247,7 @@ public final class NoCubesConfig {
 
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
-		public static MeshGenerator meshGenerator;
+		public static Mesher mesher;
 		public static boolean collisionsEnabled;
 		public static boolean tempMobCollisionsDisabled;
 		public static boolean forceVisuals;
@@ -260,12 +266,13 @@ public final class NoCubesConfig {
 		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 		 */
 		public static void bake(ModConfig config) {
+			LOG.debug("Baking config {}", config.getFileName());
 			// TODO: How are these values changing handled on the client?
 			//  Does forge auto sync the config when it changes, if not I need to
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
-			meshGenerator = INSTANCE.meshGenerator.get().generator;
+			mesher = INSTANCE.mesher.get().instance;
 			collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();
 			forceVisuals = INSTANCE.forceVisuals.get();
@@ -276,8 +283,8 @@ public final class NoCubesConfig {
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 			extraSmoothMesh = INSTANCE.extraSmoothMesh.get();
 			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
-				// TODO: This seems to be broken and never gets called in singleplayer
-				DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ClientUtil::reloadAllChunks);
+				// TODO: This seems to be broken and never gets called in singleplayer (should it be?)
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientUtil.reloadAllChunks("Server chunk rendering settings changed"));
 			if (FMLEnvironment.dist.isDedicatedServer())
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
 		}
@@ -289,7 +296,7 @@ public final class NoCubesConfig {
 		}
 
 		private static int hashChunkRenderSettings() {
-			return Objects.hash(meshGenerator, forceVisuals, extraSmoothMesh);
+			return Objects.hash(mesher, forceVisuals, extraSmoothMesh);
 		}
 
 		public static void updateSmoothable(boolean newValue, BlockState... states) {
@@ -301,7 +308,7 @@ public final class NoCubesConfig {
 			Hacks.saveAndLoad(ModConfig.Type.SERVER);
 		}
 
-		public enum MeshGeneratorEnum {
+		public enum MesherType {
 			SurfaceNets(new SurfaceNets()),
 			OldNoCubes(new OldNoCubes()),
 			Debug_MarchingCubes(new MarchingCubes()),
@@ -310,10 +317,10 @@ public final class NoCubesConfig {
 			Debug_CullingChamfer(new CullingChamfer()),
 			;
 
-			public final MeshGenerator generator;
+			public final Mesher instance;
 
-			MeshGeneratorEnum(MeshGenerator generator) {
-				this.generator = generator;
+			MesherType(Mesher instance) {
+				this.instance = instance;
 			}
 		}
 
@@ -329,7 +336,7 @@ public final class NoCubesConfig {
 			 */
 			final ConfigValue<List<? extends String>> smoothableWhitelist;
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
-			final EnumValue<MeshGeneratorEnum> meshGenerator;
+			final EnumValue<MesherType> mesher;
 			final BooleanValue collisionsEnabled;
 			final BooleanValue tempMobCollisionsDisabled;
 			final BooleanValue forceVisuals;
@@ -358,10 +365,10 @@ public final class NoCubesConfig {
 					.comment("If ONLY players should be able to walk up the smooth slopes generated by NoCubes")
 					.define("tempMobCollisionsDisabled", true);
 
-				meshGenerator = builder
+				mesher = builder
 					.translation(NoCubes.MOD_ID + ".config.meshGenerator")
 					.comment("meshGenerator")
-					.defineEnum("meshGenerator", MeshGeneratorEnum.SurfaceNets);
+					.defineEnum("meshGenerator", MesherType.SurfaceNets);
 
 				forceVisuals = builder
 					.translation(NoCubes.MOD_ID + ".config.forceVisuals")
@@ -401,7 +408,9 @@ public final class NoCubesConfig {
 		 * Similar to {@link ConfigFileTypeHandler.ConfigWatcher#run()}
 		 */
 		static void saveAndLoad(ModConfig.Type type) {
+			LOG.debug("Saving and loading {} config", type.name());
 			ConfigTracker_getConfig(type).ifPresent(modConfig -> {
+				LOG.debug("Found {} ModConfig to save and load", type.name());
 				modConfig.save();
 				((CommentedFileConfig) modConfig.getConfigData()).load();
 				modConfig.getSpec().afterReload();
@@ -414,7 +423,9 @@ public final class NoCubesConfig {
 		 * Similar to {@link ConfigTracker#loadDefaultServerConfigs}
 		 */
 		public static void loadDefaultServerConfig() {
+			LOG.debug("Loading default server config");
 			ConfigTracker_getConfig(ModConfig.Type.SERVER).ifPresent(modConfig -> {
+				LOG.debug("Found ModConfig to load as default");
 				var config = CommentedConfig.inMemory();
 				modConfig.getSpec().correct(config);
 //				modConfig.setConfigData(config);
@@ -422,19 +433,20 @@ public final class NoCubesConfig {
 //				modConfig.fireEvent(IConfigEvent.loading(modConfig));
 				ModConfig_fireEvent(modConfig, IConfigEvent.loading(modConfig));
 			});
-
 		}
 
 		/**
 		 * Similar to {@link ConfigTracker#getConfigFileName}
 		 */
 		private static Optional<ModConfig> ConfigTracker_getConfig(ModConfig.Type type) {
+			LOG.debug("Getting {} ModConfig from ConfigTracker", type.name());
 			return ConfigTracker.INSTANCE.configSets().get(type).stream()
 				.filter(modConfig -> modConfig.getModId().equals(NoCubes.MOD_ID))
 				.findFirst();
 		}
 
 		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
+			LOG.debug("Setting ModConfig config data");
 			var setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
 			try {
 				setConfigData.invoke(modConfig, data);
@@ -444,12 +456,14 @@ public final class NoCubesConfig {
 		}
 
 		private static void ModConfig_fireEvent(ModConfig modConfig, IConfigEvent event) {
+			LOG.debug("Firing ModConfig event");
 //			modConfig.fireEvent(event);
 			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
 		}
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
-			assert FMLEnvironment.dist.isClient();
+			LOG.debug("Setting logical server config (on the client) from server sync packet");
+			assert FMLEnvironment.dist.isClient() : "This packet should have only be sent server->client";
 			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
 			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
@@ -463,6 +477,7 @@ public final class NoCubesConfig {
 		 * Stores the list of blocks that 'just are' smoothable by default.
 		 * This includes stuff like Stone and any blocks that other mods register as smoothable.
 		 */
+		// TODO: Convert this to a tag
 		private static final Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
 
 		static {
@@ -520,6 +535,7 @@ public final class NoCubesConfig {
 		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
+			LOG.debug("Updating user-defined smoothable string lists");
 			var toAddTo = newValue ? whitelist : blacklist;
 			var toRemoveFrom = newValue ? blacklist : whitelist;
 			for (var state : states) {
@@ -535,6 +551,7 @@ public final class NoCubesConfig {
 		}
 
 		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist) {
+			LOG.debug("Recomputing in-memory smoothable lookups from user-defined smoothable string lists");
 			var whitelisted = parseBlockStates(whitelist);
 			var blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()

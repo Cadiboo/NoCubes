@@ -3,14 +3,17 @@ package io.github.cadiboo.nocubes.network;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
-import net.minecraft.Util;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
@@ -37,9 +40,8 @@ public record C2SRequestUpdateSmoothable(
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		var ctx = contextSupplier.get();
-		var sender = ctx.getSender();
-		var hasPermission = sender.hasPermissions(REQUIRED_PERMISSION_LEVEL);
-		if (hasPermission) {
+		var sender = Objects.requireNonNull(ctx.getSender(), "Command sender was null");
+		if (checkPermissionAndNotifyIfUnauthorised(sender)) {
 			var newValue = msg.newValue;
 			var statesToUpdate = Arrays.stream(msg.states)
 				.filter(s -> NoCubes.smoothableHandler.isSmoothable(s) != newValue)
@@ -53,9 +55,15 @@ public record C2SRequestUpdateSmoothable(
 				// Send back update to all clients
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(newValue, statesToUpdate));
 			}
-		} else
-			sender.sendMessage(new TranslatableComponent(NoCubes.MOD_ID + ".command.addSmoothableNoPermission"), Util.NIL_UUID);
+		}
 		ctx.setPacketHandled(true);
+	}
+
+	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player) {
+		if (player.hasPermissions(REQUIRED_PERMISSION_LEVEL))
+			return true;
+		ModUtil.warnPlayer(player, NoCubes.MOD_ID + ".command.changeSmoothableNoPermission");
+		return false;
 	}
 
 }

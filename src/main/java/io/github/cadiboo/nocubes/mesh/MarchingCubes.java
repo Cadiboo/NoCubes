@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 /**
  * @author Cadiboo
  */
-public class MarchingCubes implements MeshGenerator {
+public class MarchingCubes implements Mesher {
 
 	@Override
 	public BlockPos getPositiveAreaExtension() {

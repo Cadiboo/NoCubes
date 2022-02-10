@@ -16,13 +16,17 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public interface OptiFineProxy {
 
-	boolean initialisedAndUsable();
+	/**
+	 * @return Null if this proxy is usable, otherwise a description of what went wrong
+	 */
+	@Nullable String notUsableBecause();
 
 	void preRenderChunk(RenderChunk chunkRender, BlockPos chunkPos, PoseStack matrix);
 

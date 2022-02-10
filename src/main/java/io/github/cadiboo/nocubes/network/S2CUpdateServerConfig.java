@@ -20,10 +20,10 @@ public record S2CUpdateServerConfig(
 ) {
 
 	public static S2CUpdateServerConfig create(ModConfig serverConfig) {
-		assert FMLEnvironment.dist.isDedicatedServer();
+		assert FMLEnvironment.dist.isDedicatedServer() : "This should not be called on clients because they don't need their logical server config synced (they just reference it directly)";
 		try {
-			File file = ((FileConfig) serverConfig.getConfigData()).getFile();
-			byte[] data = Files.readAllBytes(file.toPath());
+			var file = ((FileConfig) serverConfig.getConfigData()).getFile();
+			var data = Files.readAllBytes(file.toPath());
 			return new S2CUpdateServerConfig(data);
 		} catch (IOException e) {
 			throw new RuntimeException("Could not read NoCubes server config file!", e);

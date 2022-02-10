@@ -15,6 +15,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -42,7 +43,7 @@ import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetMethod;
 class HD_U_H5 implements OptiFineProxy {
 
 	@Override
-	public boolean initialisedAndUsable() {
+	public @Nullable String notUsableBecause() {
 		var declaredFields = Arrays.stream(Reflect.class.getDeclaredFields()).collect(Collectors.toMap(Field::getName, f -> f));
 		for (var field : Reflect.class.getFields()) {
 			try {
@@ -52,14 +53,13 @@ class HD_U_H5 implements OptiFineProxy {
 						if (declaredField != null && declaredField.get(null) != null)
 							continue; // "Overridden" field
 					}
-					LogManager.getLogger("NoCubes OptiFine Compatibility").info("{}: Proxy not usable because reflection was unable to find field {}", getClass().getSimpleName(), field.getName());
-					return false;
+					return "reflection was unable to find field " + field.getName();
 				}
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
 		}
-		return true;
+		return null;
 	}
 
 	@Override

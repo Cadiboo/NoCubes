@@ -9,7 +9,7 @@ import net.minecraft.core.Vec3i;
 
 import java.util.function.Predicate;
 
-public class CullingChamfer implements MeshGenerator {
+public class CullingChamfer implements Mesher {
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {

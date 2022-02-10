@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  * @author Cadiboo
  * @author Click_Me
  */
-public final class OldNoCubes implements MeshGenerator {
+public final class OldNoCubes implements Mesher {
 
 	// Points order
 	public static final int X0Y0Z0 = 0;

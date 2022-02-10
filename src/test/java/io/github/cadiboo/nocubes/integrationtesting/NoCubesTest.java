@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MeshGeneratorEnum;
+import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.core.BlockPos;
@@ -34,7 +34,7 @@ public class NoCubesTest {
 					NoCubes.smoothableHandler.setSmoothable(true, dirt);
 			}),
 			new Test("area sanity check", NoCubesTest::areaSanityCheck),
-			new Test("mesh generators sanity check", NoCubesTest::meshGeneratorsSanityCheck)
+			new Test("mesher sanity check", NoCubesTest::mesherSanityCheck)
 		);
 	}
 
@@ -44,7 +44,7 @@ public class NoCubesTest {
 		assertTrue(1 == new Area(null, start, new BlockPos(1, 1, 1)).numBlocks());
 	}
 
-	private static void meshGeneratorsSanityCheck() {
+	private static void mesherSanityCheck() {
 		Predicate<BlockState> isSmoothable = $ -> $ == STONE.defaultBlockState();
 
 		var start = new BlockPos(100, 50, 25);
@@ -62,8 +62,8 @@ public class NoCubesTest {
 				// No-op
 			}
 		};
-		for (var generator : MeshGeneratorEnum.values())
-			generator.generator.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+		for (var mesher : MesherType.values())
+			mesher.instance.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
 	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {

@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.util;
 
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.Mesher;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.core.BlockPos;
@@ -25,10 +25,10 @@ public class Area implements AutoCloseable {
 		this.size = size.immutable();
 	}
 
-	public Area(BlockGetter world, BlockPos startInclusive, BlockPos size, MeshGenerator generator) {
+	public Area(BlockGetter world, BlockPos startInclusive, BlockPos size, Mesher mesher) {
 		this.world = world;
-		Vec3i negativeExtension = generator.getNegativeAreaExtension();
-		Vec3i positiveExtension = generator.getPositiveAreaExtension();
+		var negativeExtension = mesher.getNegativeAreaExtension();
+		var positiveExtension = mesher.getPositiveAreaExtension();
 		this.start = startInclusive.subtract(negativeExtension).immutable();
 		this.size = new BlockPos(
 			size.getX() + negativeExtension.getX() + positiveExtension.getX(),

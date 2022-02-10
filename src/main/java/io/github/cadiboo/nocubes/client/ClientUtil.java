@@ -5,32 +5,88 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import io.github.cadiboo.nocubes.config.ColorParser;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.util.Mth;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class ClientUtil {
 
-	public static void reloadAllChunks() {
+	private static final Logger LOG = LogManager.getLogger();
+
+	public static void reloadAllChunks(String because) {
+		LOG.debug("Re-rendering chunks because {}", because);
 		var minecraft = Minecraft.getInstance();
 		minecraft.execute(minecraft.levelRenderer::allChanged);
 	}
 
-	public static void lineVertex(VertexConsumer buffer, PoseStack stack, float x, float y, float z, ColorParser.Color color) {
-		var matrix = stack.last().pose();
-		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
+	public static void warnPlayer(String translationKey, Object... formatArgs) {
+		ModUtil.warnPlayer(Minecraft.getInstance().player, translationKey, formatArgs);
+	}
+
+	/**
+	 * This is both a convenience method and an optimisation.
+	 * Calling 'buffer.vertex(pose, x, y, z)' or 'buffer.normal(normal, x, y, z)' allocate a Vector4f and a Vector3f respectively.
+	 * To avoid allocating many short-lived vectors we do the transform ourselves instead.
+	 */
+	public static void line(
+		VertexConsumer buffer, PoseStack matrix, ColorParser.Color color,
+		float x0, float y0, float z0,
+		float x1, float y1, float z1
+	) {
+		var currentTransform = matrix.last();
+		var pose = currentTransform.pose();
+		var normal = currentTransform.normal();
+		// Calling 'buffer.vertex(pose, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short-lived vectors we do the transform ourselves instead
-		var transformedX = getTransformX(matrix, x, y, z, 1);
-		var transformedY = getTransformY(matrix, x, y, z, 1);
-		var transformedZ = getTransformZ(matrix, x, y, z, 1);
+		var transformedX0 = getTransformX(pose, x0, y0, z0, 1);
+		var transformedY0 = getTransformY(pose, x0, y0, z0, 1);
+		var transformedZ0 = getTransformZ(pose, x0, y0, z0, 1);
+		var transformedX1 = getTransformX(pose, x1, y1, z1, 1);
+		var transformedY1 = getTransformY(pose, x1, y1, z1, 1);
+		var transformedZ1 = getTransformZ(pose, x1, y1, z1, 1);
+
+		var normalX = x1 - x0;
+		var normalY = y1 - y0;
+		var normalZ = z1 - z0;
+		var length = Mth.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+		normalX /= length;
+		normalY /= length;
+		normalZ /= length;
+
+		var transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
+		var transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
+		var transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
+
 		buffer
-			.vertex(transformedX, transformedY, transformedZ)
+			.vertex(transformedX0, transformedY0, transformedZ0)
 			.color(color.red, color.green, color.blue, color.alpha)
-			.normal(0, 0, 0)
+			.normal(transformedNormalX, transformedNormalY, transformedNormalZ)
+			.endVertex();
+		buffer
+			.vertex(transformedX1, transformedY1, transformedZ1)
+			.color(color.red, color.green, color.blue, color.alpha)
+			.normal(transformedNormalX, transformedNormalY, transformedNormalZ)
 			.endVertex();
 	}
 
-	public static void vertex(VertexConsumer buffer, PoseStack matrix, float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {
-		// Calling 'buffer.vertex(matrix, x, y, z)' allocates a Vector4f
-		// To avoid allocating so many short-lived vectors we do the transform ourselves instead
+	/**
+	 * This is both a convenience method and an optimisation.
+	 * Calling 'buffer.vertex(pose, x, y, z)' or 'buffer.normal(normal, x, y, z)' allocate a Vector4f and a Vector3f respectively.
+	 * To avoid allocating many short-lived vectors we do the transform ourselves instead.
+	 */
+	public static void vertex(
+		VertexConsumer buffer, PoseStack matrix,
+		float x, float y, float z,
+		float red, float green, float blue, float alpha,
+		float texU, float texV,
+		int overlayUV, int lightmapUV,
+		float normalX, float normalY, float normalZ
+	) {
 		var currentTransform = matrix.last();
 		var pose = currentTransform.pose();
 		var normal = currentTransform.normal();
@@ -43,7 +99,13 @@ public final class ClientUtil {
 		var transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
 		var transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
 
-		buffer.vertex(transformedX, transformedY, transformedZ, red, green, blue, alpha, texU, texV, overlayUV, lightmapUV, transformedNormalX, transformedNormalY, transformedNormalZ);
+		buffer.vertex(
+			transformedX, transformedY, transformedZ,
+			red, green, blue, alpha,
+			texU, texV,
+			overlayUV, lightmapUV,
+			transformedNormalX, transformedNormalY, transformedNormalZ
+		);
 	}
 
 	public static float getTransformX(Matrix3f matrix, float x, float y, float z) {

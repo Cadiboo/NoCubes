@@ -259,9 +259,9 @@ public final class RendererDispatcher {
 	}
 
 	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
-		var generator = NoCubesConfig.Server.meshGenerator;
-		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, generator)) {
-			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, generator, area);
+		var mesher = NoCubesConfig.Server.mesher;
+		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, mesher)) {
+			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
 		}
 	}
 
@@ -275,12 +275,12 @@ public final class RendererDispatcher {
 
 	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothable) {
 		var start = System.nanoTime();
-		var generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 		try (
-			var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, generator);
+			var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
 			var ignored = renderer.matrix.push()
 		) {
-			MeshRenderer.renderArea(renderer, isSmoothable, generator, area);
+			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}

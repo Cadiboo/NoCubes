@@ -17,7 +17,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.coremod.api.ASMAPI;
-import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -35,18 +35,16 @@ class HD_U_G8 implements OptiFineProxy {
 	static final RenderType[] OVERLAY_LAYERS = new RenderType[]{RenderType.cutout(), RenderType.cutoutMipped(), RenderType.translucent()};
 
 	@Override
-	public boolean initialisedAndUsable() {
-		for (Field field : Reflect.class.getDeclaredFields()) {
+	public @Nullable String notUsableBecause() {
+		for (var field : Reflect.class.getDeclaredFields()) {
 			try {
-				if (field.get(null) == null) {
-					LogManager.getLogger("NoCubes OptiFine Compatibility").info("{}: Proxy not usable because reflection was unable to find field {}", getClass().getSimpleName(), field.getName());
-					return false;
-				}
+				if (field.get(null) == null)
+					return "reflection was unable to find field " + field.getName();
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
 		}
-		return true;
+		return null;
 	}
 
 	@Override

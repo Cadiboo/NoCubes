@@ -33,7 +33,7 @@ import org.apache.logging.log4j.LogManager;
 
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.lineVertex;
+import static io.github.cadiboo.nocubes.client.ClientUtil.line;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 
 /**
@@ -61,12 +61,12 @@ public final class OverlayRenderer {
 		var camera = event.getCamera().getPosition();
 		var matrix = event.getPoseStack();
 		var buffer = event.getMultiBufferSource().getBuffer(RenderType.lines());
-		var generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 		var stateSolidity = MeshRenderer.isSolidRender(state);
-		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, generator)) {
+		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, mesher)) {
 			var color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			generator.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
+			mesher.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
 				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
 				return true;
 			});
@@ -88,7 +88,7 @@ public final class OverlayRenderer {
 		if (viewer == null)
 			return;
 
-		var generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 
 		var camera = cameraInfo.getPosition();
 		var matrixStack = event.getPoseStack();
@@ -129,7 +129,7 @@ public final class OverlayRenderer {
 		if (NoCubesConfig.Client.debugVisualiseDensitiesGrid) {
 			var distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 			var densityColor = new Color(0F, 0F, 1F, 0.5F);
-			try (var area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), generator)) {
+			try (var area = new Area(world, targetedPos.offset(-2, -2, -2), new BlockPos(4, 4, 4), mesher)) {
 				var states = area.getAndCacheBlocks();
 				var densities = new float[area.numBlocks()];
 				for (int i = 0; i < densities.length; ++i)
@@ -214,11 +214,11 @@ public final class OverlayRenderer {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, PoseStack matrix, Vec3 camera, VertexConsumer buffer) {
-		var generator = NoCubesConfig.Server.meshGenerator;
+		var mesher = NoCubesConfig.Server.mesher;
 		var meshSize = new BlockPos(16, 16, 16);
 		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
-			var area = new Area(viewer.level, meshStart, meshSize, generator);
+			var area = new Area(viewer.level, meshStart, meshSize, mesher);
 			var light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
 		) {
 			var faceInfo = new FaceInfo();
@@ -232,7 +232,7 @@ public final class OverlayRenderer {
 			var lightColor = new Color(1F, 1F, 0F, 1F);
 
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			generator.generate(area, isSmoothable, (pos, face) -> {
+			mesher.generate(area, isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
 				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);
@@ -277,13 +277,19 @@ public final class OverlayRenderer {
 		var startX = (float) (offset.getX() - camera.x + start.x);
 		var startY = (float) (offset.getY() - camera.y + start.y);
 		var startZ = (float) (offset.getZ() - camera.z + start.z);
-		lineVertex(buffer, matrix, startX, startY, startZ, color);
-		lineVertex(buffer, matrix, startX + add.x, startY + add.y, startZ + add.z, color);
+		line(
+			buffer, matrix, color,
+			startX, startY, startZ,
+			startX + add.x, startY + add.y, startZ + add.z
+		);
 	}
 
 	private static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
-		lineVertex(buffer, matrix, (float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z), color);
-		lineVertex(buffer, matrix, (float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z), color);
+		line(
+			buffer, matrix, color,
+			(float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z),
+			(float) (endOffset.getX() + end.x - camera.x), (float) (endOffset.getY() + end.y - camera.y), (float) (endOffset.getZ() + end.z - camera.z)
+		);
 	}
 
 	private static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, Color color, VertexConsumer buffer, PoseStack matrix) {
@@ -307,24 +313,21 @@ public final class OverlayRenderer {
 		var v1z = (float) (z + v1.z);
 		var v2z = (float) (z + v2.z);
 		var v3z = (float) (z + v3.z);
-		lineVertex(buffer, matrix, v0x, v0y, v0z, color);
-		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
-		lineVertex(buffer, matrix, v1x, v1y, v1z, color);
-		lineVertex(buffer, matrix, v2x, v2y, v2z, color);
-		lineVertex(buffer, matrix, v2x, v2y, v2z, color);
-		lineVertex(buffer, matrix, v3x, v3y, v3z, color);
-		lineVertex(buffer, matrix, v3x, v3y, v3z, color);
-		lineVertex(buffer, matrix, v0x, v0y, v0z, color);
+		line(buffer, matrix, color, v0x, v0y, v0z, v1x, v1y, v1z);
+		line(buffer, matrix, color, v1x, v1y, v1z, v2x, v2y, v2z);
+		line(buffer, matrix, color, v2x, v2y, v2z, v3x, v3y, v3z);
+		line(buffer, matrix, color, v3x, v3y, v3z, v0x, v0y, v0z);
 	}
 
 	private static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, Color color) {
 		var x = pos.getX() - camera.x;
 		var y = pos.getY() - camera.y;
 		var z = pos.getZ() - camera.z;
-		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> {
-			lineVertex(buffer, stack, (float) (x + x0), (float) (y + y0), (float) (z + z0), color);
-			lineVertex(buffer, stack, (float) (x + x1), (float) (y + y1), (float) (z + z1), color);
-		});
+		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> line(
+			buffer, stack, color,
+			(float) (x + x0), (float) (y + y0), (float) (z + z0),
+			(float) (x + x1), (float) (y + y1), (float) (z + z1)
+		));
 	}
 
 }

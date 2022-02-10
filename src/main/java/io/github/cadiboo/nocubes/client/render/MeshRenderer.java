@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -30,8 +30,6 @@ import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRe
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
 import static net.minecraft.world.level.block.GrassBlock.SNOWY;
 
-// /tp @p 83.63 64.26 -112.34 -90.10 -6.33 Wall
-// /tp @p 87.64 75.43 -180.15 -158.48 33.15 Hillside
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
@@ -43,15 +41,15 @@ public final class MeshRenderer {
 		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
 	}
 
-	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, MeshGenerator generator, Area area) {
+	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area) {
 		var faceInfo = new FaceInfo();
 		var objects = new MutableObjects();
-		MeshGenerator.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
+		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
-			generator.generate(area, isSmoothable, (ignored, face) -> {
+			mesher.generate(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
 				RenderableState foundState;
-				if (generator instanceof OldNoCubes) {
+				if (mesher instanceof OldNoCubes) {
 					foundState = objects.foundState;
 					foundState.state = area.getBlockState(ignored);
 					foundState.pos.set(ignored);
@@ -72,12 +70,12 @@ public final class MeshRenderer {
 		ForgeHooksClient.setRenderType(null);
 	}
 
-	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, MeshGenerator generator, Area area) {
-		MeshGenerator.translateToMeshStart(matrix, area.start, worldPos);
+	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, Mesher mesher, Area area) {
+		Mesher.translateToMeshStart(matrix, area.start, worldPos);
 		var stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 		var faceInfo = new FaceInfo();
-		generator.generate(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
+		mesher.generate(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
 			var renderBothSides = false;
 			// Don't need textures or lighting because the crumbling texture overwrites them
