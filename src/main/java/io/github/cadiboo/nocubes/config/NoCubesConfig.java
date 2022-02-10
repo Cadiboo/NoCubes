@@ -520,10 +520,10 @@ public final class NoCubesConfig {
 		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
-			List<String> toAddTo = newValue ? whitelist : blacklist;
-			List<String> toRemoveFrom = newValue ? blacklist : whitelist;
-			for (BlockState state : states) {
-				String string = BlockStateConverter.toString(state);
+			var toAddTo = newValue ? whitelist : blacklist;
+			var toRemoveFrom = newValue ? blacklist : whitelist;
+			for (var state : states) {
+				var string = BlockStateConverter.toString(state);
 				NoCubes.smoothableHandler.setSmoothable(newValue, state);
 				if (!toAddTo.contains(string))
 					toAddTo.add(string);
