@@ -85,7 +85,7 @@ public final class KeybindingHandler {
 			ClientUtil.reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
-			if (C2SRequestUpdateSmoothable.checkPermissionAndNotifyIfUnauthorised(player))
+			if (C2SRequestUpdateSmoothable.checkPermissionAndNotifyIfUnauthorised(player, minecraft.getSingleplayerServer()))
 				// Only send the packet if we have permission, don't send a packet that will be denied
 				NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(newValue, states));
 		}

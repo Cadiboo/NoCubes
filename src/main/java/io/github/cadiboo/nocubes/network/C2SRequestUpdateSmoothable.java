@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
@@ -12,6 +13,7 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -41,7 +43,7 @@ public record C2SRequestUpdateSmoothable(
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		var ctx = contextSupplier.get();
 		var sender = Objects.requireNonNull(ctx.getSender(), "Command sender was null");
-		if (checkPermissionAndNotifyIfUnauthorised(sender)) {
+		if (checkPermissionAndNotifyIfUnauthorised(sender, sender.server)) {
 			var newValue = msg.newValue;
 			var statesToUpdate = Arrays.stream(msg.states)
 				.filter(s -> NoCubes.smoothableHandler.isSmoothable(s) != newValue)
@@ -59,7 +61,9 @@ public record C2SRequestUpdateSmoothable(
 		ctx.setPacketHandled(true);
 	}
 
-	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player) {
+	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player, @Nullable MinecraftServer connectedToServer) {
+		if (connectedToServer != null && connectedToServer.isSingleplayerOwner(player.getGameProfile()))
+			return true;
 		if (player.hasPermissions(REQUIRED_PERMISSION_LEVEL))
 			return true;
 		ModUtil.warnPlayer(player, NoCubes.MOD_ID + ".command.changeSmoothableNoPermission");
