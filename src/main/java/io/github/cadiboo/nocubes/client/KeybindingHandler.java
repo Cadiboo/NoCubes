@@ -74,9 +74,10 @@ public final class KeybindingHandler {
 		var targeted = ((BlockHitResult) lookingAt);
 		var targetedState = world.getBlockState(targeted.getBlockPos());
 		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
-		// Add all states if the player is crouching (to make it east to toggle on/off all leaves)
+		// Add all states if the player is not crouching (to make it easy to toggle on/off all leaves)
+		// If the player needs fine-grained control over which specific blockstates are smoothable they can crouch
 		// (Yes I know it says shift, it actually checks the crouch key)
-		var states = player.isShiftKeyDown() ? ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new): new BlockState[] {targetedState};
+		var states = player.isShiftKeyDown() ? new BlockState[]{targetedState} : ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new);
 
 		LOG.debug("toggleLookedAtSmoothable currentServerHasNoCubes={}", NoCubesNetwork.currentServerHasNoCubes);
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
