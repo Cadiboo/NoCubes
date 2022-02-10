@@ -11,6 +11,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.AxisCycle;
@@ -56,6 +57,7 @@ public final class CollisionHandler {
 
 		var entity = context.getEntity();
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
+			(NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			entity == null || reader.getBlockState(blockPos) != state
 		)
