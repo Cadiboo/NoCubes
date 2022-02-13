@@ -105,32 +105,29 @@ function initializeCoreMod() {
 						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Random;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
 						new LabelNode() // Label for original instructions
 					));
+					print('Done injecting the preIteration hook');
 				}
-				print('Done injecting the preIteration hook');
 
-                // Inject the hook where we change vanilla's fluid rendering
-                {
-                    // We are trying to replace this code
-                    //  FluidState fluidstate = chunkrendercache.getFluidState(blockpos2); // Vanilla
-                    //  FluidState fluidstate = blockstate.getFluidState(); // OptiFine
-                    // With this code
-                    //	FluidState fluidstate = io.github.cadiboo.hooks.Hooks.getRenderFluidState(pos);
+                // OptiFine optimises 'chunkRenderCache.getFluidState(pos)' to 'state.getFluidState()'
+                // This breaks our extended fluids rendering so we undo it
+                if (isOptiFinePresent) {
                     var getFluidStateCall = findFirstMethodCall(
                         methodNode,
                         ASMAPI.MethodType.VIRTUAL,
-                        isOptiFinePresent ? 'net/minecraft/world/level/block/state/BlockState' : 'net/minecraft/client/renderer/chunk/RenderChunkRegion',
-                        ASMAPI.mapMethod(isOptiFinePresent ? 'm_60819_' : 'm_6425_'), // getFluidState
-                        isOptiFinePresent ? '()Lnet/minecraft/world/level/material/FluidState;' : '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;'
+                        'net/minecraft/world/level/block/state/BlockState',
+                        ASMAPI.mapMethod('m_60819_'), // getFluidState
+                        '()Lnet/minecraft/world/level/material/FluidState;'
                     );
                     var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
                     removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
                     instructions.insert(previousLabel, ASMAPI.listOf(
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 19 : 16), // blockpos2 - blockPos
-                        callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;')
+						new VarInsnNode(ALOAD, 19), // pos
+						new VarInsnNode(ALOAD, 20), // state
+                        callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
                     ));
                     // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
-                }
-                print('Done injecting the fluid render bypass hook');
+				 	print('Done injecting the fluid render bypass hook');
+   				}
 
 				// Inject the hook where we cancel vanilla's block rendering for smoothable blocks
 				{
@@ -160,157 +157,12 @@ function initializeCoreMod() {
                     	new JumpInsnNode(IFEQ, labelToJumpToIfBlockIsInvisible),
 						new LabelNode() // Label for original instructions
 					));
+					print('Done injecting the canBlockStateRender hook');
 				}
-				print('Done injecting the canBlockStateRender hook');
 				return methodNode;
 			}
 		},
-        'BlockRendererDispatcher#renderBlockDamage': {
-			'target': {
-				'type': 'METHOD',
-				'class': 'net.minecraft.client.renderer.block.BlockRenderDispatcher',
-				// Forge-added overload
-				'methodName': 'renderBreakingTexture',
-				'methodDesc': '(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)V'
-			},
-			'transformer': function(methodNode) {
-				// The code that we are trying to inject looks like this:
-				//	<start of method>
-				//	// NoCubes Start
-				//	if (io.github.cadiboo.nocubes.hooks.Hooks.renderBlockDamage(this, state, pos, lightReaderIn, matrixStackIn, vertexBuilderIn, checkSides, random, modelData))
-				//		return;
-				//	// NoCubes End
-				// <rest of method>
-				var originalInstructionsLabel = new LabelNode();
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new VarInsnNode(ALOAD, 1), // state
-					new VarInsnNode(ALOAD, 2), // pos
-					new VarInsnNode(ALOAD, 3), // lightReaderIn
-					new VarInsnNode(ALOAD, 4), // matrixStackIn
-					new VarInsnNode(ALOAD, 5), // vertexBuilderIn
-					new VarInsnNode(ALOAD, 6), // modelData
-					callNoCubesHook('renderBreakingTexture', '(Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)Z'),
-					new JumpInsnNode(IFEQ, originalInstructionsLabel),
-					new InsnNode(RETURN),
-					originalInstructionsLabel
-				));
-				return methodNode;
-			}
-		},
-		'ClientWorld#setBlocksDirty': {
-			'target': {
-				'type': 'METHOD',
-				'class': 'net.minecraft.client.multiplayer.ClientLevel',
-				'methodName': 'm_6550_',
-				'methodDesc': '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V'
-			},
-			'transformer': function(methodNode) {
-				// Redirect execution to our hook
-				var minecraft_name = ASMAPI.mapField('f_104565_'); // mc, minecraft
-				var levelRenderer_name = ASMAPI.mapField('f_104562_'); // worldRenderer, levelRenderer
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new FieldInsnNode(GETFIELD, 'net/minecraft/client/multiplayer/ClientLevel', minecraft_name, 'Lnet/minecraft/client/Minecraft;'),
-					new VarInsnNode(ALOAD, 0), // this
-					new FieldInsnNode(GETFIELD, 'net/minecraft/client/multiplayer/ClientLevel', levelRenderer_name, 'Lnet/minecraft/client/renderer/LevelRenderer;'),
-					new VarInsnNode(ALOAD, 1), // pos
-					new VarInsnNode(ALOAD, 2), // oldState
-					new VarInsnNode(ALOAD, 3), // newState
-					callNoCubesHook('setBlocksDirty', '(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/renderer/LevelRenderer;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)V'),
-					new InsnNode(RETURN),
-					new LabelNode() // Label for original instructions
-				));
-				return methodNode;
-			}
-		},
-		'BlockState#canOcclude': {
-            'target': {
-                'type': 'METHOD',
-                'class': 'net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase',
-                'methodName': 'm_60815_',
-                'methodDesc': '()Z'
-            },
-            'transformer': function(methodNode) {
-                // The code that we are trying to inject looks like this:
-                //	<start of method>
-                //	// NoCubes Start
-                //	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.canOccludeOverride(this)) != null)
-                //		return override.booleanValue();
-                //	// NoCubes End
-                // <rest of method>
-                injectOverrideAtFirstLabel(methodNode.instructions,
-                    ASMAPI.listOf(
-                        new VarInsnNode(ALOAD, 0), // this
-                        new TypeInsnNode(CHECKCAST, 'net/minecraft/world/level/block/state/BlockState'),
-                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/lang/Boolean;')
-                    ),
-                    callBooleanValueAndReturn()
-                );
-                return methodNode;
-            }
-        },
-        // This should fail relatively silently if OptiFine is not present
-        'BlockState#isCacheOpaqueCube (OptiFine)': {
-            'target': {
-                'type': 'METHOD',
-                'class': 'net.minecraft.world.level.block.state.BlockState',
-                'methodName': 'isCacheOpaqueCube', // Added by OptiFine
-                'methodDesc': '()Z'
-            },
-            'transformer': function(methodNode) {
-                // The code that we are trying to inject looks like this:
-                //	<start of method>
-                //	// NoCubes Start
-                //	if ((Boolean override = io.github.cadiboo.nocubes.hooks.Hooks.canOccludeOverride(this)) != null)
-                //		return override.booleanValue();
-                //	// NoCubes End
-                // <rest of method>
-                injectOverrideAtFirstLabel(methodNode.instructions,
-                    ASMAPI.listOf(
-                        new VarInsnNode(ALOAD, 0), // this
-                        callNoCubesHook('canOccludeOverride', '(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/lang/Boolean;')
-                    ),
-                    callBooleanValueAndReturn()
-                );
-                return methodNode;
-            }
-        },
         // endregion Rendering
-
-		// Add fields that allow us to very efficiently store/query if a block state is smoothable
-		'BlockState': {
-			'target': {
-				'type': 'CLASS',
-				'name': 'net.minecraft.world.level.block.state.BlockState'
-			},
-			'transformer': function(classNode) {
-				var fields = classNode.fields;
-				// Params: int access, String name, String descriptor, String signature, Object value
-				var field = new FieldNode(ACC_PUBLIC, 'nocubes_isTerrainSmoothable', 'Z', null, false)
-				fields.add(field);
-
-				// Params: int access, String name, String descriptor, @Nullable String signature, @Nullable String[] exceptions
-				var setTerrainSmoothable = new MethodNode(ACC_PUBLIC, 'setTerrainSmoothable', '(Z)V', null, null)
-				var isTerrainSmoothable = new MethodNode(ACC_PUBLIC, 'isTerrainSmoothable', '()Z', null, null)
-				setTerrainSmoothable.instructions = ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new VarInsnNode(ILOAD, 1), // value
-					new FieldInsnNode(PUTFIELD, 'net/minecraft/world/level/block/state/BlockState', field.name, field.desc),
-					new InsnNode(RETURN)
-				);
-				isTerrainSmoothable.instructions = ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 0), // this
-					new FieldInsnNode(GETFIELD, 'net/minecraft/world/level/block/state/BlockState', field.name, field.desc),
-					new InsnNode(IRETURN)
-				);
-				classNode.methods.add(setTerrainSmoothable);
-				classNode.methods.add(isTerrainSmoothable);
-				classNode.interfaces.add('io/github/cadiboo/nocubes/hooks/INoCubesBlockState');
-
-				return classNode;
-			}
-		},
 
         // region Collisions
 		'BlockState#getCollisionShape(NoContext)': {
@@ -457,93 +309,6 @@ function initializeCoreMod() {
 			}
 		},
         // endregion Collisions
-
-		// region Extended Fluids
-		'World#getFluidState': {
-			'target': {
-				'type': 'METHOD',
-				'class': 'net.minecraft.world.level.Level',
-				'methodName': 'm_6425_',
-				'methodDesc': '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;'
-			},
-			'transformer': function(methodNode) {
-				// The code that we are trying to inject looks like this:
-				//	<start of method>
-                //	if (this.isOutsideBuildHeight(pos))
-                //		return Fluids.EMPTY.getDefaultState();
-				//	// NoCubes Start
-				//	if ((FluidState override = io.github.cadiboo.nocubes.hooks.Hooks.getFluidState(this, pos)) != null)
-				//		return override;
-				//	// NoCubes End
-				//	return this.getChunkAt(pos).getFluidState(pos);
-                //	}
-                //  <end of method>
-                var instructions = methodNode.instructions;
-                var getChunkAtCall = findFirstMethodCall(
-                    methodNode,
-                    ASMAPI.MethodType.VIRTUAL,
-                    'net/minecraft/world/level/Level',
-                    ASMAPI.mapMethod('m_46745_'), // World.getChunkAt
-                    '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/chunk/LevelChunk;'
-                );
-
-                injectOverride(instructions,
-                	findFirstLabelBefore(instructions, getChunkAtCall),
-					ASMAPI.listOf(
-						new VarInsnNode(ALOAD, 0), // this
-						new VarInsnNode(ALOAD, 1), // pos
-						callNoCubesHook('getFluidStateOverride', '(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;')
-					),
-					ASMAPI.listOf(
-						new InsnNode(ARETURN)
-					)
-				);
-				return methodNode;
-			}
-		},
-		'ChunkRenderCache#getFluidState': {
-			'target': {
-				'type': 'METHOD',
-				'class': 'net.minecraft.client.renderer.chunk.RenderChunkRegion',
-				'methodName': 'm_6425_',
-				'methodDesc': '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;'
-			},
-			'transformer': function(methodNode) {
-				injectAfterFirstLabel(methodNode.instructions, ASMAPI.listOf(
-					new VarInsnNode(ALOAD, 1), // pos
-					callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;'),
-					new InsnNode(ARETURN)
-				));
-				return methodNode;
-			}
-		},
-		'BlockRenderDispatcher#<init>': {
-			'target': {
-				'type': 'METHOD',
-				'class': 'net.minecraft.client.renderer.block.BlockRenderDispatcher',
-				'methodName': '<init>',
-				'methodDesc': '(Lnet/minecraft/client/renderer/block/BlockModelShaper;Lnet/minecraft/client/renderer/BlockEntityWithoutLevelRenderer;Lnet/minecraft/client/color/block/BlockColors;)V'
-			},
-			'transformer': function(methodNode) {
-				// We are trying to change this code
-				//	this.liquidBlockRenderer = new FluidBlockRenderer();
-				// To this code
-				//	this.liquidBlockRenderer = io.github.cadiboo.nocubes.hooks.Hooks.createFluidBlockRenderer(new FluidBlockRenderer());
-				var instructions = methodNode.instructions;
-				var liquidBlockRendererPut = findFirstFieldInstruction(
-					instructions,
-					PUTFIELD,
-					'net/minecraft/client/renderer/block/BlockRenderDispatcher',
-					ASMAPI.mapField('f_110901_'), // liquidBlockRenderer
-					'Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;'
-				);
-				instructions.insertBefore(liquidBlockRendererPut, ASMAPI.listOf(
-					callNoCubesHook('createFluidBlockRenderer', '(Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;)Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;')
-				));
-				return methodNode;
-			}
-		},
-		// endregion Extended Fluids
 	});
 }
 

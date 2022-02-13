@@ -6,11 +6,11 @@ import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -134,5 +134,10 @@ public final class ClientUtil {
 
 	public static float getTransformW(Matrix4f matrix, float x, float y, float z, float w) {
 		return matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
+	}
+
+	public static FluidState getExtendedFluidState(BlockPos pos) {
+		var level = Minecraft.getInstance().level;
+		return level == null ? Fluids.EMPTY.defaultFluidState() : ModUtil.getExtendedFluidState(level, pos);
 	}
 }

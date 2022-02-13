@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.*;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
 

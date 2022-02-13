@@ -17,7 +17,6 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.coremod.api.ASMAPI;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;

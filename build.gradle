@@ -3,11 +3,13 @@ buildscript {
 	repositories {
 		// These repositories are only for Gradle plugins, put any other repositories in the repository block further below
 		maven { url = 'https://maven.minecraftforge.net' }
+		maven { url = 'https://repo.spongepowered.org/maven' }
 		mavenCentral()
 	}
 	// Buildscript dependency on Forge Gradle
 	dependencies {
 		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
 	}
 }
 
@@ -21,6 +23,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
+apply plugin: 'org.spongepowered.mixin'
 
 repositories {
 	maven {
@@ -103,6 +106,14 @@ minecraft {
 	}
 }
 
+mixin {
+	add sourceSets.main, "mixins.${modId}.refmap.json"
+	config "mixins.${modId}.json"
+
+	debug.verbose = true
+	debug.export = true
+}
+
 configurations {
 	library
 	implementation.extendsFrom library
@@ -125,6 +136,9 @@ dependencies {
 	// If this is any group other than 'net.minecraft' it is assumed that the dep is a ForgeGradle 'patcher' dependency and its patches will be applied
 	// The userdev artifact is a special name and will get all sorts of transformations applied to it
 	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
+
+	// Apply Mixin AP
+	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
 	// Add a compile/implementation dependency on all .jar files in ./libs
 	implementation fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')

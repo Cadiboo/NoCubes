@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 
 public final /* inline record */ class Texture {

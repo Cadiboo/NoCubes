@@ -1,12 +1,11 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.mesh.Mesher;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 
 public class Area implements AutoCloseable {
 

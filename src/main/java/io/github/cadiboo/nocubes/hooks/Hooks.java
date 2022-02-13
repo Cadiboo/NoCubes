@@ -1,50 +1,31 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
-import net.minecraft.client.renderer.chunk.RenderChunkRegion;
-import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.Connection;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.model.data.IModelData;
-import net.minecraftforge.network.NetworkHooks;
-import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.Random;
-import java.util.stream.Stream;
 
 /**
  * @author Cadiboo
@@ -65,20 +46,16 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link RebuildTask#compile} instead of {@link RenderChunkRegion#getFluidState(BlockPos)}
-	 * Called from: {@link RenderChunkRegion#getFluidState(BlockPos)} instead of {@link BlockState#getFluidState()}
+	 * Called from: {@link RebuildTask#compile} instead of {@link BlockState#getFluidState()} when OptiFine is present
 	 * <p>
-	 * Hooking this allows us to control vanilla's fluids rendering which lets us cancel it and do our own rendering or
-	 * change where fluids are rendered (to make extended fluids work).
+	 * Hooking this makes extended fluids render properly
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static FluidState getRenderFluidState(BlockPos pos) {
+	public static FluidState getRenderFluidStateOptiFine(BlockPos pos, BlockState state) {
 		SelfCheck.getRenderFluidState = true;
-		var world = Minecraft.getInstance().level;
-		if (world == null)
-			return Fluids.EMPTY.defaultFluidState();
-		// We hook this too, see 'getFluidStateOverride' below
- 		return world.getFluidState(pos);
+		if (NoCubesConfig.Server.extendFluidsRange > 0)
+			return ClientUtil.getExtendedFluidState(pos);
+		return state.getFluidState();
 	}
 
 	/**
@@ -108,74 +85,15 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link BlockRenderDispatcher#renderBreakingTexture} before any other logic
-	 * Calls: {@link RendererDispatcher#renderBreakingTexture} if the blockstate is smoothable
-	 * <p>
-	 * Renders our own smoothed cracking/breaking/damage animation.
-	 *
-	 * @return If normal rendering should be cancelled (i.e. normal rendering should NOT happen)
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static boolean renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
-		SelfCheck.renderBreakingTexture = true;
-		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(state))
-			return false;
-		RendererDispatcher.renderBreakingTexture(dispatcher, state, pos, world, matrix, buffer, modelData);
-		return true;
-	}
-
-	/**
-	 * Called from: {@link ClientLevel#setBlocksDirty(BlockPos, BlockState, BlockState)} before any other logic
-	 * <p>
-	 * The method 'setBlocksDirty' gets called when a block is updated and marked for re-render.
-	 * Calls {@link LevelRenderer#setBlocksDirty(int, int, int, int, int, int)}  with a range of 2 instead of the normal 1.
-	 * This fixes seams that appear when meshes along chunk borders change.
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static void setBlocksDirty(Minecraft minecraft, LevelRenderer worldRenderer, BlockPos pos, BlockState oldState, BlockState newState) {
-		SelfCheck.setBlocksDirty = true;
-		if (minecraft.getModelManager().requiresRender(oldState, newState)) {
-			int x = pos.getX();
-			int y = pos.getY();
-			int z = pos.getZ();
-			int extension = NoCubesConfig.Client.render ? 2 : 1;
-			worldRenderer.setBlocksDirty(x - extension, y - extension, z - extension, x + extension, y + extension, z + extension);
-		}
-	}
-
-	/**
 	 * Called from: {@link BlockState#canOcclude()} before any other logic
 	 * Called from: BlockState#isCacheOpaqueCube() (OptiFine) before any other logic
 	 * <p>
 	 * Hooking this makes {@link Block#shouldRenderFace} return true and
 	 * causes cubic terrain (including fluids) to be rendered when they are up against smooth terrain, stopping us from
 	 * being able to see through the ground near smooth terrain.
-	 *
-	 * @return A value to override vanilla's handing or <code>null</code> to use vanilla's handing
 	 */
-	public static @Nullable Boolean canOccludeOverride(BlockState state) {
-		SelfCheck.canOccludeOverride = true;
-		if (NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state))
-			return false;
-		return null;
-	}
-
-	/**
-	 * Called from: {@link BlockRenderDispatcher#BlockRenderDispatcher(BlockModelShaper, BlockEntityWithoutLevelRenderer, BlockColors)} before the FluidBlockRenderer is stored in the field
-	 * <p>
-	 * Hooking this lets us have extended fluids when OptiFine is installed.
-	 *
-	 * @return A fluid block renderer that works
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static LiquidBlockRenderer createFluidBlockRenderer(LiquidBlockRenderer original) {
-		SelfCheck.createFluidBlockRenderer = true;
-		return new LiquidBlockRenderer() {
-			@Override
-			public boolean tesselate(BlockAndTintGetter ignored, BlockPos posIn, VertexConsumer vertexBuilderIn, FluidState fluidStateIn) {
-				return super.tesselate(Minecraft.getInstance().level, posIn, vertexBuilderIn, fluidStateIn);
-			}
-		};
+	public static boolean shouldCancelOcclusion(BlockBehaviour.BlockStateBase state) {
+		return NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state);
 	}
 	// endregion Rendering
 
@@ -296,59 +214,5 @@ public final class Hooks {
 	}
 
 	// endregion Collisions
-
-	/**
-	 * Called from: World#getFluidState after the world bounds check in place of the normal getFluidState logic
-	 *
-	 * @return a fluid state that may not actually exist in the position
-	 */
-	public static @Nullable FluidState getFluidStateOverride(Level world, BlockPos pos) {
-		SelfCheck.getFluidStateOverride = true;
-		if (NoCubesConfig.Server.extendFluidsRange <= 0)
-			return null;
-		return ModUtil.getExtendedFluidState(world, pos);
-	}
-
-//
-//	/**
-//	 * Called from: ChunkRenderCache#<init> right after ChunkRenderCache#cacheStartPos is set
-//	 * Calls: ClientUtil.setupChunkRenderCache to set up the cache in an optimised way
-//	 */
-//	@OnlyIn(Dist.CLIENT)
-//	public static void initChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
-//		ClientUtil.setupChunkRenderCache(_this, chunkStartX, chunkStartZ, chunks, start, end);
-//	}
-
-	/**
-	 * Load classes that we modify to get errors sooner.
-	 */
-	public static void loadClasses(Dist dist) {
-		loadClass("net.minecraft.world.level.block.state.BlockBehaviour$BlockStateBase");
-		loadClass("net.minecraft.world.level.block.state.BlockState");
-		loadClass("net.minecraft.world.level.Level");
-		loadClass("net.minecraftforge.network.NetworkHooks");
-		if (dist.isClient()) {
-			loadClass("net.minecraft.client.renderer.block.BlockRenderDispatcher");
-			loadClass("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask");
-			loadClass("net.minecraft.client.multiplayer.ClientLevel");
-			loadClass("net.minecraft.client.renderer.chunk.RenderChunkRegion");
-//		} else {
-
-		}
-	}
-
-	private static void loadClass(String className) {
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		try {
-			Class.forName(className, false, loader);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Failed to load class \"" + className + "\", probably a coremod issue", e);
-		}
-		try {
-			Class.forName(className, true, loader);
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("Failed to initialise class \"" + className + "\", probably a coremod issue", e);
-		}
-	}
 
 }

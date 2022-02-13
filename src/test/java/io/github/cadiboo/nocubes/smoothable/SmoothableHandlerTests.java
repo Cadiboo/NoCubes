@@ -2,12 +2,12 @@ package io.github.cadiboo.nocubes.smoothable;
 
 import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
 import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
-import net.minecraft.world.level.block.state.BlockState;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Cadiboo
@@ -15,30 +15,9 @@ import static org.junit.Assert.*;
 public class SmoothableHandlerTests {
 
 	@Test
-	public void asmShouldNotBeUsedIfCoremodFails() {
-		var state = Mockito.mock(BlockStateBase.class);
-		var handler = SmoothableHandler.create(state);
-		assertEquals(SmoothableHandler.Set.class, handler.getClass());
-	}
-
-	@Test
-	public void asmShouldBeUsedIfCoremodSucceeds() {
-		var state = createStubbedStateForASM();
-		var handler = SmoothableHandler.create(state);
-		assertEquals(SmoothableHandler.ASM.class, handler.getClass());
-	}
-
-	@Test
 	public void asmShouldWork() {
-		shouldWork(new SmoothableHandler.ASM(), createStubbedStateForASM());
-	}
-
-	@Test
-	public void setShouldWork() {
-		shouldWork(new SmoothableHandler.Set(), Mockito.mock(BlockStateBase.class));
-	}
-
-	private void shouldWork(SmoothableHandler handler, BlockStateBase state) {
+		var handler = SmoothableHandler.create();
+		var state = createStubbedStateForAsm();
 		assertFalse(handler.isSmoothable(state));
 		handler.setSmoothable(true, state);
 		assertTrue(handler.isSmoothable(state));
@@ -46,7 +25,7 @@ public class SmoothableHandlerTests {
 		assertFalse(handler.isSmoothable(state));
 	}
 
-	private BlockStateBase createStubbedStateForASM() {
+	private BlockStateBase createStubbedStateForAsm() {
 		boolean[] smoothableRef = {false};
 		var mockedState = Mockito.mock(BlockStateBase.class, Mockito.withSettings().extraInterfaces(INoCubesBlockState.class));
 		var mock = (INoCubesBlockState) mockedState;

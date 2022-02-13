@@ -16,10 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.Material;
@@ -180,19 +177,24 @@ public class ModUtil {
 		return (xSize * ySize * z) + (xSize * y) + x;
 	}
 
+	/**
+	 * Searches neighbouring positions around a smooth block for a source fluid state.
+	 * Makes the smooth block have the fluid "extended" into it.
+	 *
+	 * @return a fluid state that may not actually exist in the position
+	 */
 	public static FluidState getExtendedFluidState(Level world, BlockPos pos) {
-		// Check NoCubesConfig.Server.extendFluidsRange fluid states around pos and return a fluid state if there is one
-		int extendRange = NoCubesConfig.Server.extendFluidsRange;
+		var extendRange = NoCubesConfig.Server.extendFluidsRange;
 		assert extendRange > 0;
 
-		int x = pos.getX();
-		int y = pos.getY();
-		int z = pos.getZ();
-		int chunkX = x >> 4;
-		int chunkZ = z >> 4;
-		LevelChunk chunk = world.getChunk(chunkX, chunkZ);
+		var x = pos.getX();
+		var y = pos.getY();
+		var z = pos.getZ();
+		var chunkX = x >> 4;
+		var chunkZ = z >> 4;
+		var chunk = world.getChunk(chunkX, chunkZ);
 
-		FluidState fluid = chunk.getFluidState(x, y, z);
+		var fluid = chunk.getFluidState(x, y, z);
 		if (!fluid.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(chunk.getBlockState(pos)))
 			return fluid;
 
@@ -202,8 +204,8 @@ public class ModUtil {
 			return fluid;
 
 		// Check around
-		for (int extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
-			for (int extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
+		for (var extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
+			for (var extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
 				if (extendZ == z && extendX == x)
 					continue; // We already checked ourself above
 

@@ -7,7 +7,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.network.NetworkEvent;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.function.Supplier;

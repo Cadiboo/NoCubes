@@ -2,21 +2,16 @@ package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.KeybindingHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.hooks.Hooks;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.EventBus;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLLoader;
 
 /**
  * @author Cadiboo
@@ -25,8 +20,7 @@ import net.minecraftforge.fml.loading.FMLLoader;
 public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
-	// Blocks is safe to use here, it gets initialised before mods are constructed
-	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create(Blocks.STONE.defaultBlockState());
+	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create();
 
 	public NoCubes() {
 		var modBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -35,7 +29,6 @@ public final class NoCubes {
 		modBus.addListener((FMLClientSetupEvent event) -> {
 			KeybindingHandler.registerKeybindings(MinecraftForge.EVENT_BUS);
 		});
-		Hooks.loadClasses(FMLLoader.getDist());
 	}
 
 	/**
