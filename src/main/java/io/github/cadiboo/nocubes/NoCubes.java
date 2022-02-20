@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes;
 
-import io.github.cadiboo.nocubes.client.KeybindingHandler;
+import io.github.cadiboo.nocubes.client.Keybindings;
+import io.github.cadiboo.nocubes.client.render.OverlayRenderers;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
@@ -27,7 +28,8 @@ public final class NoCubes {
 		NoCubesConfig.register(ModLoadingContext.get(), modBus);
 		NoCubesNetwork.register();
 		modBus.addListener((FMLClientSetupEvent event) -> {
-			KeybindingHandler.registerKeybindings(MinecraftForge.EVENT_BUS);
+			Keybindings.register(MinecraftForge.EVENT_BUS);
+			OverlayRenderers.register(MinecraftForge.EVENT_BUS);
 		});
 	}
 

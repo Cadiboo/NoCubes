@@ -41,7 +41,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.client.ClientUtil.vertex;
+import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
 /**

@@ -6,7 +6,6 @@ import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.mesh.*;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
@@ -39,6 +38,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 import static net.minecraft.world.level.block.Blocks.*;
 
 /**
@@ -120,7 +120,7 @@ public final class NoCubesConfig {
 			grassTufts = INSTANCE.grassTufts.get();
 
 			if (oldRender != render || (render && oldChunkRenderSettingsHash != hashChunkRenderSettings()))
-				ClientUtil.reloadAllChunks("Client chunk rendering settings changed");
+				reloadAllChunks("Client chunk rendering settings changed");
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -284,7 +284,7 @@ public final class NoCubesConfig {
 			extraSmoothMesh = INSTANCE.extraSmoothMesh.get();
 			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
 				// TODO: This seems to be broken and never gets called in singleplayer (should it be?)
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientUtil.reloadAllChunks("Server chunk rendering settings changed"));
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("Server chunk rendering settings changed"));
 			if (FMLEnvironment.dist.isDedicatedServer())
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
 		}

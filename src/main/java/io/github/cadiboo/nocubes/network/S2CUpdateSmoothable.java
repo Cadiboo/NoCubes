@@ -1,13 +1,14 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
+
+import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
 /**
  * @author Cadiboo
@@ -33,7 +34,7 @@ public record S2CUpdateSmoothable(
 		var ctx = contextSupplier.get();
 		ctx.enqueueWork(() -> {
 			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.states);
-			ClientUtil.reloadAllChunks("The server told us that the smoothness of some states changed");
+			reloadAllChunks("The server told us that the smoothness of some states changed");
 		});
 		ctx.setPacketHandled(true);
 	}

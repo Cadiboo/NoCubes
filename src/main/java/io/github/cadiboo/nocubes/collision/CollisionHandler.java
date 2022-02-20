@@ -150,7 +150,6 @@ public final class CollisionHandler {
 	}
 
 	public static void forEachCollisionRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
-		assert NoCubesConfig.Server.collisionsEnabled;
 		var mesher = NoCubesConfig.Server.mesher;
 
 		var start = new BlockPos(minX, minY, minZ);

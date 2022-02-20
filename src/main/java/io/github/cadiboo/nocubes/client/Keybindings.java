@@ -19,18 +19,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
+import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
+
 /**
  * @author Cadiboo
  */
-public final class KeybindingHandler {
+public final class Keybindings {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static void registerKeybindings(IEventBus bus) {
+	public static void register(IEventBus bus) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
-			makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, KeybindingHandler::toggleVisuals),
-			makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, KeybindingHandler::toggleLookedAtSmoothable)
+			makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, Keybindings::toggleVisuals),
+			makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, Keybindings::toggleLookedAtSmoothable)
 		);
 		bus.addListener((TickEvent.ClientTickEvent event) -> {
 			if (event.phase != TickEvent.Phase.END)
@@ -56,7 +58,7 @@ public final class KeybindingHandler {
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
-		ClientUtil.reloadAllChunks("toggleVisuals was pressed");
+		reloadAllChunks("toggleVisuals was pressed");
 	}
 
 	private static void toggleLookedAtSmoothable() {
@@ -81,7 +83,7 @@ public final class KeybindingHandler {
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
 			NoCubes.smoothableHandler.setSmoothable(newValue, states);
-			ClientUtil.reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
+			reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
 			if (C2SRequestUpdateSmoothable.checkPermissionAndNotifyIfUnauthorised(player, minecraft.getSingleplayerServer()))
