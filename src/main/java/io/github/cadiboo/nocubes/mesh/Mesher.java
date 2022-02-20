@@ -78,10 +78,14 @@ public interface Mesher {
 	 */
 	static void translateToMeshStart(PoseStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
 		matrix.translate(
-			validateMeshOffset(areaStart.getX() - renderStartPos.getX()),
-			validateMeshOffset(areaStart.getY() - renderStartPos.getY()),
-			validateMeshOffset(areaStart.getZ() - renderStartPos.getZ())
+			getMeshOffset(areaStart.getX(), renderStartPos.getX()),
+			getMeshOffset(areaStart.getY(), renderStartPos.getY()),
+			getMeshOffset(areaStart.getZ(), renderStartPos.getZ())
 		);
+	}
+
+	static int getMeshOffset(int areaStart, int desiredStart) {
+		return validateMeshOffset(areaStart - desiredStart);
 	}
 
 	/* private */

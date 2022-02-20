@@ -36,6 +36,7 @@ import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.*;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
+import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * @author Cadiboo
@@ -173,7 +174,7 @@ public final class OverlayRenderers {
 			int maxY = minY + height;
 			int maxX = minX + width;
 			int zyxIndex = 0;
-			var pos = new BlockPos.MutableBlockPos();
+			var pos = new MutableBlockPos();
 			for (int z = minZ; z < maxZ; ++z) {
 				for (int y = minY; y < maxY; ++y) {
 					for (int x = minX; x < maxX; ++x, ++zyxIndex) {
@@ -225,7 +226,7 @@ public final class OverlayRenderers {
 		var color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
 		var start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level, new BlockPos.MutableBlockPos(),
+		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level, new MutableBlockPos(),
 			start.getX(), start.getX() + collisionsRenderRadius * 2,
 			start.getY(), start.getY() + collisionsRenderRadius * 2,
 			start.getZ(), start.getZ() + collisionsRenderRadius * 2,
