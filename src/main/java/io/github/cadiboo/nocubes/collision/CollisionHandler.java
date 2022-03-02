@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
+import io.github.cadiboo.nocubes.mesh.Mesher2xSmoothness;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
@@ -185,7 +186,7 @@ public final class CollisionHandler {
 				var x0 = pos.getX();
 				var y0 = pos.getY();
 				var z0 = pos.getZ();
-				if (!NoCubesConfig.Server.extraSmoothMesh && mesher instanceof SurfaceNets) {
+				if (mesher instanceof Mesher2xSmoothness doubleSmooth && doubleSmooth.smoothness2x) {
 					// Pretty disgusting, see the comments in SurfaceNets about densities and corners for why this offset exists
 					x0 += 0.5F;
 					y0 += 0.5F;

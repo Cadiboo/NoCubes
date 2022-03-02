@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -14,12 +13,16 @@ import java.util.function.Predicate;
 /**
  * @author Cadiboo
  */
-public class MarchingCubes implements Mesher {
+public class MarchingCubes extends Mesher2xSmoothness {
+
+	public MarchingCubes(boolean smoothness2x) {
+		super(smoothness2x);
+	}
 
 	@Override
 	public BlockPos getPositiveAreaExtension() {
 		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
-		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
+		return smoothness2x ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
@@ -32,7 +35,7 @@ public class MarchingCubes implements Mesher {
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		Face face = new Face();
-		boolean smoother = NoCubesConfig.Server.extraSmoothMesh;
+		boolean smoother = smoothness2x;
 		float[] data = SurfaceNets.generateDistanceField(area, isSmoothable, smoother);
 		BlockPos dims = smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
 

@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
@@ -18,11 +17,15 @@ import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
  * @see "https://github.com/mikolalysenko/isosurface/blob/master/lib/surfacenets.js"
  * @see "https://github.com/mikolalysenko/mikolalysenko.github.com/blob/master/Isosurface/js/surfacenets.js"
  */
-public class SurfaceNets implements Mesher {
+public class SurfaceNets extends Mesher2xSmoothness {
 
 	public static final int COMPLETELY_OUTSIDE_ISOSURFACE = 0;
 	public static final int COMPLETELY_INSIDE_ISOSURFACE = 0xFF;
 	private static final ThreadLocalArrayCache<float[]> DISTANCE_FIELD_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
+
+	public SurfaceNets(boolean smoothness2x) {
+		super(smoothness2x);
+	}
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {
@@ -33,12 +36,12 @@ public class SurfaceNets implements Mesher {
 	@Override
 	public Vec3i getNegativeAreaExtension() {
 		// I'm not sure why it's needed, but it is needed very much
-		return NoCubesConfig.Server.extraSmoothMesh ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
+		return smoothness2x ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		var smoother = NoCubesConfig.Server.extraSmoothMesh;
+		var smoother = smoothness2x;
 		var distanceField = generateDistanceField(area, isSmoothable, smoother);
 		var dims = getDimensions(area, smoother);
 //		var testMesh = TestData.SPHERE;
