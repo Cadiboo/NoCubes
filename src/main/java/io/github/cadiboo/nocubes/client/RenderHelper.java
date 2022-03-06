@@ -22,8 +22,8 @@ public class RenderHelper {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static void reloadAllChunks(String because) {
-		LOG.debug("Re-rendering chunks because {}", because);
+	public static void reloadAllChunks(String because, Object... becauseArgs) {
+		LOG.debug(() -> "Re-rendering chunks because " + because.formatted(becauseArgs));
 		var minecraft = Minecraft.getInstance();
 		minecraft.execute(minecraft.levelRenderer::allChanged);
 	}

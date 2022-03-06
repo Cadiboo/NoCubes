@@ -119,8 +119,10 @@ public final class NoCubesConfig {
 			fixPlantHeight = INSTANCE.fixPlantHeight.get();
 			grassTufts = INSTANCE.grassTufts.get();
 
-			if (oldRender != render || (render && oldChunkRenderSettingsHash != hashChunkRenderSettings()))
-				reloadAllChunks("Client chunk rendering settings changed");
+			if (oldRender != render)
+				reloadAllChunks("custom rendering was toggled to %b in the client config", render);
+			else if (render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
+				reloadAllChunks("options affecting chunk rendering in the client config were changed");
 
 			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -266,8 +268,6 @@ public final class NoCubesConfig {
 		 */
 		public static void bake(ModConfig config) {
 			LOG.debug("Baking config {}", config.getFileName());
-			// TODO: How are these values changing handled on the client?
-			//  Does forge auto sync the config when it changes, if not I need to
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
@@ -280,9 +280,10 @@ public final class NoCubesConfig {
 				Client.render = true;
 			extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
+
 			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
 				// TODO: This seems to be broken and never gets called in singleplayer (should it be?)
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("Server chunk rendering settings changed"));
+				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
 			if (FMLEnvironment.dist.isDedicatedServer())
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
 		}
