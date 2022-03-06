@@ -73,16 +73,19 @@ minecraft {
 			workingDirectory project.file('run/server')
 			setForceExit(false)  // To allow integration tests to run in CI
 		}
+		configureEach {
+			workingDirectory project.file('run/' + it.name) as File
+			// The markers can be added/removed as needed (separated by commas)
+			property 'forge.logging.markers', 'XFORM' // 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
+			property 'forge.logging.console.level', 'debug' // 'trace' // For ASM classdump
+			jvmArg '-ea' // Enable assertions
+			// Use the 'test' module (and both source sets) because it contains our integration tests
+			ideaModule "${project.name}.test"
+			mods.register(modId as String) {
+				sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
+			}
+		}
 	}
-	runs.configureEach({ config ->
-		// The markers can be added/removed as needed (separated by commas)
-		config.property 'forge.logging.markers', 'XFORM' // 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
-		config.property 'forge.logging.console.level', 'debug' // 'trace' // For ASM classdump
-		config.sources = [sourceSets.main, sourceSets.test]
-		config.jvmArg '-ea' // Enable assertions
-		config.ideaModule = config.ideaModule.replace('main', 'test') // Use the 'test' module because it contains our integration tests
-		config.property 'mixin.env.disableRefMap', 'true' // To allow dependencies to load
-	})
 }
 
 mixin {
