@@ -37,15 +37,15 @@ import net.minecraftforge.client.model.data.IModelData;
 
 import java.util.List;
 import java.util.Random;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
+import static net.minecraft.core.BlockPos.MutableBlockPos;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
 /**
  * Calls the {@link MeshRenderer} or {@link FluidRenderer} and provides utility code for both.
+ *
  * @author Cadiboo
  */
 public final class RendererDispatcher {
@@ -59,6 +59,8 @@ public final class RendererDispatcher {
 	 * Stops every method having lots of parameters.
 	 */
 	public static class ChunkRenderInfo {
+		private static final List<RenderType> BLOCK_LAYERS = RenderType.chunkBufferLayers();
+
 		public final RebuildTask rebuildTask;
 		public final RenderChunk chunkRender;
 		public final CompiledChunk compiledChunk;
@@ -87,23 +89,23 @@ public final class RendererDispatcher {
 			this.blockColors = Minecraft.getInstance().getBlockColors();
 		}
 
-		public void renderInLayers(
-			Predicate<RenderType> predicate,
-			BiFunction<RenderType, BufferBuilder, Object> preRender,
-			RenderInLayer render,
-			BiConsumer<BufferBuilder, Object> postRender
-		) {
-			var layers = RenderType.chunkBufferLayers();
+		interface RenderInLayer {
+			boolean render(BlockState state, BlockPos worldPos, IModelData modelData, RenderType layer, BufferBuilder buffer, Object renderEnv);
+		}
+
+		public void renderInBlockLayers(BlockState state, BlockPos worldPos, RenderInLayer render) {
+			var modelData = rebuildTask.getModelData(worldPos);
+			var layers = BLOCK_LAYERS;
 			for (int i = 0, size = layers.size(); i < size; ++i) {
 				var layer = layers.get(i);
-				if (!predicate.test(layer))
+				if (!ItemBlockRenderTypes.canRenderInLayer(state, layer))
 					continue;
 
 				var buffer = getAndStartBuffer(layer);
-				var renderEnv = preRender.apply(layer, buffer);
-				boolean used = render.render(layer, buffer, renderEnv);
+				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
+				boolean used = render.render(state, worldPos, modelData, layer, buffer, renderEnv);
 
-				postRender.accept(buffer, renderEnv);
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
 				if (used)
 					markLayerUsed(layer);
 			}
@@ -125,13 +127,10 @@ public final class RendererDispatcher {
 			return color;
 		}
 
-		public void renderBlock(BlockState state, BlockPos.MutableBlockPos worldPos) {
-			var modelData = rebuildTask.getModelData(worldPos);
-			renderInLayers(
-				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
-				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-				(layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData),
-				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
+		public void renderBlock(BlockState stateIn, MutableBlockPos worldPosIn) {
+			renderInBlockLayers(
+				stateIn, worldPosIn,
+				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData)
 			);
 		}
 
@@ -155,19 +154,15 @@ public final class RendererDispatcher {
 			void accept(RenderType layer, VertexConsumer buffer, BakedQuad quad, Color color, boolean emissive);
 		}
 
-		public void forEachQuad(BlockState state, BlockPos worldPos, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
-			var numQuadsRendered = new int[] {0};
-			var rand = optiFine.getSeed(state.getSeed(worldPos));
-			var modelData = rebuildTask.getModelData(worldPos);
-			renderInLayers(
-				layer -> ItemBlockRenderTypes.canRenderInLayer(state, layer),
-				(layer, buffer) -> optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos),
-				(layer, buffer, renderEnv) -> {
+		public void forEachQuad(BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
+			var rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
+			renderInBlockLayers(
+				stateIn, worldPosIn,
+				(state, worldPos, modelData, layer, buffer, renderEnv) -> {
 					var model = getModel(state, renderEnv);
 
 					var nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
 					var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
-					numQuadsRendered[0] += nullQuads.size();
 
 					List<BakedQuad> dirQuads;
 					if (!state.hasProperty(SNOWY))
@@ -185,21 +180,15 @@ public final class RendererDispatcher {
 						}
 					}
 					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
-					numQuadsRendered[0] += dirQuads.size();
 
 					int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
-					numQuadsRendered[0] += numOverlaysRendered;
 					anyQuadsFound |= numOverlaysRendered > 0;
 
 					if (!anyQuadsFound)
 						forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 					return true;
-				},
-				(buffer, renderEnv) -> optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk)
+				}
 			);
-			// TODO: Remove
-			// For debugging because it seems like I'm rendering multiple quads for each block
-			int quadsRendered = numQuadsRendered[0];
 		}
 
 		private BakedModel getModel(BlockState state, Object renderEnv) {
@@ -283,10 +272,6 @@ public final class RendererDispatcher {
 			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
-	}
-
-	interface RenderInLayer {
-		boolean render(RenderType layer, BufferBuilder buffer, Object renderEnv);
 	}
 
 	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, RenderType layer) {
