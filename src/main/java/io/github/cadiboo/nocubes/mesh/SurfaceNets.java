@@ -1,27 +1,32 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.*;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.ShapeConsumer;
+import io.github.cadiboo.nocubes.mesh.TestData.TestMesh;
+import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
+import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
+ * Surface Nets generates a vertex for each cell and then stitches them together.
  * Written by Mikola Lysenko (C) 2012
  * Ported from JavaScript to Java and modified for NoCubes by Cadiboo.
  *
  * @see "https://github.com/mikolalysenko/isosurface/blob/master/lib/surfacenets.js"
  * @see "https://github.com/mikolalysenko/mikolalysenko.github.com/blob/master/Isosurface/js/surfacenets.js"
  */
-public class SurfaceNets extends Mesher2xSmoothness {
-
-	public static final int COMPLETELY_OUTSIDE_ISOSURFACE = 0;
-	public static final int COMPLETELY_INSIDE_ISOSURFACE = 0xFF;
-	private static final ThreadLocalArrayCache<float[]> DISTANCE_FIELD_CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
+public class SurfaceNets extends SDFMesher {
 
 	public SurfaceNets(boolean smoothness2x) {
 		super(smoothness2x);
@@ -40,73 +45,46 @@ public class SurfaceNets extends Mesher2xSmoothness {
 	}
 
 	@Override
-	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		var smoother = smoothness2x;
-		var distanceField = generateDistanceField(area, isSmoothable, smoother);
-		var dims = getDimensions(area, smoother);
-//		var testMesh = TestData.SPHERE;
-//		var distanceField = testMesh.generateDistanceField(area.start.getX(), area.start.getY(), area.start.getZ());
-//		var dims = testMesh.dimensions;
-		generateOrThrow(distanceField, dims, smoother, voxelAction, faceAction);
-	}
-
-	public static BlockPos getDimensions(Area area, boolean smoother) {
-		return smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
-	}
-
-	public static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable, boolean smoother) {
-		// The area, converted from a BlockState[] to an isSmoothable[]
-		// densityField[x, y, z] = isSmoothable(chunk[x, y, z]);
-		var states = area.getAndCacheBlocks();
-		// NB: SurfaceNets expects to be working on the signed distance at the corner of each block
-		// To get this we would have to average the densities of each block & its neighbours
-		// Doing this results in loss of terrain features (one-block large features effectively disappear)
-		// Because we want to preserve these features, we feed SurfaceNets the inverted block densities, pretending that they
-		// are the corner distances and then offset the resulting mesh by 0.5
-		return smoother ? generateDistanceField(area, isSmoothable, states) : generateNegativeDensityField(area, isSmoothable, states);
-	}
-
-	private static float[] generateNegativeDensityField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
-		int length = area.numBlocks();
-		var densityField = DISTANCE_FIELD_CACHE.takeArray(length);
-		for (int i = 0; i < length; ++i)
-			densityField[i] = -ModUtil.getBlockDensity(isSmoothable, states[i]);
-		return densityField;
-	}
-
-	private static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable, BlockState[] states) {
-		int areaX = area.size.getX();
-		int areaY = area.size.getY();
-		int areaZ = area.size.getZ();
-
-		int distanceFieldSizeX = areaX - 1;
-		int distanceFieldSizeY = areaY - 1;
-		int distanceFieldSizeZ = areaZ - 1;
-		int distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
-		var distanceField = DISTANCE_FIELD_CACHE.takeArray(distanceFieldSize);
-
-		int index = 0;
-		for (int z = 0; z < areaZ; ++z) {
-			for (int y = 0; y < areaY; ++y) {
-				for (int x = 0; x < areaX; ++x, ++index) {
-					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
-						continue;
-					var combinedDensity = 0;
-					int neighbourIndex = index;
-					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
-						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
-							for (int neighbourX = 0; neighbourX < 2; ++neighbourX, ++neighbourIndex)
-								combinedDensity += ModUtil.getBlockDensity(isSmoothable, states[neighbourIndex]);
-					int distanceFieldIndex = ModUtil.get3dIndexInto1dArray(x, y, z, distanceFieldSizeX, distanceFieldSizeY);
-					distanceField[distanceFieldIndex] = -combinedDensity / 8F;
-				}
+	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+		// Duplicated in MarchingCubes
+		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
+		var vertexNormals = new Face();
+		var faceNormal = new Vec();
+		var centre = new Vec();
+		generateOrThrow(
+			area, isSmoothable,
+			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
+			(pos, face) -> {
+				face.assignAverageTo(centre);
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.assignAverageTo(faceNormal);
+				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
 			}
-		}
-		return distanceField;
+		);
 	}
 
-	private static void generateOrThrow(float[] distanceField, BlockPos dims, boolean smoother, VoxelAction voxelAction, FaceAction faceAction) {
-		var pos = new BlockPos.MutableBlockPos();
+	@Override
+	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+		generateOrThrow(area, isSmoothable, FullCellAction.IGNORE, action);
+	}
+
+	private void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FullCellAction fullCellAction, FaceAction action) {
+		// Duplicated in MarchingCubes
+		@Nullable TestMesh testMesh = null; // TestData.SPHERE
+		var smoother = smoothness2x;
+		var distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
+		var dims = getDimensions(area, smoother, testMesh);
+		// Because we are passing block densities instead of corner distances (see the NB comment in generateDistanceField) we need to offset the mesh
+		float offset = smoother ? 1F : 0.5F;
+		generateOrThrow2(
+			distanceField, dims,
+			(x, y, z) -> fullCellAction.apply(x + offset, y + offset, z + offset),
+			(pos, face) -> action.apply(pos, face.add(offset))
+		);
+	}
+
+	private static void generateOrThrow2(float[] distanceField, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
+		var pos = new MutableBlockPos();
 
 		final Face face = new Face();
 		int n = 0;
@@ -141,7 +119,8 @@ public class SurfaceNets extends Mesher2xSmoothness {
 
 					//Read in 8 field values around this vertex and store them in an array
 					//Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-					int mask = 0, corner = 0, cornerIndex = n;
+					short mask = 0, corner = 0;
+					int cornerIndex = n;
 					for (int cornerZ = 0; cornerZ < 2; ++cornerZ, cornerIndex += dims.getX() * (dims.getY() - 2))
 						for (int cornerY = 0; cornerY < 2; ++cornerY, cornerIndex += dims.getX() - 2)
 							for (byte cornerX = 0; cornerX < 2; ++cornerX, ++corner, ++cornerIndex) {
@@ -152,11 +131,11 @@ public class SurfaceNets extends Mesher2xSmoothness {
 								mask |= insideIsosurface ? (1 << corner) : 0;
 							}
 
-					if (!voxelAction.apply(pos.set(x, y, z), getAmountInsideIsosurface(smoother, cornerDistances)))
+					if (mask == MASK_FULLY_INSIDE_ISOSURFACE && !fullCellAction.apply(x, y, z))
 						return;
 
 					// Check for early termination if cell does not intersect boundary
-					if (mask == COMPLETELY_OUTSIDE_ISOSURFACE || mask == COMPLETELY_INSIDE_ISOSURFACE)
+					if (mask == MASK_FULLY_OUTSIDE_ISOSURFACE || mask == MASK_FULLY_INSIDE_ISOSURFACE)
 						continue;
 
 					// Sum up edge intersections
@@ -208,12 +187,6 @@ public class SurfaceNets extends Mesher2xSmoothness {
 					vertex.x = x + s * vertex.x;
 					vertex.y = y + s * vertex.y;
 					vertex.z = z + s * vertex.z;
-					if (!smoother) {
-						// Because we are passing block densities instead of corner distances (see the NB comment above) we need to offset the mesh
-						vertex.add(0.5F, 0.5F, 0.5F);
-					} else {
-						vertex.add(1, 1, 1);
-					}
 					//Add vertex to buffer
 					verticesBuffer[bufferPointer] = vertex;
 
@@ -255,7 +228,7 @@ public class SurfaceNets extends Mesher2xSmoothness {
 						}
 						face.flip(); // TODO: I should probably fix this at some point
 						pos.set(x, y, z);
-						if (!faceAction.apply(pos, face))
+						if (!action.apply(pos, face))
 							return;
 					}
 				}

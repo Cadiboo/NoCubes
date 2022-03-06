@@ -3,9 +3,6 @@ package io.github.cadiboo.nocubes.collision;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
-import io.github.cadiboo.nocubes.mesh.Mesher2xSmoothness;
-import io.github.cadiboo.nocubes.mesh.OldNoCubes;
-import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -150,7 +147,7 @@ public final class CollisionHandler {
 		);
 	}
 
-	public static void forEachCollisionRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, IShapeConsumer consumer) {
+	public static void forEachCollisionRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, ShapeConsumer consumer) {
 		var mesher = NoCubesConfig.Server.mesher;
 
 		var start = new BlockPos(minX, minY, minZ);
@@ -174,61 +171,23 @@ public final class CollisionHandler {
 
 	// endregion indev
 
-	public static void generate(Area area, Mesher mesher, IShapeConsumer consumer) {
-		var vertexNormals = new Face();
-		var faceNormal = new Vec();
-		var centre = new Vec();
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		mesher.generate(area, isSmoothable, (pos, amount) -> {
-			// Generate collisions for blocks that are fully inside the isosurface
-			// The face handler will generate collisions for the surface
-			if (amount == 1) {
-				var x0 = pos.getX();
-				var y0 = pos.getY();
-				var z0 = pos.getZ();
-				if (mesher instanceof Mesher2xSmoothness doubleSmooth && doubleSmooth.smoothness2x) {
-					// Pretty disgusting, see the comments in SurfaceNets about densities and corners for why this offset exists
-					x0 += 0.5F;
-					y0 += 0.5F;
-					z0 += 0.5F;
-				}
-				return consumer.accept(
-					x0, y0, z0,
-					x0 + 1, y0 + 1, z0 + 1
-				);
-			}
-			return true;
-		}, (pos, face) -> {
-			face.assignAverageTo(centre);
-			face.assignNormalTo(vertexNormals);
-			vertexNormals.assignAverageTo(faceNormal);
-			if (mesher instanceof OldNoCubes)
-				// Keeps flat surfaces collidable but also allows super rough terrain
-				faceNormal.multiply(0.00001F);
-
-//			if (isSmoothable.test(area.getBlockState(pos))) {
-//				int x0 = pos.getX();
-//				int y0 = pos.getY();
-//				int z0 = pos.getZ();
-//				return consumer.accept(
-//					x0, y0, z0,
-//					x0 + 1, y0 + 1, z0 + 1
-//				);
-//			}
-
-			if (!generateShape(centre, faceNormal, consumer, face.v0))
-				return false;
-			if (!generateShape(centre, faceNormal, consumer, face.v1))
-				return false;
-			if (!generateShape(centre, faceNormal, consumer, face.v2))
-				return false;
-			if (!generateShape(centre, faceNormal, consumer, face.v3))
-				return false;
-			return true;
-		});
+	public static void generate(Area area, Mesher mesher, ShapeConsumer consumer) {
+		mesher.generateCollisions(area, NoCubes.smoothableHandler::isSmoothable, consumer);
 	}
 
-	private static boolean generateShape(Vec centre, Vec faceNormal, IShapeConsumer consumer, Vec v) {
+	public static boolean generateShapes(Vec centre, Vec faceNormal, ShapeConsumer consumer, Face face) {
+		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v0))
+			return false;
+		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v1))
+			return false;
+		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v2))
+			return false;
+		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v3))
+			return false;
+		return true;
+	}
+
+	private static boolean generateShape(Vec centre, Vec faceNormal, ShapeConsumer consumer, Vec v) {
 		var vX = v.x;
 		var vY = v.y;
 		var vZ = v.z;
@@ -239,18 +198,6 @@ public final class CollisionHandler {
 			Math.min(vX, extX), Math.min(vY, extY), Math.min(vZ, extZ),
 			Math.max(vX, extX), Math.max(vY, extY), Math.max(vZ, extZ)
 		);
-	}
-
-	public interface IShapeConsumer {
-
-		/**
-		 * Return if more shapes should be generated.
-		 */
-		boolean accept(
-			double x0, double y0, double z0,
-			double x1, double y1, double z1
-		);
-
 	}
 
 }

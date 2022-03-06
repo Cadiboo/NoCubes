@@ -63,7 +63,7 @@ public class NoCubesTest {
 			}
 		};
 		for (var mesher : MesherType.values())
-			mesher.instance.generate(area, isSmoothable, NoCubesTest::checkAndMutate);
+			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
 	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {

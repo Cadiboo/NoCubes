@@ -1,23 +1,26 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
 
 import java.util.function.Predicate;
+
+import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 
 /**
  * @author Cadiboo
  * @author Click_Me
  */
-public final class OldNoCubes implements Mesher {
+public final class OldNoCubes extends SimpleMesher {
 
 	// Points order
 	public static final int X0Y0Z0 = 0;
@@ -44,142 +47,141 @@ public final class OldNoCubes implements Mesher {
 
 	@Override
 	public BlockPos getPositiveAreaExtension() {
-		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
+		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public BlockPos getNegativeAreaExtension() {
-		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
+		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos size = area.size;
-		int depth = size.getZ();
-		int height = size.getY();
-		int width = size.getX();
+	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+		var vertexNormals = new Face();
+		var faceNormal = new Vec();
+		var centre = new Vec();
+		generateInternal(
+			area, isSmoothable,
+			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
+			(pos, face) -> {
+				face.assignAverageTo(centre);
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.assignAverageTo(faceNormal);
 
-		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+				// Keeps flat surfaces collidable but also allows super rough terrain
+				faceNormal.multiply(0.00001F);
 
-		Face face = new Face();
+				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
+			}
+		);
+	}
+
+	@Override
+	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+		generateInternal(area, isSmoothable, FullBlockAction.IGNORE, action);
+	}
+
+	private interface FullBlockAction {
+		FullBlockAction IGNORE = (x, y, z) -> true;
+
+		boolean apply(int x, int y, int z);
+	}
+
+	private void generateInternal(Area area, Predicate<BlockState> isSmoothable, FullBlockAction fullBlockAction, FaceAction faceAction) {
+		var face = new Face();
+		var pos = new MutableBlockPos();
 		// The 8 points that make the block.
 		// 1 point for each corner
-		Vec[] points = {new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
-		Direction[] directions = ModUtil.DIRECTIONS;
-		int directionsLength = directions.length;
-		float[] neighboursSmoothability = new float[directionsLength];
+		var points = new Vec[]{new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
+		var directions = ModUtil.DIRECTIONS;
+		var directionsLength = directions.length;
+		var neighboursSmoothness = new float[directionsLength];
+		var roughness = NoCubesConfig.Server.oldNoCubesRoughness;
+		generate(area, isSmoothable, (x, y, z, index) -> {
+			var blocks = area.getAndCacheBlocks();
+			var state = blocks[index];
 
-		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
+			var combinedNeighboursSmoothness = 0F;
+			for (var i = 0; i < directionsLength; ++i) {
+				var direction = directions[i];
+				pos.set(x, y, z).move(direction);
+				var neighbour = blocks[area.index(pos)];
+				var density = ModUtil.getBlockDensity(isSmoothable, neighbour);
+				combinedNeighboursSmoothness += density;
+				neighboursSmoothness[i] = density;
+			}
 
-		int index = 0;
-		for (int z = 0; z < depth; ++z) {
-			for (int y = 0; y < height; ++y) {
-				for (int x = 0; x < width; ++x, ++index) {
-					if (isOutsideMesh(x, y, z, size))
-						continue;
+			var amountInsideIsosurface = (combinedNeighboursSmoothness / directionsLength) / 2 + 0.5F;
+			if (amountInsideIsosurface == 1 && !fullBlockAction.apply(x, y, z))
+				return false;
+			if (amountInsideIsosurface == 0 || ModUtil.isSnowLayer(state))
+				return true;
 
-					BlockState state = blocks[index];
-					if (!isSmoothable.test(state))
-						// We aren't smoothable
-						continue;
+			resetPoints(points);
+			// Loop through all the points:
+			// Here everything will be 'smoothed'.
+			for (byte pointIndex = 0; pointIndex < 8; ++pointIndex) {
+				var point = points[pointIndex];
 
-					float combinedNeighboursSmoothability = 0;
-					for (int i = 0; i < directionsLength; ++i) {
-						Direction direction = directions[i];
-						pos.set(x, y, z).move(direction);
-						BlockState neighbour = blocks[area.index(pos)];
-						float density = ModUtil.getBlockDensity(isSmoothable, neighbour);
-						combinedNeighboursSmoothability += density;
-						neighboursSmoothability[i] = density;
-					}
+				// Give the point the block's coordinates.
+				point.x += x;
+				point.y += y;
+				point.z += z;
 
-					float amountInsideIsosurface = (combinedNeighboursSmoothability / directionsLength) / 2 + 0.5F;
-					if (!voxelAction.apply(pos.set(x, y, z), amountInsideIsosurface))
-						return;
-					if (amountInsideIsosurface == 0 || ModUtil.isSnowLayer(state))
-						continue;
-
-					resetPoints(points);
-					// Loop through all the points:
-					// Here everything will be 'smoothed'.
-					for (int pointIndex = 0; pointIndex < 8; ++pointIndex) {
-						Vec point = points[pointIndex];
-
-						// Give the point the block's coordinates.
-						point.x += x;
-						point.y += y;
-						point.z += z;
-
-						if (!doesPointIntersectWithManufactured(area, point, isSmoothable, pos)) {
-							if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
-								point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-							else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))
-								point.y = y + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
-							givePointRoughness(roughness, area, point);
-						}
-					}
-
-					for (int i = 0; i < directionsLength; ++i) {
-						Direction direction = directions[i];
-
-						if (neighboursSmoothability[i] == ModUtil.FULLY_SMOOTHABLE)
-							continue;
-
-						//0-3
-						//1-2
-						//0,0-1,0
-						//0,1-1,1
-						switch (direction) {
-							default:
-							case DOWN:
-								face.v0.set(points[X1Y0Z1]);
-								face.v1.set(points[X0Y0Z1]);
-								face.v2.set(points[X0Y0Z0]);
-								face.v3.set(points[X1Y0Z0]);
-								break;
-							case UP:
-								face.v0.set(points[X1Y1Z1]);
-								face.v1.set(points[X1Y1Z0]);
-								face.v2.set(points[X0Y1Z0]);
-								face.v3.set(points[X0Y1Z1]);
-								break;
-							case NORTH:
-								face.v0.set(points[X1Y1Z0]);
-								face.v1.set(points[X1Y0Z0]);
-								face.v2.set(points[X0Y0Z0]);
-								face.v3.set(points[X0Y1Z0]);
-								break;
-							case SOUTH:
-								face.v0.set(points[X1Y1Z1]);
-								face.v1.set(points[X0Y1Z1]);
-								face.v2.set(points[X0Y0Z1]);
-								face.v3.set(points[X1Y0Z1]);
-								break;
-							case WEST:
-								face.v0.set(points[X0Y1Z1]);
-								face.v1.set(points[X0Y1Z0]);
-								face.v2.set(points[X0Y0Z0]);
-								face.v3.set(points[X0Y0Z1]);
-								break;
-							case EAST:
-								face.v0.set(points[X1Y1Z1]);
-								face.v1.set(points[X1Y0Z1]);
-								face.v2.set(points[X1Y0Z0]);
-								face.v3.set(points[X1Y1Z0]);
-								break;
-						}
-
-						if (!faceAction.apply(pos.set(x, y, z), face))
-							return;
-
-					}
-
+				if (!doesPointIntersectWithManufactured(area, point, isSmoothable, pos)) {
+					if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
+						point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
+					else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))
+						point.y = y + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
+					givePointRoughness(roughness, area, point);
 				}
 			}
-		}
+
+			for (int i = 0; i < directionsLength; ++i) {
+				if (neighboursSmoothness[i] == ModUtil.FULLY_SMOOTHABLE)
+					continue;
+				//0-3
+				//1-2
+				//0,0-1,0
+				//0,1-1,1
+				if (!faceAction.apply(pos.set(x, y, z), switch (directions[i]) {
+					case DOWN -> face.set(
+						points[X1Y0Z1],
+						points[X0Y0Z1],
+						points[X0Y0Z0],
+						points[X1Y0Z0]);
+					case UP -> face.set(
+						points[X1Y1Z1],
+						points[X1Y1Z0],
+						points[X0Y1Z0],
+						points[X0Y1Z1]);
+					case NORTH -> face.set(
+						points[X1Y1Z0],
+						points[X1Y0Z0],
+						points[X0Y0Z0],
+						points[X0Y1Z0]);
+					case SOUTH -> face.set(
+						points[X1Y1Z1],
+						points[X0Y1Z1],
+						points[X0Y0Z1],
+						points[X1Y0Z1]);
+					case WEST -> face.set(
+						points[X0Y1Z1],
+						points[X0Y1Z0],
+						points[X0Y0Z0],
+						points[X0Y0Z1]);
+					case EAST -> face.set(
+						points[X1Y1Z1],
+						points[X1Y0Z1],
+						points[X1Y0Z0],
+						points[X1Y1Z0]);
+				}))
+					return false;
+			}
+			return true;
+		});
 	}
 
 	private static float max(float a, float b, float c, float d, float e, float f, float g, float h) {
@@ -236,7 +238,7 @@ public final class OldNoCubes implements Mesher {
 		return state.getMaterial() == Material.AIR || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
 	}
 
-	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, BlockPos.MutableBlockPos pos) {
+	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, MutableBlockPos pos) {
 		boolean intersects = false;
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
@@ -250,7 +252,7 @@ public final class OldNoCubes implements Mesher {
 		return intersects;
 	}
 
-	public static boolean doesPointBottomIntersectWithAir(Area area, Vec point, BlockPos.MutableBlockPos pos) {
+	public static boolean doesPointBottomIntersectWithAir(Area area, Vec point, MutableBlockPos pos) {
 		boolean intersects = false;
 		boolean notOnly = false;
 		for (int i = 0; i < 4; i++) {
@@ -267,7 +269,7 @@ public final class OldNoCubes implements Mesher {
 		return intersects && notOnly;
 	}
 
-	public static boolean doesPointIntersectWithManufactured(Area area, Vec point, Predicate<BlockState> isSmoothable, BlockPos.MutableBlockPos pos) {
+	public static boolean doesPointIntersectWithManufactured(Area area, Vec point, Predicate<BlockState> isSmoothable, MutableBlockPos pos) {
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;

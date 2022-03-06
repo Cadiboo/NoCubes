@@ -79,7 +79,7 @@ public final class OverlayRenderers {
 		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, mesher)) {
 			var color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			mesher.generate(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
+			mesher.generateGeometry(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
 				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
 				return true;
 			});
@@ -267,7 +267,7 @@ public final class OverlayRenderers {
 			var lightColor = new Color(1F, 1F, 0F, 1F);
 
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			mesher.generate(area, isSmoothable, (pos, face) -> {
+			mesher.generateGeometry(area, isSmoothable, (pos, face) -> {
 				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 					return true;
 				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);

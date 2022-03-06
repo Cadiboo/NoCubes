@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -7,13 +9,16 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.function.Predicate;
+
+import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * @author Cadiboo
  */
-public class MarchingCubes extends Mesher2xSmoothness {
+public class MarchingCubes extends SDFMesher {
 
 	public MarchingCubes(boolean smoothness2x) {
 		super(smoothness2x);
@@ -21,33 +26,128 @@ public class MarchingCubes extends Mesher2xSmoothness {
 
 	@Override
 	public BlockPos getPositiveAreaExtension() {
-		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
+		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return smoothness2x ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public BlockPos getNegativeAreaExtension() {
-		// Need data about the area's direct neighbour blocks blocks to check if they should be culled
+		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		Face face = new Face();
-		boolean smoother = smoothness2x;
-		float[] data = SurfaceNets.generateDistanceField(area, isSmoothable, smoother);
-		BlockPos dims = smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
+	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+		// Duplicated in SurfaceNets
+		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
+		var vertexNormals = new Face();
+		var faceNormal = new Vec();
+		var centre = new Vec();
+		generateOrThrow(
+			area, isSmoothable,
+			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
+			(pos, face) -> {
+				face.assignAverageTo(centre);
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.assignAverageTo(faceNormal);
+				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
+			}
+		);
+	}
 
-		byte[][] cubeVerts = Lookup.CUBE_VERTS;
-		short[] edgeTable = Lookup.EDGE_TABLE;
-		byte[][] edgeIndex = Lookup.EDGE_INDEX;
-		byte[][] triTable = Lookup.TRI_TABLE;
+//	@Override
+//	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+//		var smoother = smoothness2x;
+//		var data = generateDistanceField(area, isSmoothable, smoother);
+//		var dims = smoother ? area.size.subtract(ModUtil.VEC_ONE) : area.size;
+//
+//		var cubeVerts = Lookup.CUBE_VERTS;
+//
+//		int n = 0;
+//		var grid = new float[8];
+//
+//		//March over the volume
+//		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX()) {
+//			for (int y = 0; y < dims.getY() - 1; ++y, ++n) {
+//				for (int x = 0; x < dims.getX() - 1; ++x, ++n) {
+//					//For each cell, compute cube mask
+//					short cube_index = 0;
+//					for (byte i = 0; i < 8; ++i) {
+//						byte[] v = cubeVerts[i];
+//						float s = data[n + v[0] + dims.getX() * (v[1] + dims.getY() * v[2])];
+//						grid[i] = s;
+//						cube_index |= (s > 0) ? 1 << i : 0;
+//					}
+//
+//					// Generate collision based on edge intersection (somehow)
+//					// Easier to just generate cubes based on the value of the edge mask
+//
+//					if (cube_index == MASK_FULLY_OUTSIDE_ISOSURFACE)
+//						continue;
+//
+////					if (cube_index == MASK_FULLY_INSIDE_ISOSURFACE) {
+////						if (!ShapeConsumer.acceptFullCube(x, y, z, action))
+////							return;
+////						continue;
+////					}
+//
+//					// For each corner that is inside the mesh,
+//					// call the action with a shape stretching from the centre of the area to the corner
+//					for (byte i = 0; i < 8; ++i) {
+//						if ((cube_index & (1 << i)) == 0 || i != 0)
+//							continue;
+//						var v = cubeVerts[i];
+//						// TODO: Use grid values to find edge intercept
+//						var cornerX = x + v[0];
+//						var cornerY = y + v[1];
+//						var cornerZ = z + v[2];
+//						var centreX = x + 0.5;
+//						var centreY = y + 0.5;
+//						var centreZ = z + 0.5;
+//						if (!action.accept(
+//							Math.min(centreX, cornerX), Math.min(centreY, cornerY), Math.min(centreZ, cornerZ),
+//							Math.max(centreX, cornerX), Math.max(centreY, cornerY), Math.max(centreZ, cornerZ)
+//						))
+//							return;
+//					}
+//				}
+//			}
+//		}
+//	}
+
+	@Override
+	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
+		generateOrThrow(area, isSmoothable, FullCellAction.IGNORE, action);
+	}
+
+	private void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FullCellAction fullCellAction, FaceAction action) {
+		// Duplicated in SurfaceNets
+		@Nullable TestData.TestMesh testMesh = null; // TestData.SPHERE
+		var smoother = smoothness2x;
+		var distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
+		var dims = getDimensions(area, smoother, testMesh);
+		// Because we are passing block densities instead of corner distances (see the NB comment in generateDistanceField) we need to offset the mesh
+		float offset = smoother ? 1F : 0.5F;
+		generateOrThrow2(
+			distanceField, dims,
+			(x, y, z) -> fullCellAction.apply(x + offset, y + offset, z + offset),
+			(pos, face) -> action.apply(pos, face.add(offset))
+		);
+	}
+
+	private static void generateOrThrow2(float[] data, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
+		var pos = new MutableBlockPos();
+		var face = new Face();
+
+		var cubeVerts = Lookup.CUBE_VERTS;
+		var edgeTable = Lookup.EDGE_TABLE;
+		var edgeIndex = Lookup.EDGE_INDEX;
+		var triTable = Lookup.TRI_TABLE;
 
 		int n = 0;
-		float[] grid = new float[8];
-		int[] edges = new int[12];
-		ArrayList<Vec> vertices = new ArrayList<>();
+		var grid = new float[8];
+		var edges = new int[12];
+		var vertices = new ArrayList<Vec>();
 
 		//March over the volume
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX()) {
@@ -56,11 +156,14 @@ public class MarchingCubes extends Mesher2xSmoothness {
 					//For each cell, compute cube mask
 					short cube_index = 0;
 					for (byte i = 0; i < 8; ++i) {
-						byte[] v = cubeVerts[i];
+						var v = cubeVerts[i];
 						float s = data[n + v[0] + dims.getX() * (v[1] + dims.getY() * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
 					}
+
+					if (cube_index == MASK_FULLY_INSIDE_ISOSURFACE && !fullCellAction.apply(x, y, z))
+						return;
 
 					//Compute vertices
 					short edge_mask = edgeTable[cube_index];
@@ -72,12 +175,12 @@ public class MarchingCubes extends Mesher2xSmoothness {
 							continue;
 						edges[i] = vertices.size();
 
-						byte[] e = edgeIndex[i];
-						final byte[] p0 = cubeVerts[e[0]];
-						final byte[] p1 = cubeVerts[e[1]];
-						final float a = grid[e[0]];
-						final float b = grid[e[1]];
-						final float d = a - b;
+						var e = edgeIndex[i];
+						var p0 = cubeVerts[e[0]];
+						var p1 = cubeVerts[e[1]];
+						var a = grid[e[0]];
+						var b = grid[e[1]];
+						var d = a - b;
 						float t = 0;
 						if (Math.abs(d) > 1e-6)
 							t = a / d;
@@ -89,13 +192,13 @@ public class MarchingCubes extends Mesher2xSmoothness {
 					}
 
 					//Add faces
-					byte[] f = triTable[cube_index];
+					var f = triTable[cube_index];
 					for (byte i = 0; i < f.length; i += 3) {
 						face.v0.set(vertices.get(edges[f[i + 0]]));
 						face.v1.set(vertices.get(edges[f[i + 1]]));
 						face.v2.set(vertices.get(edges[f[i + 2]]));
 						face.v3.set(face.v2);
-						if (!faceAction.apply(pos.set(x, y, z), face))
+						if (!action.apply(pos.set(x, y, z), face))
 							return;
 					}
 				}

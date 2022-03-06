@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -10,17 +11,13 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
 
+import static net.minecraft.core.BlockPos.MutableBlockPos;
+
 public interface Mesher {
 
-	VoxelAction DEFAULT_VOXEL_ACTION = (pos, amount) -> true;
-
-	default void generate(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
-		generate(area, isSmoothable, DEFAULT_VOXEL_ACTION, action);
-	}
-
-	default void generate(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
+	default void generateGeometry(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
 		try {
-			generateOrThrow(area, isSmoothable, voxelAction, faceAction);
+			generateGeometryInternal(area, isSmoothable, action);
 		} catch (Throwable t) {
 			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
 				throw t;
@@ -28,7 +25,19 @@ public interface Mesher {
 		}
 	}
 
-	void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
+	default void generateCollisions(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+		try {
+			generateCollisionsInternal(area, isSmoothable, action);
+		} catch (Throwable t) {
+			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
+				throw t;
+			t.getCause();
+		}
+	}
+
+	void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action);
+
+	void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action);
 
 	Vec3i getPositiveAreaExtension();
 
@@ -41,25 +50,14 @@ public interface Mesher {
 		 * @param face        The face, positioned relatively to the start of the area
 		 * @return false if no more faces need to be generated
 		 */
-		boolean apply(BlockPos.MutableBlockPos relativePos, Face face);
-
-	}
-
-	interface VoxelAction {
-
-		/**
-		 * @param relativePos            The position of the voxel, positioned relatively to the start of the area
-		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
-		 * @return false if no more voxels need to iterated over
-		 */
-		boolean apply(BlockPos.MutableBlockPos relativePos, float amountInsideIsosurface);
+		boolean apply(MutableBlockPos relativePos, Face face);
 
 	}
 
 	/* protected */
 	default boolean isOutsideMesh(int x, int y, int z, BlockPos size) {
-		Vec3i negativeExtension = getNegativeAreaExtension();
-		Vec3i positiveExtension = getPositiveAreaExtension();
+		var negativeExtension = getNegativeAreaExtension();
+		var positiveExtension = getPositiveAreaExtension();
 		// Block is outside where we are generating it for, we only query it for its neighbouring faces
 		return x >= size.getX() - positiveExtension.getX() || x < negativeExtension.getX() ||
 			y >= size.getY() - positiveExtension.getY() || y < negativeExtension.getY() ||

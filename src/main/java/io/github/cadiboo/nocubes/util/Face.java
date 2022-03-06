@@ -76,12 +76,20 @@ public final /* inline */ class Face {
 		return this;
 	}
 
+	public Face add(float value) {
+		return add(value, value, value);
+	}
+
 	public Face add(float x, float y, float z) {
 		v0.add(x, y, z);
 		v1.add(x, y, z);
 		v2.add(x, y, z);
 		v3.add(x, y, z);
 		return this;
+	}
+
+	public Face subtract(float value) {
+		return subtract(value, value, value);
 	}
 
 	public Face subtract(float x, float y, float z) {
@@ -92,11 +100,11 @@ public final /* inline */ class Face {
 		return this;
 	}
 
-	public Face multiply(float d) {
-		v0.multiply(d);
-		v1.multiply(d);
-		v2.multiply(d);
-		v3.multiply(d);
+	public Face multiply(float value) {
+		v0.multiply(value);
+		v1.multiply(value);
+		v2.multiply(value);
+		v3.multiply(value);
 		return this;
 	}
 

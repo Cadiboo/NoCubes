@@ -46,7 +46,7 @@ public final class MeshRenderer {
 		var objects = new MutableObjects();
 		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
-			mesher.generate(area, isSmoothable, (ignored, face) -> {
+			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
 				RenderableState foundState;
 				if (mesher instanceof OldNoCubes) {
@@ -75,7 +75,7 @@ public final class MeshRenderer {
 		var stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 		var faceInfo = new FaceInfo();
-		mesher.generate(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
+		mesher.generateGeometry(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
 			var renderBothSides = false;
 			// Don't need textures or lighting because the crumbling texture overwrites them

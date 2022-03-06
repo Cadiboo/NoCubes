@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -9,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
 
-public class StupidCubic implements Mesher {
+public class StupidCubic extends SimpleMesher {
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {
@@ -22,85 +23,73 @@ public class StupidCubic implements Mesher {
 	}
 
 	@Override
-	public void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos size = area.size;
-		int depth = size.getZ();
-		int height = size.getY();
-		int width = size.getX();
+	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
+		generate(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
+	}
 
+	@Override
+	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
 		final float min = 0F;
 		final float max = 1F - min;
 
-		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		Face face = new Face();
-		int index = 0;
-		for (int z = 0; z < depth; ++z) {
-			for (int y = 0; y < height; ++y) {
-				for (int x = 0; x < width; ++x, ++index) {
-					boolean smoothable = isSmoothable.test(blocks[index]);
-					if (!voxelAction.apply(pos.set(x, y, z), smoothable ? 1 : 0))
-						return;
-					if (!smoothable)
-						// We aren't smoothable
-						continue;
+		var pos = new BlockPos.MutableBlockPos();
+		var face = new Face();
+		generate(area, isSmoothable, (x, y, z, index) -> {
+			// Up (pos y)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + max, y + max, z + max,
+				x + max, y + max, z + min,
+				x + min, y + max, z + min,
+				x + min, y + max, z + max
+			)))
+				return false;
 
-					// Up (pos y)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + max, y + max, z + max,
-						x + max, y + max, z + min,
-						x + min, y + max, z + min,
-						x + min, y + max, z + max
-					)))
-						return;
+			// Down (neg y)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + max, y, z + max,
+				x + min, y, z + max,
+				x + min, y, z + min,
+				x + max, y, z + min
+			)))
+				return false;
 
-					// Down (neg y)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + max, y, z + max,
-						x + min, y, z + max,
-						x + min, y, z + min,
-						x + max, y, z + min
-					)))
-						return;
+			// South (pos z)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + max, y + max, z + max,
+				x + min, y + max, z + max,
+				x + min, y + min, z + max,
+				x + max, y + min, z + max
+			)))
+				return false;
 
-					// South (pos z)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + max, y + max, z + max,
-						x + min, y + max, z + max,
-						x + min, y + min, z + max,
-						x + max, y + min, z + max
-					)))
-						return;
+			// North (neg z)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + max, y + max, z + min,
+				x + max, y + min, z + min,
+				x + min, y + min, z + min,
+				x + min, y + max, z + min
+			)))
+				return false;
 
-					// North (neg z)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + max, y + max, z + min,
-						x + max, y + min, z + min,
-						x + min, y + min, z + min,
-						x + min, y + max, z + min
-					)))
-						return;
+			// East (pos x)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + max, y + max, z + max,
+				x + max, y + min, z + max,
+				x + max, y + min, z + min,
+				x + max, y + max, z + min
+			)))
+				return false;
 
-					// East (pos x)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + max, y + max, z + max,
-						x + max, y + min, z + max,
-						x + max, y + min, z + min,
-						x + max, y + max, z + min
-					)))
-						return;
-
-					// West (neg x)
-					if (!faceAction.apply(pos.set(x, y, z), face.set(
-						x + min, y + max, z + max,
-						x + min, y + max, z + min,
-						x + min, y + min, z + min,
-						x + min, y + min, z + max
-					)))
-						return;
-				}
-			}
-		}
+			// West (neg x)
+			if (!action.apply(pos.set(x, y, z), face.set(
+				x + min, y + max, z + max,
+				x + min, y + max, z + min,
+				x + min, y + min, z + min,
+				x + min, y + min, z + max
+			)))
+				return false;
+			return true;
+		});
 	}
 
 }
