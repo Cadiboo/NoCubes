@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,9 +19,8 @@ public interface Mesher {
 		try {
 			generateGeometryInternal(area, isSmoothable, action);
 		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			t.getCause();
+			Util.pauseInIde(t);
+			throw t;
 		}
 	}
 
@@ -29,9 +28,8 @@ public interface Mesher {
 		try {
 			generateCollisionsInternal(area, isSmoothable, action);
 		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			t.getCause();
+			Util.pauseInIde(t);
+			throw t;
 		}
 	}
 

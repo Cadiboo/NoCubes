@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.Material;
-import net.minecraftforge.common.util.Lazy;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
@@ -32,12 +31,6 @@ public class ModUtil {
 	public static final BlockPos VEC_TWO = new BlockPos(2, 2, 2);
 	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
 	public static final Direction[] DIRECTIONS = Direction.values();
-	public static final Lazy<Boolean> IS_DEVELOPER_WORKSPACE = Lazy.concurrentOf(() -> {
-		var target = System.getenv().get("target");
-		if (target == null)
-			return false;
-		return target.contains("userdev");
-	});
 	public static final float FULLY_SMOOTHABLE = 1;
 	public static final float NOT_SMOOTHABLE = -FULLY_SMOOTHABLE;
 

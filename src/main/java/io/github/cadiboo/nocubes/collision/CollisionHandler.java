@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.Util;
 import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
@@ -33,9 +34,8 @@ public final class CollisionHandler {
 		try {
 			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, (EntityCollisionContext) context);
 		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			return canCollide ? Shapes.block() : Shapes.empty();
+			Util.pauseInIde(t);
+			throw t;
 		}
 	}
 
@@ -132,9 +132,8 @@ public final class CollisionHandler {
 			forEachCollisionShapeRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
 			return motionRef[0];
 		} catch (Throwable t) {
-			if (!ModUtil.IS_DEVELOPER_WORKSPACE.get())
-				throw t;
-			return motion;
+			Util.pauseInIde(t);
+			throw t;
 		} finally {
 			if (world instanceof Level)
 				((Level) world).getProfiler().pop();
