@@ -24,11 +24,9 @@ public class BlockRenderDispatcherMixin {
 		method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)V",
 		at = @At("HEAD"),
 		remap = false, // Forge-added method
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
-	private void renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData, CallbackInfo ci) {
+	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData, CallbackInfo ci) {
 		if (Hooks.renderingEnabledFor(state)) {
 			RendererDispatcher.renderBreakingTexture((BlockRenderDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
 			ci.cancel();

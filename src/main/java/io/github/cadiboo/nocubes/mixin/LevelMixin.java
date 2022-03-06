@@ -22,11 +22,9 @@ public abstract class LevelMixin {
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/Level;getChunkAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/chunk/LevelChunk;"
 		),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
-	public void getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
+	public void nocubes_getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			ci.setReturnValue(ModUtil.getExtendedFluidState((Level) (Object) this, pos));
 	}

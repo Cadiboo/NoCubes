@@ -19,10 +19,9 @@ public class LevelRendererMixin {
 			"setBlocksDirty(IIIIII)V",
 		},
 		constant = @Constant(intValue = 1),
-		require = 6 * 2,
-		allow = 6 * 2
+		require = 6 * 2 // 6 replacements for each method, targets 2 methods
 	)
-	public int setBlocksDirty(int originalValue) {
+	public int nocubes_setBlocksDirty(int originalValue) {
 		// Math.max so if someone else also modifies the value (e.g. to 3) we don't overwrite their extension
 		return NoCubesConfig.Client.render ? Math.max(2, originalValue) : originalValue;
 	}

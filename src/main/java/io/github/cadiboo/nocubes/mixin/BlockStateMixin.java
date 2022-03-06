@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.world.level.block.state.BlockState;
+import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,14 +16,15 @@ public abstract class BlockStateMixin {
 	/**
 	 * Documentation on {@link Hooks#shouldCancelOcclusion}
 	 */
+	@Dynamic("Added by OptiFine")
 	@Inject(
 		method = "isCacheOpaqueCube()Z",
 		at = @At("HEAD"),
 		cancellable = true,
-		require = -1, // Don't fail if OptiFine isn't installed
+		require = 0, // Don't fail if OptiFine isn't installed
 		remap = false // OptiFine added method
 	)
-	public void isCacheOpaqueCube(CallbackInfoReturnable<Boolean> ci) {
+	public void nocubes_isCacheOpaqueCube(CallbackInfoReturnable<Boolean> ci) {
 		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
 			ci.setReturnValue(false);
 	}

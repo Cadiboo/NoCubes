@@ -1,13 +1,10 @@
 package io.github.cadiboo.nocubes.mixin;
 
-import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -23,30 +20,10 @@ public class RenderChunkRebuildTaskMixin {
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;getRenderShape()Lnet/minecraft/world/level/block/RenderShape;"
-		),
-		require = 1,
-		allow = 1
+		)
 	)
-	public RenderShape getRenderShape(BlockState state) {
+	public RenderShape nocubes_getRenderShape(BlockState state) {
 		// Invisible blocks are not rendered by vanilla
-		return allowVanillaRenderingFor(state) ? state.getRenderShape() : RenderShape.INVISIBLE;
-	}
-
-	/**
-	 * Disables vanilla rendering for smoothable BlockStates.
-	 * Also disables vanilla's rendering for plans (grass, flowers) so that
-	 * we can make them render at the proper height in the smooth ground
-	 */
-	@Unique
-	private static boolean allowVanillaRenderingFor(BlockState state) {
-		if (!NoCubesConfig.Client.render)
-			return true;
-
-		if (NoCubes.smoothableHandler.isSmoothable(state))
-			return false; // A smooth block, we'll render this in MeshRenderer
-		if (NoCubesConfig.Client.fixPlantHeight && ModUtil.isShortPlant(state))
-			return false; // We render plants ourselves in MeshRenderer in this case
-
-		return true; // A non-smooth block we don't care about
+		return Hooks.allowVanillaRenderingFor(state) ? state.getRenderShape() : RenderShape.INVISIBLE;
 	}
 }

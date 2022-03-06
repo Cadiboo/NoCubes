@@ -28,11 +28,9 @@ public class BlockCollisionsMixin {
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isSuffocating(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
-		),
-		require = 1,
-		allow = 1
+		)
 	)
-	public boolean isSuffocating(BlockState state, BlockGetter blockGetter, BlockPos blockPos) {
+	public boolean nocubes_isSuffocating(BlockState state, BlockGetter blockGetter, BlockPos blockPos) {
 		if (Hooks.collisionsEnabledFor(state))
 			return false;
 		return state.isSuffocating(blockGetter, blockPos);

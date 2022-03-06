@@ -21,11 +21,9 @@ public class RenderChunkRegionMixin {
 	@Inject(
 		method = "getFluidState",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
-	public void getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
+	public void nocubes_getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			ci.setReturnValue(ClientUtil.getExtendedFluidState(pos));
 	}

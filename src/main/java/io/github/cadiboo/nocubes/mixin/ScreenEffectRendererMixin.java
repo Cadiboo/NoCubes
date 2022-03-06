@@ -27,11 +27,9 @@ public class ScreenEffectRendererMixin {
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isViewBlocking(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
-		),
-		require = 1,
-		allow = 1
+		)
 	)
-	private static boolean isViewBlocking(BlockState state, BlockGetter level, BlockPos pos) {
+	private static boolean nocubes_isViewBlocking(BlockState state, BlockGetter level, BlockPos pos) {
 		var blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");

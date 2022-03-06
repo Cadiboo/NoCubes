@@ -46,9 +46,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Inject(
 		method = "canOcclude()Z",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
 	public void canOcclude(CallbackInfoReturnable<Boolean> ci) {
 		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
@@ -61,12 +59,11 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Inject(
 		method = "getVisualShape",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
 	public void getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		var state = asState();
+		@SuppressWarnings("deprecation")
 		var visualShape = getBlock().getVisualShape(state, level, pos, context);
 		if (visualShape.isEmpty() || !Hooks.renderingEnabledFor(state))
 			cir.setReturnValue(visualShape);
@@ -84,9 +81,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Inject(
 		method = "getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
 	public void getCollisionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
 		collisionShapeHelper(asState(), level, pos, CollisionContext.empty(), cir);
@@ -98,9 +93,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Inject(
 		method = "getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/phys/shapes/CollisionContext;)Lnet/minecraft/world/phys/shapes/VoxelShape;",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
 	public void getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		collisionShapeHelper(asState(), level, pos, context, cir);
@@ -125,11 +118,9 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Inject(
 		method = "hasLargeCollisionShape",
 		at = @At("HEAD"),
-		cancellable = true,
-		require = 1,
-		allow = 1
+		cancellable = true
 	)
-	public void hasLargeCollisionShape(CallbackInfoReturnable<Boolean> cir) {
+	public void nocubes_hasLargeCollisionShape(CallbackInfoReturnable<Boolean> cir) {
 		if (Hooks.collisionsEnabledFor(asState()))
 			cir.setReturnValue(true);
 	}

@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
@@ -62,9 +63,26 @@ public final class Hooks {
 	}
 
 	/**
-	 * Hooking this makes {@link Block#shouldRenderFace} return true and
-	 * causes cubic terrain (including fluids) to be rendered when they are up against smooth terrain, stopping us from
-	 * being able to see through the ground near smooth terrain.
+	 * Disables vanilla rendering for smoothable BlockStates.
+	 * Also disables vanilla's rendering for plans (grass, flowers) so that
+	 * we can make them render at the proper height in the smooth ground
+	 */
+	public static boolean allowVanillaRenderingFor(BlockState state) {
+		if (!NoCubesConfig.Client.render)
+			return true;
+
+		if (NoCubes.smoothableHandler.isSmoothable(state))
+			return false; // A smooth block, we'll render this in MeshRenderer
+		if (NoCubesConfig.Client.fixPlantHeight && ModUtil.isShortPlant(state))
+			return false; // We render plants ourselves in MeshRenderer in this case
+
+		return true; // A non-smooth block we don't care about
+	}
+
+	/**
+	 * Hooking this makes {@link Block#shouldRenderFace} return true and causes cubic terrain (including fluids) to be
+	 * rendered when they are up against smooth terrain, stopping us from being able to see through the ground near
+	 * smooth terrain.
 	 */
 	public static boolean shouldCancelOcclusion(BlockStateBase state) {
 		return renderingEnabledFor(state);
