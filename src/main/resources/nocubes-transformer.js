@@ -5,61 +5,23 @@
  */
 function initializeCoreMod() {
 
-	/*Class/Interface*/ Opcodes = Java.type('org.objectweb.asm.Opcodes');
-	/*Class*/ ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
+	// Classes
+	Opcodes = Java.type('org.objectweb.asm.Opcodes');
+	ASMAPI = Java.type('net.minecraftforge.coremod.api.ASMAPI');
+	LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
+	AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode');
+	InsnNode = Java.type('org.objectweb.asm.tree.InsnNode');
+	VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode');
+	FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
+	MethodInsnNode = Java.type('org.objectweb.asm.tree.MethodInsnNode');
 
-	/*Class*/ InsnList = Java.type('org.objectweb.asm.tree.InsnList');
-	/*Class*/ LabelNode = Java.type('org.objectweb.asm.tree.LabelNode');
-
-	/*Class*/ FieldNode = Java.type('org.objectweb.asm.tree.FieldNode');
-	/*Class*/ MethodNode = Java.type('org.objectweb.asm.tree.MethodNode');
-
-	/*Class*/ AbstractInsnNode = Java.type('org.objectweb.asm.tree.AbstractInsnNode');
-	/*Class*/ InsnNode = Java.type('org.objectweb.asm.tree.InsnNode');
-	/*Class*/ VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode');
-	/*Class*/ FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
-	/*Class*/ MethodInsnNode = Java.type('org.objectweb.asm.tree.MethodInsnNode');
-	/*Class*/ JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode');
-	/*Class*/ TypeInsnNode = Java.type('org.objectweb.asm.tree.TypeInsnNode');
-
-	ACC_PUBLIC = Opcodes.ACC_PUBLIC;
-
+	// Opcodes
 	INVOKESTATIC = Opcodes.INVOKESTATIC;
-	INVOKEVIRTUAL = Opcodes.INVOKEVIRTUAL;
-	INVOKEINTERFACE = Opcodes.INVOKEINTERFACE;
-
 	ALOAD = Opcodes.ALOAD;
-	ILOAD = Opcodes.ILOAD;
-	FLOAD = Opcodes.FLOAD;
-	DLOAD = Opcodes.DLOAD;
-
-	ISTORE = Opcodes.ISTORE;
-
-	RETURN = Opcodes.RETURN;
 	ARETURN = Opcodes.ARETURN;
-	IRETURN = Opcodes.IRETURN;
-	DRETURN = Opcodes.DRETURN;
-
-	NEW = Opcodes.NEW;
-	CHECKCAST = Opcodes.CHECKCAST;
-	DUP = Opcodes.DUP;
-	POP = Opcodes.POP;
-
-	ACONST_NULL = Opcodes.ACONST_NULL;
-	ICONST_0 = Opcodes.ICONST_0;
-	ICONST_1 = Opcodes.ICONST_1;
-
-	IFEQ = Opcodes.IFEQ;
-	IFNE = Opcodes.IFNE;
-	IF_ACMPEQ = Opcodes.IF_ACMPEQ;
-	IFNULL = Opcodes.IFNULL;
-
 	GETFIELD = Opcodes.GETFIELD;
-	PUTFIELD = Opcodes.PUTFIELD;
-	GETSTATIC = Opcodes.GETSTATIC;
 
-	GOTO = Opcodes.GOTO;
-
+	// Instruction types
 	LABEL = AbstractInsnNode.LABEL;
 	METHOD_INSN = AbstractInsnNode.METHOD_INSN;
 
@@ -151,21 +113,6 @@ function assertInstructionFound(instruction, name, instructions) {
 		throw "Error: Couldn't find '" + name + "' in instructions:\n" + stringifyInstructions(instructions);
 }
 
-function findFirstLabel(instructions, startIndex) {
-	if (!startIndex)
-		startIndex = 0;
-	var length = instructions.size();
-	var i;
-	for (i = startIndex; i < length; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.getType() == LABEL) {
-			print('Found first label after index ' + startIndex + ': ' + instruction);
-			return instruction;
-		}
-	}
-	throw "Error: Couldn't find first label after index " + startIndex + ' in ' + stringifyInstructions(instructions);
-}
-
 function findFirstLabelBefore(instructions, start) {
     return findFirstLabelBeforeIndex(instructions, instructions.indexOf(start));
 }
@@ -191,16 +138,6 @@ function findFirstMethodCall(methodNode, methodType, owner, name, desc) {
 	return instruction;
 }
 
-function findFirstFieldInstruction(instructions, opcode, owner, name, desc) {
-	for (var i = 0, length = instructions.size(); i < length; ++i) {
-		var instruction = instructions.get(i);
-		if (instruction.opcode != opcode || instruction.owner != owner || instruction.name != name || instruction.desc != desc)
-			continue;
-		return instruction;
-	}
-	assertInstructionFound(null, name + 'FieldInsn', instructions);
-}
-
 /**
  * Utility function to create an INVOKESTATIC call to one of our hooks
  *
@@ -221,54 +158,6 @@ function callNoCubesHook(name, desc) {
 		//boolean isInterface
 		false
 	);
-}
-
-function injectAfterFirstLabel(instructions, instructionsToInject) {
-	var injectAfter = findFirstLabel(instructions);
-	instructions.insert(injectAfter, instructionsToInject);
-}
-
-function injectOverrideAtFirstLabel(instructions, instructionsToCallToGetValue, instructionsToRunIfNotNull) {
-	var injectAfter = findFirstLabel(instructions);
-	injectOverride(instructions, injectAfter, instructionsToCallToGetValue, instructionsToRunIfNotNull);
-}
-
-function injectOverride(instructions, injectAfter, instructionsToCallToGetValue, instructionsToRunIfNotNull) {
-	var instructionsToInject = ASMAPI.listOf();
-	instructionsToInject.add(instructionsToCallToGetValue);
-	// Duplicate the return value of 'instructionsToCallToGetValue' so that it is on the top of the stack for 'instructionsToRunIfNotNull'
-	instructionsToInject.add(new InsnNode(DUP));
-	var originalInstructionsLabel = new LabelNode();
-	instructionsToInject.add(new JumpInsnNode(IFNULL, originalInstructionsLabel))
-	instructionsToInject.add(instructionsToRunIfNotNull);
-	instructionsToInject.add(originalInstructionsLabel);
-	// Pop the return value of 'instructionsToCallToGetValue' off the stack because 'instructionsToRunIfNotNull' wasn't called
-	instructionsToInject.add(new InsnNode(POP));
-	instructions.insert(injectAfter, instructionsToInject);
-}
-
-function callBooleanValueAndReturn() {
-	return ASMAPI.listOf(
-		new MethodInsnNode(
-			INVOKEVIRTUAL, // int opcode
-			'java/lang/Boolean', // String owner
-			'booleanValue', // String name
-			'()Z', // String descriptor
-			false // boolean isInterface
-		),
-		new InsnNode(IRETURN)
-	);
-}
-
-/**
- * Utility function for removing multiple instructions
- *
- * @param {InsnList} instructions The list of instructions to modify
- * @param {InsnList} start The first instruction in the list to be removed
- * @param {InsnList} end The last instruction in the list to be removed
- */
-function removeBetweenInclusive(instructions, start, end) {
-	removeBetweenIndicesInclusive(instructions.indexOf(start), instructions.indexOf(end));
 }
 
 /**
