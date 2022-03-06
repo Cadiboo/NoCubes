@@ -10,6 +10,7 @@
 		"BlockRenderDispatcherMixin",
 		"ChunkCacheOFMixin",
 		"LevelRendererMixin",
+		"RenderChunkRebuildTaskMixin",
 		"RenderChunkRegionMixin"
 	],
 	"server": [

@@ -59,32 +59,6 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link RebuildTask#compile} right before {@link BlockState#getRenderShape()} is called
-	 * <p>
-	 * Hooking this disables vanilla rendering for smoothable BlockStates.
-	 * Also disables vanilla's rendering for plans (grass, flowers) so that we can make
-	 * them render at the proper height in the smooth ground
-	 *
-	 * @return If the state can render
-	 */
-	@OnlyIn(Dist.CLIENT)
-	public static boolean canBlockStateRender(BlockState state) {
-		SelfCheck.canBlockStateRender = true;
-		if (!NoCubesConfig.Client.render)
-			return true;
-		if (!NoCubes.smoothableHandler.isSmoothable(state)) {
-			if (!NoCubesConfig.Client.fixPlantHeight)
-				return true;
-			if (!ModUtil.isShortPlant(state))
-				return true;
-//			if (!Minecraft.getInstance().level.getBlockState(pos.down()).isSmoothable())
-//				return true;
-			return false;
-		}
-		return false;
-	}
-
-	/**
 	 * Called from: {@link BlockState#canOcclude()} before any other logic
 	 * Called from: BlockState#isCacheOpaqueCube() (OptiFine) before any other logic
 	 * <p>

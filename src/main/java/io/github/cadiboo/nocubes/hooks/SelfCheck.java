@@ -4,7 +4,6 @@ public final class SelfCheck {
 
 	static boolean preIteration;
 	static boolean getRenderFluidState;
-	static boolean canBlockStateRender;
 
 	static boolean getCollisionShapeNoContextOverride;
 	static boolean getCollisionShapeWithContextOverride;
@@ -16,7 +15,6 @@ public final class SelfCheck {
 		return new String[]{
 			"preIteration hook called: " + preIteration,
 			"getRenderFluidState hook called: " + getRenderFluidState,
-			"canBlockStateRender hook called: " + canBlockStateRender,
 
 			"getCollisionShapeOverride(NoContext) hook called: " + getCollisionShapeNoContextOverride,
 			"getCollisionShapeOverride(WithContext) hook called: " + getCollisionShapeWithContextOverride,

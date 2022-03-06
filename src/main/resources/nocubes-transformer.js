@@ -128,37 +128,6 @@ function initializeCoreMod() {
                     // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
 				 	print('Done injecting the fluid render bypass hook');
    				}
-
-				// Inject the hook where we cancel vanilla's block rendering for smoothable blocks
-				{
-					// The code that we are trying to inject looks like this:
-					//	// NoCubes Start
-                    //	if (io.github.cadiboo.nocubes.hooks.Hooks.canBlockStateRender(blockstate)))
-                    //	// NoCubes End
-                    //	if (iblockstate.getRenderShape() != EnumBlockRenderType.INVISIBLE && iblockstate.canRenderInLayer(blockrenderlayer1)) {
-
-					var getRenderShapeName = ASMAPI.mapMethod('m_60799_'); // getRenderShape
-					var getRenderShapeCall = findFirstMethodCall(
-						methodNode,
-						ASMAPI.MethodType.VIRTUAL,
-						'net/minecraft/world/level/block/state/BlockState',
-						getRenderShapeName,
-						'()Lnet/minecraft/world/level/block/RenderShape;'
-					);
-					var getRenderShapeCallIndex = instructions.indexOf(getRenderShapeCall);
-					var firstLabelBeforeGetRenderTypeCall = findFirstLabelBeforeIndex(instructions, getRenderShapeCallIndex);
-					var branchIfBlockIsInvisibleInstruction = ASMAPI.findFirstInstructionAfter(methodNode, IF_ACMPEQ, getRenderShapeCallIndex);
-					assertInstructionFound(branchIfBlockIsInvisibleInstruction, 'branchIfBlockIsInvisible', instructions);
-					var labelToJumpToIfBlockIsInvisible = branchIfBlockIsInvisibleInstruction.label
-
-					instructions.insert(firstLabelBeforeGetRenderTypeCall, ASMAPI.listOf(
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 20 : 17), // blockstate
-						callNoCubesHook('canBlockStateRender', '(Lnet/minecraft/world/level/block/state/BlockState;)Z'),
-                    	new JumpInsnNode(IFEQ, labelToJumpToIfBlockIsInvisible),
-						new LabelNode() // Label for original instructions
-					));
-					print('Done injecting the canBlockStateRender hook');
-				}
 				return methodNode;
 			}
 		},
