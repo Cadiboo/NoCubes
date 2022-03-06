@@ -68,43 +68,21 @@ minecraft {
 	runs {
 		client {
 			workingDirectory project.file('run')
-			jvmArg '-ea' // Enable assertions
-			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', 'XFORM'
-//			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
-			property 'forge.logging.console.level', 'debug'
-//			property 'forge.logging.console.level', 'trace' // For ASM classdump
-			property 'mixin.env.disableRefMap', 'true' // To allow BetterFoliage to load
-
-			mods {
-				"${modId}" {
-					// Main sources (everything that goes in your final compiled mod. From /src/main/)
-					source sourceSets.main
-					// Test sources (debugging, unit tests. From /src/test/)
-					source sourceSets.test
-				}
-			}
 		}
-
 		server {
 			workingDirectory project.file('run/server')
-			jvmArg '-ea' // Enable assertions
-			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', 'XFORM'
-			property 'forge.logging.console.level', 'debug'
-
-			mods {
-				"${modId}" {
-					// Main sources (everything that goes in your final compiled mod. From /src/main/)
-					source sourceSets.main
-					// Test sources (debugging, unit tests. From /src/test/)
-					source sourceSets.test
-				}
-			}
-			property 'nocubes.testing.integration', 'true'
-			setForceExit(false)
+			setForceExit(false)  // To allow integration tests to run in CI
 		}
 	}
+	runs.configureEach({ config ->
+		// The markers can be added/removed as needed (separated by commas)
+		config.property 'forge.logging.markers', 'XFORM' // 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
+		config.property 'forge.logging.console.level', 'debug' // 'trace' // For ASM classdump
+		config.sources = [sourceSets.main, sourceSets.test]
+		config.jvmArg '-ea' // Enable assertions
+		config.ideaModule = config.ideaModule.replace('main', 'test') // Use the 'test' module because it contains our integration tests
+		config.property 'mixin.env.disableRefMap', 'true' // To allow dependencies to load
+	})
 }
 
 mixin {
