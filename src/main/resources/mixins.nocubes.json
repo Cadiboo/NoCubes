@@ -2,6 +2,7 @@
 	"compatibilityLevel": "JAVA_17",
 	"package": "io.github.cadiboo.nocubes.mixin",
 	"mixins": [
+		"BlockCollisionsMixin",
 		"BlockStateBaseMixin",
 		"BlockStateMixin",
 		"LevelMixin"
@@ -11,7 +12,8 @@
 		"ChunkCacheOFMixin",
 		"LevelRendererMixin",
 		"RenderChunkRebuildTaskMixin",
-		"RenderChunkRegionMixin"
+		"RenderChunkRegionMixin",
+		"ScreenEffectRendererMixin"
 	],
 	"server": [
 	]

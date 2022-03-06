@@ -27,6 +27,19 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Predicate;
 
+/**
+ * Collisions sanity check:
+ * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#getCollisionShape})
+ * - Player should be able to walk into and out of single block holes ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#hasLargeCollisionShape})
+ * - Player should be able to walk up slopes made out of normally solid blocks like stone/dirt/grass/sand ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#hasLargeCollisionShape})
+ * - Player should be able to swim through smooth blocks underwater without suffocating (e.g. near the shore) ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#isSuffocating})
+ * - Player should not suffocate when inside the voxel of a smooth block but not inside its new shape (same as above)
+ * - Player should suffocate when inside the voxel of a smooth block and inside its new shape (same as above)
+ * - Suffocation overlay should only show when inside the voxel and new shape of a smooth block ({@link io.github.cadiboo.nocubes.mixin.ScreenEffectRendererMixin#isViewBlocking})
+ * - Dirt path/Farmland turning to dirt should not crash the game
+ * - Falling blocks (sand/gravel) should not break when they fall
+ * - Player should be able to place snow on slopes of smooth blocks
+ */
 public final class CollisionHandler {
 
 	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
@@ -45,7 +58,7 @@ public final class CollisionHandler {
 	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, BlockGetter reader, BlockPos blockPos, EntityCollisionContext context) {
 		if (!canCollide)
 			return Shapes.empty();
-		assert NoCubesConfig.Server.collisionsEnabled;
+		// assert NoCubesConfig.Server.collisionsEnabled; // This is called from debug code & the ScreenEffectRenderer
 		assert NoCubes.smoothableHandler.isSmoothable(state);
 
 //		if (context.getEntity() instanceof PlayerEntity)
@@ -56,7 +69,7 @@ public final class CollisionHandler {
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
 			(NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
-			entity == null || reader.getBlockState(blockPos) != state
+			(entity == null && reader.getBlockState(blockPos) != state)
 		)
 			return state.getShape(reader, blockPos);
 

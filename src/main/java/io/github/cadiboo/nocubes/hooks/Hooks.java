@@ -13,7 +13,6 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.Reb
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,11 +20,21 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Random;
 
+import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
+
 /**
  * @author Cadiboo
  */
 @SuppressWarnings("unused") // Hooks are called with ASM
 public final class Hooks {
+
+	public static boolean renderingEnabledFor(BlockStateBase state) {
+		return NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state);
+	}
+
+	public static boolean collisionsEnabledFor(BlockStateBase state) {
+		return NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state);
+	}
 
 	// region Rendering
 
@@ -53,15 +62,12 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link BlockState#canOcclude()} before any other logic
-	 * Called from: BlockState#isCacheOpaqueCube() (OptiFine) before any other logic
-	 * <p>
 	 * Hooking this makes {@link Block#shouldRenderFace} return true and
 	 * causes cubic terrain (including fluids) to be rendered when they are up against smooth terrain, stopping us from
 	 * being able to see through the ground near smooth terrain.
 	 */
-	public static boolean shouldCancelOcclusion(BlockBehaviour.BlockStateBase state) {
-		return NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state);
+	public static boolean shouldCancelOcclusion(BlockStateBase state) {
+		return renderingEnabledFor(state);
 	}
 	// endregion Rendering
 

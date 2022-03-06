@@ -2,9 +2,8 @@ package io.github.cadiboo.nocubes.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -30,7 +29,7 @@ public class BlockRenderDispatcherMixin {
 		allow = 1
 	)
 	private void renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData, CallbackInfo ci) {
-		if (NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state)) {
+		if (Hooks.renderingEnabledFor(state)) {
 			RendererDispatcher.renderBreakingTexture((BlockRenderDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
 			ci.cancel();
 		}

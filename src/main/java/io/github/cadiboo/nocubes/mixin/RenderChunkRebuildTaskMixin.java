@@ -41,13 +41,12 @@ public class RenderChunkRebuildTaskMixin {
 	private static boolean allowVanillaRenderingFor(BlockState state) {
 		if (!NoCubesConfig.Client.render)
 			return true;
-		if (!NoCubes.smoothableHandler.isSmoothable(state)) {
-			if (!NoCubesConfig.Client.fixPlantHeight)
-				return true;
-			if (!ModUtil.isShortPlant(state))
-				return true;
-			return false;
-		}
-		return false;
+
+		if (NoCubes.smoothableHandler.isSmoothable(state))
+			return false; // A smooth block, we'll render this in MeshRenderer
+		if (NoCubesConfig.Client.fixPlantHeight && ModUtil.isShortPlant(state))
+			return false; // We render plants ourselves in MeshRenderer in this case
+
+		return true; // A non-smooth block we don't care about
 	}
 }
