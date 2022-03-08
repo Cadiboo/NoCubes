@@ -29,16 +29,18 @@ import java.util.function.Predicate;
 
 /**
  * Collisions sanity check:
- * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#getCollisionShape})
+ * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_getCollisionShape})
  * - Player should be able to walk into and out of single block holes ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
  * - Player should be able to walk up slopes made out of normally solid blocks like stone/dirt/grass/sand ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
  * - Player should be able to swim through smooth blocks underwater without suffocating (e.g. near the shore) ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#nocubes_isSuffocating})
  * - Player should not suffocate when inside the voxel of a smooth block but not inside its new shape (same as above)
  * - Player should suffocate when inside the voxel of a smooth block and inside its new shape (same as above)
  * - Suffocation overlay should only show when inside the voxel and new shape of a smooth block ({@link io.github.cadiboo.nocubes.mixin.ScreenEffectRendererMixin#nocubes_isViewBlocking})
+ * - 3rd person camera should not be super zoomed-in when only partially inside a smooth voxel ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_getVisualShape})
  * - Dirt path/Farmland turning to dirt should not crash the game
  * - Falling blocks (sand/gravel) should not break when they fall
- * - Player should be able to place snow on slopes of smooth blocks
+ * - Player should be able to place redstone on slopes of smooth blocks
+ * - Player should be able to place snow on slopes of smooth blocks (currently broken)
  */
 public final class CollisionHandler {
 

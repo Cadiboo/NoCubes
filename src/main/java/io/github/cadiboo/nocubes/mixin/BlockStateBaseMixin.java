@@ -48,7 +48,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void canOcclude(CallbackInfoReturnable<Boolean> ci) {
+	public void nocubes_canOcclude(CallbackInfoReturnable<Boolean> ci) {
 		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
 			ci.setReturnValue(false);
 	}
@@ -61,7 +61,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+	public void nocubes_getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		var state = asState();
 		@SuppressWarnings("deprecation")
 		var visualShape = getBlock().getVisualShape(state, level, pos, context);
@@ -83,8 +83,8 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void getCollisionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
-		collisionShapeHelper(asState(), level, pos, CollisionContext.empty(), cir);
+	public void nocubes_getCollisionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
+		nocubes_collisionShapeHelper(asState(), level, pos, CollisionContext.empty(), cir);
 	}
 
 	/**
@@ -95,12 +95,12 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-		collisionShapeHelper(asState(), level, pos, context, cir);
+	public void nocubes_getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+		nocubes_collisionShapeHelper(asState(), level, pos, context, cir);
 	}
 
 	@Unique
-	private static void collisionShapeHelper(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+	private static void nocubes_collisionShapeHelper(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		if (Hooks.collisionsEnabledFor(state))
 			cir.setReturnValue(CollisionHandler.getCollisionShape(state, level, pos, context));
 	}
@@ -112,7 +112,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	 * Returning true from 'hasLargeCollisionShape' makes smooth blocks be included in the blocks checked by
 	 * {@link BlockCollisions#computeNext} when they are touching a boundary of the area (normally they wouldn't be).
 	 *
-	 * @implNote This could be moved to {@link BlockCollisions} (the only place it's called from as of 1.18.2) to avoid
+	 * @implNote This could be moved to {@link BlockCollisionsMixin} (the only place it's called from as of 1.18.2) to avoid
 	 * the {@link CallbackInfoReturnable} allocation at the expense of compatibility with future call sites (e.g. in mods).
 	 */
 	@Inject(
