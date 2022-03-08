@@ -4,15 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * This compatibility system isn't perfect and leads to a lot of code duplication
+ * This compatibility system isn't perfect.
  * However, it's a lot better than the previous system.
  */
 public class OptiFineCompatibility {
 
-	private static final OptiFineProxy[] PROXIES = {
-		new HD_U_H5(),
-		new HD_U_G8(),
-	};
 	private static volatile OptiFineProxy instance;
 
 	public static OptiFineProxy proxy() {
@@ -29,7 +25,9 @@ public class OptiFineCompatibility {
 	}
 
 	private static OptiFineProxy createProxy(Logger log) {
-		for (var proxy : PROXIES) {
+		for (var proxy : new OptiFineProxy[] {
+			new HD_U_G8(),
+		}) {
 			var because = proxy.notUsableBecause();
 			if (because == null)
 				return proxy;

@@ -33,6 +33,7 @@ class HD_U_G8 implements OptiFineProxy {
 	// From OptiFine's BlockModelRenderer
 	static final RenderType[] OVERLAY_LAYERS = new RenderType[]{RenderType.cutout(), RenderType.cutoutMipped(), RenderType.translucent()};
 
+	// If refactoring this to make a common base class, use reflection from HD_U_H5 proxy from before it was deleted 8/3/2022
 	@Override
 	public @Nullable String notUsableBecause() {
 		for (var field : Reflect.class.getDeclaredFields()) {
@@ -163,15 +164,15 @@ class HD_U_G8 implements OptiFineProxy {
 		MethodHandle pushEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "pushEntity", BlockState.class, VertexConsumer.class);
 		MethodHandle popEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "popEntity", VertexConsumer.class);
 
-		MethodHandle postRenderOverlays = tryGetMethod("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "postRenderOverlays", ChunkBufferBuilderPack.class, CompiledChunk.class);
-		Field regionDX = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDX");
-		Field regionDY = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDY");
-		Field regionDZ = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender", "regionDZ");
+		MethodHandle postRenderOverlays = tryGetMethod(RenderChunk.class.getName(), "postRenderOverlays", ChunkBufferBuilderPack.class, CompiledChunk.class);
+		Field regionDX = tryGetField(RenderChunk.class.getName(), "regionDX");
+		Field regionDY = tryGetField(RenderChunk.class.getName(), "regionDY");
+		Field regionDZ = tryGetField(RenderChunk.class.getName(), "regionDZ");
 
-		MethodHandle getQuadEmissive = tryGetMethod("net.minecraft.client.renderer.model.BakedQuad", "getQuadEmissive");
-		MethodHandle setBlockLayer = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "setBlockLayer", RenderType.class);
-		MethodHandle setMidBlock = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "setMidBlock", float.class, float.class, float.class);
-		MethodHandle getRenderEnv = tryGetMethod("net.minecraft.client.renderer.BufferBuilder", "getRenderEnv", BlockState.class, BlockPos.class);
+		MethodHandle getQuadEmissive = tryGetMethod(BakedQuad.class.getName(), "getQuadEmissive");
+		MethodHandle setBlockLayer = tryGetMethod(BufferBuilder.class.getName(), "setBlockLayer", RenderType.class);
+		MethodHandle setMidBlock = tryGetMethod(BufferBuilder.class.getName(), "setMidBlock", float.class, float.class, float.class);
+		MethodHandle getRenderEnv = tryGetMethod(BufferBuilder.class.getName(), "getRenderEnv", BlockState.class, BlockPos.class);
 
 		MethodHandle reset = tryGetMethod("net.optifine.render.RenderEnv", "reset", BlockState.class, BlockPos.class);
 		MethodHandle setRegionRenderCacheBuilder = tryGetMethod("net.optifine.render.RenderEnv", "setRegionRenderCacheBuilder", ChunkBufferBuilderPack.class);
@@ -190,7 +191,7 @@ class HD_U_G8 implements OptiFineProxy {
 		MethodHandle getRenderQuads = tryGetMethod("net.optifine.model.BlockModelCustomizer", "getRenderQuads", List.class, BlockAndTintGetter.class, BlockState.class, BlockPos.class, Direction.class, RenderType.class, long.class, "net.optifine.render.RenderEnv");
 		MethodHandle chunkLayerSet_add = tryGetMethod("net.optifine.render.ChunkLayerSet", "add", RenderType.class);
 
-		Field hasBlocks = tryGetField("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$CompiledChunk", ASMAPI.mapField("f_112749_"));
+		Field hasBlocks = tryGetField(CompiledChunk.class.getName(), ASMAPI.mapField("f_112749_"));
 
 		static boolean Config_isShaders() {
 			try {

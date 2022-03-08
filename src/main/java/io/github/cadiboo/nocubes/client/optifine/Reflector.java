@@ -7,20 +7,6 @@ import java.lang.reflect.Field;
 
 public interface Reflector {
 
-	static MethodHandle getMethod(String clazz, String name, Object... paramClasses) {
-		var method = tryGetMethod(clazz, name, paramClasses);
-		if (method != null)
-			return method;
-		throw new NullPointerException(String.format("Could not find method '%s' on class '%s'.", name, clazz));
-	}
-
-	static Field getField(String clazz, String name) {
-		var field = tryGetField(clazz, name);
-		if (field != null)
-			return field;
-		throw new NullPointerException(String.format("Could not find field '%s' on class '%s'.", name, clazz));
-	}
-
 	static @Nullable MethodHandle tryGetMethod(String clazz, String name, Object... paramClasses) {
 		try {
 			var lookup = MethodHandles.publicLookup();
