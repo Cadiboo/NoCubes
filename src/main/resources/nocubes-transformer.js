@@ -26,7 +26,7 @@ function initializeCoreMod() {
 	METHOD_INSN = AbstractInsnNode.METHOD_INSN;
 
 	return wrapWithLogging({
-        // region Rendering
+		// region Rendering
 		// Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 		'ChunkRender#rebuildChunk': {
 			'target': {
@@ -70,30 +70,30 @@ function initializeCoreMod() {
 					print('Done injecting the preIteration hook');
 				}
 
-                // OptiFine optimises 'chunkRenderCache.getFluidState(pos)' to 'state.getFluidState()'
-                // This breaks our extended fluids rendering so we undo it
-                if (isOptiFinePresent) {
-                    var getFluidStateCall = findFirstMethodCall(
-                        methodNode,
-                        ASMAPI.MethodType.VIRTUAL,
-                        'net/minecraft/world/level/block/state/BlockState',
-                        ASMAPI.mapMethod('m_60819_'), // getFluidState
-                        '()Lnet/minecraft/world/level/material/FluidState;'
-                    );
-                    var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
-                    removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
-                    instructions.insert(previousLabel, ASMAPI.listOf(
+				// OptiFine optimises 'chunkRenderCache.getFluidState(pos)' to 'state.getFluidState()'
+				// This breaks our extended fluids rendering so we undo it
+				if (isOptiFinePresent) {
+					var getFluidStateCall = findFirstMethodCall(
+						methodNode,
+						ASMAPI.MethodType.VIRTUAL,
+						'net/minecraft/world/level/block/state/BlockState',
+						ASMAPI.mapMethod('m_60819_'), // getFluidState
+						'()Lnet/minecraft/world/level/material/FluidState;'
+					);
+					var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
+					removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
+					instructions.insert(previousLabel, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, 19), // pos
 						new VarInsnNode(ALOAD, 20), // state
-                        callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
-                    ));
-                    // We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
-				 	print('Done injecting the fluid render bypass hook');
-   				}
+						callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
+					));
+					// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
+					print('Done injecting the fluid render bypass hook');
+				}
 				return methodNode;
 			}
 		},
-        // endregion Rendering
+		// endregion Rendering
 	});
 }
 
@@ -114,7 +114,7 @@ function assertInstructionFound(instruction, name, instructions) {
 }
 
 function findFirstLabelBefore(instructions, start) {
-    return findFirstLabelBeforeIndex(instructions, instructions.indexOf(start));
+	return findFirstLabelBeforeIndex(instructions, instructions.indexOf(start));
 }
 
 function findFirstLabelBeforeIndex(instructions, startIndex) {
