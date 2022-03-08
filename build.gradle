@@ -176,6 +176,14 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 	archiveClassifier.set('javadoc')
 	from javadoc.destinationDir
 }
+javadoc {
+	// Gradle doesn't support Java 8's new tags out of the box
+	options.tags = [
+		'apiNote:a:API Note:',
+		'implSpec:a:Implementation Requirements:',
+		'implNote:a:Implementation Note:',
+	]
+}
 
 artifacts {
 	archives jar
