@@ -17,8 +17,7 @@ import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.util.List;
-
-import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.CompiledChunk_hasBlocks;
+import java.util.Set;
 
 class Dummy implements OptiFineProxy {
 
@@ -71,7 +70,7 @@ class Dummy implements OptiFineProxy {
 
 	@Override
 	public void markRenderLayerUsed(CompiledChunk compiledChunk, RenderType renderType) {
-		CompiledChunk_hasBlocks(compiledChunk).add(renderType);
+		((Set<RenderType>) (Object) compiledChunk.hasBlocks).add(renderType);
 	}
 
     @Override
