@@ -18,10 +18,10 @@ class HD_U_G8 extends HD_U_G7 {
 
 	@Override
 	public @Nullable String notUsableBecause() {
-		var reason = super.notUsableBecause();
+		String reason = super.notUsableBecause();
 		if (reason != null)
 			return reason;
-		for (var field : Reflect.class.getDeclaredFields()) {
+		for (Field field : Reflect.class.getDeclaredFields()) {
 			try {
 				if (field.get(null) == null)
 					return "reflection was unable to find field " + field.getName();

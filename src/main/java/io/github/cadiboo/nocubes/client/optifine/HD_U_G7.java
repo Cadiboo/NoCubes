@@ -35,7 +35,7 @@ class HD_U_G7 implements OptiFineProxy {
 	// If refactoring this to make a common base class, use reflection from HD_U_H5 proxy from before it was deleted 8/3/2022
 	@Override
 	public @Nullable String notUsableBecause() {
-		for (var field : Reflect.class.getDeclaredFields()) {
+		for (Field field : Reflect.class.getDeclaredFields()) {
 			try {
 				if (field.get(null) == null)
 					return "reflection was unable to find field " + field.getName();

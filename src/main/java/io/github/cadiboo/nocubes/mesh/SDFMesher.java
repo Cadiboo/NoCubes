@@ -50,7 +50,7 @@ abstract class SDFMesher implements Mesher {
 	}
 
 	private static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
-		var states = area.getAndCacheBlocks();
+		BlockState[] states = area.getAndCacheBlocks();
 		int areaX = area.size.getX();
 		int areaY = area.size.getY();
 		int areaZ = area.size.getZ();
@@ -59,7 +59,7 @@ abstract class SDFMesher implements Mesher {
 		int distanceFieldSizeY = areaY - 1;
 		int distanceFieldSizeZ = areaZ - 1;
 		int distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
-		var distanceField = CACHE.takeArray(distanceFieldSize);
+		float[] distanceField = CACHE.takeArray(distanceFieldSize);
 
 		int index = 0;
 		for (int z = 0; z < areaZ; ++z) {
@@ -67,7 +67,7 @@ abstract class SDFMesher implements Mesher {
 				for (int x = 0; x < areaX; ++x, ++index) {
 					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
 						continue;
-					var combinedDensity = 0;
+					float combinedDensity = 0;
 					int neighbourIndex = index;
 					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
 						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
@@ -82,9 +82,9 @@ abstract class SDFMesher implements Mesher {
 	}
 
 	static float[] generateNegativeDensityField(Area area, Predicate<BlockState> isSmoothable) {
-		var states = area.getAndCacheBlocks();
+		BlockState[] states = area.getAndCacheBlocks();
 		int length = area.numBlocks();
-		var densityField = CACHE.takeArray(length);
+		float[] densityField = CACHE.takeArray(length);
 		for (int i = 0; i < length; ++i)
 			densityField[i] = -ModUtil.getBlockDensity(isSmoothable, states[i]);
 		return densityField;

@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
+import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.block.BlockState;
@@ -25,8 +26,8 @@ public class NoCubesTest {
 			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(DIRT.defaultBlockState()))),
 			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(AIR.defaultBlockState()))),
 			new Test("removing smoothable should work", () -> {
-				var dirt = DIRT.defaultBlockState();
-				var oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
+				BlockState dirt = DIRT.defaultBlockState();
+				boolean oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
 				NoCubes.smoothableHandler.setSmoothable(false, dirt);
 				assertFalse(NoCubes.smoothableHandler.isSmoothable(dirt));
 				if (oldValue)
@@ -46,8 +47,8 @@ public class NoCubesTest {
 	private static void mesherSanityCheck() {
 		Predicate<BlockState> isSmoothable = $ -> $ == STONE.defaultBlockState();
 
-		var start = new BlockPos(100, 50, 25);
-		var area = new Area(null, start, new BlockPos(5, 5, 5)) {
+		BlockPos start = new BlockPos(100, 50, 25);
+		Area area = new Area(null, start, new BlockPos(5, 5, 5)) {
 			@Override
 			public BlockState[] getAndCacheBlocks() {
 				BlockState[] states = new BlockState[numBlocks()];
@@ -61,7 +62,7 @@ public class NoCubesTest {
 				// No-op
 			}
 		};
-		for (var mesher : MesherType.values())
+		for (MesherType mesher : MesherType.values())
 			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 

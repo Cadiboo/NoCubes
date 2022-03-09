@@ -38,14 +38,14 @@ public class CullingChamfer extends SimpleMesher {
 		final float min = 0.25F;
 		final float max = 1F - min;
 
-		var size = area.size;
+		BlockPos size = area.size;
 		int height = size.getY();
 		int width = size.getX();
 
-		var pos = new BlockPos.Mutable();
-		var face = new Face();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
+		Face face = new Face();
 		generate(area, isSmoothable, (x, y, z, index) -> {
-			var blocks = area.getAndCacheBlocks();
+			BlockState[] blocks = area.getAndCacheBlocks();
 			boolean posY = !isSmoothable.test(blocks[index + height]);
 			boolean negY = !isSmoothable.test(blocks[index - height]);
 			boolean posX = !isSmoothable.test(blocks[index + 1]);

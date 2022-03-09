@@ -15,6 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
@@ -104,17 +105,17 @@ public class ModUtil {
 	 * @return a fluid state that may not actually exist in the position
 	 */
 	public static FluidState getExtendedFluidState(World world, BlockPos pos) {
-		var extendRange = NoCubesConfig.Server.extendFluidsRange;
+		int extendRange = NoCubesConfig.Server.extendFluidsRange;
 		assert extendRange > 0;
 
-		var x = pos.getX();
-		var y = pos.getY();
-		var z = pos.getZ();
-		var chunkX = x >> 4;
-		var chunkZ = z >> 4;
-		var chunk = world.getChunk(chunkX, chunkZ);
+		int x = pos.getX();
+		int y = pos.getY();
+		int z = pos.getZ();
+		int chunkX = x >> 4;
+		int chunkZ = z >> 4;
+		Chunk chunk = world.getChunk(chunkX, chunkZ);
 
-		var fluid = chunk.getFluidState(x, y, z);
+		FluidState fluid = chunk.getFluidState(x, y, z);
 		if (!fluid.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(chunk.getBlockState(pos)))
 			return fluid;
 
@@ -124,8 +125,8 @@ public class ModUtil {
 			return fluid;
 
 		// Check around
-		for (var extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
-			for (var extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
+		for (int extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
+			for (int extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
 				if (extendZ == z && extendX == x)
 					continue; // We already checked ourself above
 

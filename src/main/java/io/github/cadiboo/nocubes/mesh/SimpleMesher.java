@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.util.Area;
 import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.function.Predicate;
 
@@ -12,7 +13,7 @@ abstract class SimpleMesher implements Mesher {
 	}
 
 	void generate(Area area, Predicate<BlockState> isSmoothable, Action action) {
-		var size = area.size;
+		BlockPos size = area.size;
 		int depth = size.getZ();
 		int height = size.getY();
 		int width = size.getX();

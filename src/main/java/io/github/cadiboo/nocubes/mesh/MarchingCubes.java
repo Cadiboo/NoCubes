@@ -38,9 +38,9 @@ public class MarchingCubes extends SDFMesher {
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
 		// Duplicated in SurfaceNets
 		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
-		var vertexNormals = new Face();
-		var faceNormal = new Vec();
-		var centre = new Vec();
+		Face vertexNormals = new Face();
+		Vec faceNormal = new Vec();
+		Vec centre = new Vec();
 		generateOrThrow(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
@@ -121,9 +121,9 @@ public class MarchingCubes extends SDFMesher {
 	private void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FullCellAction fullCellAction, FaceAction action) {
 		// Duplicated in SurfaceNets
 		@Nullable TestData.TestMesh testMesh = null; // TestData.SPHERE
-		var smoother = smoothness2x;
-		var distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
-		var dims = getDimensions(area, smoother, testMesh);
+		boolean smoother = smoothness2x;
+		float[] distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
+		BlockPos dims = getDimensions(area, smoother, testMesh);
 		// Because we are passing block densities instead of corner distances (see the NB comment in generateDistanceField) we need to offset the mesh
 		float offset = smoother ? 1F : 0.5F;
 		generateOrThrow2(
@@ -134,18 +134,18 @@ public class MarchingCubes extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] data, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		var pos = new BlockPos.Mutable();
-		var face = new Face();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
+		Face face = new Face();
 
-		var cubeVerts = Lookup.CUBE_VERTS;
-		var edgeTable = Lookup.EDGE_TABLE;
-		var edgeIndex = Lookup.EDGE_INDEX;
-		var triTable = Lookup.TRI_TABLE;
+		byte[][] cubeVerts = Lookup.CUBE_VERTS;
+		short[] edgeTable = Lookup.EDGE_TABLE;
+		byte[][] edgeIndex = Lookup.EDGE_INDEX;
+		byte[][] triTable = Lookup.TRI_TABLE;
 
 		int n = 0;
-		var grid = new float[8];
-		var edges = new int[12];
-		var vertices = new ArrayList<Vec>();
+		float[] grid = new float[8];
+		int[] edges = new int[12];
+		ArrayList<Vec> vertices = new ArrayList<Vec>();
 
 		//March over the volume
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX()) {
@@ -154,7 +154,7 @@ public class MarchingCubes extends SDFMesher {
 					//For each cell, compute cube mask
 					short cube_index = 0;
 					for (byte i = 0; i < 8; ++i) {
-						var v = cubeVerts[i];
+						byte[] v = cubeVerts[i];
 						float s = data[n + v[0] + dims.getX() * (v[1] + dims.getY() * v[2])];
 						grid[i] = s;
 						cube_index |= (s > 0) ? 1 << i : 0;
@@ -173,12 +173,12 @@ public class MarchingCubes extends SDFMesher {
 							continue;
 						edges[i] = vertices.size();
 
-						var e = edgeIndex[i];
-						var p0 = cubeVerts[e[0]];
-						var p1 = cubeVerts[e[1]];
-						var a = grid[e[0]];
-						var b = grid[e[1]];
-						var d = a - b;
+						byte[] e = edgeIndex[i];
+						byte[] p0 = cubeVerts[e[0]];
+						byte[] p1 = cubeVerts[e[1]];
+						float a = grid[e[0]];
+						float b = grid[e[1]];
+						float d = a - b;
 						float t = 0;
 						if (Math.abs(d) > 1e-6)
 							t = a / d;
@@ -190,7 +190,7 @@ public class MarchingCubes extends SDFMesher {
 					}
 
 					//Add faces
-					var f = triTable[cube_index];
+					byte[] f = triTable[cube_index];
 					for (byte i = 0; i < f.length; i += 3) {
 						face.v0.set(vertices.get(edges[f[i + 0]]));
 						face.v1.set(vertices.get(edges[f[i + 1]]));

@@ -23,15 +23,15 @@ public class RenderHelper {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public static void reloadAllChunks(String because, Object... becauseArgs) {
-		LOG.debug(() -> "Re-rendering chunks because " + because.formatted(becauseArgs));
-		var minecraft = Minecraft.getInstance();
+		LOG.debug(() -> "Re-rendering chunks because " + String.format(because, becauseArgs));
+		Minecraft minecraft = Minecraft.getInstance();
 		minecraft.execute(minecraft.levelRenderer::allChanged);
 	}
 
 	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
-		var startX = (float) (offset.getX() - camera.x + start.x);
-		var startY = (float) (offset.getY() - camera.y + start.y);
-		var startZ = (float) (offset.getZ() - camera.z + start.z);
+		float startX = (float) (offset.getX() - camera.x + start.x);
+		float startY = (float) (offset.getY() - camera.y + start.y);
+		float startZ = (float) (offset.getZ() - camera.z + start.z);
 		line(
 			buffer, matrix, color,
 			startX, startY, startZ,
@@ -48,26 +48,26 @@ public class RenderHelper {
 	}
 
 	public static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, ColorParser.Color color, IVertexBuilder buffer, MatrixStack matrix) {
-		var v0 = face.v0;
-		var v1 = face.v1;
-		var v2 = face.v2;
-		var v3 = face.v3;
-		var x = pos.getX() - camera.x;
-		var y = pos.getY() - camera.y;
-		var z = pos.getZ() - camera.z;
+		Vec v0 = face.v0;
+		Vec v1 = face.v1;
+		Vec v2 = face.v2;
+		Vec v3 = face.v3;
+		double x = pos.getX() - camera.x;
+		double y = pos.getY() - camera.y;
+		double z = pos.getZ() - camera.z;
 
-		var v0x = (float) (x + v0.x);
-		var v1x = (float) (x + v1.x);
-		var v2x = (float) (x + v2.x);
-		var v3x = (float) (x + v3.x);
-		var v0y = (float) (y + v0.y);
-		var v1y = (float) (y + v1.y);
-		var v2y = (float) (y + v2.y);
-		var v3y = (float) (y + v3.y);
-		var v0z = (float) (z + v0.z);
-		var v1z = (float) (z + v1.z);
-		var v2z = (float) (z + v2.z);
-		var v3z = (float) (z + v3.z);
+		float v0x = (float) (x + v0.x);
+		float v1x = (float) (x + v1.x);
+		float v2x = (float) (x + v2.x);
+		float v3x = (float) (x + v3.x);
+		float v0y = (float) (y + v0.y);
+		float v1y = (float) (y + v1.y);
+		float v2y = (float) (y + v2.y);
+		float v3y = (float) (y + v3.y);
+		float v0z = (float) (z + v0.z);
+		float v1z = (float) (z + v1.z);
+		float v2z = (float) (z + v2.z);
+		float v3z = (float) (z + v3.z);
 		line(buffer, matrix, color, v0x, v0y, v0z, v1x, v1y, v1z);
 		line(buffer, matrix, color, v1x, v1y, v1z, v2x, v2y, v2z);
 		line(buffer, matrix, color, v2x, v2y, v2z, v3x, v3y, v3z);
@@ -75,9 +75,9 @@ public class RenderHelper {
 	}
 
 	public static void drawShape(MatrixStack stack, IVertexBuilder buffer, VoxelShape shape, BlockPos pos, Vector3d camera, ColorParser.Color color) {
-		var x = pos.getX() - camera.x;
-		var y = pos.getY() - camera.y;
-		var z = pos.getZ() - camera.z;
+		double x = pos.getX() - camera.x;
+		double y = pos.getY() - camera.y;
+		double z = pos.getZ() - camera.z;
 		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> line(
 			buffer, stack, color,
 			(float) (x + x0), (float) (y + y0), (float) (z + z0),
@@ -95,29 +95,29 @@ public class RenderHelper {
 		float x0, float y0, float z0,
 		float x1, float y1, float z1
 	) {
-		var currentTransform = matrix.last();
-		var pose = currentTransform.pose();
-		var normal = currentTransform.normal();
+		MatrixStack.Entry currentTransform = matrix.last();
+		Matrix4f pose = currentTransform.pose();
+		Matrix3f normal = currentTransform.normal();
 		// Calling 'buffer.vertex(pose, x, y, z)' allocates a Vector4f
 		// To avoid allocating so many short-lived vectors we do the transform ourselves instead
-		var transformedX0 = getTransformX(pose, x0, y0, z0, 1);
-		var transformedY0 = getTransformY(pose, x0, y0, z0, 1);
-		var transformedZ0 = getTransformZ(pose, x0, y0, z0, 1);
-		var transformedX1 = getTransformX(pose, x1, y1, z1, 1);
-		var transformedY1 = getTransformY(pose, x1, y1, z1, 1);
-		var transformedZ1 = getTransformZ(pose, x1, y1, z1, 1);
+		float transformedX0 = getTransformX(pose, x0, y0, z0, 1);
+		float transformedY0 = getTransformY(pose, x0, y0, z0, 1);
+		float transformedZ0 = getTransformZ(pose, x0, y0, z0, 1);
+		float transformedX1 = getTransformX(pose, x1, y1, z1, 1);
+		float transformedY1 = getTransformY(pose, x1, y1, z1, 1);
+		float transformedZ1 = getTransformZ(pose, x1, y1, z1, 1);
 
-		var normalX = x1 - x0;
-		var normalY = y1 - y0;
-		var normalZ = z1 - z0;
-		var length = MathHelper.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+		float normalX = x1 - x0;
+		float normalY = y1 - y0;
+		float normalZ = z1 - z0;
+		float length = MathHelper.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
 		normalX /= length;
 		normalY /= length;
 		normalZ /= length;
 
-		var transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
-		var transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
-		var transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
+		float transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
+		float transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
+		float transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
 
 		buffer
 			.vertex(transformedX0, transformedY0, transformedZ0)
@@ -144,17 +144,17 @@ public class RenderHelper {
 		int overlayUV, int lightmapUV,
 		float normalX, float normalY, float normalZ
 	) {
-		var currentTransform = matrix.last();
-		var pose = currentTransform.pose();
-		var normal = currentTransform.normal();
+		MatrixStack.Entry currentTransform = matrix.last();
+		Matrix4f pose = currentTransform.pose();
+		Matrix3f normal = currentTransform.normal();
 
-		var transformedX = getTransformX(pose, x, y, z, 1);
-		var transformedY = getTransformY(pose, x, y, z, 1);
-		var transformedZ = getTransformZ(pose, x, y, z, 1);
+		float transformedX = getTransformX(pose, x, y, z, 1);
+		float transformedY = getTransformY(pose, x, y, z, 1);
+		float transformedZ = getTransformZ(pose, x, y, z, 1);
 
-		var transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
-		var transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
-		var transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
+		float transformedNormalX = getTransformX(normal, normalX, normalY, normalZ);
+		float transformedNormalY = getTransformY(normal, normalX, normalY, normalZ);
+		float transformedNormalZ = getTransformZ(normal, normalX, normalY, normalZ);
 
 		buffer.vertex(
 			transformedX, transformedY, transformedZ,

@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.world.ClientWorld;
@@ -215,8 +216,8 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	private int fetchCombinedLight(BlockPos worldPos) {
-		var world = this.world;
-		var state = world.getBlockState(worldPos);
+		ClientWorld world = this.world;
+		BlockState state = world.getBlockState(worldPos);
 		return WorldRenderer.getLightColor(world, state, worldPos);
 	}
 

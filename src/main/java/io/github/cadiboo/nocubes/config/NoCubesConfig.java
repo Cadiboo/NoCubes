@@ -18,6 +18,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
@@ -35,6 +36,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,8 +66,8 @@ public final class NoCubesConfig {
 			Pair.of(ModConfig.Type.SERVER, Server.SPEC)
 		).forEach(pair -> context.registerConfig(pair.getKey(), pair.getValue()));
 		modBus.addListener((ModConfigEvent event) -> {
-			var config = event.getConfig();
-			var spec = config.getSpec();
+			ModConfig config = event.getConfig();
+			ForgeConfigSpec spec = config.getSpec();
 			LOG.debug("Received config event for {}", config.getFileName());
 			if (spec == Client.SPEC)
 				Client.bake(config);
@@ -421,7 +423,7 @@ public final class NoCubesConfig {
 			LOG.debug("Loading default server config");
 			ConfigTracker_getConfig(ModConfig.Type.SERVER).ifPresent(modConfig -> {
 				LOG.debug("Found ModConfig to load as default");
-				var config = CommentedConfig.inMemory();
+				CommentedConfig config = CommentedConfig.inMemory();
 				modConfig.getSpec().correct(config);
 //				modConfig.setConfigData(config);
 				ModConfig_setConfigData(modConfig, config);
@@ -441,7 +443,7 @@ public final class NoCubesConfig {
 
 		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
 			LOG.debug("Setting ModConfig config data");
-			var setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
+			Method setConfigData = ObfuscationReflectionHelper.findMethod(ModConfig.class, "setConfigData", CommentedConfig.class);
 			try {
 				setConfigData.invoke(modConfig, data);
 			} catch (IllegalAccessException | InvocationTargetException e) {
@@ -450,7 +452,7 @@ public final class NoCubesConfig {
 		}
 
 		private static void fireReloadEvent(ModConfig modConfig) {
-			var modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
+			ModContainer modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
 			ModConfig.Reloading event;
 			try {
 				event = ObfuscationReflectionHelper.findConstructor(ModConfig.Reloading.class, ModConfig.class).newInstance(modConfig);
@@ -463,8 +465,8 @@ public final class NoCubesConfig {
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
 			LOG.debug("Setting logical server config (on the client) from server sync packet");
 			assert FMLEnvironment.dist.isClient() : "This packet should have only be sent server->client";
-			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
-			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
+			ModConfig modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
+			ConfigParser<CommentedConfig> parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
 			fireReloadEvent(modConfig);
 		}
@@ -535,10 +537,10 @@ public final class NoCubesConfig {
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
 			LOG.debug("Updating user-defined smoothable string lists");
-			var toAddTo = newValue ? whitelist : blacklist;
-			var toRemoveFrom = newValue ? blacklist : whitelist;
-			for (var state : states) {
-				var string = BlockStateConverter.toString(state);
+			List<String> toAddTo = newValue ? whitelist : blacklist;
+			List<String> toRemoveFrom = newValue ? blacklist : whitelist;
+			for (BlockState state : states) {
+				String string = BlockStateConverter.toString(state);
 				NoCubes.smoothableHandler.setSmoothable(newValue, state);
 				if (!toAddTo.contains(string))
 					toAddTo.add(string);
@@ -551,18 +553,18 @@ public final class NoCubesConfig {
 
 		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist) {
 			LOG.debug("Recomputing in-memory smoothable lookups from user-defined smoothable string lists");
-			var whitelisted = parseBlockStates(whitelist);
-			var blacklisted = parseBlockStates(blacklist);
+			Set<BlockState> whitelisted = parseBlockStates(whitelist);
+			Set<BlockState> blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
-					var smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
+					boolean smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
 					NoCubes.smoothableHandler.setSmoothable(smoothable, state);
 				});
 		}
 
 		static Set<BlockState> parseBlockStates(List<? extends String> list) {
-			var set = Sets.<BlockState>newIdentityHashSet();
+			Set<BlockState> set = Sets.<BlockState>newIdentityHashSet();
 			list.parallelStream()
 				.map(BlockStateConverter::fromStringOrNull)
 				.filter(Objects::nonNull)

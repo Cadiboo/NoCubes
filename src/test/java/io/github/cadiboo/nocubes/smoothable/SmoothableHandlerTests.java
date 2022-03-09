@@ -16,8 +16,8 @@ public class SmoothableHandlerTests {
 
 	@Test
 	public void asmShouldWork() {
-		var handler = SmoothableHandler.create();
-		var state = createStubbedStateForAsm();
+		SmoothableHandler handler = SmoothableHandler.create();
+		AbstractBlockState state = createStubbedStateForAsm();
 		assertFalse(handler.isSmoothable(state));
 		handler.setSmoothable(true, state);
 		assertTrue(handler.isSmoothable(state));
@@ -27,8 +27,8 @@ public class SmoothableHandlerTests {
 
 	private AbstractBlockState createStubbedStateForAsm() {
 		boolean[] smoothableRef = {false};
-		var mockedState = Mockito.mock(AbstractBlockState.class, Mockito.withSettings().extraInterfaces(INoCubesBlockState.class));
-		var mock = (INoCubesBlockState) mockedState;
+		AbstractBlockState mockedState = Mockito.mock(AbstractBlockState.class, Mockito.withSettings().extraInterfaces(INoCubesBlockState.class));
+		INoCubesBlockState mock = (INoCubesBlockState) mockedState;
 
 		// This code would have been added into the BlockState via ASM
 		Mockito.when(mock.isTerrainSmoothable()).thenAnswer(invocation -> smoothableRef[0]);

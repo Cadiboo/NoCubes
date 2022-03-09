@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -21,10 +22,15 @@ import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSI
 /**
  * @author Cadiboo
  */
-public record C2SRequestUpdateSmoothable(
-	boolean newValue,
-	BlockState[] states
-) {
+public class C2SRequestUpdateSmoothable {
+
+	public final boolean newValue;
+	public final BlockState[] states;
+
+	public C2SRequestUpdateSmoothable(boolean newValue, BlockState[] states) {
+		this.newValue = newValue;
+		this.states = states;
+	}
 
 	public static void encode(C2SRequestUpdateSmoothable msg, PacketBuffer buffer) {
 		buffer.writeBoolean(msg.newValue);
@@ -39,11 +45,11 @@ public record C2SRequestUpdateSmoothable(
 	}
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		var ctx = contextSupplier.get();
-		var sender = Objects.requireNonNull(ctx.getSender(), "Command sender was null");
+		NetworkEvent.Context ctx = contextSupplier.get();
+		ServerPlayerEntity sender = Objects.requireNonNull(ctx.getSender(), "Command sender was null");
 		if (checkPermissionAndNotifyIfUnauthorised(sender, sender.server)) {
-			var newValue = msg.newValue;
-			var statesToUpdate = Arrays.stream(msg.states)
+			boolean newValue = msg.newValue;
+			BlockState[] statesToUpdate = Arrays.stream(msg.states)
 				.filter(s -> NoCubes.smoothableHandler.isSmoothable(s) != newValue)
 				.toArray(BlockState[]::new);
 			// Guards against useless config reload and/or someone spamming these packets to the server and the server spamming all clients

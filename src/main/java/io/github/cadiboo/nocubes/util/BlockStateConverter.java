@@ -1,11 +1,13 @@
 package io.github.cadiboo.nocubes.util;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.BlockStateArgument;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.state.Property;
 import net.minecraft.util.Util;
 
 import java.util.Arrays;
@@ -20,7 +22,7 @@ public interface BlockStateConverter {
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")
-		var state = Block.BLOCK_STATE_REGISTRY.byId(id);
+		BlockState state = Block.BLOCK_STATE_REGISTRY.byId(id);
 		if (state == null)
 			throw new IllegalStateException("Unknown blockstate id" + id);
 		return state;
@@ -28,7 +30,7 @@ public interface BlockStateConverter {
 
 	static int toId(BlockState state) {
 		@SuppressWarnings("deprecation")
-		var id = Block.BLOCK_STATE_REGISTRY.getId(state);
+		int id = Block.BLOCK_STATE_REGISTRY.getId(state);
 		if (id == -1)
 			throw new IllegalStateException("Unknown blockstate " + state);
 		return id;
@@ -44,8 +46,8 @@ public interface BlockStateConverter {
 	}
 
 	static String toString(BlockState state) {
-		var block = state.getBlock().getRegistryName().toString();
-		var values = state.getValues();
+		String block = state.getBlock().getRegistryName().toString();
+		ImmutableMap<Property<?>, Comparable<?>> values = state.getValues();
 		if (values.isEmpty())
 			return block;
 		return values.entrySet().stream()
@@ -54,7 +56,7 @@ public interface BlockStateConverter {
 	}
 
 	static void writeBlockStatesTo(PacketBuffer buffer, BlockState[] states) {
-		var ids = Arrays.stream(states)
+		int[] ids = Arrays.stream(states)
 			.mapToInt(BlockStateConverter::toId)
 			.toArray();
 		buffer.writeVarIntArray(ids);

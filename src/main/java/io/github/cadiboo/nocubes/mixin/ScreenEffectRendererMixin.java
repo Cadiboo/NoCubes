@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OverlayRenderer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.ISelectionContext;
@@ -30,9 +31,9 @@ public class ScreenEffectRendererMixin {
 		)
 	)
 	private static boolean nocubes_isViewBlocking(BlockState state, IBlockReader level, BlockPos pos) {
-		var blocking = state.isViewBlocking(level, pos);
+		boolean blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
-			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
+			PlayerEntity player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
 			return VoxelShapes.joinIsNotEmpty(
 				CollisionHandler.getCollisionShape(state, level, pos, ISelectionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
 				VoxelShapes.create(player.getBoundingBox()),

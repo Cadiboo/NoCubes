@@ -13,10 +13,15 @@ import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 /**
  * @author Cadiboo
  */
-public record S2CUpdateSmoothable(
-	boolean newValue,
-	BlockState[] states
-) {
+public class S2CUpdateSmoothable {
+
+	public final boolean newValue;
+	public final BlockState[] states;
+
+	public S2CUpdateSmoothable(boolean newValue, BlockState[] states) {
+		this.newValue = newValue;
+		this.states = states;
+	}
 
 	public static void encode(S2CUpdateSmoothable msg, PacketBuffer buffer) {
 		buffer.writeBoolean(msg.newValue);
@@ -31,7 +36,7 @@ public record S2CUpdateSmoothable(
 	}
 
 	public static void handle(S2CUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		var ctx = contextSupplier.get();
+		NetworkEvent.Context ctx = contextSupplier.get();
 		ctx.enqueueWork(() -> {
 			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.states);
 			reloadAllChunks("the server told us that the smoothness of some states changed");

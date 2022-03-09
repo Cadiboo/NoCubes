@@ -7,6 +7,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3i;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldReader;
+import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 
@@ -30,8 +31,8 @@ public class Area implements AutoCloseable {
 
 	public Area(IBlockReader world, BlockPos startInclusive, BlockPos size, Mesher mesher) {
 		this.world = world;
-		var negativeExtension = mesher.getNegativeAreaExtension();
-		var positiveExtension = mesher.getPositiveAreaExtension();
+		Vector3i negativeExtension = mesher.getNegativeAreaExtension();
+		Vector3i positiveExtension = mesher.getPositiveAreaExtension();
 		this.start = startInclusive.subtract(negativeExtension).immutable();
 		this.size = new BlockPos(
 			size.getX() + negativeExtension.getX() + positiveExtension.getX(),
@@ -42,18 +43,18 @@ public class Area implements AutoCloseable {
 
 	public BlockState[] getAndCacheBlocks() {
 		if (blocks == null) {
-			var array = blocks = BLOCKS_CACHE.takeArray(this.numBlocks());
-			var start = this.start;
-			var startX = start.getX();
-			var startY = start.getY();
-			var startZ = start.getZ();
-			var size = this.size;
-			var endX = startX + size.getX();
-			var endY = startY + size.getY();
-			var endZ = startZ + size.getZ();
-			var world = this.world;
+			BlockState[] array = blocks = BLOCKS_CACHE.takeArray(this.numBlocks());
+			BlockPos start = this.start;
+			int startX = start.getX();
+			int startY = start.getY();
+			int startZ = start.getZ();
+			BlockPos size = this.size;
+			int endX = startX + size.getX();
+			int endY = startY + size.getY();
+			int endZ = startZ + size.getZ();
+			IBlockReader world = this.world;
 			if (world instanceof IWorldReader) {
-				var endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
+				BlockPos endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
 				traverse(start, endInclusive, new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> {
 					array[zyxIndex] = state;
 					return true;
@@ -104,7 +105,7 @@ public class Area implements AutoCloseable {
 			int x = relativePos.getX();
 			int y = relativePos.getY();
 			int z = relativePos.getZ();
-			var state = world.getBlockState(relativePos.move(start));
+			BlockState state = world.getBlockState(relativePos.move(start));
 			relativePos.set(x, y, z);
 			return state;
 		}
@@ -137,7 +138,7 @@ public class Area implements AutoCloseable {
 		int endXInclusive, int endYInclusive, int endZInclusive,
 		BlockPos.Mutable currentPosition, ChunkGetter world, Traverser func
 	) {
-		final var air = Blocks.AIR.defaultBlockState();
+		final BlockState air = Blocks.AIR.defaultBlockState();
 		int endXPlus1 = endXInclusive + 1;
 		int endYPlus1 = endYInclusive + 1;
 		int endZPlus1 = endZInclusive + 1;
@@ -156,8 +157,8 @@ public class Area implements AutoCloseable {
 				int maskedNextBlockChunkX = (blockChunkX + 16) & 0xFFFFFFF0;
 				int chunkX = blockChunkX >> 4;
 				int chunkZ = blockChunkZ >> 4;
-				@Nullable var chunk = world.getChunk(chunkX, chunkZ);
-				@Nullable var sections = chunk == null ? null : chunk.getSections();
+				@Nullable IChunk chunk = world.getChunk(chunkX, chunkZ);
+				@Nullable ChunkSection[] sections = chunk == null ? null : chunk.getSections();
 				int chunkMinSection = 0;//chunk != null ? chunk.getMinSection() : 0;
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
@@ -166,7 +167,7 @@ public class Area implements AutoCloseable {
 //					@Nullable var section = sections == null ? null : sections[sectionIndex];
 					// If sectionIndex is out of range we want to continue supplying air to the func
 					// No clue how this will work with cubic chunks...
-					@Nullable var section = sections == null || (sectionIndex < 0 || sectionIndex >= sections.length) ? null : sections[sectionIndex];
+					@Nullable ChunkSection section = sections == null || (sectionIndex < 0 || sectionIndex >= sections.length) ? null : sections[sectionIndex];
 					int sectionMinX = Math.max(maskedBlockChunkX, startXInclusive);
 					int sectionMinY = Math.max(maskedBlockChunkY, startYInclusive);
 					int sectionMinZ = Math.max(maskedBlockChunkZ, startZInclusive);
@@ -179,7 +180,7 @@ public class Area implements AutoCloseable {
 						for (int z = sectionMinZ; z < sectionMaxZ; ++z) {
 							int maskedZ = z & 15;
 							for (int x = sectionMinX; x < sectionMaxX; ++x) {
-								var state = section == null ? air : section.getBlockState(x & 15, maskedY, maskedZ);
+								BlockState state = section == null ? air : section.getBlockState(x & 15, maskedY, maskedZ);
 								currentPosition.set(x, y, z);
 								int zyxIndex = (z - startZInclusive) * widthMulHeight + (y - startYInclusive) * width + (x - startXInclusive);
 								if (!func.accept(state, currentPosition, zyxIndex))

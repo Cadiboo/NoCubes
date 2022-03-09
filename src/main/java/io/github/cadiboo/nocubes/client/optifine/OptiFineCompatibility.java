@@ -15,7 +15,7 @@ public class OptiFineCompatibility {
 		if (instance == null) {
 			synchronized (OptiFineCompatibility.class) {
 				if (instance == null) {
-					var log = LogManager.getLogger("NoCubes OptiFine Compatibility");
+					Logger log = LogManager.getLogger("NoCubes OptiFine Compatibility");
 					instance = createProxy(log);
 					log.info("Using {} proxy", instance.getClass().getSimpleName());
 				}
@@ -25,11 +25,11 @@ public class OptiFineCompatibility {
 	}
 
 	private static OptiFineProxy createProxy(Logger log) {
-		for (var proxy : new OptiFineProxy[] {
+		for (OptiFineProxy proxy : new OptiFineProxy[] {
 			new HD_U_G8(),
 			new HD_U_G7(),
 		}) {
-			var because = proxy.notUsableBecause();
+			String because = proxy.notUsableBecause();
 			if (because == null)
 				return proxy;
 			log.info("{} proxy not usable because {}", proxy.getClass().getSimpleName(), because);

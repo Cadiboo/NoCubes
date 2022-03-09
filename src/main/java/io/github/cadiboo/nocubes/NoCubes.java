@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -24,7 +25,7 @@ public final class NoCubes {
 	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create();
 
 	public NoCubes() {
-		var modBus = FMLJavaModLoadingContext.get().getModEventBus();
+		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 		NoCubesConfig.register(ModLoadingContext.get(), modBus);
 		NoCubesNetwork.register();
 		modBus.addListener((FMLClientSetupEvent event) -> {
@@ -38,8 +39,8 @@ public final class NoCubes {
 	 * Add your blocks as being smoothable.
 	 */
 	public static void addSmoothable(Block... blocks) {
-		for (var block : blocks)
-			addSmoothable(ModUtil.getStates(block).toArray(BlockState[]::new));
+		for (Block block : blocks)
+			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
 	}
 
 	/**

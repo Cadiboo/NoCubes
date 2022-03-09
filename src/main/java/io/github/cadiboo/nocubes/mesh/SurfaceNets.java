@@ -47,9 +47,9 @@ public class SurfaceNets extends SDFMesher {
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
 		// Duplicated in MarchingCubes
 		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
-		var vertexNormals = new Face();
-		var faceNormal = new Vec();
-		var centre = new Vec();
+		Face vertexNormals = new Face();
+		Vec faceNormal = new Vec();
+		Vec centre = new Vec();
 		generateOrThrow(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
@@ -70,9 +70,9 @@ public class SurfaceNets extends SDFMesher {
 	private void generateOrThrow(Area area, Predicate<BlockState> isSmoothable, FullCellAction fullCellAction, FaceAction action) {
 		// Duplicated in MarchingCubes
 		@Nullable TestMesh testMesh = null; // TestData.SPHERE
-		var smoother = smoothness2x;
-		var distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
-		var dims = getDimensions(area, smoother, testMesh);
+		boolean smoother = smoothness2x;
+		float[] distanceField = generateDistanceField(area, isSmoothable, smoother, testMesh);
+		BlockPos dims = getDimensions(area, smoother, testMesh);
 		// Because we are passing block densities instead of corner distances (see the NB comment in generateDistanceField) we need to offset the mesh
 		float offset = smoother ? 1F : 0.5F;
 		generateOrThrow2(
@@ -83,7 +83,7 @@ public class SurfaceNets extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] distanceField, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		var pos = new BlockPos.Mutable();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		final Face face = new Face();
 		int n = 0;

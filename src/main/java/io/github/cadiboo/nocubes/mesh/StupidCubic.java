@@ -32,8 +32,8 @@ public class StupidCubic extends SimpleMesher {
 		final float min = 0F;
 		final float max = 1F - min;
 
-		var pos = new BlockPos.Mutable();
-		var face = new Face();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
+		Face face = new Face();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			// Up (pos y)
 			if (!action.apply(pos.set(x, y, z), face.set(

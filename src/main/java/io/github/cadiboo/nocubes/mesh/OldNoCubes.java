@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.function.Predicate;
@@ -57,9 +58,9 @@ public final class OldNoCubes extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
-		var vertexNormals = new Face();
-		var faceNormal = new Vec();
-		var centre = new Vec();
+		Face vertexNormals = new Face();
+		Vec faceNormal = new Vec();
+		Vec centre = new Vec();
 		generateInternal(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
@@ -88,30 +89,30 @@ public final class OldNoCubes extends SimpleMesher {
 	}
 
 	private void generateInternal(Area area, Predicate<BlockState> isSmoothable, FullBlockAction fullBlockAction, FaceAction faceAction) {
-		var face = new Face();
-		var pos = new BlockPos.Mutable();
+		Face face = new Face();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 		// The 8 points that make the block.
 		// 1 point for each corner
-		var points = new Vec[]{new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
-		var directions = ModUtil.DIRECTIONS;
-		var directionsLength = directions.length;
-		var neighboursSmoothness = new float[directionsLength];
-		var roughness = NoCubesConfig.Server.oldNoCubesRoughness;
+		Vec[] points = new Vec[]{new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
+		Direction[] directions = ModUtil.DIRECTIONS;
+		int directionsLength = directions.length;
+		float[] neighboursSmoothness = new float[directionsLength];
+		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 		generate(area, isSmoothable, (x, y, z, index) -> {
-			var blocks = area.getAndCacheBlocks();
-			var state = blocks[index];
+			BlockState[] blocks = area.getAndCacheBlocks();
+			BlockState state = blocks[index];
 
-			var combinedNeighboursSmoothness = 0F;
-			for (var i = 0; i < directionsLength; ++i) {
-				var direction = directions[i];
+			float combinedNeighboursSmoothness = 0F;
+			for (byte i = 0; i < directionsLength; ++i) {
+				Direction direction = directions[i];
 				pos.set(x, y, z).move(direction);
-				var neighbour = blocks[area.index(pos)];
-				var density = ModUtil.getBlockDensity(isSmoothable, neighbour);
+				BlockState neighbour = blocks[area.index(pos)];
+				float density = ModUtil.getBlockDensity(isSmoothable, neighbour);
 				combinedNeighboursSmoothness += density;
 				neighboursSmoothness[i] = density;
 			}
 
-			var amountInsideIsosurface = (combinedNeighboursSmoothness / directionsLength) / 2 + 0.5F;
+			float amountInsideIsosurface = (combinedNeighboursSmoothness / directionsLength) / 2 + 0.5F;
 			if (amountInsideIsosurface == 1 && !fullBlockAction.apply(x, y, z))
 				return false;
 			if (amountInsideIsosurface == 0 || ModUtil.isSnowLayer(state))
@@ -121,7 +122,7 @@ public final class OldNoCubes extends SimpleMesher {
 			// Loop through all the points:
 			// Here everything will be 'smoothed'.
 			for (byte pointIndex = 0; pointIndex < 8; ++pointIndex) {
-				var point = points[pointIndex];
+				Vec point = points[pointIndex];
 
 				// Give the point the block's coordinates.
 				point.x += x;
@@ -144,38 +145,57 @@ public final class OldNoCubes extends SimpleMesher {
 				//1-2
 				//0,0-1,0
 				//0,1-1,1
-				if (!faceAction.apply(pos.set(x, y, z), switch (directions[i]) {
-					case DOWN -> face.set(
-						points[X1Y0Z1],
-						points[X0Y0Z1],
-						points[X0Y0Z0],
-						points[X1Y0Z0]);
-					case UP -> face.set(
-						points[X1Y1Z1],
-						points[X1Y1Z0],
-						points[X0Y1Z0],
-						points[X0Y1Z1]);
-					case NORTH -> face.set(
-						points[X1Y1Z0],
-						points[X1Y0Z0],
-						points[X0Y0Z0],
-						points[X0Y1Z0]);
-					case SOUTH -> face.set(
-						points[X1Y1Z1],
-						points[X0Y1Z1],
-						points[X0Y0Z1],
-						points[X1Y0Z1]);
-					case WEST -> face.set(
-						points[X0Y1Z1],
-						points[X0Y1Z0],
-						points[X0Y0Z0],
-						points[X0Y0Z1]);
-					case EAST -> face.set(
-						points[X1Y1Z1],
-						points[X1Y0Z1],
-						points[X1Y0Z0],
-						points[X1Y1Z0]);
-				}))
+				switch (directions[i]) {
+					case DOWN:
+						face.set(
+							points[X1Y0Z1],
+							points[X0Y0Z1],
+							points[X0Y0Z0],
+							points[X1Y0Z0]
+						);
+						break;
+					case UP:
+						face.set(
+							points[X1Y1Z1],
+							points[X1Y1Z0],
+							points[X0Y1Z0],
+							points[X0Y1Z1]
+						);
+						break;
+					case NORTH:
+						face.set(
+							points[X1Y1Z0],
+							points[X1Y0Z0],
+							points[X0Y0Z0],
+							points[X0Y1Z0]
+						);
+						break;
+					case SOUTH:
+						face.set(
+							points[X1Y1Z1],
+							points[X0Y1Z1],
+							points[X0Y0Z1],
+							points[X1Y0Z1]
+						);
+						break;
+					case WEST:
+						face.set(
+							points[X0Y1Z1],
+							points[X0Y1Z0],
+							points[X0Y0Z0],
+							points[X0Y0Z1]
+						);
+						break;
+					case EAST:
+						face.set(
+							points[X1Y1Z1],
+							points[X1Y0Z1],
+							points[X1Y0Z0],
+							points[X1Y1Z0]
+						);
+						break;
+				}
+				if (!faceAction.apply(pos.set(x, y, z), face))
 					return false;
 			}
 			return true;

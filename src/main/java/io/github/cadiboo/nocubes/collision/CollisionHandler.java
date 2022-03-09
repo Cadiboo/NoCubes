@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.FallingBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Util;
@@ -59,7 +60,7 @@ public final class CollisionHandler {
 //			// Noclip for debugging
 //			return VoxelShapes.empty();
 
-		var entity = context.getEntity();
+		Entity entity = context.getEntity();
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
 			(NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof PlayerEntity)) ||
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
@@ -67,17 +68,17 @@ public final class CollisionHandler {
 		)
 			return state.getShape(reader, blockPos);
 
-		var mesher = NoCubesConfig.Server.mesher;
-		var ref = new VoxelShape[]{VoxelShapes.empty()};
-		if (reader instanceof World level)
-			level.getProfiler().push("NoCubes collisions");
-		try (var area = new Area(reader, blockPos, ModUtil.VEC_ONE, mesher)) {
+		Mesher mesher = NoCubesConfig.Server.mesher;
+		VoxelShape[] ref = new VoxelShape[]{VoxelShapes.empty()};
+		if (reader instanceof World)
+			((World) reader).getProfiler().push("NoCubes collisions");
+		try (Area area = new Area(reader, blockPos, ModUtil.VEC_ONE, mesher)) {
 			// See Mesher#translateToMeshStart for an explanation of this
-			var dx = Mesher.validateMeshOffset(area.start.getX() - blockPos.getX());
-			var dy = Mesher.validateMeshOffset(area.start.getY() - blockPos.getY());
-			var dz = Mesher.validateMeshOffset(area.start.getZ() - blockPos.getZ());
+			float dx = Mesher.validateMeshOffset(area.start.getX() - blockPos.getX());
+			float dy = Mesher.validateMeshOffset(area.start.getY() - blockPos.getY());
+			float dz = Mesher.validateMeshOffset(area.start.getZ() - blockPos.getZ());
 			generate(area, mesher, (x0, y0, z0, x1, y1, z1) -> {
-				var shape = VoxelShapes.box(
+				VoxelShape shape = VoxelShapes.box(
 					dx + x0, dy + y0, dz + z0,
 					dx + x1, dy + y1, dz + z1
 				);
@@ -85,8 +86,8 @@ public final class CollisionHandler {
 				return true;
 			});
 		} finally {
-			if (reader instanceof World level)
-				level.getProfiler().pop();
+			if (reader instanceof World)
+				((World) reader).getProfiler().pop();
 		}
 		return ref[0];//.optimize();
 	}
@@ -100,20 +101,20 @@ public final class CollisionHandler {
 	}
 
 	public static void forEachCollisionRelativeToStart(ICollisionReader world, BlockPos.Mutable pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, ShapeConsumer consumer) {
-		var mesher = NoCubesConfig.Server.mesher;
+		Mesher mesher = NoCubesConfig.Server.mesher;
 
-		var start = new BlockPos(minX, minY, minZ);
+		BlockPos start = new BlockPos(minX, minY, minZ);
 		// Size is mutable and only correct until the Area constructor call
-		var size = pos.set(
+		BlockPos.Mutable size = pos.set(
 			maxX - minX,
 			maxY - minY,
 			maxZ - minZ
 		);
-		try (var area = new Area(world, start, size, mesher)) {
+		try (Area area = new Area(world, start, size, mesher)) {
 			// See Mesher#translateToMeshStart for an explanation of this
-			var dx = Mesher.validateMeshOffset(area.start.getX() - start.getX());
-			var dy = Mesher.validateMeshOffset(area.start.getY() - start.getY());
-			var dz = Mesher.validateMeshOffset(area.start.getZ() - start.getZ());
+			float dx = Mesher.validateMeshOffset(area.start.getX() - start.getX());
+			float dy = Mesher.validateMeshOffset(area.start.getY() - start.getY());
+			float dz = Mesher.validateMeshOffset(area.start.getZ() - start.getZ());
 			generate(area, mesher, (x0, y0, z0, x1, y1, z1) -> consumer.accept(
 				dx + x0, dy + y0, dz + z0,
 				dx + x1, dy + y1, dz + z1
@@ -141,12 +142,12 @@ public final class CollisionHandler {
 	}
 
 	private static boolean generateShape(Vec centre, Vec faceNormal, ShapeConsumer consumer, Vec v) {
-		var vX = v.x;
-		var vY = v.y;
-		var vZ = v.z;
-		var extX = centre.x + faceNormal.x;
-		var extY = centre.y + faceNormal.y;
-		var extZ = centre.z + faceNormal.z;
+		float vX = v.x;
+		float vY = v.y;
+		float vZ = v.z;
+		float extX = centre.x + faceNormal.x;
+		float extY = centre.y + faceNormal.y;
+		float extZ = centre.z + faceNormal.z;
 		return consumer.accept(
 			Math.min(vX, extX), Math.min(vY, extY), Math.min(vZ, extZ),
 			Math.max(vX, extX), Math.max(vY, extY), Math.max(vZ, extZ)

@@ -13,13 +13,11 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.GrassPathBlock;
+import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.world.EmptyBlockReader;
 import net.minecraftforge.client.ForgeHooksClient;
 
@@ -42,8 +40,8 @@ public final class MeshRenderer {
 	}
 
 	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area) {
-		var faceInfo = new FaceInfo();
-		var objects = new MutableObjects();
+		FaceInfo faceInfo = new FaceInfo();
+		MutableObjects objects = new MutableObjects();
 		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
@@ -55,7 +53,7 @@ public final class MeshRenderer {
 					foundState.pos.set(ignored);
 				} else
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
-				var renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
+				RenderableState renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
 				if (renderState.state.getRenderShape() == BlockRenderType.INVISIBLE)
 					return true; // How?
@@ -72,12 +70,12 @@ public final class MeshRenderer {
 
 	static void renderBreakingTexture(BlockState state, BlockPos worldPos, MatrixStack matrix, IVertexBuilder buffer, Mesher mesher, Area area) {
 		Mesher.translateToMeshStart(matrix, area.start, worldPos);
-		var stateSolidity = isSolidRender(state);
+		boolean stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var faceInfo = new FaceInfo();
+		FaceInfo faceInfo = new FaceInfo();
 		mesher.generateGeometry(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
-			var renderBothSides = false;
+			boolean renderBothSides = false;
 			// Don't need textures or lighting because the crumbling texture overwrites them
 			renderQuad(buffer, matrix, faceInfo, Color.WHITE, Texture.EVERYTHING, FaceLight.MAX_BRIGHTNESS, renderBothSides);
 			return true;
@@ -85,68 +83,68 @@ public final class MeshRenderer {
 	}
 
 	static void renderFaceWithConnectedTextures(ChunkRenderInfo renderer, MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState) {
-		var state = renderState.state;
-		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
+		BlockState state = renderState.state;
+		BlockPos.Mutable worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
 
-		var material = state.getMaterial();
-		var renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
+		Material material = state.getMaterial();
+		boolean renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
 
-		var light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
-		var shade = renderer.getShade(faceInfo.approximateDirection);
+		FaceLight light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
+		float shade = renderer.getShade(faceInfo.approximateDirection);
 
 		renderer.forEachQuad(
 			state, worldPos, faceInfo.approximateDirection,
 			(colorState, colorWorldPos, quad) -> renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
 			(layer, buffer, quad, color, emissive) -> {
-				var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+				Texture texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
 				renderQuad(buffer, renderer.matrix.matrix(), faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
 			}
 		);
 	}
 
 	static void renderExtras(ChunkRenderInfo renderer, MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo) {
-		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
-		var renderGrassTufts = NoCubesConfig.Client.grassTufts;
+		boolean renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
+		boolean renderGrassTufts = NoCubesConfig.Client.grassTufts;
 		if (!renderPlantsOffset && !renderGrassTufts)
 			return;
 
 		if (faceInfo.approximateDirection != Direction.UP)
 			return;
 
-		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
-		var stateAbove = area.getBlockState(relativeAbove);
+		BlockPos.Mutable relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
+		BlockState stateAbove = area.getBlockState(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
-			try (var ignored = renderer.matrix.push()) {
-				var worldAbove = relativeAbove.move(area.start);
-				var center = faceInfo.centre;
+			try (FluentMatrixStack ignored = renderer.matrix.push()) {
+				BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
+				Vec center = faceInfo.centre;
 				renderer.matrix.matrix().translate(center.x - 0.5F, center.y, center.z - 0.5F);
 				renderer.renderBlock(stateAbove, worldAbove);
 			}
 		}
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
-			var grass = Blocks.GRASS.defaultBlockState();
-			var worldAbove = relativeAbove.move(area.start);
-			var renderBothSides = true;
+			BlockState grass = Blocks.GRASS.defaultBlockState();
+			BlockPos.Mutable worldAbove = relativeAbove.move(area.start);
+			boolean renderBothSides = true;
 
-			var offset = grass.getOffset(renderer.world, worldAbove);
-			var xOff = (float) offset.x;
-			var zOff = (float) offset.z;
-			var yExt = 0.4F;
-			var snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
-			var face = faceInfo.face;
+			Vector3d offset = grass.getOffset(renderer.world, worldAbove);
+			float xOff = (float) offset.x;
+			float zOff = (float) offset.z;
+			float yExt = 0.4F;
+			boolean snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
+			Face face = faceInfo.face;
 
-			var grassTuft0 = objects.grassTuft0;
+			FaceInfo grassTuft0 = objects.grassTuft0;
 			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
-			var light0 = renderer.light.get(area.start, grassTuft0, objects.grassTuft0Light);
-			var shade0 = renderer.getShade(grassTuft0.approximateDirection);
+			FaceLight light0 = renderer.light.get(area.start, grassTuft0, objects.grassTuft0Light);
+			float shade0 = renderer.getShade(grassTuft0.approximateDirection);
 
-			var grassTuft1 = objects.grassTuft1;
+			FaceInfo grassTuft1 = objects.grassTuft1;
 			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
-			var light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
-			var shade1 = renderer.getShade(grassTuft1.approximateDirection);
+			FaceLight light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
+			float shade1 = renderer.getShade(grassTuft1.approximateDirection);
 
-			var matrix = renderer.matrix.matrix();
+			MatrixStack matrix = renderer.matrix.matrix();
 			renderer.forEachQuad(
 				grass, worldAbove, null,
 				(state, worldPos, quad) -> snowy ? Color.WHITE : renderer.getColor(objects.color, quad, grass, worldAbove, 1F),
@@ -202,7 +200,7 @@ public final class MeshRenderer {
 		}
 
 		public static FaceInfo withFace() {
-			var faceInfo = new FaceInfo();
+			FaceInfo faceInfo = new FaceInfo();
 			faceInfo.setup(new Face());
 			return faceInfo;
 		}
@@ -268,9 +266,9 @@ public final class MeshRenderer {
 		}
 
 		public static RenderableState findAt(MutableObjects objects, Area area, Vec faceNormal, Vec faceCentre, Predicate<BlockState> isSmoothable) {
-			var foundState = objects.foundState;
-			var faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
-			var state = area.getBlockState(faceBlockPos);
+			RenderableState foundState = objects.foundState;
+			BlockPos.Mutable faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
+			BlockState state = area.getBlockState(faceBlockPos);
 
 			// Has always been true in testing, so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
 			// This HAS failed due to a race condition with the mesh being generated and then this getting called after
@@ -296,11 +294,11 @@ public final class MeshRenderer {
 			if (isSmoothable.test(original.state))
 				return original;
 
-			var relativePos = toUse.pos;
+			BlockPos.Mutable relativePos = toUse.pos;
 			for (int i = 0, offsets_orderedLength = OFFSETS_ORDERED.length; i < offsets_orderedLength; i++) {
-				var offset = OFFSETS_ORDERED[i];
+				BlockPos offset = OFFSETS_ORDERED[i];
 				relativePos.set(original.pos).move(offset);
-				var state = area.getBlockState(relativePos);
+				BlockState state = area.getBlockState(relativePos);
 				if (isSmoothable.test(state)) {
 					toUse.state = state;
 					return toUse;
@@ -312,7 +310,7 @@ public final class MeshRenderer {
 	}
 
 	private static boolean isSnow(BlockState state) {
-		var block = state.getBlock();
+		Block block = state.getBlock();
 		return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
 	}
 

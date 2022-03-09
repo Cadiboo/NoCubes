@@ -8,9 +8,11 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.World;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -18,6 +20,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.ArrayList;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
@@ -30,14 +34,14 @@ public final class Keybindings {
 
 	public static void register(IEventBus bus) {
 		LOG.debug("Registering keybindings");
-		var keybindings = Lists.newArrayList(
+		ArrayList<Pair<KeyBinding, Runnable>> keybindings = Lists.newArrayList(
 			makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, Keybindings::toggleVisuals),
 			makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, Keybindings::toggleLookedAtSmoothable)
 		);
 		bus.addListener((TickEvent.ClientTickEvent event) -> {
 			if (event.phase != TickEvent.Phase.END)
 				return;
-			for (var keybinding : keybindings)
+			for (Pair<KeyBinding, Runnable> keybinding : keybindings)
 				if (keybinding.getKey().consumeClick()) {
 					LOG.debug("Keybinding {} pressed", keybinding.getKey().getName());
 					keybinding.getValue().run();
@@ -47,7 +51,7 @@ public final class Keybindings {
 
 	private static Pair<KeyBinding, Runnable> makeKeybinding(String name, int key, Runnable action) {
 		LOG.debug("Registering keybinding {}", name);
-		var mapping = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		KeyBinding mapping = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
 		ClientRegistry.registerKeyBinding(mapping);
 		return Pair.of(mapping, action);
 	}
@@ -62,22 +66,22 @@ public final class Keybindings {
 	}
 
 	private static void toggleLookedAtSmoothable() {
-		var minecraft = Minecraft.getInstance();
-		var world = minecraft.level;
-		var player = minecraft.player;
-		var lookingAt = minecraft.hitResult;
+		Minecraft minecraft = Minecraft.getInstance();
+		World world = minecraft.level;
+		ClientPlayerEntity player = minecraft.player;
+		RayTraceResult lookingAt = minecraft.hitResult;
 		if (world == null || player == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK) {
 			LOG.debug("toggleLookedAtSmoothable preconditions not met (world={}, player={}, lookingAt={})", world, player, lookingAt);
 			return;
 		}
 
-		var targeted = ((BlockRayTraceResult) lookingAt);
-		var targetedState = world.getBlockState(targeted.getBlockPos());
-		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
+		BlockRayTraceResult targeted = ((BlockRayTraceResult) lookingAt);
+		BlockState targetedState = world.getBlockState(targeted.getBlockPos());
+		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
 		// Add all states if the player is not crouching (to make it easy to toggle on/off all leaves)
 		// If the player needs fine-grained control over which specific blockstates are smoothable they can crouch
 		// (Yes I know it says shift, it actually checks the crouch key)
-		var states = player.isShiftKeyDown() ? new BlockState[]{targetedState} : ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new);
+		BlockState[] states = player.isShiftKeyDown() ? new BlockState[]{targetedState} : ModUtil.getStates(targetedState.getBlock()).toArray(new BlockState[0]);
 
 		LOG.debug("toggleLookedAtSmoothable currentServerHasNoCubes={}", NoCubesNetwork.currentServerHasNoCubes);
 		if (!NoCubesNetwork.currentServerHasNoCubes) {

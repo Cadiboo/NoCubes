@@ -61,9 +61,9 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		cancellable = true
 	)
 	public void nocubes_getVisualShape(IBlockReader level, BlockPos pos, ISelectionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-		var state = asState();
+		BlockState state = asState();
 		@SuppressWarnings("deprecation")
-		var visualShape = getBlock().getVisualShape(state, level, pos, context);
+		VoxelShape visualShape = getBlock().getVisualShape(state, level, pos, context);
 		if (visualShape.isEmpty() || !Hooks.renderingEnabledFor(state))
 			cir.setReturnValue(visualShape);
 		else

@@ -17,7 +17,7 @@ public interface SmoothableHandler {
 	void setSmoothable(boolean newValue, AbstractBlockState state);
 
 	default void setSmoothable(boolean newValue, AbstractBlockState[] states) {
-		for (var state : states)
+		for (AbstractBlockState state : states)
 			setSmoothable(newValue, state);
 	}
 

@@ -7,6 +7,8 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.network.NetworkManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
@@ -31,7 +33,7 @@ public final class ClientEventSubscriber {
 		if (!NoCubesConfig.Client.debugEnabled || !Screen.hasAltDown())
 			return;
 
-		var world = Minecraft.getInstance().level;
+		ClientWorld world = Minecraft.getInstance().level;
 		if (world == null)
 			return;
 
@@ -70,7 +72,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		var connection = event.getNetworkManager();
+		NetworkManager connection = event.getNetworkManager();
 		if (connection != null && NetworkHooks.isVanillaConnection(connection)) {
 			// Forge has already loaded the default server configs for us (see NetworkHooks#handleClientLoginSuccess(Connection))
 			LOG.debug("Not loading default server config - Forge has already loaded it for us");

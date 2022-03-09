@@ -25,9 +25,9 @@ public final class TestRunner {
 	@SubscribeEvent
 	public static void runTests(FMLServerStartedEvent event) {
 		SharedConstants.IS_RUNNING_IN_IDE = true;
-		var testRepository = new TestRepository();
-		var server = event.getServer();
-		var fails = testRepository.tests.parallelStream()
+		TestRepository testRepository = new TestRepository();
+		MinecraftServer server = event.getServer();
+		long fails = testRepository.tests.parallelStream()
 			.filter(test -> runTestWithCatch(test, server))
 			.count();
 		if (fails > 0)

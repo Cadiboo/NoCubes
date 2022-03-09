@@ -2,7 +2,17 @@ package io.github.cadiboo.nocubes.client.render;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 
-public record FluentMatrixStack(MatrixStack matrix) implements AutoCloseable {
+public class FluentMatrixStack implements AutoCloseable {
+
+	public final MatrixStack matrix;
+
+	public MatrixStack matrix() {
+		return matrix;
+	}
+
+	public FluentMatrixStack(MatrixStack matrix) {
+		this.matrix = matrix;
+	}
 
 	public FluentMatrixStack push() {
 		matrix.pushPose();

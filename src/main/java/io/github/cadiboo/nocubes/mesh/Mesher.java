@@ -52,8 +52,8 @@ public interface Mesher {
 
 	/* protected */
 	default boolean isOutsideMesh(int x, int y, int z, BlockPos size) {
-		var negativeExtension = getNegativeAreaExtension();
-		var positiveExtension = getPositiveAreaExtension();
+		Vector3i negativeExtension = getNegativeAreaExtension();
+		Vector3i positiveExtension = getPositiveAreaExtension();
 		// Block is outside where we are generating it for, we only query it for its neighbouring faces
 		return x >= size.getX() - positiveExtension.getX() || x < negativeExtension.getX() ||
 			y >= size.getY() - positiveExtension.getY() || y < negativeExtension.getY() ||

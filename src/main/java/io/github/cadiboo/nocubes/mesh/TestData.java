@@ -50,14 +50,14 @@ public interface TestData {
 		private static final ThreadLocal<NoiseConfig> CONFIG = ThreadLocal.withInitial(NoiseConfig::new);
 
 		public static void setOffset(int posX, int posY, int posZ) {
-			var config = CONFIG.get();
+			NoiseConfig config = CONFIG.get();
 			config.offsetX = posX;
 			config.offsetY = posY;
 			config.offsetZ = posZ;
 		}
 
 		public static float noise(float x, float y, float z) {
-			var config = CONFIG.get();
+			NoiseConfig config = CONFIG.get();
 			x += config.offsetX;
 			y += config.offsetY;
 			z += config.offsetZ;
