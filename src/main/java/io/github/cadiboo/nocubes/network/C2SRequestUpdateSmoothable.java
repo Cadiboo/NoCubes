@@ -4,12 +4,12 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -26,12 +26,12 @@ public record C2SRequestUpdateSmoothable(
 	BlockState[] states
 ) {
 
-	public static void encode(C2SRequestUpdateSmoothable msg, FriendlyByteBuf buffer) {
+	public static void encode(C2SRequestUpdateSmoothable msg, PacketBuffer buffer) {
 		buffer.writeBoolean(msg.newValue);
 		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
 	}
 
-	public static C2SRequestUpdateSmoothable decode(FriendlyByteBuf buffer) {
+	public static C2SRequestUpdateSmoothable decode(PacketBuffer buffer) {
 		return new C2SRequestUpdateSmoothable(
 			buffer.readBoolean(),
 			BlockStateConverter.readBlockStatesFrom(buffer)
@@ -59,7 +59,7 @@ public record C2SRequestUpdateSmoothable(
 		ctx.setPacketHandled(true);
 	}
 
-	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player, @Nullable MinecraftServer connectedToServer) {
+	public static boolean checkPermissionAndNotifyIfUnauthorised(PlayerEntity player, @Nullable MinecraftServer connectedToServer) {
 		if (connectedToServer != null && connectedToServer.isSingleplayerOwner(player.getGameProfile()))
 			return true;
 		if (player.hasPermissions(REQUIRED_PERMISSION_LEVEL))

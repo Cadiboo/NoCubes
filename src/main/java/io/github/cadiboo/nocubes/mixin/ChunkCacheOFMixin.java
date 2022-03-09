@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import net.minecraft.client.renderer.chunk.RenderChunkRegion;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.material.FluidState;
+import net.minecraft.client.renderer.chunk.ChunkRenderCache;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.util.math.BlockPos;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ChunkCacheOFMixin {
 
 	/**
-	 * ChunkCacheOF is OptiFine's override of {@link RenderChunkRegion}
+	 * ChunkCacheOF is OptiFine's override of {@link ChunkRenderCache}
 	 * See the documentation on {@link RenderChunkRegionMixin#nocubes_getExtendedFluidState}
 	 */
 	@Dynamic("Added by OptiFine")

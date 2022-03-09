@@ -4,23 +4,22 @@ import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 
 import java.util.function.Predicate;
-
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 public class CullingChamfer extends SimpleMesher {
 
 	@Override
-	public Vec3i getPositiveAreaExtension() {
+	public Vector3i getPositiveAreaExtension() {
 		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public Vec3i getNegativeAreaExtension() {
+	public Vector3i getNegativeAreaExtension() {
 		// Need data about the area's direct neighbour blocks to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
@@ -43,7 +42,7 @@ public class CullingChamfer extends SimpleMesher {
 		int height = size.getY();
 		int width = size.getX();
 
-		var pos = new MutableBlockPos();
+		var pos = new BlockPos.Mutable();
 		var face = new Face();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			var blocks = area.getAndCacheBlocks();

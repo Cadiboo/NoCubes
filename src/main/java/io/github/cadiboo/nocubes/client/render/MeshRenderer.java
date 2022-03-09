@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
@@ -13,14 +13,14 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirtPathBlock;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.GrassPathBlock;
+import net.minecraft.block.material.Material;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EmptyBlockReader;
 import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.function.Consumer;
@@ -28,12 +28,12 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
 import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
-import static net.minecraft.world.level.block.GrassBlock.SNOWY;
+import static net.minecraft.block.GrassBlock.SNOWY;
 
 public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
-		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof DirtPathBlock;
+		return state.isSolidRender(EmptyBlockReader.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof GrassPathBlock;
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
@@ -57,7 +57,7 @@ public final class MeshRenderer {
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				var renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
-				if (renderState.state.getRenderShape() == RenderShape.INVISIBLE)
+				if (renderState.state.getRenderShape() == BlockRenderType.INVISIBLE)
 					return true; // How?
 
 				renderFaceWithConnectedTextures(renderer, objects, area, faceInfo, renderState);
@@ -67,10 +67,10 @@ public final class MeshRenderer {
 				return true;
 			});
 		});
-		ForgeHooksClient.setRenderType(null);
+		ForgeHooksClient.setRenderLayer(null);
 	}
 
-	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, Mesher mesher, Area area) {
+	static void renderBreakingTexture(BlockState state, BlockPos worldPos, MatrixStack matrix, IVertexBuilder buffer, Mesher mesher, Area area) {
 		Mesher.translateToMeshStart(matrix, area.start, worldPos);
 		var stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
@@ -176,7 +176,7 @@ public final class MeshRenderer {
 	}
 
 	private static void renderQuad(
-		VertexConsumer buffer, PoseStack matrix,
+		IVertexBuilder buffer, MatrixStack matrix,
 		FaceInfo faceInfo,
 		Color color,
 		Texture uvs,
@@ -220,7 +220,7 @@ public final class MeshRenderer {
 		final FaceLight grassTuft0Light = new FaceLight();
 		final FaceInfo grassTuft1 = FaceInfo.withFace();
 		final FaceLight grassTuft1Light = new FaceLight();
-		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		final BlockPos.Mutable pos = new BlockPos.Mutable();
 		final Color color = new Color();
 		final Texture texture = new Texture();
 	}
@@ -260,7 +260,7 @@ public final class MeshRenderer {
 			new BlockPos(-1, -1, -1),
 		};
 
-		private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		private final BlockPos.Mutable pos = new BlockPos.Mutable();
 		BlockState state;
 
 		public BlockPos relativePos() {

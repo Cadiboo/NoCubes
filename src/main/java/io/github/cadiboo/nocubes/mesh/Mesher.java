@@ -1,17 +1,15 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import net.minecraft.Util;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 
 import java.util.function.Predicate;
-
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 public interface Mesher {
 
@@ -37,9 +35,9 @@ public interface Mesher {
 
 	void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action);
 
-	Vec3i getPositiveAreaExtension();
+	Vector3i getPositiveAreaExtension();
 
-	Vec3i getNegativeAreaExtension();
+	Vector3i getNegativeAreaExtension();
 
 	interface FaceAction {
 
@@ -48,7 +46,7 @@ public interface Mesher {
 		 * @param face        The face, positioned relatively to the start of the area
 		 * @return false if no more faces need to be generated
 		 */
-		boolean apply(MutableBlockPos relativePos, Face face);
+		boolean apply(BlockPos.Mutable relativePos, Face face);
 
 	}
 
@@ -72,7 +70,7 @@ public interface Mesher {
 	 * And the vertices are going to be relative to the start of the area
 	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
 	 */
-	static void translateToMeshStart(PoseStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
+	static void translateToMeshStart(MatrixStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
 		matrix.translate(
 			getMeshOffset(areaStart.getX(), renderStartPos.getX()),
 			getMeshOffset(areaStart.getY(), renderStartPos.getY()),

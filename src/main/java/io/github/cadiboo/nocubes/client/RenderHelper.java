@@ -1,17 +1,17 @@
 package io.github.cadiboo.nocubes.client;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,7 +28,7 @@ public class RenderHelper {
 		minecraft.execute(minecraft.levelRenderer::allChanged);
 	}
 
-	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
+	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
 		var startX = (float) (offset.getX() - camera.x + start.x);
 		var startY = (float) (offset.getY() - camera.y + start.y);
 		var startZ = (float) (offset.getZ() - camera.z + start.z);
@@ -39,7 +39,7 @@ public class RenderHelper {
 		);
 	}
 
-	public static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, ColorParser.Color color, VertexConsumer buffer, PoseStack matrix, Vec3 camera) {
+	public static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, ColorParser.Color color, IVertexBuilder buffer, MatrixStack matrix, Vector3d camera) {
 		line(
 			buffer, matrix, color,
 			(float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z),
@@ -47,7 +47,7 @@ public class RenderHelper {
 		);
 	}
 
-	public static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, ColorParser.Color color, VertexConsumer buffer, PoseStack matrix) {
+	public static void drawFacePosColor(Face face, Vector3d camera, BlockPos pos, ColorParser.Color color, IVertexBuilder buffer, MatrixStack matrix) {
 		var v0 = face.v0;
 		var v1 = face.v1;
 		var v2 = face.v2;
@@ -74,7 +74,7 @@ public class RenderHelper {
 		line(buffer, matrix, color, v3x, v3y, v3z, v0x, v0y, v0z);
 	}
 
-	public static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, ColorParser.Color color) {
+	public static void drawShape(MatrixStack stack, IVertexBuilder buffer, VoxelShape shape, BlockPos pos, Vector3d camera, ColorParser.Color color) {
 		var x = pos.getX() - camera.x;
 		var y = pos.getY() - camera.y;
 		var z = pos.getZ() - camera.z;
@@ -91,7 +91,7 @@ public class RenderHelper {
 	 * To avoid allocating many short-lived vectors we do the transform ourselves instead.
 	 */
 	public static void line(
-		VertexConsumer buffer, PoseStack matrix, ColorParser.Color color,
+		IVertexBuilder buffer, MatrixStack matrix, ColorParser.Color color,
 		float x0, float y0, float z0,
 		float x1, float y1, float z1
 	) {
@@ -110,7 +110,7 @@ public class RenderHelper {
 		var normalX = x1 - x0;
 		var normalY = y1 - y0;
 		var normalZ = z1 - z0;
-		var length = Mth.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
+		var length = MathHelper.sqrt(normalX * normalX + normalY * normalY + normalZ * normalZ);
 		normalX /= length;
 		normalY /= length;
 		normalZ /= length;
@@ -137,7 +137,7 @@ public class RenderHelper {
 	 * To avoid allocating many short-lived vectors we do the transform ourselves instead.
 	 */
 	public static void vertex(
-		VertexConsumer buffer, PoseStack matrix,
+		IVertexBuilder buffer, MatrixStack matrix,
 		float x, float y, float z,
 		float red, float green, float blue, float alpha,
 		float texU, float texV,

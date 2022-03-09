@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
-import net.minecraft.core.BlockPos;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
+import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
@@ -33,7 +33,7 @@ class HD_U_G8 extends HD_U_G7 {
 	}
 
 	@Override
-	protected void prePushShaderEntity(RenderChunk chunkRender, BufferBuilder buffer, BlockPos pos) {
+	protected void prePushShaderEntity(ChunkRender chunkRender, BufferBuilder buffer, BlockPos pos) {
 		if (Shaders_useMidBlockAttrib())
 			BufferBuilder_setMidBlock(
 				buffer,

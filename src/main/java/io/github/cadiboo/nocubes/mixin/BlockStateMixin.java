@@ -1,14 +1,13 @@
 package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.hooks.Hooks;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.AbstractBlock.AbstractBlockState;
+import net.minecraft.block.BlockState;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
 @Mixin(BlockState.class)
 public abstract class BlockStateMixin {
@@ -25,7 +24,7 @@ public abstract class BlockStateMixin {
 		remap = false // OptiFine added method
 	)
 	public void nocubes_isCacheOpaqueCube(CallbackInfoReturnable<Boolean> ci) {
-		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
+		if (Hooks.shouldCancelOcclusion((AbstractBlockState) (Object) this))
 			ci.setReturnValue(false);
 	}
 }

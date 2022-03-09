@@ -6,8 +6,8 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -39,7 +39,7 @@ public final class NoCubes {
 	 */
 	public static void addSmoothable(Block... blocks) {
 		for (var block : blocks)
-			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
+			addSmoothable(ModUtil.getStates(block).toArray(BlockState[]::new));
 	}
 
 	/**

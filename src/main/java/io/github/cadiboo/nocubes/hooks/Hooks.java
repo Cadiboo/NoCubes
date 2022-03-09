@@ -1,27 +1,26 @@
 package io.github.cadiboo.nocubes.hooks;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.matrix.MatrixStack;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.block.AbstractBlock.AbstractBlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.ChunkRender.RebuildTask;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Random;
-
-import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
 /**
  * @author Cadiboo
@@ -29,11 +28,11 @@ import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBas
 @SuppressWarnings("unused") // Hooks are called with ASM
 public final class Hooks {
 
-	public static boolean renderingEnabledFor(BlockStateBase state) {
+	public static boolean renderingEnabledFor(AbstractBlockState state) {
 		return NoCubesConfig.Client.render && NoCubes.smoothableHandler.isSmoothable(state);
 	}
 
-	public static boolean collisionsEnabledFor(BlockStateBase state) {
+	public static boolean collisionsEnabledFor(AbstractBlockState state) {
 		return NoCubesConfig.Server.collisionsEnabled && NoCubes.smoothableHandler.isSmoothable(state);
 	}
 
@@ -44,7 +43,7 @@ public final class Hooks {
 	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void preIteration(RebuildTask rebuildTask, RenderChunk chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, ChunkBufferBuilderPack builderIn, BlockPos blockpos, BlockAndTintGetter chunkrendercache, PoseStack matrixstack, Random random, BlockRenderDispatcher blockrendererdispatcher) {
+	public static void preIteration(RebuildTask rebuildTask, ChunkRender chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, RegionRenderCacheBuilder builderIn, BlockPos blockpos, IBlockDisplayReader chunkrendercache, MatrixStack matrixstack, Random random, BlockRendererDispatcher blockrendererdispatcher) {
 		SelfCheck.preIteration = true;
 		RendererDispatcher.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
 	}
@@ -84,7 +83,7 @@ public final class Hooks {
 	 * rendered when they are up against smooth terrain, stopping us from being able to see through the ground near
 	 * smooth terrain.
 	 */
-	public static boolean shouldCancelOcclusion(BlockStateBase state) {
+	public static boolean shouldCancelOcclusion(AbstractBlockState state) {
 		return renderingEnabledFor(state);
 	}
 	// endregion Rendering
@@ -114,7 +113,7 @@ public final class Hooks {
 //	 */
 //	public static double collide(
 //		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
-//		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.MutableBlockPos pos,
+//		AxisCycle rotation, AxisCycle inverseRotation, BlockPos.Mutable pos,
 //		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
 //	) {
 ////		SelfCheck.collide = true;

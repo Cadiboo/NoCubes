@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
@@ -12,20 +12,20 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.client.Camera;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraftforge.client.event.DrawSelectionEvent.HighlightBlock;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraftforge.client.event.DrawHighlightEvent.HighlightBlock;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +36,6 @@ import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.*;
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * @author Cadiboo
@@ -54,7 +53,7 @@ public final class OverlayRenderers {
 			Pair.of("drawNearbyCollisions", OverlayRenderers::drawNearbyCollisions),
 			Pair.of("drawNearbyDensities", OverlayRenderers::drawNearbyDensities)
 		);
-		events.addListener((RenderLevelLastEvent event) -> renderDebugOverlays(event, debugOverlays));
+		events.addListener((RenderWorldLastEvent event) -> renderDebugOverlays(event, debugOverlays));
 	}
 
 
@@ -71,9 +70,9 @@ public final class OverlayRenderers {
 
 		event.setCanceled(true);
 
-		var camera = event.getCamera().getPosition();
-		var matrix = event.getPoseStack();
-		var buffer = event.getMultiBufferSource().getBuffer(RenderType.lines());
+		var camera = event.getInfo().getPosition();
+		var matrix = event.getMatrix();
+		var buffer = event.getBuffers().getBuffer(RenderType.lines());
 		var mesher = NoCubesConfig.Server.mesher;
 		var stateSolidity = MeshRenderer.isSolidRender(state);
 		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, mesher)) {
@@ -86,7 +85,7 @@ public final class OverlayRenderers {
 		}
 	}
 
-	public static void renderDebugOverlays(RenderLevelLastEvent event, List<Pair<String, DebugOverlay>> overlays) {
+	public static void renderDebugOverlays(RenderWorldLastEvent event, List<Pair<String, DebugOverlay>> overlays) {
 		if (!NoCubesConfig.Client.debugEnabled)
 			return;
 
@@ -95,12 +94,12 @@ public final class OverlayRenderers {
 
 //		drawBlockDestructionProgressForDebug(minecraft, camera);
 		var bufferSource = minecraft.renderBuffers().bufferSource();
-		Supplier<VertexConsumer> linesSupplier = () -> bufferSource.getBuffer(RenderType.lines());
+		Supplier<IVertexBuilder> linesSupplier = () -> bufferSource.getBuffer(RenderType.lines());
 		overlays.forEach(overlay -> {
 			var profiler = minecraft.getProfiler();
 			profiler.push(overlay.getLeft());
 			try {
-				overlay.getRight().render(camera, event.getPoseStack(), linesSupplier);
+				overlay.getRight().render(camera, event.getMatrixStack(), linesSupplier);
 			} finally {
 				profiler.pop();
 			}
@@ -111,20 +110,20 @@ public final class OverlayRenderers {
 	}
 
 	interface DebugOverlay {
-		void render(Camera camera, PoseStack matrix, Supplier<VertexConsumer> linesSupplier);
+		void render(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> linesSupplier);
 	}
 
 	private static BlockPos getTargetedPosForDebugRendering(Entity viewer) {
 		var targeted = viewer.pick(20.0D, 0.0F, false);
 		// Where the player is looking at or their position of they're not looking at a block
-		return targeted.getType() != HitResult.Type.BLOCK ? viewer.blockPosition() : ((BlockHitResult) targeted).getBlockPos();
+		return targeted.getType() != RayTraceResult.Type.BLOCK ? viewer.blockPosition() : ((BlockRayTraceResult) targeted).getBlockPos();
 	}
 
 	/**
 	 * Draws block destruction progress (cracking texture) near the viewer.
 	 * Was used to debug issues with matrix transformations while implementing our custom destruction progress rendering.
 	 */
-	private static void drawBlockDestructionProgressForDebug(Minecraft minecraft, Camera camera) {
+	private static void drawBlockDestructionProgressForDebug(Minecraft minecraft, ActiveRenderInfo camera) {
 		var viewer = camera.getEntity();
 		var targetedPos = getTargetedPosForDebugRendering(viewer);
 		var start = targetedPos.offset(-2, -2, -2);
@@ -134,7 +133,7 @@ public final class OverlayRenderers {
 			.forEach(pos -> minecraft.levelRenderer.destroyBlockProgress(100 + i[0]++, pos, 9));
 	}
 
-	private static void drawOutlineAroundNearbySmoothableBlocks(Camera camera, PoseStack matrix, Supplier<VertexConsumer> buffer) {
+	private static void drawOutlineAroundNearbySmoothableBlocks(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> buffer) {
 		if (!NoCubesConfig.Client.debugOutlineSmoothables)
 			return;
 		var viewer = camera.getEntity();
@@ -144,11 +143,11 @@ public final class OverlayRenderers {
 		var end = viewer.blockPosition().offset(5, 5, 5);
 		BlockPos.betweenClosed(start, end).forEach(pos -> {
 			if (isSmoothable.test(viewer.level.getBlockState(pos)))
-				drawShape(matrix, buffer.get(), Shapes.block(), pos, camera.getPosition(), color);
+				drawShape(matrix, buffer.get(), VoxelShapes.block(), pos, camera.getPosition(), color);
 		});
 	}
 
-	private static void drawNearbyDensities(Camera camera, PoseStack matrix, Supplier<VertexConsumer> buffer) {
+	private static void drawNearbyDensities(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> buffer) {
 		// Draw nearby block densities and computed corner signed distance fields
 		// This was just for understanding how SurfaceNets works
 		// It made me understand why feeding it the 'proper' corner info results in much smoother terrain
@@ -156,7 +155,7 @@ public final class OverlayRenderers {
 		if (!NoCubesConfig.Client.debugVisualiseDensitiesGrid)
 			return;
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
+		var distanceIndicator = VoxelShapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 		var densityColor = new Color(0F, 0F, 1F, 0.5F);
 		var viewer = camera.getEntity();
 		try (var area = new Area(viewer.level, getTargetedPosForDebugRendering(viewer).offset(-2, -2, -2), new BlockPos(4, 4, 4), NoCubesConfig.Server.mesher)) {
@@ -174,7 +173,7 @@ public final class OverlayRenderers {
 			int maxY = minY + height;
 			int maxX = minX + width;
 			int zyxIndex = 0;
-			var pos = new MutableBlockPos();
+			var pos = new BlockPos.Mutable();
 			for (int z = minZ; z < maxZ; ++z) {
 				for (int y = minY; y < maxY; ++y) {
 					for (int x = minX; x < maxX; ++x, ++zyxIndex) {
@@ -182,7 +181,7 @@ public final class OverlayRenderers {
 						var density = densities[zyxIndex];
 						var densityScale = 0.5F + density / 2F; // from [-1, 1] -> [0, 1]
 						if (densityScale > 0.01) {
-							var box = Shapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
+							var box = VoxelShapes.box(0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 - densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2, 0.5 + densityScale / 2);
 							drawShape(matrix, buffer.get(), box, pos, camera.getPosition(), densityColor);
 						}
 						if (x <= minX || y <= minY || z <= minZ)
@@ -203,7 +202,7 @@ public final class OverlayRenderers {
 		}
 	}
 
-	private static void drawNearbyCollisions(Camera camera, PoseStack matrix, Supplier<VertexConsumer> buffer) {
+	private static void drawNearbyCollisions(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> buffer) {
 		// Draw nearby collisions in green and player intersecting collisions in red
 		if (!NoCubesConfig.Client.debugRenderCollisions)
 			return;
@@ -211,14 +210,14 @@ public final class OverlayRenderers {
 		var intersectingColor = new Color(1, 0, 0, 0.4F);
 		var deviatingColor = new Color(0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
-		var viewerShape = Shapes.create(viewer.getBoundingBox());
+		var viewerShape = VoxelShapes.create(viewer.getBoundingBox());
 		viewer.level.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(collisionsRenderRadius)).forEach(voxelShape -> {
-			boolean intersects = Shapes.joinIsNotEmpty(voxelShape, viewerShape, BooleanOp.AND);
+			boolean intersects = VoxelShapes.joinIsNotEmpty(voxelShape, viewerShape, IBooleanFunction.AND);
 			drawShape(matrix, buffer.get(), voxelShape, BlockPos.ZERO, camera.getPosition(), intersects ? intersectingColor : deviatingColor);
 		});
 	}
 
-	private static void drawNearbyMeshCollisions(Camera camera, PoseStack matrix, Supplier<VertexConsumer> buffer) {
+	private static void drawNearbyMeshCollisions(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> buffer) {
 		// Draw NoCubes' collisions in green (or yellow if debugRenderCollisions is enabled)
 		if (!NoCubesConfig.Client.debugRenderMeshCollisions)
 			return;
@@ -226,7 +225,7 @@ public final class OverlayRenderers {
 		var color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
 		var start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level, new MutableBlockPos(),
+		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level, new BlockPos.Mutable(),
 			start.getX(), start.getX() + collisionsRenderRadius * 2,
 			start.getY(), start.getY() + collisionsRenderRadius * 2,
 			start.getZ(), start.getZ() + collisionsRenderRadius * 2,
@@ -237,7 +236,7 @@ public final class OverlayRenderers {
 		);
 	}
 
-	private static void maybeRenderMeshAndRecordPerformance(Camera camera, PoseStack matrix, Supplier<VertexConsumer> linesSupplier, RollingProfiler profiler) {
+	private static void maybeRenderMeshAndRecordPerformance(ActiveRenderInfo camera, MatrixStack matrix, Supplier<IVertexBuilder> linesSupplier, RollingProfiler profiler) {
 		// Measure the performance of meshing nearby blocks (and maybe render the result)
 		if (!NoCubesConfig.Client.debugRecordMeshPerformance && !NoCubesConfig.Client.debugOutlineNearbyMesh)
 			return;
@@ -248,13 +247,13 @@ public final class OverlayRenderers {
 			LogManager.getLogger("Calc" + (NoCubesConfig.Client.debugOutlineNearbyMesh ? " & outline" : "") + " nearby mesh").debug("Average {}ms over the past {} frames", profiler.average() / 1000_000F, profiler.size());
 	}
 
-	private static void drawNearbyMesh(Entity viewer, Vec3 camera, PoseStack matrix, VertexConsumer buffer) {
+	private static void drawNearbyMesh(Entity viewer, Vector3d camera, MatrixStack matrix, IVertexBuilder buffer) {
 		var mesher = NoCubesConfig.Server.mesher;
 		var meshSize = new BlockPos(16, 16, 16);
 		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
 			var area = new Area(viewer.level, meshStart, meshSize, mesher);
-			var light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
+			var light = new LightCache((ClientWorld) viewer.level, meshStart, meshSize)
 		) {
 			var faceInfo = new FaceInfo();
 			var objects = new MutableObjects();

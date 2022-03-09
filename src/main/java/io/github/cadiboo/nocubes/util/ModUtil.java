@@ -3,19 +3,18 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.*;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.Material;
+import net.minecraft.block.*;
+import net.minecraft.block.material.Material;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Util;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
@@ -42,9 +41,9 @@ public class ModUtil {
 		return size.getX() * size.getY() * size.getZ();
 	}
 
-	public static void warnPlayer(@Nullable Player player, String translationKey, Object... formatArgs) {
+	public static void warnPlayer(@Nullable PlayerEntity player, String translationKey, Object... formatArgs) {
 		if (player != null)
-			player.sendMessage(new TranslatableComponent(translationKey, formatArgs).withStyle(ChatFormatting.RED), Util.NIL_UUID);
+			player.sendMessage(new TranslationTextComponent(translationKey, formatArgs).withStyle(TextFormatting.RED), Util.NIL_UUID);
 		else
 			LogManager.getLogger("NoCubes notification fallback").warn(I18n.get(translationKey, formatArgs));
 	}
@@ -61,7 +60,7 @@ public class ModUtil {
 			return NOT_SMOOTHABLE;
 		if (isSnowLayer(state))
 			// Snow layer, not the actual whole snow block
-			return mapSnowHeight(state.getValue(SnowLayerBlock.LAYERS));
+			return mapSnowHeight(state.getValue(SnowBlock.LAYERS));
 		return FULLY_SMOOTHABLE;
 	}
 
@@ -71,12 +70,12 @@ public class ModUtil {
 	}
 
 	public static boolean isSnowLayer(BlockState state) {
-		return state.hasProperty(SnowLayerBlock.LAYERS);
+		return state.hasProperty(SnowBlock.LAYERS);
 	}
 
 	public static boolean isShortPlant(BlockState state) {
 		Block block = state.getBlock();
-		return block instanceof BushBlock && !(block instanceof DoublePlantBlock || block instanceof CropBlock || block instanceof StemBlock);
+		return block instanceof BushBlock && !(block instanceof DoublePlantBlock || block instanceof CropsBlock || block instanceof StemBlock);
 	}
 
 	public static boolean isPlant(BlockState state) {
@@ -104,7 +103,7 @@ public class ModUtil {
 	 *
 	 * @return a fluid state that may not actually exist in the position
 	 */
-	public static FluidState getExtendedFluidState(Level world, BlockPos pos) {
+	public static FluidState getExtendedFluidState(World world, BlockPos pos) {
 		var extendRange = NoCubesConfig.Server.extendFluidsRange;
 		assert extendRange > 0;
 

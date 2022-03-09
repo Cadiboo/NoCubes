@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.util.math.BlockPos;
 
 public final class ClientUtil {
 

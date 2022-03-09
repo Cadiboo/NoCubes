@@ -6,13 +6,13 @@ import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.fml.network.NetworkHooks;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -70,7 +70,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		var connection = event.getConnection();
+		var connection = event.getNetworkManager();
 		if (connection != null && NetworkHooks.isVanillaConnection(connection)) {
 			// Forge has already loaded the default server configs for us (see NetworkHooks#handleClientLoginSuccess(Connection))
 			LOG.debug("Not loading default server config - Forge has already loaded it for us");

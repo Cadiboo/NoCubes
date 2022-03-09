@@ -6,14 +6,14 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.client.KeyMapping;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.ClientRegistry;
+import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,9 +45,9 @@ public final class Keybindings {
 		});
 	}
 
-	private static Pair<KeyMapping, Runnable> makeKeybinding(String name, int key, Runnable action) {
+	private static Pair<KeyBinding, Runnable> makeKeybinding(String name, int key, Runnable action) {
 		LOG.debug("Registering keybinding {}", name);
-		var mapping = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		var mapping = new KeyBinding(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
 		ClientRegistry.registerKeyBinding(mapping);
 		return Pair.of(mapping, action);
 	}
@@ -66,12 +66,12 @@ public final class Keybindings {
 		var world = minecraft.level;
 		var player = minecraft.player;
 		var lookingAt = minecraft.hitResult;
-		if (world == null || player == null || lookingAt == null || lookingAt.getType() != HitResult.Type.BLOCK) {
+		if (world == null || player == null || lookingAt == null || lookingAt.getType() != RayTraceResult.Type.BLOCK) {
 			LOG.debug("toggleLookedAtSmoothable preconditions not met (world={}, player={}, lookingAt={})", world, player, lookingAt);
 			return;
 		}
 
-		var targeted = ((BlockHitResult) lookingAt);
+		var targeted = ((BlockRayTraceResult) lookingAt);
 		var targetedState = world.getBlockState(targeted.getBlockPos());
 		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
 		// Add all states if the player is not crouching (to make it easy to toggle on/off all leaves)

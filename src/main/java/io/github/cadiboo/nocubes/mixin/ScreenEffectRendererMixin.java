@@ -2,21 +2,21 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.hooks.Hooks;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ScreenEffectRenderer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.client.renderer.OverlayRenderer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.IBooleanFunction;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.world.IBlockReader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Objects;
 
-@Mixin(ScreenEffectRenderer.class)
+@Mixin(OverlayRenderer.class)
 public class ScreenEffectRendererMixin {
 
 	/**
@@ -26,17 +26,17 @@ public class ScreenEffectRendererMixin {
 		method = "getOverlayBlock",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/level/block/state/BlockState;isViewBlocking(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
+			target = "Lnet/minecraft/block/BlockState;isViewBlocking(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
 		)
 	)
-	private static boolean nocubes_isViewBlocking(BlockState state, BlockGetter level, BlockPos pos) {
+	private static boolean nocubes_isViewBlocking(BlockState state, IBlockReader level, BlockPos pos) {
 		var blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
-			return Shapes.joinIsNotEmpty(
-				CollisionHandler.getCollisionShape(state, level, pos, CollisionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
-				Shapes.create(player.getBoundingBox()),
-				BooleanOp.AND
+			return VoxelShapes.joinIsNotEmpty(
+				CollisionHandler.getCollisionShape(state, level, pos, ISelectionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
+				VoxelShapes.create(player.getBoundingBox()),
+				IBooleanFunction.AND
 			);
 		}
 		return blocking;

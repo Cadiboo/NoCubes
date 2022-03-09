@@ -1,34 +1,34 @@
 package io.github.cadiboo.nocubes.mixin;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.hooks.Hooks;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(BlockRenderDispatcher.class)
+@Mixin(BlockRendererDispatcher.class)
 public class BlockRenderDispatcherMixin {
 
 	/**
 	 * Renders our own smoothed cracking/breaking/damage animation.
 	 */
 	@Inject(
-		method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)V",
+		method = "renderBlockDamage",
 		at = @At("HEAD"),
 		remap = false, // Forge-added method
 		cancellable = true
 	)
-	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData, CallbackInfo ci) {
+	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, IBlockDisplayReader world, MatrixStack matrix, IVertexBuilder buffer, IModelData modelData, CallbackInfo ci) {
 		if (Hooks.renderingEnabledFor(state)) {
-			RendererDispatcher.renderBreakingTexture((BlockRenderDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
+			RendererDispatcher.renderBreakingTexture((BlockRendererDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
 			ci.cancel();
 		}
 	}

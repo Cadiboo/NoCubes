@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.util.Area;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
 
 import java.util.function.Predicate;
 

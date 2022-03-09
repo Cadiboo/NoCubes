@@ -2,17 +2,17 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.util.Area;
-import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.FluidBlockRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.world.IWorld;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.fluids.FluidAttributes;
 
-public class FluidRenderer extends LiquidBlockRenderer {
+public class FluidRenderer extends FluidBlockRenderer {
 
 	public static void render(Area area, LightCache light) {
 		BlockPos size = area.size;
@@ -21,7 +21,7 @@ public class FluidRenderer extends LiquidBlockRenderer {
 		int width = size.getX();
 
 		BlockState[] blocks = area.getAndCacheBlocks();
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {
@@ -42,11 +42,11 @@ public class FluidRenderer extends LiquidBlockRenderer {
 	}
 
 
-	private static TextureAtlasSprite[] getStaticAndFlowingSprites(LiquidBlockRenderer fluidRenderer, LevelReader world, BlockState block, FluidState fluid, BlockPos worldPos) {
+	private static TextureAtlasSprite[] getStaticAndFlowingSprites(FluidBlockRenderer fluidRenderer, IWorld world, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return ForgeHooksClient.getFluidSprites(world, worldPos, fluid);
 	}
 
-	private static void setColor(Color color, FluidState fluid, BlockAndTintGetter world, BlockPos worldPos) {
+	private static void setColor(Color color, FluidState fluid, IBlockDisplayReader world, BlockPos worldPos) {
 		FluidAttributes attributes = fluid.getType().getAttributes();
 		color.unpackFromARGB(attributes.getColor(world, worldPos));
 	}

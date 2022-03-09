@@ -6,12 +6,11 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 
 import java.util.Arrays;
 
@@ -22,14 +21,14 @@ public final class LightCache implements AutoCloseable {
 
 	public static final int MAX_BRIGHTNESS = LightTexture.pack(15, 15);
 	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, LightCache::resetIntArray);
-	private static final ThreadLocal<BlockPos.MutableBlockPos> POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+	private static final ThreadLocal<BlockPos.Mutable> POS = ThreadLocal.withInitial(BlockPos.Mutable::new);
 
 	public final BlockPos start;
 	public final BlockPos size;
-	private final ClientLevel world;
+	private final ClientWorld world;
 	private int[] array;
 
-	public LightCache(ClientLevel world, BlockPos meshStart, BlockPos meshSize) {
+	public LightCache(ClientWorld world, BlockPos meshStart, BlockPos meshSize) {
 		this.world = world;
 		this.start = meshStart.offset(-1, -1, -1).immutable();
 		this.size = meshSize.offset(2, 2, 2).immutable();
@@ -46,10 +45,10 @@ public final class LightCache implements AutoCloseable {
 	/**
 	 * Gets the position in world space to use to get light values for this vertex
 	 */
-	public BlockPos.MutableBlockPos lightWorldPos(BlockPos relativeTo, Vec vec, Vec normal) {
-		float vx = -0.5F + vec.x + Mth.clamp(normal.x * 4, -1, 1);
-		float vy = -0.5F + vec.y + Mth.clamp(normal.y * 4, -1, 1);
-		float vz = -0.5F + vec.z + Mth.clamp(normal.z * 4, -1, 1);
+	public BlockPos.Mutable lightWorldPos(BlockPos relativeTo, Vec vec, Vec normal) {
+		float vx = -0.5F + vec.x + MathHelper.clamp(normal.x * 4, -1, 1);
+		float vy = -0.5F + vec.y + MathHelper.clamp(normal.y * 4, -1, 1);
+		float vz = -0.5F + vec.z + MathHelper.clamp(normal.z * 4, -1, 1);
 
 		int x = Math.round(vx);
 		int y = Math.round(vy);
@@ -70,7 +69,7 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	public int get(BlockPos relativeTo, Vec vec, Vec faceNormal) {
-		BlockPos.MutableBlockPos lightWorldPos = lightWorldPos(relativeTo, vec, faceNormal);
+		BlockPos.Mutable lightWorldPos = lightWorldPos(relativeTo, vec, faceNormal);
 		int light = get(lightWorldPos);
 		if (light == 0)
 			light = get(lightWorldPos.move(0, -1, 0));
@@ -216,9 +215,9 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	private int fetchCombinedLight(BlockPos worldPos) {
-		ClientLevel world = this.world;
-		BlockState state = world.getBlockState(worldPos);
-		return LevelRenderer.getLightColor(world, state, worldPos);
+		var world = this.world;
+		var state = world.getBlockState(worldPos);
+		return WorldRenderer.getLightColor(world, state, worldPos);
 	}
 
 	private int[] getArray() {

@@ -11,8 +11,8 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.ForgeConfigSpec.*;
@@ -20,16 +20,15 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import net.minecraftforge.fml.config.ConfigTracker;
-import net.minecraftforge.fml.config.IConfigEvent;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.config.ModConfig.ModConfigEvent;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +39,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
-import static net.minecraft.world.level.block.Blocks.*;
+import static net.minecraft.block.Blocks.*;
 
 /**
  * The Config for NoCubes.
@@ -411,7 +410,7 @@ public final class NoCubesConfig {
 				((CommentedFileConfig) modConfig.getConfigData()).load();
 				modConfig.getSpec().afterReload();
 //				modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+				fireReloadEvent(modConfig);
 			});
 		}
 
@@ -427,7 +426,7 @@ public final class NoCubesConfig {
 //				modConfig.setConfigData(config);
 				ModConfig_setConfigData(modConfig, config);
 //				modConfig.fireEvent(IConfigEvent.loading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.loading(modConfig));
+				fireReloadEvent(modConfig);
 			});
 		}
 
@@ -436,9 +435,8 @@ public final class NoCubesConfig {
 		 */
 		private static Optional<ModConfig> ConfigTracker_getConfig(ModConfig.Type type) {
 			LOG.debug("Getting {} ModConfig from ConfigTracker", type.name());
-			return ConfigTracker.INSTANCE.configSets().get(type).stream()
-				.filter(modConfig -> modConfig.getModId().equals(NoCubes.MOD_ID))
-				.findFirst();
+			Map<String, Map<ModConfig.Type, ModConfig>> configsByMod = ObfuscationReflectionHelper.getPrivateValue(ConfigTracker.class, ConfigTracker.INSTANCE, "configsByMod");
+			return Optional.ofNullable(configsByMod.getOrDefault(NoCubes.MOD_ID, Collections.emptyMap()).getOrDefault(type, null));
 		}
 
 		private static void ModConfig_setConfigData(ModConfig modConfig, CommentedConfig data) {
@@ -451,10 +449,15 @@ public final class NoCubesConfig {
 			}
 		}
 
-		private static void ModConfig_fireEvent(ModConfig modConfig, IConfigEvent event) {
-			LOG.debug("Firing ModConfig event");
-//			modConfig.fireEvent(event);
-			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
+		private static void fireReloadEvent(ModConfig modConfig) {
+			var modContainer = ModList.get().getModContainerById(modConfig.getModId()).get();
+			ModConfig.Reloading event;
+			try {
+				event = ObfuscationReflectionHelper.findConstructor(ModConfig.Reloading.class, ModConfig.class).newInstance(modConfig);
+			} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+				throw new RuntimeException(e);
+			}
+			modContainer.dispatchConfigEvent(event);
 		}
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
@@ -463,7 +466,7 @@ public final class NoCubesConfig {
 			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
 			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
-			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+			fireReloadEvent(modConfig);
 		}
 	}
 
@@ -481,16 +484,16 @@ public final class NoCubesConfig {
 			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[]{
 				STONE, GRANITE, DIORITE, ANDESITE,
 				GRASS_BLOCK, DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
-				DEEPSLATE, ROOTED_DIRT, TUFF, CALCITE, SMOOTH_BASALT, AMETHYST_BLOCK, BUDDING_AMETHYST,
+				/*DEEPSLATE, ROOTED_DIRT, TUFF, CALCITE, SMOOTH_BASALT, AMETHYST_BLOCK, BUDDING_AMETHYST,*/
 				BEDROCK,
 				SAND, RED_SAND,
 				SANDSTONE, RED_SANDSTONE,
 				GRAVEL,
-				COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
-				DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE, DEEPSLATE_GOLD_ORE, DEEPSLATE_REDSTONE_ORE, DEEPSLATE_DIAMOND_ORE, DEEPSLATE_LAPIS_ORE, DEEPSLATE_EMERALD_ORE,
-				INFESTED_STONE, INFESTED_DEEPSLATE,
+				COAL_ORE, IRON_ORE, /*COPPER_ORE,*/ GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
+				/*DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE, DEEPSLATE_GOLD_ORE, DEEPSLATE_REDSTONE_ORE, DEEPSLATE_DIAMOND_ORE, DEEPSLATE_LAPIS_ORE, DEEPSLATE_EMERALD_ORE,*/
+				INFESTED_STONE, /*INFESTED_DEEPSLATE,*/
 				BONE_BLOCK,
-				DIRT_PATH,
+				/*DIRT_PATH,*/
 				CLAY, TERRACOTTA, WHITE_TERRACOTTA, ORANGE_TERRACOTTA, MAGENTA_TERRACOTTA, LIGHT_BLUE_TERRACOTTA, YELLOW_TERRACOTTA, LIME_TERRACOTTA, PINK_TERRACOTTA, GRAY_TERRACOTTA, LIGHT_GRAY_TERRACOTTA, CYAN_TERRACOTTA, PURPLE_TERRACOTTA, BLUE_TERRACOTTA, BROWN_TERRACOTTA, GREEN_TERRACOTTA, RED_TERRACOTTA, BLACK_TERRACOTTA,
 				SNOW, SNOW_BLOCK, ICE, PACKED_ICE, FROSTED_ICE,
 				NETHERRACK, SOUL_SAND, SOUL_SOIL, BASALT, MAGMA_BLOCK, GLOWSTONE, NETHER_WART_BLOCK, CRIMSON_STEM, WARPED_NYLIUM, WARPED_WART_BLOCK, WARPED_STEM,

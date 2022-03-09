@@ -4,15 +4,14 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.BlockPos.MutableBlockPos;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static net.minecraft.world.level.block.Blocks.*;
+import static net.minecraft.block.Blocks.*;
 
 /**
  * @author Cadiboo
@@ -66,7 +65,7 @@ public class NoCubesTest {
 			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTest::checkAndMutate);
 	}
 
-	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {
+	private static boolean checkAndMutate(BlockPos.Mutable pos, Face face) {
 		assertFalse(pos.getX() < 0);
 		assertFalse(pos.getX() >= 5);
 		pos.move(1000, 1000, 1000);

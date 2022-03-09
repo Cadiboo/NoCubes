@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.smoothable;
 
 import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
-import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
+import net.minecraft.block.AbstractBlock.AbstractBlockState;
 
 /**
  * The in-memory list of smoothables.
@@ -12,11 +12,11 @@ import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
  */
 public interface SmoothableHandler {
 
-	boolean isSmoothable(BlockStateBase state);
+	boolean isSmoothable(AbstractBlockState state);
 
-	void setSmoothable(boolean newValue, BlockStateBase state);
+	void setSmoothable(boolean newValue, AbstractBlockState state);
 
-	default void setSmoothable(boolean newValue, BlockStateBase[] states) {
+	default void setSmoothable(boolean newValue, AbstractBlockState[] states) {
 		for (var state : states)
 			setSmoothable(newValue, state);
 	}
@@ -24,12 +24,12 @@ public interface SmoothableHandler {
 	static SmoothableHandler create() {
 		return new SmoothableHandler() {
 			@Override
-			public boolean isSmoothable(BlockStateBase state) {
+			public boolean isSmoothable(AbstractBlockState state) {
 				return ((INoCubesBlockState) state).isTerrainSmoothable();
 			}
 
 			@Override
-			public void setSmoothable(boolean newValue, BlockStateBase state) {
+			public void setSmoothable(boolean newValue, AbstractBlockState state) {
 				((INoCubesBlockState) state).setTerrainSmoothable(newValue);
 			}
 		};

@@ -6,14 +6,12 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.function.Predicate;
-
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * @author Cadiboo
@@ -136,7 +134,7 @@ public class MarchingCubes extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] data, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		var pos = new MutableBlockPos();
+		var pos = new BlockPos.Mutable();
 		var face = new Face();
 
 		var cubeVerts = Lookup.CUBE_VERTS;

@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.util;
 
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
 
 /**
  * @author Cadiboo

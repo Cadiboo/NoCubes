@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.WorldRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
-@Mixin(LevelRenderer.class)
+@Mixin(WorldRenderer.class)
 public class LevelRendererMixin {
 
 	/**
@@ -15,7 +15,7 @@ public class LevelRendererMixin {
 	 */
 	@ModifyConstant(
 		method = {
-			"setBlockDirty(Lnet/minecraft/core/BlockPos;Z)V",
+			"setBlockDirty(Lnet/minecraft/util/math/BlockPos;Z)V",
 			"setBlocksDirty(IIIIII)V",
 		},
 		constant = @Constant(intValue = 1),

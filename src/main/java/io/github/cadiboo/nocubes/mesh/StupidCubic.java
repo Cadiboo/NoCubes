@@ -4,21 +4,21 @@ import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 
 import java.util.function.Predicate;
 
 public class StupidCubic extends SimpleMesher {
 
 	@Override
-	public Vec3i getPositiveAreaExtension() {
+	public Vector3i getPositiveAreaExtension() {
 		return ModUtil.VEC_ZERO;
 	}
 
 	@Override
-	public Vec3i getNegativeAreaExtension() {
+	public Vector3i getNegativeAreaExtension() {
 		return ModUtil.VEC_ZERO;
 	}
 
@@ -32,7 +32,7 @@ public class StupidCubic extends SimpleMesher {
 		final float min = 0F;
 		final float max = 1F - min;
 
-		var pos = new BlockPos.MutableBlockPos();
+		var pos = new BlockPos.Mutable();
 		var face = new Face();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			// Up (pos y)

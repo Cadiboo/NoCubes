@@ -7,16 +7,15 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * Surface Nets generates a vertex for each cell and then stitches them together.
@@ -33,13 +32,13 @@ public class SurfaceNets extends SDFMesher {
 	}
 
 	@Override
-	public Vec3i getPositiveAreaExtension() {
+	public Vector3i getPositiveAreaExtension() {
 		// Needed otherwise seams appear in the meshes because surface nets generates a mesh 1 smaller than it "should"
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public Vec3i getNegativeAreaExtension() {
+	public Vector3i getNegativeAreaExtension() {
 		// I'm not sure why it's needed, but it is needed very much
 		return smoothness2x ? ModUtil.VEC_TWO : ModUtil.VEC_ONE;
 	}
@@ -84,7 +83,7 @@ public class SurfaceNets extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] distanceField, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		var pos = new MutableBlockPos();
+		var pos = new BlockPos.Mutable();
 
 		final Face face = new Face();
 		int n = 0;

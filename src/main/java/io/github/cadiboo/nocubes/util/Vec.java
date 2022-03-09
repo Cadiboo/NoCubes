@@ -1,12 +1,12 @@
 package io.github.cadiboo.nocubes.util;
 
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import com.mojang.math.Vector4f;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.util.Mth;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.vector.Matrix3f;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.Vector3f;
+import net.minecraft.util.math.vector.Vector4f;
 
 /**
  * @author Cadiboo
@@ -102,7 +102,7 @@ public final /* inline */ class Vec {
 	}
 
 	public Vec normalise() {
-		float length = Mth.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+		float length = MathHelper.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 		if (length < 0.0001)
 			// Zero vector, everything is already zero
 			return this;
@@ -178,7 +178,7 @@ public final /* inline */ class Vec {
 		return this;
 	}
 
-	public BlockPos.MutableBlockPos assignTo(BlockPos.MutableBlockPos pos) {
+	public BlockPos.Mutable assignTo(BlockPos.Mutable pos) {
 		return pos.set(x, y, z);
 	}
 

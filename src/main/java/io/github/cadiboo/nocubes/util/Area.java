@@ -1,14 +1,14 @@
 package io.github.cadiboo.nocubes.util;
 
 import io.github.cadiboo.nocubes.mesh.Mesher;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Vector3i;
+import net.minecraft.world.IBlockReader;
+import net.minecraft.world.IWorldReader;
+import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.chunk.IChunk;
 
 import javax.annotation.Nullable;
 
@@ -18,17 +18,17 @@ public class Area implements AutoCloseable {
 
 	public final BlockPos start;
 	public final BlockPos size;
-	private final BlockGetter world;
+	private final IBlockReader world;
 	// Arrays are indexed [z][y][x] for cache locality
 	private BlockState[] blocks;
 
-	public /* for testing */ Area(BlockGetter world, BlockPos startInclusive, BlockPos size) {
+	public /* for testing */ Area(IBlockReader world, BlockPos startInclusive, BlockPos size) {
 		this.world = world;
 		this.start = startInclusive.immutable();
 		this.size = size.immutable();
 	}
 
-	public Area(BlockGetter world, BlockPos startInclusive, BlockPos size, Mesher mesher) {
+	public Area(IBlockReader world, BlockPos startInclusive, BlockPos size, Mesher mesher) {
 		this.world = world;
 		var negativeExtension = mesher.getNegativeAreaExtension();
 		var positiveExtension = mesher.getPositiveAreaExtension();
@@ -52,14 +52,14 @@ public class Area implements AutoCloseable {
 			var endY = startY + size.getY();
 			var endZ = startZ + size.getZ();
 			var world = this.world;
-			if (world instanceof LevelReader) {
+			if (world instanceof IWorldReader) {
 				var endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
-				traverse(start, endInclusive, new BlockPos.MutableBlockPos(), (LevelReader) world, (state, pos, zyxIndex) -> {
+				traverse(start, endInclusive, new BlockPos.Mutable(), (IWorldReader) world, (state, pos, zyxIndex) -> {
 					array[zyxIndex] = state;
 					return true;
 				});
 			} else {
-				BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+				BlockPos.Mutable pos = new BlockPos.Mutable();
 				int zyxIndex = 0;
 				for (int z = startZ; z < endZ; ++z)
 					for (int y = startY; y < endY; ++y)
@@ -98,7 +98,7 @@ public class Area implements AutoCloseable {
 	public void close() {
 	}
 
-	public BlockState getBlockState(BlockPos.MutableBlockPos relativePos) {
+	public BlockState getBlockState(BlockPos.Mutable relativePos) {
 		int index = indexIfInsideCache(relativePos);
 		if (index == -1) {
 			int x = relativePos.getX();
@@ -112,30 +112,30 @@ public class Area implements AutoCloseable {
 	}
 
 	public interface Traverser {
-		boolean accept(BlockState state, BlockPos.MutableBlockPos pos, int zyxIndex);
+		boolean accept(BlockState state, BlockPos.Mutable pos, int zyxIndex);
 	}
 
-	public static void traverse(Vec3i startInclusive, Vec3i endInclusive, BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func) {
+	public static void traverse(Vector3i startInclusive, Vector3i endInclusive, BlockPos.Mutable currentPosition, IWorldReader world, Traverser func) {
 		traverse(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
 	public static void traverse(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.MutableBlockPos currentPosition, LevelReader world, Traverser func
+		BlockPos.Mutable currentPosition, IWorldReader world, Traverser func
 	) {
 		traverse(startXInclusive, startYInclusive, startZInclusive, endXInclusive, endYInclusive, endZInclusive, currentPosition, (x, z) -> world.getChunk(x, z, ChunkStatus.EMPTY, false), func);
 	}
 
 	public interface ChunkGetter {
-		@Nullable ChunkAccess getChunk(int chunkX, int chunkY);
+		@Nullable IChunk getChunk(int chunkX, int chunkY);
 	}
 
 	/** Copied and tweaked from "https://github.com/BiggerSeries/Phosphophyllite/blob/a5c07fa7a5fd52db4aadcadb4b1a9273c5d65cda/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L62-L94". */
 	public static void traverse(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.MutableBlockPos currentPosition, ChunkGetter world, Traverser func
+		BlockPos.Mutable currentPosition, ChunkGetter world, Traverser func
 	) {
 		final var air = Blocks.AIR.defaultBlockState();
 		int endXPlus1 = endXInclusive + 1;
@@ -158,7 +158,7 @@ public class Area implements AutoCloseable {
 				int chunkZ = blockChunkZ >> 4;
 				@Nullable var chunk = world.getChunk(chunkX, chunkZ);
 				@Nullable var sections = chunk == null ? null : chunk.getSections();
-				int chunkMinSection = chunk != null ? chunk.getMinSection() : 0;
+				int chunkMinSection = 0;//chunk != null ? chunk.getMinSection() : 0;
 				for (int blockChunkY = startYInclusive; blockChunkY < maxY; blockChunkY += 16) {
 					int maskedBlockChunkY = blockChunkY & 0xFFFFFFF0;
 					int maskedNextBlockChunkY = (blockChunkY + 16) & 0xFFFFFFF0;

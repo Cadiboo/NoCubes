@@ -2,11 +2,11 @@ package io.github.cadiboo.nocubes.util;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import net.minecraft.Util;
-import net.minecraft.commands.arguments.blocks.BlockStateArgument;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.command.arguments.BlockStateArgument;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.Util;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -53,14 +53,14 @@ public interface BlockStateConverter {
 			.collect(Collectors.joining(",", block + "[", "]"));
 	}
 
-	static void writeBlockStatesTo(FriendlyByteBuf buffer, BlockState[] states) {
+	static void writeBlockStatesTo(PacketBuffer buffer, BlockState[] states) {
 		var ids = Arrays.stream(states)
 			.mapToInt(BlockStateConverter::toId)
 			.toArray();
 		buffer.writeVarIntArray(ids);
 	}
 
-	static BlockState[] readBlockStatesFrom(FriendlyByteBuf buffer) {
+	static BlockState[] readBlockStatesFrom(PacketBuffer buffer) {
 		return Arrays.stream(buffer.readVarIntArray())
 			.mapToObj(BlockStateConverter::fromId)
 			.toArray(BlockState[]::new);
