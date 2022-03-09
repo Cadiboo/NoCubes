@@ -32,9 +32,9 @@ function initializeCoreMod() {
 		'ChunkRender#rebuildChunk': {
 			'target': {
 				'type': 'METHOD',
-				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask',
-				'methodName': 'm_112865_', // compile
-				'methodDesc': '(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;)Ljava/util/Set;'
+				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$ChunkRender$RebuildTask',
+				'methodName': 'func_228940_a_', // compile
+				'methodDesc': '(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)Ljava/util/Set;'
 			},
 			'transformer': function(methodNode) {
 				var instructions = methodNode.instructions;
@@ -48,18 +48,18 @@ function initializeCoreMod() {
 					var positionsIteratorCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.STATIC,
-						isOptiFinePresent ? 'net/optifine/BlockPosM' : 'net/minecraft/core/BlockPos',
-						isOptiFinePresent ? 'getAllInBoxMutable' : ASMAPI.mapMethod('m_121940_'), // BlockPos#betweenClosed
-						'(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;'
+						isOptiFinePresent ? 'net/optifine/BlockPosM' : 'net/minecraft/util/math/BlockPos',
+						isOptiFinePresent ? 'getAllInBoxMutable' : ASMAPI.mapMethod('func_218278_a'), // BlockPos#betweenClosed
+						'(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)Ljava/lang/Iterable;'
 					);
 					var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, positionsIteratorCall);
 
 					// I'm not sure if this is still necessary, but it works so I'm not touching it (I remember it was painful to get right)
-					var outerClassFieldName = isOptiFinePresent ? 'this$1' : ASMAPI.mapField('f_112859_');
+					var outerClassFieldName = isOptiFinePresent ? 'this$1' : ASMAPI.mapField('field_228939_e_');
 					instructions.insert(firstLabelBeforePositionsIteratorCall, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, 0), // this
 						new VarInsnNode(ALOAD, 0), // ChunkRender.this
-						new FieldInsnNode(GETFIELD, 'net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask', outerClassFieldName, 'Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;'),
+						new FieldInsnNode(GETFIELD, 'net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask', outerClassFieldName, 'Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;'),
 						new VarInsnNode(ALOAD, 4), // compiledChunkIn
 						new VarInsnNode(ALOAD, 5), // builderIn
 						new VarInsnNode(ALOAD, 7), // blockpos - startPosition
@@ -67,7 +67,7 @@ function initializeCoreMod() {
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 12), // matrixstack
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // blockrendererdispatcher
-						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Random;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
+						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$ChunkRender;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Ljava/util/Random;Lnet/minecraft/client/renderer/BlockRendererDispatcher;)V'),
 						new LabelNode() // Label for original instructions
 					));
 					print('Done injecting the preIteration hook');
@@ -79,16 +79,16 @@ function initializeCoreMod() {
 					var getFluidStateCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.VIRTUAL,
-						'net/minecraft/world/level/block/state/BlockState',
-						ASMAPI.mapMethod('m_60819_'), // getFluidState
-						'()Lnet/minecraft/world/level/material/FluidState;'
+						'net/minecraft/block/BlockState',
+						ASMAPI.mapMethod('func_204520_s'), // getFluidState
+						'()Lnet/minecraft/fluid/FluidState;'
 					);
 					var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
 					removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
 					instructions.insert(previousLabel, ASMAPI.listOf(
 						new VarInsnNode(ALOAD, ofg8 ? 19 : 17), // pos
 						new VarInsnNode(ALOAD, ofg8 ? 20 : 18), // state
-						callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
+						callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/fluid/FluidState;')
 					));
 					// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
 					print('Done injecting the fluid render bypass hook');
