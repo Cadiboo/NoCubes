@@ -140,14 +140,18 @@ jar {
 	classifier 'dev'
 	manifest {
 		attributes([
-			'Mod-Id'             : modId,
-			'Mod-Group'          : modGroup,
-			'Mod-Name'           : project.name,
-			'Mod-Version'        : project.version,
-			'Built-For'          : "${project.modMinecraftVersion}-${project.modForgeVersion}",
-			'Built-At-UTC'       : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-			'Built-On-JVM'       : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-			'Signing-Fingerprint': project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
+			// See https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
+			'Specification-Title'   : project.name,
+			'Specification-Version' : modVersion,
+			'Specification-Vendor'  : project.group,
+			'Implementation-Title'  : modId,
+			'Implementation-Version': project.version,
+			'Implementation-Vendor' : project.group,
+
+			'Built-For'             : "${project.modMinecraftVersion}-${project.modForgeVersion}",
+			'Built-At-UTC'          : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+			'Built-On-JVM'          : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+			'Signing-Fingerprint'   : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
 		])
 	}
 }
