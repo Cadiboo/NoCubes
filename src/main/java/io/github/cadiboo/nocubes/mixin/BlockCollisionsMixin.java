@@ -2,17 +2,17 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.shapes.VoxelShapeSpliterator;
+import net.minecraft.world.IBlockReader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import java.util.function.BiPredicate;
-
-@Mixin(VoxelShapeSpliterator.class)
+@Mixin(ClientPlayerEntity.class)
 public class BlockCollisionsMixin {
 
 	/**
@@ -26,16 +26,16 @@ public class BlockCollisionsMixin {
 	 * in {@link PlayerEntity#freeAt} and {@link Entity#isInWall} which we don't want to mess up.
 	 */
 	@Redirect(
-		method = "collisionCheck",
+		method = "lambda$suffocatesAt$0(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;)Z",
 		at = @At(
 			value = "INVOKE",
-			target = "Ljava/util/function/BiPredicate;test(Ljava/lang/Object;Ljava/lang/Object;)Z"
+			target = "Lnet/minecraft/block/BlockState;isSuffocating(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Z"
 		)
 	)
-	public <T, U> boolean nocubes_isSuffocating(BiPredicate<T, U> instance, T state, U pos) {
-		if (Hooks.collisionsEnabledFor((BlockState) state))
+	public boolean nocubes_isSuffocating(BlockState state, IBlockReader level, BlockPos pos) {
+		if (Hooks.collisionsEnabledFor(state))
 			return false;
-		return instance.test(state, pos);
+		return state.isSuffocating(level, pos);
 	}
 
 }
