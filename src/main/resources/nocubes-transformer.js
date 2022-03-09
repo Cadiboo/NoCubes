@@ -19,6 +19,7 @@ function initializeCoreMod() {
 	INVOKESTATIC = Opcodes.INVOKESTATIC;
 	ALOAD = Opcodes.ALOAD;
 	ARETURN = Opcodes.ARETURN;
+	GETSTATIC = Opcodes.GETSTATIC;
 	GETFIELD = Opcodes.GETFIELD;
 
 	// Instruction types
@@ -38,6 +39,8 @@ function initializeCoreMod() {
 			'transformer': function(methodNode) {
 				var instructions = methodNode.instructions;
 				var isOptiFinePresent = detectOptiFine(instructions);
+				// OptiFine G8 added two booleans to the stack (shaders and shadersMidBlock)
+				var ofg8 = isOptiFinePresent && !!tryFindFirstFieldInstruction(instructions, GETSTATIC, 'net/optifine/shaders/Shaders', 'useMidBlockAttrib', 'Z');
 
 				// Inject the hook where we do our rendering
 				// We inject right above where vanilla loops (iterates) through all the the blocks
@@ -62,8 +65,8 @@ function initializeCoreMod() {
 						new VarInsnNode(ALOAD, 7), // blockpos - startPosition
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 12 : 11), // chunkrendercache
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 12), // matrixstack
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 16 : 13), // random
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 17 : 14), // blockrendererdispatcher
+						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
+						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // blockrendererdispatcher
 						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Random;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
 						new LabelNode() // Label for original instructions
 					));
@@ -83,8 +86,8 @@ function initializeCoreMod() {
 					var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
 					removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
 					instructions.insert(previousLabel, ASMAPI.listOf(
-						new VarInsnNode(ALOAD, 19), // pos
-						new VarInsnNode(ALOAD, 20), // state
+						new VarInsnNode(ALOAD, ofg8 ? 19 : 17), // pos
+						new VarInsnNode(ALOAD, ofg8 ? 20 : 18), // state
 						callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
 					));
 					// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
@@ -130,6 +133,16 @@ function findFirstLabelBeforeIndex(instructions, startIndex) {
 		}
 	}
 	throw "Error: Couldn't find first label before index " + startIndex + ' in ' + stringifyInstructions(instructions);
+}
+
+function tryFindFirstFieldInstruction(instructions, opcode, owner, name, desc) {
+	for (var i = 0, length = instructions.size(); i < length; ++i) {
+		var instruction = instructions.get(i);
+		if (instruction.opcode != opcode || instruction.owner != owner || instruction.name != name || instruction.desc != desc)
+			continue;
+		return instruction;
+	}
+	return null;
 }
 
 function findFirstMethodCall(methodNode, methodType, owner, name, desc) {

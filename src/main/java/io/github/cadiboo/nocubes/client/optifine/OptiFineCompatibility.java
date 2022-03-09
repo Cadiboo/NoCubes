@@ -27,6 +27,7 @@ public class OptiFineCompatibility {
 	private static OptiFineProxy createProxy(Logger log) {
 		for (var proxy : new OptiFineProxy[] {
 			new HD_U_G8(),
+			new HD_U_G7(),
 		}) {
 			var because = proxy.notUsableBecause();
 			if (because == null)
