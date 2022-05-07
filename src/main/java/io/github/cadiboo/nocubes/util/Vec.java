@@ -1,9 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import com.mojang.math.Vector4f;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -112,9 +108,6 @@ public final /* inline */ class Vec {
 		return this;
 	}
 
-	/**
-	 * @return toUse
-	 */
 	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace, Vec toUse) {
 //		normal = crossProduct(prev - vec, next - vec).normalise();
 		final float x = vec.x;
@@ -128,9 +121,6 @@ public final /* inline */ class Vec {
 //		).normalise().multiply(-1);
 	}
 
-	/**
-	 * @return toUse
-	 */
 	public static Vec cross(
 		float x0, float y0, float z0,
 		float x1, float y1, float z1,
@@ -140,35 +130,6 @@ public final /* inline */ class Vec {
 		toUse.y = z0 * x1 - x0 * z1;
 		toUse.z = x0 * y1 - y0 * x1;
 		return toUse;
-	}
-
-	/**
-	 * Copied from {@link Vector3f#transform(Matrix3f)}
-	 */
-	public Vec transform(Matrix3f matrix) {
-		float x = this.x;
-		float y = this.y;
-		float z = this.z;
-		this.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
-		this.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
-		this.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
-		return this;
-	}
-
-	/**
-	 * Copied from {@link Vector4f#transform(Matrix4f)}
-	 */
-	public Vec transform(Matrix4f matrix) {
-		float x = this.x;
-		float y = this.y;
-		float z = this.z;
-//		float w = this.w;
-		float w = 1F;
-		this.x = matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
-		this.y = matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
-		this.z = matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
-//		this.w = matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
-		return this;
 	}
 
 	public Vec interpolate(float t, Vec v0, Vec v1) {

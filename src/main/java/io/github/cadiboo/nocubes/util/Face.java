@@ -1,8 +1,5 @@
 package io.github.cadiboo.nocubes.util;
 
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
-
 /**
  * @author Cadiboo
  */
@@ -105,22 +102,6 @@ public final /* inline */ class Face {
 		v1.multiply(value);
 		v2.multiply(value);
 		v3.multiply(value);
-		return this;
-	}
-
-	public Face transform(Matrix3f matrix) {
-		v0.transform(matrix);
-		v1.transform(matrix);
-		v2.transform(matrix);
-		v3.transform(matrix);
-		return this;
-	}
-
-	public Face transform(Matrix4f matrix) {
-		v0.transform(matrix);
-		v1.transform(matrix);
-		v2.transform(matrix);
-		v3.transform(matrix);
 		return this;
 	}
 

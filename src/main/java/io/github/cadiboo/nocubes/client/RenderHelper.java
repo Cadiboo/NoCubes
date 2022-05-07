@@ -4,6 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
 import com.mojang.math.Matrix4f;
+import com.mojang.math.Vector3f;
+import com.mojang.math.Vector4f;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -165,30 +167,37 @@ public class RenderHelper {
 		);
 	}
 
+	/** See {@link Vector3f#transform(Matrix3f)} */
 	public static float getTransformX(Matrix3f matrix, float x, float y, float z) {
 		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
 	}
 
+	/** See {@link Vector3f#transform(Matrix3f)} */
 	public static float getTransformY(Matrix3f matrix, float x, float y, float z) {
 		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
 	}
 
+	/** See {@link Vector3f#transform(Matrix3f)} */
 	public static float getTransformZ(Matrix3f matrix, float x, float y, float z) {
 		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
 	}
 
+	/** See {@link Vector4f#transform(Matrix4f)} */
 	public static float getTransformX(Matrix4f matrix, float x, float y, float z, float w) {
 		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z + matrix.m03 * w;
 	}
 
+	/** See {@link Vector4f#transform(Matrix4f)} */
 	public static float getTransformY(Matrix4f matrix, float x, float y, float z, float w) {
 		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z + matrix.m13 * w;
 	}
 
+	/** See {@link Vector4f#transform(Matrix4f)} */
 	public static float getTransformZ(Matrix4f matrix, float x, float y, float z, float w) {
 		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z + matrix.m23 * w;
 	}
 
+	/** See {@link Vector4f#transform(Matrix4f)} */
 	public static float getTransformW(Matrix4f matrix, float x, float y, float z, float w) {
 		return matrix.m30 * x + matrix.m31 * y + matrix.m32 * z + matrix.m33 * w;
 	}
