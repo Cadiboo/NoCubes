@@ -22,7 +22,7 @@ final public class GameTestsAdapter {
 		return Arrays.stream(NoCubesTests.createTests())
 			.map(test -> new TestFunction(
 				NoCubes.MOD_ID + " integration", // batch
-				test.name(),
+				test.name().replace(' ', '_'),
 				EMPTY_STRUCTURE, // structure
 				Rotation.NONE,
 				20, // maxTicks
