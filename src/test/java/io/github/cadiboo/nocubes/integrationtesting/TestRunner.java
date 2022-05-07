@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.Util;
+import net.minecraft.gametest.framework.GameTestServer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
@@ -37,7 +38,7 @@ public final class TestRunner {
 			log(server, new TextComponent(fails + " TESTS FAILED").withStyle(RED));
 		else
 			log(server, new TextComponent("ALL TESTS PASSED").withStyle(GREEN));
-		if (!TestUtil.IS_CI_ENVIRONMENT.get())
+		if (!(server instanceof GameTestServer))
 			return;
 		log(server, new TextComponent("Shutting down server..."));
 		if (fails > 0)
