@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.integrationtesting;
 
-import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
@@ -24,7 +23,6 @@ public final class TestRunner {
 
 	@SubscribeEvent
 	public static void runTests(ServerStartedEvent event) {
-		SharedConstants.IS_RUNNING_IN_IDE = true;
 		var testRepository = new TestRepository();
 		var server = event.getServer();
 		var fails = testRepository.tests.parallelStream()
