@@ -21,15 +21,20 @@ final public class GameTestsAdapter {
 	public static Collection<TestFunction> createTests() {
 		return Arrays.stream(NoCubesTests.createTests())
 			.map(test -> new TestFunction(
-				NoCubes.MOD_ID + " integration", // batch
-				test.name().replace(' ', '_'),
+				NoCubes.MOD_ID + "Integration", // batch
+				NoCubes.MOD_ID + "_" + test.name().replace(' ', '_'),
 				EMPTY_STRUCTURE, // structure
 				Rotation.NONE,
 				20, // maxTicks
 				20L, // setupTicks
 				true, // required
 				helper -> {
-					test.action().run();
+					try {
+						test.action().run();
+					} catch (AssertionError e) {
+						helper.fail(e.getMessage());
+						return;
+					}
 					helper.succeed();
 				}
 			))
