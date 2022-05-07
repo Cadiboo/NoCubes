@@ -1,32 +1,22 @@
 # Tweaked from https://github.com/StrikerRockers-Mods/VanillaTweaks/blob/1.15/.github/workflows/gradle.yml
-name: Java CI
+name: Build and test
 
 on: [push,pull_request]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v1
-    - name: Set up JDK
-      uses: actions/setup-java@v1
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup Java
+      uses: actions/setup-java@v2
       with:
-        java-version: 1.8
-    - name: Setup Build
-      run: chmod 777 gradlew
-    - name: Accept Server EULA
-      run: mkdir -p run/server && echo "eula=true" > run/server/eula.txt
-    - name: Build and Check
+        distribution: temurin
+        java-version: 17
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    - name: Build and check
       run: ./gradlew check --stacktrace
-    - name: "Run Integration Tests on Server"
-      uses: eskatos/gradle-command-action@v1
-      with:
-        arguments: --stacktrace --debug runServer
-        wrapper-cache-enabled: true
-        dependencies-cache-enabled: true
-        configuration-cache-enabled: true
-#     - name: Launch Client # Doesn't work because LWJGL
-#       run: ./gradlew runClient --stacktrace
+    - name: Integration tests
+      run: ./gradlew runGameTestServer --stacktrace
