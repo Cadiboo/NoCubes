@@ -74,6 +74,7 @@ minecraft {
 		// Runs all integration tests then quits, for use in CI
 		gameTestServer {
 			workingDirectory project.file('run/server')
+			setForceExit(false) // To allow integration tests to run in CI
 		}
 		configureEach {
 			workingDirectory project.file('run/' + it.name) as File
