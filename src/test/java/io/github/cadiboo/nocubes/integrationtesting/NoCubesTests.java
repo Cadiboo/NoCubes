@@ -8,24 +8,26 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Predicate;
 
 import static net.minecraft.world.level.block.Blocks.*;
 
 /**
+ * Integration tests
+ *
  * @author Cadiboo
  */
-public class NoCubesTest {
+final class NoCubesTests {
 
-	public static void addTests(List<Test> tests) {
-		Collections.addAll(tests,
-//			new Test("the version in mods.toml should have been replaced by gradle", () -> assertFalse(0 == ModList.get().getModFileById(NoCubes.MOD_ID).getMods().get(0).getVersion().getMajorVersion())),
-			new Test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(STONE.defaultBlockState()))),
-			new Test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(DIRT.defaultBlockState()))),
-			new Test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(AIR.defaultBlockState()))),
-			new Test("removing smoothable should work", () -> {
+	record Test(String name, Runnable action) {}
+
+	static Test[] createTests() {
+		return new Test[]{
+//			test("the version in mods.toml should have been replaced by gradle", () -> assertFalse(0 == ModList.get().getModFileById(NoCubes.MOD_ID).getMods().get(0).getVersion().getMajorVersion())),
+			test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(STONE.defaultBlockState()))),
+			test("dirt should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(DIRT.defaultBlockState()))),
+			test("air should not be smoothable", () -> assertFalse(NoCubes.smoothableHandler.isSmoothable(AIR.defaultBlockState()))),
+			test("removing smoothable should work", () -> {
 				var dirt = DIRT.defaultBlockState();
 				var oldValue = NoCubes.smoothableHandler.isSmoothable(dirt);
 				NoCubes.smoothableHandler.setSmoothable(false, dirt);
@@ -33,9 +35,13 @@ public class NoCubesTest {
 				if (oldValue)
 					NoCubes.smoothableHandler.setSmoothable(true, dirt);
 			}),
-			new Test("area sanity check", NoCubesTest::areaSanityCheck),
-			new Test("mesher sanity check", NoCubesTest::mesherSanityCheck)
-		);
+			test("area sanity check", NoCubesTests::areaSanityCheck),
+			test("mesher sanity check", NoCubesTests::mesherSanityCheck),
+		};
+	}
+
+	private static Test test(String name, Runnable action) {
+		return new Test(name, action);
 	}
 
 	private static void areaSanityCheck() {
@@ -63,7 +69,7 @@ public class NoCubesTest {
 			}
 		};
 		for (var mesher : MesherType.values())
-			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTest::checkAndMutate);
+			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTests::checkAndMutate);
 	}
 
 	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {
