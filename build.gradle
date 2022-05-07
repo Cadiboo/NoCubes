@@ -62,8 +62,7 @@ minecraft {
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	// We have an access transformer because we reach into some of Minecraft's private/protected rendering internals
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-	// Currently, this location cannot be changed from the default.
+	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Must be this exact path
 
 	runs {
 		client {
@@ -220,4 +219,8 @@ import net.minecraftforge.gradle.common.tasks.SignJar
 		outputFile = jarTask.archiveFile
 	}
 	jarTask.finalizedBy(signingTask)
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
