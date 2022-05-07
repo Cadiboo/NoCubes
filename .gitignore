@@ -20,6 +20,9 @@ build
 .gradle
 
 # other
-run
+run/*
+!run/gameTestServer
+run/gameTestServer/*
+!run/gameTestServer/gameteststructures
 # Ignore deobfuscated OptiFine
 libs/OptiFine_*_MOD-deobf.jar
