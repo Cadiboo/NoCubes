@@ -70,13 +70,17 @@ minecraft {
 		}
 		server {
 			workingDirectory project.file('run/server')
-			setForceExit(false)  // To allow integration tests to run in CI
+		}
+		// Runs all integration tests then quits, for use in CI
+		gameTestServer {
+			workingDirectory project.file('run/server')
 		}
 		configureEach {
 			workingDirectory project.file('run/' + it.name) as File
 			// The markers can be added/removed as needed (separated by commas)
 			property 'forge.logging.markers', 'XFORM' // 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
 			property 'forge.logging.console.level', 'debug' // 'trace' // For ASM classdump
+			property 'forge.enabledGameTestNamespaces', project.modId // Run our integration tests
 			jvmArg '-ea' // Enable assertions
 			// Use the 'test' module (and both source sets) because it contains our integration tests
 			ideaModule "${project.name}.test"
