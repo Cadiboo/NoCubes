@@ -348,12 +348,12 @@ public final class NoCubesConfig {
 			private Impl(ForgeConfigSpec.Builder builder) {
 				smoothableWhitelist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelist")
-					.comment("What blocks should be smoothed by NoCubes")
+					.comment("What blocks should be smoothed by NoCubes (same syntax as the /setblock command)")
 					.defineListAllowEmpty(Collections.singletonList("smoothableWhitelist"), Lists::newArrayList, String.class::isInstance);
 
 				smoothableBlacklist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklist")
-					.comment("What blocks should not be smoothed by NoCubes")
+					.comment("What blocks should not be smoothed by NoCubes (same syntax as the /setblock command)")
 					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklist"), Lists::newArrayList, String.class::isInstance);
 
 				collisionsEnabled = builder
