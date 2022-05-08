@@ -53,6 +53,22 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 			ci.setReturnValue(false);
 	}
 
+//	/**
+//	 * Very similar logic to {@link Hooks#shouldCancelOcclusion}.
+//	 * Fixes some lighting issues with smooth blocks and fixes blocks from the
+//	 * <a href="https://www.curseforge.com/minecraft/mc-mods/framedblocks">FramedBlocks mod</a>
+//	 * not rendering their sides when up against smooth blocks.
+//	 */
+//	@Inject(
+//		method = "isSolidRender",
+//		at = @At("HEAD"),
+//		cancellable = true
+//	)
+//	public void nocubes_isSolidRender(CallbackInfoReturnable<Boolean> ci) {
+//		if (Hooks.renderingEnabledFor((BlockStateBase) (Object) this))
+//			ci.setReturnValue(false);
+//	}
+
 	/**
 	 * Makes the 3rd person camera not be super zoomed-in when half inside a smoothed block.
 	 */

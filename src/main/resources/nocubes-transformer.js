@@ -14,6 +14,7 @@ function initializeCoreMod() {
 	VarInsnNode = Java.type('org.objectweb.asm.tree.VarInsnNode');
 	FieldInsnNode = Java.type('org.objectweb.asm.tree.FieldInsnNode');
 	MethodInsnNode = Java.type('org.objectweb.asm.tree.MethodInsnNode');
+	JumpInsnNode = Java.type('org.objectweb.asm.tree.JumpInsnNode');
 
 	// Opcodes
 	INVOKESTATIC = Opcodes.INVOKESTATIC;
@@ -96,6 +97,66 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
+		'FramedBlocks Occlusion': {
+			'target': {
+				'type': 'METHOD',
+				'class': 'xfacthd.framedblocks.api.util.SideSkipPredicate',
+				'methodName': 'compareState',
+				'methodDesc': '(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z'
+			},
+			'transformer': function(methodNode) {
+				var instructions = methodNode.instructions;
+//			      L3
+//                   LINENUMBER 75 L3
+//                   ALOAD 5
+//                   ALOAD 2
+//                   IF_ACMPNE L4
+//                   ALOAD 5
+///
+//                   GETSTATIC net/minecraft/tags/BlockTags.LEAVES : Lnet/minecraft/tags/TagKey;
+//                   INVOKEVIRTUAL net/minecraft/world/level/block/state/BlockState.is (Lnet/minecraft/tags/TagKey;)Z
+//                   IFEQ L5
+//                  L4
+//                  FRAME APPEND [xfacthd/framedblocks/api/block/FramedBlockEntity net/minecraft/world/level/block/state/BlockState]
+//                   ALOAD 5
+//                   ALOAD 0
+//                   ALOAD 1
+//                   INVOKEVIRTUAL net/minecraft/world/level/block/state/BlockState.isSolidRender (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+//                   IFEQ L6
+//                   ALOAD 2
+//                   ALOAD 0
+//                   ALOAD 1
+//                   ALOAD 3
+//                   INVOKEVIRTUAL net/minecraft/core/BlockPos.relative (Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+//                   INVOKEVIRTUAL net/minecraft/world/level/block/state/BlockState.isSolidRender (Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+//                   IFEQ L6
+//                  L5
+//                   ICONST_1
+//                   IRETURN
+				var isCall = findFirstMethodCall(
+					methodNode,
+					ASMAPI.MethodType.VIRTUAL,
+					'net/minecraft/world/level/block/state/BlockState',
+					ASMAPI.mapMethod('m_204336_'), // is
+					'(Lnet/minecraft/tags/TagKey;)Z'
+				);
+				instructions.remove(isCall.getPrevious()); // Remove GETSTATIC net/minecraft/tags/BlockTags.LEAVES
+				//instructions.set(isCall.getNext(), new JumpInsnNode(Opcodes.IFNE, isCall.getNext().label));
+				instructions.set(isCall, new MethodInsnNode(
+					//int opcode
+					Opcodes.INVOKEVIRTUAL,
+					//String owner
+					'net/minecraft/world/level/block/state/BlockState',
+					//String name
+					ASMAPI.mapMethod('m_60815_'), // canOcclude
+					//String descriptor
+					'()Z',
+					//boolean isInterface
+					false
+				));
+				return methodNode;
+			}
+		}
 		// endregion Rendering
 	});
 }
