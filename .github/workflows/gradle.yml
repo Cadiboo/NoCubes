@@ -20,9 +20,9 @@ jobs:
       run: ./gradlew check --stacktrace
     - name: Integration tests
       run: ./gradlew runGameTestServer --stacktrace
-  - name: Archive unsigned jars
-    uses: actions/upload-artifact@v3
-    with:
+    - name: Archive unsigned jars
+      uses: actions/upload-artifact@v3
+      with:
         name: unsigned-jars
         path: |
             build/libs/*.jar
