@@ -33,9 +33,18 @@ public final class NoCubes {
 		});
 	}
 
+	// region API
 	/**
 	 * For other mods.
-	 * Add your blocks as being smoothable.
+	 * Check if a block is smoothable in-world (takes user/server configuration into account).
+	 */
+	public static boolean isSmoothable(BlockState state) {
+		return smoothableHandler.isSmoothable(state);
+	}
+
+	/**
+	 * For other mods.
+	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
 	 */
 	public static void addSmoothable(Block... blocks) {
 		for (var block : blocks)
@@ -44,10 +53,11 @@ public final class NoCubes {
 
 	/**
 	 * For other mods.
-	 * Add your blocks as being smoothable.
+	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
 	 */
 	public static void addSmoothable(BlockState... states) {
 		NoCubesConfig.Smoothables.addDefault(states);
 	}
+	// endregion
 
 }
