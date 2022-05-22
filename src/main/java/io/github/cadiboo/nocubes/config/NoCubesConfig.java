@@ -11,8 +11,6 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
@@ -39,9 +37,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 import static net.minecraft.world.level.block.Blocks.*;
@@ -477,50 +473,62 @@ public final class NoCubesConfig {
 		 * Stores the list of blocks that 'just are' smoothable by default.
 		 * This includes stuff like Stone and any blocks that other mods register as smoothable.
 		 */
-		private static final TagKey<Block> DEFAULT_SMOOTHABLES_TAG = ForgeRegistries.BLOCKS.tags().createOptionalTagKey(
-			new ResourceLocation(NoCubes.MOD_ID, "smoothable"),
-			Stream.concat(
-				Arrays.stream(new Block[]{
-					STONE, GRANITE, DIORITE, ANDESITE,
-					GRASS_BLOCK, DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
-					DEEPSLATE, ROOTED_DIRT, TUFF, CALCITE, SMOOTH_BASALT, AMETHYST_BLOCK, BUDDING_AMETHYST,
-					BEDROCK,
-					SAND, RED_SAND,
-					SANDSTONE, RED_SANDSTONE,
-					GRAVEL,
-					COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
-					DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE, DEEPSLATE_GOLD_ORE, DEEPSLATE_REDSTONE_ORE, DEEPSLATE_DIAMOND_ORE, DEEPSLATE_LAPIS_ORE, DEEPSLATE_EMERALD_ORE,
-					INFESTED_STONE, INFESTED_DEEPSLATE,
-					BONE_BLOCK,
-					DIRT_PATH,
-					CLAY, TERRACOTTA, WHITE_TERRACOTTA, ORANGE_TERRACOTTA, MAGENTA_TERRACOTTA, LIGHT_BLUE_TERRACOTTA, YELLOW_TERRACOTTA, LIME_TERRACOTTA, PINK_TERRACOTTA, GRAY_TERRACOTTA, LIGHT_GRAY_TERRACOTTA, CYAN_TERRACOTTA, PURPLE_TERRACOTTA, BLUE_TERRACOTTA, BROWN_TERRACOTTA, GREEN_TERRACOTTA, RED_TERRACOTTA, BLACK_TERRACOTTA,
-					SNOW, SNOW_BLOCK, ICE, PACKED_ICE, FROSTED_ICE,
-					NETHERRACK, SOUL_SAND, SOUL_SOIL, BASALT, MAGMA_BLOCK, GLOWSTONE, NETHER_WART_BLOCK, CRIMSON_STEM, WARPED_NYLIUM, WARPED_WART_BLOCK, WARPED_STEM,
-					END_STONE,
-					OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG,
-					OAK_LEAVES, SPRUCE_LEAVES, BIRCH_LEAVES, JUNGLE_LEAVES, ACACIA_LEAVES, DARK_OAK_LEAVES,
-				}),
-				Arrays.stream(new String[]{
-					"biomesoplenty:grass",
-					"biomesoplenty:dirt",
-					"biomesoplenty:white_sand",
-					"biomesoplenty:dried_sand",
-					"biomesoplenty:hard_ice",
-					"biomesoplenty:mud",
-					"chisel:marble2",
-					"chisel:limestone2",
-					"dynamictrees:rootydirtspecies",
-					"dynamictrees:rootysand",
-					"iceandfire:ash",
-					"iceandfire:sapphire_ore",
-					"iceandfire:chared_grass",
-					"iceandfire:chared_stone",
-					"iceandfire:frozen_grass_path",
-					"notenoughroofs:copper_ore",
-					"rustic:slate",
-				}).map(id -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id))).filter(Objects::nonNull)
-			).<Supplier<Block>>map(block -> () -> block).collect(Collectors.toSet())
-		);
+		// TODO: Convert this to a tag
+		private static final Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
+
+		static {
+			// Add all possible BlockStates for these blocks
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[]{
+				STONE, GRANITE, DIORITE, ANDESITE,
+				GRASS_BLOCK, DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
+				DEEPSLATE, ROOTED_DIRT, TUFF, CALCITE, SMOOTH_BASALT, AMETHYST_BLOCK, BUDDING_AMETHYST,
+				BEDROCK,
+				SAND, RED_SAND,
+				SANDSTONE, RED_SANDSTONE,
+				GRAVEL,
+				COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
+				DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE, DEEPSLATE_GOLD_ORE, DEEPSLATE_REDSTONE_ORE, DEEPSLATE_DIAMOND_ORE, DEEPSLATE_LAPIS_ORE, DEEPSLATE_EMERALD_ORE,
+				INFESTED_STONE, INFESTED_DEEPSLATE,
+				BONE_BLOCK,
+				DIRT_PATH,
+				CLAY, TERRACOTTA, WHITE_TERRACOTTA, ORANGE_TERRACOTTA, MAGENTA_TERRACOTTA, LIGHT_BLUE_TERRACOTTA, YELLOW_TERRACOTTA, LIME_TERRACOTTA, PINK_TERRACOTTA, GRAY_TERRACOTTA, LIGHT_GRAY_TERRACOTTA, CYAN_TERRACOTTA, PURPLE_TERRACOTTA, BLUE_TERRACOTTA, BROWN_TERRACOTTA, GREEN_TERRACOTTA, RED_TERRACOTTA, BLACK_TERRACOTTA,
+				SNOW, SNOW_BLOCK, ICE, PACKED_ICE, FROSTED_ICE,
+				NETHERRACK, SOUL_SAND, SOUL_SOIL, BASALT, MAGMA_BLOCK, GLOWSTONE, NETHER_WART_BLOCK, CRIMSON_STEM, WARPED_NYLIUM, WARPED_WART_BLOCK, WARPED_STEM,
+				END_STONE,
+				OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG,
+				OAK_LEAVES, SPRUCE_LEAVES, BIRCH_LEAVES, JUNGLE_LEAVES, ACACIA_LEAVES, DARK_OAK_LEAVES,
+			}).flatMap(block -> ModUtil.getStates(block).stream()).collect(Collectors.toList()));
+
+			// Add each of these individual BlockStates
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new BlockState[]{
+
+			}).collect(Collectors.toList()));
+
+			// Add these modded BlockStates
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(
+				"biomesoplenty:grass[snowy=false,variant=sandy]",
+				"biomesoplenty:dirt[coarse=false,variant=sandy]",
+				"biomesoplenty:white_sand",
+				"biomesoplenty:grass[snowy=false,variant=silty]",
+				"biomesoplenty:dirt[coarse=false,variant=loamy]",
+				"biomesoplenty:grass[snowy=false,variant=loamy]",
+				"biomesoplenty:dried_sand",
+				"biomesoplenty:hard_ice",
+				"biomesoplenty:mud[variant=mud]",
+				"biomesoplenty:dirt[coarse=false,variant=silty]",
+				"chisel:marble2[variation=7]",
+				"chisel:limestone2[variation=7]",
+				"dynamictrees:rootydirtspecies[life=0]",
+				"dynamictrees:rootysand[life=0]",
+				"iceandfire:ash",
+				"iceandfire:sapphire_ore",
+				"iceandfire:chared_grass",
+				"iceandfire:chared_stone",
+				"iceandfire:frozen_grass_path",
+				"notenoughroofs:copper_ore",
+				"rustic:slate"
+			)));
+		}
 
 		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
 			LOG.debug("Updating user-defined smoothable string lists");
@@ -543,11 +551,10 @@ public final class NoCubesConfig {
 			var whitelisted = parseBlockStates(whitelist);
 			var blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
-				.forEach(block -> {
-					for (var state : ModUtil.getStates(block)) {
-						var smoothable = (whitelisted.contains(state) || state.is(DEFAULT_SMOOTHABLES_TAG)) && !blacklisted.contains(state);
-						NoCubes.smoothableHandler.setSmoothable(smoothable, state);
-					}
+				.flatMap(block -> ModUtil.getStates(block).parallelStream())
+				.forEach(state -> {
+					var smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
+					NoCubes.smoothableHandler.setSmoothable(smoothable, state);
 				});
 		}
 
@@ -560,6 +567,9 @@ public final class NoCubesConfig {
 			return set;
 		}
 
+		public static void addDefault(BlockState... states) {
+			DEFAULT_SMOOTHABLES.addAll(Arrays.asList(states));
+		}
 	}
 
 }

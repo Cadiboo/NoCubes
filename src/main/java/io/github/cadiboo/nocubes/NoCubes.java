@@ -41,6 +41,23 @@ public final class NoCubes {
 	public static boolean isSmoothable(BlockState state) {
 		return smoothableHandler.isSmoothable(state);
 	}
+
+	/**
+	 * For other mods.
+	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
+	 */
+	public static void addSmoothable(Block... blocks) {
+		for (var block : blocks)
+			addSmoothable(ModUtil.getStates(block).toArray(new BlockState[0]));
+	}
+
+	/**
+	 * For other mods.
+	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
+	 */
+	public static void addSmoothable(BlockState... states) {
+		NoCubesConfig.Smoothables.addDefault(states);
+	}
 	// endregion
 
 }
