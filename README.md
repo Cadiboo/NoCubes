@@ -1,5 +1,5 @@
 # [NoCubes Mod](https://Cadiboo.github.io/projects/nocubes/)
-![Java CI](https://github.com/Cadiboo/NoCubes/workflows/Java%20CI/badge.svg?branch=master)
+![Build](https://github.com/Cadiboo/NoCubes/workflows/Java%20CI/badge.svg?branch=master)
 [
 ![Curseforge Downloads](http://cf.way2muchnoise.eu/full_nocubes_downloads.svg)
 ![Curseforge Versions](http://cf.way2muchnoise.eu/versions/nocubes.svg)
