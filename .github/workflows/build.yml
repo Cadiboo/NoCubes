@@ -1,8 +1,4 @@
-# Tweaked from https://github.com/StrikerRockers-Mods/VanillaTweaks/blob/1.15/.github/workflows/gradle.yml
-name: Build and test
-
-on: [push,pull_request]
-
+on: push
 jobs:
   build:
     runs-on: ubuntu-latest
