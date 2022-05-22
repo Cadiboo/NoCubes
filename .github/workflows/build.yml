@@ -14,7 +14,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Build and check
-        run: ./gradlew check --stacktrace
+        run: ./gradlew build --stacktrace
       - name: Integration tests
         run: ./gradlew runGameTestServer --stacktrace
       - name: Archive unsigned jars
