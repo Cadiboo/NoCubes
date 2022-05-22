@@ -140,8 +140,12 @@ dependencies {
 	testImplementation 'junit:junit:4.13.2'
 }
 
+java {
+	withJavadocJar()
+	withSourcesJar()
+}
 jar {
-	classifier 'dev'
+	classifier 'dev-slim'
 	manifest {
 		attributes([
 			// See https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
@@ -159,26 +163,6 @@ jar {
 		])
 	}
 }
-shadowJar {
-	classifier ''
-
-	configurations = [project.configurations.shadow]
-	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
-	manifest.attributes(jar.manifest.getAttributes())
-}
-reobf {
-	// We want the output of the following tasks to be reobfuscated
-	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-	shadowJar {}
-}
-task sourcesJar(type: Jar, dependsOn: classes) {
-	archiveClassifier.set('sources')
-	from sourceSets.main.allSource
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-	archiveClassifier.set('javadoc')
-	from javadoc.destinationDir
-}
 javadoc {
 	// Gradle doesn't support Java 8's new tags out of the box
 	options.tags = [
@@ -187,38 +171,51 @@ javadoc {
 		'implNote:a:Implementation Note:',
 	]
 }
-
-artifacts {
-	archives jar
-	archives shadowJar
-	archives sourcesJar
-	archives javadocJar
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+def commonShadowConfig = { task ->
+	configure(task) {
+		// Some code adapted from "https://github.com/johnrengelman/shadow/blob/1f868967b29bc78af4f021330094fad5dee4ac2c/src/main/groovy/com/github/jengelman/gradle/plugins/shadow/ShadowJavaPlugin.groovy#L60-L96"
+		task.from sourceSets.main.output
+		task.manifest.attributes jar.manifest.attributes
+		task.configurations = [project.configurations.shadow]
+		task.relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
+	}
+}
+task devShadowJar(type: ShadowJar, dependsOn: jar) { task ->
+	classifier 'dev-all'
+	commonShadowConfig(task)
+}
+shadowJar { task ->
+	classifier '' // Production jar, remapped in-place by reobf
+	commonShadowConfig(task)
+	builtBy
 }
 
-// Sign all the jars
 import net.minecraftforge.gradle.common.tasks.SignJar
-
-[
-	jar,
-	shadowJar,
-	sourcesJar,
-	javadocJar,
-].each { jarTask ->
-	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: SignJar, dependsOn: jarTask) {
-		// Skips if the keyStore property is missing.
-		onlyIf {
-			project.hasProperty('keyStore')
-		}
-		// findProperty allows us to reference the property without it existing.
-		// Using project.propName would cause the script to fail validation if the property did not exist.
-		keyStore = project.findProperty('keyStore')
-		alias = project.findProperty('keyStoreAlias')
-		storePass = project.findProperty('keyStorePass')
-		keyPass = project.findProperty('keyStoreKeyPass')
-		inputFile = jarTask.archiveFile
-		outputFile = jarTask.archiveFile
+artifacts {
+	def jars = [
+		jar,
+		devShadowJar,
+		shadowJar,
+		sourcesJar,
+		javadocJar,
+	]
+	jars.each { jarTask ->
+		archives(jarTask)
+		publish.dependsOn(tasks.create(name: "sign${jarTask.name.capitalize()}", type: SignJar, dependsOn: jarTask) {
+			dependsOn build
+			onlyIf {
+				project.hasProperty('keyStore')
+			}
+			// Using project.propName would cause the script to fail validation if the property did not exist so we use project.findProperty instead
+		 	keyStore = project.findProperty('keyStore')
+			alias = project.findProperty('keyStoreAlias')
+			storePass = project.findProperty('keyStorePass')
+			keyPass = project.findProperty('keyStoreKeyPass')
+			inputFile = jarTask.archiveFile
+			outputFile = jarTask.archiveFile
+		})
 	}
-	jarTask.finalizedBy(signingTask)
 }
 
 tasks.withType(JavaCompile).configureEach {
