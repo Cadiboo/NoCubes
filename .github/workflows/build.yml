@@ -3,22 +3,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Setup Java
-      uses: actions/setup-java@v2
-      with:
-        distribution: temurin
-        java-version: 17
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
-    - name: Build and check
-      run: ./gradlew check --stacktrace
-    - name: Integration tests
-      run: ./gradlew runGameTestServer --stacktrace
-    - name: Archive unsigned jars
-      uses: actions/upload-artifact@v3
-      with:
-        name: unsigned-jars
-        path: |
-            build/libs/*.jar
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Build and check
+        run: ./gradlew check --stacktrace
+      - name: Integration tests
+        run: ./gradlew runGameTestServer --stacktrace
+      - name: Archive unsigned jars
+        uses: actions/upload-artifact@v3
+        with:
+          name: unsigned-jars
+          path: |
+            ./build/libs/*.jar
+          if-no-files-found: error

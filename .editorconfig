@@ -8,11 +8,15 @@ insert_final_newline = true
 charset = utf-8
 indent_style = tab
 indent_size = 4
+trim_trailing_whitespace = true
 
 [*.java]
-trim_trailing_whitespace = true
 # Empty anonymous classes used for reified generic types should be on 1 line
 ij_java_keep_simple_classes_in_one_line = true
 
 [*.md]
 trim_trailing_whitespace = false
+
+[*.yml]
+indent_style = space
+indent_size = 2
