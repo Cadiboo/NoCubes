@@ -1,39 +1,18 @@
-// Forge buildscript - necessary for Forge to be setup
 buildscript {
-	repositories {
-		// These repositories are only for Gradle plugins, put any other repositories in the repository block further below
-		maven { url = 'https://maven.minecraftforge.net' }
-		maven { url = 'https://repo.spongepowered.org/maven' }
-		mavenCentral()
-	}
-	// Buildscript dependency on Forge Gradle
 	dependencies {
-		classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+		// Can't use the newer 'plugins' block for Mixin, need to use the old 'apply plugin' method
 		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
 	}
 }
-
 plugins {
 	id 'java'
 	// Shadow jar includes our libraries into our final jar
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'eclipse'
+	id 'eclipse' // Is this needed?
 	id 'maven-publish'
+	id 'net.minecraftforge.gradle' version '5.1.+'
 }
-
-// Necessary for Forge to be setup
-apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'org.spongepowered.mixin'
-
-repositories {
-	maven {
-		url "https://www.cursemaven.com"
-		content {
-			includeGroup "curse.maven"
-		}
-	}
-	mavenCentral()
-}
 
 def getGitCommit = { ->
 	def stdout = new ByteArrayOutputStream()
@@ -111,6 +90,15 @@ minecraft.runs.all {
 	}
 }
 
+repositories {
+	maven {
+		url "https://www.cursemaven.com"
+		content {
+			includeGroup "curse.maven"
+		}
+	}
+	mavenCentral()
+}
 dependencies {
 	// If OptiFine (deobfuscated with Cadiboo's OptiFine deobf tool) is in libs, we want to be able to compile against its classes
 	// We use 'provided' and not 'implementation', we don't want it to actually load at runtime because the non-deobf
@@ -195,6 +183,7 @@ artifacts {
 	archives javadocJar
 }
 
+// TODO: Move this to the publish step, not the build step
 // Sign all the jars
 import net.minecraftforge.gradle.common.tasks.SignJar
 
