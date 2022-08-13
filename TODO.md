@@ -1,6 +1,8 @@
 # TODO
 ## Soon
 Pressing issues that need to be fixed soon (usually because they affect performance, are painful bugs or are [regressions](https://en.wikipedia.org/wiki/Software_regression))
+1. Fix leaves with snow on them not being rendered 2 sided (render snow 2 sided in this case)
+1. Fix powdered snow being walkable when collisions are enabled (don't have terrain collisions for smooth blocks that normally don't have collisions)
 1. Investigate and fix [colored terracotta not being colored with OptiFine & Patrix 128](https://discord.com/channels/493715188843937793/520716613574590494/962760253378822276) (likely small task)
 1. Fix config loading issues (need to unit/integration test)
    - Need to stop old configs being loaded and overwriting the correct in-memory config

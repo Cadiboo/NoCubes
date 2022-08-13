@@ -21,7 +21,6 @@ import net.minecraft.world.level.block.DirtPathBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Material;
-import net.minecraftforge.client.ForgeHooksClient;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -67,7 +66,6 @@ public final class MeshRenderer {
 				return true;
 			});
 		});
-		ForgeHooksClient.setRenderType(null);
 	}
 
 	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, Mesher mesher, Area area) {

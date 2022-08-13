@@ -22,24 +22,24 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelData;
 
 import java.util.List;
-import java.util.Random;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
+import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults;
 import static net.minecraft.core.BlockPos.MutableBlockPos;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
@@ -59,29 +59,35 @@ public final class RendererDispatcher {
 	 * Stops every method having lots of parameters.
 	 */
 	public static class ChunkRenderInfo {
-		private static final List<RenderType> BLOCK_LAYERS = RenderType.chunkBufferLayers();
-
 		public final RebuildTask rebuildTask;
 		public final RenderChunk chunkRender;
-		public final CompiledChunk compiledChunk;
 		public final ChunkBufferBuilderPack buffers;
+		public final CompileResults compileResults;
 		public final BlockPos chunkPos;
 		public final BlockAndTintGetter world;
 		public final FluentMatrixStack matrix;
-		public final Random random;
+		public final Set<RenderType> usedLayers;
+		public final RandomSource random;
 		public final BlockRenderDispatcher dispatcher;
 		public final LightCache light;
 		public final OptiFineProxy optiFine;
 		public final BlockColors blockColors;
 
-		public ChunkRenderInfo(RebuildTask rebuildTask, RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, BlockPos chunkPos, BlockAndTintGetter world, FluentMatrixStack matrix, Random random, BlockRenderDispatcher dispatcher, LightCache light, OptiFineProxy optiFine) {
+		public ChunkRenderInfo(
+			RebuildTask rebuildTask, RenderChunk chunkRender,
+			ChunkBufferBuilderPack buffers, CompileResults compileResults, BlockPos chunkPos,
+			BlockAndTintGetter world, FluentMatrixStack matrix,
+			Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
+			LightCache light, OptiFineProxy optiFine
+		) {
 			this.rebuildTask = rebuildTask;
 			this.chunkRender = chunkRender;
-			this.compiledChunk = compiledChunk;
 			this.buffers = buffers;
+			this.compileResults = compileResults;
 			this.chunkPos = chunkPos;
 			this.world = world;
 			this.matrix = matrix;
+			this.usedLayers = usedLayers;
 			this.random = random;
 			this.dispatcher = dispatcher;
 			this.light = light;
@@ -90,24 +96,19 @@ public final class RendererDispatcher {
 		}
 
 		interface RenderInLayer {
-			boolean render(BlockState state, BlockPos worldPos, IModelData modelData, RenderType layer, BufferBuilder buffer, Object renderEnv);
+			void render(BlockState state, BlockPos worldPos, ModelData modelData, RenderType layer, BufferBuilder buffer, Object renderEnv);
 		}
 
 		public void renderInBlockLayers(BlockState state, BlockPos worldPos, RenderInLayer render) {
 			var modelData = rebuildTask.getModelData(worldPos);
-			var layers = BLOCK_LAYERS;
-			for (int i = 0, size = layers.size(); i < size; ++i) {
-				var layer = layers.get(i);
-				if (!ItemBlockRenderTypes.canRenderInLayer(state, layer))
-					continue;
-
+			var layers = ItemBlockRenderTypes.getRenderLayers(state);
+			for (var layer : layers) {
 				var buffer = getAndStartBuffer(layer);
 				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
-				boolean used = render.render(state, worldPos, modelData, layer, buffer, renderEnv);
+				render.render(state, worldPos, modelData, layer, buffer, renderEnv);
 
-				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compiledChunk);
-				if (used)
-					markLayerUsed(layer);
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compileResults);
+				markLayerUsed(layer);
 			}
 		}
 
@@ -130,7 +131,7 @@ public final class RendererDispatcher {
 		public void renderBlock(BlockState stateIn, MutableBlockPos worldPosIn) {
 			renderInBlockLayers(
 				stateIn, worldPosIn,
-				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData)
+				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
 			);
 		}
 
@@ -139,11 +140,11 @@ public final class RendererDispatcher {
 		}
 
 		public BufferBuilder getAndStartBuffer(RenderType layer) {
-			return RendererDispatcher.getAndStartBuffer(chunkRender, compiledChunk, buffers, layer);
+			return RendererDispatcher.getAndStartBuffer(chunkRender, compileResults, buffers, usedLayers, layer);
 		}
 
 		public void markLayerUsed(RenderType layer) {
-			RendererDispatcher.markLayerUsed(compiledChunk, optiFine, layer);
+			RendererDispatcher.markLayerUsed(compileResults, optiFine, layer);
 		}
 
 		public interface ColorSupplier {
@@ -186,7 +187,6 @@ public final class RendererDispatcher {
 
 					if (!anyQuadsFound)
 						forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
-					return true;
 				}
 			);
 		}
@@ -197,9 +197,9 @@ public final class RendererDispatcher {
 			return model;
 		}
 
-		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, IModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
+		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
 			random.setSeed(rand);
-			var quads = model.getQuads(state, direction, random, modelData);
+			var quads = model.getQuads(state, direction, random, modelData, layer);
 			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
 			return quads;
 		}
@@ -226,7 +226,11 @@ public final class RendererDispatcher {
 		}
 	}
 
-	public static void renderChunk(RebuildTask rebuildTask, RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack, Random random, BlockRenderDispatcher dispatcher) {
+	public static void renderChunk(
+		RebuildTask rebuildTask, RenderChunk chunkRender, ChunkBufferBuilderPack buffers,
+		CompileResults compileResults, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
+	) {
 		var start = System.nanoTime();
 		var matrix = new FluentMatrixStack(matrixStack);
 		try (
@@ -236,7 +240,12 @@ public final class RendererDispatcher {
 			var optiFine = OptiFineCompatibility.proxy();
 			// Matrix stack is translated to the start of the chunk
 			optiFine.preRenderChunk(chunkRender, chunkPos, matrixStack);
-			var renderer = new ChunkRenderInfo(rebuildTask, chunkRender, compiledChunk, buffers, chunkPos, world, matrix, random, dispatcher, light, optiFine);
+			var renderer = new ChunkRenderInfo(
+				rebuildTask, chunkRender, buffers,
+				compileResults, chunkPos, world, matrix,
+				usedLayers, random, dispatcher,
+				light, optiFine
+			);
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
 			renderChunkFluids(renderer);
@@ -247,7 +256,7 @@ public final class RendererDispatcher {
 		totalProfiler.recordAndLogElapsedNanosChunk(start, "total");
 	}
 
-	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData) {
+	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData) {
 		var mesher = NoCubesConfig.Server.mesher;
 		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, mesher)) {
 			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
@@ -255,11 +264,11 @@ public final class RendererDispatcher {
 	}
 
 	private static void renderChunkFluids(ChunkRenderInfo renderer) {
-//		var start = System.nanoTime();
+		var start = System.nanoTime();
 //		try (var area = new Area(Minecraft.getInstance().level, renderer.chunkPos.subtract(ModUtil.VEC_ONE), ModUtil.CHUNK_SIZE.offset(ModUtil.VEC_TWO))) {
 //			FluidRenderer.render(renderer, area);
 //		}
-//		fluidsProfiler.recordAndLogElapsedNanosChunk(start, "fluids");
+		fluidsProfiler.recordAndLogElapsedNanosChunk(start, "fluids");
 	}
 
 	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothable) {
@@ -274,18 +283,17 @@ public final class RendererDispatcher {
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
-	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers, RenderType layer) {
-		ForgeHooksClient.setRenderType(layer);
+	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompileResults compiledChunk, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
 		var buffer = buffers.builder(layer);
 
-		if (compiledChunk.hasLayer.add(layer))
+		if (usedLayers.add(layer))
 			chunkRender.beginLayer(buffer);
 		return buffer;
 	}
 
-	static void markLayerUsed(CompiledChunk compiledChunk, OptiFineProxy optiFine, RenderType layer) {
-		compiledChunk.isCompletelyEmpty = false;
-		optiFine.markRenderLayerUsed(compiledChunk, layer);
+	static void markLayerUsed(CompileResults compiledChunk, OptiFineProxy optiFine, RenderType layer) {
+		// TODO: Why was this needed?
+		//optiFine.markRenderLayerUsed(compiledChunk, layer);
 	}
 
 	static void quad(

@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,12 +21,12 @@ public class BlockRenderDispatcherMixin {
 	 * Renders our own smoothed cracking/breaking/damage animation.
 	 */
 	@Inject(
-		method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/IModelData;)V",
+		method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/ModelData;)V",
 		at = @At("HEAD"),
 		remap = false, // Forge-added method
 		cancellable = true
 	)
-	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, IModelData modelData, CallbackInfo ci) {
+	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData, CallbackInfo ci) {
 		if (Hooks.renderingEnabledFor(state)) {
 			RendererDispatcher.renderBreakingTexture((BlockRenderDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
 			ci.cancel();

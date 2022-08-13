@@ -7,11 +7,12 @@ import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,8 +20,9 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.Random;
+import java.util.Set;
 
+import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults;
 import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
 /**
@@ -44,9 +46,22 @@ public final class Hooks {
 	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static void preIteration(RebuildTask rebuildTask, RenderChunk chunkRender, ChunkRenderDispatcher.CompiledChunk compiledChunkIn, ChunkBufferBuilderPack builderIn, BlockPos blockpos, BlockAndTintGetter chunkrendercache, PoseStack matrixstack, Random random, BlockRenderDispatcher blockrendererdispatcher) {
+	public static void preIteration(
+		// Fields (this, RenderChunk.this)
+		RebuildTask rebuildTask, RenderChunk chunkRender,
+		// Params (p_234471_)
+		ChunkBufferBuilderPack buffers,
+		// Local variables
+		CompileResults compileResults, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
+		// Scoped local variables
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
+	) {
 		SelfCheck.preIteration = true;
-		RendererDispatcher.renderChunk(rebuildTask, chunkRender, compiledChunkIn, builderIn, blockpos, chunkrendercache, matrixstack, random, blockrendererdispatcher);
+		RendererDispatcher.renderChunk(
+			rebuildTask, chunkRender, buffers,
+			compileResults, chunkPos, world, matrix,
+			usedLayers, random, dispatcher
+		);
 	}
 
 	/**

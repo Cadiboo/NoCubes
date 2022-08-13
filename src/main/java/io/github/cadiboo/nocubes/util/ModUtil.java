@@ -4,11 +4,10 @@ import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.ChatFormatting;
-import net.minecraft.Util;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.*;
@@ -44,7 +43,7 @@ public class ModUtil {
 
 	public static void warnPlayer(@Nullable Player player, String translationKey, Object... formatArgs) {
 		if (player != null)
-			player.sendMessage(new TranslatableComponent(translationKey, formatArgs).withStyle(ChatFormatting.RED), Util.NIL_UUID);
+			player.sendSystemMessage(Component.translatable(translationKey, formatArgs).withStyle(ChatFormatting.RED));
 		else
 			LogManager.getLogger("NoCubes notification fallback").warn(I18n.get(translationKey, formatArgs));
 	}
