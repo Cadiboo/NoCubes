@@ -17,6 +17,8 @@ function initializeCoreMod() {
 
 	// Opcodes
 	INVOKESTATIC = Opcodes.INVOKESTATIC;
+	DUP = Opcodes.DUP;
+	DUP_X1 = Opcodes.DUP_X1;
 	ALOAD = Opcodes.ALOAD;
 	ARETURN = Opcodes.ARETURN;
 	GETSTATIC = Opcodes.GETSTATIC;
@@ -100,6 +102,57 @@ function initializeCoreMod() {
 				return methodNode;
 			}
 		},
+		// Changes fluid rendering to support extended fluid rendering
+		'LiquidBlockRenderer#tesselate': {
+			'target': {
+				'type': 'METHOD',
+				'class': 'net.minecraft.client.renderer.block.LiquidBlockRenderer',
+				'methodName': 'm_234369_', // tesselate
+				'methodDesc': '(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)V'
+			},
+			'transformer': function(methodNode) {
+				var instructions = methodNode.instructions;
+				// Redirect every 'blockState.getFluidState()' call preceded by a 'world.getBlockState(pos)' to our 'getRenderFluidState' hook
+				// This could be converted to a Mixin but
+				// - Each offset block pos would need to be recreated (currently using DUP_X1 to avoid this) making it less efficient that this ASM
+				// - Targeting each different 'blockState.getFluidState()' call might be hard
+				// Warning - clever/complex code:
+				// - Uses DUP_X1 to copy the 'pos' parameter from the 'world.getBlockState(pos)' call onto the stack (below the 'world' param to not interfere with the call)
+				// - Uses DUP to copy the 'state' returned from the 'world.getBlockState(pos)' call onto the stack
+				// - Removes the existing 'blockState.getFluidState()' call
+				// - Calls our 'getRenderFluidState' with the 'pos' and 'state', removing them from the stack
+				// Repeats this for all 6 invocations at the start of the method
+				var lastIndex = 0;
+				for (var direction = 0; direction < 6; ++direction) {
+					var getBlockStateCall = findFirstMethodCall(
+						methodNode,
+						ASMAPI.MethodType.INTERFACE,
+						'net/minecraft/world/level/BlockAndTintGetter',
+						ASMAPI.mapMethod('m_8055_'), // getBlockState
+						'(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;',
+						lastIndex + 1
+					);
+					// DUP the blockPos parameter and put it lower on the stack than world
+					instructions.insertBefore(getBlockStateCall, new InsnNode(DUP_X1));
+					// DUP the returned blockState
+					instructions.insert(getBlockStateCall, new InsnNode(DUP));
+					lastIndex = instructions.indexOf(getBlockStateCall);
+					var getFluidStateCall = findFirstMethodCall(
+						methodNode,
+						ASMAPI.MethodType.VIRTUAL,
+						'net/minecraft/world/level/block/state/BlockState',
+						ASMAPI.mapMethod('m_60819_'), // getFluidState
+						'()Lnet/minecraft/world/level/material/FluidState;',
+						lastIndex + 1
+					);
+					var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
+					removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
+					instructions.insert(previousLabel, callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;'));
+					// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
+				}
+				return methodNode;
+			}
+		},
 		// endregion Rendering
 	});
 }
@@ -149,9 +202,9 @@ function tryFindFirstFieldInstruction(instructions, opcode, owner, name, desc) {
 	return null;
 }
 
-function findFirstMethodCall(methodNode, methodType, owner, name, desc) {
-	var instruction = ASMAPI.findFirstMethodCall(methodNode, methodType, owner, name, desc);
-	assertInstructionFound(instruction, name + 'Call', methodNode.instructions);
+function findFirstMethodCall(methodNode, methodType, owner, name, desc, startIndex) {
+	var instruction = ASMAPI.findFirstMethodCallAfter(methodNode, methodType, owner, name, desc, (typeof startIndex !== 'undefined') ? startIndex : 0);
+	assertInstructionFound(instruction, name + 'Call', methodNode.instructions, startIndex);
 	return instruction;
 }
 

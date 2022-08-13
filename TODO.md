@@ -9,8 +9,6 @@ Pressing issues that need to be fixed soon (usually because they affect performa
    - Happens when config is updated multiple times in fast succession
    - Possibly related: [Smoothable syncing issue](https://discord.com/channels/493715188843937793/520716613574590494/957546807104253953) ([logs](https://discord.com/channels/493715188843937793/520716613574590494/958303722868441129))
    - Fix by adding GUID to config file & discarding loading configs that have a guid different to our most recently saved?
-1. Fix fluids rendering their sides against extended fluids (1.18.1+)
-   - Do I need to rewrite the whole fluid renderer to make this work? (if so medium task, otherwise small task)
 
 ## Later
 Less pressing issues (usually large work that's important but should be sidelined for bug fixes)
