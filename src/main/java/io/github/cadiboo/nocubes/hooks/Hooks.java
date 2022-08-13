@@ -65,12 +65,12 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link RebuildTask#compile} instead of {@link BlockState#getFluidState()} when OptiFine is present
+	 * Called from: {@link RebuildTask#compile} instead of {@link BlockState#getFluidState()}
 	 * <p>
 	 * Hooking this makes extended fluids render properly
 	 */
 	@OnlyIn(Dist.CLIENT)
-	public static FluidState getRenderFluidStateOptiFine(BlockPos pos, BlockState state) {
+	public static FluidState getRenderFluidState(BlockPos pos, BlockState state) {
 		SelfCheck.getRenderFluidState = true;
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			return ClientUtil.getExtendedFluidState(pos);

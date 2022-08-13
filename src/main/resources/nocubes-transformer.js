@@ -78,9 +78,8 @@ function initializeCoreMod() {
 					print('Done injecting the preIteration hook');
 				}
 
-				// OptiFine optimises 'chunkRenderCache.getFluidState(pos)' to 'state.getFluidState()'
-				// This breaks our extended fluids rendering so we undo it
-				if (isOptiFinePresent) {
+				// Redirects 'state.getFluidState()' to our own code so we can have extended fluids render properly
+				{
 					var getFluidStateCall = findFirstMethodCall(
 						methodNode,
 						ASMAPI.MethodType.VIRTUAL,
@@ -91,12 +90,12 @@ function initializeCoreMod() {
 					var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
 					removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
 					instructions.insert(previousLabel, ASMAPI.listOf(
-						new VarInsnNode(ALOAD, ofg8 ? 19 : 17), // pos
-						new VarInsnNode(ALOAD, ofg8 ? 20 : 18), // state
-						callNoCubesHook('getRenderFluidStateOptiFine', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
+						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 19 : 17) : 16), // pos
+						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 20 : 18) : 18), // state
+						callNoCubesHook('getRenderFluidState', '(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;')
 					));
 					// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
-					print('Done injecting the fluid render bypass hook');
+					print('Done injecting the fluid state getter redirect');
 				}
 				return methodNode;
 			}
