@@ -1,8 +1,8 @@
 # [NoCubes Mod](https://Cadiboo.github.io/projects/nocubes/)
 ![Build](https://github.com/Cadiboo/NoCubes/workflows/Build/badge.svg?branch=master)
 [
-![Curseforge Downloads](http://cf.way2muchnoise.eu/full_nocubes_downloads.svg)
-![Curseforge Versions](http://cf.way2muchnoise.eu/versions/nocubes.svg)
+![Curseforge Downloads](https://cf.way2muchnoise.eu/full_nocubes_downloads.svg)
+![Curseforge Versions](https://cf.way2muchnoise.eu/versions/nocubes.svg)
 ](https://www.curseforge.com/minecraft/mc-mods/nocubes)
 [
 ![Discord](https://img.shields.io/discord/493715188843937793?label=Discord)
