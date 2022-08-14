@@ -71,7 +71,7 @@ function initializeCoreMod() {
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 10), // world (from RebuildTask.region)
 						// Scoped local variables
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 10 : 11), // matrix
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 12 : 12), // usedLayers
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 15 : 12), // usedLayers
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // dispatcher
 						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask$CompileResults;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
