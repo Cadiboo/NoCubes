@@ -7,7 +7,6 @@ import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +16,7 @@ import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Set;
 
 class Dummy implements OptiFineProxy {
 
@@ -50,12 +50,11 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompileResults compileResults) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompileResults compileResults) {
-
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override

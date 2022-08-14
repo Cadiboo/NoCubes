@@ -107,7 +107,7 @@ public final class RendererDispatcher {
 				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
 				render.render(state, worldPos, modelData, layer, buffer, renderEnv);
 
-				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, compileResults);
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
 				markLayerUsed(layer);
 			}
 		}
@@ -144,7 +144,7 @@ public final class RendererDispatcher {
 		}
 
 		public void markLayerUsed(RenderType layer) {
-			RendererDispatcher.markLayerUsed(compileResults, optiFine, layer);
+			usedLayers.add(layer);
 		}
 
 		public interface ColorSupplier {
@@ -289,11 +289,6 @@ public final class RendererDispatcher {
 		if (usedLayers.add(layer))
 			chunkRender.beginLayer(buffer);
 		return buffer;
-	}
-
-	static void markLayerUsed(CompileResults compiledChunk, OptiFineProxy optiFine, RenderType layer) {
-		// TODO: Why was this needed?
-		//optiFine.markRenderLayerUsed(compiledChunk, layer);
 	}
 
 	static void quad(

@@ -24,7 +24,7 @@ class HD_U_G8 extends HD_U_G7 {
 		for (var field : Reflect.class.getDeclaredFields()) {
 			try {
 				if (field.get(null) == null)
-					return "reflection was unable to find field " + field.getName();
+					return "reflection was unable to find " + field.getName();
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Can't access my own fields...?", e);
 			}
