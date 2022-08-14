@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.client.ClientEventSubscriber;
-import io.github.cadiboo.nocubes.client.LightCache;
+import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import net.minecraft.block.BlockLiquid;
@@ -40,7 +40,7 @@ public final class ExtendedFluidBlockRenderer {
 			@Nonnull final BufferBuilder buffer,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			//TODO: eventually do better lighting for 0.3.0
-			@Nonnull final LightCache packedLightCache
+			@Nonnull final LazyPackedLightCache packedLightCache
 	) {
 
 		PooledMutableBlockPos renderPos = PooledMutableBlockPos.retain(renderX, renderY, renderZ);

@@ -1,26 +1,27 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.util.math.BlockPos;
+import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Biomes;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
+import net.minecraftforge.fml.common.EnhancedRuntimeException;
+import org.apache.logging.log4j.LogManager;
+
+import javax.annotation.Nonnull;
+import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
  */
-public final class LazyBlockColorCache {
+public final class LazyBlockColorCache extends XYZCache implements AutoCloseable {
 
-	private static final ThreadLocalArrayCache<int[]> CACHE = new ThreadLocalArrayCache<>(int[]::new, array -> array.length, ClientUtil::resetIntArray);
-
-	private final Area area;
-	private int[] array;
-
-	public LazyBlockColorCache(Area area) {
-		this.area = area;
-	}
-
-	//
+//	private static final ThreadLocal<LazyBlockColorCache> POOL = ThreadLocal.withInitial(() -> new LazyBlockColorCache(0, 0, 0, 0, 0, 0));
+//	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
+//
 //	public int chunkRenderPosX;
 //	public int chunkRenderPosY;
 //	public int chunkRenderPosZ;
@@ -241,37 +242,16 @@ public final class LazyBlockColorCache {
 //
 //	}
 
-//	public int get(Vec v) {
-//	}
+	public int get(Vec v) {
 
-	/** x, y & z are relative to the start of the area. */
-	public int get(int x, int y, int z, MutableBlockPos unsetWorldPos) {
+	}
+
+	public int get(int x, int y, int z) {
 		int index = index(x, y, z);
-		int[] array = getArray();
 		int color = array[index];
-		if (color == -1) {
-			BlockPos start = area.start;
-			unsetWorldPos.setPos(start.getX() + x, start.getY() + y, start.getZ() + z);
-			array[index] = color = compute(index, unsetWorldPos);
-		}
+		if (color == -1)
+			array[index] = color = compute(x, y, z);
 		return color;
-	}
-
-	private int compute(int index, MutableBlockPos worldPos) {
-		Area area = this.area;
-		return area.getAndCacheBlocks()[index].getPackedLightmapCoords(area.world, worldPos);
-	}
-
-	private int[] getArray() {
-		int[] array = this.array;
-		if (array == null)
-			this.array = array = CACHE.takeArray(area.getLength());
-		return array;
-	}
-
-	private int index(int x, int y, int z) {
-		BlockPos size = area.size;
-		return size.getX() * size.getY() * z + size.getX() * y + x;
 	}
 
 }

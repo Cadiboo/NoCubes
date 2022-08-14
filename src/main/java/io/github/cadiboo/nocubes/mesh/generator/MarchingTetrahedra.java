@@ -5,7 +5,12 @@ import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.IBlockAccess;
 
+import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.function.Predicate;
 
 /**
@@ -14,13 +19,13 @@ import java.util.function.Predicate;
 public final class MarchingTetrahedra implements MeshGenerator {
 
 	@Override
-	public BlockPos getPositiveAreaExtension() {
+	public Vec3i getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public BlockPos getNegativeAreaExtension() {
+	public Vec3i getNegativeAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
@@ -47,7 +52,7 @@ public final class MarchingTetrahedra implements MeshGenerator {
 
 	@Override
 	public void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		byte[] dims = {(byte) (area.size.getX()), (byte) (area.size.getY()), (byte) (area.size.getZ())};
+		byte[] dims = {(byte) (area.end.getX() - area.start.getX()), (byte) (area.end.getY() - area.start.getY()), (byte) (area.end.getZ() - area.start.getZ())};
 		MutableBlockPos pos = new MutableBlockPos();
 		Face face = new Face();
 		float[] data = MeshGenerator.generateCornerDistanceField(area, isSmoothable);

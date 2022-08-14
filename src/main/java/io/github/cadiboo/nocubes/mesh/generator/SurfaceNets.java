@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.Vec3i;
 
 import java.util.function.Predicate;
 
@@ -34,13 +35,13 @@ public class SurfaceNets implements MeshGenerator {
 	}
 
 	@Override
-	public BlockPos getPositiveAreaExtension() {
+	public Vec3i getPositiveAreaExtension() {
 		// Seams appear in the meshes, surface nets generates a mesh 1 smaller than it "should"
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public BlockPos getNegativeAreaExtension() {
+	public Vec3i getNegativeAreaExtension() {
 		// I'm not sure why it's needed but it is needed very much
 		return ModUtil.VEC_ONE;
 	}
@@ -62,7 +63,8 @@ public class SurfaceNets implements MeshGenerator {
 			densityField[i] = -ModUtil.getIndividualBlockDensity(isStateSmoothable, state);
 		}
 //		float[] densityField = MeshGenerator.generateCornerDistanceField(area, isSmoothable);
-		generateOrThrow2(densityField, area.size, voxelAction, faceAction);
+		BlockPos dims = area.end.subtract(area.start);
+		generateOrThrow2(densityField, dims, voxelAction, faceAction);
 	}
 
 	private static void generateOrThrow2(float[] densityField, BlockPos dims, VoxelAction voxelAction, FaceAction faceAction) {

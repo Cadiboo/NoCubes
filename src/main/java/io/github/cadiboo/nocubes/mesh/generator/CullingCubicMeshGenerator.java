@@ -7,30 +7,32 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.Vec3i;
 
 import java.util.function.Predicate;
 
 public class CullingCubicMeshGenerator implements MeshGenerator {
 
 	@Override
-	public BlockPos getPositiveAreaExtension() {
+	public Vec3i getPositiveAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
-	public BlockPos getNegativeAreaExtension() {
+	public Vec3i getNegativeAreaExtension() {
 		// Need data about the each block's direct neighbours to check if they should be culled
 		return ModUtil.VEC_ONE;
 	}
 
 	@Override
 	public void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		BlockPos size = area.size;
+		BlockPos start = area.start;
+		BlockPos end = area.end;
 
-		int depth = size.getZ();
-		int height = size.getY();
-		int width = size.getX();
+		int depth = end.getZ() - start.getZ();
+		int height = end.getY() - start.getY();
+		int width = end.getX() - start.getX();
 
 		final float min = 0.75F;
 		final float max = 0.25F;

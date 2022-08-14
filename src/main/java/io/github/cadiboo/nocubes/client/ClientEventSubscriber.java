@@ -106,24 +106,22 @@ public final class ClientEventSubscriber {
 
 		final Minecraft minecraft = Minecraft.getMinecraft();
 
-		if (Config.terrainCollisions) {
-			final NetHandlerPlayClient connection = minecraft.getConnection();
-			if (connection != null) {
-				final NetworkManager networkManager = connection.getNetworkManager();
-				if (networkManager != null) {
-					final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
-					if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-						Config.terrainCollisions = false;
-					}
+		final NetHandlerPlayClient connection = minecraft.getConnection();
+		if (connection != null) {
+			final NetworkManager networkManager = connection.getNetworkManager();
+			if (networkManager != null) {
+				final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
+				if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
+					Config.terrainCollisions = false;
 				}
 			}
 		}
 
-//		final WorldClient world = minecraft.world;
-//		// Every minute
-//		if (world != null && world.getWorldTime() % 1200 == 0) {
-//			BlockColorInfo.refresh();
-//		}
+		final WorldClient world = minecraft.world;
+		// Every minute
+		if (world != null && world.getWorldTime() % 1200 == 0) {
+			BlockColorInfo.refresh();
+		}
 
 //		// TODO: Temp!
 //		{
@@ -418,7 +416,7 @@ public final class ClientEventSubscriber {
 		double d1 = player.lastTickPosY + (player.posY - player.lastTickPosY) * (double) partialTicks;
 		double d2 = player.lastTickPosZ + (player.posZ - player.lastTickPosZ) * (double) partialTicks;
 		// Draw nearby collisions in aqua and player intersecting collisions in red
-		AxisAlignedBB playerAABB = player.getEntityBoundingBox();
+		AxisAlignedBB playerAABB = new AxisAlignedBB(player.getPosition());
 		for (AxisAlignedBB collision : world.getCollisionBoxes(player, playerAABB.grow(3))) {
 			boolean intersects = playerAABB.intersects(collision);
 			float red = intersects ? 1F : 0F;

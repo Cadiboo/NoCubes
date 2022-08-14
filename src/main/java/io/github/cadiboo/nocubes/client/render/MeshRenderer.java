@@ -4,7 +4,14 @@ import io.github.cadiboo.nocubes.client.*;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
+import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.mesh.generator.CullingCubicMeshGenerator;
+import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
 import io.github.cadiboo.nocubes.util.*;
+import io.github.cadiboo.nocubes.util.pooled.cache.CornerDensityCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
+import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -14,9 +21,11 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
@@ -28,12 +37,16 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeColorHelper;
+import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
 import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.registries.IRegistryDelegate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.Predicate;
 
@@ -76,57 +89,16 @@ public final class MeshRenderer {
 
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
-//			MeshGenerator generator = new CullingCubicMeshGenerator();
-			MeshGenerator generator = Config.terrainMeshGenerator.getMeshGenerator();
-			BlockPos start = chunkRenderPos.subtract(generator.getNegativeAreaExtension());
-			BlockPos end = start.add(ModUtil.CHUNK_SIZE).add(generator.getPositiveAreaExtension());
 			try (
-				Area area = new Area(world, start, end);
-//				LazyBlockColorCache colors = new LazyBlockColorCache(area);
-				LightCache light = new LightCache(area);
+				Area area = new Area(world, chunkRenderPos, chunkRenderPos.add(16, 16, 16));
+				LazyBlockColorCache colors = ClientCacheUtil.generateLazyBlockColorCache(
+					chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
+					chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
+					2, 2, 2,
+					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.GRASS_COLOR, IS_BLOCK_STATE_GRASS
+			)) {
 			) {
-				TextureInfo tex = new TextureInfo();
-				Face normals = new Face();
-				Vec normal = new Vec();
-				IsSmoothable isSmoothable = TERRAIN_SMOOTHABLE;
-				generator.generate(area, isSmoothable, (pos, face) -> {
-					face.assignNormalTo(normals);
-					normals.assignAverageTo(normal);
-
-					ClientUtil.move(pos, start);
-					EnumFacing direction = normal.getDirectionFromNormal();
-					IBlockState textureState = ClientUtil.getTexturePosAndState(pos, area, isSmoothable, direction, true, true); //tryForBetterTexturesSnow, tryForBetterTexturesGrass
-					final long posRand = MathHelper.getPositionRandom(pos);
-
-					for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
-						BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
-						if (!textureState.getBlock().canRenderInLayer(textureState, initialBlockRenderLayer))
-							continue;
-
-						BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
-						int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
-						ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
-
-						BufferBuilder buffer = ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkRenderPos);
-						random.setSeed(posRand);
-						List<BakedQuad> quads = ModelHelper.getQuads(textureState, pos, buffer, area.world, blockRendererDispatcher, /*modelData, random,*/ posRand, correctedBlockRenderLayer);
-						if (quads == null)
-							continue;
-
-						for (int i1 = 0; i1 < quads.size(); ++i1) {
-							BakedQuad quad = quads.get(i1);
-
-							renderFace(start, light, tex, face, normals, direction, buffer, quad);
-
-							usedBlockRenderLayers[correctedBlockRenderLayerOrdinal] = true;
-						}
-					}
-					ForgeHooksClient.setRenderLayer(null);
-
-//					BakedQuad quad = model.getQuad(world, pos);
-//
-//					// Can use normal in light calculation
-//					buffer.pos(vec).color(colors.get(vec, state)).tex(u, v).light(light.get(vec));
+				Config.terrainMeshGenerator.getMeshGenerator().generate(area, TERRAIN_SMOOTHABLE, (pos, face) -> {
 					return true;
 				});
 			}
@@ -139,37 +111,11 @@ public final class MeshRenderer {
 		}
 	}
 
-	private static void renderFace(BlockPos start, LightCache light, TextureInfo tex, Face face, Face normals, EnumFacing direction, BufferBuilder buffer, BakedQuad quad) {
-		tex.unpackFromQuad(quad, quad.getFormat().getIntegerSize());
-		tex.switchForDirection(direction);
-		drawVertex(start, light, buffer, face.v0, normals.v0, tex.u0, tex.v0);
-		drawVertex(start, light, buffer, face.v1, normals.v1, tex.u1, tex.v1);
-		drawVertex(start, light, buffer, face.v2, normals.v2, tex.u2, tex.v2);
-		drawVertex(start, light, buffer, face.v3, normals.v3, tex.u3, tex.v3);
-	}
-
-	private static void drawVertex(BlockPos start, LightCache light, BufferBuilder buffer, Vec vec, Vec normal, float u, float v) {
-		double x = start.getX();
-		double y = start.getY();
-		double z = start.getZ();
-
-		int packedLight = light.get(vec, normal);
-		int skyLight = (packedLight >> 16) & 0xFF;
-		int blockLight = packedLight & 0xFF;
-
-		buffer
-			.pos(x + vec.x, y + vec.y, z + vec.z)
-			.color(1.0F, 1.0F, 1.0F, 1.0F)
-			.tex(u, v)
-			.lightmap(skyLight, blockLight)
-			.endVertex();
-	}
-
 //	private static void renderTerrainChunk(
 //		final RenderChunk chunkRender, final BlockPos chunkRenderPos, final ChunkCompileTaskGenerator chunkRenderTask, final CompiledChunk compiledChunk, final IBlockAccess chunkRenderCache, final boolean[] usedBlockRenderLayers, final Random random, final BlockRendererDispatcher blockRendererDispatcher,
 //		final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 //		final PooledMutableBlockPos pooledMutableBlockPos,
-//		final StateCache stateCache, final LightCache lazyPackedLightCache,
+//		final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache,
 //		final MeshGenerator meshGenerator,
 //		final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
 //		final SmoothableCache smoothableCache, final CornerDensityCache cornerDensityCache
@@ -223,7 +169,7 @@ public final class MeshRenderer {
 //		final RenderChunk chunkRender, final BlockPos chunkRenderPos, final ChunkCompileTaskGenerator generator, final CompiledChunk compiledChunk, final IBlockAccess chunkRenderCache, final boolean[] usedBlockRenderLayers, final Random random, final BlockRendererDispatcher blockRendererDispatcher,
 //		final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
 //		final PooledMutableBlockPos pooledMutableBlockPos,
-//		final StateCache stateCache, final LightCache lazyPackedLightCache,
+//		final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache,
 //		final MeshGenerator meshGenerator,
 //		final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
 //	) {
@@ -418,7 +364,7 @@ public final class MeshRenderer {
 //		final StateCache stateCache,
 //		final BlockRendererDispatcher blockRendererDispatcher,
 //		final Random random,
-//		final LightCache lazyPackedLightCache,
+//		final LazyPackedLightCache lazyPackedLightCache,
 //		final LazyBlockColorCache lazyBlockColorCache,
 //		final SmoothableCache smoothableCache,
 //		final PooledMutableBlockPos pooledMutableBlockPos,
@@ -472,7 +418,7 @@ public final class MeshRenderer {
 //		final BlockRendererDispatcher blockRendererDispatcher,
 //		final Random random,
 //		final boolean[] usedBlockRenderLayers,
-//		final LightCache lazyPackedLightCache,
+//		final LazyPackedLightCache lazyPackedLightCache,
 //		final LazyBlockColorCache lazyBlockColorCache,
 //		final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry,
 //		final PooledMutableBlockPos pooledMutableBlockPos,
@@ -1269,83 +1215,6 @@ public final class MeshRenderer {
 		} else {
 			return .97f;
 		}
-	}
-
-	static final class TextureInfo {
-		public float u0;
-		public float v0;
-		public float u1;
-		public float v1;
-		public float u2;
-		public float v2;
-		public float u3;
-		public float v3;
-
-		public void unpackFromQuad(BakedQuad quad, int formatSize) {
-			final int[] vertexData = quad.getVertexData();
-			// Quads are packed xyz|argb|u|v|ts
-			u0 = Float.intBitsToFloat(vertexData[4]);
-			v0 = Float.intBitsToFloat(vertexData[5]);
-			u1 = Float.intBitsToFloat(vertexData[formatSize + 4]);
-			v1 = Float.intBitsToFloat(vertexData[formatSize + 5]);
-			u2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 4]);
-			v2 = Float.intBitsToFloat(vertexData[formatSize * 2 + 5]);
-			u3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 4]);
-			v3 = Float.intBitsToFloat(vertexData[formatSize * 3 + 5]);
-		}
-
-		public void switchForDirection(EnumFacing direction) {
-			switch (direction) {
-				case NORTH:
-				case EAST:
-					break;
-				case DOWN:
-				case SOUTH:
-				case WEST: {
-					float u0 = this.u0;
-					float v0 = this.v0;
-					float u1 = this.u1;
-					float v1 = this.v1;
-					float u2 = this.u2;
-					float v2 = this.v2;
-					float u3 = this.u3;
-					float v3 = this.v3;
-
-					this.u0 = u3;
-					this.v0 = v3;
-					this.u1 = u0;
-					this.v1 = v0;
-					this.u2 = u1;
-					this.v2 = v1;
-					this.u3 = u2;
-					this.v3 = v2;
-					break;
-				}
-				case UP: {
-					float u0 = this.u0;
-					float v0 = this.v0;
-					float u1 = this.u1;
-					float v1 = this.v1;
-					float u2 = this.u2;
-					float v2 = this.v2;
-					float u3 = this.u3;
-					float v3 = this.v3;
-
-					this.u0 = u2;
-					this.v0 = v2;
-					this.u1 = u3;
-					this.v1 = v3;
-					this.u2 = u0;
-					this.v2 = v0;
-					this.u3 = u1;
-					this.v3 = v1;
-					break;
-				}
-				default:
-					throw new IllegalStateException("Unexpected value: " + direction);
-			}
-		}
-
 	}
 
 }

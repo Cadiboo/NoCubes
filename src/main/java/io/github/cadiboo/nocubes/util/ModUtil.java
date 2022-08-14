@@ -48,7 +48,7 @@ public final class ModUtil {
 	 */
 	public static final int COMMAND_PERMISSION_LEVEL = 2;
 	public static final String COMMAND_PERMISSION_NAME = "give";
-	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
+	public static final Vec3i VEC_ONE = new Vec3i(1, 1, 1);
 	public static final Vec3i CHUNK_SIZE = new Vec3i(16, 16, 16);
 
 	/**
