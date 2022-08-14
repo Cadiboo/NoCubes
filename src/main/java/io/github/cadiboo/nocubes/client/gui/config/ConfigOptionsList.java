@@ -3,27 +3,23 @@ package io.github.cadiboo.nocubes.client.gui.config;
 import com.google.common.base.Joiner;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
 import io.github.cadiboo.nocubes.config.ConfigHolder;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.BooleanValue;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.ConfigValue;
-import io.github.cadiboo.nocubes.config.ForgeConfigSpec.EnumValue;
-import io.github.cadiboo.nocubes.config.ModConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
+import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
+import net.minecraftforge.fml.config.ModConfig;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
+import static net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 
 /**
  * @author Cadiboo

@@ -5,7 +5,6 @@ import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
@@ -35,7 +34,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -52,6 +50,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
+import net.minecraftforge.fml.config.ConfigTracker;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;
@@ -65,12 +64,7 @@ import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
-import static org.lwjgl.input.Keyboard.KEY_C;
-import static org.lwjgl.input.Keyboard.KEY_I;
-import static org.lwjgl.input.Keyboard.KEY_K;
-import static org.lwjgl.input.Keyboard.KEY_N;
-import static org.lwjgl.input.Keyboard.KEY_O;
-import static org.lwjgl.input.Keyboard.KEY_P;
+import static org.lwjgl.input.Keyboard.*;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class

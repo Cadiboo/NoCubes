@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.config;
 
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
+import net.minecraftforge.common.ForgeConfigSpec;
 
 import javax.annotation.Nonnull;
 import java.util.List;

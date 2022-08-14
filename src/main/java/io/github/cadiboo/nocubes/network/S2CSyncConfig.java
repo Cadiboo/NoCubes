@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.network;
 
-import io.github.cadiboo.nocubes.config.ConfigTracker;
 import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -9,6 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.network.ConfigSync;
 
 /**
  * @author Cadiboo
@@ -45,7 +45,7 @@ public final class S2CSyncConfig implements IMessage, IMessageHandler<S2CSyncCon
 	@Override
 	public IMessage onMessage(final S2CSyncConfig msg, final MessageContext context) {
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> Minecraft.getMinecraft().addScheduledTask(() -> {
-			ConfigTracker.INSTANCE.receiveSyncedConfig(msg);
+			ConfigSync.INSTANCE.receiveSyncedConfig(msg);
 		}));
 		return null;
 	}
