@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;

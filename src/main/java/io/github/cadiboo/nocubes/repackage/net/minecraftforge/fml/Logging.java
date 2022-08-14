@@ -1,4 +1,4 @@
-package net.minecraftforge.fml;
+package io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml;
 
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;

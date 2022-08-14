@@ -11,6 +11,7 @@ import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
 import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
 import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Face;
@@ -50,7 +51,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
-import net.minecraftforge.fml.config.ConfigTracker;
 import org.apache.logging.log4j.LogManager;
 
 import java.text.DecimalFormat;

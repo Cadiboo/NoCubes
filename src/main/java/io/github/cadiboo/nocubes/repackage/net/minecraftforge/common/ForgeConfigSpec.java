@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.minecraftforge.common;
+package io.github.cadiboo.nocubes.repackage.net.minecraftforge.common;
 
 import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.ConfigSpec.CorrectionAction;
@@ -15,7 +15,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
-import net.minecraftforge.fml.config.IConfigSpec;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.IConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 
@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.electronwill.nightconfig.core.ConfigSpec.CorrectionAction.*;
-import static net.minecraftforge.fml.Logging.CORE;
+import static io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.Logging.CORE;
 
 /*
  * Like {@link com.electronwill.nightconfig.core.ConfigSpec} except in builder format, and extended to accept comments, language keys,

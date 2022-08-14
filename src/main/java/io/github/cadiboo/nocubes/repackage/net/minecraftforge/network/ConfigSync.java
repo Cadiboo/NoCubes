@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  */
 
-package net.minecraftforge.network;
+package io.github.cadiboo.nocubes.repackage.net.minecraftforge.network;
 
 import io.github.cadiboo.nocubes.network.S2CSyncConfig;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.config.ConfigTracker;
-import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
