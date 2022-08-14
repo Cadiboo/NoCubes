@@ -1,63 +1,68 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 
-import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import java.util.HashMap;
 
 /**
  * @author Cadiboo
  */
 public interface MeshGenerator {
-	VoxelAction DEFAULT_VOXEL_ACTION = (pos, amount) -> true;
 
-	default void generate(Area area, Predicate<IBlockState> isSmoothable, FaceAction action) {
-		generate(area, isSmoothable, DEFAULT_VOXEL_ACTION, action);
+	/**
+	 * Generates a chunk WITHOUT OFFSETTING OR TRANSLATING ANY VERTICES
+	 *
+	 * @param scalarFieldData the float[] data
+	 * @param dimensions      the dimensions of the mesh
+	 * @return the chunk vertices
+	 */
+	@Nonnull
+	HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
+
+	/**
+	 * @param position             the byte[] position relative to the chunk pos
+	 * @param neighbourDensityGrid the neighbour density grid
+	 * @return the block vertices
+	 */
+	// TODO FIXME: Deal with this
+	@Nonnull
+	FaceList generateBlock(@Nonnull final float[] scalarFieldData, @Nonnull final byte[] dimensions);
+
+	default byte getSizeXExtension() {
+		return 0;
 	}
 
-	void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction);
-
-	Vec3i getPositiveAreaExtension();
-
-	Vec3i getNegativeAreaExtension();
-
-	interface FaceAction {
-
-		/**
-		 * Return false if no more faces need to be generated
-		 *
-		 * @param pos  The position of the face, positioned relatively to the start of the area
-		 * @param face The face, positioned relatively to the start of the area
-		 */
-		boolean apply(MutableBlockPos pos, Face face);
-
+	default byte getSizeYExtension() {
+		return 0;
 	}
 
-	interface VoxelAction {
-
-		/**
-		 * Return false if no more voxels need to iterated over
-		 *
-		 * @param pos                    The position of the voxel, positioned relatively to the start of the area
-		 * @param amountInsideIsosurface The amount of the voxel that is inside the isosurface (range 0-1)
-		 */
-		boolean apply(MutableBlockPos pos, float amountInsideIsosurface);
+	default byte getSizeZExtension() {
+		return 0;
 	}
 
-	static float[] generateCornerDistanceField(Area area, Predicate<IBlockState> isSmoothable) {
-		IBlockAccess world = area.world;
-		int startX = area.start.getX();
-		int startY = area.start.getY();
-		int startZ = area.start.getZ();
-		int maxX = area.end.getX() - startX + 1;
-		int maxY = area.end.getY() - startY + 1;
-		int maxZ = area.end.getZ() - startZ + 1;
-		MutableBlockPos pos = new MutableBlockPos();
+	// TODO FIXME: Deal with this
+	@Nonnull
+	FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess cache, @Nonnull final IsSmoothable isSmoothable);
+
+	// TODO FIXME: Deal with this
+	@Nonnull
+	default float[] generateScalarFieldData(
+			final int startX, final int startY, final int startZ,
+			final int endX, final int endY, final int endZ,
+			@Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable, @Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+	) {
+
+		final int maxX = endX - startX;
+		final int maxY = endY - startY;
+		final int maxZ = endZ - startZ;
 
 		final float[] scalarFieldData = new float[maxX * maxY * maxZ];
 
@@ -70,12 +75,14 @@ public interface MeshGenerator {
 					for (int zOffset = 0; zOffset < 2; ++zOffset) {
 						for (int yOffset = 0; yOffset < 2; ++yOffset) {
 							for (int xOffset = 0; xOffset < 2; ++xOffset) {
-								pos.setPos(
-									startX + x - xOffset,
-									startY + y - yOffset,
-									startZ + z - zOffset
+
+								pooledMutableBlockPos.setPos(
+										startX + x - xOffset,
+										startY + y - yOffset,
+										startZ + z - zOffset
 								);
-								final IBlockState state = world.getBlockState(pos);
+
+								final IBlockState state = blockAccess.getBlockState(pooledMutableBlockPos);
 								density += ModUtil.getIndividualBlockDensity(isSmoothable.test(state), state);
 							}
 						}

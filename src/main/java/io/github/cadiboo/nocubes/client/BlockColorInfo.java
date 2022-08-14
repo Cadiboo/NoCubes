@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
@@ -8,7 +8,13 @@ import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
 import javax.annotation.Nonnull;
 import java.util.Calendar;
 
-import static java.util.Calendar.*;
+import static java.util.Calendar.AUGUST;
+import static java.util.Calendar.DAY_OF_MONTH;
+import static java.util.Calendar.DAY_OF_WEEK;
+import static java.util.Calendar.DAY_OF_YEAR;
+import static java.util.Calendar.FRIDAY;
+import static java.util.Calendar.MONTH;
+import static java.util.Calendar.OCTOBER;
 import static net.minecraft.util.math.MathHelper.clamp;
 import static net.minecraft.util.math.MathHelper.floor;
 
@@ -20,11 +26,9 @@ public final class BlockColorInfo implements AutoCloseable {
 	private static final ThreadLocal<BlockColorInfo> POOL = ThreadLocal.withInitial(() -> new BlockColorInfo(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1));
 	public static boolean rainbow;
 	public static boolean black;
-
 	static {
 		refresh();
 	}
-
 	public float red0;
 	public float green0;
 	public float blue0;
@@ -41,10 +45,10 @@ public final class BlockColorInfo implements AutoCloseable {
 	private boolean inUse;
 
 	private BlockColorInfo(
-		final float red0, final float green0, final float blue0,
-		final float red1, final float green1, final float blue1,
-		final float red2, final float green2, final float blue2,
-		final float red3, final float green3, final float blue3
+			final float red0, final float green0, final float blue0,
+			final float red1, final float green1, final float blue1,
+			final float red2, final float green2, final float blue2,
+			final float red3, final float green3, final float blue3
 	) {
 		this.red0 = red0;
 		this.green0 = green0;
@@ -62,29 +66,29 @@ public final class BlockColorInfo implements AutoCloseable {
 	}
 
 	public static BlockColorInfo generateBlockColorInfo(
-		final LazyBlockColorCache lazyBlockColorCache,
-		final Vec v0,
-		final Vec v1,
-		final Vec v2,
-		final Vec v3,
-		final int chunkRenderPosX,
-		final int chunkRenderPosY,
-		final int chunkRenderPosZ,
-		final int[] cache,
-		final int sizeX, final int sizeY,
-		final int biomeBlendRadius, final int area, final int max,
-		final IBlockAccess reader,
-		final ColorResolver colorResolver,
-		final boolean useCache,
-		final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
+			@Nonnull final Vec3 v0,
+			@Nonnull final Vec3 v1,
+			@Nonnull final Vec3 v2,
+			@Nonnull final Vec3 v3,
+			final int chunkRenderPosX,
+			final int chunkRenderPosY,
+			final int chunkRenderPosZ,
+			final int[] cache,
+			final int sizeX, final int sizeY,
+			final int biomeBlendRadius, final int area, final int max,
+			final IBlockAccess reader,
+			final ColorResolver colorResolver,
+			final boolean useCache,
+			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
 	) {
 
 		if (black) {
 			return retain(
-				0, 0, 0,
-				0, 0, 0,
-				0, 0, 0,
-				0, 0, 0
+					0, 0, 0,
+					0, 0, 0,
+					0, 0, 0,
+					0, 0, 0
 			);
 		}
 
@@ -172,10 +176,10 @@ public final class BlockColorInfo implements AutoCloseable {
 
 		if (rainbow) {
 			return retain(
-				red0, green0, blue0,
-				red1, green1, blue1,
-				red2, green2, blue2,
-				red3, green3, blue3
+					red0, green0, blue0,
+					red1, green1, blue1,
+					red2, green2, blue2,
+					red3, green3, blue3
 			);
 		} else {
 			// colorPart = colorPart / 27F
@@ -199,20 +203,20 @@ public final class BlockColorInfo implements AutoCloseable {
 			// Dividing by 27F before and not dividing here results in weird colors that still follows biomes
 			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
 			return retain(
-				red0 / 255F, green0 / 255F, blue0 / 255F,
-				red1 / 255F, green1 / 255F, blue1 / 255F,
-				red2 / 255F, green2 / 255F, blue2 / 255F,
-				red3 / 255F, green3 / 255F, blue3 / 255F
+					red0 / 255F, green0 / 255F, blue0 / 255F,
+					red1 / 255F, green1 / 255F, blue1 / 255F,
+					red2 / 255F, green2 / 255F, blue2 / 255F,
+					red3 / 255F, green3 / 255F, blue3 / 255F
 			);
 		}
 
 	}
 
 	public static BlockColorInfo retain(
-		final float red0, final float green0, final float blue0,
-		final float red1, final float green1, final float blue1,
-		final float red2, final float green2, final float blue2,
-		final float red3, final float green3, final float blue3
+			final float red0, final float green0, final float blue0,
+			final float red1, final float green1, final float blue1,
+			final float red2, final float green2, final float blue2,
+			final float red3, final float green3, final float blue3
 	) {
 
 		BlockColorInfo pooled = POOL.get();

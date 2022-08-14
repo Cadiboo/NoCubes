@@ -1,114 +1,24 @@
 package io.github.cadiboo.nocubes.mesh.generator;
 
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.block.state.IBlockState;
+import io.github.cadiboo.nocubes.util.pooled.Face;
+import io.github.cadiboo.nocubes.util.pooled.FaceList;
+import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.function.Predicate;
 
 /**
  * @author Cadiboo
  */
 public final class MarchingCubes implements MeshGenerator {
 
-	@Override
-	public Vec3i getPositiveAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
-		return ModUtil.VEC_ONE;
-	}
-
-	@Override
-	public Vec3i getNegativeAreaExtension() {
-		// Need data about the each block's direct neighbours to check if they should be culled
-		return ModUtil.VEC_ONE;
-	}
-
-	@Override
-	public void generate(Area area, Predicate<IBlockState> isSmoothable, VoxelAction voxelAction, FaceAction faceAction) {
-		byte[] dims = {(byte) (area.end.getX() - area.start.getX()), (byte) (area.end.getY() - area.start.getY()), (byte) (area.end.getZ() - area.start.getZ())};
-		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		Face face = new Face();
-		float[] data = MeshGenerator.generateCornerDistanceField(area, isSmoothable);
-
-		final byte[][] cubeVerts = Lookup.CUBE_VERTS;
-		final short[] edgeTable = Lookup.EDGE_TABLE;
-		final byte[][] edgeIndex = Lookup.EDGE_INDEX;
-		final byte[][] triTable = Lookup.TRI_TABLE;
-
-		final byte[] x = {0, 0, 0};
-		short n = 0;
-		final float[] grid = new float[8];
-		final int[] edges = new int[12];
-		final ArrayList<float[]> vertices = new ArrayList<>();
-
-		//March over the volume
-		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
-			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
-				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
-					//For each cell, compute cube mask
-					short cube_index = 0;
-					for (byte i = 0; i < 8; ++i) {
-						byte[] v = cubeVerts[i];
-						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
-						grid[i] = s;
-						cube_index |= (s > 0) ? 1 << i : 0;
-					}
-					//Compute vertices
-					short edge_mask = edgeTable[cube_index];
-					if (edge_mask == 0) {
-						continue;
-					}
-					for (byte i = 0; i < 12; ++i) {
-						if ((edge_mask & (1 << i)) == 0) {
-							continue;
-						}
-						edges[i] = vertices.size();
-						float[] nv = {0, 0, 0};
-
-						byte[] e = edgeIndex[i];
-						final byte[] p0 = cubeVerts[e[0]];
-						final byte[] p1 = cubeVerts[e[1]];
-						final float a = grid[e[0]];
-						final float b = grid[e[1]];
-						final float d = a - b;
-						float t = 0;
-						if (Math.abs(d) > 1e-6) {
-							t = a / d;
-						}
-						for (byte j = 0; j < 3; ++j) {
-							nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
-						}
-						vertices.add(nv);
-					}
-					//Add faces
-					byte[] f = triTable[cube_index];
-					for (byte i = 0; i < f.length; i += 3) {
-						float[] v0 = vertices.get(edges[f[i + 0]]);
-						float[] v1 = vertices.get(edges[f[i + 1]]);
-						float[] v2 = vertices.get(edges[f[i + 2]]);
-						face.v0.set(v0[0], v0[1], v0[2]);
-						face.v1.set(v1[0], v1[1], v1[2]);
-						face.v2.set(v2[0], v2[1], v2[2]);
-						face.v3.set(face.v2);
-						if (!faceAction.apply(pos.setPos(x[0], x[1], x[2]), face))
-							return;
-					}
-				}
-	}
-
-	private static interface Lookup {
-
-
-		short[] EDGE_TABLE = {
+	private static final short[] EDGE_TABLE = {
 			0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
 			0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
 			0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -142,7 +52,7 @@ public final class MarchingCubes implements MeshGenerator {
 			0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
 			0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0};
 
-		byte[][] TRI_TABLE = {
+	private static final byte[][] TRI_TABLE = {
 			{},
 			{0, 8, 3},
 			{0, 1, 9},
@@ -400,7 +310,7 @@ public final class MarchingCubes implements MeshGenerator {
 			{0, 3, 8},
 			{}};
 
-		byte[][] CUBE_VERTS = {
+	private static final byte[][] CUBE_VERTS = {
 			{0, 0, 0},
 			{1, 0, 0},
 			{1, 1, 0},
@@ -409,9 +319,9 @@ public final class MarchingCubes implements MeshGenerator {
 			{1, 0, 1},
 			{1, 1, 1},
 			{0, 1, 1}
-		};
+	};
 
-		byte[][] EDGE_INDEX = {
+	private static final byte[][] EDGE_INDEX = {
 			{0, 1},
 			{1, 2},
 			{2, 3},
@@ -424,8 +334,157 @@ public final class MarchingCubes implements MeshGenerator {
 			{1, 5},
 			{2, 6},
 			{3, 7}
-		};
+	};
 
+	@Override
+	@Nonnull
+	public HashMap<Vec3b, FaceList> generateChunk(@Nonnull final float[] data, @Nonnull final byte[] dims) {
+
+		final byte[][] cubeVerts = CUBE_VERTS;
+		final short[] edgeTable = EDGE_TABLE;
+		final byte[][] edgeIndex = EDGE_INDEX;
+		final byte[][] triTable = TRI_TABLE;
+
+		final byte[] x = {0, 0, 0};
+		short n = 0;
+		final float[] grid = new float[8];
+		final int[] edges = new int[12];
+		final HashMap<Vec3b, FaceList> posToFaces = new HashMap<>();
+
+		final ArrayList<float[]> vertices = new ArrayList<>();
+
+		//March over the volume
+		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
+			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
+				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
+					//For each cell, compute cube mask
+					short cube_index = 0;
+					for (byte i = 0; i < 8; ++i) {
+						byte[] v = cubeVerts[i];
+						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+						grid[i] = s;
+						cube_index |= (s > 0) ? 1 << i : 0;
+					}
+					//Compute vertices
+					short edge_mask = edgeTable[cube_index];
+					if (edge_mask == 0) {
+						continue;
+					}
+					for (byte i = 0; i < 12; ++i) {
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+						edges[i] = vertices.size();
+						float[] nv = {0, 0, 0};
+
+						byte[] e = edgeIndex[i];
+						final byte[] p0 = cubeVerts[e[0]];
+						final byte[] p1 = cubeVerts[e[1]];
+						final float a = grid[e[0]];
+						final float b = grid[e[1]];
+						final float d = a - b;
+						float t = 0;
+						if (Math.abs(d) > 1e-6) {
+							t = a / d;
+						}
+						for (byte j = 0; j < 3; ++j) {
+							nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
+						}
+						vertices.add(nv);
+					}
+					final FaceList faces = FaceList.retain();
+					//Add faces
+					byte[] f = triTable[cube_index];
+					for (byte i = 0; i < f.length; i += 3) {
+						faces.add(
+								Face.retain(
+										Vec3.retain(vertices.get(edges[f[i]])),
+										Vec3.retain(vertices.get(edges[f[i + 1]])),
+										Vec3.retain(vertices.get(edges[f[i + 2]]))
+								)
+						);
+					}
+					posToFaces.put(Vec3b.retain(x[0], x[1], x[2]), faces);
+				}
+
+		return posToFaces;
+	}
+
+	@Override
+	@Nonnull
+	public FaceList generateBlock(@Nonnull final float[] data, @Nonnull final byte[] dims) {
+		final byte[][] cubeVerts = CUBE_VERTS;
+		final short[] edgeTable = EDGE_TABLE;
+		final byte[][] edgeIndex = EDGE_INDEX;
+		final byte[][] triTable = TRI_TABLE;
+
+		final byte[] x = {0, 0, 0};
+		short n = 0;
+		final float[] grid = new float[8];
+		final int[] edges = new int[12];
+		final FaceList faces = FaceList.retain();
+
+		final ArrayList<float[]> vertices = new ArrayList<>();
+
+		//March over the volume
+		for (x[2] = 0; x[2] < dims[2] - 1; ++x[2], n += dims[0])
+			for (x[1] = 0; x[1] < dims[1] - 1; ++x[1], ++n)
+				for (x[0] = 0; x[0] < dims[0] - 1; ++x[0], ++n) {
+					//For each cell, compute cube mask
+					short cube_index = 0;
+					for (byte i = 0; i < 8; ++i) {
+						byte[] v = cubeVerts[i];
+						final float s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+						grid[i] = s;
+						cube_index |= (s > 0) ? 1 << i : 0;
+					}
+					//Compute vertices
+					short edge_mask = edgeTable[cube_index];
+					if (edge_mask == 0) {
+						continue;
+					}
+					for (byte i = 0; i < 12; ++i) {
+						if ((edge_mask & (1 << i)) == 0) {
+							continue;
+						}
+						edges[i] = vertices.size();
+						float[] nv = {0, 0, 0};
+
+						byte[] e = edgeIndex[i];
+						final byte[] p0 = cubeVerts[e[0]];
+						final byte[] p1 = cubeVerts[e[1]];
+						final float a = grid[e[0]];
+						final float b = grid[e[1]], d = a - b;
+						float t = 0;
+						if (Math.abs(d) > 1e-6) {
+							t = a / d;
+						}
+						for (byte j = 0; j < 3; ++j) {
+							nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
+						}
+						vertices.add(nv);
+					}
+
+					//Add faces
+					byte[] f = triTable[cube_index];
+					for (byte i = 0; i < f.length; i += 3) {
+						faces.add(
+								Face.retain(
+										Vec3.retain(vertices.get(edges[f[i]])),
+										Vec3.retain(vertices.get(edges[f[i + 1]])),
+										Vec3.retain(vertices.get(edges[f[i + 2]]))
+								)
+						);
+					}
+				}
+
+		return faces;
+	}
+
+	@Nonnull
+	@Override
+	public FaceList generateBlock(@Nonnull final BlockPos pos, @Nonnull final IBlockAccess blockAccess, @Nonnull final IsSmoothable isSmoothable) {
+		return FaceList.retain();
 	}
 
 }
