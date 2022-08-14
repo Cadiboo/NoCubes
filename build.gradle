@@ -126,11 +126,9 @@ jar {
 				"Implementation-Vendor" :"examplemodsareus",
 				"Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
 		])
-		if (project.hasProperty('core_plugin')) {
-			attributes 'FMLCorePluginContainsFMLMod': 'true'
-			attributes 'FMLCorePlugin': project.core_plugin
-		}
-		attributes 'FMLAT': 'nocubes_at.cfg'
+		attributes 'FMLCorePluginContainsFMLMod': 'true'
+		attributes 'FMLCorePlugin': coremodLoadingPlugin
+		attributes 'FMLAT': 'accesstransformer.cfg'
 		attributes 'ContainedDeps': "core-${NIGHTCONFIG_VERSION}.jar toml-${NIGHTCONFIG_VERSION}.jar"
 	}
 }
