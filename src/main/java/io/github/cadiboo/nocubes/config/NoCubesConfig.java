@@ -67,6 +67,8 @@ public final class NoCubesConfig {
 		modBus.addListener((ModConfigEvent event) -> {
 			var config = event.getConfig();
 			var spec = config.getSpec();
+			if (!((ForgeConfigSpec)spec).isLoaded())
+				return;
 			LOG.debug("Received config event for {}", config.getFileName());
 			if (spec == Client.SPEC)
 				Client.bake(config);
