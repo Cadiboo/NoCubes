@@ -133,6 +133,14 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+processResources {
+	// Ensures this task is redone when the version changes
+	inputs.property 'version', project.version
+	filesMatching('**/META-INF/mods.toml') {
+		expand 'version': project.version
+	}
+}
+
 jar {
 	classifier 'dev'
 	manifest {
