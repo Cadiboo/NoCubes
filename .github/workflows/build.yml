@@ -13,14 +13,22 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+      - name: Setup Keystore
+        run: |
+          echo ${{ secrets.KEYSTORE_BASE64 }} | base64 -d > keystore.jks
+          echo "keyStore=keystore.jks" >> gradle.properties
+          echo "keyStoreAlias=${{ secrets.KEYSTORE_ALIAS }}" >> gradle.properties
+          echo "keyStorePass=${{ secrets.KEYSTORE_PASS }}" >> gradle.properties
+          echo "keyStoreKeyPass=${{ secrets.KEYSTORE_KEY_PASS }}" >> gradle.properties
+          echo "signSHA1=${{ secrets.KEYSTORE_SIGN_SHA1 }}" >> gradle.properties
       - name: Build and check
         run: ./gradlew build --stacktrace
       - name: Integration tests
         run: ./gradlew runGameTestServer --stacktrace
-      - name: Archive unsigned jars
+      - name: Archive jars
         uses: actions/upload-artifact@v3
         with:
-          name: unsigned-jars
+          name: signed-jars
           path: |
             ./build/libs/*.jar
           if-no-files-found: error
