@@ -14,17 +14,17 @@ plugins {
 }
 apply plugin: 'org.spongepowered.mixin'
 
-def getGitCommit = { ->
+String execCmd(List<String> params, String fallback) {
 	def stdout = new ByteArrayOutputStream()
 	def result = exec {
-		commandLine 'git', 'rev-parse', '--short', 'HEAD'
+		commandLine params
 		standardOutput = stdout
 	}
-	return result.getExitValue() != 0 ? 'nogit' : stdout.toString().trim()
+	return result.getExitValue() != 0 ? fallback : stdout.toString().trim()
 }
 
 // We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
-version = "${modMinecraftVersion}-${modVersion}-${getGitCommit()}"
+version = "${modMinecraftVersion}-${modVersion}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
 group = modGroup
 archivesBaseName = modFileName
 
@@ -128,6 +128,11 @@ dependencies {
 	testImplementation 'junit:junit:4.13.2'
 }
 
+// region build
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+}
+
 jar {
 	classifier 'dev'
 	manifest {
@@ -182,7 +187,9 @@ artifacts {
 	archives sourcesJar
 	archives javadocJar
 }
+// endregion
 
+// region publish
 // TODO: Move this to the publish step, not the build step
 // Sign all the jars
 import net.minecraftforge.gradle.common.tasks.SignJar
@@ -209,7 +216,4 @@ import net.minecraftforge.gradle.common.tasks.SignJar
 	}
 	jarTask.finalizedBy(signingTask)
 }
-
-tasks.withType(JavaCompile).configureEach {
-	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
+// endregion
