@@ -32,3 +32,14 @@ jobs:
           path: |
             ./build/libs/*.jar
           if-no-files-found: error
+      - name: Publish
+        uses: Kir-Antipov/mc-publish@v3.1
+        with:
+          version-type: beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          modrinth-id: w3bbwFYU
+#          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+#          curseforge-id: 309664
+#          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files-primary: build/libs/!(*-@(dev|sources|javadoc)).jar
+          files-secondary: build/libs/*-@(dev|sources|javadoc).jar
