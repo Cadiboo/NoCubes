@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInf
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -18,7 +19,6 @@ import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Set;
 
 public interface OptiFineProxy {
 
@@ -39,9 +39,9 @@ public interface OptiFineProxy {
 
 	BakedModel getModel(Object renderEnv, BakedModel originalModel, BlockState state);
 
-	void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers);
+	void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack buffers, CompiledChunk compiledChunk);
 
-	void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers);
+	void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack buffers, CompiledChunk compiledChunk);
 
 	@Nullable BakedQuad getQuadEmissive(BakedQuad quad);
 

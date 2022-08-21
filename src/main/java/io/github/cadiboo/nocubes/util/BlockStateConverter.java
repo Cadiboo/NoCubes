@@ -3,11 +3,9 @@ package io.github.cadiboo.nocubes.util;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.Util;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
-import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -20,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public interface BlockStateConverter {
 
-	BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.REGISTRY.allFlags()));
+	BlockStateArgument PARSER = BlockStateArgument.block();
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")

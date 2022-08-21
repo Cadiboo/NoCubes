@@ -24,7 +24,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraftforge.client.event.RenderHighlightEvent;
+import net.minecraftforge.client.event.DrawSelectionEvent.HighlightBlock;
 import net.minecraftforge.client.event.RenderLevelLastEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
@@ -58,7 +58,7 @@ public final class OverlayRenderers {
 	}
 
 
-	public static void renderBlockHighlight(RenderHighlightEvent event) {
+	public static void renderBlockHighlight(HighlightBlock event) {
 		if (!NoCubesConfig.Client.render)
 			return;
 		if (!NoCubesConfig.Client.renderSelectionBox)
@@ -66,9 +66,7 @@ public final class OverlayRenderers {
 		var world = Minecraft.getInstance().level;
 		if (world == null)
 			return;
-		var targetHitResult = event.getTarget();
-		if (!(targetHitResult instanceof BlockHitResult target))
-			return;
+		var target = event.getTarget();
 		var lookingAtPos = target.getBlockPos();
 		var state = world.getBlockState(lookingAtPos);
 		if (!NoCubes.smoothableHandler.isSmoothable(state))

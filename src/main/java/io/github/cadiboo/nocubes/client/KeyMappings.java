@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,11 +28,11 @@ public final class KeyMappings {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
+	public static void register(IEventBus forgeBus) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
-			makeKeybinding(registerEvent, "toggleVisuals", GLFW.GLFW_KEY_O, KeyMappings::toggleVisuals),
-			makeKeybinding(registerEvent, "toggleSmoothable", GLFW.GLFW_KEY_N, KeyMappings::toggleLookedAtSmoothable)
+			makeKeybinding("toggleVisuals", GLFW.GLFW_KEY_O, KeyMappings::toggleVisuals),
+			makeKeybinding("toggleSmoothable", GLFW.GLFW_KEY_N, KeyMappings::toggleLookedAtSmoothable)
 		);
 		forgeBus.addListener((TickEvent.ClientTickEvent tickEvent) -> {
 			if (tickEvent.phase != TickEvent.Phase.END)
@@ -45,10 +45,10 @@ public final class KeyMappings {
 		});
 	}
 
-	private static Pair<KeyMapping, Runnable> makeKeybinding(RegisterKeyMappingsEvent event, String name, int key, Runnable action) {
+	private static Pair<KeyMapping, Runnable> makeKeybinding(String name, int key, Runnable action) {
 		LOG.debug("Registering keybinding {}", name);
 		var mapping = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
-		event.register(mapping);
+		ClientRegistry.registerKeyBinding(mapping);
 		return Pair.of(mapping, action);
 	}
 

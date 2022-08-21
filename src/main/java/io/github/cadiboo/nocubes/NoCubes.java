@@ -8,13 +8,11 @@ import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 
 /**
  * @author Cadiboo
@@ -28,10 +26,11 @@ public final class NoCubes {
 	public NoCubes() {
 		var modBus = FMLJavaModLoadingContext.get().getModEventBus();
 		NoCubesConfig.register(ModLoadingContext.get(), modBus);
-		if (FMLEnvironment.dist.isClient())
-			modBus.addListener((RegisterKeyMappingsEvent event) -> KeyMappings.register(event, MinecraftForge.EVENT_BUS));
 		NoCubesNetwork.register();
-		modBus.addListener((FMLClientSetupEvent event) -> OverlayRenderers.register(MinecraftForge.EVENT_BUS));
+		modBus.addListener((FMLClientSetupEvent event) -> {
+			KeyMappings.register(MinecraftForge.EVENT_BUS);
+			OverlayRenderers.register(MinecraftForge.EVENT_BUS);
+		});
 	}
 
 	// region API

@@ -7,6 +7,7 @@ import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -19,7 +20,6 @@ import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G7.Reflect.*;
 import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetField;
@@ -87,19 +87,19 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompiledChunk compiledChunk) {
 		if (Config_isShaders())
 			SVertexBuilder_popEntity(buffer);
 
 		if (RenderEnv_isOverlaysRendered(renderEnv)) {
-			ChunkRender_postRenderOverlays(chunkRender, builder, usedLayers);
+			ChunkRender_postRenderOverlays(chunkRender, builder, compiledChunk);
 			RenderEnv_setOverlaysRendered(renderEnv, false);
 		}
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
-		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, usedLayers);
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompiledChunk compiledChunk) {
+		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, compiledChunk);
 	}
 
 	@Override
@@ -150,7 +150,7 @@ class HD_U_G7 implements OptiFineProxy {
 		MethodHandle pushEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "pushEntity", BlockState.class, VertexConsumer.class);
 		MethodHandle popEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "popEntity", VertexConsumer.class);
 
-		MethodHandle postRenderOverlays = tryGetMethod(RenderChunk.class.getName(), "postRenderOverlays", ChunkBufferBuilderPack.class, Set.class);
+		MethodHandle postRenderOverlays = tryGetMethod(RenderChunk.class.getName(), "postRenderOverlays", ChunkBufferBuilderPack.class, CompiledChunk.class);
 		Field regionDX = tryGetField(RenderChunk.class.getName(), "regionDX");
 		Field regionDY = tryGetField(RenderChunk.class.getName(), "regionDY");
 		Field regionDZ = tryGetField(RenderChunk.class.getName(), "regionDZ");
@@ -311,10 +311,10 @@ class HD_U_G7 implements OptiFineProxy {
 			}
 		}
 
-		static void ChunkRender_postRenderOverlays(RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+		static void ChunkRender_postRenderOverlays(RenderChunk chunkRender, ChunkBufferBuilderPack builder, CompiledChunk compiledChunk) {
 //			chunkRender.postRenderOverlays(builder, compiledChunk);
 			try {
-				postRenderOverlays.invokeExact(chunkRender, builder, usedLayers);
+				postRenderOverlays.invokeExact(chunkRender, builder, compiledChunk);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}

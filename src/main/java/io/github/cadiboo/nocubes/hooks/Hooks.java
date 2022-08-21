@@ -7,12 +7,10 @@ import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,8 +18,9 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.util.Set;
+import java.util.Random;
 
+import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.CompiledChunk;
 import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
 /**
@@ -48,18 +47,18 @@ public final class Hooks {
 	public static void preIteration(
 		// Fields (this, RenderChunk.this)
 		RebuildTask rebuildTask, RenderChunk chunkRender,
-		// Params (p_234471_)
-		ChunkBufferBuilderPack buffers,
+		// Params (p_112869_, p_112870_)
+		CompiledChunk compiledChunk, ChunkBufferBuilderPack buffers,
 		// Local variables
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
 		// Scoped local variables
-		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
+		Random random, BlockRenderDispatcher dispatcher
 	) {
 		SelfCheck.preIteration = true;
 		RendererDispatcher.renderChunk(
 			rebuildTask, chunkRender, buffers,
 			chunkPos, world, matrix,
-			usedLayers, random, dispatcher
+			compiledChunk, random, dispatcher
 		);
 	}
 

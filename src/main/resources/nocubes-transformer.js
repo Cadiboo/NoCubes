@@ -35,8 +35,8 @@ function initializeCoreMod() {
 			'target': {
 				'type': 'METHOD',
 				'class': 'net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask',
-				'methodName': 'm_234467_', // compile
-				'methodDesc': '(FFFLnet/minecraft/client/renderer/ChunkBufferBuilderPack;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask$CompileResults;'
+				'methodName': 'm_112865_', // compile
+				'methodDesc': '(FFFLnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;)Ljava/util/Set;'
 			},
 			'transformer': function(methodNode) {
 				var instructions = methodNode.instructions;
@@ -64,16 +64,16 @@ function initializeCoreMod() {
 						new VarInsnNode(ALOAD, 0), // ChunkRender.this
 						new FieldInsnNode(GETFIELD, 'net/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask', outerClassFieldName, 'Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;'),
 						// Params
-						new VarInsnNode(ALOAD, 4), // buffers
+						new VarInsnNode(ALOAD, 4), // compiledChunkIn
+						new VarInsnNode(ALOAD, 5), // buffers
 						// Local variables
 						new VarInsnNode(ALOAD, 7), // chunkPos
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 10), // world (from RebuildTask.region)
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 12 : 11), // world (from RebuildTask.region)
 						// Scoped local variables
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 10 : 11), // matrix
-						new VarInsnNode(ALOAD, isOptiFinePresent ? 15 : 12), // usedLayers
+						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 12), // matrix
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // dispatcher
-						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
+						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$CompiledChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Random;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
 						new LabelNode() // Label for original instructions
 					));
 					print('Done injecting the preIteration hook');
@@ -106,8 +106,8 @@ function initializeCoreMod() {
 			'target': {
 				'type': 'METHOD',
 				'class': 'net.minecraft.client.renderer.block.LiquidBlockRenderer',
-				'methodName': 'm_234369_', // tesselate
-				'methodDesc': '(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)V'
+				'methodName': 'm_203173_', // tesselate
+				'methodDesc': '(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)Z'
 			},
 			'transformer': function(methodNode) {
 				var instructions = methodNode.instructions;
