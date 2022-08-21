@@ -282,7 +282,6 @@ public final class RendererDispatcher {
 
 	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
 		var buffer = buffers.builder(layer);
-
 		if (usedLayers.add(layer))
 			chunkRender.beginLayer(buffer);
 		return buffer;
