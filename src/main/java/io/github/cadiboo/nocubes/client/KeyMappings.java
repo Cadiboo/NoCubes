@@ -28,11 +28,7 @@ public final class KeyMappings {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static void register(IEventBus modBus, IEventBus forgeBus) {
-		modBus.addListener((RegisterKeyMappingsEvent event) -> register(event, forgeBus));
-	}
-
-	private static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
+	public static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
 			makeKeybinding(registerEvent, "toggleVisuals", GLFW.GLFW_KEY_O, KeyMappings::toggleVisuals),
