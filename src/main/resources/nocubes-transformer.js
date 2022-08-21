@@ -66,7 +66,6 @@ function initializeCoreMod() {
 						// Params
 						new VarInsnNode(ALOAD, 4), // buffers
 						// Local variables
-						new VarInsnNode(ALOAD, 5), // compileResults
 						new VarInsnNode(ALOAD, 7), // chunkPos
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 11 : 10), // world (from RebuildTask.region)
 						// Scoped local variables
@@ -74,7 +73,7 @@ function initializeCoreMod() {
 						new VarInsnNode(ALOAD, isOptiFinePresent ? 15 : 12), // usedLayers
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
 						new VarInsnNode(ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // dispatcher
-						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask$CompileResults;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
+						callNoCubesHook('preIteration', '(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V'),
 						new LabelNode() // Label for original instructions
 					));
 					print('Done injecting the preIteration hook');

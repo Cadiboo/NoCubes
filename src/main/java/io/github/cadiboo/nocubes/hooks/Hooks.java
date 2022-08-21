@@ -22,7 +22,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.util.Set;
 
-import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults;
 import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
 /**
@@ -52,14 +51,14 @@ public final class Hooks {
 		// Params (p_234471_)
 		ChunkBufferBuilderPack buffers,
 		// Local variables
-		CompileResults compileResults, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
+		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
 		// Scoped local variables
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
 		SelfCheck.preIteration = true;
 		RendererDispatcher.renderChunk(
 			rebuildTask, chunkRender, buffers,
-			compileResults, chunkPos, world, matrix,
+			chunkPos, world, matrix,
 			usedLayers, random, dispatcher
 		);
 	}

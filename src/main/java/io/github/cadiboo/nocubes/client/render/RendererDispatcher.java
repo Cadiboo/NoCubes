@@ -39,7 +39,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
-import static net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask.CompileResults;
 import static net.minecraft.core.BlockPos.MutableBlockPos;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
@@ -62,7 +61,6 @@ public final class RendererDispatcher {
 		public final RebuildTask rebuildTask;
 		public final RenderChunk chunkRender;
 		public final ChunkBufferBuilderPack buffers;
-		public final CompileResults compileResults;
 		public final BlockPos chunkPos;
 		public final BlockAndTintGetter world;
 		public final FluentMatrixStack matrix;
@@ -75,7 +73,7 @@ public final class RendererDispatcher {
 
 		public ChunkRenderInfo(
 			RebuildTask rebuildTask, RenderChunk chunkRender,
-			ChunkBufferBuilderPack buffers, CompileResults compileResults, BlockPos chunkPos,
+			ChunkBufferBuilderPack buffers, BlockPos chunkPos,
 			BlockAndTintGetter world, FluentMatrixStack matrix,
 			Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
 			LightCache light, OptiFineProxy optiFine
@@ -83,7 +81,6 @@ public final class RendererDispatcher {
 			this.rebuildTask = rebuildTask;
 			this.chunkRender = chunkRender;
 			this.buffers = buffers;
-			this.compileResults = compileResults;
 			this.chunkPos = chunkPos;
 			this.world = world;
 			this.matrix = matrix;
@@ -140,7 +137,7 @@ public final class RendererDispatcher {
 		}
 
 		public BufferBuilder getAndStartBuffer(RenderType layer) {
-			return RendererDispatcher.getAndStartBuffer(chunkRender, compileResults, buffers, usedLayers, layer);
+			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
 		}
 
 		public void markLayerUsed(RenderType layer) {
@@ -228,7 +225,7 @@ public final class RendererDispatcher {
 
 	public static void renderChunk(
 		RebuildTask rebuildTask, RenderChunk chunkRender, ChunkBufferBuilderPack buffers,
-		CompileResults compileResults, BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
+		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
 		var start = System.nanoTime();
@@ -242,7 +239,7 @@ public final class RendererDispatcher {
 			optiFine.preRenderChunk(chunkRender, chunkPos, matrixStack);
 			var renderer = new ChunkRenderInfo(
 				rebuildTask, chunkRender, buffers,
-				compileResults, chunkPos, world, matrix,
+				chunkPos, world, matrix,
 				usedLayers, random, dispatcher,
 				light, optiFine
 			);
@@ -283,7 +280,7 @@ public final class RendererDispatcher {
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
-	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, CompileResults compiledChunk, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
+	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
 		var buffer = buffers.builder(layer);
 
 		if (usedLayers.add(layer))
