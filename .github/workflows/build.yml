@@ -38,6 +38,7 @@ jobs:
         with:
           version-type: beta
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-commitish: ${{ env.GITHUB_SHA }}
 #          modrinth-id: w3bbwFYU
 #          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 #          curseforge-id: 309664
