@@ -4,7 +4,7 @@ license="LGPLv3"
 issueTrackerURL="https://github.com/Cadiboo/NoCubes/issues"
 [[mods]]
 modId="nocubes"
-version="${version}"
+version="${file.jarVersion}"
 displayName="NoCubes"
 updateJSONURL="https://cadiboo.github.io/projects/nocubes/update.json"
 displayURL="https://cadiboo.github.io/projects/nocubes"

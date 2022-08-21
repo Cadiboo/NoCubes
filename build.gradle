@@ -136,8 +136,11 @@ tasks.withType(JavaCompile).configureEach {
 processResources {
 	// Ensures this task is redone when the version changes
 	inputs.property 'version', project.version
+	// NB: We need to use 'file.jarVersion' in mods.toml because IntelliJ doesn't run this task when it runs our mod in dev
+	// This works because 'file.jarVersion' gets handled at runtime by Forge
+	// IntelliJ bug: "https://youtrack.jetbrains.com/issue/IDEA-173367/The-processResources-task-is-not-correctly-handled-by-IntelliJ"
 	filesMatching('**/META-INF/mods.toml') {
-		expand 'version': project.version
+		expand 'file': [ jarVersion: project.version ]
 	}
 }
 
