@@ -1,6 +1,7 @@
 # TODO
 ## Soon
 Pressing issues that need to be fixed soon (usually because they affect performance, are painful bugs or are [regressions](https://en.wikipedia.org/wiki/Software_regression))
+1. Fix issues with adding blocks as smoothable when there are lots of blocks added by mods (likely an issue with ID pallates or encoding)
 1. Fix powdered snow being walkable when collisions are enabled (don't have terrain collisions for smooth blocks that normally don't have collisions)
 1. Investigate and fix [colored terracotta not being colored with OptiFine & Patrix 128](https://discord.com/channels/493715188843937793/520716613574590494/962760253378822276) (likely small task)
 1. Fix config loading issues (need to unit/integration test)
