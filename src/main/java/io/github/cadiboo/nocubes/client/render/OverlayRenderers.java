@@ -61,6 +61,8 @@ public final class OverlayRenderers {
 	public static void renderBlockHighlight(RenderHighlightEvent event) {
 		if (!NoCubesConfig.Client.render)
 			return;
+		if (!NoCubesConfig.Client.renderSelectionBox)
+			return;
 		var world = Minecraft.getInstance().level;
 		if (world == null)
 			return;

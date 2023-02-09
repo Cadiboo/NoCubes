@@ -85,6 +85,7 @@ public final class NoCubesConfig {
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
 		public static boolean render;
+		public static boolean renderSelectionBox;
 		public static ColorParser.Color selectionBoxColor;
 		public static boolean betterGrassSides;
 		public static boolean moreSnow;
@@ -116,6 +117,7 @@ public final class NoCubesConfig {
 
 			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
+			renderSelectionBox = INSTANCE.renderSelectionBox.get();
 			selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get());
 			betterGrassSides = INSTANCE.betterGrassSides.get();
 			moreSnow = INSTANCE.moreSnow.get();
@@ -155,6 +157,7 @@ public final class NoCubesConfig {
 		static class Impl {
 
 			final BooleanValue render;
+			final BooleanValue renderSelectionBox;
 			final ConfigValue<String> selectionBoxColor;
 			final BooleanValue betterGrassSides;
 			final BooleanValue moreSnow;
@@ -175,6 +178,10 @@ public final class NoCubesConfig {
 					.comment("If NoCubes' custom rendering is enabled")
 					.define("render", true);
 
+				renderSelectionBox = builder
+					.translation(NoCubes.MOD_ID + ".config.renderSelectionBox")
+					.comment("If NoCubes' should render a custom outline (selection box) for smoothed blocks (set to false to use Vanilla's cubic rendering).")
+					.define("renderSelectionBox", true);
 				selectionBoxColor = builder
 					.translation(NoCubes.MOD_ID + ".config.selectionBoxColor")
 					.comment(
