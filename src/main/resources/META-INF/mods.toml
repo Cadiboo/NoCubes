@@ -15,6 +15,8 @@ description='''
 NoCubes is a mod by Cadiboo for 1.12.2+ that creates smooth terrain in Minecraft.
 It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.
 '''
+# Disable Sodium/Rubidium's chunk rendering optimisations because they break our chunk rendering
+"sodium:options"."features.chunk_rendering"=false
 
 [[dependencies.nocubes]]
 modId="forge"
