@@ -57,9 +57,11 @@ minecraft {
 		}
 		configureEach {
 			workingDirectory project.file('run/' + it.name) as File
+			def dumpTransformedClasses = false // Set to true to debug Mixin/Asm issues
 			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', 'XFORM' // 'XFORM,MODLAUNCHER,CLASSDUMP' // For ASM classdump
-			property 'forge.logging.console.level', 'debug' // 'trace' // For ASM classdump
+			property 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
+			property 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
+			property 'mixin.debug.export', "${dumpTransformedClasses}"
 			property 'forge.enabledGameTestNamespaces', project.modId // Run our integration tests
 			jvmArg '-ea' // Enable assertions
 			// Use the 'test' module (and both source sets) because it contains our integration tests
