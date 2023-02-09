@@ -5,11 +5,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.Util;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public interface BlockStateConverter {
 
-	BlockStateArgument PARSER = new BlockStateArgument(new CommandBuildContext(RegistryAccess.BUILTIN.get()));
+	BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.DEFAULT_FLAGS));
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")
@@ -47,7 +48,7 @@ public interface BlockStateConverter {
 	}
 
 	static String toString(BlockState state) {
-		var block = Registry.BLOCK.getKey(state.getBlock()).toString();
+		var block = ForgeRegistries.BLOCKS.getKey(state.getBlock()).toString();
 		var values = state.getValues();
 		if (values.isEmpty())
 			return block;
