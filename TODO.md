@@ -1,19 +1,16 @@
 # TODO
 ## Soon
 Pressing issues that need to be fixed soon (usually because they affect performance, are painful bugs or are [regressions](https://en.wikipedia.org/wiki/Software_regression))
-1. Fix issues with adding blocks as smoothable when there are lots of blocks added by mods (likely an issue with ID pallates or encoding)
 1. Fix powdered snow being walkable when collisions are enabled (don't have terrain collisions for smooth blocks that normally don't have collisions)
 1. Investigate and fix [colored terracotta not being colored with OptiFine & Patrix 128](https://discord.com/channels/493715188843937793/520716613574590494/962760253378822276) (likely small task)
 1. Fix config loading issues (need to unit/integration test)
    - Need to stop old configs being loaded and overwriting the correct in-memory config
    - Happens when config is updated multiple times in fast succession
-   - Possibly related: [Smoothable syncing issue](https://discord.com/channels/493715188843937793/520716613574590494/957546807104253953) ([logs](https://discord.com/channels/493715188843937793/520716613574590494/958303722868441129))
    - Fix by adding GUID to config file & discarding loading configs that have a guid different to our most recently saved?
 1. Fix leaves with snow on them not being rendered 2 sided (~~render snow 2 sided in this case~~, can't because we are actually rendering the snow block - can't check if nearby blocks are leaves for performance; need to actually fix snow and make it render as its own 'render layer', might be a big task)
 
 ## Later
 Less pressing issues (usually large work that's important but should be sidelined for bug fixes)
-1. Move [DEFAULT_SMOOTHABLES](https://github.com/Cadiboo/NoCubes/blob/55b624f27fec70986d02cf5c34377f9ea98ca20c/src/main/java/io/github/cadiboo/nocubes/config/NoCubesConfig.java#L476) to a tag for use by mod & modpack devs (small/medium task)
 1. Make collisions generate for an entire area, not single blocks (large task)
    - Big performance gain
    - Needs to also fix mobs not spawning
