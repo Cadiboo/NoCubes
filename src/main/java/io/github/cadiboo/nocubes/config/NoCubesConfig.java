@@ -319,7 +319,7 @@ public final class NoCubesConfig {
 		public static void bake(ModConfig config) {
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
-			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
+			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
 			mesher = INSTANCE.mesher.get().instance;
 			collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();
@@ -389,6 +389,7 @@ public final class NoCubesConfig {
 			 */
 			final ConfigValue<List<? extends String>> smoothableWhitelist;
 			final ConfigValue<List<? extends String>> smoothableBlacklist;
+			final BooleanValue useDefaultSmoothableList;
 			final EnumValue<MesherType> mesher;
 			final BooleanValue collisionsEnabled;
 			final BooleanValue tempMobCollisionsDisabled;
@@ -406,6 +407,11 @@ public final class NoCubesConfig {
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklist")
 					.comment("What blocks should not be smoothed by NoCubes (same syntax as the /setblock command)")
 					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklist"), Lists::newArrayList, String.class::isInstance);
+
+				useDefaultSmoothableList = builder
+					.translation(NoCubes.MOD_ID + ".config.useDefaultSmoothableList")
+					.comment("If NoCubes should smooth common natural blocks (e.g. dirt, stone, ore) even if they are not included in the above whitelist")
+					.define("useDefaultSmoothableList", true);
 
 				collisionsEnabled = builder
 					.translation(NoCubes.MOD_ID + ".config.collisionsEnabled")
@@ -524,7 +530,6 @@ public final class NoCubesConfig {
 		 * Stores the list of blocks that 'just are' smoothable by default.
 		 * This includes stuff like Stone and any blocks that other mods register as smoothable.
 		 */
-		// TODO: Convert this to a tag
 		private static final Set<BlockState> DEFAULT_SMOOTHABLES = Sets.newIdentityHashSet();
 
 		static {
@@ -538,6 +543,7 @@ public final class NoCubesConfig {
 				SANDSTONE, RED_SANDSTONE,
 				GRAVEL,
 				COAL_ORE, IRON_ORE, COPPER_ORE, GOLD_ORE, REDSTONE_ORE, DIAMOND_ORE, LAPIS_ORE, EMERALD_ORE, NETHER_QUARTZ_ORE, NETHER_GOLD_ORE,
+				RAW_IRON_BLOCK, RAW_COPPER_BLOCK, RAW_GOLD_BLOCK,
 				DEEPSLATE_COAL_ORE, DEEPSLATE_IRON_ORE, DEEPSLATE_COPPER_ORE, DEEPSLATE_GOLD_ORE, DEEPSLATE_REDSTONE_ORE, DEEPSLATE_DIAMOND_ORE, DEEPSLATE_LAPIS_ORE, DEEPSLATE_EMERALD_ORE,
 				INFESTED_STONE, INFESTED_DEEPSLATE,
 				BONE_BLOCK,
@@ -552,11 +558,11 @@ public final class NoCubesConfig {
 
 			// Add each of these individual BlockStates
 			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new BlockState[]{
-
 			}).collect(Collectors.toList()));
 
 			// Add these modded BlockStates
-			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(
+			//noinspection RedundantArrayCreation
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(new String[]{
 				"biomesoplenty:grass[snowy=false,variant=sandy]",
 				"biomesoplenty:dirt[coarse=false,variant=sandy]",
 				"biomesoplenty:white_sand",
@@ -577,8 +583,8 @@ public final class NoCubesConfig {
 				"iceandfire:chared_stone",
 				"iceandfire:frozen_grass_path",
 				"notenoughroofs:copper_ore",
-				"rustic:slate"
-			)));
+				"rustic:slate",
+			})));
 		}
 
 		static void updateUserDefinedSmoothableStringLists(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
@@ -597,14 +603,14 @@ public final class NoCubesConfig {
 			}
 		}
 
-		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist) {
+		static void recomputeInMemoryLookup(List<? extends String> whitelist, List<? extends String> blacklist, boolean useDefaultSmoothables) {
 			LOG.debug("Recomputing in-memory smoothable lookups from user-defined smoothable string lists");
 			var whitelisted = parseBlockStates(whitelist);
 			var blacklisted = parseBlockStates(blacklist);
 			ForgeRegistries.BLOCKS.getValues().parallelStream()
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
-					var smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
+					var smoothable = (whitelisted.contains(state) || (useDefaultSmoothables && Smoothables.DEFAULT_SMOOTHABLES.contains(state))) && !blacklisted.contains(state);
 					if (Common.debugEnabled && NoCubes.smoothableHandler.isSmoothable(state) != smoothable)
 						LOG.debug(() -> "Updating smoothness of %s to %b".formatted(state, smoothable));
 					NoCubes.smoothableHandler.setSmoothable(smoothable, state);

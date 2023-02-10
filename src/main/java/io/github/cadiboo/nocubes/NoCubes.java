@@ -45,7 +45,7 @@ public final class NoCubes {
 
 	/**
 	 * For other mods.
-	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
+	 * Add your block(s) as being smoothable 'by default' (may be overridden in world by user/server config).
 	 */
 	public static void addSmoothable(Block... blocks) {
 		for (var block : blocks)
@@ -54,7 +54,7 @@ public final class NoCubes {
 
 	/**
 	 * For other mods.
-	 * Add your block(s) as being smoothable 'by default' (may be overridden/server in world by user config).
+	 * Add your block(s) as being smoothable 'by default' (may be overridden in world by user/server config).
 	 */
 	public static void addSmoothable(BlockState... states) {
 		NoCubesConfig.Smoothables.addDefault(states);
