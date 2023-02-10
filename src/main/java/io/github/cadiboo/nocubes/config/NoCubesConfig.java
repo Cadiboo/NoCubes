@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
@@ -59,22 +60,71 @@ public final class NoCubesConfig {
 	 * @param context The ModLoadingContext to register the configs to
 	 */
 	public static void register(ModLoadingContext context, IEventBus modBus) {
-		Lists.newArrayList(
-//			Pair.of(ModConfig.Type.COMMON, Common.SPEC),
-			Pair.of(ModConfig.Type.CLIENT, Client.SPEC),
-			Pair.of(ModConfig.Type.SERVER, Server.SPEC)
-		).forEach(pair -> context.registerConfig(pair.getKey(), pair.getValue()));
+		var specs = new HashMap<ForgeConfigSpec, Pair<ModConfig.Type, Consumer<ModConfig>>>();
+		specs.put(Common.SPEC, Pair.of(ModConfig.Type.COMMON, Common::bake));
+		specs.put(Client.SPEC, Pair.of(ModConfig.Type.CLIENT, Client::bake));
+		specs.put(Server.SPEC, Pair.of(ModConfig.Type.SERVER, Server::bake));
+		specs.forEach((spec, typeAndBaker) -> context.registerConfig(typeAndBaker.getKey(), spec));
 		modBus.addListener((ModConfigEvent event) -> {
 			var config = event.getConfig();
-			var spec = config.getSpec();
-			if (!((ForgeConfigSpec)spec).isLoaded())
-				return;
-			LOG.debug("Received config event for {}", config.getFileName());
-			if (spec == Client.SPEC)
-				Client.bake(config);
-			else if (spec == Server.SPEC)
-				Server.bake(config);
+			var typeAndBaker = specs.get(config.getSpec());
+			if (typeAndBaker == null)
+				LOG.debug("Received config event for unknown config {}", config.getFileName());
+			else
+				bakeConfig(config, typeAndBaker.getValue());
 		});
+	}
+
+	/**
+	 * Each time our config changes we get the values from it and store them in our own fields ('baking' them)
+	 * instead of looking up the values on the config (which is pretty slow) each time we need them.
+	 */
+	private static void bakeConfig(ModConfig config, Consumer<ModConfig> baker) {
+		if (!((ForgeConfigSpec)config.getSpec()).isLoaded()) {
+			LOG.debug("Not baking unloaded config {}", config.getFileName());
+			return;
+		}
+		LOG.debug("Baking config {}", config.getFileName());
+		baker.accept(config);
+	}
+
+	/**
+	 * Settings that effect the app state regardless of if it is a client or server.
+	 */
+	public static class Common {
+
+		public static final Impl INSTANCE;
+		public static final ForgeConfigSpec SPEC;
+
+		public static boolean debugEnabled;
+
+		static {
+			var specPair = new ForgeConfigSpec.Builder().configure(Common.Impl::new);
+			SPEC = specPair.getRight();
+			INSTANCE = specPair.getLeft();
+		}
+
+		/**
+		 * See {@link NoCubesConfig#bakeConfig}
+		 */
+		public static void bake(ModConfig config) {
+			debugEnabled = INSTANCE.debugEnabled.get();
+		}
+
+		/**
+		 * Responsible for interfacing with Forge's config API and creating a Config with all our options.
+		 */
+		static class Impl {
+
+			final BooleanValue debugEnabled;
+
+			private Impl(ForgeConfigSpec.Builder builder) {
+				debugEnabled = builder
+					.translation(NoCubes.MOD_ID + ".config.debugEnabled")
+					.comment("If debugging features should be enabled")
+					.define("debugEnabled", false);
+			}
+		}
 	}
 
 	/**
@@ -92,7 +142,6 @@ public final class NoCubesConfig {
 		public static boolean fixPlantHeight;
 		public static boolean grassTufts;
 
-		public static boolean debugEnabled;
 		public static boolean debugOutlineSmoothables;
 		public static boolean debugVisualiseDensitiesGrid;
 		public static boolean debugRenderCollisions;
@@ -101,17 +150,15 @@ public final class NoCubesConfig {
 		public static boolean debugOutlineNearbyMesh;
 
 		static {
-			Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
+			var specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
 			SPEC = specPair.getRight();
 			INSTANCE = specPair.getLeft();
 		}
 
 		/**
-		 * Each time our config changes we get the values from it and store them in our own fields ('baking' them)
-		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
+		 * See {@link NoCubesConfig#bakeConfig}
 		 */
 		public static void bake(ModConfig config) {
-			LOG.debug("Baking config {}", config.getFileName());
 			boolean oldRender = render;
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
@@ -129,7 +176,6 @@ public final class NoCubesConfig {
 			else if (render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
 				reloadAllChunks("options affecting chunk rendering in the client config were changed");
 
-			debugEnabled = INSTANCE.debugEnabled.get();
 			debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
 			debugVisualiseDensitiesGrid = INSTANCE.debugVisualiseDensitiesGrid.get();
 			debugRenderCollisions = INSTANCE.debugRenderCollisions.get();
@@ -164,7 +210,6 @@ public final class NoCubesConfig {
 			final BooleanValue fixPlantHeight;
 			final BooleanValue grassTufts;
 
-			final BooleanValue debugEnabled;
 			final BooleanValue debugOutlineSmoothables;
 			final BooleanValue debugVisualiseDensitiesGrid;
 			final BooleanValue debugRenderCollisions;
@@ -233,17 +278,13 @@ public final class NoCubesConfig {
 				builder
 					.push("debug");
 				{
-					debugEnabled = builder
-						.translation(NoCubes.MOD_ID + ".config.debugEnabled")
-						.comment("If debugging features should be enabled")
-						.define("debugEnabled", false);
-
-					debugOutlineSmoothables = builder.define("debugOutlineSmoothables", false);
-					debugVisualiseDensitiesGrid = builder.define("debugVisualiseDensitiesGrid", false);
-					debugRenderCollisions = builder.define("debugRenderCollisions", false);
-					debugRenderMeshCollisions = builder.define("debugRenderMeshCollisions", false);
-					debugRecordMeshPerformance = builder.define("debugRecordMeshPerformance", false);
-					debugOutlineNearbyMesh = builder.define("debugOutlineNearbyMesh", false);
+					final var debugComment = "Enable debug mode in the common config";
+					debugOutlineSmoothables = builder.comment(debugComment).define("debugOutlineSmoothables", false);
+					debugVisualiseDensitiesGrid = builder.comment(debugComment).define("debugVisualiseDensitiesGrid", false);
+					debugRenderCollisions = builder.comment(debugComment).define("debugRenderCollisions", false);
+					debugRenderMeshCollisions = builder.comment(debugComment).define("debugRenderMeshCollisions", false);
+					debugRecordMeshPerformance = builder.comment(debugComment).define("debugRecordMeshPerformance", false);
+					debugOutlineNearbyMesh = builder.comment(debugComment).define("debugOutlineNearbyMesh", false);
 				}
 				builder.pop();
 			}
@@ -267,17 +308,15 @@ public final class NoCubesConfig {
 		public static float oldNoCubesRoughness;
 
 		static {
-			Pair<Impl, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
+			var specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
 			SPEC = specPair.getRight();
 			INSTANCE = specPair.getLeft();
 		}
 
 		/**
-		 * Each time our config changes we get the values from it and store them in our own fields ('baking' them)
-		 * instead of looking up the values on the config (which is pretty slow) each time we need them.
+		 * See {@link NoCubesConfig#bakeConfig}
 		 */
 		public static void bake(ModConfig config) {
-			LOG.debug("Baking config {}", config.getFileName());
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
 			Smoothables.recomputeInMemoryLookup(INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get());
@@ -291,8 +330,7 @@ public final class NoCubesConfig {
 			extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
-			if (oldChunkRenderSettingsHash != hashChunkRenderSettings())
-				// TODO: This seems to be broken and never gets called in singleplayer (should it be?)
+			if (Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
 			if (FMLEnvironment.dist.isDedicatedServer() && ServerLifecycleHooks.getCurrentServer() != null)
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
@@ -305,11 +343,15 @@ public final class NoCubesConfig {
 		}
 
 		private static int hashChunkRenderSettings() {
-			return Objects.hash(mesher, forceVisuals);
+			var smoothables = ForgeRegistries.BLOCKS.getValues().stream()
+				.flatMap(block -> ModUtil.getStates(block).stream())
+				.map(NoCubes.smoothableHandler::isSmoothable)
+				.toArray(Boolean[]::new);
+			return Objects.hash(mesher, forceVisuals, Arrays.hashCode(smoothables));
 		}
 
 		public static void updateSmoothable(boolean newValue, BlockState... states) {
-			Smoothables.updateSmoothables(newValue, states, (List) INSTANCE.smoothableWhitelist.get(), (List) INSTANCE.smoothableBlacklist.get());
+			Smoothables.updateUserDefinedSmoothableStringLists(newValue, states, (List) INSTANCE.smoothableWhitelist.get(), (List) INSTANCE.smoothableBlacklist.get());
 			saveAndLoad();
 		}
 
@@ -539,7 +581,7 @@ public final class NoCubesConfig {
 			)));
 		}
 
-		static void updateSmoothables(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
+		static void updateUserDefinedSmoothableStringLists(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
 			LOG.debug("Updating user-defined smoothable string lists");
 			var toAddTo = newValue ? whitelist : blacklist;
 			var toRemoveFrom = newValue ? blacklist : whitelist;
@@ -563,6 +605,8 @@ public final class NoCubesConfig {
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
 					var smoothable = (whitelisted.contains(state) || Smoothables.DEFAULT_SMOOTHABLES.contains(state)) && !blacklisted.contains(state);
+					if (Common.debugEnabled && NoCubes.smoothableHandler.isSmoothable(state) != smoothable)
+						LOG.debug(() -> "Updating smoothness of %s to %b".formatted(state, smoothable));
 					NoCubes.smoothableHandler.setSmoothable(smoothable, state);
 				});
 		}

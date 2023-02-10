@@ -92,7 +92,7 @@ public final class OverlayRenderers {
 	}
 
 	public static void renderDebugOverlays(RenderLevelLastEvent event, List<Pair<String, DebugOverlay>> overlays) {
-		if (!NoCubesConfig.Client.debugEnabled)
+		if (!NoCubesConfig.Common.debugEnabled)
 			return;
 
 		var minecraft = Minecraft.getInstance();

@@ -21,7 +21,7 @@ public final class RollingProfiler {
 	 * @return true if a rollover happened
 	 */
 	public boolean recordElapsedNanos(long startNanos) {
-		if (!NoCubesConfig.Client.debugEnabled)
+		if (!NoCubesConfig.Common.debugEnabled)
 			return false;
 		long elapsed = System.nanoTime() - startNanos;
 		int i = index.incrementAndGet() % records.length;

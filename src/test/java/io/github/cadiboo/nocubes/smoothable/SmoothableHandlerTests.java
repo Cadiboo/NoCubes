@@ -31,9 +31,9 @@ public class SmoothableHandlerTests {
 		var mock = (INoCubesBlockState) mockedState;
 
 		// This code would have been added into the BlockState via ASM
-		Mockito.when(mock.isTerrainSmoothable()).thenAnswer(invocation -> smoothableRef[0]);
-		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setTerrainSmoothable(true);
-		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setTerrainSmoothable(false);
+		Mockito.when(mock.isSmoothable()).thenAnswer(invocation -> smoothableRef[0]);
+		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setSmoothable(true);
+		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setSmoothable(false);
 
 		return mockedState;
 	}

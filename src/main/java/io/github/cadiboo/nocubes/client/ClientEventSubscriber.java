@@ -28,7 +28,7 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void printDebugInfo(TickEvent.ClientTickEvent event) {
-		if (!NoCubesConfig.Client.debugEnabled || !Screen.hasAltDown())
+		if (!NoCubesConfig.Common.debugEnabled || !Screen.hasAltDown())
 			return;
 
 		var world = Minecraft.getInstance().level;

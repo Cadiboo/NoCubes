@@ -6,7 +6,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 /**
  * The in-memory list of smoothables.
  * Shared between client and server in singleplayer.
- * Uses ASM-added fields with an identity set fallback.
+ * Uses the {@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_isSmoothable} field which is added via ASM at runtime.
  *
  * @author Cadiboo
  */
@@ -25,12 +25,12 @@ public interface SmoothableHandler {
 		return new SmoothableHandler() {
 			@Override
 			public boolean isSmoothable(BlockStateBase state) {
-				return ((INoCubesBlockState) state).isTerrainSmoothable();
+				return ((INoCubesBlockState) state).isSmoothable();
 			}
 
 			@Override
 			public void setSmoothable(boolean newValue, BlockStateBase state) {
-				((INoCubesBlockState) state).setTerrainSmoothable(newValue);
+				((INoCubesBlockState) state).setSmoothable(newValue);
 			}
 		};
 	}

@@ -31,12 +31,12 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	public boolean nocubes_isSmoothable;
 
 	@Override
-	public void setTerrainSmoothable(boolean value) {
+	public void setSmoothable(boolean value) {
 		nocubes_isSmoothable = value;
 	}
 
 	@Override
-	public boolean isTerrainSmoothable() {
+	public boolean isSmoothable() {
 		return nocubes_isSmoothable;
 	}
 
