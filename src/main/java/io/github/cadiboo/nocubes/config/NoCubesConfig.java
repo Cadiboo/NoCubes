@@ -569,7 +569,7 @@ public final class NoCubesConfig {
 
 		static Set<BlockState> parseBlockStates(List<? extends String> list) {
 			var set = Sets.<BlockState>newIdentityHashSet();
-			list.parallelStream()
+			list.stream()
 				.map(BlockStateConverter::fromStringOrNull)
 				.filter(Objects::nonNull)
 				.forEach(set::add);
