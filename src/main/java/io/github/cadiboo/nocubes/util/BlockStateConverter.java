@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 public interface BlockStateConverter {
 
-	BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.DEFAULT_FLAGS));
+	BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.REGISTRY.allFlags()));
 
 	static BlockState fromId(int id) {
 		@SuppressWarnings("deprecation")
