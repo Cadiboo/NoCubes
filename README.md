@@ -75,6 +75,7 @@ Isosurface extraction isn't the only way of procedurally generating a mesh thoug
 1. Clone/download this repo
 1. Open NoCubes/build.gradle in IntelliJ and select 'Open as Gradle Project'
 1. Go to the gradle sidebar on the right and click the 🔄 "Reload All Gradle Projects" icon
+1. Go to the gradle sidebar on the right and select "🐘 NoCubes > Tasks > forgegradle runs > genIntellijRuns" and double click it to run it (may have to rerun it multiple times, it often fails to download assets)
 1. Go to the run configurations dropdown in the right of the top 'sidebar' and select 'runClient'
 1. Clicking the 🕷 "Debug 'runClient'" button will start Minecraft with NoCubes running
 
