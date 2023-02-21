@@ -83,23 +83,23 @@ Isosurface extraction isn't the only way of procedurally generating a mesh thoug
 OptiFine is a bit hard to work with  
 To get it running in your development environment:  
 1. Download the OptiFine version that you want from [optifine.net](https://optifine.net/downloads)  
-2. Download OptiFine dev tweaker from [GitHub](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases/latest)  
-3. Put both jar files into `NoCubes/run/mods/`  
-4. Run the game and OptiFine & Shaders will load
+1. Download OptiFine dev tweaker from [GitHub](https://github.com/OpenCubicChunks/OptiFineDevTweaker/releases/latest)  
+1. Put both jar files into `NoCubes/run/mods/`  
+1. Run the game and OptiFine & Shaders will load
 
 To be able to also compile against OptiFine (do the above steps first):
 1. You must have set up NoCubes and had gradle install and deobfuscate Minecraft first
-2. Make sure that you have Minecraft for the version you're running NoCubes on  
+1. Make sure that you have Minecraft for the version you're running NoCubes on  
      If you don't, just open the minecraft launcher, select the right version and hit 'Play'.
      The launcher will download everything and you can just quit the game when it starts.
      To find the version of Minecraft that NoCubes is being built against look in `gradle.properties`.
-3. Download OptiFineDeobf from [GitHub](https://github.com/Cadiboo/OptiFineDeobf/releases/latest)
-4. Run the OptiFine jar in `NoCubes/run/mods/` and select 'Extract', put the resulting extracted jar somewhere outside the `mods` folder
-5. Run OptiFineDeobf, select the extracted OptiFine jar in `NoCubes/run/mods/` and select the `NoCubes` folder for the project folder
-6. Select a mappings file that maps from SRG to MCP/official (don't use obf -> MCP mappings)
-7. Select 'Make Public' and 'Forge Dev jar' then click 'Deobf'
-8. Put the deobfuscated OptiFine jar into `NoCubes/libs/`
-9. Refresh gradle in your IDE and you should be able to compile against OptiFine's classes (and running OptiFine still works as it did before)
+1. Download OptiFineDeobf from [GitHub](https://github.com/Cadiboo/OptiFineDeobf/releases/latest)
+1. Run the OptiFine jar in `NoCubes/run/mods/` and select 'Extract', put the resulting extracted jar somewhere outside the `mods` folder
+1. Run OptiFineDeobf, select the extracted OptiFine jar that you just created and select the `NoCubes` folder for the project folder
+1. Select a mappings file that maps from SRG to MCP/official (don't use obf -> MCP mappings)
+1. Select 'Make Public' and 'Forge Dev jar' then click 'Deobf'
+1. Put the deobfuscated OptiFine jar into `NoCubes/libs/`
+1. Refresh gradle in your IDE and you should be able to compile against OptiFine's classes (and running OptiFine still works as it did before)
 
 Note: You can replace the normal OptiFine jar with the extracted (non-deobfuscated) one in `NoCubes/run/mods/` (this *may* speed up OptiFine's loading time)
 
