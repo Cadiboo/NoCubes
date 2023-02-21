@@ -100,6 +100,10 @@ repositories {
 		}
 	}
 	mavenCentral()
+	// Mod jar dependencies in ./libs
+	flatDir {
+		dir 'libs'
+	}
 }
 dependencies {
 	// If OptiFine (deobfuscated with Cadiboo's OptiFine deobf tool) is in libs, we want to be able to look at its classes
@@ -116,8 +120,12 @@ dependencies {
 	// Apply Mixin AP
 	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-	// Add a compile/implementation dependency on all .jar files in ./libs
-	implementation fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
+	// Add a compile/implementation dependency on (and deobfuscate) all .jar files in ./libs
+	fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs').each { file ->
+		def fileNameWithoutDotJarExtension = file.name.substring(0, file.name.length() - 4)
+		def indexOfLastDash = fileNameWithoutDotJarExtension.lastIndexOf('-');
+		implementation fg.deobf("local:${fileNameWithoutDotJarExtension.substring(0, indexOfLastDash)}:${fileNameWithoutDotJarExtension.substring(indexOfLastDash + 1)}")
+	}
 
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'

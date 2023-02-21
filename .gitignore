@@ -24,5 +24,5 @@ run/*
 !run/gameTestServer
 run/gameTestServer/*
 !run/gameTestServer/gameteststructures
-# Ignore deobfuscated OptiFine
-libs/OptiFine_*_MOD-deobf.jar
+# Ignore mods being used for testing
+libs/*
