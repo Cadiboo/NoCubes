@@ -33,7 +33,7 @@ jobs:
             ./build/libs/*.jar
           if-no-files-found: error
       - name: Publish
-        uses: Kir-Antipov/mc-publish@v3.1
+        uses: Kir-Antipov/mc-publish@v3.2
         if: "contains(github.event.head_commit.message, '[ci publish]')"
         with:
           version-type: beta
