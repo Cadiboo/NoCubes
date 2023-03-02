@@ -24,8 +24,7 @@ jobs:
       - name: Build and check
         run: ./gradlew build --stacktrace
       - name: Integration tests
-        # Minecraft server exits with code 0 when it crashes during startup, search its output for the crash so that we don't continue on thinking our tests passed
-        run: ./gradlew runGameTestServer --stacktrace | tee /dev/fd/2 | grep -q 'Failed to start the minecraft server' && exit 1
+        run: ./gradlew runGameTestServer --stacktrace
       - name: Archive jars
         uses: actions/upload-artifact@v3
         with:
