@@ -131,10 +131,12 @@ public final class OldNoCubes extends SimpleMesher {
 				point.z += z;
 
 				if (!doesPointIntersectWithManufactured(area, point, isSmoothable, pos)) {
-					if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
-						point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-					else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))
-						point.y = y + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
+					if (NoCubesConfig.Server.oldNoCubesSlopes) {
+						if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
+							point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
+						else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))
+							point.y = y + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
+					}
 					givePointRoughness(roughness, area, point);
 				}
 			}
