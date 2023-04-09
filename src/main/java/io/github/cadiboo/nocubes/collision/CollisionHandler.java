@@ -42,7 +42,14 @@ import java.util.function.Predicate;
  * - Player should be able to place redstone on slopes of smooth blocks
  * - Player should be able to place snow on slopes of smooth blocks (currently broken)
  */
+// TODO: Rename to SmoothShapes or SmoothVoxelShapeHandler
+// TODO: Improve method names and cleanup
 public final class CollisionHandler {
+
+	// TODO: Incorporate hacks for FallingBlocks and tempMobCollisionsDisabled
+
+	// Not for use by the collisions system, simply
+	// public static VoxelShape createNoCubesVoxelShape(BlockGetter world, BlockPos pos)
 
 	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
 		boolean canCollide = state.getBlock().hasCollision;
@@ -101,8 +108,10 @@ public final class CollisionHandler {
 
 	// region indev
 
-	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, MutableBlockPos pos) {
+	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, MutableBlockPos pos, boolean onlySuffocatingBlocks) {
 		Deque<VoxelShape> shapes = new ArrayDeque<>();
+		if (onlySuffocatingBlocks)
+			return shapes; // TODO: WHY WHY WHY DOES EVERYTHING BREAK IF THIS ISN'T HERE (read javadoc on deleted nocubes_isSuffocating method)
 		int minX = Mth.floor(area.minX - 1.0E-7D) - 1;
 		int maxX = Mth.floor(area.maxX + 1.0E-7D) + 1;
 		int minY = Mth.floor(area.minY - 1.0E-7D) - 1;
@@ -121,38 +130,6 @@ public final class CollisionHandler {
 			return true;
 		});
 		return shapes;
-	}
-
-	public static double collideAxisInArea(
-		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
-		AxisCycle rotation, AxisCycle inverseRotation, MutableBlockPos pos,
-		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
-	) {
-		if (world instanceof Level)
-			((Level) world).getProfiler().push("NoCubes collisions");
-		try {
-			double[] motionRef = {motion};
-			Axis axis = inverseRotation.cycle(Axis.Z);
-			Predicate<VoxelShape> predicate = shape -> {
-				assert Math.abs(motionRef[0]) >= 1.0E-7D;
-				motionRef[0] = shape.collide(axis, aabb, motionRef[0]);
-				if (Math.abs(motionRef[0]) < 1.0E-7D) {
-					motionRef[0] = 0;
-					return false;
-				}
-				return true;
-			};
-
-			// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
-			forEachCollisionShapeRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
-			return motionRef[0];
-		} catch (Throwable t) {
-			Util.pauseInIde(t);
-			throw t;
-		} finally {
-			if (world instanceof Level)
-				((Level) world).getProfiler().pop();
-		}
 	}
 
 	public static void forEachCollisionShapeRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
