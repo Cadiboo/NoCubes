@@ -8,11 +8,13 @@ architectury {
 }
 
 loom {
-    accessWidenerPath = project(":common").loom.accessWidenerPath
+	// TODO: Replace Access Transformer with Access Widener
+    //accessWidenerPath = project(":common").loom.accessWidenerPath
 
     forge {
-        convertAccessWideners = true
-        extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+		// TODO: Replace Access Transformer with Access Widener
+        //convertAccessWideners = true
+        //extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
 
         mixinConfig "nocubes-common.mixins.json"
         mixinConfig "nocubes.mixins.json"
@@ -35,6 +37,13 @@ dependencies {
 
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	shadowCommon(forgeRuntimeLibrary(implementation('org.beryx:awt-color-factory:1.0.2')))
+
+//	modImplementation "curse.maven:KotlinForForge-351264:3331341"
+//	modImplementation "curse.maven:BetterFoliage-228529:3335091"
+
+	// For unit tests
+	testImplementation 'org.mockito:mockito-core:4.5.1'
+	testImplementation 'junit:junit:4.13.2'
 }
 
 processResources {
