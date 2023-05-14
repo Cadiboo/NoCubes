@@ -1,240 +1,57 @@
-buildscript {
-	dependencies {
-		// Can't use the newer 'plugins' block for Mixin, need to use the old 'apply plugin' method
-		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-	}
-}
 plugins {
-	id 'java'
-	// Shadow jar includes our libraries into our final jar
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'eclipse' // Is this needed?
-	id 'maven-publish'
-	id 'net.minecraftforge.gradle' version '5.1.+'
-}
-apply plugin: 'org.spongepowered.mixin'
-
-String execCmd(List<String> params, String fallback) {
-	def stdout = new ByteArrayOutputStream()
-	def result = exec {
-		commandLine params
-		standardOutput = stdout
-	}
-	return result.getExitValue() != 0 ? fallback : stdout.toString().trim()
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id "dev.architectury.loom" version "1.1-SNAPSHOT" apply false
 }
 
-// We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
-version = "${modMinecraftVersion}-${modVersion}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
-group = modGroup
-archivesBaseName = modFileName
+architectury {
+    minecraft = rootProject.minecraftVersion
+}
 
-if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
-	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
+subprojects {
+    apply plugin: "dev.architectury.loom"
 
-// Mojang ships Java 17 to end users in 1.18+, so mods should target this version
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
-
-minecraft {
-	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/master/mdk/build.gradle#L28-L40"
-	mappings channel: 'official', version: modMinecraftVersion
-	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-
-	// We have an access transformer because we reach into some of Minecraft's private/protected rendering internals
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Must be this exact path
-
-	runs {
-		client {
-			workingDirectory project.file('run')
-		}
-		server {
-			workingDirectory project.file('run/server')
-		}
-		// Runs all integration tests then quits, for use in CI
-		gameTestServer {
-			workingDirectory project.file('run/server')
-			setForceExit(false) // To allow integration tests to run in CI
-		}
-		configureEach {
-			workingDirectory project.file('run/' + it.name) as File
-			def dumpTransformedClasses = false // Set to true to debug Mixin/Asm issues
-			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
-			property 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
-			property 'mixin.debug.export', "${dumpTransformedClasses}"
-			property 'forge.enabledGameTestNamespaces', project.modId // Run our integration tests
-			jvmArg '-ea' // Enable assertions
-			// Use the 'test' module (and both source sets) because it contains our integration tests
-			ideaModule "${project.name}.test"
-			mods.register(modId as String) {
-				sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
+    loom {
+        silentMojangMappingsLicense()
+		runs {
+			configureEach {
+				// We want both forge & fabric to share a single game dir
+				runDir "../${runDir}/${it.name}"
 			}
 		}
 	}
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraftVersion}"
+        // The following line declares the mojmap mappings, you may use other mappings as well
+        mappings loom.officialMojangMappings()
+        // The following line declares the yarn mappings you may select this one as well.
+        // mappings "net.fabricmc:yarn:1.19.4+build.2:v2"
+    }
 }
 
-mixin {
-	add sourceSets.main, "mixins.${modId}.refmap.json"
-	config "mixins.${modId}.json"
+allprojects {
+    apply plugin: "java"
+    apply plugin: "architectury-plugin"
+    apply plugin: "maven-publish"
 
-	debug.verbose = true
-	debug.export = true
+    archivesBaseName = rootProject.archivesBaseName
+    version = rootProject.modVersion
+    group = rootProject.mavenGroup
+
+    repositories {
+        // Add repositories to retrieve artifacts from in here.
+        // You should only use this when depending on other mods because
+        // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+        // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+        // for more information about repositories.
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.release = 17
+    }
+
+    java {
+        withSourcesJar()
+    }
 }
-
-configurations {
-	library
-	implementation.extendsFrom library
-	shadow.extendsFrom library
-}
-minecraft.runs.all {
-	lazyToken('minecraft_classpath') {
-		configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-	}
-}
-
-repositories {
-	maven {
-		url "https://www.cursemaven.com"
-		content {
-			includeGroup "curse.maven"
-		}
-	}
-	mavenCentral()
-	// Mod jar dependencies in ./libs
-	flatDir {
-		dir 'libs'
-	}
-}
-dependencies {
-	// If OptiFine (deobfuscated with Cadiboo's OptiFine deobf tool) is in libs, we want to be able to look at its classes
-	// We use 'testCompileOnly' and not 'implementation', we don't want it to actually load at runtime because the non-deobf
-	// version of OptiFine and OptiFineDevTweaker are loaded from the mods folder at runtime
-	// OptiFine is the first dependency because so that we can compile against its version of vanilla's classes, not Forge's
-	testCompileOnly fileTree(include: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
-
-	// Specify the version of Minecraft to use
-	// If this is any group other than 'net.minecraft' it is assumed that the dep is a ForgeGradle 'patcher' dependency and its patches will be applied
-	// The userdev artifact is a special name and will get all sorts of transformations applied to it
-	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
-
-	// Apply Mixin AP
-	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
-	// Add a compile/implementation dependency on (and deobfuscate) all .jar files in ./libs
-	fileTree(include: ['*.jar'], exclude: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs').each { file ->
-		def fileNameWithoutDotJarExtension = file.name.substring(0, file.name.length() - 4)
-		def indexOfLastDash = fileNameWithoutDotJarExtension.lastIndexOf('-');
-		implementation fg.deobf("local:${fileNameWithoutDotJarExtension.substring(0, indexOfLastDash)}:${fileNameWithoutDotJarExtension.substring(indexOfLastDash + 1)}")
-	}
-
-	// For the config color picker (we include it in our production jar with ShadowJar)
-	library 'org.beryx:awt-color-factory:1.0.2'
-
-//	implementation fg.deobf("curse.maven:KotlinForForge-351264:3331341")
-//	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
-
-	// For unit tests
-	testImplementation 'org.mockito:mockito-core:4.5.1'
-	testImplementation 'junit:junit:4.13.2'
-}
-
-// region build
-tasks.withType(JavaCompile).configureEach {
-	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
-
-processResources {
-	// Ensures this task is redone when the version changes
-	inputs.property 'version', project.version
-	// NB: We need to use 'file.jarVersion' in mods.toml because IntelliJ doesn't run this task when it runs our mod in dev
-	// This works because 'file.jarVersion' gets handled at runtime by Forge
-	// IntelliJ bug: "https://youtrack.jetbrains.com/issue/IDEA-173367/The-processResources-task-is-not-correctly-handled-by-IntelliJ"
-	filesMatching('**/META-INF/mods.toml') {
-		expand 'file': [ jarVersion: project.version ]
-	}
-}
-
-jar {
-	classifier 'dev'
-	manifest {
-		attributes([
-			// See https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
-			'Specification-Title'   : project.name,
-			'Specification-Version' : modVersion,
-			'Specification-Vendor'  : project.group,
-			'Implementation-Title'  : modId,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor' : project.group,
-
-			'Built-For'             : "${project.modMinecraftVersion}-${project.modForgeVersion}",
-			'Built-At-UTC'          : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-			'Built-On-JVM'          : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-			'Signing-Fingerprint'   : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
-		])
-	}
-}
-shadowJar {
-	classifier ''
-
-	configurations = [project.configurations.shadow]
-	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
-	manifest.attributes(jar.manifest.getAttributes())
-}
-reobf {
-	// We want the output of the following tasks to be reobfuscated
-	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-	shadowJar {}
-}
-task sourcesJar(type: Jar, dependsOn: classes) {
-	archiveClassifier.set('sources')
-	from sourceSets.main.allSource
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-	archiveClassifier.set('javadoc')
-	from javadoc.destinationDir
-}
-javadoc {
-	// Gradle doesn't support Java 8's new tags out of the box
-	options.tags = [
-		'apiNote:a:API Note:',
-		'implSpec:a:Implementation Requirements:',
-		'implNote:a:Implementation Note:',
-	]
-}
-
-artifacts {
-	archives jar
-	archives shadowJar
-	archives sourcesJar
-	archives javadocJar
-}
-// endregion
-
-// region publish
-// TODO: Move this to the publish step, not the build step
-// Sign all the jars
-import net.minecraftforge.gradle.common.tasks.SignJar
-
-[
-	jar,
-	shadowJar,
-	sourcesJar,
-	javadocJar,
-].each { jarTask ->
-	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: SignJar, dependsOn: jarTask) {
-		// Skips if the keyStore property is missing.
-		onlyIf {
-			project.hasProperty('keyStore')
-		}
-		// findProperty allows us to reference the property without it existing.
-		// Using project.propName would cause the script to fail validation if the property did not exist.
-		keyStore = project.findProperty('keyStore')
-		alias = project.findProperty('keyStoreAlias')
-		storePass = project.findProperty('keyStorePass')
-		keyPass = project.findProperty('keyStoreKeyPass')
-		inputFile = jarTask.archiveFile
-		outputFile = jarTask.archiveFile
-	}
-	jarTask.finalizedBy(signingTask)
-}
-// endregion
