@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "nocubes",
+  "version": "${version}",
+  "name": "NoCubes",
+  "description": "This is an example description! Tell everyone what your mod is about!",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "Insert License Here",
+  "icon": "assets/nocubes/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "io.github.cadiboo.nocubes.fabric.NoCubesModFabric"
+    ]
+  },
+  "mixins": [
+    "nocubes.mixins.json",
+    "nocubes-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": ">=1.19.4",
+    "architectury": ">=8.1.79"
+  }
+}
