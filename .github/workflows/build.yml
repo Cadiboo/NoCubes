@@ -1,0 +1,48 @@
+name: Build
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 8 # 17
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+      - name: Setup Keystore
+        run: |
+          echo ${{ secrets.KEYSTORE_BASE64 }} | base64 -d > keystore.jks
+          echo "keyStore=keystore.jks" >> gradle.properties
+          echo "keyStoreAlias=${{ secrets.KEYSTORE_ALIAS }}" >> gradle.properties
+          echo "keyStorePass=${{ secrets.KEYSTORE_PASS }}" >> gradle.properties
+          echo "keyStoreKeyPass=${{ secrets.KEYSTORE_KEY_PASS }}" >> gradle.properties
+          echo "signSHA1=${{ secrets.KEYSTORE_SIGN_SHA1 }}" >> gradle.properties
+      - name: Build and check
+        run: ./gradlew build --stacktrace
+      #- name: Integration tests
+      #  run: ./gradlew runGameTestServer --stacktrace
+      - name: Archive jars
+        uses: actions/upload-artifact@v3
+        with:
+          name: signed-jars
+          path: |
+            ./build/libs/*.jar
+          if-no-files-found: error
+      # - name: Publish
+      #   uses: Kir-Antipov/mc-publish@v3.2
+      #   if: "contains(github.event.head_commit.message, '[ci publish]')"
+      #   with:
+      #     version-type: beta
+      #     files: build/libs/!(*-@(dev|sources|javadoc)).jar
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     github-commitish: ${{ env.GITHUB_SHA }}
+      #     github-files-primary: build/libs/!(*-@(dev|sources|javadoc)).jar
+      #     github-files-secondary: build/libs/*-@(dev|sources|javadoc).jar
+      #     curseforge-id: 309664
+      #     curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+      #     modrinth-id: w3bbwFYU
+      #     modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
