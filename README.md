@@ -9,7 +9,7 @@ I forgot how to do this after moving to 1.16 for a while and wasn't able to get 
 I'm writing what got it to work for me when I returned to 1.12.2 here.
 Steps:
 1. Make sure you're using Java 8.
-2. Comment out the OptiFine related line in the Access Transformer in `src/main/resources/nocubes_at.cfg`
+2. Comment out the OptiFine related line in the Access Transformer in `src/main/resources/META-INF/accesstransformer.cfg`
   - It has a comment above it about needing to be disabled
   - You can just open it in any text editor, it's not a special file
   - Comment the line out by putting `#` at the start of the line
