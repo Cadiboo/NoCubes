@@ -25,7 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -54,7 +54,7 @@ public final class OverlayRenderers {
 			Pair.of("drawNearbyCollisions", OverlayRenderers::drawNearbyCollisions),
 			Pair.of("drawNearbyDensities", OverlayRenderers::drawNearbyDensities)
 		);
-		events.addListener((RenderLevelLastEvent event) -> renderDebugOverlays(event, debugOverlays));
+		events.addListener((RenderLevelStageEvent event) -> renderDebugOverlays(event, debugOverlays));
 	}
 
 
@@ -91,8 +91,11 @@ public final class OverlayRenderers {
 		}
 	}
 
-	public static void renderDebugOverlays(RenderLevelLastEvent event, List<Pair<String, DebugOverlay>> overlays) {
+	public static void renderDebugOverlays(RenderLevelStageEvent event, List<Pair<String, DebugOverlay>> overlays) {
 		if (!NoCubesConfig.Common.debugEnabled)
+			return;
+
+		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL)
 			return;
 
 		var minecraft = Minecraft.getInstance();
@@ -148,7 +151,7 @@ public final class OverlayRenderers {
 		var start = viewer.blockPosition().offset(-5, -5, -5);
 		var end = viewer.blockPosition().offset(5, 5, 5);
 		BlockPos.betweenClosed(start, end).forEach(pos -> {
-			if (isSmoothable.test(viewer.level.getBlockState(pos)))
+			if (isSmoothable.test(viewer.level().getBlockState(pos)))
 				drawShape(matrix, buffer.get(), Shapes.block(), pos, camera.getPosition(), color);
 		});
 	}
@@ -164,7 +167,7 @@ public final class OverlayRenderers {
 		var distanceIndicator = Shapes.box(0, 0, 0, 1 / 8F, 1 / 8F, 1 / 8F);
 		var densityColor = new Color(0F, 0F, 1F, 0.5F);
 		var viewer = camera.getEntity();
-		try (var area = new Area(viewer.level, getTargetedPosForDebugRendering(viewer).offset(-2, -2, -2), new BlockPos(4, 4, 4), NoCubesConfig.Server.mesher)) {
+		try (var area = new Area(viewer.level(), getTargetedPosForDebugRendering(viewer).offset(-2, -2, -2), new BlockPos(4, 4, 4), NoCubesConfig.Server.mesher)) {
 			var states = area.getAndCacheBlocks();
 			var densities = new float[area.numBlocks()];
 			for (int i = 0; i < densities.length; ++i)
@@ -217,7 +220,7 @@ public final class OverlayRenderers {
 		var deviatingColor = new Color(0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
 		var viewerShape = Shapes.create(viewer.getBoundingBox());
-		viewer.level.getBlockCollisions(viewer, viewer.getBoundingBox().inflate(collisionsRenderRadius)).forEach(voxelShape -> {
+		viewer.level().getBlockCollisions(viewer, viewer.getBoundingBox().inflate(collisionsRenderRadius)).forEach(voxelShape -> {
 			boolean intersects = Shapes.joinIsNotEmpty(voxelShape, viewerShape, BooleanOp.AND);
 			drawShape(matrix, buffer.get(), voxelShape, BlockPos.ZERO, camera.getPosition(), intersects ? intersectingColor : deviatingColor);
 		});
@@ -231,7 +234,7 @@ public final class OverlayRenderers {
 		var color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
 		var start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level, new MutableBlockPos(),
+		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level(), new MutableBlockPos(),
 			start.getX(), start.getX() + collisionsRenderRadius * 2,
 			start.getY(), start.getY() + collisionsRenderRadius * 2,
 			start.getZ(), start.getZ() + collisionsRenderRadius * 2,
@@ -258,8 +261,8 @@ public final class OverlayRenderers {
 		var meshSize = new BlockPos(16, 16, 16);
 		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
 		try (
-			var area = new Area(viewer.level, meshStart, meshSize, mesher);
-			var light = new LightCache((ClientLevel) viewer.level, meshStart, meshSize)
+			var area = new Area(viewer.level(), meshStart, meshSize, mesher);
+			var light = new LightCache((ClientLevel) viewer.level(), meshStart, meshSize)
 		) {
 			var faceInfo = new FaceInfo();
 			var objects = new MutableObjects();
