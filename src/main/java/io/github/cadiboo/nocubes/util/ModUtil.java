@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.Material;
+import net.minecraftforge.common.IPlantable;
 import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
@@ -79,15 +79,7 @@ public class ModUtil {
 	}
 
 	public static boolean isPlant(BlockState state) {
-		Material material = state.getMaterial();
-		return material == Material.PLANT ||
-			material == Material.WATER_PLANT ||
-			material == Material.REPLACEABLE_PLANT ||
-			material == Material.REPLACEABLE_FIREPROOF_PLANT ||
-			material == Material.REPLACEABLE_WATER_PLANT ||
-			material == Material.BAMBOO_SAPLING ||
-			material == Material.BAMBOO ||
-			material == Material.VEGETABLE;
+		return state.getBlock() instanceof IPlantable;
 	}
 
 	/**

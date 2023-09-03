@@ -16,11 +16,8 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.EmptyBlockGetter;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirtPathBlock;
-import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -86,8 +83,8 @@ public final class MeshRenderer {
 		var state = renderState.state;
 		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
 
-		var material = state.getMaterial();
-		var renderBothSides = material != Material.GLASS && material != Material.PORTAL && material != Material.TOP_SNOW && !MeshRenderer.isSolidRender(state);
+		var block = state.getBlock();
+		var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof  EndPortalBlock) && !(block instanceof SnowLayerBlock) && !MeshRenderer.isSolidRender(state);
 
 		var light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
 		var shade = renderer.getShade(faceInfo.approximateDirection);

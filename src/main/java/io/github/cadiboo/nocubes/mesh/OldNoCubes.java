@@ -9,7 +9,6 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.Material;
 
 import java.util.function.Predicate;
 
@@ -237,7 +236,7 @@ public final class OldNoCubes extends SimpleMesher {
 	}
 
 	public static boolean isBlockAirPlantOrSnowLayer(BlockState state) {
-		return state.getMaterial() == Material.AIR || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
+		return state.isAir() || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
 	}
 
 	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, MutableBlockPos pos) {
