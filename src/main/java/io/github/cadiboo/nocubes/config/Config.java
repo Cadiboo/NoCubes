@@ -1,6 +1,12 @@
 package io.github.cadiboo.nocubes.config;
 
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
+import io.github.cadiboo.nocubes.mesh.CullingChamfer;
+import io.github.cadiboo.nocubes.mesh.CullingCubic;
+import io.github.cadiboo.nocubes.mesh.MarchingCubes;
+import io.github.cadiboo.nocubes.mesh.Mesher;
+import io.github.cadiboo.nocubes.mesh.OldNoCubes;
+import io.github.cadiboo.nocubes.mesh.StupidCubic;
+import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 import net.minecraft.block.Block;
@@ -27,7 +33,7 @@ public final class Config {
 	public static boolean renderSmoothTerrain;
 	public static boolean renderSmoothLeaves;
 	public static boolean renderSmoothAndVanillaLeaves;
-	public static MeshGeneratorType leavesMeshGenerator;
+	public static Mesher leavesMeshGenerator;
 	public static Set<String> leavesSmoothable;
 	public static SmoothLeavesType smoothLeavesType;
 
@@ -44,9 +50,30 @@ public final class Config {
 	// Server
 	public static ExtendFluidsRange extendFluidsRange;
 
-	public static MeshGeneratorType terrainMeshGenerator;
+	public static Mesher terrainMeshGenerator;
 	public static boolean terrainCollisions;
 	public static Set<String> terrainSmoothable;
 	public static boolean forceVisuals;
+
+	public static boolean oldNoCubesSlopes = false;
+	public static float oldNoCubesRoughness = 0;
+
+	public enum MesherType {
+		SurfaceNets(new SurfaceNets(false)),
+		OldNoCubes(new OldNoCubes()),
+		Debug_SurfaceNets2xSmoothness(new SurfaceNets(true)),
+		Debug_MarchingCubes(new MarchingCubes(false)),
+		Debug_MarchingCubes2xSmoothness(new MarchingCubes(true)),
+		Debug_CullingCubic(new CullingCubic()),
+		Debug_StupidCubic(new StupidCubic()),
+		Debug_CullingChamfer(new CullingChamfer()),
+		;
+
+		public final Mesher instance;
+
+		MesherType(Mesher instance) {
+			this.instance = instance;
+		}
+	}
 
 }

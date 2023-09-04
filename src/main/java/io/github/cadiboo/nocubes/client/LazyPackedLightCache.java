@@ -1,144 +1,84 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.XYZCache;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.fml.common.EnhancedRuntimeException;
-import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
 
 /**
  * @author Cadiboo
  */
-public final class LazyPackedLightCache extends XYZCache implements AutoCloseable {
+public final class LazyPackedLightCache implements AutoCloseable {
 
-	private static final ThreadLocal<LazyPackedLightCache> POOL = ThreadLocal.withInitial(() -> new LazyPackedLightCache(0, 0, 0, 0, 0, 0));
+	private static final ThreadLocal<LazyPackedLightCache> POOL = ThreadLocal.withInitial(() -> new LazyPackedLightCache(0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
-	@Nonnull
-	public IBlockAccess reader;
-	@Nonnull
-	public StateCache stateCache;
-	@Nonnull
+
 	public int[] cache;
-	private int chunkRenderPosX;
-	private int chunkRenderPosY;
-	private int chunkRenderPosZ;
+	private Area area;
 	private boolean inUse;
 
-	private LazyPackedLightCache(
-			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
-			final int sizeX, final int sizeY, final int sizeZ
-	) {
-		super(startPaddingX, startPaddingY, startPaddingZ, sizeX, sizeY, sizeZ);
-		final int size = sizeX * sizeY * sizeZ;
+	private LazyPackedLightCache(int size) {
 		this.cache = new int[size];
 		System.arraycopy(ClientUtil.NEGATIVE_1_8000, 0, this.cache, 0, size);
 		this.inUse = false;
 	}
 
 	@Nonnull
-	public static LazyPackedLightCache retain(
-			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
-			final int sizeX, final int sizeY, final int sizeZ,
-			@Nonnull final IBlockAccess reader,
-			@Nonnull final StateCache stateCache,
-			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ
-	) {
-
+	public static LazyPackedLightCache retain(Area area) {
 		final LazyPackedLightCache pooled = POOL.get();
 
 		if (pooled.inUse) {
 			throw new IllegalStateException("LazyPackedLightCache is already in use!");
 		}
 		pooled.inUse = true;
+		pooled.area = area;
 
-		pooled.reader = reader;
-		pooled.stateCache = stateCache;
+		int size = area.size.getX() * area.size.getY() * area.size.getZ();
 
-		pooled.chunkRenderPosX = chunkRenderPosX;
-		pooled.chunkRenderPosY = chunkRenderPosY;
-		pooled.chunkRenderPosZ = chunkRenderPosZ;
-
-		pooled.startPaddingX = startPaddingX;
-		pooled.startPaddingY = startPaddingY;
-		pooled.startPaddingZ = startPaddingZ;
-
-		final int size = sizeX * sizeY * sizeZ;
-
-		if (pooled.sizeX == sizeX && pooled.sizeY == sizeY && pooled.sizeZ == sizeZ) {
+		if (pooled.cache.length >= size) {
 			System.arraycopy(ClientUtil.NEGATIVE_1_8000, 0, pooled.cache, 0, size);
 			return pooled;
 		}
 
-		pooled.sizeX = sizeX;
-		pooled.sizeY = sizeY;
-		pooled.sizeZ = sizeZ;
-
-		if (pooled.cache.length < size || pooled.cache.length > size * 1.25F) {
-			pooled.cache = new int[size];
-		}
-
+		pooled.cache = new int[size];
 		System.arraycopy(ClientUtil.NEGATIVE_1_8000, 0, pooled.cache, 0, size);
-
 		return pooled;
+	}
+
+	@Deprecated
+	public int get(final int x, final int y, final int z) {
+		return get(x, y, z, MUTABLE_BLOCK_POS.get());
+	}
+
+	public int get(final int x, final int y, final int z, MutableBlockPos pos) {
+		return get(x, y, z, this.cache, this.area, pos);
 	}
 
 	public static int get(
 			final int x, final int y, final int z,
 			final int[] cache,
-			final int index,
-			final StateCache stateCache, final IBlockAccess reader,
-			final MutableBlockPos mutableBlockPos,
-			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
-			final int startPaddingX, final int startPaddingY, final int startPaddingZ,
-			final int diffX, final int diffY, final int diffZ,
-			final int stateCacheSizeX, final int stateCacheSizeY
+			Area area,
+			MutableBlockPos mutableBlockPos
 	) {
-		try {
+		int index = area.indexIfInsideCache(x, y, z);
+		if (index != -1) {
 			int packedLight = cache[index];
-			if (packedLight == -1) {
-				packedLight = stateCache.getBlockStates()[stateCache.getIndex(
-						x + diffX,
-						y + diffY,
-						z + diffZ,
-						stateCacheSizeX, stateCacheSizeY
-				)].getPackedLightmapCoords(
-						reader,
-						mutableBlockPos.setPos(
-								chunkRenderPosX + x - startPaddingX,
-								chunkRenderPosY + y - startPaddingY,
-								chunkRenderPosZ + z - startPaddingZ
-						)
-				);
-				cache[index] = packedLight;
-				if (packedLight == -1) LogManager.getLogger().error("BARRRF");
-			}
-			return packedLight;
-		} catch (final ArrayIndexOutOfBoundsException e) {
-			throw new CustomArrayIndexOutOfBoundsException(
-					x, y, z,
-					cache,
-					index,
-					stateCache, reader,
-					mutableBlockPos,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-					startPaddingX, startPaddingY, startPaddingZ,
-					diffX, diffY, diffZ,
-					e
-			);
+			if (packedLight != -1)
+				return packedLight;
 		}
-	}
 
-	@Deprecated
-	public int get(final int x, final int y, final int z) {
-		return get(x, y, z, this.cache, this.stateCache, this.reader, MUTABLE_BLOCK_POS.get(), this.chunkRenderPosX, this.chunkRenderPosY, this.chunkRenderPosZ, this.startPaddingX, this.startPaddingY, this.startPaddingZ, this.stateCache.startPaddingX - this.startPaddingX, this.stateCache.startPaddingY - this.startPaddingY, this.stateCache.startPaddingZ - this.startPaddingZ);
-	}
-
-	@Deprecated
-	public int get(final int x, final int y, final int z, final int[] cache, final StateCache stateCache, final IBlockAccess reader, final MutableBlockPos mutableBlockPos, final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ, final int startPaddingX, final int startPaddingY, final int startPaddingZ, final int diffX, final int diffY, final int diffZ) {
-		return get(x, y, z, cache, getIndex(x, y, z, this.sizeX, this.sizeY), stateCache, reader, mutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateCache.sizeX, stateCache.sizeY);
+		IBlockState state = area.getBlockState(index, mutableBlockPos);
+		int packedLight = state.getPackedLightmapCoords(
+			area.world,
+			mutableBlockPos.setPos(area.start).add(x, y, z)
+		);
+		if (index != -1)
+			cache[index] = packedLight;
+		return packedLight;
 	}
 
 	@Override

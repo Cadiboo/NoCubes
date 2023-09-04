@@ -2,10 +2,8 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 
@@ -82,7 +80,7 @@ public final class LightmapInfo implements AutoCloseable {
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
-			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LazyPackedLightCache light,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
@@ -109,41 +107,27 @@ public final class LightmapInfo implements AutoCloseable {
 		final int v3YOffset = 1 + clamp(floor(v3.y) - chunkRenderPosY, -1, 16);
 		final int v3ZOffset = 1 + clamp(floor(v3.z) - chunkRenderPosZ, -1, 16);
 
-		final int[] cache = lazyPackedLightCache.cache;
-		final StateCache stateCache = lazyPackedLightCache.stateCache;
-		final int sizeX = lazyPackedLightCache.sizeX;
-		final int sizeY = lazyPackedLightCache.sizeY;
-		final IBlockAccess reader = lazyPackedLightCache.reader;
-		final int startPaddingX = lazyPackedLightCache.startPaddingX;
-		final int startPaddingZ = lazyPackedLightCache.startPaddingZ;
-		final int startPaddingY = lazyPackedLightCache.startPaddingY;
-		final int diffX = stateCache.startPaddingX - startPaddingX;
-		final int diffY = stateCache.startPaddingY - startPaddingY;
-		final int diffZ = stateCache.startPaddingZ - startPaddingZ;
-		final int stateCacheSizeX = stateCache.sizeX;
-		final int stateCacheSizeY = stateCache.sizeY;
-
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
-		for (int zOffset = 0; zOffset < 3; ++zOffset) {
-			for (int yOffset = 0; yOffset < 3; ++yOffset) {
-				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
+		for (int zOffset = -1; zOffset < 2; ++zOffset) {
+			for (int yOffset = -1; yOffset < 2; ++yOffset) {
+				for (int xOffset = -1; xOffset < 2; ++xOffset, ++index) {
 					final int x0 = v0XOffset + xOffset;
 					final int y0 = v0YOffset + yOffset;
 					final int z0 = v0ZOffset + zOffset;
-					packedLight0[index] = LazyPackedLightCache.get(x0, y0, z0, cache, lazyPackedLightCache.getIndex(x0, y0, z0, sizeX, sizeY), stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateCacheSizeX, stateCacheSizeY);
+					packedLight0[index] = light.get(x0, y0, z0, pooledMutableBlockPos);
 					final int x1 = v1XOffset + xOffset;
 					final int y1 = v1YOffset + yOffset;
 					final int z1 = v1ZOffset + zOffset;
-					packedLight1[index] = LazyPackedLightCache.get(x1, y1, z1, cache, lazyPackedLightCache.getIndex(x1, y1, z1, sizeX, sizeY), stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateCacheSizeX, stateCacheSizeY);
+					packedLight1[index] = light.get(x1, y1, z1, pooledMutableBlockPos);
 					final int x2 = v2XOffset + xOffset;
 					final int y2 = v2YOffset + yOffset;
 					final int z2 = v2ZOffset + zOffset;
-					packedLight2[index] = LazyPackedLightCache.get(x2, y2, z2, cache, lazyPackedLightCache.getIndex(x2, y2, z2, sizeX, sizeY), stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateCacheSizeX, stateCacheSizeY);
+					packedLight2[index] = light.get(x2, y2, z2, pooledMutableBlockPos);
 					final int x3 = v3XOffset + xOffset;
 					final int y3 = v3YOffset + yOffset;
 					final int z3 = v3ZOffset + zOffset;
-					packedLight3[index] = LazyPackedLightCache.get(x3, y3, z3, cache, lazyPackedLightCache.getIndex(x3, y3, z3, sizeX, sizeY), stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ, stateCacheSizeX, stateCacheSizeY);
+					packedLight3[index] = light.get(x3, y3, z3, pooledMutableBlockPos);
 				}
 			}
 		}
@@ -179,22 +163,17 @@ public final class LightmapInfo implements AutoCloseable {
 
 		final int[] packedLight0 = new int[27];
 
-		final int[] cache = lazyPackedLightCache.cache;
-		final StateCache stateCache = lazyPackedLightCache.stateCache;
-		final IBlockAccess reader = lazyPackedLightCache.reader;
-		final int startPaddingX = lazyPackedLightCache.startPaddingX;
-		final int startPaddingY = lazyPackedLightCache.startPaddingY;
-		final int startPaddingZ = lazyPackedLightCache.startPaddingZ;
-		final int diffX = stateCache.startPaddingX - startPaddingX;
-		final int diffY = stateCache.startPaddingY - startPaddingY;
-		final int diffZ = stateCache.startPaddingZ - startPaddingZ;
-
 		int index = 0;
-		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
-		for (int zOffset = 0; zOffset < 3; ++zOffset) {
-			for (int yOffset = 0; yOffset < 3; ++yOffset) {
-				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					packedLight0[index] = lazyPackedLightCache.get((v0XOffset + xOffset), (v0YOffset + yOffset), (v0ZOffset + zOffset), cache, stateCache, reader, pooledMutableBlockPos, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, startPaddingX, startPaddingY, startPaddingZ, diffX, diffY, diffZ);
+		// From (-1, -1, -1) to (1, 1, 1)
+		for (int zOffset = -1; zOffset < 2; ++zOffset) {
+			for (int yOffset = -1; yOffset < 2; ++yOffset) {
+				for (int xOffset = -1; xOffset < 2; ++xOffset, ++index) {
+					packedLight0[index] = lazyPackedLightCache.get(
+						v0XOffset + xOffset,
+						v0YOffset + yOffset,
+						v0ZOffset + zOffset,
+						pooledMutableBlockPos
+					);
 				}
 			}
 		}

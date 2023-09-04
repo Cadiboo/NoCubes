@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.config;
 
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 
@@ -19,7 +18,7 @@ final class ServerConfig {
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<ExtendFluidsRange> extendFluidsRange;
 	@Nonnull
-	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> terrainMeshGenerator;
+	final ForgeConfigSpec.ConfigValue<Config.MesherType> terrainMeshGenerator;
 	@Nonnull
 	final ForgeConfigSpec.BooleanValue terrainCollisions;
 	@Nonnull
@@ -38,7 +37,7 @@ final class ServerConfig {
 		terrainMeshGenerator = builder
 				.comment("The mesh generator that generates the terrain")
 				.translation(MOD_ID + ".config.terrainMeshGenerator")
-				.defineEnum("terrainMeshGenerator", MeshGeneratorType.SurfaceNets);
+				.defineEnum("terrainMeshGenerator", Config.MesherType.SurfaceNets);
 		terrainCollisions = builder
 				.comment("If realistic terrain collisions should be calculated")
 				.translation(MOD_ID + ".config.terrainCollisions")

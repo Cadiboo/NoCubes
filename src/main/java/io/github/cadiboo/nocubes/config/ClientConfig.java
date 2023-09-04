@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.config;
 
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.util.SmoothLeavesType;
 
@@ -24,7 +23,7 @@ final class ClientConfig {
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<List<? extends String>> leavesSmoothable;
 	@Nonnull
-	final ForgeConfigSpec.ConfigValue<MeshGeneratorType> leavesMeshGenerator;
+	final ForgeConfigSpec.ConfigValue<Config.MesherType> leavesMeshGenerator;
 	@Nonnull
 	final ForgeConfigSpec.ConfigValue<SmoothLeavesType> smoothLeavesType;
 
@@ -66,7 +65,7 @@ final class ClientConfig {
 		leavesMeshGenerator = builder
 				.comment("The mesh generator that generates leaves")
 				.translation(MOD_ID + ".config.leavesMeshGenerator")
-				.defineEnum("leavesMeshGenerator", MeshGeneratorType.SurfaceNets);
+				.defineEnum("leavesMeshGenerator", Config.MesherType.SurfaceNets);
 		smoothLeavesType = builder
 				.comment("How leaves should be rendered")
 				.translation(MOD_ID + ".config.smoothLeavesType")

@@ -4,32 +4,33 @@ import io.github.cadiboo.nocubes.client.ClientCacheUtil;
 import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
 import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
 import io.github.cadiboo.nocubes.client.UVHelper;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
 import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.CacheUtil;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import io.github.cadiboo.nocubes.util.pooled.Vec3b;
-import io.github.cadiboo.nocubes.util.pooled.cache.CornerDensityCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
@@ -59,394 +60,274 @@ public final class RenderDispatcher {
 	private static final Predicate<IBlockState> IS_BLOCK_STATE_LEAVES = blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial());
 	private static final Predicate<IBlockState> ALWAYS_TRUE = blockState -> true;
 
-	public static void renderChunk(
-			@Nonnull final RenderChunk chunkRender,
-			@Nonnull final BlockPos chunkRenderPos,
-			@Nonnull final ChunkCompileTaskGenerator chunkRenderTask,
-			@Nonnull final CompiledChunk compiledChunk,
-			// Use World for eagerly generated caches
-			@Nonnull final World world,
-			// Use RenderChunkCache for lazily generated caches
-			@Nonnull final IBlockAccess chunkRenderCache,
-			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final Random random,
-			@Nonnull final BlockRendererDispatcher blockRendererDispatcher
-	) {
 
-		final int chunkRenderPosX = chunkRenderPos.getX();
-		final int chunkRenderPosY = chunkRenderPos.getY();
-		final int chunkRenderPosZ = chunkRenderPos.getZ();
+	/**
+	 * A big blob of objects related to vanilla chunk rendering.
+	 * Stops every method having lots of parameters.
+	 */
+	public static class ChunkRenderInfo {
+		public final RenderChunk chunkRender;
+		public final BlockPos chunkRenderPos;
+		public final ChunkCompileTaskGenerator chunkRenderTask;
+		public final CompiledChunk compiledChunk;
+		public final World world;
+		public final IBlockAccess chunkRenderCache;
+		public final boolean[] usedLayers;
+		public final Random random;
+		public final BlockRendererDispatcher dispatcher;
+		public final OptiFineProxy optiFine;
+		public final BlockColors blockColors;
 
-		// Smoothable Cache    | -1, n + 1 | n + 2
-		// Density Cache       | -1, n     | n + 1
-		// Vertices            | -1, 16    | 18
-		// Light Cache         | -2, 17    | 20
-		// Color Cache         | -2, 17    | 20
-
-		int stateCachePaddingX = 0;
-		int stateCachePaddingY = 0;
-		int stateCachePaddingZ = 0;
-
-		int stateCacheEndX = 0;
-		int stateCacheEndY = 0;
-		int stateCacheEndZ = 0;
-
-//		// TODO: Test fluids cache stuff (State, Light & Colors)
-//		//  to see what their min required values actually are
-//		// Fluids Cache        | -2, 18    | 21
-//		{
-//			stateCachePaddingX = 2;
-//			stateCachePaddingY = 2;
-//			stateCachePaddingZ = 2;
-//			stateCacheEndX = 18;
-//			stateCacheEndY = 18;
-//			stateCacheEndZ = 18;
-//		}
-
-		if (Config.renderSmoothTerrain) {
-			final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
-
-			// A chunk is 0-15 (so 16). SmoothableCaches need +1 on each positive axis
-			stateCacheEndX = Math.max(stateCacheEndX, getMeshSizeX(17, meshGenerator));
-			stateCacheEndY = Math.max(stateCacheEndY, getMeshSizeY(17, meshGenerator));
-			stateCacheEndZ = Math.max(stateCacheEndZ, getMeshSizeZ(17, meshGenerator));
-
-			// Density caches need 1 block on negative axis
-			stateCachePaddingX = Math.max(stateCachePaddingX, 1);
-			stateCachePaddingY = Math.max(stateCachePaddingY, 1);
-			stateCachePaddingZ = Math.max(stateCachePaddingZ, 1);
-		}
-		if (Config.renderSmoothLeaves) {
-			final MeshGenerator meshGenerator = Config.leavesMeshGenerator.getMeshGenerator();
-
-			// A chunk is 0-15 (so 16). SmoothableCaches need +1 on each positive axis
-			stateCacheEndX = Math.max(stateCacheEndX, getMeshSizeX(17, meshGenerator));
-			stateCacheEndY = Math.max(stateCacheEndY, getMeshSizeY(17, meshGenerator));
-			stateCacheEndZ = Math.max(stateCacheEndZ, getMeshSizeZ(17, meshGenerator));
-
-			// Density caches need 1 block on negative axis
-			stateCachePaddingX = Math.max(stateCachePaddingX, 1);
-			stateCachePaddingY = Math.max(stateCachePaddingY, 1);
-			stateCachePaddingZ = Math.max(stateCachePaddingZ, 1);
+		public ChunkRenderInfo(
+				RenderChunk chunkRender, BlockPos chunkRenderPos, ChunkCompileTaskGenerator chunkRenderTask,
+				CompiledChunk compiledChunk, World world, IBlockAccess chunkRenderCache,
+				boolean[] usedLayers, Random random, BlockRendererDispatcher dispatcher
+		) {
+			this.chunkRender = chunkRender;
+			this.chunkRenderPos = chunkRenderPos;
+			this.chunkRenderTask = chunkRenderTask;
+			this.compiledChunk = compiledChunk;
+			this.world = world;
+			this.chunkRenderCache = chunkRenderCache;
+			this.usedLayers = usedLayers;
+			this.random = random;
+			this.dispatcher = dispatcher;
+			this.optiFine = OptiFineCompatibility.PROXY;
+			this.blockColors = Minecraft.getMinecraft().getBlockColors();
 		}
 
-		if (Config.renderSmoothTerrain || Config.renderSmoothLeaves) {
-			// Texture & light caches needs -2 and +2
-			stateCacheEndX = Math.max(stateCacheEndX, 18);
-			stateCacheEndY = Math.max(stateCacheEndY, 18);
-			stateCacheEndZ = Math.max(stateCacheEndZ, 18);
-			stateCachePaddingX = Math.max(stateCachePaddingX, 2);
-			stateCachePaddingY = Math.max(stateCachePaddingY, 2);
-			stateCachePaddingZ = Math.max(stateCachePaddingZ, 2);
+		interface RenderInLayer {
+			void render(IBlockState state, BlockPos worldPos, BlockRenderLayer layer, BufferBuilder buffer, Object renderEnv);
 		}
 
-		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			try (
-					StateCache stateCache = CacheUtil.generateStateCache(
-							chunkRenderPosX - stateCachePaddingX, chunkRenderPosY - stateCachePaddingY, chunkRenderPosZ - stateCachePaddingZ,
-							chunkRenderPosX + stateCacheEndX, chunkRenderPosY + stateCacheEndY, chunkRenderPosZ + stateCacheEndZ,
-							stateCachePaddingX, stateCachePaddingY, stateCachePaddingZ,
-							world, pooledMutableBlockPos
-					);
-					LazyPackedLightCache lazyPackedLightCache = ClientCacheUtil.generateLazyPackedLightCache(
-							chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-							2, 2, 2,
-							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							stateCache,
-							chunkRenderCache
-					)
-			) {
-				if (Config.renderSmoothTerrain) {
-					final MeshGenerator meshGenerator = Config.terrainMeshGenerator.getMeshGenerator();
-					// TODO FIXME: should be 16
-					final byte meshSizeX = getMeshSizeX(17, meshGenerator);
-					final byte meshSizeY = getMeshSizeY(17, meshGenerator);
-					final byte meshSizeZ = getMeshSizeZ(17, meshGenerator);
-					// FIXME: Why is it like this... why
-					try (
-							SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
-									// Density Cache needs 1 extra on each negative axis
-									chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-									// Density Cache uses 1 extra from the smoothable cache on each positive axis
-									chunkRenderPosX + meshSizeX, chunkRenderPosY + meshSizeY, chunkRenderPosZ + meshSizeZ,
-									1, 1, 1,
-									stateCache, TERRAIN_SMOOTHABLE
-							);
-							CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
-									// Density Cache needs 1 extra on each negative axis
-									chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-									// FIXME: Why? Why? Why? It makes no sense
-									chunkRenderPosX + meshSizeX - 1, chunkRenderPosY + meshSizeY - 1, chunkRenderPosZ + meshSizeZ - 1,
-									1, 1, 1,
-									stateCache, smoothableCache
-							)
-					) {
-						ExtendedFluidChunkRenderer.renderChunk(
-								chunkRender,
-								chunkRenderTask,
-								compiledChunk,
-								chunkRenderPos,
-								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-								chunkRenderCache,
-								pooledMutableBlockPos,
-								usedBlockRenderLayers,
-								blockRendererDispatcher,
-								stateCache,
-								smoothableCache,
-								lazyPackedLightCache
-						);
-//						try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-//								// Fluid renderer needs +2 on all axis because reasons
-//								chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-//								// Fluid renderer needs +2 on all axis because reasons
-//								chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-//								2, 2, 2,
-//								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
-//						)) {
-//							OptimisedFluidBlockRenderer.renderChunk(
-//									chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
-//									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-//									pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-//									Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes ? null : cornerDensityCache
-//							);
-//						}
-						renderTerrainChunk(
-								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
-								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-								pooledMutableBlockPos, stateCache, lazyPackedLightCache,
-								meshGenerator, meshSizeX, meshSizeY, meshSizeZ,
-								smoothableCache, cornerDensityCache
-						);
+		public void renderInBlockLayers(IBlockState state, BlockPos worldPos, RenderInLayer render) {
+			var layers = ItemBlockRenderTypes.getRenderLayers(state);
+			for (var layer : layers) {
+				var buffer = getAndStartBuffer(layer);
+				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
+				render.render(state, worldPos, layer, buffer, renderEnv);
+
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
+				markLayerUsed(layer);
+			}
+		}
+
+		public Color getColor(Color color, BakedQuad quad, BlockState state, BlockPos pos, float shade) {
+			if (!quad.isTinted()) {
+				color.red = shade;
+				color.green = shade;
+				color.blue = shade;
+//				color.alpha = 1.0F;
+				return color;
+			}
+			int packedColor = blockColors.getColor(state, world, pos, quad.getTintIndex());
+			color.red = (float) (packedColor >> 16 & 255) / 255.0F * shade;
+			color.green = (float) (packedColor >> 8 & 255) / 255.0F * shade;
+			color.blue = (float) (packedColor & 255) / 255.0F * shade;
+//			color.alpha = 1.0F;
+			return color;
+		}
+
+		public void renderBlock(BlockState stateIn, MutableBlockPos worldPosIn) {
+			renderInBlockLayers(
+					stateIn, worldPosIn,
+					(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
+			);
+		}
+
+		public float getShade(Direction direction) {
+			return world.getShade(direction, true);
+		}
+
+		public BufferBuilder getAndStartBuffer(RenderType layer) {
+			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
+		}
+
+		public void markLayerUsed(RenderType layer) {
+			usedLayers.add(layer);
+		}
+
+		public interface ColorSupplier {
+			Color apply(BlockState state, BlockPos worldPos, BakedQuad quad);
+		}
+
+		public interface QuadConsumer {
+			void accept(RenderType layer, VertexConsumer buffer, BakedQuad quad, Color color, boolean emissive);
+		}
+
+		public void forEachQuad(BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
+			var rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
+			renderInBlockLayers(
+					stateIn, worldPosIn,
+					(state, worldPos, modelData, layer, buffer, renderEnv) -> {
+						var model = getModel(state, renderEnv);
+
+						var nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
+						var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+
+						List<BakedQuad> dirQuads;
+						if (!state.hasProperty(SNOWY))
+							dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, direction);
+						else {
+							// Make grass/snow/mycilium side faces be rendered with their top texture
+							// Equivalent to OptiFine's Better Grass feature
+							if (!state.getValue(SNOWY))
+								dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
+							else {
+								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+								BlockState snow = Blocks.SNOW.defaultBlockState();
+								BakedModel snowModel = getModel(snow, renderEnv);
+								dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
+							}
+						}
+						anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+
+						int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
+						anyQuadsFound |= numOverlaysRendered > 0;
+
+						if (!anyQuadsFound)
+							forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 					}
-				} else {
-//					try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-//							// Fluid renderer needs +2 on all axis because reasons
-//							chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-//							// Fluid renderer needs +2 on all axis because reasons
-//							chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-//							2, 2, 2,
-//							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColors.WATER_COLOR, ALWAYS_TRUE
-//					)) {
-//						OptimisedFluidBlockRenderer.renderChunk(
-//								chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
-//								chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-//								pooledMutableBlockPos, stateCache, lazyPackedLightCache, lazyBlockColorCache,
-//								null
-//						);
-//					}
+			);
+		}
+
+		private BakedModel getModel(BlockState state, Object renderEnv) {
+			var model = dispatcher.getBlockModel(state);
+			model = optiFine.getModel(renderEnv, model, state);
+			return model;
+		}
+
+		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
+			random.setSeed(rand);
+			var quads = model.getQuads(state, direction, random, modelData, layer);
+			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
+			return quads;
+		}
+
+		public boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
+			int i = 0;
+			for (; i < quads.size(); i++) {
+				var quad = quads.get(i);
+				var color = colorSupplier.apply(state, worldPos, quad);
+				var emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
+				if (emissive != null) {
+					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
+					action.accept(layer, buffer, quad, color, true);
 				}
-				if (Config.renderSmoothLeaves) {
-					final MeshGenerator meshGenerator = Config.leavesMeshGenerator.getMeshGenerator();
-					// TODO FIXME: should be 16
-					final byte meshSizeX = getMeshSizeX(17, meshGenerator);
-					final byte meshSizeY = getMeshSizeY(17, meshGenerator);
-					final byte meshSizeZ = getMeshSizeZ(17, meshGenerator);
-					renderLeavesChunk(
-							chunkRender, chunkRenderPos, chunkRenderTask, compiledChunk, chunkRenderCache, usedBlockRenderLayers, random, blockRendererDispatcher,
-							chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-							pooledMutableBlockPos, stateCache, lazyPackedLightCache,
-							meshGenerator, meshSizeX, meshSizeY, meshSizeZ
-					);
-				}
-			} finally {
-				pooledMutableBlockPos.release();
+				if (optiFine != null)
+					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
+				action.accept(layer, buffer, quad, color, false);
 			}
-		} catch (Exception e) {
-			CrashReport crashReport = CrashReport.makeCrashReport(e, "Error rendering NoCubes chunk!");
-			crashReport.makeCategory("Rendering chunk");
-			throw new ReportedException(crashReport);
+			return i > 0;
+		}
+
+		private List<BakedQuad> getMissingQuads() {
+			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
 		}
 	}
 
-	private static void renderTerrainChunk(
-			@Nonnull final RenderChunk chunkRender, @Nonnull final BlockPos chunkRenderPos, @Nonnull final ChunkCompileTaskGenerator chunkRenderTask, @Nonnull final CompiledChunk compiledChunk, @Nonnull final IBlockAccess chunkRenderCache, @Nonnull final boolean[] usedBlockRenderLayers, @Nonnull final Random random, @Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
-			final PooledMutableBlockPos pooledMutableBlockPos,
-			final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache,
-			final MeshGenerator meshGenerator,
-			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ,
-			final SmoothableCache smoothableCache, final CornerDensityCache cornerDensityCache
+	// Use World for eagerly generated caches
+	// Use RenderChunkCache for lazily generated caches
+	public static void renderChunk(
+			RenderChunk chunkRender, BlockPos chunkRenderPos, ChunkCompileTaskGenerator chunkRenderTask,
+			CompiledChunk compiledChunk, World world, IBlockAccess chunkRenderCache,
+			boolean[] usedLayers, Random random, BlockRendererDispatcher dispatcher
 	) {
-		PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-					chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-					chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-					2, 2, 2,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.GRASS_COLOR, IS_BLOCK_STATE_GRASS
-			)) {
-				final HashMap<Vec3b, FaceList> mesh;
-				if (Config.terrainMeshGenerator == MeshGeneratorType.OldNoCubes) {
-					// TODO: Remove
-					mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, TERRAIN_SMOOTHABLE, pooledMutableBlockPos);
-				} else {
-					mesh = MeshDispatcher.offsetChunkMesh(
-							chunkRenderPos,
-							meshGenerator.generateChunk(
-									cornerDensityCache.getCornerDensityCache(),
-									new byte[]{meshSizeX, meshSizeY, meshSizeZ}
-							)
-					);
-				}
-				MeshRenderer.renderMesh(
-						chunkRender,
-						chunkRenderTask,
-						compiledChunk,
-						chunkRenderPos,
-						chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-						chunkRenderCache,
-						stateCache,
-						blockRendererDispatcher,
-						random,
-						lazyPackedLightCache,
-						lazyBlockColorCache,
-						mesh,
-						smoothableCache,
-						pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-						false,
-						true, true
-				);
-			}
-		} finally {
-			texturePooledMutableBlockPos.release();
+		ChunkRenderInfo renderer = new ChunkRenderInfo(
+			chunkRender, chunkRenderPos, chunkRenderTask,
+			compiledChunk, world, chunkRenderCache,
+			usedLayers, random, dispatcher
+		);
+		Predicate<IBlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+		if (NoCubesConfig.Client.render)
+			renderChunkMesh(renderer, isSmoothable);
+	}
+
+	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData) {
+		var mesher = NoCubesConfig.Server.mesher;
+		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, mesher)) {
+			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
 		}
 	}
 
-	private static void renderLeavesChunk(
-			@Nonnull final RenderChunk chunkRender, @Nonnull final BlockPos chunkRenderPos, @Nonnull final ChunkCompileTaskGenerator generator, @Nonnull final CompiledChunk compiledChunk, @Nonnull final IBlockAccess chunkRenderCache, @Nonnull final boolean[] usedBlockRenderLayers, @Nonnull final Random random, @Nonnull final BlockRendererDispatcher blockRendererDispatcher,
-			final int chunkRenderPosX, final int chunkRenderPosY, final int chunkRenderPosZ,
-			final PooledMutableBlockPos pooledMutableBlockPos,
-			final StateCache stateCache, final LazyPackedLightCache lazyPackedLightCache,
-			final MeshGenerator meshGenerator,
-			final byte meshSizeX, final byte meshSizeY, final byte meshSizeZ
+	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<IBlockState> isSmoothable) {
+		long start = System.nanoTime();
+		var mesher = NoCubesConfig.Server.mesher;
+		try (
+				var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
+				var ignored = renderer.matrix.push()
+		) {
+			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
+		}
+		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
+	}
+
+	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
+		var buffer = buffers.builder(layer);
+		if (usedLayers.add(layer))
+			chunkRender.beginLayer(buffer);
+		return buffer;
+	}
+
+	static void quad(
+			VertexConsumer buffer, PoseStack matrix,
+			Face face, Vec faceNormal,
+			Color color,
+			Texture uvs,
+			FaceLight light,
+			boolean doubleSided
 	) {
-		PooledMutableBlockPos texturePooledMutableBlockPos = PooledMutableBlockPos.retain();
-		try {
-			try (LazyBlockColorCache lazyBlockColorCache = ClientCacheUtil.generateLazyBlockColorCache(
-					chunkRenderPosX - 2, chunkRenderPosY - 2, chunkRenderPosZ - 2,
-					chunkRenderPosX + 18, chunkRenderPosY + 18, chunkRenderPosZ + 18,
-					2, 2, 2,
-					chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, chunkRenderCache, BiomeColorHelper.FOLIAGE_COLOR, IS_BLOCK_STATE_LEAVES
-			)) {
-				switch (Config.smoothLeavesType) {
-					case SEPARATE:
-						for (final Block smoothableBlock : Config.leavesSmoothableBlocks) {
-							final IsSmoothable isSmoothable = (checkState) -> (LEAVES_SMOOTHABLE.test(checkState) && checkState.getBlock() == smoothableBlock);
-							// FIXME: Why is it like this... why
-							try (
-//								ModProfiler ignored = ModProfiler.get().start("renderLeaves" + smoothableBlock.getRegistryName());
-									SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
-											// Density Cache needs 1 extra on each negative axis
-											chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-											// Density Cache uses 1 extra from the smoothable cache on each positive axis
-											chunkRenderPosX + meshSizeX, chunkRenderPosY + meshSizeY, chunkRenderPosZ + meshSizeZ,
-											1, 1, 1,
-											stateCache, isSmoothable
-									);
-									CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
-											// Density Cache needs 1 extra on each negative axis
-											chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-											// FIXME: Why? Why? Why? It makes no sense
-											chunkRenderPosX + meshSizeX - 1, chunkRenderPosY + meshSizeY - 1, chunkRenderPosZ + meshSizeZ - 1,
-											1, 1, 1,
-											stateCache, smoothableCache
-									)
-							) {
-								final HashMap<Vec3b, FaceList> mesh;
-								if (Config.leavesMeshGenerator == MeshGeneratorType.OldNoCubes) {
-									// TODO: Remove
-									mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, isSmoothable, pooledMutableBlockPos);
-								} else {
-									mesh = MeshDispatcher.offsetChunkMesh(
-											chunkRenderPos,
-											meshGenerator.generateChunk(
-													cornerDensityCache.getCornerDensityCache(),
-													new byte[]{meshSizeX, meshSizeY, meshSizeZ}
-											)
-									);
-								}
-								MeshRenderer.renderMesh(
-										chunkRender,
-										generator,
-										compiledChunk,
-										chunkRenderPos,
-										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-										chunkRenderCache,
-										stateCache,
-										blockRendererDispatcher,
-										random,
-										lazyPackedLightCache,
-										lazyBlockColorCache,
-										mesh,
-										smoothableCache,
-										pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-										true,
-										true, false
-								);
-							}
-						}
-						break;
-					case TOGETHER:
-						final IsSmoothable isSmoothable = LEAVES_SMOOTHABLE;
-						// FIXME: Why is it like this... why
-						try (
-//							ModProfiler ignored = ModProfiler.get().start("renderLeavesTogether");
-								SmoothableCache smoothableCache = CacheUtil.generateSmoothableCache(
-										// Density Cache needs 1 extra on each negative axis
-										chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-										// Density Cache uses 1 extra from the smoothable cache on each positive axis
-										chunkRenderPosX + meshSizeX, chunkRenderPosY + meshSizeY, chunkRenderPosZ + meshSizeZ,
-										1, 1, 1,
-										stateCache, isSmoothable
-								);
-								CornerDensityCache cornerDensityCache = CacheUtil.generateCornerDensityCache(
-										// Density Cache needs 1 extra on each negative axis
-										chunkRenderPosX - 1, chunkRenderPosY - 1, chunkRenderPosZ - 1,
-										// FIXME: Why? Why? Why? It makes no sense
-										chunkRenderPosX + meshSizeX - 1, chunkRenderPosY + meshSizeY - 1, chunkRenderPosZ + meshSizeZ - 1,
-										1, 1, 1,
-										stateCache, smoothableCache
-								)
-						) {
-							final HashMap<Vec3b, FaceList> mesh;
-							if (Config.leavesMeshGenerator == MeshGeneratorType.OldNoCubes) {
-								// TODO: Remove
-								mesh = OldNoCubes.generateChunk(chunkRenderPos, chunkRenderCache, isSmoothable, pooledMutableBlockPos);
-							} else {
-								mesh = MeshDispatcher.offsetChunkMesh(
-										chunkRenderPos,
-										meshGenerator.generateChunk(
-												cornerDensityCache.getCornerDensityCache(),
-												new byte[]{meshSizeX, meshSizeY, meshSizeZ}
-										)
-								);
-							}
-							MeshRenderer.renderMesh(
-									chunkRender,
-									generator,
-									compiledChunk,
-									chunkRenderPos,
-									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-									chunkRenderCache,
-									stateCache,
-									blockRendererDispatcher,
-									random,
-									lazyPackedLightCache,
-									lazyBlockColorCache,
-									mesh,
-									smoothableCache,
-									pooledMutableBlockPos, texturePooledMutableBlockPos, usedBlockRenderLayers,
-									true,
-									true, false
-							);
-						}
-						break;
-				}
-			}
-		} finally {
-			texturePooledMutableBlockPos.release();
+		quad(
+				buffer, matrix, doubleSided,
+				face, color, uvs, OverlayTexture.NO_OVERLAY, light, faceNormal
+		);
+	}
+
+	static void quad(
+			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
+			Face face, Color color, Texture texture, int overlay, FaceLight light, Vec normal
+	) {
+		quad(
+				buffer, matrix, doubleSided,
+				face.v0, color, texture.u0, texture.v0, overlay, light.v0, normal,
+				face.v1, color, texture.u1, texture.v1, overlay, light.v1, normal,
+				face.v2, color, texture.u2, texture.v2, overlay, light.v2, normal,
+				face.v3, color, texture.u3, texture.v3, overlay, light.v3, normal
+		);
+	}
+
+	static void quad(
+			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
+			Vec vec0, Color color0, float u0, float v0, int overlay0, int light0, Vec normal0,
+			Vec vec1, Color color1, float u1, float v1, int overlay1, int light1, Vec normal1,
+			Vec vec2, Color color2, float u2, float v2, int overlay2, int light2, Vec normal2,
+			Vec vec3, Color color3, float u3, float v3, int overlay3, int light3, Vec normal3
+	) {
+		quad(
+				buffer, matrix, doubleSided,
+				vec0.x, vec0.y, vec0.z, color0.red, color0.green, color0.blue, color0.alpha, u0, v0, overlay0, light0, normal0.x, normal0.y, normal0.z,
+				vec1.x, vec1.y, vec1.z, color1.red, color1.green, color1.blue, color1.alpha, u1, v1, overlay1, light1, normal1.x, normal1.y, normal1.z,
+				vec2.x, vec2.y, vec2.z, color2.red, color2.green, color2.blue, color2.alpha, u2, v2, overlay2, light2, normal2.x, normal2.y, normal2.z,
+				vec3.x, vec3.y, vec3.z, color3.red, color3.green, color3.blue, color3.alpha, u3, v3, overlay3, light3, normal3.x, normal3.y, normal3.z
+		);
+	}
+
+	static void quad(
+			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
+			float v0x, float v0y, float v0z, float red0, float green0, float blue0, float alpha0, float u0, float v0, int overlay0, int light0, float n0x, float n0y, float n0z,
+			float v1x, float v1y, float v1z, float red1, float green1, float blue1, float alpha1, float u1, float v1, int overlay1, int light1, float n1x, float n1y, float n1z,
+			float v2x, float v2y, float v2z, float red2, float green2, float blue2, float alpha2, float u2, float v2, int overlay2, int light2, float n2x, float n2y, float n2z,
+			float v3x, float v3y, float v3z, float red3, float green3, float blue3, float alpha3, float u3, float v3, int overlay3, int light3, float n3x, float n3y, float n3z
+	) {
+		vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, overlay0, light0, n0x, n0y, n0z);
+		vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, overlay1, light1, n1x, n1y, n1z);
+		vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, overlay2, light2, n2x, n2y, n2z);
+		vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, overlay3, light3, n3x, n3y, n3z);
+		if (doubleSided) {
+			vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, overlay0, light0, n0x, n0y, n0z);
+			vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, overlay3, light3, n3x, n3y, n3z);
+			vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, overlay2, light2, n2x, n2y, n2z);
+			vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, overlay1, light1, n1x, n1y, n1z);
 		}
 	}
 

@@ -1,33 +1,41 @@
 package io.github.cadiboo.nocubes.util;
 
+import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBush;
+import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockDoublePlant;
 import net.minecraft.block.BlockSnow;
+import net.minecraft.block.BlockStem;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.crash.CrashReport;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.common.ModContainer;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 
 /**
- * Util that is used on BOTH physical sides
- *
  * @author Cadiboo
  */
-@SuppressWarnings("WeakerAccess")
-public final class ModUtil {
+public class ModUtil {
 
 	// TODO: Remove once Direction.VALUES is ATed
 	public static final EnumFacing[] DIRECTION_VALUES = EnumFacing.VALUES;
@@ -130,138 +138,30 @@ public final class ModUtil {
 		return NoCubesLoadingPlugin.DEVELOPER_ENVIRONMENT;
 	}
 
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeX(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeXExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeY(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeYExtension());
-	}
-
-	/**
-	 * We add 1 because idk (it fixes seams in between chunks)
-	 * and then surface nets needs another +1 because reasons
-	 */
-	public static byte getMeshSizeZ(final int initialSize, final MeshGenerator meshGenerator) {
-		return (byte) (initialSize + meshGenerator.getSizeZExtension());
-	}
-
-//	public static IFluidState getFluidState(final World world, final BlockPos pos) {
-//		final int posX = pos.getX();
-//		final int posY = pos.getY();
-//		final int posZ = pos.getZ();
-//
-//		int currentChunkPosX = posX >> 4;
-//		int currentChunkPosZ = posZ >> 4;
-//		Chunk currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//
-//		final int extendRange = Config.extendFluidsRange.getRange();
-//
-//		if (extendRange == 0) {
-//			return currentChunk.getFluidState(posX, posY, posZ);
-//		}
-//
-//		final BlockState state = currentChunk.getBlockState(pos);
-//
-//		// Do not extend if not terrain smoothable
-//		if (!state.nocubes_isTerrainSmoothable()) {
-//			return state.getFluidState();
-//		}
-//
-//		final IFluidState fluidState = state.getFluidState();
-//		if (!fluidState.isEmpty()) {
-//			return fluidState;
-//		}
-//
-//		// For offset = -1 or -2 to offset = 1 or 2;
-//		final int maxXOffset = extendRange;
-//		final int maxZOffset = extendRange;
-//
-//		// Check up
-//		{
-//			final IFluidState state1 = currentChunk.getFluidState(posX, posY + 1, posZ);
-//			if (state1.isSource()) {
-//				return state1;
-//			}
-//		}
-//
-//		for (int xOffset = -maxXOffset; xOffset <= maxXOffset; ++xOffset) {
-//			for (int zOffset = -maxZOffset; zOffset <= maxZOffset; ++zOffset) {
-//
-//				// No point in checking myself
-//				if (xOffset == 0 && zOffset == 0) {
-//					continue;
-//				}
-//
-//				final int checkX = posX + xOffset;
-//				final int checkZ = posZ + zOffset;
-//
-//				if (currentChunkPosX != checkX >> 4 || currentChunkPosZ != checkZ >> 4) {
-//					currentChunkPosX = checkX >> 4;
-//					currentChunkPosZ = checkZ >> 4;
-//					currentChunk = world.getChunk(currentChunkPosX, currentChunkPosZ);
-//				}
-//
-//				final IFluidState state1 = currentChunk.getFluidState(checkX, posY, checkZ);
-//				if (state1.isSource()) {
-//					return state1;
-//				}
-//
-//			}
-//		}
-//		return fluidState;
-//	}
-
 //	/**
-//	 * Mostly copied from StolenReposeCode.getDensity
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
 //	 */
-//	public static boolean doesTerrainCauseSuffocation(final IBlockReader reader, final BlockPos pos) {
-//		float density = 0;
-//		try (
-//				ModProfiler ignored = ModProfiler.get().start("Collisions calculate cube density");
-//				PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain()
-//		) {
-////			final WorldBorder worldBorder = reader.getWorldBorder();
-//
-//			final int startX = pos.getX();
-//			final int startY = pos.getY();
-//			final int startZ = pos.getZ();
-//
-//			for (int zOffset = 0; zOffset < 2; ++zOffset) {
-//				for (int yOffset = 0; yOffset < 2; ++yOffset) {
-//					for (int xOffset = 0; xOffset < 2; ++xOffset) {
-//
-//						pooledMutableBlockPos.setPos(
-//								startX - xOffset,
-//								startY - yOffset,
-//								startZ - zOffset
-//						);
-//
-////						// Return a fully solid cube if its not loaded
-////						if (!reader.isBlockLoaded(pooledMutableBlockPos) || !worldBorder.contains(pooledMutableBlockPos)) {
-////							density += 1;
-////							continue;
-////						}
-//
-//						final BlockState testState = reader.getBlockState(pooledMutableBlockPos);
-//						density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
-//					}
-//				}
-//			}
-//		}
-//
-//		// > 0 means outside isosurface
-//		// > -4 means mostly outside isosurface
-//		return density > -4;
+//	public static byte getMeshSizeX(final int initialSize, final Mesher meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeXExtension());
 //	}
+//
+//	/**
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
+//	 */
+//	public static byte getMeshSizeY(final int initialSize, final Mesher meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeYExtension());
+//	}
+//
+//	/**
+//	 * We add 1 because idk (it fixes seams in between chunks)
+//	 * and then surface nets needs another +1 because reasons
+//	 */
+//	public static byte getMeshSizeZ(final int initialSize, final Mesher meshGenerator) {
+//		return (byte) (initialSize + meshGenerator.getSizeZExtension());
+//	}
+
 
 	/**
 	 * @param material The {@link Material} to check
@@ -316,6 +216,74 @@ public final class ModUtil {
 			crashReport.makeCategory("Loading class");
 			throw new ReportedException(crashReport);
 		}
+	}
+
+
+
+
+	public static final BlockPos VEC_ZERO = new BlockPos(0, 0, 0);
+	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
+	public static final BlockPos VEC_TWO = new BlockPos(2, 2, 2);
+	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
+	public static final EnumFacing[] DIRECTIONS = EnumFacing.values();
+	public static final float FULLY_SMOOTHABLE = 1;
+	public static final float NOT_SMOOTHABLE = -FULLY_SMOOTHABLE;
+
+	public static ImmutableList<IBlockState> getStates(Block block) {
+		return block.getBlockState().getValidStates();
+	}
+
+	public static int length(BlockPos size) {
+		return size.getX() * size.getY() * size.getZ();
+	}
+
+	public static void warnPlayer(@Nullable EntityPlayer player, String translationKey, Object... formatArgs) {
+		TextComponentTranslation msg = new TextComponentTranslation(translationKey, formatArgs);
+		if (player != null)
+			player.sendStatusMessage(msg, true);
+		else
+			LogManager.getLogger("NoCubes notification fallback").warn(msg.getFormattedText());
+	}
+
+	public static float getBlockDensity(Predicate<IBlockState> isSmoothable, IBlockState state) {
+		return getBlockDensity(isSmoothable.test(state), state);
+	}
+
+	/**
+	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
+	 */
+	public static float getBlockDensity(boolean shouldSmooth, IBlockState state) {
+		if (!shouldSmooth)
+			return NOT_SMOOTHABLE;
+		if (isSnowLayer(state))
+			// Snow layer, not the actual whole snow block
+			return mapSnowHeight(state.getValue(BlockSnow.LAYERS));
+		return FULLY_SMOOTHABLE;
+	}
+
+	/** Map snow height between 1-8 to between -1 and 1. */
+	private static float mapSnowHeight(int value) {
+		return -1 + (value - 1) * 0.25F;
+	}
+
+	public static boolean isSnowLayer(IBlockState state) {
+		return state.getProperties().containsKey(BlockSnow.LAYERS);
+	}
+
+	public static boolean isShortPlant(IBlockState state) {
+		Block block = state.getBlock();
+		return block instanceof BlockBush && !(block instanceof BlockDoublePlant || block instanceof BlockCrops || block instanceof BlockStem);
+	}
+
+	public static boolean isPlant(IBlockState state) {
+		return state.getBlock() instanceof IPlantable;
+	}
+
+	/**
+	 * Assumes the array is indexed [z][y][x].
+	 */
+	public static int get3dIndexInto1dArray(int x, int y, int z, int xSize, int ySize) {
+		return (xSize * ySize * z) + (xSize * y) + x;
 	}
 
 }

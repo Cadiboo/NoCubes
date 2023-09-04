@@ -3,12 +3,17 @@ package io.github.cadiboo.nocubes.config;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ExtendFluidsRange;
 import io.github.cadiboo.nocubes.util.INoCubesBlockState;
 import io.github.cadiboo.nocubes.util.StateHolder;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockDirt;
+import net.minecraft.block.BlockMycelium;
+import net.minecraft.block.BlockSand;
+import net.minecraft.block.BlockSilverfish;
+import net.minecraft.block.BlockStainedHardenedClay;
+import net.minecraft.block.BlockStone;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.CommandBase;
@@ -28,9 +33,64 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static io.github.cadiboo.nocubes.config.Config.*;
-import static net.minecraft.init.Blocks.*;
-import static net.minecraft.item.EnumDyeColor.*;
+import static io.github.cadiboo.nocubes.config.Config.LOGGER;
+import static io.github.cadiboo.nocubes.config.Config.applyDiffuseLighting;
+import static io.github.cadiboo.nocubes.config.Config.betterTextures;
+import static io.github.cadiboo.nocubes.config.Config.extendFluidsRange;
+import static io.github.cadiboo.nocubes.config.Config.forceVisuals;
+import static io.github.cadiboo.nocubes.config.Config.leavesMeshGenerator;
+import static io.github.cadiboo.nocubes.config.Config.leavesSmoothable;
+import static io.github.cadiboo.nocubes.config.Config.leavesSmoothableBlocks;
+import static io.github.cadiboo.nocubes.config.Config.naturalFluidTextures;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothAndVanillaLeaves;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothLeaves;
+import static io.github.cadiboo.nocubes.config.Config.renderSmoothTerrain;
+import static io.github.cadiboo.nocubes.config.Config.shortGrass;
+import static io.github.cadiboo.nocubes.config.Config.smoothFluidColors;
+import static io.github.cadiboo.nocubes.config.Config.smoothFluidLighting;
+import static io.github.cadiboo.nocubes.config.Config.smoothLeavesType;
+import static io.github.cadiboo.nocubes.config.Config.terrainCollisions;
+import static io.github.cadiboo.nocubes.config.Config.terrainMeshGenerator;
+import static io.github.cadiboo.nocubes.config.Config.terrainSmoothable;
+import static net.minecraft.init.Blocks.BEDROCK;
+import static net.minecraft.init.Blocks.CLAY;
+import static net.minecraft.init.Blocks.COAL_ORE;
+import static net.minecraft.init.Blocks.DIAMOND_ORE;
+import static net.minecraft.init.Blocks.DIRT;
+import static net.minecraft.init.Blocks.EMERALD_ORE;
+import static net.minecraft.init.Blocks.END_STONE;
+import static net.minecraft.init.Blocks.GLOWSTONE;
+import static net.minecraft.init.Blocks.GOLD_ORE;
+import static net.minecraft.init.Blocks.GRASS;
+import static net.minecraft.init.Blocks.GRASS_PATH;
+import static net.minecraft.init.Blocks.GRAVEL;
+import static net.minecraft.init.Blocks.HARDENED_CLAY;
+import static net.minecraft.init.Blocks.IRON_ORE;
+import static net.minecraft.init.Blocks.LAPIS_ORE;
+import static net.minecraft.init.Blocks.LEAVES;
+import static net.minecraft.init.Blocks.LEAVES2;
+import static net.minecraft.init.Blocks.LIT_REDSTONE_ORE;
+import static net.minecraft.init.Blocks.MAGMA;
+import static net.minecraft.init.Blocks.MONSTER_EGG;
+import static net.minecraft.init.Blocks.MYCELIUM;
+import static net.minecraft.init.Blocks.NETHERRACK;
+import static net.minecraft.init.Blocks.PACKED_ICE;
+import static net.minecraft.init.Blocks.QUARTZ_ORE;
+import static net.minecraft.init.Blocks.REDSTONE_ORE;
+import static net.minecraft.init.Blocks.RED_SANDSTONE;
+import static net.minecraft.init.Blocks.SAND;
+import static net.minecraft.init.Blocks.SANDSTONE;
+import static net.minecraft.init.Blocks.SNOW_LAYER;
+import static net.minecraft.init.Blocks.SOUL_SAND;
+import static net.minecraft.init.Blocks.STAINED_HARDENED_CLAY;
+import static net.minecraft.init.Blocks.STONE;
+import static net.minecraft.item.EnumDyeColor.BLACK;
+import static net.minecraft.item.EnumDyeColor.BROWN;
+import static net.minecraft.item.EnumDyeColor.ORANGE;
+import static net.minecraft.item.EnumDyeColor.RED;
+import static net.minecraft.item.EnumDyeColor.SILVER;
+import static net.minecraft.item.EnumDyeColor.WHITE;
+import static net.minecraft.item.EnumDyeColor.YELLOW;
 
 /**
  * @author Cadiboo
@@ -51,7 +111,7 @@ public final class ConfigHelper {
 
 		renderSmoothLeaves = ConfigHolder.CLIENT.renderSmoothLeaves.get();
 		renderSmoothAndVanillaLeaves = ConfigHolder.CLIENT.renderSmoothAndVanillaLeaves.get();
-		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get();
+		leavesMeshGenerator = ConfigHolder.CLIENT.leavesMeshGenerator.get().instance;
 		leavesSmoothable = Sets.newHashSet(ConfigHolder.CLIENT.leavesSmoothable.get());
 		initLeavesSmoothable();
 		smoothLeavesType = ConfigHolder.CLIENT.smoothLeavesType.get();
@@ -76,7 +136,7 @@ public final class ConfigHelper {
 
 		extendFluidsRange = ConfigHolder.SERVER.extendFluidsRange.get();
 
-		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get();
+		terrainMeshGenerator = ConfigHolder.SERVER.terrainMeshGenerator.get().instance;
 		terrainCollisions = ConfigHolder.SERVER.terrainCollisions.get();
 
 		forceVisuals = ConfigHolder.SERVER.forceVisuals.get();
@@ -401,7 +461,7 @@ public final class ConfigHelper {
 		setValueAndSave(serverConfig, "general.extendFluidsRange", newRange);
 	}
 
-	public static void setTerrainMeshGenerator(final MeshGeneratorType newGenerator) {
+	public static void setTerrainMeshGenerator(final Config.MesherType newGenerator) {
 		setValueAndSave(serverConfig, "general.terrainMeshGenerator", newGenerator);
 	}
 
