@@ -1,65 +1,55 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import io.github.cadiboo.nocubes.client.ClientCacheUtil;
-import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
-import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
+import io.github.cadiboo.nocubes.client.render.struct.*;
 import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
-import io.github.cadiboo.nocubes.mesh.MeshGenerator;
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
-import io.github.cadiboo.nocubes.mesh.generator.OldNoCubes;
+import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.CacheUtil;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.crash.CrashReport;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.ReportedException;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeColorHelper;
+import net.minecraftforge.client.ForgeHooksClient;
 import org.lwjgl.opengl.GL11;
 
-import javax.annotation.Nonnull;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
 
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
+import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
+import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
 import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeX;
-import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeY;
-import static io.github.cadiboo.nocubes.util.ModUtil.getMeshSizeZ;
 
 /**
  * @author Cadiboo
  */
 public final class RenderDispatcher {
-
-	private static final Predicate<IBlockState> IS_BLOCK_STATE_GRASS = blockState -> ModUtil.isMaterialGrass(blockState.getMaterial());
-	private static final Predicate<IBlockState> IS_BLOCK_STATE_LEAVES = blockState -> ModUtil.isMaterialLeaves(blockState.getMaterial());
-	private static final Predicate<IBlockState> ALWAYS_TRUE = blockState -> true;
-
 
 	/**
 	 * A big blob of objects related to vanilla chunk rendering.
@@ -67,24 +57,24 @@ public final class RenderDispatcher {
 	 */
 	public static class ChunkRenderInfo {
 		public final RenderChunk chunkRender;
-		public final BlockPos chunkRenderPos;
+		public final BlockPos chunkPos;
 		public final ChunkCompileTaskGenerator chunkRenderTask;
 		public final CompiledChunk compiledChunk;
 		public final World world;
 		public final IBlockAccess chunkRenderCache;
 		public final boolean[] usedLayers;
-		public final Random random;
+		public final long random;
 		public final BlockRendererDispatcher dispatcher;
 		public final OptiFineProxy optiFine;
 		public final BlockColors blockColors;
 
 		public ChunkRenderInfo(
-				RenderChunk chunkRender, BlockPos chunkRenderPos, ChunkCompileTaskGenerator chunkRenderTask,
+				RenderChunk chunkRender, BlockPos chunkPos, ChunkCompileTaskGenerator chunkRenderTask,
 				CompiledChunk compiledChunk, World world, IBlockAccess chunkRenderCache,
-				boolean[] usedLayers, Random random, BlockRendererDispatcher dispatcher
+				boolean[] usedLayers, long random, BlockRendererDispatcher dispatcher
 		) {
 			this.chunkRender = chunkRender;
-			this.chunkRenderPos = chunkRenderPos;
+			this.chunkPos = chunkPos;
 			this.chunkRenderTask = chunkRenderTask;
 			this.compiledChunk = compiledChunk;
 			this.world = world;
@@ -101,26 +91,38 @@ public final class RenderDispatcher {
 		}
 
 		public void renderInBlockLayers(IBlockState state, BlockPos worldPos, RenderInLayer render) {
-			var layers = ItemBlockRenderTypes.getRenderLayers(state);
-			for (var layer : layers) {
-				var buffer = getAndStartBuffer(layer);
-				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
-				render.render(state, worldPos, layer, buffer, renderEnv);
+			for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
+				BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
+				if (!state.getBlock().canRenderInLayer(state, initialBlockRenderLayer)) {
+					continue;
+				}
+				BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
+				int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
+				ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
+//				var buffer = getAndStartBuffer(layer);
+				BufferBuilder buffer = ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkPos);
 
-				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
-				markLayerUsed(layer);
+//				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
+				OptiFineCompatibility.PROXY.pushShaderThing(state, worldPos, world, buffer);
+//				render.render(state, worldPos, layer, buffer, renderEnv);
+				render.render(state, worldPos, correctedBlockRenderLayer, buffer, null);
+
+//				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
+				OptiFineCompatibility.PROXY.popShaderThing(buffer);
+				usedLayers[correctedBlockRenderLayerOrdinal] = true;
 			}
+			ForgeHooksClient.setRenderLayer(null);
 		}
 
-		public Color getColor(Color color, BakedQuad quad, BlockState state, BlockPos pos, float shade) {
-			if (!quad.isTinted()) {
+		public Color getColor(Color color, BakedQuad quad, IBlockState state, BlockPos pos, float shade) {
+			if (!quad.hasTintIndex()) {
 				color.red = shade;
 				color.green = shade;
 				color.blue = shade;
 //				color.alpha = 1.0F;
 				return color;
 			}
-			int packedColor = blockColors.getColor(state, world, pos, quad.getTintIndex());
+			int packedColor = blockColors.colorMultiplier(state, world, pos, quad.getTintIndex());
 			color.red = (float) (packedColor >> 16 & 255) / 255.0F * shade;
 			color.green = (float) (packedColor >> 8 & 255) / 255.0F * shade;
 			color.blue = (float) (packedColor & 255) / 255.0F * shade;
@@ -128,42 +130,43 @@ public final class RenderDispatcher {
 			return color;
 		}
 
-		public void renderBlock(BlockState stateIn, MutableBlockPos worldPosIn) {
+		public void renderBlock(IBlockState stateIn, MutableBlockPos worldPosIn) {
 			renderInBlockLayers(
 					stateIn, worldPosIn,
-					(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
+					(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBlock(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
 			);
 		}
 
-		public float getShade(Direction direction) {
-			return world.getShade(direction, true);
+		public float getShade(EnumFacing direction) {
+//			return world.get(direction, true);
+			return MeshRenderer.diffuseLight(direction);
 		}
 
-		public BufferBuilder getAndStartBuffer(RenderType layer) {
-			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
-		}
+//		public BufferBuilder getAndStartBuffer(RenderType layer) {
+//			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
+//		}
 
-		public void markLayerUsed(RenderType layer) {
-			usedLayers.add(layer);
-		}
+//		public void markLayerUsed(RenderType layer) {
+//			usedLayers.add(layer);
+//		}
 
 		public interface ColorSupplier {
-			Color apply(BlockState state, BlockPos worldPos, BakedQuad quad);
+			Color apply(IBlockState state, BlockPos worldPos, BakedQuad quad);
 		}
 
 		public interface QuadConsumer {
-			void accept(RenderType layer, VertexConsumer buffer, BakedQuad quad, Color color, boolean emissive);
+			void accept(BlockRenderLayer layer, BufferBuilder buffer, BakedQuad quad, Color color, boolean emissive);
 		}
 
-		public void forEachQuad(BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
-			var rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
+		public void forEachQuad(IBlockState stateIn, BlockPos worldPosIn, EnumFacing direction, ColorSupplier colorSupplier, QuadConsumer action) {
+			Random rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
 			renderInBlockLayers(
 					stateIn, worldPosIn,
 					(state, worldPos, modelData, layer, buffer, renderEnv) -> {
 						var model = getModel(state, renderEnv);
 
-						var nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
-						var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
+						List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
+						boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
 						List<BakedQuad> dirQuads;
 						if (!state.hasProperty(SNOWY))
@@ -175,8 +178,8 @@ public final class RenderDispatcher {
 								dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
 							else {
 								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-								BlockState snow = Blocks.SNOW.defaultBlockState();
-								BakedModel snowModel = getModel(snow, renderEnv);
+								IBlockState snow = Blocks.SNOW.getDefaultState();
+								IBakedModel snowModel = getModel(snow, renderEnv);
 								dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
 							}
 						}
@@ -191,25 +194,25 @@ public final class RenderDispatcher {
 			);
 		}
 
-		private BakedModel getModel(BlockState state, Object renderEnv) {
-			var model = dispatcher.getBlockModel(state);
+		private IBakedModel getModel(IBlockState state, Object renderEnv) {
+			IBakedModel model = dispatcher.getBlockModel(state);
 			model = optiFine.getModel(renderEnv, model, state);
 			return model;
 		}
 
-		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
+		private List<BakedQuad> getQuadsAndStoreOverlays(IBlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, EnumFacing direction) {
 			random.setSeed(rand);
-			var quads = model.getQuads(state, direction, random, modelData, layer);
+			List<BakedQuad> quads = model.getQuads(state, direction, random, modelData, layer);
 			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
 			return quads;
 		}
 
-		public boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
+		public boolean forEachQuad(List<BakedQuad> quads, IBlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
 			int i = 0;
 			for (; i < quads.size(); i++) {
-				var quad = quads.get(i);
-				var color = colorSupplier.apply(state, worldPos, quad);
-				var emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
+				BakedQuad quad = quads.get(i);
+				Color color = colorSupplier.apply(state, worldPos, quad);
+				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
 				if (emissive != null) {
 					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
 					action.accept(layer, buffer, quad, color, true);
@@ -222,7 +225,7 @@ public final class RenderDispatcher {
 		}
 
 		private List<BakedQuad> getMissingQuads() {
-			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
+			return dispatcher.getBlockModelShapes().getModelManager().getMissingModel().getQuads(Blocks.AIR.getDefaultState(), EnumFacing.UP, random);
 		}
 	}
 
@@ -243,18 +246,18 @@ public final class RenderDispatcher {
 			renderChunkMesh(renderer, isSmoothable);
 	}
 
-	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData) {
-		var mesher = NoCubesConfig.Server.mesher;
-		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, mesher)) {
+	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher,IBlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, BufferBuilder buffer, ModelData modelData) {
+		Mesher mesher = NoCubesConfig.Server.mesher;
+		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
 			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
 		}
 	}
 
 	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<IBlockState> isSmoothable) {
 		long start = System.nanoTime();
-		var mesher = NoCubesConfig.Server.mesher;
+		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (
-				var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
+				Area area = new Area(Minecraft.getMinecraft().world, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
 				var ignored = renderer.matrix.push()
 		) {
 			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
@@ -262,15 +265,15 @@ public final class RenderDispatcher {
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
-	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
-		var buffer = buffers.builder(layer);
-		if (usedLayers.add(layer))
-			chunkRender.beginLayer(buffer);
-		return buffer;
-	}
+//	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
+//		BufferBuilder buffer = buffers.builder(layer);
+//		if (usedLayers.add(layer))
+//			chunkRender.beginLayer(buffer);
+//		return buffer;
+//	}
 
 	static void quad(
-			VertexConsumer buffer, PoseStack matrix,
+			BufferBuilder buffer, PoseStack matrix,
 			Face face, Vec faceNormal,
 			Color color,
 			Texture uvs,
@@ -279,55 +282,55 @@ public final class RenderDispatcher {
 	) {
 		quad(
 				buffer, matrix, doubleSided,
-				face, color, uvs, OverlayTexture.NO_OVERLAY, light, faceNormal
+				face, color, uvs, light, faceNormal
 		);
 	}
 
 	static void quad(
-			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
-			Face face, Color color, Texture texture, int overlay, FaceLight light, Vec normal
+			BufferBuilder buffer, PoseStack matrix, boolean doubleSided,
+			Face face, Color color, Texture texture, FaceLight light, Vec normal
 	) {
 		quad(
 				buffer, matrix, doubleSided,
-				face.v0, color, texture.u0, texture.v0, overlay, light.v0, normal,
-				face.v1, color, texture.u1, texture.v1, overlay, light.v1, normal,
-				face.v2, color, texture.u2, texture.v2, overlay, light.v2, normal,
-				face.v3, color, texture.u3, texture.v3, overlay, light.v3, normal
+				face.v0, color, texture.u0, texture.v0, light.v0,
+				face.v1, color, texture.u1, texture.v1, light.v1,
+				face.v2, color, texture.u2, texture.v2, light.v2,
+				face.v3, color, texture.u3, texture.v3, light.v3
 		);
 	}
 
 	static void quad(
-			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
-			Vec vec0, Color color0, float u0, float v0, int overlay0, int light0, Vec normal0,
-			Vec vec1, Color color1, float u1, float v1, int overlay1, int light1, Vec normal1,
-			Vec vec2, Color color2, float u2, float v2, int overlay2, int light2, Vec normal2,
-			Vec vec3, Color color3, float u3, float v3, int overlay3, int light3, Vec normal3
+			BufferBuilder buffer, PoseStack matrix, boolean doubleSided,
+			Vec vec0, Color color0, float u0, float v0, int light0,
+			Vec vec1, Color color1, float u1, float v1, int light1,
+			Vec vec2, Color color2, float u2, float v2, int light2,
+			Vec vec3, Color color3, float u3, float v3, int light3
 	) {
 		quad(
 				buffer, matrix, doubleSided,
-				vec0.x, vec0.y, vec0.z, color0.red, color0.green, color0.blue, color0.alpha, u0, v0, overlay0, light0, normal0.x, normal0.y, normal0.z,
-				vec1.x, vec1.y, vec1.z, color1.red, color1.green, color1.blue, color1.alpha, u1, v1, overlay1, light1, normal1.x, normal1.y, normal1.z,
-				vec2.x, vec2.y, vec2.z, color2.red, color2.green, color2.blue, color2.alpha, u2, v2, overlay2, light2, normal2.x, normal2.y, normal2.z,
-				vec3.x, vec3.y, vec3.z, color3.red, color3.green, color3.blue, color3.alpha, u3, v3, overlay3, light3, normal3.x, normal3.y, normal3.z
+				vec0.x, vec0.y, vec0.z, color0.red, color0.green, color0.blue, color0.alpha, u0, v0, light0,
+				vec1.x, vec1.y, vec1.z, color1.red, color1.green, color1.blue, color1.alpha, u1, v1, light1,
+				vec2.x, vec2.y, vec2.z, color2.red, color2.green, color2.blue, color2.alpha, u2, v2, light2,
+				vec3.x, vec3.y, vec3.z, color3.red, color3.green, color3.blue, color3.alpha, u3, v3, light3
 		);
 	}
 
 	static void quad(
-			VertexConsumer buffer, PoseStack matrix, boolean doubleSided,
-			float v0x, float v0y, float v0z, float red0, float green0, float blue0, float alpha0, float u0, float v0, int overlay0, int light0, float n0x, float n0y, float n0z,
-			float v1x, float v1y, float v1z, float red1, float green1, float blue1, float alpha1, float u1, float v1, int overlay1, int light1, float n1x, float n1y, float n1z,
-			float v2x, float v2y, float v2z, float red2, float green2, float blue2, float alpha2, float u2, float v2, int overlay2, int light2, float n2x, float n2y, float n2z,
-			float v3x, float v3y, float v3z, float red3, float green3, float blue3, float alpha3, float u3, float v3, int overlay3, int light3, float n3x, float n3y, float n3z
+			BufferBuilder buffer, PoseStack matrix, boolean doubleSided,
+			float v0x, float v0y, float v0z, float red0, float green0, float blue0, float alpha0, float u0, float v0, int light0,
+			float v1x, float v1y, float v1z, float red1, float green1, float blue1, float alpha1, float u1, float v1, int light1,
+			float v2x, float v2y, float v2z, float red2, float green2, float blue2, float alpha2, float u2, float v2, int light2,
+			float v3x, float v3y, float v3z, float red3, float green3, float blue3, float alpha3, float u3, float v3, int light3
 	) {
-		vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, overlay0, light0, n0x, n0y, n0z);
-		vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, overlay1, light1, n1x, n1y, n1z);
-		vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, overlay2, light2, n2x, n2y, n2z);
-		vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, overlay3, light3, n3x, n3y, n3z);
+		vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, light0);
+		vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, light1);
+		vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, light2);
+		vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, light3);
 		if (doubleSided) {
-			vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, overlay0, light0, n0x, n0y, n0z);
-			vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, overlay3, light3, n3x, n3y, n3z);
-			vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, overlay2, light2, n2x, n2y, n2z);
-			vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, overlay1, light1, n1x, n1y, n1z);
+			vertex(buffer, matrix, v0x, v0y, v0z, red0, green0, blue0, alpha0, u0, v0, light0);
+			vertex(buffer, matrix, v3x, v3y, v3z, red3, green3, blue3, alpha3, u3, v3, light3);
+			vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, light2);
+			vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, light1);
 		}
 	}
 

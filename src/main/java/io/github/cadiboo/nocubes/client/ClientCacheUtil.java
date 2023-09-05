@@ -13,7 +13,7 @@ import java.util.function.Predicate;
  */
 public final class ClientCacheUtil {
 
-	public static LazyPackedLightCache generateLazyPackedLightCache(
+	public static LightCache generateLazyPackedLightCache(
 			// from position
 			final int fromX, final int fromY, final int fromZ,
 			// to position
@@ -27,7 +27,7 @@ public final class ClientCacheUtil {
 		final int cacheSizeX = Math.abs(toX - fromX);
 		final int cacheSizeY = Math.abs(toY - fromY);
 		final int cacheSizeZ = Math.abs(toZ - fromZ);
-		return LazyPackedLightCache.retain(
+		return LightCache.retain(
 				startPaddingX, startPaddingY, startPaddingZ,
 				cacheSizeX, cacheSizeY, cacheSizeZ,
 				cache,

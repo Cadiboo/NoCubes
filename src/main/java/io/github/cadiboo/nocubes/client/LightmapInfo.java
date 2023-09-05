@@ -41,7 +41,7 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	public static LightmapInfo generateLightmapInfo(
-			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LightCache lazyPackedLightCache,
 			@Nonnull final Vec3 v0,
 			@Nonnull final Vec3 v1,
 			@Nonnull final Vec3 v2,
@@ -69,7 +69,7 @@ public final class LightmapInfo implements AutoCloseable {
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
-			@Nonnull final LazyPackedLightCache packedLightCache,
+			@Nonnull final LightCache packedLightCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		return generateLightmapInfoSmooth(v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, packedLightCache, pooledMutableBlockPos);
@@ -80,7 +80,7 @@ public final class LightmapInfo implements AutoCloseable {
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
-			@Nonnull final LazyPackedLightCache light,
+			@Nonnull final LightCache light,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
@@ -153,7 +153,7 @@ public final class LightmapInfo implements AutoCloseable {
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
-			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LightCache lazyPackedLightCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
 	) {
 

@@ -3,14 +3,13 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.BlockColorInfo;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LazyBlockColorCache;
-import io.github.cadiboo.nocubes.client.LazyPackedLightCache;
+import io.github.cadiboo.nocubes.client.LightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.StateHolder;
 import io.github.cadiboo.nocubes.util.pooled.Face;
 import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
@@ -19,11 +18,9 @@ import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
@@ -36,9 +33,7 @@ import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.biome.BiomeColorHelper;
 import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.registries.IRegistryDelegate;
@@ -54,8 +49,6 @@ import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
-import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED;
-import static io.github.cadiboo.nocubes.client.ModelHelper.DIRECTION_QUADS_ORDERED_LENGTH;
 import static net.minecraft.util.EnumFacing.DOWN;
 import static net.minecraft.util.EnumFacing.EAST;
 import static net.minecraft.util.EnumFacing.NORTH;
@@ -81,7 +74,7 @@ public final class MeshRenderer {
 			@Nonnull final StateCache stateCache,
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
-			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LightCache lazyPackedLightCache,
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final SmoothableCache smoothableCache,
@@ -171,7 +164,7 @@ public final class MeshRenderer {
 			@Nonnull final BlockRendererDispatcher blockRendererDispatcher,
 			@Nonnull final Random random,
 			@Nonnull final boolean[] usedBlockRenderLayers,
-			@Nonnull final LazyPackedLightCache lazyPackedLightCache,
+			@Nonnull final LightCache lazyPackedLightCache,
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry,
 			@Nonnull final Vec3b pos,
@@ -294,27 +287,27 @@ public final class MeshRenderer {
 						float colorGreen3 = -1;
 						float colorBlue3 = -1;
 
-						if (shortGrass) {
-							profiler.end(); // HACKY
-							profiler.start("shortGrass");
-							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
-								renderShortGrass(
-										chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
-										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-										reader,
-										blockRendererDispatcher,
-										random,
-										usedBlockRenderLayers,
-										pooledMutableBlockPos,
-										texturePos,
-										v0, v1, v2, v3,
-										lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3,
-										lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3
-								);
-							}
-							profiler.end();
-							profiler.start("renderMesh"); // HACKY
-						}
+//						if (shortGrass) {
+//							profiler.end(); // HACKY
+//							profiler.start("shortGrass");
+//							if (textureState == StateHolder.GRASS_BLOCK_DEFAULT && areVerticesCloseToFlat(v0, v1, v2, v3)) {
+//								renderShortGrass(
+//										chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
+//										chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+//										reader,
+//										blockRendererDispatcher,
+//										random,
+//										usedBlockRenderLayers,
+//										pooledMutableBlockPos,
+//										texturePos,
+//										v0, v1, v2, v3,
+//										lightmapSkyLight0, lightmapSkyLight1, lightmapSkyLight2, lightmapSkyLight3,
+//										lightmapBlockLight0, lightmapBlockLight1, lightmapBlockLight2, lightmapBlockLight3
+//								);
+//							}
+//							profiler.end();
+//							profiler.start("renderMesh"); // HACKY
+//						}
 
 						for (int i = 0; i < BLOCK_RENDER_LAYER_VALUES_LENGTH; ++i) {
 							final BlockRenderLayer initialBlockRenderLayer = BLOCK_RENDER_LAYER_VALUES[i];
@@ -604,7 +597,7 @@ public final class MeshRenderer {
 		}
 	}
 
-	private static float diffuseLight(final EnumFacing side) {
+	public static float diffuseLight(final EnumFacing side) {
 		if (side == UP) {
 			return 1f;
 		} else {

@@ -107,7 +107,7 @@ final class StolenReposeCode {
 		}
 	}
 
-	private static AxisAlignedBB cornerBox(final BlockPos pos, Direction direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world) {
+	private static AxisAlignedBB cornerBox(final BlockPos pos, EnumFacing direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world) {
 		final double height;
 		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, slopingShore, submerged, world) &&
 				stepHigh(pos.add(0, 0, direction.z), stepHeight, slopingShore, submerged, world) &&
