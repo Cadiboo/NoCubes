@@ -24,7 +24,7 @@ public class BlockCollisionsMixin {
 	 * in {@link Player#freeAt} and {@link net.minecraft.world.entity.Entity#isInWall} which we don't want to mess up.
 	 */
 	@Redirect(
-		method = "computeNext()Lnet/minecraft/world/phys/shapes/VoxelShape;",
+		method = "computeNext",
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isSuffocating(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
