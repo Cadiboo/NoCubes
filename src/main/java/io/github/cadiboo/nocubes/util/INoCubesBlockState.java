@@ -7,11 +7,7 @@ package io.github.cadiboo.nocubes.util;
 public interface INoCubesBlockState {
 
     /** Does NOT take into account whether NoCubes is enabled or not. */
-    boolean nocubes_isTerrainSmoothable();
-    void nocubes_setTerrainSmoothable(boolean smoothable);
-
-    /** Does NOT take into account whether NoCubes is enabled or not. */
-    boolean nocubes_isLeavesSmoothable();
-    void nocubes_setLeavesSmoothable(boolean smoothable);
+    boolean nocubes_isSmoothable();
+    void nocubes_setSmoothable(boolean smoothable);
 
 }

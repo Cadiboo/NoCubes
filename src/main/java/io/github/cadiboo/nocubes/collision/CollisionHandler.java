@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -36,6 +37,8 @@ public final class CollisionHandler {
 	}
 
 	public static boolean shouldApplyReposeCollisions(@Nullable final Entity entity) {
+		if (NoCubesConfig.Server.tempMobCollisionsDisabled)
+			return false;
 		return entity instanceof EntityItem || entity instanceof EntityLivingBase;
 	}
 
@@ -52,7 +55,7 @@ public final class CollisionHandler {
 			final boolean flag,
 			final boolean flag1
 	) {
-		if (!Config.terrainCollisions) {
+		if (!NoCubesConfig.Server.collisionsEnabled) {
 			return getVanillaCollisions(_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1);
 		} else if (shouldApplyMeshCollisions(entityIn)) {
 			return getMeshCollisions(_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1);
@@ -137,7 +140,7 @@ public final class CollisionHandler {
 		return getCollisions(
 				_this, entityIn, aabb, p_191504_3_, outList, i, j, k, l, i1, j1, worldborder, flag, flag1,
 				(state, _this1, pooledMutableBlockPos, aabb1, outList1, entityIn1) -> {
-					if (TERRAIN_SMOOTHABLE.test(state)) {
+					if (NoCubes.smoothableHandler.isSmoothable(state)) {
 						StolenReposeCode.addCollisionBoxToList(state, _this1, pooledMutableBlockPos, aabb1, outList1, entityIn1, false);
 					} else {
 						state.addCollisionBoxToList(_this1, pooledMutableBlockPos, aabb1, outList1, entityIn1, false);
@@ -175,7 +178,7 @@ public final class CollisionHandler {
 			return getCollisions(
 					_this, entityIn, aabb, p_191504_3_, outList, minXm1, maxXp1, minYm1, maxYp1, minZm1, maxZp1, worldborder, flag, flag1,
 					(state, _this1, pooledMutableBlockPos1, aabb1, outList1, entityIn1) -> {
-						if (!TERRAIN_SMOOTHABLE.test(state))
+						if (!NoCubes.smoothableHandler.isSmoothable(state))
 							state.addCollisionBoxToList(_this1, pooledMutableBlockPos1, aabb1, outList1, entityIn1, false);
 					}
 			);

@@ -12,6 +12,7 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -133,7 +134,7 @@ public final class RenderDispatcher {
 		public void renderBlock(IBlockState stateIn, MutableBlockPos worldPosIn) {
 			renderInBlockLayers(
 					stateIn, worldPosIn,
-					(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBlock(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
+					(state, worldPos, layer, buffer, renderEnv) -> dispatcher.renderBlock(state, worldPos, world, buffer)
 			);
 		}
 
@@ -159,34 +160,34 @@ public final class RenderDispatcher {
 		}
 
 		public void forEachQuad(IBlockState stateIn, BlockPos worldPosIn, EnumFacing direction, ColorSupplier colorSupplier, QuadConsumer action) {
-			Random rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
+			long rand = random;
 			renderInBlockLayers(
 					stateIn, worldPosIn,
-					(state, worldPos, modelData, layer, buffer, renderEnv) -> {
-						var model = getModel(state, renderEnv);
+					(state, worldPos, layer, buffer, renderEnv) -> {
+						IBakedModel model = getModel(state, renderEnv);
 
-						List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
+						List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, layer, renderEnv, model, null);
 						boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
 						List<BakedQuad> dirQuads;
-						if (!state.hasProperty(SNOWY))
-							dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, direction);
+						if (!state.getProperties().containsKey(BlockGrass.SNOWY))
+							dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, layer, renderEnv, model, direction);
 						else {
 							// Make grass/snow/mycilium side faces be rendered with their top texture
 							// Equivalent to OptiFine's Better Grass feature
-							if (!state.getValue(SNOWY))
-								dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
+							if (!state.getValue(BlockGrass.SNOWY))
+								dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? EnumFacing.UP : direction);
 							else {
 								// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 								IBlockState snow = Blocks.SNOW.getDefaultState();
 								IBakedModel snowModel = getModel(snow, renderEnv);
-								dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
+								dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, layer, renderEnv, snowModel, null);
 							}
 						}
 						anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
-						int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
-						anyQuadsFound |= numOverlaysRendered > 0;
+//						int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
+//						anyQuadsFound |= numOverlaysRendered > 0;
 
 						if (!anyQuadsFound)
 							forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
@@ -195,30 +196,30 @@ public final class RenderDispatcher {
 		}
 
 		private IBakedModel getModel(IBlockState state, Object renderEnv) {
-			IBakedModel model = dispatcher.getBlockModel(state);
-			model = optiFine.getModel(renderEnv, model, state);
+			IBakedModel model = dispatcher.getModelForState(state);
+			model = optiFine.getRenderModel(model, state, renderEnv);
 			return model;
 		}
 
-		private List<BakedQuad> getQuadsAndStoreOverlays(IBlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, EnumFacing direction) {
-			random.setSeed(rand);
-			List<BakedQuad> quads = model.getQuads(state, direction, random, modelData, layer);
-			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
+		private List<BakedQuad> getQuadsAndStoreOverlays(IBlockState state, BlockPos worldPos, long rand, BlockRenderLayer layer, Object renderEnv, IBakedModel model, EnumFacing direction) {
+//			random.setSeed(rand);
+			List<BakedQuad> quads = model.getQuads(state, direction, random);
+			quads = optiFine.getRenderQuads(quads, world, state, worldPos, direction, layer, rand, renderEnv);
 			return quads;
 		}
 
-		public boolean forEachQuad(List<BakedQuad> quads, IBlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
+		public boolean forEachQuad(List<BakedQuad> quads, IBlockState state, BlockPos worldPos, ColorSupplier colorSupplier, BlockRenderLayer layer, BufferBuilder buffer, Object renderEnv, QuadConsumer action) {
 			int i = 0;
 			for (; i < quads.size(); i++) {
 				BakedQuad quad = quads.get(i);
 				Color color = colorSupplier.apply(state, worldPos, quad);
-				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
-				if (emissive != null) {
-					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
-					action.accept(layer, buffer, quad, color, true);
-				}
-				if (optiFine != null)
-					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
+//				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
+//				if (emissive != null) {
+//					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
+//					action.accept(layer, buffer, quad, color, true);
+//				}
+//				if (optiFine != null)
+//					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
 				action.accept(layer, buffer, quad, color, false);
 			}
 			return i > 0;
@@ -239,17 +240,33 @@ public final class RenderDispatcher {
 		ChunkRenderInfo renderer = new ChunkRenderInfo(
 			chunkRender, chunkRenderPos, chunkRenderTask,
 			compiledChunk, world, chunkRenderCache,
-			usedLayers, random, dispatcher
+			usedLayers, 0, dispatcher
 		);
 		Predicate<IBlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 		if (NoCubesConfig.Client.render)
 			renderChunkMesh(renderer, isSmoothable);
 	}
 
-	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher,IBlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, BufferBuilder buffer, ModelData modelData) {
+	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher,IBlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, BufferBuilder buffer, ModelData modelData) {
+
+	}
+
+	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final IBlockAccess world, final TextureAtlasSprite textureatlassprite) {
+		if (iblockstate.getRenderType() != EnumBlockRenderType.MODEL) {
+			return;
+		}
+
+		// Draw tessellator and start again with color
+		tessellatorIn.draw();
+		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
 			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
+		} finally {
+			// Draw tessellator and start again without color
+			tessellatorIn.draw();
+			bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+			bufferBuilderIn.noColor();
 		}
 	}
 
@@ -332,58 +349,6 @@ public final class RenderDispatcher {
 			vertex(buffer, matrix, v2x, v2y, v2z, red2, green2, blue2, alpha2, u2, v2, light2);
 			vertex(buffer, matrix, v1x, v1y, v1z, red1, green1, blue1, alpha1, u1, v1, light1);
 		}
-	}
-
-	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final IBlockAccess world, final TextureAtlasSprite textureatlassprite) {
-		if (iblockstate.getRenderType() != EnumBlockRenderType.MODEL) {
-			return;
-		}
-
-		final IsSmoothable isSmoothable;
-		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(iblockstate)) {
-			isSmoothable = TERRAIN_SMOOTHABLE;
-			meshGeneratorType = Config.terrainMeshGenerator;
-		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(iblockstate)) {
-			isSmoothable = LEAVES_SMOOTHABLE;
-			meshGeneratorType = Config.leavesMeshGenerator;
-		} else {
-			return;
-		}
-
-		// Draw tessellator and start again with color
-		tessellatorIn.draw();
-		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-
-		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(blockpos, world, isSmoothable, meshGeneratorType)) {
-			float minU = UVHelper.getMinU(textureatlassprite);
-			float maxU = UVHelper.getMaxU(textureatlassprite);
-			float minV = UVHelper.getMinV(textureatlassprite);
-			float maxV = UVHelper.getMaxV(textureatlassprite);
-			final int packed = iblockstate.getPackedLightmapCoords(world, blockpos);
-			int lightmapSkyLight = (packed >> 16) & 0xFFFF;
-			int lightmapBlockLight = packed & 0xFFFF;
-			for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {
-				try (Face face = faces.get(faceIndex)) {
-					try (
-							Vec3 v0 = face.getVertex0();
-							Vec3 v1 = face.getVertex1();
-							Vec3 v2 = face.getVertex2();
-							Vec3 v3 = face.getVertex3()
-					) {
-						bufferBuilderIn.pos(v0.x, v0.y, v0.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v1.x, v1.y, v1.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v2.x, v2.y, v2.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-						bufferBuilderIn.pos(v3.x, v3.y, v3.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-					}
-				}
-			}
-		}
-
-		// Draw tessellator and start again without color
-		tessellatorIn.draw();
-		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-		bufferBuilderIn.noColor();
 	}
 
 }

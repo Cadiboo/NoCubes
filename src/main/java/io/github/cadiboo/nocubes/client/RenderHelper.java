@@ -17,9 +17,9 @@ public class RenderHelper {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public static void reloadAllChunks(String because, Object... becauseArgs) {
-		LOG.debug(() -> "Re-rendering chunks because " + because.formatted(becauseArgs));
+		LOG.debug(() -> "Re-rendering chunks because " + String.format(because, becauseArgs));
 		Minecraft minecraft = Minecraft.getMinecraft();
-		minecraft.execute(minecraft.renderGlobal::loadRenderers);
+		minecraft.renderGlobal.loadRenderers();
 	}
 
 //	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec3 camera) {

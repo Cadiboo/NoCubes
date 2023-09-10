@@ -3,12 +3,12 @@ package io.github.cadiboo.nocubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.config.ConfigHolder;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.*;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
+import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
 import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.github.cadiboo.nocubes.util.FileUtils;
@@ -47,125 +47,19 @@ public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
 	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
-	public static final SimpleNetworkWrapper CHANNEL = NetworkRegistry.INSTANCE.newSimpleChannel(NoCubes.MOD_ID);
+	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create();
 	@Instance
 	public static NoCubes INSTANCE = null;
 	public final EnumMap<ModConfig.Type, ModConfig> configs = new EnumMap<>(ModConfig.Type.class);
 	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-	protected Optional<Consumer<ModConfig.ModConfigEvent>> configHandler = Optional.empty();
+	public Optional<Consumer<ModConfig.ModConfigEvent>> configHandler = Optional.empty();
 
 	public NoCubes() {
-
-//		final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-//		modEventBus.addListener((ModConfig.ModConfigEvent event) -> {
-//			final ModConfig config = event.getConfig();
-//			if (config.getSpec() == ConfigHolder.CLIENT_SPEC) {
-//				ConfigHelper.bakeClient(config);
-//			} else if (config.getSpec() == ConfigHolder.SERVER_SPEC) {
-//				ConfigHelper.bakeServer(config);
-//			}
-//		});
-//
-//		final ModLoadingContext modLoadingContext = ModLoadingContext.get();
-//		modLoadingContext.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
-//		modLoadingContext.registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
-
-		this.configHandler = Optional.of((ModConfig.ModConfigEvent event) -> {
-			final ModConfig config = event.getConfig();
-			if (config.getSpec() == ConfigHolder.CLIENT_SPEC) {
-				ConfigHelper.bakeClient(config);
-			} else if (config.getSpec() == ConfigHolder.SERVER_SPEC) {
-				ConfigHelper.bakeServer(config);
-			}
-		});
-
-		int networkId = 0;
-		CHANNEL.registerMessage(
-				C2SRequestAddTerrainSmoothable.class,
-				C2SRequestAddTerrainSmoothable.class,
-				networkId++,
-				Side.SERVER
-		);
-		CHANNEL.registerMessage(
-				C2SRequestDisableTerrainCollisions.class,
-				C2SRequestDisableTerrainCollisions.class,
-				networkId++,
-				Side.SERVER
-		);
-		CHANNEL.registerMessage(
-				C2SRequestEnableTerrainCollisions.class,
-				C2SRequestEnableTerrainCollisions.class,
-				networkId++,
-				Side.SERVER
-		);
-		CHANNEL.registerMessage(
-				C2SRequestRemoveTerrainSmoothable.class,
-				C2SRequestRemoveTerrainSmoothable.class,
-				networkId++,
-				Side.SERVER
-		);
-		CHANNEL.registerMessage(
-				C2SRequestSetExtendFluidsRange.class,
-				C2SRequestSetExtendFluidsRange.class,
-				networkId++,
-				Side.SERVER
-		);
-		CHANNEL.registerMessage(
-				C2SRequestSetTerrainMeshGenerator.class,
-				C2SRequestSetTerrainMeshGenerator.class,
-				networkId++,
-				Side.SERVER
-		);
-
-		/* Server -> Client */
-		CHANNEL.registerMessage(
-				S2CSyncConfig.class,
-				S2CSyncConfig.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CAddTerrainSmoothable.class,
-				S2CAddTerrainSmoothable.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CDisableTerrainCollisions.class,
-				S2CDisableTerrainCollisions.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CEnableTerrainCollisions.class,
-				S2CEnableTerrainCollisions.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CRemoveTerrainSmoothable.class,
-				S2CRemoveTerrainSmoothable.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CSetExtendFluidsRange.class,
-				S2CSetExtendFluidsRange.class,
-				networkId++,
-				Side.CLIENT
-		);
-		CHANNEL.registerMessage(
-				S2CSetTerrainMeshGenerator.class,
-				S2CSetTerrainMeshGenerator.class,
-				networkId++,
-				Side.CLIENT
-		);
-
+		NoCubesNetwork.register();
 	}
 
 	@Mod.EventHandler
 	public void onPreInit(final FMLPreInitializationEvent event) {
-
 		if (NoCubesLoadingPlugin.RCRCH_INSTALLED) {
 			DistExecutor.runWhenOn(Side.CLIENT, () -> ClientUtil::crashIfRCRCHInstalled);
 			DistExecutor.runWhenOn(Side.SERVER, () -> () -> FMLCommonHandler.instance().raiseException(new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game."), "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", true));
@@ -175,8 +69,7 @@ public final class NoCubes {
 				ClientUtil.crashIfIncompatibleOptiFine();
 		});
 
-		this.registerConfig(ModConfig.Type.CLIENT, ConfigHolder.CLIENT_SPEC);
-		this.registerConfig(ModConfig.Type.SERVER, ConfigHolder.SERVER_SPEC);
+		NoCubesConfig.register(this);
 
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.CLIENT, Loader.instance().getConfigDir().toPath()));
 		ConfigTracker.INSTANCE.loadConfigs(ModConfig.Type.COMMON, Loader.instance().getConfigDir().toPath());
