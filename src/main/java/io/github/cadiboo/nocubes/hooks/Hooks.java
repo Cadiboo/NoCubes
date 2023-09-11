@@ -53,7 +53,7 @@ public final class Hooks {
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(iblockstate)) {
 				return true;
 		}
-		RenderDispatcher.renderSmoothBlockDamage(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
+		RenderDispatcher.renderBreakingTexture(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
 		return false;
 	}
 

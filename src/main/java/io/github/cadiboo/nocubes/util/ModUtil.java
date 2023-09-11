@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.tempcore.NoCubesLoadingPlugin;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.BlockCrops;
@@ -77,18 +76,18 @@ public class ModUtil {
 	}
 
 	/**
-	 * Give the vec3 some (pseudo) random offset based on its location.
+	 * Give the Vec some (pseudo) random offset based on its location.
 	 * This code is from {link MathHelper#getCoordinateRandom} and Block#getOffset
 	 *
-	 * @param vec3 the vec3
+	 * @param Vec the Vec
 	 */
-	public static Vec3 offsetVertex(final Vec3 vec3) {
-		long rand = (long) (vec3.x * 3129871.0D) ^ (long) vec3.z * 116129781L ^ (long) vec3.y;
+	public static Vec offsetVertex(final Vec Vec) {
+		long rand = (long) (Vec.x * 3129871.0D) ^ (long) Vec.z * 116129781L ^ (long) Vec.y;
 		rand = rand * rand * 42317861L + rand * 11;
-		vec3.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
-		vec3.y += ((double) ((float) (rand >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D;
-		vec3.z += ((double) ((float) (rand >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D;
-		return vec3;
+		Vec.x += ((double) ((float) (rand >> 16 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		Vec.y += ((double) ((float) (rand >> 20 & 15L) / 15.0F) - 1.0D) * 0.2D;
+		Vec.z += ((double) ((float) (rand >> 24 & 15L) / 15.0F) - 0.5D) * 0.5D;
+		return Vec;
 	}
 
 	/**

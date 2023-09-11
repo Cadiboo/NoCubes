@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
@@ -67,10 +67,10 @@ public final class BlockColorInfo implements AutoCloseable {
 
 	public static BlockColorInfo generateBlockColorInfo(
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
-			@Nonnull final Vec3 v0,
-			@Nonnull final Vec3 v1,
-			@Nonnull final Vec3 v2,
-			@Nonnull final Vec3 v3,
+			@Nonnull final Vec v0,
+			@Nonnull final Vec v1,
+			@Nonnull final Vec v2,
+			@Nonnull final Vec v3,
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,

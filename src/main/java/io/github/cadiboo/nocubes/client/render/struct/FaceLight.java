@@ -1,7 +1,9 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
+import io.github.cadiboo.nocubes.client.LightCache;
+
 public final /* inline record */ class FaceLight {
-//	public static final FaceLight MAX_BRIGHTNESS = new FaceLight(LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS);
+	public static final FaceLight MAX_BRIGHTNESS = new FaceLight(LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS, LightCache.MAX_BRIGHTNESS);
 	public /* final */ int v0;
 	public /* final */ int v1;
 	public /* final */ int v2;

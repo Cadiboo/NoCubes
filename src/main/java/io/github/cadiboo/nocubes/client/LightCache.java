@@ -11,6 +11,8 @@ import javax.annotation.Nonnull;
  */
 public final class LightCache implements AutoCloseable {
 
+	public static final int MAX_BRIGHTNESS = 0xFF << 16 | 0xFF;
+
 	private static final ThreadLocal<LightCache> POOL = ThreadLocal.withInitial(() -> new LightCache(0));
 	private static final ThreadLocal<MutableBlockPos> MUTABLE_BLOCK_POS = ThreadLocal.withInitial(MutableBlockPos::new);
 

@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;

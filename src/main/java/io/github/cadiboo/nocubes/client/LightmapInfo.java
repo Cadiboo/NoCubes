@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 
@@ -42,10 +42,10 @@ public final class LightmapInfo implements AutoCloseable {
 
 	public static LightmapInfo generateLightmapInfo(
 			@Nonnull final LightCache lazyPackedLightCache,
-			@Nonnull final Vec3 v0,
-			@Nonnull final Vec3 v1,
-			@Nonnull final Vec3 v2,
-			final Vec3 v3,
+			@Nonnull final Vec v0,
+			@Nonnull final Vec v1,
+			@Nonnull final Vec v2,
+			final Vec v3,
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
@@ -65,7 +65,7 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoSmoothAO(
-			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
+			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
@@ -76,7 +76,7 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoSmooth(
-			@Nonnull final Vec3 v0, @Nonnull final Vec3 v1, @Nonnull final Vec3 v2, @Nonnull final Vec3 v3,
+			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,
@@ -149,7 +149,7 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoFlat(
-			@Nonnull final Vec3 v0,
+			@Nonnull final Vec v0,
 			final int chunkRenderPosX,
 			final int chunkRenderPosY,
 			final int chunkRenderPosZ,

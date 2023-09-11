@@ -23,7 +23,7 @@ public class RenderHelper {
 			minecraft.renderGlobal.loadRenderers();
 	}
 
-//	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec3 camera) {
+//	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec camera) {
 //		var startX = (float) (offset.getX() - camera.x + start.x);
 //		var startY = (float) (offset.getY() - camera.y + start.y);
 //		var startZ = (float) (offset.getZ() - camera.z + start.z);
@@ -34,7 +34,7 @@ public class RenderHelper {
 //		);
 //	}
 
-//	public static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec3 camera) {
+//	public static void drawLinePosColorFromTo(BlockPos startOffset, Vec start, BlockPos endOffset, Vec end, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec camera) {
 //		line(
 //			buffer, matrix, color,
 //			(float) (startOffset.getX() + start.x - camera.x), (float) (startOffset.getY() + start.y - camera.y), (float) (startOffset.getZ() + start.z - camera.z),
@@ -42,7 +42,7 @@ public class RenderHelper {
 //		);
 //	}
 
-//	public static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix) {
+//	public static void drawFacePosColor(Face face, Vec camera, BlockPos pos, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix) {
 //		var v0 = face.v0;
 //		var v1 = face.v1;
 //		var v2 = face.v2;
@@ -69,7 +69,7 @@ public class RenderHelper {
 //		line(buffer, matrix, color, v3x, v3y, v3z, v0x, v0y, v0z);
 //	}
 
-//	public static void drawShape(PoseStack stack, BufferBuilder buffer, VoxelShape shape, BlockPos pos, Vec3 camera, ColorParser.Color color) {
+//	public static void drawShape(PoseStack stack, BufferBuilder buffer, VoxelShape shape, BlockPos pos, Vec camera, ColorParser.Color color) {
 //		var x = pos.getX() - camera.x;
 //		var y = pos.getY() - camera.y;
 //		var z = pos.getZ() - camera.z;
@@ -138,15 +138,15 @@ public class RenderHelper {
 		float texU, float texV, int lightmapUV
 	) {
 
-//		double transformedX = (double) matrix.x + x;
-//		double transformedY = (double) matrix.y + y;
-//		double transformedZ = (double) matrix.z + z;
+		double transformedX = matrix.x + x;
+		double transformedY = matrix.y + y;
+		double transformedZ = matrix.z + z;
 
 		int skyLight = (lightmapUV >> 16) & 0xFF;
 		int blockLight = lightmapUV & 0xFF;
 
 		buffer
-			.pos(x, y, z)
+			.pos(transformedX, transformedY, transformedZ)
 			.color(red, green, blue, alpha)
 			.tex(texU, texV)
 			.lightmap(skyLight, blockLight);

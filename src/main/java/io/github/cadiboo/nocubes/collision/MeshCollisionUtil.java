@@ -1,8 +1,8 @@
 package io.github.cadiboo.nocubes.collision;
 
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 
@@ -28,7 +28,7 @@ public final class MeshCollisionUtil {
 		return (int) ((d0 + d1 + d2 + d3) / 4);
 	}
 
-	public static AxisAlignedBB makeShape(Vec3 centre, Vec3 averageOfNormal, Vec3 v) {
+	public static AxisAlignedBB makeShape(Vec centre, Vec averageOfNormal, Vec v) {
 		double w = centre.x - v.x;
 		if (-0.01 < w && w < 0.01)
 			w = 0.0625 * averageOfNormal.x;
@@ -64,63 +64,63 @@ public final class MeshCollisionUtil {
 		//_____
 		//_____
 		//1___2
-		final Vec3 v0;
-		final Vec3 v1;
-		final Vec3 v2;
-		final Vec3 v3;
+		final Vec v0;
+		final Vec v1;
+		final Vec v2;
+		final Vec v3;
 		//0_*_3
 		//_____
 		//*___*
 		//_____
 		//1_*_2
-		final Vec3 v0v1;
-		final Vec3 v1v2;
-		final Vec3 v2v3;
-		final Vec3 v3v0;
+		final Vec v0v1;
+		final Vec v1v2;
+		final Vec v2v3;
+		final Vec v3v0;
 //		//0x*x3
 //		//x___x
 //		//*___*
 //		//x___x
 //		//1x*x2
-//		final Vec3 v0v1v0;
-//		final Vec3 v0v1v1;
-//		final Vec3 v1v2v1;
-//		final Vec3 v1v2v2;
-//		final Vec3 v2v3v2;
-//		final Vec3 v2v3v3;
-//		final Vec3 v3v0v3;
-//		final Vec3 v3v0v0;
+//		final Vec v0v1v0;
+//		final Vec v0v1v1;
+//		final Vec v1v2v1;
+//		final Vec v1v2v2;
+//		final Vec v2v3v2;
+//		final Vec v2v3v3;
+//		final Vec v3v0v3;
+//		final Vec v3v0v0;
 		//0x*x3
 		//xa_ax
 		//*___*
 		//xa_ax
 		//1x*x2
-		final Vec3 v0v1v1v2;
-		final Vec3 v1v2v2v3;
-		final Vec3 v2v3v3v0;
-		final Vec3 v3v0v0v1;
+		final Vec v0v1v1v2;
+		final Vec v1v2v2v3;
+		final Vec v2v3v3v0;
+		final Vec v3v0v0v1;
 //		//0x*x3
 //		//xabax
 //		//*b_b*
 //		//xabax
 //		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3;
-//		final Vec3 v1v2v2v3v2v3v3v0;
-//		final Vec3 v2v3v3v0v3v0v0v1;
-//		final Vec3 v3v0v0v1v0v1v1v2;
+//		final Vec v0v1v1v2v1v2v2v3;
+//		final Vec v1v2v2v3v2v3v3v0;
+//		final Vec v2v3v3v0v3v0v0v1;
+//		final Vec v3v0v0v1v0v1v1v2;
 //		//0x*x3
 //		//xabax
 //		//*bcb*
 //		//xabax
 //		//1x*x2
-//		final Vec3 v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1;
-//		final Vec3 v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2;
+//		final Vec v0v1v1v2v1v2v2v3v2v3v3v0v3v0v0v1;
+//		final Vec v1v2v2v3v2v3v3v0v3v0v0v1v0v1v1v2;
 
 		try (ModProfiler ignored = profiler.start("interpolate")) {
-			v0 = face.getVertex0();
-			v1 = face.getVertex1();
-			v2 = face.getVertex2();
-			v3 = face.getVertex3();
+			v0 = face.v0;
+			v1 = face.v1;
+			v2 = face.v2;
+			v3 = face.v3;
 			v0v1 = interp(v0, v1, 0.5F);
 			v1v2 = interp(v1, v2, 0.5F);
 			v2v3 = interp(v2, v3, 0.5F);
@@ -267,10 +267,10 @@ public final class MeshCollisionUtil {
 //			v2.close();
 //			v3.close();
 		}
-		v0v1.close();
-		v1v2.close();
-		v2v3.close();
-		v3v0.close();
+	//	v0v1.close();
+	//	v1v2.close();
+	//	v2v3.close();
+	//	v3v0.close();
 //		v0v1v0.close();
 //		v0v1v1.close();
 //		v1v2v1.close();
@@ -279,10 +279,10 @@ public final class MeshCollisionUtil {
 //		v2v3v3.close();
 //		v3v0v3.close();
 //		v3v0v0.close();
-		v0v1v1v2.close();
-		v1v2v2v3.close();
-		v2v3v3v0.close();
-		v3v0v0v1.close();
+	//	v0v1v1v2.close();
+	//	v1v2v2v3.close();
+	//	v2v3v3v0.close();
+	//	v3v0v0v1.close();
 //		v0v1v1v2v1v2v2v3.close();
 //		v1v2v2v3v2v3v3v0.close();
 //		v2v3v3v0v3v0v0v1.close();
@@ -303,8 +303,8 @@ public final class MeshCollisionUtil {
 		}
 	}
 
-	private static Vec3 interp(final Vec3 v0, final Vec3 v1, final float t) {
-		return Vec3.retain(
+	private static Vec interp(final Vec v0, final Vec v1, final float t) {
+		return new Vec(
 				v0.x + t * (v1.x - v0.x),
 				v0.y + t * (v1.y - v0.y),
 				v0.z + t * (v1.z - v0.z)
@@ -312,13 +312,13 @@ public final class MeshCollisionUtil {
 	}
 
 	private static AxisAlignedBB createAxisAlignedBBForVertex(
-			final Vec3 vec3,
+			final Vec Vec,
 			final float boxRadius,
 			final double maxY
 	) {
-		final double vy = vec3.y;
-		final double vx = vec3.x;
-		final double vz = vec3.z;
+		final double vy = Vec.y;
+		final double vx = Vec.x;
+		final double vz = Vec.z;
 
 		final boolean isOverMax = vy + boxRadius > maxY;
 		return new AxisAlignedBB(

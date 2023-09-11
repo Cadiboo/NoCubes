@@ -108,14 +108,14 @@ public final /* inline */ class Vec {
 		return this;
 	}
 
-	public static Vec normal(Vec prevVecInFace, Vec vec, Vec nextVecInFace, Vec toUse) {
+	public static Vec normal(Vec prevVec3inFace, Vec vec, Vec nextVec3inFace, Vec toUse) {
 //		normal = crossProduct(prev - vec, next - vec).normalise();
 		final float x = vec.x;
 		final float y = vec.y;
 		final float z = vec.z;
 		return cross(
-			prevVecInFace.x - x, prevVecInFace.y - y, prevVecInFace.z - z,
-			nextVecInFace.x - x, nextVecInFace.y - y, nextVecInFace.z - z,
+			prevVec3inFace.x - x, prevVec3inFace.y - y, prevVec3inFace.z - z,
+			nextVec3inFace.x - x, nextVec3inFace.y - y, nextVec3inFace.z - z,
 			toUse
 		);//.normalise();
 //		).normalise().multiply(-1);

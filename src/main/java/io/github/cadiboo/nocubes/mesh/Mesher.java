@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.client.render.struct.PoseStack;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
@@ -59,23 +60,23 @@ public interface Mesher {
 			z >= size.getZ() - positiveExtension.getZ() || z < negativeExtension.getZ();
 	}
 
-//	/**
-//	 * The vertices in meshes are generated relative to {@link Area#start}.
-//	 * {@link Area#start} is not necessarily the place where the final mesh should be rendered.
-//	 * The difference between the start of the area and the position we are generating for
-//	 * This exists because:
-//	 * To render a 16x16x16 area you need the data of a 18x18x18 area (+1 voxel on each axis)
-//	 * So the area is going to start at chunkPos - 1 (and extend 18 blocks)
-//	 * And the vertices are going to be relative to the start of the area
-//	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
-//	 */
-//	static void translateToMeshStart(PoseStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
-//		matrix.translate(
-//			getMeshOffset(areaStart.getX(), renderStartPos.getX()),
-//			getMeshOffset(areaStart.getY(), renderStartPos.getY()),
-//			getMeshOffset(areaStart.getZ(), renderStartPos.getZ())
-//		);
-//	}
+	/**
+	 * The vertices in meshes are generated relative to {@link Area#start}.
+	 * {@link Area#start} is not necessarily the place where the final mesh should be rendered.
+	 * The difference between the start of the area and the position we are generating for
+	 * This exists because:
+	 * To render a 16x16x16 area you need the data of a 18x18x18 area (+1 voxel on each axis)
+	 * So the area is going to start at chunkPos - 1 (and extend 18 blocks)
+	 * And the vertices are going to be relative to the start of the area
+	 * We need to add an offset to the vertices because we want them to be relative to the start of the chunk, not the area
+	 */
+	static void translateToMeshStart(PoseStack matrix, BlockPos areaStart, BlockPos renderStartPos) {
+		matrix.translate(
+			getMeshOffset(areaStart.getX(), renderStartPos.getX()),
+			getMeshOffset(areaStart.getY(), renderStartPos.getY()),
+			getMeshOffset(areaStart.getZ(), renderStartPos.getZ())
+		);
+	}
 
 	static int getMeshOffset(int areaStart, int desiredStart) {
 		return validateMeshOffset(areaStart - desiredStart);

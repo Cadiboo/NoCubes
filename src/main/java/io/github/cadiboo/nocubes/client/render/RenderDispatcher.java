@@ -247,26 +247,21 @@ public final class RenderDispatcher {
 			renderChunkMesh(renderer, isSmoothable);
 	}
 
-	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher, IBlockState state, BlockPos pos, IBlockAccess world, PoseStack matrix, BufferBuilder buffer) {
-
-	}
-
-	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos pos, final IBlockState iblockstate, final IBlockAccess world, final TextureAtlasSprite textureatlassprite) {
-		if (iblockstate.getRenderType() != EnumBlockRenderType.MODEL) {
+	public static void renderBreakingTexture(Tessellator tessellatorIn, BufferBuilder buffer, BlockPos pos, IBlockState state, IBlockAccess world, TextureAtlasSprite texture) {
+		if (state.getRenderType() != EnumBlockRenderType.MODEL)
 			return;
-		}
 
 		// Draw tessellator and start again with color
 		tessellatorIn.draw();
-		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+		buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (Area area = new Area(world, pos, ModUtil.VEC_ONE, mesher)) {
-//			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
+			MeshRenderer.renderBreakingTexture(state, pos, new PoseStack(), buffer, texture, mesher, area);
 		} finally {
 			// Draw tessellator and start again without color
 			tessellatorIn.draw();
-			bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-			bufferBuilderIn.noColor();
+			buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+			buffer.noColor();
 		}
 	}
 
@@ -289,7 +284,7 @@ public final class RenderDispatcher {
 //		return buffer;
 //	}
 
-	static void quad(
+	public static void quad(
 			BufferBuilder buffer, PoseStack matrix,
 			Face face, Vec faceNormal,
 			Color color,
@@ -321,14 +316,14 @@ public final class RenderDispatcher {
 			Vec vec0, Color color0, float u0, float v0, int light0,
 			Vec vec1, Color color1, float u1, float v1, int light1,
 			Vec vec2, Color color2, float u2, float v2, int light2,
-			Vec vec3, Color color3, float u3, float v3, int light3
+			Vec Vec, Color color3, float u3, float v3, int light3
 	) {
 		quad(
 				buffer, matrix, doubleSided,
 				vec0.x, vec0.y, vec0.z, color0.red, color0.green, color0.blue, color0.alpha, u0, v0, light0,
 				vec1.x, vec1.y, vec1.z, color1.red, color1.green, color1.blue, color1.alpha, u1, v1, light1,
 				vec2.x, vec2.y, vec2.z, color2.red, color2.green, color2.blue, color2.alpha, u2, v2, light2,
-				vec3.x, vec3.y, vec3.z, color3.red, color3.green, color3.blue, color3.alpha, u3, v3, light3
+				Vec.x, Vec.y, Vec.z, color3.red, color3.green, color3.blue, color3.alpha, u3, v3, light3
 		);
 	}
 
