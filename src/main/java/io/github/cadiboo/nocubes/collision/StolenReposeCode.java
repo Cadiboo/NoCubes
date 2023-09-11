@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.collision;
 
 import com.google.common.collect.ImmutableList;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.StateHolder;
@@ -17,7 +18,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 import static java.lang.Math.max;
 
 /**
@@ -73,7 +73,7 @@ final class StolenReposeCode {
 							}
 
 							final IBlockState testState = reader.getBlockState(pooledMutableBlockPos);
-							density += ModUtil.getIndividualBlockDensity(TERRAIN_SMOOTHABLE.test(testState), testState);
+							density += ModUtil.getIndividualBlockDensity(NoCubes.smoothableHandler.isSmoothable(testState), testState);
 						}
 					}
 				}
@@ -85,7 +85,7 @@ final class StolenReposeCode {
 	}
 
 	private static boolean canSlope(final IBlockState state) {
-		return TERRAIN_SMOOTHABLE.test(state);
+		return NoCubes.smoothableHandler.isSmoothable(state);
 	}
 
 	private static boolean canSlopeAt(final IBlockState state, World worldIn, final BlockPos pos, final AxisAlignedBB collisionBoundingBox) {
@@ -107,7 +107,7 @@ final class StolenReposeCode {
 		}
 	}
 
-	private static AxisAlignedBB cornerBox(final BlockPos pos, EnumFacing direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world) {
+	private static AxisAlignedBB cornerBox(final BlockPos pos, final Direction direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world) {
 		final double height;
 		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, slopingShore, submerged, world) &&
 				stepHigh(pos.add(0, 0, direction.z), stepHeight, slopingShore, submerged, world) &&

@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
-import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
@@ -73,7 +73,7 @@ public final class ExtendedFluidChunkRenderer {
 			final int smoothableCacheStartPaddingY = smoothableCache.startPaddingY;
 			final int smoothableCacheStartPaddingZ = smoothableCache.startPaddingZ;
 
-			final int extendRange = Config.extendFluidsRange.getRange();
+			final int extendRange = NoCubesConfig.Server.extendFluidsRange;
 
 			// For offset = -1 or -2 to offset = 1 or 2;
 			final int maxXOffset = extendRange;

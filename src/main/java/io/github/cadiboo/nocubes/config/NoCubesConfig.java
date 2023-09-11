@@ -14,6 +14,7 @@ import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.mesh.StupidCubic;
 import io.github.cadiboo.nocubes.mesh.SurfaceNets;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
@@ -23,7 +24,9 @@ import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfig
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigFileTypeHandler;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig.ModConfigEvent;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
+import io.github.cadiboo.nocubes.util.DistExecutor;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirt;
@@ -33,8 +36,11 @@ import net.minecraft.block.BlockSilverfish;
 import net.minecraft.block.BlockStainedHardenedClay;
 import net.minecraft.block.BlockStone;
 import net.minecraft.block.state.IBlockState;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.server.FMLServerHandler;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +59,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.*;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.BONE_BLOCK;
 import static net.minecraft.init.Blocks.CLAY;
@@ -117,7 +124,7 @@ public final class NoCubesConfig {
 		specs.put(Client.SPEC, Pair.of(ModConfig.Type.CLIENT, Client::bake));
 		specs.put(Server.SPEC, Pair.of(ModConfig.Type.SERVER, Server::bake));
 		specs.forEach((spec, typeAndBaker) -> context.registerConfig(typeAndBaker.getKey(), spec));
-		context.configHandler = Optional.of((ModConfig.ModConfigEvent event) -> {
+		context.configHandler = Optional.of((ModConfigEvent event) -> {
 			ModConfig config = event.getConfig();
 			Pair<ModConfig.Type, Consumer<ModConfig>> typeAndBaker = specs.get(config.getSpec());
 			if (typeAndBaker == null)
@@ -385,9 +392,9 @@ public final class NoCubesConfig {
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
 			if (Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
-			if (FMLEnvironment.dist.isDedicatedServer() && ServerLifecycleHooks.getCurrentServer() != null)
-				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
+				DistExecutor.runWhenOn(Side.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
+			if (FMLCommonHandler.instance().getSide().isServer() && FMLServerHandler.instance().getServer() != null)
+				NoCubesNetwork.CHANNEL.sendToAll(S2CUpdateServerConfig.create(config));
 		}
 
 		private static <T extends Number & Comparable<T>> T validateRange(T min, T max, T value, String name) {
@@ -531,7 +538,7 @@ public final class NoCubesConfig {
 				((CommentedFileConfig) modConfig.getConfigData()).load();
 				modConfig.getSpec().afterReload();
 //				modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+				ModConfig_fireEvent(modConfig, new ModConfig.Reloading(modConfig));
 			});
 		}
 
@@ -547,14 +554,14 @@ public final class NoCubesConfig {
 //				modConfig.setConfigData(config);
 				ModConfig_setConfigData(modConfig, config);
 //				modConfig.fireEvent(IConfigEvent.loading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.loading(modConfig));
+				ModConfig_fireEvent(modConfig, new ModConfig.Loading(modConfig));
 			});
 		}
 
 		/**
 		 * Similar to {@link ConfigTracker#getConfigFileName}
 		 */
-		private static Optional<ModConfig> ConfigTracker_getConfig(ModConfig.Type type) {
+		public static Optional<ModConfig> ConfigTracker_getConfig(ModConfig.Type type) {
 			LOG.debug("Getting {} ModConfig from ConfigTracker", type.name());
 			return ConfigTracker.INSTANCE.configSets().get(type).stream()
 				.filter(modConfig -> modConfig.getModId().equals(NoCubes.MOD_ID))
@@ -571,19 +578,19 @@ public final class NoCubesConfig {
 			}
 		}
 
-		private static void ModConfig_fireEvent(ModConfig modConfig, IConfigEvent event) {
+		private static void ModConfig_fireEvent(ModConfig modConfig, ModConfigEvent event) {
 			LOG.debug("Firing ModConfig event");
-//			modConfig.fireEvent(event);
-			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
+			modConfig.fireEvent(event);
+//			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
 		}
 
 		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
 			LOG.debug("Setting logical server config (on the client) from server sync packet");
-			assert FMLEnvironment.dist.isClient() : "This packet should have only be sent server->client";
-			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
-			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
+			assert FMLCommonHandler.instance().getSide().isClient() : "This packet should have only be sent server->client";
+			ModConfig modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
+			ConfigParser<CommentedConfig> parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
 			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
-			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+			ModConfig_fireEvent(modConfig, new ModConfig.Reloading(modConfig));
 		}
 	}
 

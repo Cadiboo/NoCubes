@@ -19,7 +19,8 @@ public class RenderHelper {
 	public static void reloadAllChunks(String because, Object... becauseArgs) {
 		LOG.debug(() -> "Re-rendering chunks because " + String.format(because, becauseArgs));
 		Minecraft minecraft = Minecraft.getMinecraft();
-		minecraft.renderGlobal.loadRenderers();
+		if (minecraft.renderGlobal != null)
+			minecraft.renderGlobal.loadRenderers();
 	}
 
 //	public static void drawLinePosColorFromAdd(BlockPos offset, Vec start, Vec add, ColorParser.Color color, BufferBuilder buffer, PoseStack matrix, Vec3 camera) {
@@ -137,53 +138,53 @@ public class RenderHelper {
 		float texU, float texV, int lightmapUV
 	) {
 
-		double transformedX = (double) matrix.x + x;
-		double transformedY = (double) matrix.y + y;
-		double transformedZ = (double) matrix.z + z;
+//		double transformedX = (double) matrix.x + x;
+//		double transformedY = (double) matrix.y + y;
+//		double transformedZ = (double) matrix.z + z;
 
 		int skyLight = (lightmapUV >> 16) & 0xFF;
 		int blockLight = lightmapUV & 0xFF;
 
 		buffer
-			.pos(transformedX, transformedY, transformedZ)
+			.pos(x, y, z)
 			.color(red, green, blue, alpha)
 			.tex(texU, texV)
 			.lightmap(skyLight, blockLight);
 	}
 
-	/** See {@link Vector3f#mul(Matrix3fc)} */
-	public static float getTransformX(Matrix3f matrix, float x, float y, float z) {
-		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
-	}
-
-	/** See {@link Vector3f#mul(Matrix3fc)} */
-	public static float getTransformY(Matrix3f matrix, float x, float y, float z) {
-		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
-	}
-
-	/** See {@link Vector3f#mul(Matrix3fc)} */
-	public static float getTransformZ(Matrix3f matrix, float x, float y, float z) {
-		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
-	}
-
-	/** See {@link Vector4f#mul(Matrix4fc)} */
-	public static float getTransformX(Matrix4f matrix, float x, float y, float z, float w) {
-		return matrix.m00() * x + matrix.m10() * y + matrix.m20() * z + matrix.m30() * w;
-	}
-
-	/** See {@link Vector4f#mul(Matrix4fc)} */
-	public static float getTransformY(Matrix4f matrix, float x, float y, float z, float w) {
-		return matrix.m01() * x + matrix.m11() * y + matrix.m21() * z + matrix.m31() * w;
-	}
-
-	/** See {@link Vector4f#mul(Matrix4fc)} */
-	public static float getTransformZ(Matrix4f matrix, float x, float y, float z, float w) {
-		return matrix.m02() * x + matrix.m12() * y + matrix.m22() * z + matrix.m32() * w;
-	}
-
-	/** See {@link Vector4f#mul(Matrix4fc)} */
-	public static float getTransformW(Matrix4f matrix, float x, float y, float z, float w) {
-		return matrix.m30() * x + matrix.m31() * y + matrix.m32() * z + matrix.m33() * w;
-	}
+//	/** See {@link Vector3f#mul(Matrix3fc)} */
+//	public static float getTransformX(Matrix3f matrix, float x, float y, float z) {
+//		return matrix.m00 * x + matrix.m01 * y + matrix.m02 * z;
+//	}
+//
+//	/** See {@link Vector3f#mul(Matrix3fc)} */
+//	public static float getTransformY(Matrix3f matrix, float x, float y, float z) {
+//		return matrix.m10 * x + matrix.m11 * y + matrix.m12 * z;
+//	}
+//
+//	/** See {@link Vector3f#mul(Matrix3fc)} */
+//	public static float getTransformZ(Matrix3f matrix, float x, float y, float z) {
+//		return matrix.m20 * x + matrix.m21 * y + matrix.m22 * z;
+//	}
+//
+//	/** See {@link Vector4f#mul(Matrix4fc)} */
+//	public static float getTransformX(Matrix4f matrix, float x, float y, float z, float w) {
+//		return matrix.m00() * x + matrix.m10() * y + matrix.m20() * z + matrix.m30() * w;
+//	}
+//
+//	/** See {@link Vector4f#mul(Matrix4fc)} */
+//	public static float getTransformY(Matrix4f matrix, float x, float y, float z, float w) {
+//		return matrix.m01() * x + matrix.m11() * y + matrix.m21() * z + matrix.m31() * w;
+//	}
+//
+//	/** See {@link Vector4f#mul(Matrix4fc)} */
+//	public static float getTransformZ(Matrix4f matrix, float x, float y, float z, float w) {
+//		return matrix.m02() * x + matrix.m12() * y + matrix.m22() * z + matrix.m32() * w;
+//	}
+//
+//	/** See {@link Vector4f#mul(Matrix4fc)} */
+//	public static float getTransformW(Matrix4f matrix, float x, float y, float z, float w) {
+//		return matrix.m30() * x + matrix.m31() * y + matrix.m32() * z + matrix.m33() * w;
+//	}
 
 }

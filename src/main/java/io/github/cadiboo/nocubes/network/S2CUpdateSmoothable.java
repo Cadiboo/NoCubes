@@ -2,14 +2,15 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
+import io.github.cadiboo.nocubes.util.DistExecutor;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.network.NetworkEvent;
-
-import java.util.function.Supplier;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.relauncher.Side;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
@@ -17,33 +18,38 @@ import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
  * @author Cadiboo
  */
 public class S2CUpdateSmoothable implements IMessage, IMessageHandler<S2CUpdateSmoothable, IMessage> {
-	final boolean newValue;
-	final IBlockState[] states;
+	boolean newValue;
+	IBlockState[] states;
+
+	public S2CUpdateSmoothable() {
+	}
 
 	public S2CUpdateSmoothable(final boolean newValue, final IBlockState[] states) {
 		this.newValue = newValue;
 		this.states = states;
 	}
 
-	public static void encode(S2CUpdateSmoothable msg, FriendlyByteBuf buffer) {
-		buffer.writeBoolean(msg.newValue);
-		BlockStateConverter.writeBlockStatesTo(buffer, msg.states);
+	@Override
+	public void toBytes(ByteBuf buf) {
+		PacketBuffer buffer = new PacketBuffer(buf);
+		buffer.writeBoolean(this.newValue);
+		BlockStateConverter.writeBlockStatesTo(buffer, this.states);
 	}
 
-	public static S2CUpdateSmoothable decode(FriendlyByteBuf buffer) {
-		return new S2CUpdateSmoothable(
-			buffer.readBoolean(),
-			BlockStateConverter.readBlockStatesFrom(buffer)
-		);
+	@Override
+	public void fromBytes(ByteBuf buf) {
+		PacketBuffer buffer = new PacketBuffer(buf);
+		this.newValue = buffer.readBoolean();
+		this.states = BlockStateConverter.readBlockStatesFrom(buffer);
 	}
 
-	public static void handle(S2CUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		var ctx = contextSupplier.get();
-		ctx.enqueueWork(() -> {
+	@Override
+	public IMessage onMessage(S2CUpdateSmoothable msg, MessageContext context) {
+		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> Minecraft.getMinecraft().addScheduledTask(() -> {
 			NoCubes.smoothableHandler.setSmoothable(msg.newValue, msg.states);
 			reloadAllChunks("the server told us that the smoothness of some states changed");
-		});
-		ctx.setPacketHandled(true);
+		}));
+		return null;
 	}
 
 }

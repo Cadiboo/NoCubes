@@ -7,11 +7,8 @@ import io.github.cadiboo.nocubes.client.LightCache;
 import io.github.cadiboo.nocubes.client.LightmapInfo;
 import io.github.cadiboo.nocubes.client.ModelHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
 import io.github.cadiboo.nocubes.util.pooled.Vec3;
 import io.github.cadiboo.nocubes.util.pooled.Vec3b;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
@@ -25,11 +22,8 @@ import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
 import net.minecraft.util.math.MathHelper;
@@ -44,7 +38,6 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
@@ -76,7 +69,6 @@ public final class MeshRenderer {
 			@Nonnull final Random random,
 			@Nonnull final LightCache lazyPackedLightCache,
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
-			@Nonnull final Map<Vec3b, FaceList> chunkData,
 			@Nonnull final SmoothableCache smoothableCache,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final PooledMutableBlockPos texturePooledMutableBlockPos,
@@ -88,67 +80,67 @@ public final class MeshRenderer {
 
 			final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry = ClientUtil.getBlockColorsMap();
 
-			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
-				try (final Vec3b pos = entry.getKey()) {
-					try (final FaceList faces = entry.getValue()) {
-
-						if (faces.isEmpty()) {
-							continue;
-						}
-
-						profiler.end(); // HACKY
-						profiler.start("prepareRenderFaces"); // HACKY
-
-						final int initialPosX = chunkRenderPosX + pos.x;
-						final int initialPosY = chunkRenderPosY + pos.y;
-						final int initialPosZ = chunkRenderPosZ + pos.z;
-
-						//TODO use pos? (I've forgotten what this todo is even about)
-						final byte relativePosX = ModUtil.getRelativePos(chunkRenderPosX, initialPosX);
-						final byte relativePosY = ModUtil.getRelativePos(chunkRenderPosY, initialPosY);
-						final byte relativePosZ = ModUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
-
-						profiler.end(); // HACKY (end here because getTexturePosAndState profiles itself)
-
-						final IBlockState textureState = ClientUtil.getTexturePosAndState(
-								initialPosX, initialPosY, initialPosZ,
-								texturePooledMutableBlockPos,
-								stateCache, smoothableCache,
-								relativePosX, relativePosY, relativePosZ,
-								tryForBetterTexturesSnow, tryForBetterTexturesGrass
-						);
-
-						profiler.start("renderMesh"); // HACKY
-
-						try {
-							renderFaces(
-									chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
-									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
-									reader, blockRendererDispatcher, random,
-									usedBlockRenderLayers,
-									lazyPackedLightCache, lazyBlockColorCache,
-									blockColorsRegistry,
-									pos, faces,
-									pooledMutableBlockPos,
-									texturePooledMutableBlockPos, textureState,
-									renderOppositeSides
-							);
-						} catch (Exception e) {
-							final CrashReport crashReport = CrashReport.makeCrashReport(e, "Rendering faces for smooth block in world");
-
-							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
-							final BlockPos blockPos = new BlockPos(chunkRenderPosX + pos.x, chunkRenderPosX + pos.y, chunkRenderPosX + pos.z);
-							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, reader.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
-
-							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
-							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos.toImmutable(), textureState);
-
-							throw new ReportedException(crashReport);
-						}
-					}
-				}
-
-			}
+//			for (Entry<Vec3b, FaceList> entry : chunkData.entrySet()) {
+//				try (final Vec3b pos = entry.getKey()) {
+//					try (final FaceList faces = entry.getValue()) {
+//
+//						if (faces.isEmpty()) {
+//							continue;
+//						}
+//
+//						profiler.end(); // HACKY
+//						profiler.start("prepareRenderFaces"); // HACKY
+//
+//						final int initialPosX = chunkRenderPosX + pos.x;
+//						final int initialPosY = chunkRenderPosY + pos.y;
+//						final int initialPosZ = chunkRenderPosZ + pos.z;
+//
+//						//TODO use pos? (I've forgotten what this todo is even about)
+//						final byte relativePosX = ModUtil.getRelativePos(chunkRenderPosX, initialPosX);
+//						final byte relativePosY = ModUtil.getRelativePos(chunkRenderPosY, initialPosY);
+//						final byte relativePosZ = ModUtil.getRelativePos(chunkRenderPosZ, initialPosZ);
+//
+//						profiler.end(); // HACKY (end here because getTexturePosAndState profiles itself)
+//
+//						final IBlockState textureState = ClientUtil.getTexturePosAndState(
+//								initialPosX, initialPosY, initialPosZ,
+//								texturePooledMutableBlockPos,
+//								stateCache, smoothableCache,
+//								relativePosX, relativePosY, relativePosZ,
+//								tryForBetterTexturesSnow, tryForBetterTexturesGrass
+//						);
+//
+//						profiler.start("renderMesh"); // HACKY
+//
+//						try {
+//							renderFaces(
+//									chunkRender, chunkRenderTask, compiledChunk, chunkRenderPos,
+//									chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ,
+//									reader, blockRendererDispatcher, random,
+//									usedBlockRenderLayers,
+//									lazyPackedLightCache, lazyBlockColorCache,
+//									blockColorsRegistry,
+//									pos,
+//									pooledMutableBlockPos,
+//									texturePooledMutableBlockPos, textureState,
+//									renderOppositeSides
+//							);
+//						} catch (Exception e) {
+//							final CrashReport crashReport = CrashReport.makeCrashReport(e, "Rendering faces for smooth block in world");
+//
+//							CrashReportCategory realBlockCrashReportCategory = crashReport.makeCategory("Block being rendered");
+//							final BlockPos blockPos = new BlockPos(chunkRenderPosX + pos.x, chunkRenderPosX + pos.y, chunkRenderPosX + pos.z);
+//							CrashReportCategory.addBlockInfo(realBlockCrashReportCategory, blockPos, reader.getBlockState(new BlockPos(initialPosX, initialPosY, initialPosZ)));
+//
+//							CrashReportCategory textureBlockCrashReportCategory = crashReport.makeCategory("TextureBlock of Block being rendered");
+//							CrashReportCategory.addBlockInfo(textureBlockCrashReportCategory, texturePooledMutableBlockPos.toImmutable(), textureState);
+//
+//							throw new ReportedException(crashReport);
+//						}
+//					}
+//				}
+//
+//			}
 
 		}
 
@@ -168,7 +160,6 @@ public final class MeshRenderer {
 			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
 			@Nonnull final Map<IRegistryDelegate<Block>, IBlockColor> blockColorsRegistry,
 			@Nonnull final Vec3b pos,
-			@Nonnull final FaceList faces,
 			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos,
 			@Nonnull final BlockPos texturePos,
 			@Nonnull final IBlockState textureState,
@@ -177,8 +168,8 @@ public final class MeshRenderer {
 //		final IModelData modelData = chunkRenderTask.getModelData(texturePos);
 		final long posRand = MathHelper.getPositionRandom(texturePos);
 
-		final boolean applyDiffuseLighting = Config.applyDiffuseLighting;
-		final boolean shortGrass = Config.shortGrass;
+		final boolean applyDiffuseLighting = false;
+		final boolean shortGrass = false;
 
 		final boolean colorsCacheApplicableToTextureState = lazyBlockColorCache.shouldApply.test(textureState);
 
@@ -198,8 +189,8 @@ public final class MeshRenderer {
 		final ModProfiler profiler = ModProfiler.get();
 //		try (ModProfiler ignored = ModProfiler.get().start("renderFaces"))
 		{
-			for (int faceIndex = 0, facesSize = faces.size(); faceIndex < facesSize; ++faceIndex) {
-				try (Face face = faces.get(faceIndex)) {
+			for (int faceIndex = 0, facesSize = 0; faceIndex < facesSize; ++faceIndex) {
+				try (Face face = null) {
 					//0 3
 					//1 2
 					try (

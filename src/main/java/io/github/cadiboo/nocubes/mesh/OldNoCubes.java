@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
-import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -99,7 +99,7 @@ public final class OldNoCubes extends SimpleMesher {
 		EnumFacing[] directions = ModUtil.DIRECTIONS;
 		int directionsLength = directions.length;
 		float[] neighboursSmoothness = new float[directionsLength];
-		float roughness = Config.oldNoCubesRoughness;
+		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();
 			IBlockState state = blocks[index];
@@ -132,7 +132,7 @@ public final class OldNoCubes extends SimpleMesher {
 				point.z += z;
 
 				if (!doesPointIntersectWithManufactured(area, point, isSmoothable, pos)) {
-					if (Config.oldNoCubesSlopes) {
+					if (NoCubesConfig.Server.oldNoCubesSlopes) {
 						if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
 							point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
 						else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))

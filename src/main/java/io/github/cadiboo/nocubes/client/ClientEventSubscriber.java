@@ -1,23 +1,16 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.gui.toast.BlockStateToast;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.config.Config;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.mesh.MeshDispatcher;
-import io.github.cadiboo.nocubes.mesh.MeshGeneratorType;
-import io.github.cadiboo.nocubes.network.C2SRequestAddTerrainSmoothable;
-import io.github.cadiboo.nocubes.network.C2SRequestDisableTerrainCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestEnableTerrainCollisions;
-import io.github.cadiboo.nocubes.network.C2SRequestRemoveTerrainSmoothable;
+import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mesh.Mesher;
+import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModProfiler;
-import io.github.cadiboo.nocubes.util.pooled.Face;
-import io.github.cadiboo.nocubes.util.pooled.FaceList;
-import io.github.cadiboo.nocubes.util.pooled.Vec3;
-import net.minecraft.block.Block;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -39,8 +32,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
@@ -52,19 +43,20 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
-import static net.minecraft.util.math.RayTraceResult.Type.BLOCK;
+import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import static net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import static net.minecraftforge.fml.relauncher.Side.CLIENT;
-import static org.lwjgl.input.Keyboard.*;
+import static org.lwjgl.input.Keyboard.KEY_N;
+import static org.lwjgl.input.Keyboard.KEY_O;
+import static org.lwjgl.input.Keyboard.KEY_P;
 
 /**
  * Subscribe to events that should be handled on the PHYSICAL CLIENT in this class
@@ -74,44 +66,38 @@ import static org.lwjgl.input.Keyboard.*;
 @Mod.EventBusSubscriber(modid = MOD_ID, value = CLIENT)
 public final class ClientEventSubscriber {
 
+	private static final Logger LOG = LogManager.getLogger();
+
 	private static final String CATEGORY = "key.categories." + MOD_ID;
 
-	private static final KeyBinding toggleRenderSmoothTerrain = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", KEY_O, CATEGORY);
-	private static final KeyBinding toggleRenderSmoothLeaves = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothLeaves", KEY_I, CATEGORY);
+	private static final KeyBinding toggleVisuals = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", KEY_O, CATEGORY);
 	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KEY_P, CATEGORY);
-//	private static final KeyBinding tempDiscoverSmoothables = new KeyBinding(MOD_ID + ".key.tempDiscoverSmoothables", KEY_J, CATEGORY);
 
-	private static final KeyBinding toggleTerrainSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, CATEGORY);
-	private static final KeyBinding toggleLeavesSmoothableBlockState = new KeyBinding(MOD_ID + ".key.toggleLeavesSmoothableBlockState", KEY_K, CATEGORY);
-	private static final KeyBinding toggleTerrainCollisions = new KeyBinding(MOD_ID + ".key.toggleTerrainCollisions", KEY_C, CATEGORY);
+	private static final KeyBinding toggleSmoothable = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, CATEGORY);
 
 	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
 
 	static {
-		ClientRegistry.registerKeyBinding(toggleRenderSmoothTerrain);
-		ClientRegistry.registerKeyBinding(toggleRenderSmoothLeaves);
+		ClientRegistry.registerKeyBinding(toggleVisuals);
 		ClientRegistry.registerKeyBinding(toggleProfilers);
-//		ClientRegistry.registerKeyBinding(tempDiscoverSmoothables);
-
-		ClientRegistry.registerKeyBinding(toggleTerrainSmoothableBlockState);
-		ClientRegistry.registerKeyBinding(toggleLeavesSmoothableBlockState);
-		ClientRegistry.registerKeyBinding(toggleTerrainCollisions);
+		ClientRegistry.registerKeyBinding(toggleSmoothable);
 	}
 
 	@SubscribeEvent
 	public static void onClientTickEvent(final ClientTickEvent event) {
-
-		if (event.phase != TickEvent.Phase.END) return;
+		if (event.phase != TickEvent.Phase.END)
+			return;
 
 		final Minecraft minecraft = Minecraft.getMinecraft();
 
 		final NetHandlerPlayClient connection = minecraft.getConnection();
-		if (connection != null) {
+		if (NoCubesConfig.Server.collisionsEnabled && connection != null) {
 			final NetworkManager networkManager = connection.getNetworkManager();
 			if (networkManager != null) {
 				final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
 				if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-					Config.terrainCollisions = false;
+					NoCubesConfig.Server.collisionsEnabled = false;
+					ClientUtil.warnPlayer("[NoCubes] Connected to a vanilla server, collisions have been automatically disabled");
 				}
 			}
 		}
@@ -122,97 +108,11 @@ public final class ClientEventSubscriber {
 			BlockColorInfo.refresh();
 		}
 
-//		// TODO: Temp!
-//		{
-//			if (tempDiscoverSmoothables.isPressed()) {
-////				LOGGER.info("Discovering smoothables...");
-//				player.sendMessage(new TextComponentString("Discovering smoothables..."));
-//				final long startTime = System.nanoTime();
-//				ConfigHelper.discoverDefaultTerrainSmoothable();
-//				ConfigHelper.discoverDefaultLeavesSmoothable();
-//				player.sendMessage(new TextComponentString("Finished discovering smoothables in " + (System.nanoTime() - startTime) + " nano seconds"));
-////				LOGGER.info("Finished discovering smoothables in " + (System.nanoTime() - startTime) + " nano seconds");
-//			}
-//		}
+		if (toggleVisuals.isPressed())
+			toggleVisuals();
 
-		// Rendering
-		{
-			if (toggleRenderSmoothTerrain.isPressed()) {
-				if (Config.renderSmoothTerrain && Config.forceVisuals) {
-					TextComponentTranslation msg = new TextComponentTranslation(MOD_ID + ".visualsForcedByServer");
-					msg.getStyle().setColor(TextFormatting.RED);
-					Minecraft.getMinecraft().player.sendMessage(msg);
-					return;
-				} else {
-					final boolean newRenderSmoothTerrain = !Config.renderSmoothTerrain;
-					ConfigHelper.setRenderSmoothTerrain(newRenderSmoothTerrain);
-					// Config saving is async so set it now
-					Config.renderSmoothTerrain = newRenderSmoothTerrain;
-					ClientUtil.tryReloadRenderers();
-					return;
-				}
-			}
-			if (toggleRenderSmoothLeaves.isPressed()) {
-				final boolean newRenderSmoothLeaves = !Config.renderSmoothLeaves;
-				ConfigHelper.setRenderSmoothLeaves(newRenderSmoothLeaves);
-				// Config saving is async so set it now
-				Config.renderSmoothLeaves = newRenderSmoothLeaves;
-				ClientUtil.tryReloadRenderers();
-				return;
-			}
-		}
-
-		// Collisions
-		{
-			if (toggleTerrainCollisions.isPressed()) {
-				if (Config.terrainCollisions) {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestDisableTerrainCollisions());
-				} else {
-					NoCubes.CHANNEL.sendToServer(new C2SRequestEnableTerrainCollisions());
-				}
-			}
-		}
-
-		// Smoothables
-		SMOOTHABLES:
-		{
-			final boolean terrainPressed = toggleTerrainSmoothableBlockState.isPressed();
-			final boolean leavesPressed = toggleLeavesSmoothableBlockState.isPressed();
-			if (!terrainPressed && !leavesPressed) {
-				break SMOOTHABLES;
-			}
-
-			final RayTraceResult objectMouseOver = minecraft.objectMouseOver;
-			if (objectMouseOver.typeOfHit != BLOCK) {
-				break SMOOTHABLES;
-			}
-
-//			final BlockPos blockPos = ((BlockRayTraceResult) objectMouseOver).getPos();
-			final BlockPos blockPos = objectMouseOver.getBlockPos();
-			final IBlockState state = minecraft.world.getBlockState(blockPos);
-
-			if (terrainPressed) {
-				if (TERRAIN_SMOOTHABLE.test(state))
-					NoCubes.CHANNEL.sendToServer(new C2SRequestRemoveTerrainSmoothable(Block.getStateId(state)));
-				else
-					NoCubes.CHANNEL.sendToServer(new C2SRequestAddTerrainSmoothable(Block.getStateId(state)));
-			}
-			if (leavesPressed) {
-				final BlockStateToast toast;
-				if (!LEAVES_SMOOTHABLE.test(state)) {
-					ConfigHelper.addLeavesSmoothable(state);
-					toast = new BlockStateToast.AddLeaves(state, blockPos);
-				} else {
-					ConfigHelper.removeLeavesSmoothable(state);
-					toast = new BlockStateToast.RemoveLeaves(state, blockPos);
-				}
-				minecraft.getToastGui().add(toast);
-
-				if (Config.renderSmoothLeaves) {
-					ClientUtil.tryReloadRenderers();
-				}
-			}
-		}
+		if (toggleSmoothable.isPressed())
+			toggleLookedAtSmoothable();
 
 		if (toggleProfilers.isPressed()) {
 			if (ModProfiler.isProfilingEnabled()) {
@@ -220,6 +120,45 @@ public final class ClientEventSubscriber {
 			} else {
 				ModProfiler.enableProfiling();
 			}
+		}
+	}
+
+	private static void toggleVisuals() {
+		if (NoCubesConfig.Client.render && NoCubesConfig.Server.forceVisuals) {
+			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.visualsForcedByServer");
+			return;
+		}
+		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
+		reloadAllChunks("toggleVisuals was pressed");
+	}
+
+	private static void toggleLookedAtSmoothable() {
+		Minecraft minecraft = Minecraft.getMinecraft();
+		WorldClient world = minecraft.world;
+		EntityPlayerSP player = minecraft.player;
+		RayTraceResult lookingAt = minecraft.objectMouseOver;
+		if (world == null || player == null || lookingAt == null || lookingAt.typeOfHit != RayTraceResult.Type.BLOCK) {
+			LOG.debug("toggleLookedAtSmoothable preconditions not met (world={}, player={}, lookingAt={})", world, player, lookingAt);
+			return;
+		}
+
+		IBlockState targetedState = world.getBlockState(lookingAt.getBlockPos());
+		boolean newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
+		// Add all states if the player is not crouching (to make it easy to toggle on/off all leaves)
+		// If the player needs fine-grained control over which specific blockstates are smoothable they can crouch
+		// (Yes I know it says shift, it actually checks the crouch key)
+		IBlockState[] states = player.isSneaking() ? new IBlockState[]{targetedState} : ModUtil.getStates(targetedState.getBlock()).toArray(new IBlockState[0]);
+
+		LOG.debug("toggleLookedAtSmoothable currentServerHasNoCubes={}", NoCubesNetwork.currentServerHasNoCubes);
+		if (!NoCubesNetwork.currentServerHasNoCubes) {
+			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
+			NoCubes.smoothableHandler.setSmoothable(newValue, states);
+			reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
+		} else {
+			// We're on a server (possibly singleplayer) with NoCubes installed
+			if (C2SRequestUpdateSmoothable.checkPermissionAndNotifyIfUnauthorised(player, minecraft.getIntegratedServer()))
+				// Only send the packet if we have permission, don't send a packet that will be denied
+				NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(newValue, states));
 		}
 	}
 
@@ -433,7 +372,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
 
-		if (!Config.renderSmoothTerrain && !Config.renderSmoothLeaves) {
+		if (!NoCubesConfig.Client.render) {
 			return;
 		}
 
@@ -459,18 +398,9 @@ public final class ClientEventSubscriber {
 			return;
 		}
 
-		final IsSmoothable isSmoothable;
-		final MeshGeneratorType meshGeneratorType;
-		if (Config.renderSmoothTerrain && TERRAIN_SMOOTHABLE.test(blockState)) {
-			isSmoothable = TERRAIN_SMOOTHABLE;
-			meshGeneratorType = Config.terrainMeshGenerator;
-			event.setCanceled(true);
-		} else if (Config.renderSmoothLeaves && LEAVES_SMOOTHABLE.test(blockState)) {
-			isSmoothable = LEAVES_SMOOTHABLE;
-			meshGeneratorType = Config.leavesMeshGenerator;
-			event.setCanceled(!Config.renderSmoothAndVanillaLeaves);
-		} else
+		if (!NoCubes.smoothableHandler.isSmoothable(blockState))
 			return;
+		event.setCanceled(true);
 
 		final double renderX = player.lastTickPosX + ((player.posX - player.lastTickPosX) * partialTicks);
 		final double renderY = player.lastTickPosY + ((player.posY - player.lastTickPosY) * partialTicks);
@@ -492,28 +422,25 @@ public final class ClientEventSubscriber {
 
 		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		try (FaceList faces = MeshDispatcher.generateBlockMeshOffset(pos, world, isSmoothable, meshGeneratorType)) {
-			for (int i = 0, facesSize = faces.size(); i < facesSize; i++) {
-				try (Face face = faces.get(i)) {
-					try (
-							Vec3 v0 = face.getVertex0();
-							Vec3 v1 = face.getVertex1();
-							Vec3 v2 = face.getVertex2();
-							Vec3 v3 = face.getVertex3()
-					) {
-						final double v0x = v0.x;
-						final double v0y = v0.y;
-						final double v0z = v0.z;
-						// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
-						bufferbuilder.pos(v1.x, v1.y, v1.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v2.x, v2.y, v2.z).color(0, 0, 0, 0.4F).endVertex();
-						bufferbuilder.pos(v3.x, v3.y, v3.z).color(0, 0, 0, 0.4F).endVertex();
-						// End back at v0. Draw with alpha this time
-						bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.4F).endVertex();
-					}
-				}
-			}
+		Color color = new Color(0, 0, 0, 0.4F);
+		Mesher mesher = NoCubesConfig.Server.mesher;
+		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
+			mesher.generateGeometry(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
+				double x = area.start.getX();
+				double y = area.start.getY();
+				double z = area.start.getZ();
+				final double v0x = x + face.v0.x;
+				final double v0y = y + face.v0.y;
+				final double v0z = z + face.v0.z;
+				// Start at v0. Transparent because we don't want to draw a line from wherever the previous vertex was
+				bufferbuilder.pos(v0x, v0y, v0z).color(0, 0, 0, 0.0F).endVertex();
+				bufferbuilder.pos(x + face.v1.x, y + face.v1.y, z + face.v1.z).color(color.red, color.green, color.blue, color.alpha).endVertex();
+				bufferbuilder.pos(x + face.v2.x, y + face.v2.y, z + face.v2.z).color(color.red, color.green, color.blue, color.alpha).endVertex();
+				bufferbuilder.pos(x + face.v3.x, y + face.v3.y, z + face.v3.z).color(color.red, color.green, color.blue, color.alpha).endVertex();
+				// End back at v0. Draw with alpha this time
+				bufferbuilder.pos(v0x, v0y, v0z).color(color.red, color.green, color.blue, color.alpha).endVertex();
+				return true;
+			});
 		}
 
 		tessellator.draw();
@@ -529,7 +456,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onPlayerSPPushOutOfBlocksEvent(final PlayerSPPushOutOfBlocksEvent event) {
 		// TODO: Do this better (Do the same thing as StolenReposeCode.getDensity)
-		if (Config.terrainCollisions) {
+		if (NoCubesConfig.Server.collisionsEnabled) {
 			event.setCanceled(true);
 		}
 	}

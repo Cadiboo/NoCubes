@@ -1,12 +1,9 @@
 package io.github.cadiboo.nocubes.network;
 
-import com.sun.xml.internal.ws.api.handler.MessageHandler;
 import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-
+import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -62,50 +59,31 @@ public final class NoCubesNetwork {
 	public static void register() {
 		int networkId = 0;
 		// Client -> Server
-		register(
-			networkId,
+		CHANNEL.registerMessage(
 			C2SRequestUpdateSmoothable.class,
-			C2SRequestUpdateSmoothable::encode,
-			C2SRequestUpdateSmoothable::decode,
-			C2SRequestUpdateSmoothable::handle
+			C2SRequestUpdateSmoothable.class,
+			networkId++,
+			Side.SERVER
 		);
 
 		// Server -> Client
-		register(
-			++networkId,
-			S2CUpdateSmoothable.class,
-			S2CUpdateSmoothable::encode,
-			S2CUpdateSmoothable::decode,
-			S2CUpdateSmoothable::handle
-		);
-		register(
-			++networkId,
-			S2CUpdateServerConfig.class,
-			S2CUpdateServerConfig::encode,
-			S2CUpdateServerConfig::decode,
-			S2CUpdateServerConfig::handle
-		);
-	}
-
-	static <MSG> void register(int index, Class<MSG> messageType, BiConsumer<MSG, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
 		CHANNEL.registerMessage(
-			index,
-			messageType,
-			(msg, buffer) -> {
-				LOG.debug("Encoding {}", messageType.getSimpleName());
-				encoder.accept(msg, buffer);
-			},
-			buffer -> {
-				LOG.debug("Decoding {}", messageType.getSimpleName());
-				return decoder.apply(buffer);
-			},
-			(msg, ctx) -> {
-				LOG.debug("Handling {}", messageType.getSimpleName());
-				handler.accept(msg, ctx);
-			}
+			S2CSyncConfig.class,
+			S2CSyncConfig.class,
+			networkId++,
+			Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+			S2CUpdateSmoothable.class,
+			S2CUpdateSmoothable.class,
+			++networkId,
+			Side.CLIENT
+		);
+		CHANNEL.registerMessage(
+			S2CUpdateServerConfig.class,
+			S2CUpdateServerConfig.class,
+			++networkId,
+			Side.CLIENT
 		);
 	}
-
-	public class NoCubesMessage implements IMessage, IMessageHandler
-
 }

@@ -1,8 +1,7 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
 import com.google.common.base.Joiner;
-import io.github.cadiboo.nocubes.config.ConfigHelper;
-import io.github.cadiboo.nocubes.config.ConfigHolder;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
 import net.minecraft.client.Minecraft;
@@ -14,10 +13,15 @@ import net.minecraft.client.resources.I18n;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static io.github.cadiboo.nocubes.config.NoCubesConfig.Hacks.ConfigTracker_getConfig;
 import static io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
 import static io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec.EnumValue;
 
@@ -37,25 +41,10 @@ final class ConfigOptionsList extends GuiListExtended {
 
 		entries = new ArrayList<>();
 
-		// Client
-		{
-			entries.add(new CategoryEntry(MOD_ID + ".config.client"));
-			getConfigValues(ConfigHolder.CLIENT).forEach((configValue, name) -> {
-				final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.clientConfig);
-				entries.add(e);
-			});
-		}
-
-		// Server
-		if (this.mc.world != null) {
-			if (this.mc.getIntegratedServer() != null) {
-				entries.add(new CategoryEntry(MOD_ID + ".config.server"));
-				getConfigValues(ConfigHolder.SERVER).forEach((configValue, name) -> {
-					final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigHelper.serverConfig);
-					entries.add(e);
-				});
-			}
-		}
+		AddEntries(entries, NoCubesConfig.Common.INSTANCE, ModConfig.Type.COMMON);
+		AddEntries(entries, NoCubesConfig.Client.INSTANCE, ModConfig.Type.CLIENT);
+		if (this.mc.world != null && this.mc.getIntegratedServer() != null)
+			AddEntries(entries, NoCubesConfig.Server.INSTANCE, ModConfig.Type.SERVER);
 
 		FontRenderer fontRenderer = mcIn.fontRenderer;
 		int maxListLabelWidth = 0;
@@ -66,11 +55,22 @@ final class ConfigOptionsList extends GuiListExtended {
 			}
 		}
 		this.maxListLabelWidth = maxListLabelWidth;
+	}
 
+	private void AddEntries(List<ConfigOptionsList.Entry> entries, Object instance, ModConfig.Type type)
+	{
+		entries.add(new CategoryEntry(MOD_ID + ".config." + type.toString().toLowerCase()));
+		getConfigValues(instance).forEach((configValue, name) -> {
+			final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigTracker_getConfig(type).get());
+			entries.add(e);
+		});
 	}
 
 	private static void saveValue(final ConfigValue<?> configValue, final Supplier<ModConfig> configSupplier, final Object newValue) {
-		ConfigHelper.setValueAndSave(configSupplier.get(), DOT_JOINER.join(configValue.getPath()), newValue);
+		ModConfig modConfig = configSupplier.get();
+		modConfig.getConfigData().set(DOT_JOINER.join(configValue.getPath()), newValue);
+		modConfig.save();
+		modConfig.fireEvent(new ModConfig.Reloading(modConfig));
 	}
 
 	@Nonnull

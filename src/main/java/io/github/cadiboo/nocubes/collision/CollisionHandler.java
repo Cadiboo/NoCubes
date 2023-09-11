@@ -1,7 +1,6 @@
 package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.config.Config;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
@@ -25,7 +24,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 import static io.github.cadiboo.nocubes.collision.MeshCollisionUtil.addShapeToListIfIntersects;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
@@ -166,12 +164,12 @@ public final class CollisionHandler {
 		try {
 			forEachCollisionRelativeToStart(
 				_this, pooledMutableBlockPos,
-				 minXm1,maxXp1,
-				 minYm1,maxYp1,
-				 minZm1,maxZp1,
+				 minXm1, maxXp1,
+				 minYm1, maxYp1,
+				 minZm1, maxZp1,
 				(x0, y0, z0, x1, y1, z1) -> {
-					if (aabb.intersects(x0, y0, z0, x1, y1, z1))
-						outList.add(new AxisAlignedBB(x0, y0, z0, x1, y1, z1));
+					if (aabb.intersects(minXm1 + x0, minYm1 + y0, minZm1 + z0, minXm1 + x1, minYm1 + y1, minZm1 + z1))
+						outList.add(new AxisAlignedBB(minXm1 + x0, minYm1 + y0, minZm1 + z0, minXm1 + x1, minYm1 + y1, minZm1 + z1));
 					return true;
 				}
 			);
@@ -204,7 +202,7 @@ public final class CollisionHandler {
 	}
 
 	public static void forEachCollisionRelativeToStart(IBlockAccess world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, ShapeConsumer consumer) {
-		Mesher mesher = Config.terrainMeshGenerator;
+		Mesher mesher = NoCubesConfig.Server.mesher;
 		BlockPos start = new BlockPos(minX, minY, minZ);
 		// Size is mutable and only correct until the Area constructor call
 		BlockPos size = pos.setPos(

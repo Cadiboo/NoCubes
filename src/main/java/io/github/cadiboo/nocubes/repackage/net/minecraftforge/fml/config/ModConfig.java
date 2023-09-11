@@ -144,7 +144,7 @@ public class ModConfig
 
     public static class Loading extends ModConfigEvent {
 
-        Loading(final ModConfig config) {
+        public Loading(final ModConfig config) {
             super(config);
         }
 

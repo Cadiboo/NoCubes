@@ -1,15 +1,17 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
-import io.github.cadiboo.nocubes.client.render.struct.*;
-import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
+import io.github.cadiboo.nocubes.client.render.struct.PoseStack;
+import io.github.cadiboo.nocubes.client.render.struct.Texture;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.IsSmoothable;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.BlockGrass;
@@ -44,8 +46,6 @@ import java.util.function.Predicate;
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES;
 import static io.github.cadiboo.nocubes.client.ClientUtil.BLOCK_RENDER_LAYER_VALUES_LENGTH;
 import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.LEAVES_SMOOTHABLE;
-import static io.github.cadiboo.nocubes.util.IsSmoothable.TERRAIN_SMOOTHABLE;
 
 /**
  * @author Cadiboo
@@ -247,11 +247,11 @@ public final class RenderDispatcher {
 			renderChunkMesh(renderer, isSmoothable);
 	}
 
-	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher,IBlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, BufferBuilder buffer, ModelData modelData) {
+	public static void renderBreakingTexture(BlockRendererDispatcher dispatcher, IBlockState state, BlockPos pos, IBlockAccess world, PoseStack matrix, BufferBuilder buffer) {
 
 	}
 
-	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final IBlockAccess world, final TextureAtlasSprite textureatlassprite) {
+	public static void renderSmoothBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos pos, final IBlockState iblockstate, final IBlockAccess world, final TextureAtlasSprite textureatlassprite) {
 		if (iblockstate.getRenderType() != EnumBlockRenderType.MODEL) {
 			return;
 		}
@@ -260,8 +260,8 @@ public final class RenderDispatcher {
 		tessellatorIn.draw();
 		bufferBuilderIn.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
 		Mesher mesher = NoCubesConfig.Server.mesher;
-		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
-			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
+		try (Area area = new Area(world, pos, ModUtil.VEC_ONE, mesher)) {
+//			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
 		} finally {
 			// Draw tessellator and start again without color
 			tessellatorIn.draw();
@@ -275,11 +275,11 @@ public final class RenderDispatcher {
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (
 				Area area = new Area(Minecraft.getMinecraft().world, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
-				var ignored = renderer.matrix.push()
+				//var ignored = renderer.matrix.push()
 		) {
-			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
+//			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
 		}
-		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
+//		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
 //	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {

@@ -4,8 +4,9 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.config.Config;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModProfiler;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.pooled.cache.SmoothableCache;
 import io.github.cadiboo.nocubes.util.pooled.cache.StateCache;
 import net.minecraft.block.Block;
@@ -95,6 +96,10 @@ public final class ClientUtil {
 	// Added by Forge, no SRG name
 	private static final Field BLOCK_COLOR_MAP = ObfuscationReflectionHelper.findField(BlockColors.class, "blockColorMap");
 
+	public static void warnPlayer(String translationKey, Object... formatArgs) {
+		ModUtil.warnPlayer(Minecraft.getMinecraft().player, translationKey, formatArgs);
+	}
+
 	/**
 	 * Returns a state and sets the texturePooledMutablePos to the pos it found
 	 *
@@ -120,7 +125,7 @@ public final class ClientUtil {
 		final int stateCacheSizeX = stateCache.sizeX;
 		final int stateCacheSizeY = stateCache.sizeY;
 
-		if (Config.betterTextures) {
+		if (NoCubesConfig.Client.betterGrassSides/*betterTextures*/) {
 			if (tryForBetterTexturesSnow) {
 				try (final ModProfiler ignored = ModProfiler.get().start("getTexturePosAndState-tryForBetterTextures-snow")) {
 					IBlockState betterTextureState = blockCacheArray[stateCache.getIndex(
