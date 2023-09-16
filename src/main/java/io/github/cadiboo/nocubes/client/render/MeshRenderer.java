@@ -67,22 +67,11 @@ public final class MeshRenderer {
 			maxU, maxV,
 			maxU, minV
 		);
-
-		final int packed = state.getPackedLightmapCoords(Minecraft.getMinecraft().world, worldPos);
-		int lightmapSkyLight = (packed >> 16) & 0xFFFF;
-		int lightmapBlockLight = packed & 0xFFFF;
-
 		mesher.generateGeometry(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
-
-			buffer.pos(matrix.x + face.v0.x, matrix.y + face.v0.y, matrix.z + face.v0.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			buffer.pos(matrix.x + face.v1.x, matrix.y + face.v1.y, matrix.z + face.v1.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(minU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			buffer.pos(matrix.x + face.v2.x, matrix.y + face.v2.y, matrix.z + face.v2.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, maxV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-			buffer.pos(matrix.x + face.v3.x, matrix.y + face.v3.y, matrix.z + face.v3.z).color(0xFF, 0xFF, 0xFF, 0xFF).tex(maxU, minV).lightmap(lightmapSkyLight, lightmapBlockLight).endVertex();
-
 			boolean renderBothSides = false;
 			// Don't need textures or lighting because the crumbling texture overwrites them
-//			renderQuad(buffer, matrix, faceInfo, Color.WHITE, texture, FaceLight.MAX_BRIGHTNESS, renderBothSides);
+			renderQuad(buffer, matrix, faceInfo, Color.WHITE, texture, FaceLight.MAX_BRIGHTNESS, renderBothSides);
 			return true;
 		});
 	}

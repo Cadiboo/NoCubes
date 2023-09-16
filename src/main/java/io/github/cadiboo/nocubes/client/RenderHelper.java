@@ -149,7 +149,8 @@ public class RenderHelper {
 			.pos(transformedX, transformedY, transformedZ)
 			.color(red, green, blue, alpha)
 			.tex(texU, texV)
-			.lightmap(skyLight, blockLight);
+			.lightmap(skyLight, blockLight)
+			.endVertex();
 	}
 
 //	/** See {@link Vector3f#mul(Matrix3fc)} */
