@@ -100,8 +100,9 @@ public final class OldNoCubes extends SimpleMesher {
 		int directionsLength = directions.length;
 		float[] neighboursSmoothness = new float[directionsLength];
 		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
-		generate(area, isSmoothable, (x, y, z, index, state) -> {
+		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();
+			IBlockState state = blocks[index];
 
 			float combinedNeighboursSmoothness = 0F;
 			for (int i = 0; i < directionsLength; ++i) {

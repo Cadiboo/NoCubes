@@ -26,7 +26,7 @@ public class CullingCubic extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<IBlockState> isSmoothable, ShapeConsumer action) {
-		generate(area, isSmoothable, (x, y, z, index, state) -> ShapeConsumer.acceptFullCube(x, y, z, action));
+		generate(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class CullingCubic extends SimpleMesher {
 
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		Face face = new Face();
-		generate(area, isSmoothable, (x, y, z, index, state) -> {
+		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();
 			// Up (pos y)
 			if (!isSmoothable.test(blocks[index + height]))

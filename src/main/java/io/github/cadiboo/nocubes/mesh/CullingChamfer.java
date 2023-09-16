@@ -27,7 +27,7 @@ public class CullingChamfer extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<IBlockState> isSmoothable, ShapeConsumer action) {
-		generate(area, isSmoothable, (x, y, z, index, state) -> action.accept(
+		generate(area, isSmoothable, (x, y, z, index) -> action.accept(
 			// TODO: Make this adhere to the chamfer
 			x, y, z,
 			x + 1, y + 1, z + 1
@@ -45,7 +45,7 @@ public class CullingChamfer extends SimpleMesher {
 
 		MutableBlockPos pos = new MutableBlockPos();
 		Face face = new Face();
-		generate(area, isSmoothable, (x, y, z, index, state) -> {
+		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();
 			boolean posY = !isSmoothable.test(blocks[index + height]);
 			boolean negY = !isSmoothable.test(blocks[index - height]);
