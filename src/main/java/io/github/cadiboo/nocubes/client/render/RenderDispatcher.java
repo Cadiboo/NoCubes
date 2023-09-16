@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.LightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
@@ -270,9 +271,10 @@ public final class RenderDispatcher {
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (
 				Area area = new Area(Minecraft.getMinecraft().world, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
+				LightCache light = LightCache.retain(area);
 				//var ignored = renderer.matrix.push()
 		) {
-//			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
+			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area, light);
 		}
 //		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}

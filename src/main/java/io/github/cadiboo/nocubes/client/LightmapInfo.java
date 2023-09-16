@@ -3,7 +3,7 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 import javax.annotation.Nonnull;
 
@@ -46,42 +46,33 @@ public final class LightmapInfo implements AutoCloseable {
 			@Nonnull final Vec v1,
 			@Nonnull final Vec v2,
 			final Vec v3,
-			final int chunkRenderPosX,
-			final int chunkRenderPosY,
-			final int chunkRenderPosZ,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
 				case 0:
-					return generateLightmapInfoFlat(v0, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyPackedLightCache, pooledMutableBlockPos);
+					return generateLightmapInfoFlat(v0, lazyPackedLightCache, pooledMutableBlockPos);
 				default:
 				case 1:
-					return generateLightmapInfoSmooth(v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyPackedLightCache, pooledMutableBlockPos);
+					return generateLightmapInfoSmooth(v0, v1, v2, v3, lazyPackedLightCache, pooledMutableBlockPos);
 				case 2:
-					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, lazyPackedLightCache, pooledMutableBlockPos);
+					return generateLightmapInfoSmoothAO(v0, v1, v2, v3, lazyPackedLightCache, pooledMutableBlockPos);
 			}
 		}
 	}
 
 	private static LightmapInfo generateLightmapInfoSmoothAO(
 			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
-			final int chunkRenderPosX,
-			final int chunkRenderPosY,
-			final int chunkRenderPosZ,
 			@Nonnull final LightCache packedLightCache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
-		return generateLightmapInfoSmooth(v0, v1, v2, v3, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, packedLightCache, pooledMutableBlockPos);
+		return generateLightmapInfoSmooth(v0, v1, v2, v3, packedLightCache, pooledMutableBlockPos);
 	}
 
 	private static LightmapInfo generateLightmapInfoSmooth(
 			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
-			final int chunkRenderPosX,
-			final int chunkRenderPosY,
-			final int chunkRenderPosZ,
 			@Nonnull final LightCache light,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
@@ -91,21 +82,21 @@ public final class LightmapInfo implements AutoCloseable {
 		final int[] packedLight3 = new int[27];
 
 		// TODO offset shouldn't be hardcoded +1 anymore
-		final int v0XOffset = 1 + clamp(floor(v0.x) - chunkRenderPosX, -1, 16);
-		final int v0YOffset = 1 + clamp(floor(v0.y) - chunkRenderPosY, -1, 16);
-		final int v0ZOffset = 1 + clamp(floor(v0.z) - chunkRenderPosZ, -1, 16);
+		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
-		final int v1XOffset = 1 + clamp(floor(v1.x) - chunkRenderPosX, -1, 16);
-		final int v1YOffset = 1 + clamp(floor(v1.y) - chunkRenderPosY, -1, 16);
-		final int v1ZOffset = 1 + clamp(floor(v1.z) - chunkRenderPosZ, -1, 16);
+		final int v1XOffset = 1 + clamp(floor(v1.x), -1, 16);
+		final int v1YOffset = 1 + clamp(floor(v1.y), -1, 16);
+		final int v1ZOffset = 1 + clamp(floor(v1.z), -1, 16);
 
-		final int v2XOffset = 1 + clamp(floor(v2.x) - chunkRenderPosX, -1, 16);
-		final int v2YOffset = 1 + clamp(floor(v2.y) - chunkRenderPosY, -1, 16);
-		final int v2ZOffset = 1 + clamp(floor(v2.z) - chunkRenderPosZ, -1, 16);
+		final int v2XOffset = 1 + clamp(floor(v2.x), -1, 16);
+		final int v2YOffset = 1 + clamp(floor(v2.y), -1, 16);
+		final int v2ZOffset = 1 + clamp(floor(v2.z), -1, 16);
 
-		final int v3XOffset = 1 + clamp(floor(v3.x) - chunkRenderPosX, -1, 16);
-		final int v3YOffset = 1 + clamp(floor(v3.y) - chunkRenderPosY, -1, 16);
-		final int v3ZOffset = 1 + clamp(floor(v3.z) - chunkRenderPosZ, -1, 16);
+		final int v3XOffset = 1 + clamp(floor(v3.x), -1, 16);
+		final int v3YOffset = 1 + clamp(floor(v3.y), -1, 16);
+		final int v3ZOffset = 1 + clamp(floor(v3.z), -1, 16);
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
@@ -150,16 +141,12 @@ public final class LightmapInfo implements AutoCloseable {
 
 	private static LightmapInfo generateLightmapInfoFlat(
 			@Nonnull final Vec v0,
-			final int chunkRenderPosX,
-			final int chunkRenderPosY,
-			final int chunkRenderPosZ,
 			@Nonnull final LightCache lazyPackedLightCache,
-			@Nonnull final PooledMutableBlockPos pooledMutableBlockPos
+			@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
-
-		final int v0XOffset = 1 + clamp(floor(v0.x) - chunkRenderPosX, -1, 16);
-		final int v0YOffset = 1 + clamp(floor(v0.y) - chunkRenderPosY, -1, 16);
-		final int v0ZOffset = 1 + clamp(floor(v0.z) - chunkRenderPosZ, -1, 16);
+		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
 		final int[] packedLight0 = new int[27];
 

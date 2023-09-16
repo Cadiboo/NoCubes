@@ -49,21 +49,21 @@ public final class LightCache implements AutoCloseable {
 	}
 
 	@Deprecated
-	public int get(final int x, final int y, final int z) {
-		return get(x, y, z, MUTABLE_BLOCK_POS.get());
+	public int get(final int relativeX, final int relativeY, final int relativeZ) {
+		return get(relativeX, relativeY, relativeZ, MUTABLE_BLOCK_POS.get());
 	}
 
-	public int get(final int x, final int y, final int z, MutableBlockPos pos) {
-		return get(x, y, z, this.cache, this.area, pos);
+	public int get(final int relativeX, final int relativeY, final int relativeZ, MutableBlockPos pos) {
+		return get(relativeX, relativeY, relativeZ, this.cache, this.area, pos);
 	}
 
 	public static int get(
-			final int x, final int y, final int z,
+			final int relativeX, final int relativeY, final int relativeZ,
 			final int[] cache,
 			Area area,
 			MutableBlockPos mutableBlockPos
 	) {
-		int index = area.indexIfInsideCache(x, y, z);
+		int index = area.indexIfInsideCache(relativeX, relativeY, relativeZ);
 		if (index != -1) {
 			int packedLight = cache[index];
 			if (packedLight != -1)
@@ -73,7 +73,7 @@ public final class LightCache implements AutoCloseable {
 		IBlockState state = area.getBlockState(index, mutableBlockPos);
 		int packedLight = state.getPackedLightmapCoords(
 			area.world,
-			mutableBlockPos.setPos(area.start).add(x, y, z)
+			mutableBlockPos.setPos(area.start).add(relativeX, relativeY, relativeZ)
 		);
 		if (index != -1)
 			cache[index] = packedLight;
