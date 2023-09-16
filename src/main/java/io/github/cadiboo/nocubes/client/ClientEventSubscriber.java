@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -48,6 +49,7 @@ import org.apache.logging.log4j.Logger;
 import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
@@ -393,12 +395,12 @@ public final class ClientEventSubscriber {
 
 		final float partialTicks = event.getPartialTicks();
 		final BlockPos pos = rayTraceResult.getBlockPos();
-		final IBlockState blockState = world.getBlockState(pos);
-		if ((blockState.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
+		final IBlockState state = world.getBlockState(pos);
+		if ((state.getMaterial() == Material.AIR) || !world.getWorldBorder().contains(pos)) {
 			return;
 		}
 
-		if (!NoCubes.smoothableHandler.isSmoothable(blockState))
+		if (!NoCubes.smoothableHandler.isSmoothable(state))
 			return;
 		event.setCanceled(true);
 
@@ -424,8 +426,10 @@ public final class ClientEventSubscriber {
 
 		Color color = new Color(0, 0, 0, 0.4F);
 		Mesher mesher = NoCubesConfig.Server.mesher;
+		boolean stateSolidity = MeshRenderer.isSolidRender(state);
 		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
-			mesher.generateGeometry(area, NoCubes.smoothableHandler::isSmoothable, (relativePos, face) -> {
+			Predicate<IBlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+			mesher.generateGeometry(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 				double x = area.start.getX();
 				double y = area.start.getY();
 				double z = area.start.getZ();
