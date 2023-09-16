@@ -101,8 +101,7 @@ public final class RenderDispatcher {
 				BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
 				int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
 				ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
-//				var buffer = getAndStartBuffer(layer);
-				BufferBuilder buffer = ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkPos);
+				BufferBuilder buffer = getAndStartBuffer(correctedBlockRenderLayerOrdinal, correctedBlockRenderLayer);
 
 //				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
 				OptiFineCompatibility.PROXY.pushShaderThing(state, worldPos, world, buffer);
@@ -144,9 +143,10 @@ public final class RenderDispatcher {
 			return MeshRenderer.diffuseLight(direction);
 		}
 
-//		public BufferBuilder getAndStartBuffer(RenderType layer) {
+		public BufferBuilder getAndStartBuffer(int correctedBlockRenderLayerOrdinal, BlockRenderLayer correctedBlockRenderLayer) {
 //			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
-//		}
+			return ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkPos);
+		}
 
 //		public void markLayerUsed(RenderType layer) {
 //			usedLayers.add(layer);
@@ -274,6 +274,7 @@ public final class RenderDispatcher {
 				LightCache light = LightCache.retain(area);
 				//var ignored = renderer.matrix.push()
 		) {
+			ExtendedFluidChunkRenderer.renderArea(renderer, isSmoothable, mesher, area, light);
 			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area, light);
 		}
 //		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");

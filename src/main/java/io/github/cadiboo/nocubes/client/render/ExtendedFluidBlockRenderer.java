@@ -42,7 +42,6 @@ public final class ExtendedFluidBlockRenderer {
 			//TODO: eventually do better lighting for 0.3.0
 			@Nonnull final LightCache packedLightCache
 	) {
-
 		PooledMutableBlockPos renderPos = PooledMutableBlockPos.retain(renderX, renderY, renderZ);
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		OptiFineCompatibility.PROXY.pushShaderThing(state, renderPos, worldIn, buffer);
