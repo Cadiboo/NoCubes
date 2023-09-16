@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
+import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
@@ -373,10 +374,10 @@ public final class ClientEventSubscriber {
 
 	@SubscribeEvent
 	public static void drawBlockHighlightEvent(final DrawBlockHighlightEvent event) {
-
-		if (!NoCubesConfig.Client.render) {
+		if (!NoCubesConfig.Client.render)
 			return;
-		}
+		if (!NoCubesConfig.Client.renderSelectionBox)
+			return;
 
 		final EntityPlayer player = event.getPlayer();
 		if (player == null) {
@@ -424,7 +425,7 @@ public final class ClientEventSubscriber {
 
 		bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
 
-		Color color = new Color(0, 0, 0, 0.4F);
+		ColorParser.Color color = NoCubesConfig.Client.selectionBoxColor;
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		boolean stateSolidity = MeshRenderer.isSolidRender(state);
 		try (Area area = new Area(Minecraft.getMinecraft().world, pos, ModUtil.VEC_ONE, mesher)) {
