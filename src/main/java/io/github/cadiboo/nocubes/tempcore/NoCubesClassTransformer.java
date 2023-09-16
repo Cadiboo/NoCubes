@@ -96,6 +96,10 @@ public final class NoCubesClassTransformer implements IClassTransformer, Opcodes
 				return transformClass(basicClass, transformedName,
 						RenderGlobalTransformer::transform
 				);
+			case "net.minecraftforge.fml.common.network.internal.FMLNetworkHandler":
+				return transformClass(basicClass, transformedName,
+					FMLNetworkHandlerTransformer::transform
+				);
 		}
 		return basicClass;
 	}

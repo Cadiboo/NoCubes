@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
@@ -20,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraft.world.border.WorldBorder;
+import net.minecraftforge.fml.common.network.handshake.FMLHandshakeMessage;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -51,7 +53,7 @@ public final class Hooks {
 	@SideOnly(Side.CLIENT)
 	public static boolean renderBlockDamage(final Tessellator tessellatorIn, final BufferBuilder bufferBuilderIn, final BlockPos blockpos, final IBlockState iblockstate, final WorldClient world, final TextureAtlasSprite textureatlassprite, final BlockRendererDispatcher blockrendererdispatcher) {
 		if (!NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(iblockstate)) {
-				return true;
+			return true;
 		}
 		RenderDispatcher.renderBreakingTexture(tessellatorIn, bufferBuilderIn, blockpos, iblockstate, world, textureatlassprite);
 		return false;
@@ -77,6 +79,20 @@ public final class Hooks {
 	@SideOnly(Side.CLIENT)
 	public static boolean canBlockStateRender(final IBlockState blockstate) {
 		return !NoCubesConfig.Client.render || !NoCubes.smoothableHandler.isSmoothable(blockstate);
+	}
+
+	/**
+	 * Called from: {@link net.minecraftforge.fml.common.network.internal.FMLNetworkHandler#checkModList(FMLHandshakeMessage.ModList, Side)} when it is invoked during client/server connection handshake.
+	 * Calls: Nothing
+	 * Lets us find out if the server we are connecting to has NoCubes installed.
+	 * NB: This is not called when looking at the list of servers in the 'Multiplayer' menu, only when actually connecting to a server.
+	 * NB: This is also called for singleplayer.
+	 */
+	public static void onCheckModList(FMLHandshakeMessage.ModList modListPacket, Side side) {
+		// We only care about the server's mod list, not the client's
+		if (side == Side.SERVER) {
+			NoCubesNetwork.currentServerHasNoCubes = modListPacket.modList().containsKey(NoCubes.MOD_ID);
+		}
 	}
 
 }
