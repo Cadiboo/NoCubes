@@ -38,6 +38,7 @@ public final /* inline */ class Vec {
 	}
 
 	public EnumFacing getDirectionFromNormal() {
+		// Might be able to replace this with code from https://github.com/CaffeineMC/sodium-fabric/blob/dev/src/main/java/me/jellysquid/mods/sodium/mixin/features/render/immediate/DirectionMixin.java
 		float x = this.x;
 		// Adding a tiny amount solves conflicts caused by floating point errors for faces that are perfectly diagonal
 		float y = this.y + 0.0002F;
