@@ -81,21 +81,22 @@ public final class LightmapInfo implements AutoCloseable {
 		final int[] packedLight2 = new int[27];
 		final int[] packedLight3 = new int[27];
 
-		final int v0XOffset = ceil(v0.x - 0.5f);
-		final int v0YOffset = ceil(v0.y - 0.5f);
-		final int v0ZOffset = ceil(v0.z - 0.5f);
+		// TODO offset shouldn't be hardcoded +1 anymore
+		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
-		final int v1XOffset = ceil(v1.x - 0.5f);
-		final int v1YOffset = ceil(v1.y - 0.5f);
-		final int v1ZOffset = ceil(v1.z - 0.5f);
+		final int v1XOffset = 1 + clamp(floor(v1.x), -1, 16);
+		final int v1YOffset = 1 + clamp(floor(v1.y), -1, 16);
+		final int v1ZOffset = 1 + clamp(floor(v1.z), -1, 16);
 
-		final int v2XOffset = ceil(v2.x - 0.5f);
-		final int v2YOffset = ceil(v2.y - 0.5f);
-		final int v2ZOffset = ceil(v2.z - 0.5f);
+		final int v2XOffset = 1 + clamp(floor(v2.x), -1, 16);
+		final int v2YOffset = 1 + clamp(floor(v2.y), -1, 16);
+		final int v2ZOffset = 1 + clamp(floor(v2.z), -1, 16);
 
-		final int v3XOffset = ceil(v3.x - 0.5f);
-		final int v3YOffset = ceil(v3.y - 0.5f);
-		final int v3ZOffset = ceil(v3.z - 0.5f);
+		final int v3XOffset = 1 + clamp(floor(v3.x), -1, 16);
+		final int v3YOffset = 1 + clamp(floor(v3.y), -1, 16);
+		final int v3ZOffset = 1 + clamp(floor(v3.z), -1, 16);
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
