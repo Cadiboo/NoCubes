@@ -50,16 +50,6 @@ public interface Mesher {
 
 	}
 
-	/* protected */
-	default boolean isOutsideMesh(int x, int y, int z, Vec3i size) {
-		Vec3i negativeExtension = getNegativeAreaExtension();
-		Vec3i positiveExtension = getPositiveAreaExtension();
-		// Block is outside where we are generating it for, we only query it for its neighbouring faces
-		return x >= size.getX() - positiveExtension.getX() || x < negativeExtension.getX() ||
-			y >= size.getY() - positiveExtension.getY() || y < negativeExtension.getY() ||
-			z >= size.getZ() - positiveExtension.getZ() || z < negativeExtension.getZ();
-	}
-
 	/**
 	 * The vertices in meshes are generated relative to {@link Area#start}.
 	 * {@link Area#start} is not necessarily the place where the final mesh should be rendered.

@@ -54,7 +54,7 @@ public class Area implements AutoCloseable {
 			IBlockAccess world = this.world;
 			if (world instanceof World) {
 				BlockPos endInclusive = new BlockPos(endX - 1, endY - 1, endZ - 1);
-				traverse(start, endInclusive, new BlockPos.MutableBlockPos(), (World) world, (state, pos, zyxIndex) -> {
+				traverseWorld(start, endInclusive, new BlockPos.MutableBlockPos(), (World) world, (state, pos, zyxIndex) -> {
 					array[zyxIndex] = state;
 					return true;
 				});
@@ -114,31 +114,75 @@ public class Area implements AutoCloseable {
 		return getAndCacheBlocks()[index];
 	}
 
-	public interface Traverser {
+	public interface AreaTraverser {
+
+		boolean accept(int x, int y, int z, int index, IBlockState state);
+
+	}
+
+	public void traverse(Vec3i skipStart, Vec3i skipEnd, AreaTraverser func) {
+		BlockPos size = this.size;
+		int depth = size.getZ();
+		int height = size.getY();
+		int width = size.getX();
+
+		int minX = skipStart.getX();
+		int minY = skipStart.getY();
+		int minZ = skipStart.getZ();
+		int maxX = size.getX() - skipStart.getX() - skipEnd.getX();
+		int maxY = size.getY() - skipStart.getY() - skipEnd.getY();
+		int maxZ = size.getZ() - skipStart.getZ() - skipEnd.getZ();
+
+		IBlockState[] blocks = this.getAndCacheBlocks();
+		int index = 0;
+		for (int z = 0; z < depth; ++z) {
+			for (int y = 0; y < height; ++y) {
+				for (int x = 0; x < width; ++x, ++index) {
+					if (x < minX || x >= maxX)
+						continue;
+					if (y < minY || y >= maxY)
+						continue;
+					if (z < minZ || z >= maxZ)
+						continue;
+					if (!func.accept(x, y, z, index, blocks[index]))
+						return;
+				}
+			}
+		}
+	}
+
+	public interface WorldTraverser {
+
 		boolean accept(IBlockState state, BlockPos.MutableBlockPos pos, int zyxIndex);
+
 	}
 
-	public static void traverse(Vec3i startInclusive, Vec3i endInclusive, BlockPos.MutableBlockPos currentPosition, World world, Traverser func) {
-		traverse(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
+	public static void traverseWorld(Vec3i startInclusive, Vec3i endInclusive, BlockPos.MutableBlockPos currentPosition, World world, WorldTraverser func) {
+		traverseWorld(startInclusive.getX(), startInclusive.getY(), startInclusive.getZ(), endInclusive.getX(), endInclusive.getY(), endInclusive.getZ(), currentPosition, world, func);
 	}
 
-	public static void traverse(
+	public static void traverseWorld(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.MutableBlockPos currentPosition, World world, Traverser func
+		BlockPos.MutableBlockPos currentPosition, World world, WorldTraverser func
 	) {
-		traverse(startXInclusive, startYInclusive, startZInclusive, endXInclusive, endYInclusive, endZInclusive, currentPosition, world::getChunk, func);
+		traverseWorld(startXInclusive, startYInclusive, startZInclusive, endXInclusive, endYInclusive, endZInclusive, currentPosition, world::getChunk, func);
 	}
 
 	public interface ChunkGetter {
-		@Nullable Chunk getChunk(int chunkX, int chunkY);
+
+		@Nullable
+		Chunk getChunk(int chunkX, int chunkY);
+
 	}
 
-	/** Copied and tweaked from "https://github.com/BiggerSeries/Phosphophyllite/blob/a5c07fa7a5fd52db4aadcadb4b1a9273c5d65cda/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L62-L94". */
-	public static void traverse(
+	/**
+	 * Copied and tweaked from "https://github.com/BiggerSeries/Phosphophyllite/blob/a5c07fa7a5fd52db4aadcadb4b1a9273c5d65cda/src/main/java/net/roguelogix/phosphophyllite/util/Util.java#L62-L94".
+	 */
+	public static void traverseWorld(
 		int startXInclusive, int startYInclusive, int startZInclusive,
 		int endXInclusive, int endYInclusive, int endZInclusive,
-		BlockPos.MutableBlockPos currentPosition, ChunkGetter world, Traverser func
+		BlockPos.MutableBlockPos currentPosition, ChunkGetter world, WorldTraverser func
 	) {
 		final IBlockState air = Blocks.AIR.getDefaultState();
 		int endXPlus1 = endXInclusive + 1;
