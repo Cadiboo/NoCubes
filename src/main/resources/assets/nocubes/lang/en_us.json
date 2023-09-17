@@ -18,6 +18,8 @@
 	"nocubes.config.collisionsEnabled": "Custom collisions",
 	"nocubes.config.forceVisuals": "Force custom rendering for players",
 	"nocubes.config.extendFluidsRange": "Extended fluids range",
+	"nocubes.config.oldNoCubesSlopes": "OldNoCubes slopes",
+	"nocubes.config.oldNoCubesInFluids": "OldNoCubes in fluids",
 	"nocubes.config.oldNoCubesRoughness": "OldNoCubes roughness",
 
 	"nocubes.command.changeSmoothableNoPermission": "Unable to change block smoothness; no permission",

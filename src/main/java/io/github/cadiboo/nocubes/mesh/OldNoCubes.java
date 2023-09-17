@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
@@ -129,11 +130,11 @@ public final class OldNoCubes extends SimpleMesher {
 				point.y += y;
 				point.z += z;
 
-				if (!doesPointIntersectWithManufactured(area, point, isSmoothable, pos)) {
+				if (!doesPointIntersectWithSolid(area, point, isSmoothable, pos)) {
 					if (NoCubesConfig.Server.oldNoCubesSlopes) {
-						if (pointIndex < 4 && doesPointBottomIntersectWithAir(area, point, pos))
+						if (pointIndex < 4 && doesPointBottomIntersectWithNonSolid(area, point, pos))
 							point.y = y + 1.0F - 0.0001F; // - 0.0001F to prevent z-fighting
-						else if (pointIndex >= 4 && doesPointTopIntersectWithAir(area, point, pos))
+						else if (pointIndex >= 4 && doesPointTopIntersectWithNonSolid(area, point, pos))
 							point.y = y + 0.0F + 0.0001F; // + 0.0001F to prevent z-fighting
 					}
 					givePointRoughness(roughness, area, point);
@@ -235,51 +236,55 @@ public final class OldNoCubes extends SimpleMesher {
 		point.z += ((float) (i >> 24 & 0xF) / 15.0F - 0.5F) * roughness;
 	}
 
-	public static boolean isBlockAirPlantOrSnowLayer(BlockState state) {
-		return state.isAir() || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
+	/**
+	 * Checks if the state should be connected to with a slope (rather than a full side) when it is next to a smooth block.
+	 * Also used to decide if parts of a neighbouring smoothable block can extend into it if {@link NoCubesConfig.Server.oldNoCubesRoughness} is enabled.
+	 */
+	public static boolean isNonSolid(BlockState state) {
+		return state.isAir() || (NoCubesConfig.Server.oldNoCubesInFluids && state.getBlock() instanceof LiquidBlock && state.getFluidState().isSource()) || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
 	}
 
-	public static boolean doesPointTopIntersectWithAir(Area area, Vec point, MutableBlockPos pos) {
+	public static boolean doesPointTopIntersectWithNonSolid(Area area, Vec point, MutableBlockPos pos) {
 		boolean intersects = false;
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y, z))))
+			if (!isNonSolid(area.getBlockState(pos.set(x, y, z))))
 				return false;
-			if (isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y - 1, z))))
+			if (isNonSolid(area.getBlockState(pos.set(x, y - 1, z))))
 				intersects = true;
 		}
 		return intersects;
 	}
 
-	public static boolean doesPointBottomIntersectWithAir(Area area, Vec point, MutableBlockPos pos) {
+	public static boolean doesPointBottomIntersectWithNonSolid(Area area, Vec point, MutableBlockPos pos) {
 		boolean intersects = false;
 		boolean notOnly = false;
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
-			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y - 1, z))))
+			if (!isNonSolid(area.getBlockState(pos.set(x, y - 1, z))))
 				return false;
-			if (!isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y + 1, z))))
+			if (!isNonSolid(area.getBlockState(pos.set(x, y + 1, z))))
 				notOnly = true;
-			if (isBlockAirPlantOrSnowLayer(area.getBlockState(pos.set(x, y, z))))
+			if (isNonSolid(area.getBlockState(pos.set(x, y, z))))
 				intersects = true;
 		}
 		return intersects && notOnly;
 	}
 
-	public static boolean doesPointIntersectWithManufactured(Area area, Vec point, Predicate<BlockState> isSmoothable, MutableBlockPos pos) {
+	public static boolean doesPointIntersectWithSolid(Area area, Vec point, Predicate<BlockState> isSmoothable, MutableBlockPos pos) {
 		for (int i = 0; i < 4; i++) {
 			int x = (int) (point.x - (i & 0x1));
 			int y = (int) point.y;
 			int z = (int) (point.z - (i >> 1 & 0x1));
 			BlockState state0 = area.getBlockState(pos.set(x, y, z));
-			if (!isBlockAirPlantOrSnowLayer(state0) && !isSmoothable.test(state0))
+			if (!isNonSolid(state0) && !isSmoothable.test(state0))
 				return true;
 			BlockState state1 = area.getBlockState(pos.set(x, y - 1, z));
-			if (!isBlockAirPlantOrSnowLayer(state1) && !isSmoothable.test(state1))
+			if (!isNonSolid(state1) && !isSmoothable.test(state1))
 				return true;
 		}
 		return false;
