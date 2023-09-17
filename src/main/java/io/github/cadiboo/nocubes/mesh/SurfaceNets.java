@@ -214,19 +214,18 @@ public class SurfaceNets extends SDFMesher {
 						if ((mask & 1) != 0) {
 							face.set(
 								verticesBuffer[bufferPointer],
-								verticesBuffer[bufferPointer - dv],
-								verticesBuffer[bufferPointer - du - dv],
-								verticesBuffer[bufferPointer - du]
-							);
-						} else {
-							face.set(
-								verticesBuffer[bufferPointer],
 								verticesBuffer[bufferPointer - du],
 								verticesBuffer[bufferPointer - du - dv],
 								verticesBuffer[bufferPointer - dv]
 							);
+						} else {
+							face.set(
+								verticesBuffer[bufferPointer],
+								verticesBuffer[bufferPointer - dv],
+								verticesBuffer[bufferPointer - du - dv],
+								verticesBuffer[bufferPointer - du]
+							);
 						}
-						face.flip(); // TODO: I should probably fix this at some point
 						pos.set(x, y, z);
 						if (!action.apply(pos, face))
 							return;
