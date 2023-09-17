@@ -1,23 +1,31 @@
 package io.github.cadiboo.nocubes.client;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.platform.InputConstants;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.config.ConfigTracker;
+import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
+
+import java.io.File;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
@@ -28,11 +36,14 @@ public final class KeyMappings {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+	public static final String TOGGLE_VISUALS = "toggleVisuals";
+	public static final String TOGGLE_SMOOTHABLE = "toggleSmoothable";
+
 	public static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
-			makeKeybinding(registerEvent, "toggleVisuals", GLFW.GLFW_KEY_O, KeyMappings::toggleVisuals),
-			makeKeybinding(registerEvent, "toggleSmoothable", GLFW.GLFW_KEY_N, KeyMappings::toggleLookedAtSmoothable)
+			makeKeybinding(registerEvent, TOGGLE_VISUALS, InputConstants.UNKNOWN.getValue(), KeyMappings::toggleVisuals),
+			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE, GLFW.GLFW_KEY_N, KeyMappings::toggleLookedAtSmoothable)
 		);
 		forgeBus.addListener((TickEvent.ClientTickEvent tickEvent) -> {
 			if (tickEvent.phase != TickEvent.Phase.END)
@@ -47,9 +58,17 @@ public final class KeyMappings {
 
 	private static Pair<KeyMapping, Runnable> makeKeybinding(RegisterKeyMappingsEvent event, String name, int key, Runnable action) {
 		LOG.debug("Registering keybinding {}", name);
-		var mapping = new KeyMapping(NoCubes.MOD_ID + ".key." + name, key, NoCubes.MOD_ID + ".keycategory");
+		var mapping = new KeyMapping(qualifyName(name), key, NoCubes.MOD_ID + ".keycategory");
 		event.register(mapping);
 		return Pair.of(mapping, action);
+	}
+
+	private static String qualifyName(String name) {
+		return NoCubes.MOD_ID + ".key." + name;
+	}
+
+	public static Component translate(String name) {
+		return Component.keybind(qualifyName(name));
 	}
 
 	private static void toggleVisuals() {
@@ -58,7 +77,18 @@ public final class KeyMappings {
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
+		warnPlayerIfVisualsDisabled();
 		reloadAllChunks("toggleVisuals was pressed");
+	}
+
+	public static void warnPlayerIfVisualsDisabled() {
+		if (!NoCubesConfig.Client.render) {
+			var configFile = new File(ConfigTracker.INSTANCE.getConfigFileName(NoCubes.MOD_ID, ModConfig.Type.CLIENT));
+			var configComponent = Component.literal(configFile.getName())
+					.withStyle(ChatFormatting.UNDERLINE)
+					.withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, configFile.getAbsolutePath())));
+            ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.visualsDisabled", translate(TOGGLE_VISUALS), NoCubesConfig.Client.RENDER, configComponent);
+        }
 	}
 
 	private static void toggleLookedAtSmoothable() {
