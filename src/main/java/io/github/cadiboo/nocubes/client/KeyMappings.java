@@ -7,10 +7,8 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -18,14 +16,10 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.config.ConfigTracker;
-import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
-
-import java.io.File;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
@@ -77,18 +71,8 @@ public final class KeyMappings {
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
-		warnPlayerIfVisualsDisabled();
+		ClientUtil.warnPlayerIfVisualsDisabled();
 		reloadAllChunks("toggleVisuals was pressed");
-	}
-
-	public static void warnPlayerIfVisualsDisabled() {
-		if (!NoCubesConfig.Client.render) {
-			var configFile = new File(ConfigTracker.INSTANCE.getConfigFileName(NoCubes.MOD_ID, ModConfig.Type.CLIENT));
-			var configComponent = Component.literal(configFile.getName())
-					.withStyle(ChatFormatting.UNDERLINE)
-					.withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, configFile.getAbsolutePath())));
-            ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.visualsDisabled", translate(TOGGLE_VISUALS), NoCubesConfig.Client.RENDER, configComponent);
-        }
 	}
 
 	private static void toggleLookedAtSmoothable() {

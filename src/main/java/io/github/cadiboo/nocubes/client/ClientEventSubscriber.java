@@ -5,10 +5,8 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.event.TickEvent;
@@ -50,9 +48,8 @@ public final class ClientEventSubscriber {
 		LOG.debug("Client joined server");
 		loadDefaultServerConfigIfWeAreOnAVanillaServer(event);
 		disableCollisionsIfServerDoesNotHaveNoCubes(event);
-		if (NoCubesConfig.Client.infoMessage)
-			event.getPlayer().sendSystemMessage(Component.translatable(NoCubes.MOD_ID + ".notification.infoMessage", KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE)).withStyle(ChatFormatting.GREEN));
-		KeyMappings.warnPlayerIfVisualsDisabled();
+		ClientUtil.sendPlayerInfoMessage();
+		ClientUtil.warnPlayerIfVisualsDisabled();
 	}
 
 	/**

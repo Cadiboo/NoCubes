@@ -132,7 +132,9 @@ public final class NoCubesConfig {
 	 */
 	public static class Client {
 
+		public static final String INFO_MESSAGE = "infoMessage";
 		public static String RENDER = "render";
+
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
 		public static boolean infoMessage;
@@ -225,7 +227,7 @@ public final class NoCubesConfig {
 				infoMessage = builder
 					.translation(NoCubes.MOD_ID + ".config.infoMessage")
 					.comment("If NoCubes should display a helpful message when you join a world")
-					.define("infoMessage", true);
+					.define(INFO_MESSAGE, true);
 
 				render = builder
 					.translation(NoCubes.MOD_ID + ".config.render")
