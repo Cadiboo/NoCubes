@@ -365,6 +365,7 @@ public final class NoCubesConfig {
 		public static boolean forceVisuals;
 		public static int extendFluidsRange;
 		public static boolean oldNoCubesSlopes;
+		public static boolean oldNoCubesInFluids;
 		public static float oldNoCubesRoughness;
 
 		static {
@@ -389,6 +390,7 @@ public final class NoCubesConfig {
 				Client.render = true;
 			extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
 			oldNoCubesSlopes = INSTANCE.oldNoCubesSlopes.get();
+			oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
 			if (Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
@@ -457,6 +459,7 @@ public final class NoCubesConfig {
 			final BooleanValue forceVisuals;
 			final IntValue extendFluidsRange;
 			final BooleanValue oldNoCubesSlopes;
+			final BooleanValue oldNoCubesInFluids;
 			final DoubleValue oldNoCubesRoughness;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
@@ -510,6 +513,11 @@ public final class NoCubesConfig {
 						"Disable this if you simply want roughness applied to the ground as demonstrated in https://youtu.be/46uok05EKbY"
 					)
 					.define("oldNoCubesSlopes", true);
+
+				oldNoCubesInFluids = builder
+					.translation(NoCubes.MOD_ID + ".config.oldNoCubesInFluids")
+					.comment("If slopes be generated inside fluids by OldNoCubes")
+					.define("oldNoCubesInFluids", true);
 
 				oldNoCubesRoughness = builder
 					.translation(NoCubes.MOD_ID + ".config.oldNoCubesRoughness")

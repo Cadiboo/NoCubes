@@ -47,5 +47,14 @@ nocubes.config.terrainSmoothable=Terrain Smoothable
 nocubes.config.extendFluidsRange=Extend Fluids Range
 nocubes.config.terrainMeshGenerator=Terrain Mesh Generator
 nocubes.config.terrainCollisions=Terrain Collisions
+nocubes.config.oldNoCubesInFluids=OldNoCubes in fluids
+nocubes.config.oldNoCubesRoughness=OldNoCubes roughness
 
 nocubes.waitSeconds=Wait %s seconds
+
+nocubes.command.changeSmoothableNoPermission=Unable to change block smoothness; no permission
+
+nocubes.notification.infoMessage=NoCubes is installed, press %1$s while looking at a block to change if it is smooth
+nocubes.notification.notInstalledOnServerCollisionsUnavailable=Because NoCubes is not installed on this server NoCubes' custom collisions cannot work properly and have been temporarily disabled
+nocubes.notification.visualsForcedByServer=This server forces NoCubes' visuals to be enabled at all times while playing to ensure a 'proper' player experience
+nocubes.notification.visualsDisabled=You have turned off NoCubes' visuals, press '%1$s' to turn them on again or set '%2$s' to 'true' in your client config (%3$s)
