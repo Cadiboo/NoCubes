@@ -73,10 +73,10 @@ public class Dummy implements OptiFineProxy {
 	public void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, IBlockState state, BlockPos pos) {
 	}
 
-    @Override
+	@Override
 	public List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, IBlockAccess world, IBlockState state, BlockPos worldPos, EnumFacing direction, BlockRenderLayer layer, long rand, Object renderEnv) {
-        return quads;
-    }
+		return quads;
+	}
 
 	@Override
 	public int forEachOverlayQuad(ChunkRenderInfo renderer, IBlockState state, BlockPos worldPos, ColorSupplier colorSupplier, QuadConsumer action, Object renderEnv) {
