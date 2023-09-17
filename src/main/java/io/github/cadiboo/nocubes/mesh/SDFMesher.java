@@ -46,48 +46,55 @@ abstract class SDFMesher implements Mesher {
 		// Doing this results in loss of terrain features (one-block large features effectively disappear)
 		// Because we want to preserve these features, we feed SurfaceNets the inverted block densities, pretending that they
 		// are the corner distances and then offset the resulting mesh by 0.5
-		return smoother ? generateDistanceField(area, isSmoothable) : generateNegativeDensityField(area, isSmoothable);
+		return smoother ? generateAveragedDistanceField(area, isSmoothable) : generateDistanceField(area, isSmoothable);
 	}
 
-	private static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
+	static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
 		var states = area.getAndCacheBlocks();
-		int areaX = area.size.getX();
-		int areaY = area.size.getY();
-		int areaZ = area.size.getZ();
+		var length = area.numBlocks();
+		var densityField = CACHE.takeArray(length);
+		for (var i = 0; i < length; ++i)
+			densityField[i] = densityToSignedDistance(ModUtil.getBlockDensity(isSmoothable, states[i]));
+		return densityField;
+	}
 
-		int distanceFieldSizeX = areaX - 1;
-		int distanceFieldSizeY = areaY - 1;
-		int distanceFieldSizeZ = areaZ - 1;
-		int distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
+	private static float[] generateAveragedDistanceField(Area area, Predicate<BlockState> isSmoothable) {
+		var states = area.getAndCacheBlocks();
+		var areaX = area.size.getX();
+		var areaY = area.size.getY();
+		var areaZ = area.size.getZ();
+
+		var distanceFieldSizeX = areaX - 1;
+		var distanceFieldSizeY = areaY - 1;
+		var distanceFieldSizeZ = areaZ - 1;
+		var distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
 		var distanceField = CACHE.takeArray(distanceFieldSize);
 
-		int index = 0;
-		for (int z = 0; z < areaZ; ++z) {
-			for (int y = 0; y < areaY; ++y) {
-				for (int x = 0; x < areaX; ++x, ++index) {
+		var index = 0;
+		for (var z = 0; z < areaZ; ++z) {
+			for (var y = 0; y < areaY; ++y) {
+				for (var x = 0; x < areaX; ++x, ++index) {
 					if (z == distanceFieldSizeZ || y == distanceFieldSizeY || x == distanceFieldSizeX)
 						continue;
-					var combinedDensity = 0;
-					int neighbourIndex = index;
-					for (int neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
-						for (int neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
-							for (int neighbourX = 0; neighbourX < 2; ++neighbourX, ++neighbourIndex)
+					var combinedDensity = 0f;
+					var neighbourIndex = index;
+					for (var neighbourZ = 0; neighbourZ < 2; ++neighbourZ, neighbourIndex += areaX * (areaY - 2))
+						for (var neighbourY = 0; neighbourY < 2; ++neighbourY, neighbourIndex += areaX - 2)
+							for (var neighbourX = 0; neighbourX < 2; ++neighbourX, ++neighbourIndex)
 								combinedDensity += ModUtil.getBlockDensity(isSmoothable, states[neighbourIndex]);
-					int distanceFieldIndex = ModUtil.get3dIndexInto1dArray(x, y, z, distanceFieldSizeX, distanceFieldSizeY);
-					distanceField[distanceFieldIndex] = -combinedDensity / 8F;
+					var distanceFieldIndex = ModUtil.get3dIndexInto1dArray(x, y, z, distanceFieldSizeX, distanceFieldSizeY);
+					distanceField[distanceFieldIndex] = densityToSignedDistance(combinedDensity / 8F);
 				}
 			}
 		}
 		return distanceField;
 	}
 
-	static float[] generateNegativeDensityField(Area area, Predicate<BlockState> isSmoothable) {
-		var states = area.getAndCacheBlocks();
-		int length = area.numBlocks();
-		var densityField = CACHE.takeArray(length);
-		for (int i = 0; i < length; ++i)
-			densityField[i] = -ModUtil.getBlockDensity(isSmoothable, states[i]);
-		return densityField;
+	private static float densityToSignedDistance(float density) {
+		// Densities are POSITIVE if the block is smoothable, NEGATIVE if not
+		// Distance fields are NEGATIVE inside, POSITIVE outside
+		// We can get away with just inverting the value, so we don't actually calculate a distance to the isosurface
+		return -density;
 	}
 
 	interface FullCellAction {
