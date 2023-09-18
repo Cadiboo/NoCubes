@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.mixin;
 
-import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.SmoothShapes;
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
@@ -34,7 +34,7 @@ public class ScreenEffectRendererMixin {
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
 			return Shapes.joinIsNotEmpty(
-				CollisionHandler.getCollisionShape(state, level, pos, CollisionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
+				SmoothShapes.shapeForSmoothBlock(state, level, pos, CollisionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
 				Shapes.create(player.getBoundingBox()),
 				BooleanOp.AND
 			);

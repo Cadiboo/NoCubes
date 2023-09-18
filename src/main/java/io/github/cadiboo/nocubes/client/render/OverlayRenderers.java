@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
-import io.github.cadiboo.nocubes.collision.CollisionHandler;
+import io.github.cadiboo.nocubes.collision.SmoothShapes;
 import io.github.cadiboo.nocubes.config.ColorParser.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.Area;
@@ -234,7 +234,7 @@ public final class OverlayRenderers {
 		var color = new Color(NoCubesConfig.Client.debugRenderCollisions ? 1 : 0, 1, 0, 0.4F);
 		var viewer = camera.getEntity();
 		var start = viewer.blockPosition().offset(-collisionsRenderRadius, -collisionsRenderRadius, -collisionsRenderRadius);
-		CollisionHandler.forEachCollisionShapeRelativeToStart(viewer.level(), new MutableBlockPos(),
+		SmoothShapes.forEachCollisionShapeRelativeToStart(viewer.level(), new MutableBlockPos(),
 			start.getX(), start.getX() + collisionsRenderRadius * 2,
 			start.getY(), start.getY() + collisionsRenderRadius * 2,
 			start.getZ(), start.getZ() + collisionsRenderRadius * 2,

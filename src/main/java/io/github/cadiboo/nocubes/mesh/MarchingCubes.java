@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
-import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
+import io.github.cadiboo.nocubes.collision.SmoothShapes;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -50,7 +50,7 @@ public class MarchingCubes extends SDFMesher {
 				face.assignAverageTo(centre);
 				face.assignNormalTo(vertexNormals);
 				vertexNormals.assignAverageTo(faceNormal);
-				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
+				return SmoothShapes.generateShapes(centre, faceNormal, action, face);
 			}
 		);
 	}
