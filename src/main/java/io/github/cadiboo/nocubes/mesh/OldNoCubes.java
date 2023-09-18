@@ -247,8 +247,8 @@ public final class OldNoCubes extends SimpleMesher {
 	}
 
 	/**
-	 * Checks if the state should be connected to with a slope (rather than a full side) when it is next to a smooth block.
-	 * Also used to decide if parts of a neighbouring smoothable block can extend into it if {@link NoCubesConfig.Server.oldNoCubesRoughness} is enabled.
+	 * Checks if the state should be connected to with a slope (rather than a full side) when it is next to a smooth block if {@link NoCubesConfig.Server#oldNoCubesSlopes} is enabled.
+	 * Also used to decide if parts of a neighbouring smoothable block can extend into it if {@link NoCubesConfig.Server#oldNoCubesRoughness} is enabled.
 	 */
 	public static boolean isNonSolid(IBlockState state) {
 		return state.getBlock() == Blocks.AIR || (NoCubesConfig.Server.oldNoCubesInFluids && ExtendedFluidChunkRenderer.isSource(state)) || ModUtil.isPlant(state) || ModUtil.isSnowLayer(state);
