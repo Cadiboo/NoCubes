@@ -47,19 +47,13 @@ public final class ClientEventSubscriber {
 	public static void onClientJoinServer(ClientPlayerNetworkEvent.LoggingIn event) {
 		LOG.debug("Client joined server");
 		loadDefaultServerConfigIfWeAreOnAVanillaServer(event);
-		disableCollisionsIfServerDoesNotHaveNoCubes(event);
 		ClientUtil.sendPlayerInfoMessage();
 		ClientUtil.warnPlayerIfVisualsDisabled();
-	}
-
-	/**
-	 * This lets players not phase through the ground on servers that don't have NoCubes installed
-	 */
-	public static void disableCollisionsIfServerDoesNotHaveNoCubes(ClientPlayerNetworkEvent.LoggingIn event) {
-		if (NoCubesNetwork.currentServerHasNoCubes || !NoCubesConfig.Server.collisionsEnabled)
-			return;
-		NoCubesConfig.Server.collisionsEnabled = false;
-		ModUtil.warnPlayer(event.getPlayer(), NoCubes.MOD_ID + ".notification.notInstalledOnServerCollisionsUnavailable");
+		if (!NoCubesNetwork.currentServerHasNoCubes) {
+			// This lets players not phase through the ground on servers that don't have NoCubes installed
+			NoCubesConfig.Server.collisionsEnabled = false;
+			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.notInstalledOnServer", KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE));
+		}
 	}
 
 	/**

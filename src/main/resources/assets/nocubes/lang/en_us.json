@@ -25,7 +25,7 @@
 	"nocubes.command.changeSmoothableNoPermission": "Unable to change block smoothness; no permission",
 
 	"nocubes.notification.infoMessage": "NoCubes is installed, press %1$s while looking at a block to change if it is smooth\nYou can disable this message by changing '%2$s' to 'false' in your client config (%3$s)",
-	"nocubes.notification.notInstalledOnServerCollisionsUnavailable": "Because NoCubes is not installed on this server NoCubes' custom collisions cannot work properly and have been temporarily disabled",
+	"nocubes.notification.notInstalledOnServer": "You have connected to a server that does not have NoCubes installed\nYou can still play but NoCubes' custom collisions cannot work properly and have been temporarily disabled\nAny changes to smooth blocks you make by pressing %1$s while looking at a block will not be saved",
 	"nocubes.notification.visualsForcedByServer": "This server forces NoCubes' visuals to be enabled at all times while playing to ensure a 'proper' player experience",
 	"nocubes.notification.visualsDisabled": "You have turned off NoCubes' visuals, press '%1$s' to turn them on again or set '%2$s' to 'true' in your client config (%3$s)"
 }
