@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
@@ -37,7 +38,7 @@ public interface OptiFineProxy {
 
 	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, IBlockState state);
 
-	void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, RegionRenderCacheBuilder buffers, boolean[] usedLayers);
+	void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, boolean[] usedLayers);
 
 	void postRenderFluid(BufferBuilder buffer);
 

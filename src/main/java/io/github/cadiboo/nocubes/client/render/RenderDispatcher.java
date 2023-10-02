@@ -106,7 +106,7 @@ public final class RenderDispatcher {
 				Object renderEnv = optiFine.preRenderBlock(chunkRender, chunkRenderTask.getRegionRenderCacheBuilder(), world, correctedBlockRenderLayer, buffer, state, worldPos);
 				render.render(state, worldPos, correctedBlockRenderLayer, buffer, renderEnv);
 
-				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, chunkRenderTask.getRegionRenderCacheBuilder(), usedLayers);
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, compiledChunk, chunkRenderTask.getRegionRenderCacheBuilder(), usedLayers);
 				markLayerUsed(correctedBlockRenderLayer);
 			}
 			ForgeHooksClient.setRenderLayer(null);

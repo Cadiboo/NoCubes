@@ -105,12 +105,12 @@ class HD_U_G6 implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, RegionRenderCacheBuilder buffers, boolean[] usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, boolean[] usedLayers) {
 		if (Config_isShaders())
 			SVertexBuilder_popEntity(buffer);
 
 		if (RenderEnv_isOverlaysRendered(renderEnv)) {
-			ChunkRender_postRenderOverlays(chunkRender, buffers, usedLayers);
+			ChunkRender_postRenderOverlays(chunkRender, buffers, compiledChunk, usedLayers);
 			RenderEnv_setOverlaysRendered(renderEnv, false);
 		}
 	}
@@ -298,10 +298,10 @@ class HD_U_G6 implements OptiFineProxy {
 			}
 		}
 
-		static void ChunkRender_postRenderOverlays(RenderChunk chunkRender, RegionRenderCacheBuilder buffers, boolean[] usedLayers) {
+		static void ChunkRender_postRenderOverlays(RenderChunk chunkRender, RegionRenderCacheBuilder buffers, CompiledChunk compiledChunk, boolean[] usedLayers) {
 //			chunkRender.postRenderOverlays(buffers, compiledChunk, usedLayers);
 			try {
-				postRenderOverlays.invokeExact(chunkRender, buffers, chunkRender.compiledChunk, usedLayers);
+				postRenderOverlays.invokeExact(chunkRender, buffers, compiledChunk, usedLayers);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}

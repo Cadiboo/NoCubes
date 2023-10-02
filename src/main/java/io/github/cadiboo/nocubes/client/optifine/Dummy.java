@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
@@ -52,7 +53,7 @@ public class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, RegionRenderCacheBuilder buffers, boolean[] usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, CompiledChunk compiledChunk, RegionRenderCacheBuilder buffers, boolean[] usedLayers) {
 	}
 
 	@Override
