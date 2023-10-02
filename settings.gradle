@@ -1,5 +1,7 @@
 pluginManagement {
     repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.minecraftforge.net/' }
         maven {
             name 'FancyGradle'
             url 'https://maven.gofancy.wtf/releases'

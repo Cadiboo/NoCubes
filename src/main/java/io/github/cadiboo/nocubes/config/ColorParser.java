@@ -1,11 +1,12 @@
 package io.github.cadiboo.nocubes.config;
 
+import org.beryx.awt.color.ColorFactory;
+
 public final class ColorParser {
 
 	public static Color parse(String color) {
-//		final java.awt.Color parsed = ColorFactory.valueOf(color);
-//		return new Color(parsed.getRed(), parsed.getGreen(), parsed.getBlue(), parsed.getAlpha());
-		return new Color(0, 0, 0, 102);
+		final java.awt.Color parsed = ColorFactory.valueOf(color);
+		return new Color(parsed.getRed(), parsed.getGreen(), parsed.getBlue(), parsed.getAlpha());
 	}
 
 	public static class Color {
