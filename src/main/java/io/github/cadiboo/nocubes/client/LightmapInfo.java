@@ -41,12 +41,12 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	public static LightmapInfo generateLightmapInfo(
-			@Nonnull final LightCache lazyPackedLightCache,
-			@Nonnull final Vec v0,
-			@Nonnull final Vec v1,
-			@Nonnull final Vec v2,
-			final Vec v3,
-			@Nonnull final MutableBlockPos pooledMutableBlockPos
+		@Nonnull final LightCache lazyPackedLightCache,
+		@Nonnull final Vec v0,
+		@Nonnull final Vec v1,
+		@Nonnull final Vec v2,
+		final Vec v3,
+		@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		try (final ModProfiler ignored = ModProfiler.get().start("generateLightmapInfo")) {
 			switch (Minecraft.getMinecraft().gameSettings.ambientOcclusion) {
@@ -62,24 +62,24 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	private static LightmapInfo generateLightmapInfoSmoothAO(
-			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
-			@Nonnull final LightCache packedLightCache,
-			@Nonnull final MutableBlockPos pooledMutableBlockPos
+		@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
+		@Nonnull final LightCache packedLightCache,
+		@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		return generateLightmapInfoSmooth(v0, v1, v2, v3, packedLightCache, pooledMutableBlockPos);
 	}
 
 	private static LightmapInfo generateLightmapInfoSmooth(
-			@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
-			@Nonnull final LightCache light,
-			@Nonnull final MutableBlockPos pooledMutableBlockPos
+		@Nonnull final Vec v0, @Nonnull final Vec v1, @Nonnull final Vec v2, @Nonnull final Vec v3,
+		@Nonnull final LightCache light,
+		@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
 		// 3x3x3 cache
-		final int[] packedLight0 = new int[27];
-		final int[] packedLight1 = new int[27];
-		final int[] packedLight2 = new int[27];
-		final int[] packedLight3 = new int[27];
+		final int[] packedLight0 = new int[3 * 3 * 3];
+		final int[] packedLight1 = new int[3 * 3 * 3];
+		final int[] packedLight2 = new int[3 * 3 * 3];
+		final int[] packedLight3 = new int[3 * 3 * 3];
 
 		// TODO offset shouldn't be hardcoded +1 anymore
 		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
@@ -134,21 +134,21 @@ public final class LightmapInfo implements AutoCloseable {
 		final int blocklight3 = getBlocklight(packedLight3);
 
 		return retain(
-				skylight0, skylight1, skylight2, skylight3,
-				blocklight0, blocklight1, blocklight2, blocklight3
+			skylight0, skylight1, skylight2, skylight3,
+			blocklight0, blocklight1, blocklight2, blocklight3
 		);
 	}
 
 	private static LightmapInfo generateLightmapInfoFlat(
-			@Nonnull final Vec v0,
-			@Nonnull final LightCache lazyPackedLightCache,
-			@Nonnull final MutableBlockPos pooledMutableBlockPos
+		@Nonnull final Vec v0,
+		@Nonnull final LightCache lazyPackedLightCache,
+		@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
 		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
 		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
 		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
-		final int[] packedLight0 = new int[27];
+		final int[] packedLight0 = new int[3 * 3 * 3];
 
 		int index = 0;
 		// From (-1, -1, -1) to (1, 1, 1)
@@ -170,72 +170,72 @@ public final class LightmapInfo implements AutoCloseable {
 		final int blocklight0 = getBlocklight(packedLight0);
 
 		return retain(
-				skylight0, skylight0, skylight0, skylight0,
-				blocklight0, blocklight0, blocklight0, blocklight0
+			skylight0, skylight0, skylight0, skylight0,
+			blocklight0, blocklight0, blocklight0, blocklight0
 		);
 	}
 
 	private static int getSkylight(final int[] packedLight) {
 		return max(
-				packedLight[0] >> 16 & 0xFFFF,
-				packedLight[1] >> 16 & 0xFFFF,
-				packedLight[2] >> 16 & 0xFFFF,
-				packedLight[3] >> 16 & 0xFFFF,
-				packedLight[4] >> 16 & 0xFFFF,
-				packedLight[5] >> 16 & 0xFFFF,
-				packedLight[6] >> 16 & 0xFFFF,
-				packedLight[7] >> 16 & 0xFFFF,
-				packedLight[8] >> 16 & 0xFFFF,
-				packedLight[9] >> 16 & 0xFFFF,
-				packedLight[10] >> 16 & 0xFFFF,
-				packedLight[11] >> 16 & 0xFFFF,
-				packedLight[12] >> 16 & 0xFFFF,
-				packedLight[13] >> 16 & 0xFFFF,
-				packedLight[14] >> 16 & 0xFFFF,
-				packedLight[15] >> 16 & 0xFFFF,
-				packedLight[16] >> 16 & 0xFFFF,
-				packedLight[17] >> 16 & 0xFFFF,
-				packedLight[18] >> 16 & 0xFFFF,
-				packedLight[19] >> 16 & 0xFFFF,
-				packedLight[20] >> 16 & 0xFFFF,
-				packedLight[21] >> 16 & 0xFFFF,
-				packedLight[22] >> 16 & 0xFFFF,
-				packedLight[23] >> 16 & 0xFFFF,
-				packedLight[24] >> 16 & 0xFFFF,
-				packedLight[25] >> 16 & 0xFFFF,
-				packedLight[26] >> 16 & 0xFFFF
+			packedLight[0] >> 16 & 0xFFFF,
+			packedLight[1] >> 16 & 0xFFFF,
+			packedLight[2] >> 16 & 0xFFFF,
+			packedLight[3] >> 16 & 0xFFFF,
+			packedLight[4] >> 16 & 0xFFFF,
+			packedLight[5] >> 16 & 0xFFFF,
+			packedLight[6] >> 16 & 0xFFFF,
+			packedLight[7] >> 16 & 0xFFFF,
+			packedLight[8] >> 16 & 0xFFFF,
+			packedLight[9] >> 16 & 0xFFFF,
+			packedLight[10] >> 16 & 0xFFFF,
+			packedLight[11] >> 16 & 0xFFFF,
+			packedLight[12] >> 16 & 0xFFFF,
+			packedLight[13] >> 16 & 0xFFFF,
+			packedLight[14] >> 16 & 0xFFFF,
+			packedLight[15] >> 16 & 0xFFFF,
+			packedLight[16] >> 16 & 0xFFFF,
+			packedLight[17] >> 16 & 0xFFFF,
+			packedLight[18] >> 16 & 0xFFFF,
+			packedLight[19] >> 16 & 0xFFFF,
+			packedLight[20] >> 16 & 0xFFFF,
+			packedLight[21] >> 16 & 0xFFFF,
+			packedLight[22] >> 16 & 0xFFFF,
+			packedLight[23] >> 16 & 0xFFFF,
+			packedLight[24] >> 16 & 0xFFFF,
+			packedLight[25] >> 16 & 0xFFFF,
+			packedLight[26] >> 16 & 0xFFFF
 		);
 	}
 
 	private static int getBlocklight(final int[] packedLight) {
 		return max(
-				packedLight[0] & 0xFFFF,
-				packedLight[1] & 0xFFFF,
-				packedLight[2] & 0xFFFF,
-				packedLight[3] & 0xFFFF,
-				packedLight[4] & 0xFFFF,
-				packedLight[5] & 0xFFFF,
-				packedLight[6] & 0xFFFF,
-				packedLight[7] & 0xFFFF,
-				packedLight[8] & 0xFFFF,
-				packedLight[9] & 0xFFFF,
-				packedLight[10] & 0xFFFF,
-				packedLight[11] & 0xFFFF,
-				packedLight[12] & 0xFFFF,
-				packedLight[13] & 0xFFFF,
-				packedLight[14] & 0xFFFF,
-				packedLight[15] & 0xFFFF,
-				packedLight[16] & 0xFFFF,
-				packedLight[17] & 0xFFFF,
-				packedLight[18] & 0xFFFF,
-				packedLight[19] & 0xFFFF,
-				packedLight[20] & 0xFFFF,
-				packedLight[21] & 0xFFFF,
-				packedLight[22] & 0xFFFF,
-				packedLight[23] & 0xFFFF,
-				packedLight[24] & 0xFFFF,
-				packedLight[25] & 0xFFFF,
-				packedLight[26] & 0xFFFF
+			packedLight[0] & 0xFFFF,
+			packedLight[1] & 0xFFFF,
+			packedLight[2] & 0xFFFF,
+			packedLight[3] & 0xFFFF,
+			packedLight[4] & 0xFFFF,
+			packedLight[5] & 0xFFFF,
+			packedLight[6] & 0xFFFF,
+			packedLight[7] & 0xFFFF,
+			packedLight[8] & 0xFFFF,
+			packedLight[9] & 0xFFFF,
+			packedLight[10] & 0xFFFF,
+			packedLight[11] & 0xFFFF,
+			packedLight[12] & 0xFFFF,
+			packedLight[13] & 0xFFFF,
+			packedLight[14] & 0xFFFF,
+			packedLight[15] & 0xFFFF,
+			packedLight[16] & 0xFFFF,
+			packedLight[17] & 0xFFFF,
+			packedLight[18] & 0xFFFF,
+			packedLight[19] & 0xFFFF,
+			packedLight[20] & 0xFFFF,
+			packedLight[21] & 0xFFFF,
+			packedLight[22] & 0xFFFF,
+			packedLight[23] & 0xFFFF,
+			packedLight[24] & 0xFFFF,
+			packedLight[25] & 0xFFFF,
+			packedLight[26] & 0xFFFF
 		);
 	}
 
@@ -269,8 +269,8 @@ public final class LightmapInfo implements AutoCloseable {
 	}
 
 	public static LightmapInfo retain(
-			final int skylight0, final int skylight1, final int skylight2, final int skylight3,
-			final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3
+		final int skylight0, final int skylight1, final int skylight2, final int skylight3,
+		final int blocklight0, final int blocklight1, final int blocklight2, final int blocklight3
 	) {
 
 		LightmapInfo pooled = POOL.get();
