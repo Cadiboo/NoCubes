@@ -1,0 +1,24 @@
+# Features to add back
+Features that 1.12.2-0.4.0 had that were removed in the 1.13+ rewrite:
+- LazyPackedLightCache and LightmapInfo - averaged cached smooth lighting
+- Separate leaves & terrain rendering (good that this was removed)
+- Less performance intensive collisions for mobs (add this back)
+- MarchingTetrahedra
+- Object pooling for all vectors, faces, caches etc.
+	- CornerDensityCache
+	- SmoothableCache
+	- StateCache (changed to Area, kinda)
+- Keybinds to
+	- toggle terrain collisions
+	- set the extended fluid range
+	- set the mesh generator
+- Config options to tweak rendering:
+	- applyDiffuseLighting
+	- betterTextures (getTexturePosAndState iteration + search for snow)
+	- renderShortGrass
+	- smoothFluidLighting
+	- smoothFluidColors
+	- naturalFluidTextures
+- DynamicTreesCompatibility
+- Ability to auto-discover smoothables by reflecting world generator classes (not fully implemented)
+- Its own config GUI (client & server & common)
