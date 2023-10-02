@@ -7,6 +7,7 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 import javax.annotation.Nonnull;
 
+import static net.minecraft.util.math.MathHelper.clamp;
 import static net.minecraft.util.math.MathHelper.floor;
 
 /**
@@ -80,27 +81,28 @@ public final class LightmapInfo implements AutoCloseable {
 		final int[] packedLight2 = new int[3 * 3 * 3];
 		final int[] packedLight3 = new int[3 * 3 * 3];
 
-		final int v0XOffset = floor(v0.x);
-		final int v0YOffset = floor(v0.y);
-		final int v0ZOffset = floor(v0.z);
+		// TODO offset shouldn't be hardcoded +1 anymore
+		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
-		final int v1XOffset = floor(v1.x);
-		final int v1YOffset = floor(v1.y);
-		final int v1ZOffset = floor(v1.z);
+		final int v1XOffset = 1 + clamp(floor(v1.x), -1, 16);
+		final int v1YOffset = 1 + clamp(floor(v1.y), -1, 16);
+		final int v1ZOffset = 1 + clamp(floor(v1.z), -1, 16);
 
-		final int v2XOffset = floor(v2.x);
-		final int v2YOffset = floor(v2.y);
-		final int v2ZOffset = floor(v2.z);
+		final int v2XOffset = 1 + clamp(floor(v2.x), -1, 16);
+		final int v2YOffset = 1 + clamp(floor(v2.y), -1, 16);
+		final int v2ZOffset = 1 + clamp(floor(v2.z), -1, 16);
 
-		final int v3XOffset = floor(v3.x);
-		final int v3YOffset = floor(v3.y);
-		final int v3ZOffset = floor(v3.z);
+		final int v3XOffset = 1 + clamp(floor(v3.x), -1, 16);
+		final int v3YOffset = 1 + clamp(floor(v3.y), -1, 16);
+		final int v3ZOffset = 1 + clamp(floor(v3.z), -1, 16);
 
 		int index = 0;
-		// From (0, 0, 0) to (1, 1, 1), accounting for cache offset
-		for (int zOffset = -1; zOffset < 1; ++zOffset) {
-			for (int yOffset = -1; yOffset < 1; ++yOffset) {
-				for (int xOffset = -1; xOffset < 1; ++xOffset, ++index) {
+		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
+		for (int zOffset = -1; zOffset < 2; ++zOffset) {
+			for (int yOffset = -1; yOffset < 2; ++yOffset) {
+				for (int xOffset = -1; xOffset < 2; ++xOffset, ++index) {
 					final int x0 = v0XOffset + xOffset;
 					final int y0 = v0YOffset + yOffset;
 					final int z0 = v0ZOffset + zOffset;
@@ -142,9 +144,9 @@ public final class LightmapInfo implements AutoCloseable {
 		@Nonnull final LightCache lazyPackedLightCache,
 		@Nonnull final MutableBlockPos pooledMutableBlockPos
 	) {
-		final int v0XOffset = floor(v0.x);
-		final int v0YOffset = floor(v0.y);
-		final int v0ZOffset = floor(v0.z);
+		final int v0XOffset = 1 + clamp(floor(v0.x), -1, 16);
+		final int v0YOffset = 1 + clamp(floor(v0.y), -1, 16);
+		final int v0ZOffset = 1 + clamp(floor(v0.z), -1, 16);
 
 		final int[] packedLight0 = new int[3 * 3 * 3];
 
