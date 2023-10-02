@@ -13,7 +13,7 @@ import java.lang.reflect.Field;
  */
 public final class OptiFineLocator {
 
-	public static final String SUPPORTED_SERIES = "HD_U_F";
+	public static final String SUPPORTED_SERIES = "HD_U_G";
 
 	@Nullable
 	static Class<?> findConfigClass() {

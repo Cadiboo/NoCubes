@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.LightCache;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.util.Area;
@@ -10,17 +11,10 @@ import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.IBlockAccess;
 
-import javax.annotation.Nonnull;
 import java.util.function.Predicate;
 
 /**
@@ -50,6 +44,7 @@ public final class ExtendedFluidChunkRenderer {
 			final int maxXOffset = extendRange;
 			final int maxZOffset = extendRange;
 
+			final OptiFineProxy optiFine = OptiFineCompatibility.proxy();
 			for (int z = 0; z < 16; ++z) {
 				for (int y = 0; y < 16; ++y) {
 					for (int x = 0; x < 16; ++x) {
@@ -90,7 +85,7 @@ public final class ExtendedFluidChunkRenderer {
 								final int worldX = area.start.getX() + x;
 								final int worldY = area.start.getY() + y;
 								final int worldZ = area.start.getZ() + z;
-								OptiFineCompatibility.PROXY.pushShaderThing(fluidState, pos.setPos(
+								optiFine.preRenderFluid(fluidState, pos.setPos(
 										worldX,
 										worldY,
 										worldZ
@@ -112,7 +107,7 @@ public final class ExtendedFluidChunkRenderer {
 											light
 									);
 								} finally {
-									OptiFineCompatibility.PROXY.popShaderThing(buffer);
+									optiFine.postRenderFluid(buffer);
 								}
 
 								break OFFSET;

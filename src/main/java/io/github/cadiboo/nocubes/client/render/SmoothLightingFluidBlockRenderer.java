@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.UVHelper;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
+import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
@@ -36,7 +37,8 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 
 	@Override
 	public boolean renderFluid(final IBlockAccess worldIn, final IBlockState state, final BlockPos pos, final BufferBuilder buffer) {
-		OptiFineCompatibility.PROXY.pushShaderThing(state, pos, worldIn, buffer);
+		final OptiFineProxy optiFine = OptiFineCompatibility.proxy();
+		optiFine.preRenderFluid(state, pos, worldIn, buffer);
 		PooledMutableBlockPos pooledMutableBlockPos = PooledMutableBlockPos.retain();
 		try {
 
@@ -419,7 +421,7 @@ public final class SmoothLightingFluidBlockRenderer extends BlockFluidRenderer {
 			return wasAnythingRendered;
 		} finally {
 			pooledMutableBlockPos.release();
-			OptiFineCompatibility.PROXY.popShaderThing(buffer);
+			optiFine.postRenderFluid(buffer);
 		}
 	}
 

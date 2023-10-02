@@ -1,62 +1,52 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
+import io.github.cadiboo.nocubes.client.render.RenderDispatcher.ChunkRenderInfo.ColorSupplier;
+import io.github.cadiboo.nocubes.client.render.RenderDispatcher.ChunkRenderInfo.QuadConsumer;
+import io.github.cadiboo.nocubes.client.render.struct.PoseStack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.crash.CrashReport;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-/**
- * @author Cadiboo
- */
+import static io.github.cadiboo.nocubes.client.render.RenderDispatcher.ChunkRenderInfo;
+
 public interface OptiFineProxy {
 
-	default ReportedException createInitialisationCrashReport(Exception e) {
-		String version = getClass().getSimpleName();
-		CrashReport crashReport = CrashReport.makeCrashReport(e, "Problem initialising OptiFine " + version + " compatibility");
-		crashReport.makeCategory("NoCubes OptiFine compatibility");
-		return new ReportedException(crashReport);
-	}
+	/**
+	 * @return Null if this proxy is usable, otherwise a description of what went wrong
+	 */
+	@Nullable String notUsableBecause();
 
-	boolean isChunkCacheOF(@Nullable Object obj);
+	void preRenderChunk(RenderChunk chunkRender, BlockPos chunkPos, PoseStack matrix);
 
-	ChunkCache getChunkRenderCache(IBlockAccess reader);
+	long getSeed(long originalSeed);
 
-	void pushShaderThing(
-			IBlockState blockState,
-			BlockPos pos,
-			IBlockAccess reader,
-			BufferBuilder bufferBuilder
-	);
+	/** @return null or the RenderEnv */
+	Object preRenderBlock(RenderChunk chunkRender, RegionRenderCacheBuilder buffers, IBlockAccess chunkCache, BlockRenderLayer layer, BufferBuilder buffer, IBlockState state, BlockPos worldPos);
 
-	void popShaderThing(BufferBuilder bufferBuilder);
+	void preRenderFluid(IBlockState state, BlockPos worldPos, IBlockAccess world, BufferBuilder buffer);
 
-	Object getRenderEnv(BufferBuilder bufferBuilder, IBlockState blockState, BlockPos pos);
+	IBakedModel getModel(Object renderEnv, IBakedModel originalModel, IBlockState state);
 
-	IBakedModel getRenderModel(
-			IBakedModel modelIn,
-			IBlockState stateIn,
-			Object renderEnv
-	);
+	void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, RegionRenderCacheBuilder buffers, boolean[] usedLayers);
 
-	List<BakedQuad> getRenderQuads(
-			List<BakedQuad> quads,
-			IBlockAccess worldIn,
-			IBlockState stateIn,
-			BlockPos posIn,
-			EnumFacing enumfacing,
-			BlockRenderLayer layer,
-			long rand,
-			Object renderEnv
-	);
+	void postRenderFluid(BufferBuilder buffer);
+
+	@Nullable BakedQuad getQuadEmissive(BakedQuad quad);
+
+	void preRenderQuad(Object renderEnv, BakedQuad emissiveQuad, IBlockState state, BlockPos pos);
+
+	List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, IBlockAccess world, IBlockState state, BlockPos worldPos, EnumFacing direction, BlockRenderLayer layer, long rand, Object renderEnv);
+
+	int forEachOverlayQuad(ChunkRenderInfo renderer, IBlockState state, BlockPos worldPos, ColorSupplier colorSupplier, QuadConsumer action, Object renderEnv);
 
 }

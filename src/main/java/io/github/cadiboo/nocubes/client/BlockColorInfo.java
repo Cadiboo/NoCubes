@@ -1,11 +1,5 @@
 package io.github.cadiboo.nocubes.client;
 
-import io.github.cadiboo.nocubes.util.Vec;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.biome.BiomeColorHelper.ColorResolver;
-
-import javax.annotation.Nonnull;
 import java.util.Calendar;
 
 import static java.util.Calendar.AUGUST;
@@ -15,8 +9,6 @@ import static java.util.Calendar.DAY_OF_YEAR;
 import static java.util.Calendar.FRIDAY;
 import static java.util.Calendar.MONTH;
 import static java.util.Calendar.OCTOBER;
-import static net.minecraft.util.math.MathHelper.clamp;
-import static net.minecraft.util.math.MathHelper.floor;
 
 /**
  * @author Cadiboo
@@ -65,152 +57,152 @@ public final class BlockColorInfo implements AutoCloseable {
 		this.inUse = false;
 	}
 
-	public static BlockColorInfo generateBlockColorInfo(
-			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
-			@Nonnull final Vec v0,
-			@Nonnull final Vec v1,
-			@Nonnull final Vec v2,
-			@Nonnull final Vec v3,
-			final int chunkRenderPosX,
-			final int chunkRenderPosY,
-			final int chunkRenderPosZ,
-			final int[] cache,
-			final int sizeX, final int sizeY,
-			final int biomeBlendRadius, final int area, final int max,
-			final IBlockAccess reader,
-			final ColorResolver colorResolver,
-			final boolean useCache,
-			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
-	) {
-
-		if (black) {
-			return retain(
-					0, 0, 0,
-					0, 0, 0,
-					0, 0, 0,
-					0, 0, 0
-			);
-		}
-
-		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
-		// 3x3x3 cache
-		final int[] blockColor0 = new int[27];
-		final int[] blockColor1 = new int[27];
-		final int[] blockColor2 = new int[27];
-		final int[] blockColor3 = new int[27];
-
-		// TODO offset shouldn't be hardcoded +1 anymore
-		final int v0XOffset = 1 + clamp(floor(v0.x) - chunkRenderPosX, -1, 16);
-		final int v0YOffset = 1 + clamp(floor(v0.y) - chunkRenderPosY, -1, 16);
-		final int v0ZOffset = 1 + clamp(floor(v0.z) - chunkRenderPosZ, -1, 16);
-
-		final int v1XOffset = 1 + clamp(floor(v1.x) - chunkRenderPosX, -1, 16);
-		final int v1YOffset = 1 + clamp(floor(v1.y) - chunkRenderPosY, -1, 16);
-		final int v1ZOffset = 1 + clamp(floor(v1.z) - chunkRenderPosZ, -1, 16);
-
-		final int v2XOffset = 1 + clamp(floor(v2.x) - chunkRenderPosX, -1, 16);
-		final int v2YOffset = 1 + clamp(floor(v2.y) - chunkRenderPosY, -1, 16);
-		final int v2ZOffset = 1 + clamp(floor(v2.z) - chunkRenderPosZ, -1, 16);
-
-		final int v3XOffset = 1 + clamp(floor(v3.x) - chunkRenderPosX, -1, 16);
-		final int v3YOffset = 1 + clamp(floor(v3.y) - chunkRenderPosY, -1, 16);
-		final int v3ZOffset = 1 + clamp(floor(v3.z) - chunkRenderPosZ, -1, 16);
-
-		int index = 0;
-		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
-		for (int zOffset = 0; zOffset < 3; ++zOffset) {
-			for (int yOffset = 0; yOffset < 3; ++yOffset) {
-				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
-					final int x0 = v0XOffset + xOffset;
-					final int y0 = v0YOffset + yOffset;
-					final int z0 = v0ZOffset + zOffset;
-					blockColor0[index] = LazyBlockColorCache.get(x0, y0, z0, cache, lazyBlockColorCache.getIndex(x0, y0, z0, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
-					final int x1 = v1XOffset + xOffset;
-					final int y1 = v1YOffset + yOffset;
-					final int z1 = v1ZOffset + zOffset;
-					blockColor1[index] = LazyBlockColorCache.get(x1, y1, z1, cache, lazyBlockColorCache.getIndex(x1, y1, z1, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
-					final int x2 = v2XOffset + xOffset;
-					final int y2 = v2YOffset + yOffset;
-					final int z2 = v2ZOffset + zOffset;
-					blockColor2[index] = LazyBlockColorCache.get(x2, y2, z2, cache, lazyBlockColorCache.getIndex(x2, y2, z2, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
-					final int x3 = v3XOffset + xOffset;
-					final int y3 = v3YOffset + yOffset;
-					final int z3 = v3ZOffset + zOffset;
-					blockColor3[index] = LazyBlockColorCache.get(x3, y3, z3, cache, lazyBlockColorCache.getIndex(x3, y3, z3, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
-				}
-			}
-		}
-
-		int red0 = 0;
-		int green0 = 0;
-		int blue0 = 0;
-		int red1 = 0;
-		int green1 = 0;
-		int blue1 = 0;
-		int red2 = 0;
-		int green2 = 0;
-		int blue2 = 0;
-		int red3 = 0;
-		int green3 = 0;
-		int blue3 = 0;
-
-		// All arrays are 3x3x3 so 27
-		for (int colorIndex = 0; colorIndex < 27; colorIndex++) {
-			int color0 = blockColor0[colorIndex];
-			red0 += (color0 & 0xFF0000) >> 16;
-			green0 += (color0 & 0x00FF00) >> 8;
-			blue0 += (color0 & 0x0000FF);
-			int color1 = blockColor1[colorIndex];
-			red1 += (color1 & 0xFF0000) >> 16;
-			green1 += (color1 & 0x00FF00) >> 8;
-			blue1 += (color1 & 0x0000FF);
-			int color2 = blockColor2[colorIndex];
-			red2 += (color2 & 0xFF0000) >> 16;
-			green2 += (color2 & 0x00FF00) >> 8;
-			blue2 += (color2 & 0x0000FF);
-			int color3 = blockColor3[colorIndex];
-			red3 += (color3 & 0xFF0000) >> 16;
-			green3 += (color3 & 0x00FF00) >> 8;
-			blue3 += (color3 & 0x0000FF);
-		}
-
-		if (rainbow) {
-			return retain(
-					red0, green0, blue0,
-					red1, green1, blue1,
-					red2, green2, blue2,
-					red3, green3, blue3
-			);
-		} else {
-			// colorPart = colorPart / 27F
-			// Dividing by 0xFF here and not dividing later results in gray with purple edges
-			// Dividing by 27F here and not dividing later results in weird colors that still follows biomes
-			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
-			red0 /= 27F;
-			green0 /= 27F;
-			blue0 /= 27F;
-			red1 /= 27F;
-			green1 /= 27F;
-			blue1 /= 27F;
-			red2 /= 27F;
-			green2 /= 27F;
-			blue2 /= 27F;
-			red3 /= 27F;
-			green3 /= 27F;
-			blue3 /= 27F;
-
-			// Dividing by 0xFF before and not dividing here results in gray with purple edges
-			// Dividing by 27F before and not dividing here results in weird colors that still follows biomes
-			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
-			return retain(
-					red0 / 255F, green0 / 255F, blue0 / 255F,
-					red1 / 255F, green1 / 255F, blue1 / 255F,
-					red2 / 255F, green2 / 255F, blue2 / 255F,
-					red3 / 255F, green3 / 255F, blue3 / 255F
-			);
-		}
-
-	}
+//	public static BlockColorInfo generateBlockColorInfo(
+//			@Nonnull final LazyBlockColorCache lazyBlockColorCache,
+//			@Nonnull final Vec v0,
+//			@Nonnull final Vec v1,
+//			@Nonnull final Vec v2,
+//			@Nonnull final Vec v3,
+//			final int chunkRenderPosX,
+//			final int chunkRenderPosY,
+//			final int chunkRenderPosZ,
+//			final int[] cache,
+//			final int sizeX, final int sizeY,
+//			final int biomeBlendRadius, final int area, final int max,
+//			final IBlockAccess reader,
+//			final ColorResolver colorResolver,
+//			final boolean useCache,
+//			final BlockPos.PooledMutableBlockPos pooledMutableBlockPos
+//	) {
+//
+//		if (black) {
+//			return retain(
+//					0, 0, 0,
+//					0, 0, 0,
+//					0, 0, 0,
+//					0, 0, 0
+//			);
+//		}
+//
+//		// TODO pool these arrays? (I think pooling them is more overhead than its worth)
+//		// 3x3x3 cache
+//		final int[] blockColor0 = new int[27];
+//		final int[] blockColor1 = new int[27];
+//		final int[] blockColor2 = new int[27];
+//		final int[] blockColor3 = new int[27];
+//
+//		// TODO offset shouldn't be hardcoded +1 anymore
+//		final int v0XOffset = 1 + clamp(floor(v0.x) - chunkRenderPosX, -1, 16);
+//		final int v0YOffset = 1 + clamp(floor(v0.y) - chunkRenderPosY, -1, 16);
+//		final int v0ZOffset = 1 + clamp(floor(v0.z) - chunkRenderPosZ, -1, 16);
+//
+//		final int v1XOffset = 1 + clamp(floor(v1.x) - chunkRenderPosX, -1, 16);
+//		final int v1YOffset = 1 + clamp(floor(v1.y) - chunkRenderPosY, -1, 16);
+//		final int v1ZOffset = 1 + clamp(floor(v1.z) - chunkRenderPosZ, -1, 16);
+//
+//		final int v2XOffset = 1 + clamp(floor(v2.x) - chunkRenderPosX, -1, 16);
+//		final int v2YOffset = 1 + clamp(floor(v2.y) - chunkRenderPosY, -1, 16);
+//		final int v2ZOffset = 1 + clamp(floor(v2.z) - chunkRenderPosZ, -1, 16);
+//
+//		final int v3XOffset = 1 + clamp(floor(v3.x) - chunkRenderPosX, -1, 16);
+//		final int v3YOffset = 1 + clamp(floor(v3.y) - chunkRenderPosY, -1, 16);
+//		final int v3ZOffset = 1 + clamp(floor(v3.z) - chunkRenderPosZ, -1, 16);
+//
+//		int index = 0;
+//		// From (-1, -1, -1) to (1, 1, 1), accounting for cache offset
+//		for (int zOffset = 0; zOffset < 3; ++zOffset) {
+//			for (int yOffset = 0; yOffset < 3; ++yOffset) {
+//				for (int xOffset = 0; xOffset < 3; ++xOffset, ++index) {
+//					final int x0 = v0XOffset + xOffset;
+//					final int y0 = v0YOffset + yOffset;
+//					final int z0 = v0ZOffset + zOffset;
+//					blockColor0[index] = LazyBlockColorCache.get(x0, y0, z0, cache, lazyBlockColorCache.getIndex(x0, y0, z0, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
+//					final int x1 = v1XOffset + xOffset;
+//					final int y1 = v1YOffset + yOffset;
+//					final int z1 = v1ZOffset + zOffset;
+//					blockColor1[index] = LazyBlockColorCache.get(x1, y1, z1, cache, lazyBlockColorCache.getIndex(x1, y1, z1, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
+//					final int x2 = v2XOffset + xOffset;
+//					final int y2 = v2YOffset + yOffset;
+//					final int z2 = v2ZOffset + zOffset;
+//					blockColor2[index] = LazyBlockColorCache.get(x2, y2, z2, cache, lazyBlockColorCache.getIndex(x2, y2, z2, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
+//					final int x3 = v3XOffset + xOffset;
+//					final int y3 = v3YOffset + yOffset;
+//					final int z3 = v3ZOffset + zOffset;
+//					blockColor3[index] = LazyBlockColorCache.get(x3, y3, z3, cache, lazyBlockColorCache.getIndex(x3, y3, z3, sizeX, sizeY), biomeBlendRadius, area, max, chunkRenderPosX, chunkRenderPosY, chunkRenderPosZ, pooledMutableBlockPos, reader, colorResolver, useCache);
+//				}
+//			}
+//		}
+//
+//		int red0 = 0;
+//		int green0 = 0;
+//		int blue0 = 0;
+//		int red1 = 0;
+//		int green1 = 0;
+//		int blue1 = 0;
+//		int red2 = 0;
+//		int green2 = 0;
+//		int blue2 = 0;
+//		int red3 = 0;
+//		int green3 = 0;
+//		int blue3 = 0;
+//
+//		// All arrays are 3x3x3 so 27
+//		for (int colorIndex = 0; colorIndex < 27; colorIndex++) {
+//			int color0 = blockColor0[colorIndex];
+//			red0 += (color0 & 0xFF0000) >> 16;
+//			green0 += (color0 & 0x00FF00) >> 8;
+//			blue0 += (color0 & 0x0000FF);
+//			int color1 = blockColor1[colorIndex];
+//			red1 += (color1 & 0xFF0000) >> 16;
+//			green1 += (color1 & 0x00FF00) >> 8;
+//			blue1 += (color1 & 0x0000FF);
+//			int color2 = blockColor2[colorIndex];
+//			red2 += (color2 & 0xFF0000) >> 16;
+//			green2 += (color2 & 0x00FF00) >> 8;
+//			blue2 += (color2 & 0x0000FF);
+//			int color3 = blockColor3[colorIndex];
+//			red3 += (color3 & 0xFF0000) >> 16;
+//			green3 += (color3 & 0x00FF00) >> 8;
+//			blue3 += (color3 & 0x0000FF);
+//		}
+//
+//		if (rainbow) {
+//			return retain(
+//					red0, green0, blue0,
+//					red1, green1, blue1,
+//					red2, green2, blue2,
+//					red3, green3, blue3
+//			);
+//		} else {
+//			// colorPart = colorPart / 27F
+//			// Dividing by 0xFF here and not dividing later results in gray with purple edges
+//			// Dividing by 27F here and not dividing later results in weird colors that still follows biomes
+//			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
+//			red0 /= 27F;
+//			green0 /= 27F;
+//			blue0 /= 27F;
+//			red1 /= 27F;
+//			green1 /= 27F;
+//			blue1 /= 27F;
+//			red2 /= 27F;
+//			green2 /= 27F;
+//			blue2 /= 27F;
+//			red3 /= 27F;
+//			green3 /= 27F;
+//			blue3 /= 27F;
+//
+//			// Dividing by 0xFF before and not dividing here results in gray with purple edges
+//			// Dividing by 27F before and not dividing here results in weird colors that still follows biomes
+//			// Not dividing at all results in rainbow terrain that doesn't follow biomes but is still related to them
+//			return retain(
+//					red0 / 255F, green0 / 255F, blue0 / 255F,
+//					red1 / 255F, green1 / 255F, blue1 / 255F,
+//					red2 / 255F, green2 / 255F, blue2 / 255F,
+//					red3 / 255F, green3 / 255F, blue3 / 255F
+//			);
+//		}
+//
+//	}
 
 	public static BlockColorInfo retain(
 			final float red0, final float green0, final float blue0,

@@ -84,7 +84,7 @@ public final class RenderDispatcher {
 			this.usedLayers = usedLayers;
 			this.random = random;
 			this.dispatcher = dispatcher;
-			this.optiFine = OptiFineCompatibility.PROXY;
+			this.optiFine = OptiFineCompatibility.proxy();
 			this.blockColors = Minecraft.getMinecraft().getBlockColors();
 		}
 
@@ -103,14 +103,11 @@ public final class RenderDispatcher {
 				ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
 				BufferBuilder buffer = getAndStartBuffer(correctedBlockRenderLayerOrdinal, correctedBlockRenderLayer);
 
-//				var renderEnv = optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
-				OptiFineCompatibility.PROXY.pushShaderThing(state, worldPos, world, buffer);
-//				render.render(state, worldPos, layer, buffer, renderEnv);
-				render.render(state, worldPos, correctedBlockRenderLayer, buffer, null);
+				Object renderEnv = optiFine.preRenderBlock(chunkRender, chunkRenderTask.getRegionRenderCacheBuilder(), world, correctedBlockRenderLayer, buffer, state, worldPos);
+				render.render(state, worldPos, correctedBlockRenderLayer, buffer, renderEnv);
 
-//				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
-				OptiFineCompatibility.PROXY.popShaderThing(buffer);
-				usedLayers[correctedBlockRenderLayerOrdinal] = true;
+				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, chunkRenderTask.getRegionRenderCacheBuilder(), usedLayers);
+				markLayerUsed(correctedBlockRenderLayer);
 			}
 			ForgeHooksClient.setRenderLayer(null);
 		}
@@ -148,9 +145,9 @@ public final class RenderDispatcher {
 			return ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkPos);
 		}
 
-//		public void markLayerUsed(RenderType layer) {
-//			usedLayers.add(layer);
-//		}
+		public void markLayerUsed(BlockRenderLayer layer) {
+			usedLayers[layer.ordinal()] = true;
+		}
 
 		public interface ColorSupplier {
 			Color apply(IBlockState state, BlockPos worldPos, BakedQuad quad);
@@ -187,8 +184,8 @@ public final class RenderDispatcher {
 						}
 						anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
-//						int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
-//						anyQuadsFound |= numOverlaysRendered > 0;
+						int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
+						anyQuadsFound |= numOverlaysRendered > 0;
 
 						if (!anyQuadsFound)
 							forEachQuad(getMissingQuads(), state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
@@ -198,14 +195,14 @@ public final class RenderDispatcher {
 
 		private IBakedModel getModel(IBlockState state, Object renderEnv) {
 			IBakedModel model = dispatcher.getModelForState(state);
-			model = optiFine.getRenderModel(model, state, renderEnv);
+			model = optiFine.getModel(renderEnv, model, state);
 			return model;
 		}
 
 		private List<BakedQuad> getQuadsAndStoreOverlays(IBlockState state, BlockPos worldPos, long rand, BlockRenderLayer layer, Object renderEnv, IBakedModel model, EnumFacing direction) {
 //			random.setSeed(rand);
 			List<BakedQuad> quads = model.getQuads(state, direction, random);
-			quads = optiFine.getRenderQuads(quads, world, state, worldPos, direction, layer, rand, renderEnv);
+			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
 			return quads;
 		}
 
@@ -214,13 +211,13 @@ public final class RenderDispatcher {
 			for (; i < quads.size(); i++) {
 				BakedQuad quad = quads.get(i);
 				Color color = colorSupplier.apply(state, worldPos, quad);
-//				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
-//				if (emissive != null) {
-//					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
-//					action.accept(layer, buffer, quad, color, true);
-//				}
-//				if (optiFine != null)
-//					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
+				BakedQuad emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
+				if (emissive != null) {
+					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
+					action.accept(layer, buffer, quad, color, true);
+				}
+				if (optiFine != null)
+					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
 				action.accept(layer, buffer, quad, color, false);
 			}
 			return i > 0;

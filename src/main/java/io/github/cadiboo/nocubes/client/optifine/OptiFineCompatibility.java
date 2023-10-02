@@ -1,83 +1,39 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
-import io.github.cadiboo.nocubes.NoCubes;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ChunkCache;
-import net.minecraft.world.IBlockAccess;
-
-import javax.annotation.Nullable;
-import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
- * @author Cadiboo
+ * This compatibility system isn't perfect.
+ * However, it's a lot better than the previous system.
  */
-public final class OptiFineCompatibility {
+public class OptiFineCompatibility {
 
-	public static final boolean ENABLED;
-	public static final OptiFineProxy PROXY;
-	static {
-		OptiFineProxy proxy = makeProxy();
-		if (proxy == null) {
-			ENABLED = false;
-			PROXY = dummyProxy();
-		} else {
-			ENABLED = true;
-			PROXY = proxy;
+	private static volatile OptiFineProxy instance;
+
+	public static OptiFineProxy proxy() {
+		if (instance == null) {
+			synchronized (OptiFineCompatibility.class) {
+				if (instance == null) {
+					Logger log = LogManager.getLogger("NoCubes OptiFine Compatibility");
+					instance = createProxy(log);
+					log.info("Using {} proxy", instance.getClass().getSimpleName());
+				}
+			}
 		}
-		NoCubes.LOGGER.info("OptiFineCompatibility: Compatibility enabled = " + ENABLED);
+		return instance;
 	}
 
-	private static OptiFineProxy makeProxy() {
-		try {
-			return new HD_U_F5();
-		} catch (OutOfMemoryError oom) {
-			throw oom;
-		} catch (Throwable t) {
-			return null;
+	private static OptiFineProxy createProxy(Logger log) {
+		for (OptiFineProxy proxy : new OptiFineProxy[] {
+//			new HD_U_G8(),
+			new HD_U_G6(),
+		}) {
+			String because = proxy.notUsableBecause();
+			if (because == null)
+				return proxy;
+			log.info("{} proxy not usable because {}", proxy.getClass().getSimpleName(), because);
 		}
+		return new Dummy();
 	}
-
-	private static OptiFineProxy dummyProxy() {
-		return new OptiFineProxy() {
-			@Override
-			public boolean isChunkCacheOF(@Nullable Object obj) {
-				return false;
-			}
-
-			@Override
-			public ChunkCache getChunkRenderCache(IBlockAccess reader) {
-				throw new RuntimeException();
-			}
-
-			@Override
-			public void pushShaderThing(final IBlockState blockState, final BlockPos pos, final IBlockAccess reader, final BufferBuilder bufferBuilder) {
-			}
-
-			@Override
-			public void popShaderThing(final BufferBuilder bufferBuilder) {
-			}
-
-			@Override
-			public Object getRenderEnv(final BufferBuilder bufferBuilder, final IBlockState blockState, final BlockPos pos) {
-				return null;
-			}
-
-			@Override
-			public IBakedModel getRenderModel(final IBakedModel modelIn, final IBlockState stateIn, final Object renderEnv) {
-				return modelIn;
-			}
-
-			@Override
-			public List<BakedQuad> getRenderQuads(final List<BakedQuad> quads, final IBlockAccess worldIn, final IBlockState stateIn, final BlockPos posIn, final EnumFacing enumfacing, final BlockRenderLayer layer, final long rand, final Object renderEnv) {
-				return quads;
-			}
-		};
-	}
-
 }

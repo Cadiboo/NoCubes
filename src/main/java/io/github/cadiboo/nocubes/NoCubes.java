@@ -1,10 +1,11 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.optifine.Dummy;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.network.*;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.common.ForgeConfigSpec;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
 import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
@@ -21,8 +22,6 @@ import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -65,7 +64,7 @@ public final class NoCubes {
 			DistExecutor.runWhenOn(Side.SERVER, () -> () -> FMLCommonHandler.instance().raiseException(new IllegalStateException("NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game."), "NoCubes Dependency Error! RenderChunk rebuildChunk Hooks CANNOT be installed! Remove RenderChunk rebuildChunk Hooks from the mods folder and then restart the game.", true));
 		}
 		DistExecutor.runWhenOn(Side.CLIENT, () -> () -> {
-			if (OptiFineLocator.isOptiFineInstalled() && !OptiFineCompatibility.ENABLED)
+			if (OptiFineLocator.isOptiFineInstalled() && OptiFineCompatibility.proxy() instanceof Dummy)
 				ClientUtil.crashIfIncompatibleOptiFine();
 		});
 

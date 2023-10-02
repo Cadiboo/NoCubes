@@ -1,11 +1,8 @@
 package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -19,14 +16,8 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.color.IBlockColor;
-import net.minecraft.crash.CrashReport;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.PooledMutableBlockPos;
-import net.minecraft.world.ChunkCache;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
@@ -151,25 +142,25 @@ public final class ClientUtil {
 		}
 	}
 
-	public static Chunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IBlockAccess reader) {
-//		if (reader instanceof IWorld) { // This should never be the case...
-//			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
-//		} else
-		if (reader instanceof ChunkCache) {
-			final ChunkCache renderChunkCache = (ChunkCache) reader;
-			final int x = currentChunkPosX - renderChunkCache.chunkX;
-			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
-			return renderChunkCache.chunkArray[x][z];
-		} else if (OptiFineCompatibility.PROXY.isChunkCacheOF(reader)) {
-			final ChunkCache renderChunkCache = OptiFineCompatibility.PROXY.getChunkRenderCache(reader);
-			final int x = currentChunkPosX - renderChunkCache.chunkX;
-			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
-			return renderChunkCache.chunkArray[x][z];
-		}
-		final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(), "Invalid ChunkRenderCache: " + reader);
-		crashReport.makeCategory("NoCubes getting Chunk");
-		throw new ReportedException(crashReport);
-	}
+//	public static Chunk getChunk(final int currentChunkPosX, final int currentChunkPosZ, final IBlockAccess reader) {
+////		if (reader instanceof IWorld) { // This should never be the case...
+////			return ((IWorld) reader).getChunk(currentChunkPosX, currentChunkPosZ);
+////		} else
+//		if (reader instanceof ChunkCache) {
+//			final ChunkCache renderChunkCache = (ChunkCache) reader;
+//			final int x = currentChunkPosX - renderChunkCache.chunkX;
+//			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
+//			return renderChunkCache.chunkArray[x][z];
+//		} else if (OptiFineCompatibility.PROXY.isChunkCacheOF(reader)) {
+//			final ChunkCache renderChunkCache = OptiFineCompatibility.PROXY.getChunkRenderCache(reader);
+//			final int x = currentChunkPosX - renderChunkCache.chunkX;
+//			final int z = currentChunkPosZ - renderChunkCache.chunkZ;
+//			return renderChunkCache.chunkArray[x][z];
+//		}
+//		final CrashReport crashReport = CrashReport.makeCrashReport(new IllegalStateException(), "Invalid ChunkRenderCache: " + reader);
+//		crashReport.makeCategory("NoCubes getting Chunk");
+//		throw new ReportedException(crashReport);
+//	}
 
 //	public static void setupChunkRenderCache(final ChunkRenderCache _this, final int chunkStartX, final int chunkStartZ, final Chunk[][] chunks, final BlockPos start, final BlockPos end) {
 //		final int startX = start.getX();
