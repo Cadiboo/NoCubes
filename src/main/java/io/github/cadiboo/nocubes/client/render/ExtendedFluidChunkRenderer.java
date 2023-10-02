@@ -79,9 +79,7 @@ public final class ExtendedFluidChunkRenderer {
 								final IBlockState fluidState = blockCacheArray[index];
 
 								final BlockRenderLayer blockRenderLayer = ClientUtil.getCorrectRenderLayer(fluidState);
-								final int blockRenderLayerOrdinal = blockRenderLayer.ordinal();
-
-								BufferBuilder buffer = renderer.getAndStartBuffer(blockRenderLayerOrdinal, blockRenderLayer);
+								BufferBuilder buffer = renderer.getAndStartBuffer(blockRenderLayer);
 								final int worldX = area.start.getX() + x;
 								final int worldY = area.start.getY() + y;
 								final int worldZ = area.start.getZ() + z;
@@ -91,7 +89,7 @@ public final class ExtendedFluidChunkRenderer {
 										worldZ
 								), renderer.world, buffer);
 								try {
-									renderer.usedLayers[blockRenderLayerOrdinal] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
+									renderer.usedLayers[blockRenderLayer.ordinal()] |= ExtendedFluidBlockRenderer.renderExtendedFluid(
 											worldX,
 											worldY,
 											worldZ,

@@ -99,9 +99,8 @@ public final class RenderDispatcher {
 					continue;
 				}
 				BlockRenderLayer correctedBlockRenderLayer = ClientUtil.getCorrectRenderLayer(initialBlockRenderLayer);
-				int correctedBlockRenderLayerOrdinal = correctedBlockRenderLayer.ordinal();
 				ForgeHooksClient.setRenderLayer(correctedBlockRenderLayer);
-				BufferBuilder buffer = getAndStartBuffer(correctedBlockRenderLayerOrdinal, correctedBlockRenderLayer);
+				BufferBuilder buffer = getAndStartBuffer(correctedBlockRenderLayer);
 
 				Object renderEnv = optiFine.preRenderBlock(chunkRender, chunkRenderTask.getRegionRenderCacheBuilder(), world, correctedBlockRenderLayer, buffer, state, worldPos);
 				render.render(state, worldPos, correctedBlockRenderLayer, buffer, renderEnv);
@@ -140,9 +139,9 @@ public final class RenderDispatcher {
 			return MeshRenderer.diffuseLight(direction);
 		}
 
-		public BufferBuilder getAndStartBuffer(int correctedBlockRenderLayerOrdinal, BlockRenderLayer correctedBlockRenderLayer) {
+		public BufferBuilder getAndStartBuffer(BlockRenderLayer layer) {
 //			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
-			return ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, correctedBlockRenderLayerOrdinal, compiledChunk, correctedBlockRenderLayer, chunkRender, chunkPos);
+			return ClientUtil.startOrContinueBufferBuilder(chunkRenderTask, compiledChunk, layer, chunkRender, chunkPos);
 		}
 
 		public void markLayerUsed(BlockRenderLayer layer) {
@@ -163,6 +162,7 @@ public final class RenderDispatcher {
 					stateIn, worldPosIn,
 					(state, worldPos, layer, buffer, renderEnv) -> {
 						IBakedModel model = getModel(state, renderEnv);
+						state = state.getBlock().getExtendedState(state, Minecraft.getMinecraft().world, worldPos);
 
 						List<BakedQuad> nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, layer, renderEnv, model, null);
 						boolean anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);

@@ -151,7 +151,7 @@ class HD_U_G6 implements OptiFineProxy {
 			if (size <= 0)
 				continue;
 			totalSize += size;
-			BufferBuilder overlayBuffer = renderer.getAndStartBuffer(i, overlayLayer);
+			BufferBuilder overlayBuffer = renderer.getAndStartBuffer(overlayLayer);
 			for (int j = 0; j < size; ++j) {
 				List<BakedQuad> quads = ListQuadsOverlay_getListQuadsSingle(overlay, ListQuadsOverlay_getQuad(overlay, j));
 				IBlockState overlayState = ListQuadsOverlay_getBlockState(overlay, j);
