@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.gui.config;
 
-import joptsimple.internal.Strings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiTextField;
 
@@ -8,21 +7,21 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 //@OnlyIn(Dist.CLIENT)
-public final class ListOption implements Option {
+public final class StringOption implements Option {
 
-	private final Supplier<String[]> getter;
-	private final Consumer<String[]> setter;
+	private final Supplier<String> getter;
+	private final Consumer<String> setter;
 
-	public ListOption(Supplier<String[]> getter, Consumer<String[]> setter) {
+	public StringOption(Supplier<String> getter, Consumer<String> setter) {
 		this.getter = getter;
 		this.setter = setter;
 	}
 
-	public void set(String[] newValue) {
+	public void set(String newValue) {
 		this.setter.accept(newValue);
 	}
 
-	public String[] get() {
+	public String get() {
 		return this.getter.get();
 	}
 
@@ -31,14 +30,14 @@ public final class ListOption implements Option {
 		return new GuiTextField(0, Minecraft.getMinecraft().fontRenderer, 0, 0, width - 4, 16) {
 			{
 				this.setMaxStringLength(9999999);
-				this.setText(Strings.join(ListOption.this.get(), ", "));
+				this.setText(StringOption.this.get());
 				this.setGuiResponder(null);
 			}
 
 			@Override
 			public boolean textboxKeyTyped(char typedChar, int keyCode) {
 				if (super.textboxKeyTyped(typedChar, keyCode)) {
-					ListOption.this.set(this.getText().split(", "));
+					StringOption.this.set(this.getText());
 					return true;
 				} else {
 					return false;

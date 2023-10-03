@@ -3,14 +3,13 @@ package io.github.cadiboo.nocubes.client.gui.config;
 import java.util.function.Function;
 
 //@OnlyIn(Dist.CLIENT)
-public final class EnumOption extends Option {
+public final class EnumOption implements Option {
 
 	private final Function<Integer, Integer> cycler;
-	private final Function<EnumOption, String> translatedNameGetter;
+	private final Function<Integer, String> translatedNameGetter;
 	private int currentOrdinal;
 
-	public EnumOption(String translationKey, Function<Integer, Integer> cycler, Function<EnumOption, String> translatedNameGetter, int initialOrdinal) {
-		super(translationKey);
+	public EnumOption(Function<Integer, Integer> cycler, Function<Integer, String> translatedNameGetter, int initialOrdinal) {
 		this.cycler = cycler;
 		this.translatedNameGetter = translatedNameGetter;
 		this.currentOrdinal = initialOrdinal;
@@ -18,14 +17,14 @@ public final class EnumOption extends Option {
 
 	@Override
 	public OptionButton createWidget(int width) {
-		return new OptionButton(0, 0, width, 20, this, this.getTranslatedName(), widget -> {
+		return new OptionButton(0, 0, width, 20, this, this.getDisplayString(), widget -> {
 			this.currentOrdinal = this.cycler.apply(this.currentOrdinal);
-			widget.setMessage(this.getTranslatedName());
+			widget.setMessage(this.getDisplayString());
 		});
 	}
 
-	public String getTranslatedName() {
-		return this.translatedNameGetter.apply(this);
+	public String getDisplayString() {
+		return this.translatedNameGetter.apply(this.currentOrdinal);
 	}
 
 }

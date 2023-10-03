@@ -6,13 +6,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 //@OnlyIn(Dist.CLIENT)
-public class BooleanOption extends Option {
+public class BooleanOption implements Option {
 
 	private final Supplier<Boolean> getter;
 	private final Consumer<Boolean> setter;
 
-	public BooleanOption(String translationKey, Supplier<Boolean> getter, Consumer<Boolean> setter) {
-		super(translationKey);
+	public BooleanOption(Supplier<Boolean> getter, Consumer<Boolean> setter) {
 		this.getter = getter;
 		this.setter = setter;
 	}
@@ -35,14 +34,14 @@ public class BooleanOption extends Option {
 
 	@Override
 	public OptionButton createWidget(int width) {
-		return new OptionButton(0, 0, width, 20, this, this.getTranslatedName(), (widget) -> {
+		return new OptionButton(0, 0, width, 20, this, this.getDisplayString(), (widget) -> {
 			this.save();
-			widget.setMessage(this.getTranslatedName());
+			widget.setMessage(this.getDisplayString());
 		});
 	}
 
-	public String getTranslatedName() {
-		return this.getDisplayString() + I18n.format(this.get() ? "options.on" : "options.off");
+	public String getDisplayString() {
+		return I18n.format(this.get() ? "options.on" : "options.off");
 	}
 
 }

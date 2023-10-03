@@ -57,8 +57,7 @@ final class ConfigOptionsList extends GuiListExtended {
 		this.maxListLabelWidth = maxListLabelWidth;
 	}
 
-	private void AddEntries(List<ConfigOptionsList.Entry> entries, Object instance, ModConfig.Type type)
-	{
+	private void AddEntries(List<ConfigOptionsList.Entry> entries, Object instance, ModConfig.Type type) {
 		entries.add(new CategoryEntry(MOD_ID + ".config." + type.toString().toLowerCase()));
 		getConfigValues(instance).forEach((configValue, name) -> {
 			final ValueEntry<?> e = createValueEntry(configValue, name, () -> ConfigTracker_getConfig(type).get());
@@ -77,15 +76,17 @@ final class ConfigOptionsList extends GuiListExtended {
 	private ValueEntry<?> createValueEntry(final ConfigValue<?> configValue, final String name, Supplier<ModConfig> configSupplier) {
 		if (configValue instanceof BooleanValue) {
 			return new BooleanValueEntry((BooleanValue) configValue, name, configSupplier);
-		} else if (configValue instanceof EnumValue<?>) {
-			return new EnumValueEntry<>((EnumValue<?>) configValue, name, configSupplier);
-		} else {
-			try {
-				return new ListValueEntry<>((ConfigValue<List<? extends String>>) configValue, name, configSupplier);
-			} catch (Exception e) {
-				return new NotImplementedValueEntry<>(configValue, name, configSupplier);
-			}
 		}
+		if (configValue instanceof EnumValue<?>) {
+			return new EnumValueEntry<>((EnumValue<?>) configValue, name, configSupplier);
+		}
+		if (configValue.getDefault() instanceof String) {
+			return new StringValueEntry((ConfigValue<String>) configValue, name, configSupplier);
+		}
+		if (configValue.getDefault() instanceof List<?>) {
+			return new ListValueEntry<>((ConfigValue<List<? extends String>>) configValue, name, configSupplier);
+		}
+		return new NotImplementedValueEntry<>(configValue, name, configSupplier);
 	}
 
 	private Map<ConfigValue<?>, String> getConfigValues(final Object config) {
@@ -125,16 +126,12 @@ final class ConfigOptionsList extends GuiListExtended {
 	boolean saveChanged() {
 		boolean wasAnythingSaved = false;
 		for (final Entry entry : entries) {
-			if (entry instanceof ValueEntry) {
-				final ValueEntry<?> valueEntry = (ValueEntry) entry;
-
+			if (entry instanceof ValueEntry<?>) {
+				final ValueEntry<?> valueEntry = (ValueEntry<?>) entry;
 				if (valueEntry.isChanged()) {
 					saveValue(valueEntry.configValue, valueEntry.configSupplier, valueEntry.currentValue);
 					wasAnythingSaved = true;
 				}
-
-			} else if (entry instanceof CategoryEntry) {
-				final CategoryEntry categoryEntry = (CategoryEntry) entry;
 			}
 		}
 		return wasAnythingSaved;
@@ -230,7 +227,9 @@ final class ConfigOptionsList extends GuiListExtended {
 
 		private ValueEntry(final ConfigValue<T> configValue, final String name, final Supplier<ModConfig> configSupplier) {
 			this.configValue = configValue;
-			this.text = I18n.format(MOD_ID + ".config." + name);
+			String translationKey = MOD_ID + ".config." + name;
+			String translated = I18n.format(translationKey);
+			this.text = !Objects.equals(translated, translationKey) ? translated : name;
 			this.configSupplier = configSupplier;
 			final T value = configValue.get();
 			this.currentValue = this.initialValue = value;
@@ -241,8 +240,11 @@ final class ConfigOptionsList extends GuiListExtended {
 		protected abstract Gui makeWidget();
 
 		@Override
-		public void drawEntry(final int slotIndex, final int x, final int y, final int listWidth, final int slotHeight, final int mouseX, final int mouseY, final boolean isSelected, final float partialTicks) {
+		public void drawEntry(final int slotIndex, int x, final int y, final int listWidth, final int slotHeight, final int mouseX, final int mouseY, final boolean isSelected, final float partialTicks) {
 			final Gui widget = this.widgetSupplier.getValue();
+			FontRenderer fr = Minecraft.getMinecraft().fontRenderer;
+			fr.drawString(text, x, y + (slotHeight - fr.FONT_HEIGHT) / 2, 0x808080); // Grey
+			x += maxListLabelWidth;
 			// I HATE 1.12.2 & OptiFine. WTF IS EVEN GOING ON WITH THIS
 			if (widget instanceof GuiTextField) {
 				final GuiTextField ihate1122 = (GuiTextField) widget;
@@ -296,8 +298,8 @@ final class ConfigOptionsList extends GuiListExtended {
 
 		@Override
 		protected Gui makeWidget() {
-			return new BooleanOption(this.text, () -> this.currentValue, this::handleChanged)
-					.createWidget((configGui.width / 4) * 3);
+			return new BooleanOption(() -> this.currentValue, this::handleChanged)
+				.createWidget(getWidgetWidth());
 		}
 
 	}
@@ -319,14 +321,39 @@ final class ConfigOptionsList extends GuiListExtended {
 			return i;
 		}
 
-		private String getTranslatedText(final EnumOption enumOption) {
-			return enumOption.getDisplayString() + this.currentValue.name();
+		@Override
+		protected OptionButton makeWidget() {
+			return new EnumOption(this::cycle, i -> this.values[i].name(), this.currentValue.ordinal())
+				.createWidget(getWidgetWidth());
+		}
+
+	}
+
+	final class StringValueEntry extends ValueEntry<String> {
+
+		StringValueEntry(final ConfigValue<String> configValue, final String name, final Supplier<ModConfig> configSupplier) {
+			super(configValue, name, configSupplier);
 		}
 
 		@Override
-		protected OptionButton makeWidget() {
-			return new EnumOption(this.text, this::cycle, this::getTranslatedText, this.currentValue.ordinal())
-					.createWidget((configGui.width / 4) * 3);
+		protected GuiTextField makeWidget() {
+			return new StringOption(() -> this.currentValue, this::handleChanged)
+				.createWidget(getWidgetWidth());
+		}
+
+		@Override
+		public void keyTyped(final char eventChar, final int eventKey) {
+			((GuiTextField) widgetSupplier.getValue()).textboxKeyTyped(eventChar, eventKey);
+		}
+
+		@Override
+		public void mouseClicked(final int mouseX, final int mouseY, final int mouseEvent) {
+			((GuiTextField) widgetSupplier.getValue()).mouseClicked(mouseX, mouseY, mouseEvent);
+		}
+
+		@Override
+		public void updateCursorCounter() {
+			((GuiTextField) widgetSupplier.getValue()).updateCursorCounter();
 		}
 
 	}
@@ -339,8 +366,8 @@ final class ConfigOptionsList extends GuiListExtended {
 
 		@Override
 		protected GuiTextField makeWidget() {
-			return new ListOption(this.text, () -> this.currentValue.stream().map(Object::toString).toArray(String[]::new), this::handleChanged)
-					.createWidget((configGui.width / 4) * 3);
+			return new ListOption(() -> this.currentValue.stream().map(Object::toString).toArray(String[]::new), this::handleChanged)
+				.createWidget(getWidgetWidth());
 		}
 
 		private void handleChanged(final String[] newValue) {
@@ -376,14 +403,14 @@ final class ConfigOptionsList extends GuiListExtended {
 
 		@Override
 		protected OptionButton makeWidget() {
-			final OptionButton widget = new BooleanOption(this.text, () -> false, this::handleChanged) {
+			final OptionButton widget = new BooleanOption(() -> false, this::handleChanged) {
 				@Override
-				public String getTranslatedName() {
-					return this.getDisplayString() + I18n.format("commands.scoreboard.objectives.add.wrongType", getTranslatedText());
+				public String getDisplayString() {
+					return configValue.get().toString();
 				}
 			}
-					.createWidget((configGui.width / 4) * 3);
-			widget.packedFGColour = 0xFF0000;
+				.createWidget(getWidgetWidth());
+			widget.packedFGColour = 0x808080; // Grey
 			return widget;
 		}
 
@@ -391,6 +418,22 @@ final class ConfigOptionsList extends GuiListExtended {
 			// NOOP
 		}
 
+		@Override
+		public void drawEntry(final int slotIndex, final int x, final int y, final int listWidth, final int slotHeight, final int mouseX, final int mouseY, final boolean isSelected, final float partialTicks) {
+			super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partialTicks);
+			if (x < mouseX && mouseX < x + listWidth && y < mouseY && mouseY < y + slotHeight) {
+				String msg = "You must change this using the config file";
+				int width = Minecraft.getMinecraft().fontRenderer.getStringWidth(msg);
+				int height = Minecraft.getMinecraft().fontRenderer.FONT_HEIGHT;
+				Gui.drawRect(mouseX, mouseY, mouseX + width + 4, mouseY + height + 4, 0x55200000);
+				configGui.drawString(Minecraft.getMinecraft().fontRenderer, msg, mouseX + 2, mouseY + 2, -1);
+			}
+		}
+
+	}
+
+	private int getWidgetWidth() {
+		return (configGui.width / 4) * 3 - maxListLabelWidth;
 	}
 
 }

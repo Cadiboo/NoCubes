@@ -5,8 +5,12 @@ import org.beryx.awt.color.ColorFactory;
 public final class ColorParser {
 
 	public static Color parse(String color) {
-		final java.awt.Color parsed = ColorFactory.valueOf(color);
-		return new Color(parsed.getRed(), parsed.getGreen(), parsed.getBlue(), parsed.getAlpha());
+		try {
+			final java.awt.Color parsed = ColorFactory.valueOf(color);
+			return new Color(parsed.getRed(), parsed.getGreen(), parsed.getBlue(), parsed.getAlpha());
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Unable to parse color '" + color + "'", e);
+		}
 	}
 
 	public static class Color {
