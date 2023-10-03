@@ -267,7 +267,7 @@ public final class RenderDispatcher {
 		long start = System.nanoTime();
 		Mesher mesher = NoCubesConfig.Server.mesher;
 		try (
-				Area area = new Area(Minecraft.getMinecraft().world, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
+				Area area = new Area(renderer.world, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
 				LightCache light = LightCache.retain(area);
 				//var ignored = renderer.matrix.push()
 		) {
