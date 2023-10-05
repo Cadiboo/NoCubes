@@ -22,7 +22,6 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.*;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -30,7 +29,7 @@ import java.util.function.Predicate;
 
 /**
  * Collisions sanity check:
- * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#nocubes_computeNext})
+ * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_getCollisionShape})
  * - Player should be able to walk into and out of single block holes ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
  * - Player should be able to walk up slopes made out of normally solid blocks like stone/dirt/grass/sand ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
  * - Player should be able to swim through smooth blocks underwater without suffocating (e.g. near the shore) ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#nocubes_isSuffocating})
