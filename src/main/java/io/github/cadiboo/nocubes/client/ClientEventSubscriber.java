@@ -46,7 +46,7 @@ public final class ClientEventSubscriber {
 	@SubscribeEvent
 	public static void onClientJoinServer(ClientPlayerNetworkEvent.LoggingIn event) {
 		LOG.debug("Client joined server");
-		loadDefaultServerConfigIfWeAreOnAVanillaServer(event);
+		loadDefaultServerConfigIfWeAreOnAModdedServerWithoutNoCubes(event);
 		ClientUtil.sendPlayerInfoMessage();
 		ClientUtil.warnPlayerIfVisualsDisabled();
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
@@ -59,7 +59,7 @@ public final class ClientEventSubscriber {
 	/**
 	 * This lets NoCubes load properly on modded servers that don't have it installed
 	 */
-	public static void loadDefaultServerConfigIfWeAreOnAVanillaServer(ClientPlayerNetworkEvent.LoggingIn event) {
+	private static void loadDefaultServerConfigIfWeAreOnAModdedServerWithoutNoCubes(ClientPlayerNetworkEvent.LoggingIn event) {
 		if (NoCubesNetwork.currentServerHasNoCubes) {
 			// Forge has synced the server config to us, no need to load the default (see ConfigSync.syncConfigs)
 			LOG.debug("Not loading default server config - current server has NoCubes installed");
