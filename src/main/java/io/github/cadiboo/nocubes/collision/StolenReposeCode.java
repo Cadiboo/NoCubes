@@ -21,7 +21,7 @@ import java.util.function.Predicate;
 import static java.lang.Math.max;
 
 /**
- * This is 95% coppied from Repose
+ * This is 95% copied from Repose
  *
  * @author Cadiboo
  */
@@ -39,7 +39,7 @@ final class StolenReposeCode {
 			return;
 		}
 		if (canSlopeAt(stateIn, worldIn, posIn, collisionBoundingBox)) {
-			addSlopingCollisionBoxes(stateIn, worldIn, posIn, collidingBoxes, entityBox::intersects);
+			addSlopingCollisionBoxes(stateIn, worldIn, posIn, collidingBoxes, entityBox);
 		} else {
 			stateIn.addCollisionBoxToList(worldIn, posIn, entityBox, collidingBoxes, entityIn, isActualState);
 		}
@@ -94,20 +94,17 @@ final class StolenReposeCode {
 		return canSlope(state) && (box == null || (box.maxY > 0.5 && getStateCollisionBoundingBox(worldIn.getBlockState(posUp), worldIn, posUp) == null));
 	}
 
-	private static void addSlopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos, final List<AxisAlignedBB> collidingBoxes, final Predicate<AxisAlignedBB> predicate) {
+	private static void addSlopingCollisionBoxes(final IBlockState state, World world, final BlockPos pos, final List<AxisAlignedBB> collidingBoxes, final AxisAlignedBB bounds) {
 		final double height = blockHeight(pos, world, state);
 		final double stepHeight = height - 0.5;
 		final boolean slopingShore = true; //Config.slopingShores;
 		final boolean submerged = world.getBlockState(pos.up()).getMaterial().isLiquid();
 		for (Direction direction : Direction.OrdinalDirections) {
-			final AxisAlignedBB box = cornerBox(pos, direction, height, stepHeight, slopingShore, submerged, world);
-			if (predicate.test(box)) {
-				collidingBoxes.add(box);
-			}
+			addCornerBoxToListIfIntersects(pos, direction, height, stepHeight, slopingShore, submerged, world, collidingBoxes, bounds);
 		}
 	}
 
-	private static AxisAlignedBB cornerBox(final BlockPos pos, final Direction direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world) {
+	private static void addCornerBoxToListIfIntersects(final BlockPos pos, final Direction direction, double blockHeight, double stepHeight, boolean slopingShore, boolean submerged, World world, final List<AxisAlignedBB> collidingBoxes, final AxisAlignedBB bounds) {
 		final double height;
 		if (stepHigh(pos.add(direction.x, 0, 0), stepHeight, slopingShore, submerged, world) &&
 				stepHigh(pos.add(0, 0, direction.z), stepHeight, slopingShore, submerged, world) &&
@@ -121,10 +118,18 @@ final class StolenReposeCode {
 		final int posY = pos.getY();
 		final int posZ = pos.getZ();
 
-		return new AxisAlignedBB(
-				posX + max(0.0, direction.x / 2.0), posY, posZ + max(0.0, direction.z / 2.0),
-				posX + max(0.5, direction.x), posY + height, posZ + max(0.5, direction.z)
-		);
+		final double x0 = posX + max(0.0, direction.x / 2.0);
+		final double y0 = posY;
+		final double z0 = posZ + max(0.0, direction.z / 2.0);
+		final double x1 = posX + max(0.5, direction.x);
+		final double y1 = posY + height;
+		final double z1 = posZ + max(0.5, direction.z);
+		if (bounds.intersects(x0, y0, z0, x1, y1, z1)) {
+			collidingBoxes.add(new AxisAlignedBB(
+				x0, y0, z0,
+				x1, y1, z1
+			));
+		}
 	}
 
 	private static boolean stepHigh(final BlockPos offsetPos, final double stepHeight, final boolean slopingShore, final boolean submerged, World world) {

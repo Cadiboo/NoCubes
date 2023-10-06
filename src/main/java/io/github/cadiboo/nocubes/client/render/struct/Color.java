@@ -1,5 +1,8 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
+
+@PerformanceCriticalAllocation
 public final /* inline record */ class Color {
 	public static final Color WHITE = new Color(1F, 1F, 1F, 1F);
 

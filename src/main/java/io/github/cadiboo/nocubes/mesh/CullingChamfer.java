@@ -43,8 +43,8 @@ public class CullingChamfer extends SimpleMesher {
 		int height = size.getY();
 		int width = size.getX();
 
-		MutableBlockPos pos = new MutableBlockPos();
-		Face face = new Face();
+		MutableBlockPos pos = POS_INSTANCE.get();
+		Face face = FACE_INSTANCE.get();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();
 			boolean posY = !isSmoothable.test(blocks[index + height]);

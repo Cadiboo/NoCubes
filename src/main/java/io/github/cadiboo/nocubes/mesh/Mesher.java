@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.client.render.struct.PoseStack;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.block.state.IBlockState;
@@ -12,6 +13,11 @@ import net.minecraft.util.math.Vec3i;
 import java.util.function.Predicate;
 
 public interface Mesher {
+
+	@PerformanceCriticalAllocation
+	ThreadLocal<MutableBlockPos> POS_INSTANCE = ThreadLocal.withInitial(MutableBlockPos::new);
+	@PerformanceCriticalAllocation
+	ThreadLocal<Face> FACE_INSTANCE = ThreadLocal.withInitial(Face::new);
 
 	default void generateGeometry(Area area, Predicate<IBlockState> isSmoothable, FaceAction action) {
 		try {

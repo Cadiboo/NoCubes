@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.client.render.ExtendedFluidChunkRenderer;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mesh.SDFMesher.CollisionObjects;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -13,7 +14,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
-import net.minecraftforge.fluids.IFluidBlock;
 
 import java.util.function.Predicate;
 
@@ -62,13 +62,14 @@ public final class OldNoCubes extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<IBlockState> isSmoothable, ShapeConsumer action) {
-		Face vertexNormals = new Face();
-		Vec faceNormal = new Vec();
-		Vec centre = new Vec();
 		generateInternal(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
 			(pos, face) -> {
+				CollisionObjects objects = CollisionObjects.INSTANCE.get();
+				final Face vertexNormals = objects.vertexNormals;
+				final Vec centre = objects.centre;
+				final Vec faceNormal = objects.faceNormal;
 				face.assignAverageTo(centre);
 				face.assignNormalTo(vertexNormals);
 				vertexNormals.assignAverageTo(faceNormal);
@@ -93,14 +94,14 @@ public final class OldNoCubes extends SimpleMesher {
 	}
 
 	private void generateInternal(Area area, Predicate<IBlockState> isSmoothable, FullBlockAction fullBlockAction, FaceAction faceAction) {
-		Face face = new Face();
-		MutableBlockPos pos = new MutableBlockPos();
+		BlockPos.MutableBlockPos pos = POS_INSTANCE.get();
+		Face face = FACE_INSTANCE.get();
 		// The 8 points that make the block.
 		// 1 point for each corner
-		Vec[] points = new Vec[]{new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
+		Vec[] points = SDFMesher.VERTICES.takeArray(8);
 		EnumFacing[] directions = ModUtil.DIRECTIONS;
 		int directionsLength = directions.length;
-		float[] neighboursSmoothness = new float[directionsLength];
+		float[] neighboursSmoothness = SDFMesher.NEIGHBOURS_FIELD.get();
 		float roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			IBlockState[] blocks = area.getAndCacheBlocks();

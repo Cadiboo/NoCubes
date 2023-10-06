@@ -12,6 +12,7 @@ import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -60,8 +61,8 @@ public final class MeshRenderer {
 
 	public static void renderArea(ChunkRenderInfo renderer, Predicate<IBlockState> isSmoothableIn, Mesher mesher, Area area, LightCache light) {
 		PoseStack matrix = new PoseStack();
-		FaceInfo faceInfo = new FaceInfo();
-		MutableObjects objects = new MutableObjects();
+		FaceInfo faceInfo = FaceInfo.INSTANCE.get();
+		MutableObjects objects = MutableObjects.INSTANCE.get();
 		Mesher.translateToMeshStart(matrix, area.start, renderer.chunkPos);
 		matrix.x += renderer.chunkPos.getX();
 		matrix.y += renderer.chunkPos.getY();
@@ -97,7 +98,7 @@ public final class MeshRenderer {
 		matrix.z += worldPos.getZ();
 		boolean stateSolidity = isSolidRender(state);
 		Predicate<IBlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		FaceInfo faceInfo = new FaceInfo();
+		FaceInfo faceInfo = FaceInfo.INSTANCE.get();
 
 		float minU = UVHelper.getMinU(sprite);
 		float maxU = UVHelper.getMaxU(sprite);
@@ -227,7 +228,10 @@ public final class MeshRenderer {
 		quad(buffer, matrix, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
 	}
 
+	@PerformanceCriticalAllocation
 	public static final /* inline record */ class FaceInfo {
+		public static final ThreadLocal<FaceInfo> INSTANCE = ThreadLocal.withInitial(FaceInfo::new);
+
 		public /* final */ Face face;
 		public final Vec centre = new Vec();
 		public final Face vertexNormals = new Face();
@@ -252,7 +256,9 @@ public final class MeshRenderer {
 	/**
 	 * Until Project Valhalla is complete and inline types exist we pass around a bunch of mutable objects.
 	 */
+	@PerformanceCriticalAllocation
 	static final class MutableObjects {
+		public static final ThreadLocal<MutableObjects> INSTANCE = ThreadLocal.withInitial(MutableObjects::new);
 		final FaceLight light = new FaceLight();
 		final RenderableState foundState = new RenderableState();
 		final RenderableState renderState = new RenderableState();
@@ -266,6 +272,7 @@ public final class MeshRenderer {
 		final Texture texture = new Texture();
 	}
 
+	@PerformanceCriticalAllocation
 	static final class RenderableState {
 
 		private static final BlockPos[] OFFSETS_ORDERED = {

@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -11,7 +12,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.function.Predicate;
 
 
@@ -19,6 +19,9 @@ import java.util.function.Predicate;
  * @author Cadiboo
  */
 public class MarchingCubes extends SDFMesher {
+
+	@PerformanceCriticalAllocation
+	public static final ThreadLocal<int[]> EDGES_FIELD = ThreadLocal.withInitial(() -> new int[12]);
 
 	public MarchingCubes(boolean smoothness2x) {
 		super(smoothness2x);
@@ -40,13 +43,14 @@ public class MarchingCubes extends SDFMesher {
 	public void generateCollisionsInternal(Area area, Predicate<IBlockState> isSmoothable, ShapeConsumer action) {
 		// Duplicated in SurfaceNets
 		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
-		Face vertexNormals = new Face();
-		Vec faceNormal = new Vec();
-		Vec centre = new Vec();
 		generateOrThrow(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
 			(pos, face) -> {
+				CollisionObjects objects = CollisionObjects.INSTANCE.get();
+				final Face vertexNormals = objects.vertexNormals;
+				final Vec centre = objects.centre;
+				final Vec faceNormal = objects.faceNormal;
 				face.assignAverageTo(centre);
 				face.assignNormalTo(vertexNormals);
 				vertexNormals.assignAverageTo(faceNormal);
@@ -136,8 +140,8 @@ public class MarchingCubes extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] data, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		MutableBlockPos pos = new MutableBlockPos();
-		Face face = new Face();
+		MutableBlockPos pos = POS_INSTANCE.get();
+		Face face = FACE_INSTANCE.get();
 
 		byte[][] cubeVerts = Lookup.CUBE_VERTS;
 		short[] edgeTable = Lookup.EDGE_TABLE;
@@ -145,9 +149,10 @@ public class MarchingCubes extends SDFMesher {
 		byte[][] triTable = Lookup.TRI_TABLE;
 
 		int n = 0;
-		float[] grid = new float[8];
-		int[] edges = new int[12];
-		ArrayList<Vec> vertices = new ArrayList<Vec>();
+		float[] grid = NEIGHBOURS_FIELD.get();
+		int[] edges = EDGES_FIELD.get();
+		int vertexCount = 0;
+		Vec[] vertices = VERTICES.get();
 
 		//March over the volume
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX()) {
@@ -173,7 +178,7 @@ public class MarchingCubes extends SDFMesher {
 					for (byte i = 0; i < 12; ++i) {
 						if ((edge_mask & (1 << i)) == 0)
 							continue;
-						edges[i] = vertices.size();
+						edges[i] = vertexCount;
 
 						byte[] e = edgeIndex[i];
 						byte[] p0 = cubeVerts[e[0]];
@@ -184,19 +189,19 @@ public class MarchingCubes extends SDFMesher {
 						float t = 0;
 						if (Math.abs(d) > 1e-6)
 							t = a / d;
-						vertices.add(new Vec(
+						vertices[vertexCount++].set(
 							(x + p0[0]) + t * (p1[0] - p0[0]),
 							(y + p0[1]) + t * (p1[1] - p0[1]),
 							(z + p0[2]) + t * (p1[2] - p0[2])
-						));
+						);
 					}
 
 					//Add faces
 					byte[] f = triTable[cube_index];
 					for (byte i = 0; i < f.length; i += 3) {
-						face.v0.set(vertices.get(edges[f[i + 0]]));
-						face.v1.set(vertices.get(edges[f[i + 1]]));
-						face.v2.set(vertices.get(edges[f[i + 2]]));
+						face.v0.set(vertices[edges[f[i + 0]]]);
+						face.v1.set(vertices[edges[f[i + 1]]]);
+						face.v2.set(vertices[edges[f[i + 2]]]);
 						face.v3.set(face.v2);
 						if (!action.apply(pos.setPos(x, y, z), face))
 							return;

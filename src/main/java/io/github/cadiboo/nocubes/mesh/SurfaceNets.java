@@ -48,13 +48,14 @@ public class SurfaceNets extends SDFMesher {
 	public void generateCollisionsInternal(Area area, Predicate<IBlockState> isSmoothable, ShapeConsumer action) {
 		// Duplicated in MarchingCubes
 		// Not in shared base class SDFMesher because I intend to implement custom logic for each mesher that takes advantage of the underlying algorithm
-		Face vertexNormals = new Face();
-		Vec faceNormal = new Vec();
-		Vec centre = new Vec();
 		generateOrThrow(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
 			(pos, face) -> {
+				CollisionObjects objects = CollisionObjects.INSTANCE.get();
+				final Face vertexNormals = objects.vertexNormals;
+				final Vec centre = objects.centre;
+				final Vec faceNormal = objects.faceNormal;
 				face.assignAverageTo(centre);
 				face.assignNormalTo(vertexNormals);
 				vertexNormals.assignAverageTo(faceNormal);
@@ -84,16 +85,15 @@ public class SurfaceNets extends SDFMesher {
 	}
 
 	private static void generateOrThrow2(float[] distanceField, BlockPos dims, FullCellAction fullCellAction, FaceAction action) {
-		MutableBlockPos pos = new MutableBlockPos();
-
-		final Face face = new Face();
+		BlockPos.MutableBlockPos pos = POS_INSTANCE.get();
+		Face face = FACE_INSTANCE.get();
 		int n = 0;
 		// Appears to contain the multiplier for an axis.
 		// The X axis is stored in columns, the Y axis is stored in rows and the Z axis is stored in slices.
 		// (x, y, z) -> [z * fieldSizeX * fieldSizeY + y * fieldSizeX + x]
 		// So the multiplier for X is 1, the multiplier for Y is fieldSizeX and the multiplier for z is fieldSizeX * fieldSizeY
 		final int[] axisMultipliers = {1, (dims.getX() + 1), (dims.getX() + 1) * (dims.getY() + 1)};
-		final float[] cornerDistances = new float[8];
+		final float[] cornerDistances = NEIGHBOURS_FIELD.get();
 		// Could be a boolean, either 1 or 0, gets flipped each time we go over a z slice
 		int buf_no = 1;
 
@@ -104,7 +104,7 @@ public class SurfaceNets extends SDFMesher {
 		// of the buffer, while displaying the other half and flip sides each frame (so you're not
 		// visibly writing pixels each frame, causing a wipe-down effect as the new data is written
 		// the way that happens in old CRT (cathode-ray tube) monitors/TVs)
-		final Vec[] verticesBuffer = new Vec[axisMultipliers[2] * 2];
+		final Vec[] verticesBuffer = VERTICES.takeArray(axisMultipliers[2] * 2);
 		final float[] vertexUntilIFigureOutTheInterpolationAndIntersection = {0, 0, 0};
 
 		//March over the voxel cornerDistances
@@ -183,12 +183,11 @@ public class SurfaceNets extends SDFMesher {
 					//Now we just average the edge intersections and add them to coordinate
 					// 1.0F = isosurfaceLevel
 					float s = 1.0F / edgeCrossings;
-					Vec vertex = new Vec(vertexUntilIFigureOutTheInterpolationAndIntersection[0], vertexUntilIFigureOutTheInterpolationAndIntersection[1], vertexUntilIFigureOutTheInterpolationAndIntersection[2]);
-					vertex.x = x + s * vertex.x;
-					vertex.y = y + s * vertex.y;
-					vertex.z = z + s * vertex.z;
 					//Add vertex to buffer
-					verticesBuffer[bufferPointer] = vertex;
+					Vec vertex = verticesBuffer[bufferPointer];
+					vertex.x = x + s * vertexUntilIFigureOutTheInterpolationAndIntersection[0];
+					vertex.y = y + s * vertexUntilIFigureOutTheInterpolationAndIntersection[1];
+					vertex.z = z + s * vertexUntilIFigureOutTheInterpolationAndIntersection[2];
 
 					//Now we need to add faces together, to do this we just loop over 3 basis components
 					for (int axis = 0; axis < 3; ++axis) {

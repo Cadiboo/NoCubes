@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client;
 
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.ModProfiler;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
@@ -13,6 +14,7 @@ import static net.minecraft.util.math.MathHelper.floor;
 /**
  * @author Cadiboo
  */
+@PerformanceCriticalAllocation
 public final class LightmapInfo implements AutoCloseable {
 
 	private static final ThreadLocal<LightmapInfo> POOL = ThreadLocal.withInitial(() -> new LightmapInfo(0, 0, 0, 0, 0, 0, 0, 0));
