@@ -59,7 +59,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
-import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.*;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.BONE_BLOCK;
 import static net.minecraft.init.Blocks.CLAY;
@@ -191,8 +190,13 @@ public final class NoCubesConfig {
 	 */
 	public static class Client {
 
+		public static final String INFO_MESSAGE = "infoMessage";
+		public static String RENDER = "render";
+
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
+
+		public static boolean infoMessage;
 		public static boolean render;
 		public static boolean renderSelectionBox;
 		public static ColorParser.Color selectionBoxColor;
@@ -221,6 +225,7 @@ public final class NoCubesConfig {
 			boolean oldRender = render;
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
+			infoMessage = INSTANCE.infoMessage.get();
 			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
 			render = Server.forceVisuals || INSTANCE.render.get();
 			renderSelectionBox = INSTANCE.renderSelectionBox.get();
@@ -261,6 +266,7 @@ public final class NoCubesConfig {
 		 */
 		static class Impl {
 
+			final BooleanValue infoMessage;
 			final BooleanValue render;
 			final BooleanValue renderSelectionBox;
 			final ConfigValue<String> selectionBoxColor;
@@ -277,10 +283,15 @@ public final class NoCubesConfig {
 			final BooleanValue debugOutlineNearbyMesh;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
+				infoMessage = builder
+					.translation(NoCubes.MOD_ID + ".config.infoMessage")
+					.comment("If NoCubes should display a helpful message when you join a world")
+ 					.define(INFO_MESSAGE, true);
+
 				render = builder
 					.translation(NoCubes.MOD_ID + ".config.render")
 					.comment("If NoCubes' custom rendering is enabled")
-					.define("render", true);
+					.define(RENDER, true);
 
 				renderSelectionBox = builder
 					.translation(NoCubes.MOD_ID + ".config.renderSelectionBox")

@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
-import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.config.ColorParser;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
@@ -28,12 +27,13 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.NetworkManager;
 import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentKeybind;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.DrawBlockHighlightEvent;
 import net.minecraftforge.client.event.PlayerSPPushOutOfBlocksEvent;
@@ -42,8 +42,6 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -71,12 +69,23 @@ public final class ClientEventSubscriber {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	private static final String CATEGORY = "key.categories." + MOD_ID;
+	private static final String CATEGORY = MOD_ID + ".keycategory";
 
-	private static final KeyBinding toggleVisuals = new KeyBinding(MOD_ID + ".key.toggleRenderSmoothTerrain", KEY_O, CATEGORY);
-	private static final KeyBinding toggleProfilers = new KeyBinding(MOD_ID + ".key.toggleProfilers", KEY_P, CATEGORY);
+	public static final String TOGGLE_VISUALS = "toggleVisuals";
+	public static final String TOGGLE_SMOOTHABLE = "toggleSmoothable";
 
-	private static final KeyBinding toggleSmoothable = new KeyBinding(MOD_ID + ".key.toggleTerrainSmoothableBlockState", KEY_N, CATEGORY);
+	private static final KeyBinding toggleVisuals = new KeyBinding(qualifyName(TOGGLE_VISUALS), KEY_O, CATEGORY);
+	private static final KeyBinding toggleProfilers = new KeyBinding(qualifyName("toggleProfilers"), KEY_P, CATEGORY);
+
+	private static final KeyBinding toggleSmoothable = new KeyBinding(qualifyName(TOGGLE_SMOOTHABLE), KEY_N, CATEGORY);
+
+	private static String qualifyName(String name) {
+		return NoCubes.MOD_ID + ".key." + name;
+	}
+
+	public static ITextComponent translate(String name) {
+		return new TextComponentKeybind(qualifyName(name));
+	}
 
 	public static SmoothLightingFluidBlockRenderer smoothLightingBlockFluidRenderer;
 
@@ -92,19 +101,6 @@ public final class ClientEventSubscriber {
 			return;
 
 		final Minecraft minecraft = Minecraft.getMinecraft();
-
-		final NetHandlerPlayClient connection = minecraft.getConnection();
-		if (NoCubesConfig.Server.collisionsEnabled && connection != null) {
-			final NetworkManager networkManager = connection.getNetworkManager();
-			if (networkManager != null) {
-				final NetworkDispatcher networkDispatcher = NetworkDispatcher.get(networkManager);
-				if (networkDispatcher != null && networkDispatcher.getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-					NoCubesConfig.Server.collisionsEnabled = false;
-					ClientUtil.warnPlayer("[NoCubes] Connected to a vanilla server, collisions have been automatically disabled");
-				}
-			}
-		}
-
 		final WorldClient world = minecraft.world;
 		// Every minute
 		if (world != null && world.getWorldTime() % 1200 == 0) {
@@ -132,6 +128,7 @@ public final class ClientEventSubscriber {
 			return;
 		}
 		NoCubesConfig.Client.updateRender(!NoCubesConfig.Client.render);
+		ClientUtil.warnPlayerIfVisualsDisabled();
 		reloadAllChunks("toggleVisuals was pressed");
 	}
 
@@ -466,19 +463,34 @@ public final class ClientEventSubscriber {
 		}
 	}
 
-	@SubscribeEvent
-	public static void onClientConnectedToServerEvent(final FMLNetworkEvent.ClientConnectedToServerEvent event) {
-		if (!event.isLocal()) {
-//			final NetworkManager manager = event.getManager();
-//			if (manager == null) {
-//				throw new NullPointerException("ARGH! Network Manager is null (" + "MANAGER" + ")");
-//			}
-//			if (NetworkDispatcher.get(manager).getConnectionType() != NetworkDispatcher.ConnectionType.MODDED) {
-//				NoCubes.LOGGER.info("Connected to a vanilla server. Catching up missing behaviour.");
-//				ConfigTracker.INSTANCE.loadDefaultServerConfigs();
-//			}
-			ConfigTracker.INSTANCE.loadDefaultServerConfigs();
+	// @SubscribeEvent
+	// public static void onClientJoinServer(ClientPlayerNetworkEvent.LoggingIn event) {
+	public static void onClientJoinServer(NetHandlerPlayClient event) {
+		LOG.debug("Client joined server");
+		loadDefaultServerConfigIfWeAreOnAModdedServerWithoutNoCubes(event);
+		ClientUtil.sendPlayerInfoMessage();
+		ClientUtil.warnPlayerIfVisualsDisabled();
+		if (!NoCubesNetwork.currentServerHasNoCubes) {
+			// This lets players not phase through the ground on servers that don't have NoCubes installed
+			NoCubesConfig.Server.collisionsEnabled = false;
+			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.notInstalledOnServer", ClientEventSubscriber.translate(ClientEventSubscriber.TOGGLE_SMOOTHABLE));
 		}
+	}
+
+	private static void loadDefaultServerConfigIfWeAreOnAModdedServerWithoutNoCubes(final NetHandlerPlayClient event) {
+		if (ModUtil.isIntegratedServer(event.getNetworkManager())) {
+			// If we are on the integrated server, do nothing, our server config will have been loaded already
+			// The server config is loaded by ForgeEventSubscriber#onPlayerLoggedInEvent
+			return;
+		}
+
+		// You may have noticed that this method is named wrong
+		// This method says that it only loads the config if we are on a modded server without NoCubes
+		// However, it actually loads the config regardless
+		// This is because the method was written and named on 1.13+
+		// On 1.13+ Forge has a config system and will load the default server config for us (except when we connect to a modded server without NoCubes)
+		// On 1.12.2 Forge doesn't have a config system, so we always have to load the default configs
+		ConfigTracker.INSTANCE.loadDefaultServerConfigs();
 	}
 
 }

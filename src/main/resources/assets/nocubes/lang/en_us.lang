@@ -1,60 +1,36 @@
-nocubes.addedTerrainSmoothableBlockState=Added Terrain Smoothable
-nocubes.removedTerrainSmoothableBlockState=Removed Terrain Smoothable
-nocubes.addedLeavesSmoothableBlockState=Added Leaves Smoothable
-nocubes.removedLeavesSmoothableBlockState=Removed Leaves Smoothable
-
 key.categories.nocubes=NoCubes
-nocubes.key.toggleTerrainSmoothableBlockState=Toggle Terrain Smoothable BlockState
-nocubes.key.toggleLeavesSmoothableBlockState=Toggle Leaves Smoothable BlockState
+nocubes.key.toggleVisuals=Toggle rendering
+nocubes.key.toggleSmoothable=Toggle block smoothness
 nocubes.key.toggleProfilers=Toggle Profilers
-nocubes.key.toggleTerrainCollisions=Toggle Terrain Collisions
-nocubes.key.toggleRenderSmoothTerrain=Toggle Smooth Terrain Rendering
-nocubes.key.toggleRenderSmoothLeaves=Toggle Smooth Leaves Rendering
-
-nocubes.terrainCollisions114=NoCubes Terrain Collisions don't work properly in 1.14 yet. This is being worked on and will be fixed soon
-nocubes.terrainCollisionsEnabled=NoCubes Terrain Collisions enabled
-nocubes.terrainCollisionsDisabled=NoCubes Terrain Collisions disabled
-
-nocubes.addTerrainSmoothableNoPermission=You need to be an operator to add a Terrain Smoothable
-nocubes.disableCollisionsNoPermission=You need to be an operator to disable NoCubes Terrain Collisions
-nocubes.enableCollisionsNoPermission=You need to be an operator to enable NoCubes Terrain Collisions
-nocubes.removeTerrainSmoothableNoPermission=You need to be an operator to remove a Terrain Smoothable
-nocubes.setExtendFluidsRangeNoPermission=You need to be an operator to set the Extend Fluids Range
-nocubes.setTerrainMeshGeneratorNoPermission=You need to be an operator to set the Terrain Mesh Generator
-
-nocubes.addedTerrainSmoothable=Added Terrain Smoothable: %s
-nocubes.removedTerrainSmoothable=Removed Terrain Smoothable: %s
-nocubes.setExtendFluidsRange=Set Extend Fluids Range to %s
-nocubes.setTerrainMeshGenerator=Set Terrain Mesh Generator to %s
-nocubes.visualsForcedByServer=NoCubes' terrain rendering is being forced by the server and cannot be disabled
 
 nocubes.config.title=NoCubes Config Gui Beta (Changes aren't instant)
+
+nocubes.config.common=NoCubes Config
+nocubes.config.debugEnabled=Debug mode
+
 nocubes.config.client=Client Config
-nocubes.config.renderSmoothTerrain=Render Smooth Terrain
-nocubes.config.renderSmoothLeaves=Render Smooth Leaves
-nocubes.config.renderSmoothAndVanillaLeaves=Render both Smooth and Vanilla Leaves
-nocubes.config.leavesSmoothable=Leaves Smoothable
-nocubes.config.leavesMeshGenerator=Leaves Mesh Generator
-nocubes.config.smoothLeavesType=Smooth Leaves Type
-nocubes.config.applyDiffuseLighting=Apply Diffuse Lighting
-nocubes.config.betterTextures=Better Textures
-nocubes.config.shortGrass=Short Grass
-nocubes.config.smoothFluidLighting=Smooth Fluid Lighting
-nocubes.config.smoothFluidColors=Smooth Fluid Colors
-nocubes.config.naturalFluidTextures=Natural Fluid Textures
+nocubes.config.infoMessage=NoCubes info message
+nocubes.config.render=NoCubes rendering
+nocubes.config.selectionBoxColor=Selection box color
+nocubes.config.betterGrassSides=Better grass sides
+nocubes.config.moreSnow=More snow
+nocubes.config.fixPlantHeight=Fix plant height
+nocubes.config.grassTufts=Grass tufts
+
 nocubes.config.server=Server Config
-nocubes.config.terrainSmoothable=Terrain Smoothable
-nocubes.config.extendFluidsRange=Extend Fluids Range
-nocubes.config.terrainMeshGenerator=Terrain Mesh Generator
-nocubes.config.terrainCollisions=Terrain Collisions
+nocubes.config.smoothableWhitelist=Whitelist of smoothable blocks
+nocubes.config.smoothableBlacklist=Blacklist of non-smoothable blocks
+nocubes.config.meshGenerator=Mesh generator
+nocubes.config.collisionsEnabled=Custom collisions
+nocubes.config.forceVisuals=Force custom rendering for players
+nocubes.config.extendFluidsRange=Extended fluids range
+nocubes.config.oldNoCubesSlopes=OldNoCubes slopes
 nocubes.config.oldNoCubesInFluids=OldNoCubes in fluids
 nocubes.config.oldNoCubesRoughness=OldNoCubes roughness
 
-nocubes.waitSeconds=Wait %s seconds
-
 nocubes.command.changeSmoothableNoPermission=Unable to change block smoothness; no permission
 
-nocubes.notification.infoMessage=NoCubes is installed, press %1$s while looking at a block to change if it is smooth
-nocubes.notification.notInstalledOnServerCollisionsUnavailable=Because NoCubes is not installed on this server NoCubes' custom collisions cannot work properly and have been temporarily disabled
+nocubes.notification.infoMessage=NoCubes is installed, press %1$s while looking at a block to change if it is smooth\nYou can disable this message by changing '%2$s' to 'false' in your client config (%3$s)
+nocubes.notification.notInstalledOnServer=You have connected to a server that does not have NoCubes installed\nYou can still play but NoCubes' custom collisions cannot work properly and have been temporarily disabled\nAny changes to smooth blocks you make by pressing %1$s while looking at a block will not be saved
 nocubes.notification.visualsForcedByServer=This server forces NoCubes' visuals to be enabled at all times while playing to ensure a 'proper' player experience
 nocubes.notification.visualsDisabled=You have turned off NoCubes' visuals, press '%1$s' to turn them on again or set '%2$s' to 'true' in your client config (%3$s)

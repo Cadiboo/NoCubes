@@ -100,6 +100,10 @@ public final class NoCubesClassTransformer implements IClassTransformer, Opcodes
 				return transformClass(basicClass, transformedName,
 					FMLNetworkHandlerTransformer::transform
 				);
+			case "net.minecraft.client.network.NetHandlerPlayClient":
+				return transformClass(basicClass, transformedName,
+					NetHandlerPlayClientTransformer::transform
+				);
 		}
 		return basicClass;
 	}

@@ -3,6 +3,9 @@ package io.github.cadiboo.nocubes.client;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineLocator;
 import io.github.cadiboo.nocubes.client.render.SmoothLightingFluidBlockRenderer;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ConfigTracker;
+import io.github.cadiboo.nocubes.repackage.net.minecraftforge.fml.config.ModConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -18,11 +21,18 @@ import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.client.CustomModLoadingErrorDisplayException;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.IRegistryDelegate;
 
 import javax.annotation.Nonnull;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
@@ -296,4 +306,35 @@ public final class ClientUtil {
 			throw new RuntimeException("IllegalAccessException while getting the BlockColorsMap... how? It should have been made accessible", e);
 		}
 	}
+
+	public static void warnPlayerIfVisualsDisabled() {
+		if (!NoCubesConfig.Client.render)
+			warnPlayer(
+				NoCubes.MOD_ID + ".notification.visualsDisabled",
+				ClientEventSubscriber.translate(ClientEventSubscriber.TOGGLE_VISUALS),
+				NoCubesConfig.Client.RENDER,
+				clientConfigComponent()
+			);
+	}
+
+	public static void sendPlayerInfoMessage() {
+		if (NoCubesConfig.Client.infoMessage)
+			Minecraft.getMinecraft().player.sendMessage(
+				new TextComponentTranslation(NoCubes.MOD_ID + ".notification.infoMessage",
+					ClientEventSubscriber.translate(ClientEventSubscriber.TOGGLE_SMOOTHABLE),
+					NoCubesConfig.Client.INFO_MESSAGE,
+					clientConfigComponent()
+				).setStyle(new Style().setColor(TextFormatting.GREEN))
+			);
+	}
+
+	private static ITextComponent clientConfigComponent() {
+		File configFile = new File(ConfigTracker.INSTANCE.getConfigFileName(NoCubes.MOD_ID, ModConfig.Type.CLIENT));
+		return new TextComponentString(configFile.getName())
+			.setStyle(new Style()
+				.setUnderlined(true)
+				.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, configFile.getAbsolutePath()))
+			);
+	}
+
 }

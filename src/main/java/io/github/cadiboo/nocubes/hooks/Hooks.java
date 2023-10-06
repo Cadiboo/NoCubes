@@ -1,12 +1,14 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.ClientEventSubscriber;
 import io.github.cadiboo.nocubes.client.render.RenderDispatcher;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
@@ -93,6 +95,15 @@ public final class Hooks {
 		if (side == Side.SERVER) {
 			NoCubesNetwork.currentServerHasNoCubes = modListPacket.modList().containsKey(NoCubes.MOD_ID);
 		}
+	}
+
+	/**
+	 * Called from: the very end of {@link NetHandlerPlayClient#handleJoinGame} when it is invoked during client/server connection handshake.
+	 * Calls: {@link ClientEventSubscriber#onClientJoinServer()}
+	 */
+	@SideOnly(Side.CLIENT)
+	public static void handleJoinGame(NetHandlerPlayClient handler) {
+		ClientEventSubscriber.onClientJoinServer(handler);
 	}
 
 }

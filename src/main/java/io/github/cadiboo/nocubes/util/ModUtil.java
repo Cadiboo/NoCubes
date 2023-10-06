@@ -11,9 +11,9 @@ import net.minecraft.block.BlockSnow;
 import net.minecraft.block.BlockStem;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
@@ -30,7 +30,6 @@ import java.util.Random;
 import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.NoCubes.LOGGER;
-import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
 import static net.minecraft.init.Blocks.BEDROCK;
 import static net.minecraft.init.Blocks.SNOW_LAYER;
 
@@ -243,7 +242,7 @@ public class ModUtil {
 		TextComponentTranslation msg = new TextComponentTranslation(translationKey, formatArgs);
 		if (player != null) {
 			msg.getStyle().setColor(TextFormatting.RED);
-			Minecraft.getMinecraft().player.sendMessage(msg);
+			player.sendMessage(msg);
 		} else
 			LogManager.getLogger("NoCubes notification fallback").warn(msg.getFormattedText());
 	}
@@ -287,6 +286,10 @@ public class ModUtil {
 	 */
 	public static int get3dIndexInto1dArray(int x, int y, int z, int xSize, int ySize) {
 		return (xSize * ySize * z) + (xSize * y) + x;
+	}
+
+	public static boolean isIntegratedServer(final NetworkManager networkManager) {
+		return networkManager.isLocalChannel();
 	}
 
 }
