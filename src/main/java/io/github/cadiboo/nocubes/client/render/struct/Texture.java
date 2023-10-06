@@ -1,9 +1,11 @@
 package io.github.cadiboo.nocubes.client.render.struct;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.Direction;
 
+@PerformanceCriticalAllocation
 public final /* inline record */ class Texture {
 
 	public static final Texture EVERYTHING = new Texture(0, 0, 1, 0, 1, 1, 0, 1);

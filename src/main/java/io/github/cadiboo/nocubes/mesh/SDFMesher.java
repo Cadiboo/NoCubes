@@ -1,9 +1,12 @@
 package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.mesh.TestData.TestMesh;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
+import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -18,7 +21,17 @@ abstract class SDFMesher implements Mesher {
 	// These two really belong to MarchingCubes and SurfaceNets but are here for convenience
 	public static final short MASK_FULLY_OUTSIDE_ISOSURFACE = 0b0000_0000;
 	public static final short MASK_FULLY_INSIDE_ISOSURFACE = 0b1111_1111;
-	private static final ThreadLocalArrayCache<float[]> CACHE = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
+	@PerformanceCriticalAllocation
+	private static final ThreadLocalArrayCache<float[]> FIELD = new ThreadLocalArrayCache<>(float[]::new, array -> array.length);
+	@PerformanceCriticalAllocation
+	public static final ThreadLocal<float[]> NEIGHBOURS_FIELD = ThreadLocal.withInitial(() -> new float[8]);
+	@PerformanceCriticalAllocation
+	public static final ThreadLocalArrayCache<Vec[]> VERTICES = new ThreadLocalArrayCache<>(length -> {
+		var array = new Vec[length];
+		for (var i = 0; i < length; ++i)
+			array[i] = new Vec();
+		return array;
+	}, array -> array.length);
 
 	protected final boolean smoothness2x;
 
@@ -52,7 +65,7 @@ abstract class SDFMesher implements Mesher {
 	static float[] generateDistanceField(Area area, Predicate<BlockState> isSmoothable) {
 		var states = area.getAndCacheBlocks();
 		var length = area.numBlocks();
-		var densityField = CACHE.takeArray(length);
+		var densityField = FIELD.takeArray(length);
 		for (var i = 0; i < length; ++i)
 			densityField[i] = densityToSignedDistance(ModUtil.getBlockDensity(isSmoothable, states[i]));
 		return densityField;
@@ -68,7 +81,7 @@ abstract class SDFMesher implements Mesher {
 		var distanceFieldSizeY = areaY - 1;
 		var distanceFieldSizeZ = areaZ - 1;
 		var distanceFieldSize = distanceFieldSizeX * distanceFieldSizeY * distanceFieldSizeZ;
-		var distanceField = CACHE.takeArray(distanceFieldSize);
+		var distanceField = FIELD.takeArray(distanceFieldSize);
 
 		var index = 0;
 		for (var z = 0; z < areaZ; ++z) {
@@ -101,6 +114,14 @@ abstract class SDFMesher implements Mesher {
 		FullCellAction IGNORE = (x, y, z) -> true;
 
 		boolean apply(double x, double y, double z);
+	}
+
+	@PerformanceCriticalAllocation
+	public static class CollisionObjects {
+		public static final ThreadLocal<CollisionObjects> INSTANCE = ThreadLocal.withInitial(CollisionObjects::new);
+		public final Face vertexNormals = new Face();
+		public final Vec centre = new Vec();
+		public final Vec faceNormal = new Vec();
 	}
 
 }

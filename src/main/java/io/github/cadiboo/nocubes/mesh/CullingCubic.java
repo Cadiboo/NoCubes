@@ -38,8 +38,8 @@ public class CullingCubic extends SimpleMesher {
 		int height = size.getY();
 		int width = size.getX();
 
-		var pos = new BlockPos.MutableBlockPos();
-		var face = new Face();
+		var pos = POS_INSTANCE.get();
+		var face = FACE_INSTANCE.get();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			var blocks = area.getAndCacheBlocks();
 			// Up (pos y)

@@ -9,6 +9,7 @@ import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -38,8 +39,8 @@ public final class MeshRenderer {
 	}
 
 	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area) {
-		var faceInfo = new FaceInfo();
-		var objects = new MutableObjects();
+		var faceInfo = FaceInfo.INSTANCE.get();
+		var objects = MutableObjects.INSTANCE.get();
 		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
@@ -69,7 +70,7 @@ public final class MeshRenderer {
 		Mesher.translateToMeshStart(matrix, area.start, worldPos);
 		var stateSolidity = isSolidRender(state);
 		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var faceInfo = new FaceInfo();
+		var faceInfo = FaceInfo.INSTANCE.get();
 		mesher.generateGeometry(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
 			faceInfo.setup(face);
 			var renderBothSides = false;
@@ -181,7 +182,10 @@ public final class MeshRenderer {
 		quad(buffer, matrix, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
 	}
 
+	@PerformanceCriticalAllocation
 	public static final /* inline record */ class FaceInfo {
+		public static final ThreadLocal<FaceInfo> INSTANCE = ThreadLocal.withInitial(FaceInfo::new);
+
 		public /* final */ Face face;
 		public final Vec centre = new Vec();
 		public final Face vertexNormals = new Face();
@@ -206,7 +210,9 @@ public final class MeshRenderer {
 	/**
 	 * Until Project Valhalla is complete and inline types exist we pass around a bunch of mutable objects.
 	 */
+	@PerformanceCriticalAllocation
 	static final class MutableObjects {
+		public static final ThreadLocal<MutableObjects> INSTANCE = ThreadLocal.withInitial(MutableObjects::new);
 		final FaceLight light = new FaceLight();
 		final RenderableState foundState = new RenderableState();
 		final RenderableState renderState = new RenderableState();
@@ -220,6 +226,7 @@ public final class MeshRenderer {
 		final Texture texture = new Texture();
 	}
 
+	@PerformanceCriticalAllocation
 	static final class RenderableState {
 
 		private static final BlockPos[] OFFSETS_ORDERED = {

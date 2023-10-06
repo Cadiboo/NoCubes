@@ -17,6 +17,7 @@ abstract class SimpleMesher implements Mesher {
 		int height = size.getY();
 		int width = size.getX();
 
+		var blocks = area.getAndCacheBlocks();
 		int index = 0;
 		for (int z = 0; z < depth; ++z) {
 			for (int y = 0; y < height; ++y) {
@@ -24,7 +25,7 @@ abstract class SimpleMesher implements Mesher {
 					if (isOutsideMesh(x, y, z, size))
 						// Some generators need extra neighbour data, we don't want to call the action for it though
 						continue;
-					if (!isSmoothable.test(area.getAndCacheBlocks()[index]))
+					if (!isSmoothable.test(blocks[index]))
 						continue;
 					if (!action.apply(x, y, z, index))
 						return;

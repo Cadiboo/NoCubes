@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 
 public class Area implements AutoCloseable {
 
+	@PerformanceCriticalAllocation
 	private static final ThreadLocalArrayCache<BlockState[]> BLOCKS_CACHE = new ThreadLocalArrayCache<>(BlockState[]::new, array -> array.length);
 
 	public final BlockPos start;

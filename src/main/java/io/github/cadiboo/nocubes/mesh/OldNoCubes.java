@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mesh.SDFMesher.CollisionObjects;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -59,13 +60,14 @@ public final class OldNoCubes extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
-		var vertexNormals = new Face();
-		var faceNormal = new Vec();
-		var centre = new Vec();
 		generateInternal(
 			area, isSmoothable,
 			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
 			(pos, face) -> {
+				var objects = CollisionObjects.INSTANCE.get();
+				var vertexNormals = objects.vertexNormals;
+				var centre = objects.centre;
+				var faceNormal = objects.faceNormal;
 				face.assignAverageTo(centre);
 				face.assignNormalTo(vertexNormals);
 				vertexNormals.assignAverageTo(faceNormal);
@@ -90,14 +92,14 @@ public final class OldNoCubes extends SimpleMesher {
 	}
 
 	private void generateInternal(Area area, Predicate<BlockState> isSmoothable, FullBlockAction fullBlockAction, FaceAction faceAction) {
-		var face = new Face();
-		var pos = new MutableBlockPos();
+		var pos = POS_INSTANCE.get();
+		var face = FACE_INSTANCE.get();
 		// The 8 points that make the block.
 		// 1 point for each corner
-		var points = new Vec[]{new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec(), new Vec()};
+		var points = SDFMesher.VERTICES.takeArray(8);
 		var directions = ModUtil.DIRECTIONS;
 		var directionsLength = directions.length;
-		var neighboursSmoothness = new float[directionsLength];
+		var neighboursSmoothness = SDFMesher.NEIGHBOURS_FIELD.get();
 		var roughness = NoCubesConfig.Server.oldNoCubesRoughness;
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			var blocks = area.getAndCacheBlocks();
