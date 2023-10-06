@@ -18,7 +18,6 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBreakable;
 import net.minecraft.block.BlockGrassPath;
-import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockSnow;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -51,7 +50,7 @@ public final class MeshRenderer {
 	private static final Logger LOGGER = LogManager.getLogger("NoCubes MeshRenderer");
 
 	public static boolean isSolidRender(IBlockState state) {
-		return !(state.getBlock() instanceof BlockLeaves) && !state.isTranslucent() || state.getBlock() instanceof BlockGrassPath;
+		return state.getMaterial().isOpaque() || state.getBlock() instanceof BlockGrassPath;
 	}
 
 	public static void runForSolidAndSeeThrough(Predicate<IBlockState> isSmoothable, Consumer<Predicate<IBlockState>> action) {
