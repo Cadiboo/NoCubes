@@ -133,6 +133,8 @@ dependencies {
 //	implementation fg.deobf("curse.maven:KotlinForForge-351264:3331341")
 //	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
 
+//	implementation fg.deobf("curse.maven:Rubidium-574856:4767529")
+
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'
 	testImplementation 'junit:junit:4.13.2'
