@@ -74,6 +74,7 @@ final class NoCubesTests {
 			@Override
 			public BlockState[] getAndCacheBlocks() {
 				BlockState[] states = new BlockState[numBlocks()];
+				// Worst case for meshers: every 2nd block is smooth (a checkerboard pattern)
 				for (int i = 0; i < states.length; i++)
 					states[i] = i % 2 == 0 ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState();
 				return states;
@@ -84,8 +85,13 @@ final class NoCubesTests {
 				// No-op
 			}
 		};
-		for (var mesher : MesherType.values())
-			mesher.instance.generateGeometry(area, isSmoothable, NoCubesTests::checkAndMutate);
+		for (var mesher : MesherType.values()) {
+			try {
+				mesher.instance.generateGeometry(area, isSmoothable, NoCubesTests::checkAndMutate);
+			} catch (Exception e) {
+				throw new RuntimeException("Error with mesher" + mesher.name(), e);
+			}
+		}
 	}
 
 	private static boolean checkAndMutate(MutableBlockPos pos, Face face) {

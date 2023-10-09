@@ -152,7 +152,10 @@ public class MarchingCubes extends SDFMesher {
 		var grid = NEIGHBOURS_FIELD.get();
 		var edges = EDGES_FIELD.get();
 		var vertexCount = 0;
-		var vertices = VERTICES.get();
+		// Allocate enough memory for the worst-case scenario:
+		// When we have a checkerboard of voxels, every second voxel generates 6 faces (4 vertices each)
+		// This is over-allocating, it would be great to use a sliding buffer the way SurfaceNets works
+		var vertices = VERTICES.takeArray(4 * 6 * dims.getX() * dims.getY() * dims.getZ() / 2);
 
 		//March over the volume
 		for (int z = 0; z < dims.getZ() - 1; ++z, n += dims.getX()) {
