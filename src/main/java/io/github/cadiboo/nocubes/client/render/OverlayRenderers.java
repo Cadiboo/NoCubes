@@ -95,7 +95,7 @@ public final class OverlayRenderers {
 		if (!NoCubesConfig.Common.debugEnabled)
 			return;
 
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_LEVEL)
+		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)
 			return;
 
 		var minecraft = Minecraft.getInstance();
