@@ -127,6 +127,8 @@ public class CullingChamfer extends SimpleMesher {
 					return false;
 			}
 
+			// TODO: The orientation of faces on these chamfers is wrong
+
 			// Top chamfers
 			{
 				if (posY && posZ) {
