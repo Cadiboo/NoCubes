@@ -54,8 +54,10 @@ public final class MeshRenderer {
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 				var renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
 
-				if (renderState.state.getRenderShape() == RenderShape.INVISIBLE)
+				if (renderState.state.getRenderShape() == RenderShape.INVISIBLE) {
+//					renderState.state = Blocks.STONE.defaultBlockState();
 					return true; // How?
+				}
 
 				renderFaceWithConnectedTextures(renderer, objects, area, faceInfo, renderState);
 

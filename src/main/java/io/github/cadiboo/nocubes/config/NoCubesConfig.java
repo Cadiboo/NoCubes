@@ -383,6 +383,7 @@ public final class NoCubesConfig {
 			Debug_CullingCubic(new CullingCubic()),
 			Debug_StupidCubic(new StupidCubic()),
 			Debug_CullingChamfer(new CullingChamfer()),
+			Debug_WulferisMesher(new WulferisMesher()),
 			;
 
 			public final Mesher instance;
