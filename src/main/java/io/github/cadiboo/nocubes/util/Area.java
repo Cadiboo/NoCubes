@@ -15,7 +15,8 @@ import javax.annotation.Nullable;
 public class Area implements AutoCloseable {
 
 	@PerformanceCriticalAllocation
-	private static final ThreadLocalArrayCache<BlockState[]> BLOCKS_CACHE = new ThreadLocalArrayCache<>(BlockState[]::new, array -> array.length);
+	private static final ThreadLocalArrayCache<BlockState[]> BLOCKS_CACHE = new ThreadLocalArrayCache<>(BlockState[]::new, array -> array.length);@PerformanceCriticalAllocation
+	private static final ThreadLocal<int[]> DIRECTION_OFFSETS_CACHE = ThreadLocal.withInitial(() -> new int[ModUtil.DIRECTIONS.length]);
 
 	public final BlockPos start;
 	public final BlockPos size;
@@ -118,15 +119,15 @@ public class Area implements AutoCloseable {
 		final var upDownSliceSize = size.getY();
 		final var northSouthSliceSize = upDownSliceSize * size.getX();
 		final var eastWestSliceSize = 1;
+		final var array = DIRECTION_OFFSETS_CACHE.get();
 		// Directions are ordered DUNSWE
-		return new int [] {
-			-upDownSliceSize, // Down
-			+upDownSliceSize, // Up
-			-northSouthSliceSize, // North
-			+northSouthSliceSize, // South
-			-eastWestSliceSize, // West
-			+eastWestSliceSize, // East
-		};
+		array[0] = -upDownSliceSize; // Down
+		array[1] = +upDownSliceSize; // Up
+		array[2] = -northSouthSliceSize; // North
+		array[3] = +northSouthSliceSize; // South
+		array[4] = -eastWestSliceSize; // West
+		array[5] = +eastWestSliceSize; // East
+		return array;
 	}
 
 	public interface Traverser {
