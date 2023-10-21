@@ -5,6 +5,7 @@ import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
@@ -44,49 +45,47 @@ public class WulferisMesher extends CullingCubic {
 
 	@Override
 	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
-		var pos = POS_INSTANCE.get();
-		SmoothChecker shouldSmooth = (x, y, z) -> {
-			pos.set(x, y, z);
-			return isSmoothable.test(area.getBlockState(pos));
-		};
 		var mut = SDFMesher.CollisionObjects.INSTANCE.get().centre;
 		super.generateGeometryInternal(area, isSmoothable, (relativePos, face) -> {
-			getOffsetToSurfaceToVertex(shouldSmooth, face.v0, mut);
-			getOffsetToSurfaceToVertex(shouldSmooth, face.v1, mut);
-			getOffsetToSurfaceToVertex(shouldSmooth, face.v2, mut);
-			getOffsetToSurfaceToVertex(shouldSmooth, face.v3, mut);
+			var x = relativePos.getX();
+			var y = relativePos.getY();
+			var z = relativePos.getZ();
+			getOffsetToSurfaceToVertex(face.v0, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceToVertex(face.v1, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceToVertex(face.v2, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceToVertex(face.v3, mut, relativePos, area, isSmoothable);
+			relativePos.set(x, y, z);
 			return action.apply(relativePos, face);
 		});
 	}
 
-	@FunctionalInterface
-	interface SmoothChecker {
-		boolean test(int x, int y, int z);
+	boolean shouldSmooth(int x, int y, int z, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable) {
+		return isSmoothable.test(area.getBlockState(pos.set(x, y, z)));
 	}
 
-	float getDistance(SmoothChecker shouldSmooth, int x, int y, int z)
+	float getDistance(int x, int y, int z, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable)
 	{
 		final float scalar = 1f;
 		final float v = 1f * scalar;
 		final float defaultV = 1.4142135f * scalar;
 
-		if (!shouldSmooth.test(x, y, z))
+		if (!shouldSmooth(x, y, z, pos, area, isSmoothable))
 			return -v;
 
 //		// No Check - Fastest
 //		return 1f;
 		// Main Axis Check slower but better with 1 block pillars
 		float result = defaultV;
-		if (!shouldSmooth.test(x + 1, y, z)) result = v;
-		else if (!shouldSmooth.test(x, y + 1, z)) result = v;
-		else if (!shouldSmooth.test(x, y, z + 1)) result = v;
-		else if (!shouldSmooth.test(x - 1, y, z)) result = v;
-		else if (!shouldSmooth.test(x, y - 1, z)) result = v;
-		else if (!shouldSmooth.test(x, y, z - 1)) result = v;
+		if (!shouldSmooth(x + 1, y, z, pos, area, isSmoothable)) result = v;
+		else if (!shouldSmooth(x, y + 1, z, pos, area, isSmoothable)) result = v;
+		else if (!shouldSmooth(x, y, z + 1, pos, area, isSmoothable)) result = v;
+		else if (!shouldSmooth(x - 1, y, z, pos, area, isSmoothable)) result = v;
+		else if (!shouldSmooth(x, y - 1, z, pos, area, isSmoothable)) result = v;
+		else if (!shouldSmooth(x, y, z - 1, pos, area, isSmoothable)) result = v;
 		return result;
 	}
 
-	float sampleDensity(SmoothChecker shouldSmooth, Vec p)
+	float sampleDensity(Vec p, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable)
 	{
 		// Mesher assumes voxels are centred around a position
 		// This is not the case - mc blocks have their smallest corner in their block pos
@@ -104,10 +103,19 @@ public class WulferisMesher extends CullingCubic {
 		float dy = py - y0;
 		float dz = pz - z0;
 
-		float c00 = lerp(getDistance(shouldSmooth, x0, y0, z0), getDistance(shouldSmooth, x0 + 1, y0, z0), dx);
-		float c01 = lerp(getDistance(shouldSmooth, x0, y0, z0 + 1), getDistance(shouldSmooth, x0 + 1, y0, z0 + 1), dx);
-		float c10 = lerp(getDistance(shouldSmooth, x0, y0 + 1, z0), getDistance(shouldSmooth, x0 + 1, y0 + 1, z0), dx);
-		float c11 = lerp(getDistance(shouldSmooth, x0, y0 + 1, z0 + 1), getDistance(shouldSmooth, x0 + 1, y0 + 1, z0 + 1), dx);
+		float d000 = getDistance(x0, y0, z0, pos, area, isSmoothable);
+		float d100 = getDistance(x0 + 1, y0, z0, pos, area, isSmoothable);
+		float d001 = getDistance(x0, y0, z0 + 1, pos, area, isSmoothable);
+		float d101 = getDistance(x0 + 1, y0, z0 + 1, pos, area, isSmoothable);
+		float d010 = getDistance(x0, y0 + 1, z0, pos, area, isSmoothable);
+		float d110 = getDistance(x0 + 1, y0 + 1, z0, pos, area, isSmoothable);
+		float d011 = getDistance(x0, y0 + 1, z0 + 1, pos, area, isSmoothable);
+		float d111 = getDistance(x0 + 1, y0 + 1, z0 + 1, pos, area, isSmoothable);
+
+		float c00 = lerp(d000, d100, dx);
+		float c01 = lerp(d001, d101, dx);
+		float c10 = lerp(d010, d110, dx);
+		float c11 = lerp(d011, d111, dx);
 
 		float c0 = lerp(c00, c10, dy);
 		float c1 = lerp(c01, c11, dy);
@@ -118,13 +126,19 @@ public class WulferisMesher extends CullingCubic {
 		return Mth.lerp(time, start, end);
 	}
 
-	void getOffsetToSurfaceToVertex(SmoothChecker shouldSmooth, Vec p, Vec mut)
+	void getOffsetToSurfaceToVertex(Vec p, Vec mut, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable)
 	{
         final float E = 0.5f;
-		var x = sampleDensity(shouldSmooth, mut.set(p.x + E, p.y, p.z)) - sampleDensity(shouldSmooth, mut.set(p.x - E, p.y, p.z));
-		var y = sampleDensity(shouldSmooth, mut.set(p.x, p.y + E, p.z)) - sampleDensity(shouldSmooth, mut.set(p.x, p.y - E, p.z));
-		var z = sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z + E)) - sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z - E));
-		var scale = sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z));
+		var dx0 = sampleDensity(mut.set(p.x + E, p.y, p.z), pos, area, isSmoothable);
+		float dx1 = sampleDensity(mut.set(p.x - E, p.y, p.z), pos, area, isSmoothable);
+		float dy0 = sampleDensity(mut.set(p.x, p.y + E, p.z), pos, area, isSmoothable);
+		float dy1 = sampleDensity(mut.set(p.x, p.y - E, p.z), pos, area, isSmoothable);
+		float dz0 = sampleDensity(mut.set(p.x, p.y, p.z + E), pos, area, isSmoothable);
+		float dz1 = sampleDensity(mut.set(p.x, p.y, p.z - E), pos, area, isSmoothable);
+		var scale = sampleDensity(mut.set(p.x, p.y, p.z), pos, area, isSmoothable);
+		var x = dx0 - dx1;
+		var y = dy0 - dy1;
+		var z = dz0 - dz1;
 		p.add(mut.set(x, y, z).normalise().multiply(-scale * 0.75f));
 	}
 
