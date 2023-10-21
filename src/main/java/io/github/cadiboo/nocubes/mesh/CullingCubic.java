@@ -2,9 +2,7 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -44,62 +42,32 @@ public class CullingCubic extends SimpleMesher {
 			var blocks = area.getAndCacheBlocks();
 			// Up (pos y)
 			if (!isSmoothable.test(blocks[index + height]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + max, y + max, z + max,
-					x + max, y + max, z + min,
-					x + min, y + max, z + min,
-					x + min, y + max, z + max
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.upFace(face, x, y, z, min, max)))
 					return false;
 
 			// Down (neg y)
 			if (!isSmoothable.test(blocks[index - height]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + max, y, z + max,
-					x + min, y, z + max,
-					x + min, y, z + min,
-					x + max, y, z + min
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.downFace(face, x, y, z, min, max)))
 					return false;
 
 			// South (pos z)
 			if (!isSmoothable.test(blocks[index + width * height]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + max, y + max, z + max,
-					x + min, y + max, z + max,
-					x + min, y + min, z + max,
-					x + max, y + min, z + max
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.southFace(face, x, y, z, min, max)))
 					return false;
 
 			// North (neg z)
 			if (!isSmoothable.test(blocks[index - width * height]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + max, y + max, z + min,
-					x + max, y + min, z + min,
-					x + min, y + min, z + min,
-					x + min, y + max, z + min
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.northFace(face, x, y, z, min, max)))
 					return false;
 
 			// East (pos x)
 			if (!isSmoothable.test(blocks[index + 1]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + max, y + max, z + max,
-					x + max, y + min, z + max,
-					x + max, y + min, z + min,
-					x + max, y + max, z + min
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.eastFace(face, x, y, z, min, max)))
 					return false;
 
 			// West (neg x)
 			if (!isSmoothable.test(blocks[index - 1]))
-				if (!action.apply(pos.set(x, y, z), face.set(
-					x + min, y + max, z + max,
-					x + min, y + max, z + min,
-					x + min, y + min, z + min,
-					x + min, y + min, z + max
-				)))
+				if (!action.apply(pos.set(x, y, z), StupidCubic.westFace(face, x, y, z, min, max)))
 					return false;
 			return true;
 		});
