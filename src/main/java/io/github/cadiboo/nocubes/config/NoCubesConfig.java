@@ -152,6 +152,7 @@ public final class NoCubesConfig {
 		public static boolean debugRenderMeshCollisions;
 		public static boolean debugRecordMeshPerformance;
 		public static boolean debugOutlineNearbyMesh;
+		public static boolean debugSkipNoCubesRendering;
 
 		static {
 			var specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
@@ -187,6 +188,7 @@ public final class NoCubesConfig {
 			debugRenderMeshCollisions = INSTANCE.debugRenderMeshCollisions.get();
 			debugRecordMeshPerformance = INSTANCE.debugRecordMeshPerformance.get();
 			debugOutlineNearbyMesh = INSTANCE.debugOutlineNearbyMesh.get();
+			debugSkipNoCubesRendering = INSTANCE.debugSkipNoCubesRendering.get();
 		}
 
 		private static int hashChunkRenderSettings() {
@@ -222,6 +224,7 @@ public final class NoCubesConfig {
 			final BooleanValue debugRenderMeshCollisions;
 			final BooleanValue debugRecordMeshPerformance;
 			final BooleanValue debugOutlineNearbyMesh;
+			final BooleanValue debugSkipNoCubesRendering;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
 				infoMessage = builder
@@ -296,6 +299,7 @@ public final class NoCubesConfig {
 					debugRenderMeshCollisions = builder.comment(debugComment).define("debugRenderMeshCollisions", false);
 					debugRecordMeshPerformance = builder.comment(debugComment).define("debugRecordMeshPerformance", false);
 					debugOutlineNearbyMesh = builder.comment(debugComment).define("debugOutlineNearbyMesh", false);
+					debugSkipNoCubesRendering = builder.comment(debugComment).define("debugSkipNoCubesRendering", false);
 				}
 				builder.pop();
 			}
@@ -496,11 +500,16 @@ public final class NoCubesConfig {
 			ConfigTracker_getConfig(type).ifPresent(modConfig -> {
 				LOG.debug("Found {} ModConfig to save and load", type.name());
 				modConfig.save();
-				((CommentedFileConfig) modConfig.getConfigData()).load();
-				modConfig.getSpec().afterReload();
-//				modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+				loadConfig(modConfig);
 			});
+		}
+
+		// Separate function so I can easily call it while debugging
+		static void loadConfig(ModConfig modConfig) {
+			((CommentedFileConfig) modConfig.getConfigData()).load();
+			modConfig.getSpec().afterReload();
+//			modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
+			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
 		}
 
 		/**

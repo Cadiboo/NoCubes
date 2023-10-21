@@ -228,6 +228,9 @@ public final class RendererDispatcher {
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
+		if (NoCubesConfig.Client.debugSkipNoCubesRendering)
+			return;
+
 		var start = System.nanoTime();
 		var matrix = new FluentMatrixStack(matrixStack);
 		try (
