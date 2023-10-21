@@ -24,7 +24,7 @@ public class StupidCubic extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
-		generate(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
 	}
 
 	@Override
@@ -34,7 +34,7 @@ public class StupidCubic extends SimpleMesher {
 
 		var pos = POS_INSTANCE.get();
 		var face = FACE_INSTANCE.get();
-		generate(area, isSmoothable, (x, y, z, index) -> {
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> {
 			for (var dir : ModUtil.DIRECTIONS) {
 				if (!action.apply(pos.set(x, y, z), dirFace(dir, face, x, y, z, min, max))) {
 					return false;

@@ -11,7 +11,7 @@ abstract class SimpleMesher implements Mesher {
 		boolean apply(int x, int y, int z, int index);
 	}
 
-	void generate(Area area, Predicate<BlockState> isSmoothable, Action action) {
+	void iterateSmoothBlocksInsideMesh(Area area, Predicate<BlockState> isSmoothable, Action action) {
 		var size = area.size;
 		int depth = size.getZ();
 		int height = size.getY();

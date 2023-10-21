@@ -24,7 +24,7 @@ public class CullingCubic extends SimpleMesher {
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
-		generate(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> ShapeConsumer.acceptFullCube(x, y, z, action));
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class CullingCubic extends SimpleMesher {
 
 		var pos = POS_INSTANCE.get();
 		var face = FACE_INSTANCE.get();
-		generate(area, isSmoothable, (x, y, z, index) -> {
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> {
 			for (int directionOrdinal = 0; directionOrdinal < directions.length; directionOrdinal++) {
 				if (isSmoothable.test(blocks[index + offsetLookup[directionOrdinal]]))
 					continue;

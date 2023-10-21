@@ -99,7 +99,7 @@ public final class OldNoCubes extends SimpleMesher {
 		var directionOffsets = area.generateDirectionOffsetsLookup();
 		var neighboursSmoothness = SDFMesher.NEIGHBOURS_FIELD.get();
 		var roughness = NoCubesConfig.Server.oldNoCubesRoughness;
-		generate(area, isSmoothable, (x, y, z, index) -> {
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> {
 			var blocks = area.getAndCacheBlocks();
 			var state = blocks[index];
 
