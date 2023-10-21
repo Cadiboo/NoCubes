@@ -57,8 +57,10 @@ public class ModUtil {
 	 * @return Positive density if the block is smoothable (and will be at least partially inside the isosurface)
 	 */
 	public static float getBlockDensity(boolean shouldSmooth, BlockState state) {
-		if (!shouldSmooth)
-			return NOT_SMOOTHABLE;
+		return shouldSmooth ? getSmoothBlockDensity(state) : NOT_SMOOTHABLE;
+	}
+
+	public static float getSmoothBlockDensity(BlockState state) {
 		if (isSnowLayer(state))
 			// Snow layer, not the actual whole snow block
 			return mapSnowHeight(state.getValue(SnowLayerBlock.LAYERS));
