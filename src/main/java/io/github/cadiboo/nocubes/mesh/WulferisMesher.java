@@ -107,7 +107,7 @@ public class WulferisMesher extends SimpleMesher {
 		var state = area.getAndCacheBlocks()[area.index(x, y, z)];
 
 		if (!isSmoothable.test(state)) {
-			if (!state.canBeReplaced() && !NoCubes.smoothableHandler.isSmoothable(state) || state.getBlock() instanceof VineBlock)
+			if (!state.canBeReplaced() && !NoCubes.smoothableHandler.isSmoothable(state) && !ModUtil.isShortPlant(state) || state.getBlock() instanceof VineBlock)
 				return -1000f;
 //		if (!shouldSmooth(x, y, z, area, isSmoothable))
 			return ModUtil.NOT_SMOOTHABLE; // Outside the surface (air/water/door/non-smoothable)
