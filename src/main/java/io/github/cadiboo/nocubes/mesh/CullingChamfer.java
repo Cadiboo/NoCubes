@@ -44,6 +44,7 @@ public class CullingChamfer extends SimpleMesher {
 		var face = FACE_INSTANCE.get();
 		generate(area, isSmoothable, (x, y, z, index) -> {
 			var blocks = area.getAndCacheBlocks();
+			// Same offsets as in Area#generateDirectionOffsetsLookup
 			boolean posY = !isSmoothable.test(blocks[index + height]);
 			boolean negY = !isSmoothable.test(blocks[index - height]);
 			boolean posX = !isSmoothable.test(blocks[index + 1]);

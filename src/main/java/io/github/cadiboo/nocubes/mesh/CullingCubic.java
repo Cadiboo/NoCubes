@@ -32,43 +32,19 @@ public class CullingCubic extends SimpleMesher {
 		final float min = 0F;
 		final float max = 1F - min;
 
-		var size = area.size;
-		int height = size.getY();
-		int width = size.getX();
+		var offsetLookup = area.generateDirectionOffsetsLookup();
+		var blocks = area.getAndCacheBlocks();
+		final var directions = ModUtil.DIRECTIONS;
 
 		var pos = POS_INSTANCE.get();
 		var face = FACE_INSTANCE.get();
 		generate(area, isSmoothable, (x, y, z, index) -> {
-			var blocks = area.getAndCacheBlocks();
-			// Up (pos y)
-			if (!isSmoothable.test(blocks[index + height]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.upFace(face, x, y, z, min, max)))
+			for (int directionOrdinal = 0; directionOrdinal < directions.length; directionOrdinal++) {
+				if (isSmoothable.test(blocks[index + offsetLookup[directionOrdinal]]))
+					continue;
+				if (!action.apply(pos.set(x, y, z), StupidCubic.dirFace(directions[directionOrdinal], face, x, y, z, min, max)))
 					return false;
-
-			// Down (neg y)
-			if (!isSmoothable.test(blocks[index - height]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.downFace(face, x, y, z, min, max)))
-					return false;
-
-			// South (pos z)
-			if (!isSmoothable.test(blocks[index + width * height]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.southFace(face, x, y, z, min, max)))
-					return false;
-
-			// North (neg z)
-			if (!isSmoothable.test(blocks[index - width * height]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.northFace(face, x, y, z, min, max)))
-					return false;
-
-			// East (pos x)
-			if (!isSmoothable.test(blocks[index + 1]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.eastFace(face, x, y, z, min, max)))
-					return false;
-
-			// West (neg x)
-			if (!isSmoothable.test(blocks[index - 1]))
-				if (!action.apply(pos.set(x, y, z), StupidCubic.westFace(face, x, y, z, min, max)))
-					return false;
+			}
 			return true;
 		});
 	}

@@ -112,6 +112,22 @@ public class Area implements AutoCloseable {
 		return getAndCacheBlocks()[index];
 	}
 
+	public int[] generateDirectionOffsetsLookup() {
+		final var size = this.size;
+		final var upDownSliceSize = size.getY();
+		final var northSouthSliceSize = upDownSliceSize * size.getX();
+		final var eastWestSliceSize = 1;
+		// Directions are ordered DUNSWE
+		return new int [] {
+			-upDownSliceSize, // Down
+			+upDownSliceSize, // Up
+			-northSouthSliceSize, // North
+			+northSouthSliceSize, // South
+			-eastWestSliceSize, // West
+			+eastWestSliceSize, // East
+		};
+	}
+
 	public interface Traverser {
 		boolean accept(BlockState state, BlockPos.MutableBlockPos pos, int zyxIndex);
 	}

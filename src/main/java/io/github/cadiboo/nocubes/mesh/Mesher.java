@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 public interface Mesher {
-	
+
 	@PerformanceCriticalAllocation
 	ThreadLocal<MutableBlockPos> POS_INSTANCE = ThreadLocal.withInitial(MutableBlockPos::new);
 	@PerformanceCriticalAllocation
@@ -56,16 +56,6 @@ public interface Mesher {
 		 */
 		boolean apply(MutableBlockPos relativePos, Face face);
 
-	}
-
-	/* protected */
-	default boolean isOutsideMesh(int x, int y, int z, BlockPos size) {
-		var negativeExtension = getNegativeAreaExtension();
-		var positiveExtension = getPositiveAreaExtension();
-		// Block is outside where we are generating it for, we only query it for its neighbouring faces
-		return x >= size.getX() - positiveExtension.getX() || x < negativeExtension.getX() ||
-			y >= size.getY() - positiveExtension.getY() || y < negativeExtension.getY() ||
-			z >= size.getZ() - positiveExtension.getZ() || z < negativeExtension.getZ();
 	}
 
 	/**
