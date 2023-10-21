@@ -1,12 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.mesh.TestData.TestMesh;
-import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.ThreadLocalArrayCache;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 

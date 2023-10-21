@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.api.distmarker.Dist;

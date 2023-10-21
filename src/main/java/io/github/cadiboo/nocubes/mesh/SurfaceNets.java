@@ -4,7 +4,6 @@ import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.mesh.TestData.TestMesh;
 import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.core.BlockPos;
@@ -16,7 +15,6 @@ import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.CUBE_EDGES;
 import static io.github.cadiboo.nocubes.mesh.SurfaceNets.Lookup.EDGE_TABLE;
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * Surface Nets generates a vertex for each cell and then stitches them together.

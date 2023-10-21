@@ -2,18 +2,14 @@ package io.github.cadiboo.nocubes.mesh;
 
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
-import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
 import javax.annotation.Nullable;
 import java.util.function.Predicate;
-
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
  * @author Cadiboo

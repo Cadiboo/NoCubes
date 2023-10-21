@@ -9,11 +9,7 @@ import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
-import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
-import io.github.cadiboo.nocubes.util.Area;
-import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import io.github.cadiboo.nocubes.util.Vec;
+import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.EmptyBlockGetter;
@@ -48,7 +44,7 @@ public final class MeshRenderer {
 				RenderableState foundState;
 				if (mesher instanceof OldNoCubes) {
 					foundState = objects.foundState;
-					foundState.state = area.getBlockState(ignored);
+					foundState.state = area.getBlockStateFaultTolerant(ignored);
 					foundState.pos.set(ignored);
 				} else
 					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
@@ -112,7 +108,7 @@ public final class MeshRenderer {
 			return;
 
 		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
-		var stateAbove = area.getBlockState(relativeAbove);
+		var stateAbove = area.getBlockStateFaultTolerant(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
 			try (var ignored = renderer.matrix.push()) {
 				var worldAbove = relativeAbove.move(area.start);
@@ -274,7 +270,7 @@ public final class MeshRenderer {
 		public static RenderableState findAt(MutableObjects objects, Area area, Vec faceNormal, Vec faceCentre, Predicate<BlockState> isSmoothable) {
 			var foundState = objects.foundState;
 			var faceBlockPos = posForFace(objects.vec, faceNormal, faceCentre).assignTo(foundState.pos);
-			var state = area.getBlockState(faceBlockPos);
+			var state = area.getBlockStateFaultTolerant(faceBlockPos);
 
 			// Has always been true in testing, so I changed this from a call to tryFindNearbyPosAndState on failure to an assertion
 			// This HAS failed due to a race condition with the mesh being generated and then this getting called after
@@ -304,7 +300,7 @@ public final class MeshRenderer {
 			for (int i = 0, offsets_orderedLength = OFFSETS_ORDERED.length; i < offsets_orderedLength; i++) {
 				var offset = OFFSETS_ORDERED[i];
 				relativePos.set(original.pos).move(offset);
-				var state = area.getBlockState(relativePos);
+				var state = area.getBlockStateFaultTolerant(relativePos);
 				if (isSmoothable.test(state)) {
 					toUse.state = state;
 					return toUse;

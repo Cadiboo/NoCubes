@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.mesh;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
-import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
