@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
 
-public class WulferisMesher extends CullingCubic {
+public class WulferisMesher extends SimpleMesher {
 
 	@Override
 	public Vec3i getPositiveAreaExtension() {
@@ -33,33 +33,68 @@ public class WulferisMesher extends CullingCubic {
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
 		// TODO: Generate collisions properly based on the voxel values, not the faces
-		generateGeometryInternal(area, isSmoothable, (pos, face) -> {
-			var objects = SDFMesher.CollisionObjects.INSTANCE.get();
-			var vertexNormals = objects.vertexNormals;
-			var centre = objects.centre;
-			var faceNormal = objects.faceNormal;
-			face.assignAverageTo(centre);
-			face.assignNormalTo(vertexNormals);
-			vertexNormals.assignAverageTo(faceNormal);
-			return CollisionHandler.generateShapes(centre, faceNormal, action, face);
-		});
+		generate(
+			area, isSmoothable,
+			(x, y, z) -> ShapeConsumer.acceptFullCube(x, y, z, action),
+			(pos, face) -> {
+				var objects = SDFMesher.CollisionObjects.INSTANCE.get();
+				var vertexNormals = objects.vertexNormals;
+				var centre = objects.centre;
+				var faceNormal = objects.faceNormal;
+				face.assignAverageTo(centre);
+				face.assignNormalTo(vertexNormals);
+				vertexNormals.assignAverageTo(faceNormal);
+				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
+			}
+		);
 	}
 
 	@Override
 	public void generateGeometryInternal(Area area, Predicate<BlockState> isSmoothable, FaceAction action) {
-		var mut = SDFMesher.CollisionObjects.INSTANCE.get().centre;
-		super.generateGeometryInternal(area, isSmoothable, (relativePos, face) -> {
+		generate(area, isSmoothable, SDFMesher.FullCellAction.IGNORE, action);
+	}
+
+	// Copied and modified from CullingCubic
+	void generate(Area area, Predicate<BlockState> isSmoothable, SDFMesher.FullCellAction fullCellAction, FaceAction action) {
+		final float min = 0F;
+		final float max = 1F - min;
+
+		var offsetLookup = area.generateDirectionOffsetsLookup();
+		var blocks = area.getAndCacheBlocks();
+		final var directions = ModUtil.DIRECTIONS;
+
+		var pos = POS_INSTANCE.get();
+		var face = FACE_INSTANCE.get();
+		iterateSmoothBlocksInsideMesh(area, isSmoothable, (x, y, z, index) -> {
 			// Never render snow
 			// If vanilla is rendering it then everything works great.
 			// If we are meant to be rendering it, we should just render white on top of the block
 			// TODO: This doesn't work for multi-layer snow
-			if (area.getAndCacheBlocks()[area.index(relativePos.getX(), relativePos.getY(), relativePos.getZ())].getBlock() == Blocks.SNOW)
+			if (blocks[index].getBlock() == Blocks.SNOW)
 				return true;
-			getOffsetToSurfaceAndAddToVertex(face.v0, mut, area, isSmoothable);
-			getOffsetToSurfaceAndAddToVertex(face.v1, mut, area, isSmoothable);
-			getOffsetToSurfaceAndAddToVertex(face.v2, mut, area, isSmoothable);
-			getOffsetToSurfaceAndAddToVertex(face.v3, mut, area, isSmoothable);
-			return action.apply(relativePos, face);
+
+			var mut = SDFMesher.CollisionObjects.INSTANCE.get().centre;
+			var anyFaces = false;
+			for (int directionOrdinal = 0; directionOrdinal < directions.length; directionOrdinal++) {
+				if (isSmoothable.test(blocks[index + offsetLookup[directionOrdinal]]))
+					continue;
+				anyFaces = true;
+				StupidCubic.dirFace(directions[directionOrdinal], face, x, y, z, min, max);
+
+				// Apply the offset
+				{
+					getOffsetToSurfaceAndAddToVertex(face.v0, mut, area, isSmoothable);
+					getOffsetToSurfaceAndAddToVertex(face.v1, mut, area, isSmoothable);
+					getOffsetToSurfaceAndAddToVertex(face.v2, mut, area, isSmoothable);
+					getOffsetToSurfaceAndAddToVertex(face.v3, mut, area, isSmoothable);
+				}
+
+				if (!action.apply(pos.set(x, y, z), face))
+					return false;
+			}
+			if (!anyFaces && !fullCellAction.apply(x, y, z))
+				return false;
+			return true;
 		});
 	}
 
