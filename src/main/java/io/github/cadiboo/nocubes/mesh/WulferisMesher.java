@@ -51,10 +51,10 @@ public class WulferisMesher extends CullingCubic {
 		};
 		var mut = SDFMesher.CollisionObjects.INSTANCE.get().centre;
 		super.generateGeometryInternal(area, isSmoothable, (relativePos, face) -> {
-			face.v0.add(getOffsetToSurface(shouldSmooth, face.v0, mut));
-			face.v1.add(getOffsetToSurface(shouldSmooth, face.v1, mut));
-			face.v2.add(getOffsetToSurface(shouldSmooth, face.v2, mut));
-			face.v3.add(getOffsetToSurface(shouldSmooth, face.v3, mut));
+			getOffsetToSurfaceToVertex(shouldSmooth, face.v0, mut);
+			getOffsetToSurfaceToVertex(shouldSmooth, face.v1, mut);
+			getOffsetToSurfaceToVertex(shouldSmooth, face.v2, mut);
+			getOffsetToSurfaceToVertex(shouldSmooth, face.v3, mut);
 			return action.apply(relativePos, face);
 		});
 	}
@@ -118,14 +118,14 @@ public class WulferisMesher extends CullingCubic {
 		return Mth.lerp(time, start, end);
 	}
 
-	Vec getOffsetToSurface(SmoothChecker shouldSmooth, Vec p, Vec mut)
+	void getOffsetToSurfaceToVertex(SmoothChecker shouldSmooth, Vec p, Vec mut)
 	{
         final float E = 0.5f;
 		var x = sampleDensity(shouldSmooth, mut.set(p.x + E, p.y, p.z)) - sampleDensity(shouldSmooth, mut.set(p.x - E, p.y, p.z));
 		var y = sampleDensity(shouldSmooth, mut.set(p.x, p.y + E, p.z)) - sampleDensity(shouldSmooth, mut.set(p.x, p.y - E, p.z));
 		var z = sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z + E)) - sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z - E));
 		var scale = sampleDensity(shouldSmooth, mut.set(p.x, p.y, p.z));
-		return mut.set(x, y, z).normalise().multiply(-scale * 0.75f);
+		p.add(mut.set(x, y, z).normalise().multiply(-scale * 0.75f));
 	}
 
 }
