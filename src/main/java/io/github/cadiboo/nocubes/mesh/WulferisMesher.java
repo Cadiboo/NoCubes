@@ -50,10 +50,10 @@ public class WulferisMesher extends CullingCubic {
 			var x = relativePos.getX();
 			var y = relativePos.getY();
 			var z = relativePos.getZ();
-			getOffsetToSurfaceToVertex(face.v0, mut, relativePos, area, isSmoothable);
-			getOffsetToSurfaceToVertex(face.v1, mut, relativePos, area, isSmoothable);
-			getOffsetToSurfaceToVertex(face.v2, mut, relativePos, area, isSmoothable);
-			getOffsetToSurfaceToVertex(face.v3, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceAndAddToVertex(face.v0, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceAndAddToVertex(face.v1, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceAndAddToVertex(face.v2, mut, relativePos, area, isSmoothable);
+			getOffsetToSurfaceAndAddToVertex(face.v3, mut, relativePos, area, isSmoothable);
 			relativePos.set(x, y, z);
 			return action.apply(relativePos, face);
 		});
@@ -126,7 +126,7 @@ public class WulferisMesher extends CullingCubic {
 		return Mth.lerp(time, start, end);
 	}
 
-	void getOffsetToSurfaceToVertex(Vec p, Vec mut, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable)
+	void getOffsetToSurfaceAndAddToVertex(Vec p, Vec mut, MutableBlockPos pos, Area area, Predicate<BlockState> isSmoothable)
 	{
         final float E = 0.5f;
 		var dx0 = sampleDensity(mut.set(p.x + E, p.y, p.z), pos, area, isSmoothable);
