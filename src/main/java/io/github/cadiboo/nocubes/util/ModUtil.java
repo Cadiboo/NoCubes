@@ -28,6 +28,7 @@ public class ModUtil {
 	public static final BlockPos VEC_ZERO = new BlockPos(0, 0, 0);
 	public static final BlockPos VEC_ONE = new BlockPos(1, 1, 1);
 	public static final BlockPos VEC_TWO = new BlockPos(2, 2, 2);
+	public static final BlockPos VEC_THREE = new BlockPos(3, 3, 3);
 	public static final BlockPos CHUNK_SIZE = new BlockPos(16, 16, 16);
 	public static final Direction[] DIRECTIONS = Direction.values();
 	public static final float FULLY_SMOOTHABLE = 1;

@@ -3,13 +3,29 @@ package io.github.cadiboo.nocubes.mesh;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
 import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
+import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.function.Predicate;
 
 public class WulferisMesher extends CullingCubic {
+
+	@Override
+	public Vec3i getPositiveAreaExtension() {
+		// Need +1 to check neighbours of max block for culling (see CullingCubic)
+		// Need +1+1 on top of that to check neighbours of the neighbours for density
+		return ModUtil.VEC_THREE;
+	}
+
+	@Override
+	public Vec3i getNegativeAreaExtension() {
+		// Need -1 to check neighbours of min block for culling (see CullingCubic)
+		// Need -0.5-0.5 on top of that to check neighbours of the neighbours for density
+		return ModUtil.VEC_TWO;
+	}
 
 	@Override
 	public void generateCollisionsInternal(Area area, Predicate<BlockState> isSmoothable, ShapeConsumer action) {
@@ -50,24 +66,31 @@ public class WulferisMesher extends CullingCubic {
 
 	float getDistance(SmoothChecker shouldSmooth, int x, int y, int z)
 	{
+		final float scalar = 1f;
+		final float v = 1f * scalar;
+		final float defaultV = 1.4142135f * scalar;
+
 		if (!shouldSmooth.test(x, y, z))
-			return -1f;
+			return -v;
 
 //		// No Check - Fastest
 //		return 1f;
 		// Main Axis Check slower but better with 1 block pillars
-		float result = 1.4142135f;
-		if (!shouldSmooth.test(x + 1, y, z)) result = 1f;
-		else if (!shouldSmooth.test(x, y + 1, z)) result = 1f;
-		else if (!shouldSmooth.test(x, y, z + 1)) result = 1f;
-		else if (!shouldSmooth.test(x - 1, y, z)) result = 1f;
-		else if (!shouldSmooth.test(x, y - 1, z)) result = 1f;
-		else if (!shouldSmooth.test(x, y, z - 1)) result = 1f;
+		float result = defaultV;
+		if (!shouldSmooth.test(x + 1, y, z)) result = v;
+		else if (!shouldSmooth.test(x, y + 1, z)) result = v;
+		else if (!shouldSmooth.test(x, y, z + 1)) result = v;
+		else if (!shouldSmooth.test(x - 1, y, z)) result = v;
+		else if (!shouldSmooth.test(x, y - 1, z)) result = v;
+		else if (!shouldSmooth.test(x, y, z - 1)) result = v;
 		return result;
 	}
 
 	float sampleDensity(SmoothChecker shouldSmooth, Vec p)
 	{
+		// Mesher assumes voxels are centred around a position
+		// This is not the case - mc blocks have their smallest corner in their block pos
+		// To fix this we translate
 		var px = p.x - 0.5f;
 		var py = p.y - 0.5f;
 		var pz = p.z - 0.5f;

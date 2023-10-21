@@ -100,15 +100,16 @@ public class Area implements AutoCloseable {
 	}
 
 	public BlockState getBlockState(BlockPos.MutableBlockPos relativePos) {
-		int index = indexIfInsideCache(relativePos);
-		if (index == -1) {
-			int x = relativePos.getX();
-			int y = relativePos.getY();
-			int z = relativePos.getZ();
-			var state = world.getBlockState(relativePos.move(start));
-			relativePos.set(x, y, z);
-			return state;
-		}
+		int index = index(relativePos);
+//		int index = indexIfInsideCache(relativePos);
+//		if (index == -1) {
+//			int x = relativePos.getX();
+//			int y = relativePos.getY();
+//			int z = relativePos.getZ();
+//			var state = world.getBlockState(relativePos.move(start));
+//			relativePos.set(x, y, z);
+//			return state;
+//		}
 		return getAndCacheBlocks()[index];
 	}
 
