@@ -69,7 +69,7 @@ public final class CollisionHandler {
 
 		var entity = context.getEntity();
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
-			(NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
+			(entity != null && NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			(entity == null && reader.getBlockState(blockPos) != state)
 		)
