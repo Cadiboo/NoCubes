@@ -10,7 +10,9 @@
 		"BlockCollisionsMixin",
 		"BlockStateBaseMixin",
 		"BlockStateMixin",
-		"LevelMixin"
+		"EntityMixin",
+		"LevelMixin",
+		"PlayerMixin"
 	],
 	"client": [
 		"BlockRenderDispatcherMixin",

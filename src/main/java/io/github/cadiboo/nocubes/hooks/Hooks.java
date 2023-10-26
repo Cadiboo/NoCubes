@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
@@ -13,10 +14,16 @@ import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -144,4 +151,23 @@ public final class Hooks {
 
 	// endregion Indev-Collisions
 
+	/**
+	 * Helper function for use by other hooks/mixins.
+	 */
+	public static VoxelShape getSmoothCollisionShapeFor(Entity entity, BlockState state, BlockGetter world, BlockPos pos) {
+		assert collisionsEnabledFor(state);
+		return CollisionHandler.getCollisionShape(state, world, pos, CollisionContext.of(entity));
+	}
+
+	/**
+	 * Helper function for use by other hooks/mixins.
+	 */
+	public static boolean collisionShapeOfSmoothBlockIntersectsEntityAABB(Entity entity, BlockState state, BlockGetter level, BlockPos pos) {
+		assert collisionsEnabledFor(state);
+		return Shapes.joinIsNotEmpty(
+			getSmoothCollisionShapeFor(entity, state, level, pos).move(pos.getX(), pos.getY(), pos.getZ()),
+			Shapes.create(entity.getBoundingBox()),
+			BooleanOp.AND
+		);
+	}
 }

@@ -41,6 +41,8 @@ import java.util.function.Predicate;
  * - Falling blocks (sand/gravel) should not break when they fall
  * - Player should be able to place redstone on slopes of smooth blocks
  * - Player should be able to place snow on slopes of smooth blocks (currently broken)
+ * - Player should not suffocate when {@link NoCubesConfig.Server#tempMobCollisionsDisabled} is false
+ * - Player should not be able to sleep in a bed obstructed by smooth blocks
  */
 public final class CollisionHandler {
 
@@ -69,7 +71,7 @@ public final class CollisionHandler {
 
 		var entity = context.getEntity();
 		if (entity instanceof FallingBlockEntity || // Stop sand etc. breaking when it falls
-			(entity != null && NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
+			(NoCubesConfig.Server.tempMobCollisionsDisabled && !(entity instanceof Player)) ||
 			// Stop grass path turning to dirt causing a crash from trying to turn an empty VoxelShape into an AABB
 			(entity == null && reader.getBlockState(blockPos) != state)
 		)

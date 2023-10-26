@@ -1,15 +1,11 @@
 package io.github.cadiboo.nocubes.mixin;
 
-import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -33,11 +29,7 @@ public class ScreenEffectRendererMixin {
 		var blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
-			return Shapes.joinIsNotEmpty(
-				CollisionHandler.getCollisionShape(state, level, pos, CollisionContext.of(player)).move(pos.getX(), pos.getY(), pos.getZ()),
-				Shapes.create(player.getBoundingBox()),
-				BooleanOp.AND
-			);
+			return Hooks.collisionShapeOfSmoothBlockIntersectsEntityAABB(player, state, level, pos);
 		}
 		return blocking;
 	}
