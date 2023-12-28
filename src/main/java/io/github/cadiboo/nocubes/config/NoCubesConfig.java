@@ -420,14 +420,21 @@ public final class NoCubesConfig {
 			final DoubleValue oldNoCubesRoughness;
 
 			private Impl(ForgeConfigSpec.Builder builder) {
+				final var smoothableListCommentExtra = "Instead of manually editing this list, you can smoothen or un-smoothen blocks by looking at them in-game and pressing the 'N' key, or whatever it may have been rebound to.";
 				smoothableWhitelist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelist")
-					.comment("What blocks should be smoothed by NoCubes (same syntax as the /setblock command)")
+					.comment(
+						"What blocks should be smoothed by NoCubes (same syntax as the /setblock command)",
+						smoothableListCommentExtra
+					)
 					.defineListAllowEmpty(Collections.singletonList("smoothableWhitelist"), Lists::newArrayList, String.class::isInstance);
 
 				smoothableBlacklist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableBlacklist")
-					.comment("What blocks should not be smoothed by NoCubes (same syntax as the /setblock command)")
+					.comment(
+						"What blocks should not be smoothed by NoCubes (same syntax as the /setblock command)",
+						smoothableListCommentExtra
+					)
 					.defineListAllowEmpty(Collections.singletonList("smoothableBlacklist"), Lists::newArrayList, String.class::isInstance);
 
 				useDefaultSmoothableList = builder
