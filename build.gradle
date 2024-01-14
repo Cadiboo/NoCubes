@@ -134,6 +134,7 @@ dependencies {
 //	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
 
 //	implementation fg.deobf("curse.maven:Rubidium-574856:4952685")
+//	implementation fg.deobf("curse.maven:Embeddium-908741:4984832")
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'

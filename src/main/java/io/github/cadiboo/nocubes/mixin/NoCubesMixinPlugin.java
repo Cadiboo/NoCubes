@@ -21,16 +21,20 @@ public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 	private static boolean shouldApplyMixin(String mixinClassName) {
 		return switch (mixinClassName) {
 			case "io.github.cadiboo.nocubes.mixin.LevelRendererMixin" -> !isSodiumLoaded();
-			// Not implemented yet, see comments in MixinAsm#transformSodiumWorldRenderer
-//			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> isSodiumLoaded();
-//			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> isSodiumLoaded();
+			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> isSodiumLoaded();
+			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> isSodiumLoaded();
 			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> isSodiumLoaded();
 			default -> true;
 		};
 	}
 
 	private static boolean isSodiumLoaded() {
-		return LoadingModList.get().getModFileById("rubidium") != null;
+		var mods = LoadingModList.get();
+		if (mods.getModFileById("rubidium") != null)
+			return true;
+		if (mods.getModFileById("embeddium") != null)
+			return true;
+		return false;
 	}
 
 	// endregion
