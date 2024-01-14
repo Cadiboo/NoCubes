@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.hooks;
 
 import net.minecraftforge.coremod.api.ASMAPI;
+import org.apache.logging.log4j.LogManager;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Textifier;
@@ -9,7 +10,6 @@ import org.objectweb.asm.util.TraceMethodVisitor;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Objects;
-import java.util.logging.Logger;
 
 /**
  * We use Mixins to do most of our ASM (runtime class modification).
@@ -175,7 +175,7 @@ public final class MixinAsm {
 	// region Utility functions
 
 	static void print(String msg) {
-		Logger.getLogger("NoCubes ASM").info(msg);
+		LogManager.getLogger("NoCubes ASM").info(msg);
 	}
 
 	static MethodNode findMethodNode(ClassNode classNode, String obfuscatedName, String desc) {
@@ -222,7 +222,7 @@ public final class MixinAsm {
 
 	static MethodInsnNode findFirstMethodCall(MethodNode methodNode, ASMAPI.MethodType methodType, String owner, String name, String desc, int startIndex) {
 		var instruction = ASMAPI.findFirstMethodCallAfter(methodNode, methodType, owner, name, desc, startIndex);
-		assertInstructionFound(instruction, name + "Call", methodNode.instructions);
+		assertInstructionFound(instruction, name + " call", methodNode.instructions);
 		return instruction;
 	}
 
