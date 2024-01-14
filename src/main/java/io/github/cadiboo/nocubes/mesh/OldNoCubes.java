@@ -1,7 +1,7 @@
 package io.github.cadiboo.nocubes.mesh;
 
+import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.collision.ShapeConsumer;
-import io.github.cadiboo.nocubes.collision.SmoothShapes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.SDFMesher.CollisionObjects;
 import io.github.cadiboo.nocubes.util.Area;
@@ -72,7 +72,7 @@ public final class OldNoCubes extends SimpleMesher {
 				// Keeps flat surfaces collidable but also allows super rough terrain
 				faceNormal.multiply(0.00001F);
 
-				return SmoothShapes.generateShapes(centre, faceNormal, action, face);
+				return CollisionHandler.generateShapes(centre, faceNormal, action, face);
 			}
 		);
 	}
