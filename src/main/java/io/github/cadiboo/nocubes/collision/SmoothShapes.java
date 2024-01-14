@@ -8,24 +8,21 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.Util;
-import net.minecraft.core.AxisCycle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
-import net.minecraft.core.Direction.Axis;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.*;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /**
@@ -42,12 +39,16 @@ import java.util.function.Predicate;
  * - Falling blocks (sand/gravel) should not break when they fall
  * - Player should be able to place redstone on slopes of smooth blocks
  * - Player should be able to place snow on slopes of smooth blocks (currently broken)
- * - Player should not suffocate when {@link NoCubesConfig.Server#tempMobCollisionsDisabled} is false
- * - Player should not be able to sleep in a bed obstructed by smooth blocks
  */
-public final class CollisionHandler {
+// TODO: Improve method names and cleanup
+public final class SmoothShapes {
 
-	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
+	// TODO: Incorporate hacks for FallingBlocks and tempMobCollisionsDisabled
+
+	// Not for use by the collisions system, simply
+	// public static VoxelShape createNoCubesVoxelShape(BlockGetter world, BlockPos pos)
+
+	public static VoxelShape shapeForSmoothBlock(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
 		boolean canCollide = state.getBlock().hasCollision;
 		try {
 			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, (EntityCollisionContext) context);
@@ -104,8 +105,20 @@ public final class CollisionHandler {
 
 	// region indev
 
-	public static Deque<VoxelShape> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, MutableBlockPos pos) {
-		Deque<VoxelShape> shapes = new ArrayDeque<>();
+	public static <T> Deque<T> createNoCubesIntersectingCollisionList(CollisionGetter world, AABB area, MutableBlockPos pos, boolean onlySuffocatingBlocks, BiFunction<MutableBlockPos, VoxelShape, T> resultProvider) {
+		Deque<T> shapes = new ArrayDeque<T>();
+		if (onlySuffocatingBlocks) {
+			// Stops grass path collisions being broken.
+			// How? I don't really know:
+			// It's got something to do with {@link Player#moveTowardsClosestSpace} only checking suffocating blocks.
+			// Returning false from 'isSuffocating' stops smooth blocks being included in the blocks checked by
+			// {@link BlockCollisions#computeNext()} when called by the Player method.
+			//
+			// @implNote We don't change the base {@link BlockState#isSuffocating(BlockGetter, BlockPos)} method because it's used
+			// in {@link Player#freeAt} and {@link net.minecraft.world.entity.Entity#isInWall} which we don't want to mess up.
+			return shapes; // TODO: WHY WHY WHY DOES EVERYTHING BREAK IF THIS ISN'T HERE (read javadoc on deleted nocubes_isSuffocating method)
+		}
+
 		int minX = Mth.floor(area.minX - 1.0E-7D) - 1;
 		int maxX = Mth.floor(area.maxX + 1.0E-7D) + 1;
 		int minY = Mth.floor(area.minY - 1.0E-7D) - 1;
@@ -120,42 +133,10 @@ public final class CollisionHandler {
 			z0 += minZ;
 			z1 += minZ;
 			if (area.intersects(x0, y0, z0, x1, y1, z1))
-				shapes.add(Shapes.box(x0, y0, z0, x1, y1, z1));
+				shapes.add(resultProvider.apply(pos.set(x0, y0, z0), Shapes.box(x0, y0, z0, x1, y1, z1)));
 			return true;
 		});
 		return shapes;
-	}
-
-	public static double collideAxisInArea(
-		AABB aabb, LevelReader world, double motion, CollisionContext ctx,
-		AxisCycle rotation, AxisCycle inverseRotation, MutableBlockPos pos,
-		int minX, int maxX, int minY, int maxY, int minZ, int maxZ
-	) {
-		if (world instanceof Level)
-			((Level) world).getProfiler().push("NoCubes collisions");
-		try {
-			double[] motionRef = {motion};
-			Axis axis = inverseRotation.cycle(Axis.Z);
-			Predicate<VoxelShape> predicate = shape -> {
-				assert Math.abs(motionRef[0]) >= 1.0E-7D;
-				motionRef[0] = shape.collide(axis, aabb, motionRef[0]);
-				if (Math.abs(motionRef[0]) < 1.0E-7D) {
-					motionRef[0] = 0;
-					return false;
-				}
-				return true;
-			};
-
-			// NB: minZ and maxZ may be swapped depending on if the motion is positive or not
-			forEachCollisionShapeRelativeToStart(world, pos, minX, maxX, minY, maxY, Math.min(minZ, maxZ), Math.max(minZ, maxZ), predicate);
-			return motionRef[0];
-		} catch (Throwable t) {
-			Util.pauseInIde(t);
-			throw t;
-		} finally {
-			if (world instanceof Level)
-				((Level) world).getProfiler().pop();
-		}
 	}
 
 	public static void forEachCollisionShapeRelativeToStart(CollisionGetter world, MutableBlockPos pos, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, Predicate<VoxelShape> predicate) {
@@ -193,13 +174,13 @@ public final class CollisionHandler {
 	}
 
 	public static boolean generateShapes(Vec centre, Vec faceNormal, ShapeConsumer consumer, Face face) {
-		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v0))
+		if (!SmoothShapes.generateShape(centre, faceNormal, consumer, face.v0))
 			return false;
-		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v1))
+		if (!SmoothShapes.generateShape(centre, faceNormal, consumer, face.v1))
 			return false;
-		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v2))
+		if (!SmoothShapes.generateShape(centre, faceNormal, consumer, face.v2))
 			return false;
-		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v3))
+		if (!SmoothShapes.generateShape(centre, faceNormal, consumer, face.v3))
 			return false;
 		return true;
 	}
