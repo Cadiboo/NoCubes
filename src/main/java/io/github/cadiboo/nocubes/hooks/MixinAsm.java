@@ -18,12 +18,19 @@ import java.util.logging.Logger;
  */
 public final class MixinAsm {
 
+	private static boolean transformChunkRendererRanAlready = false;
+	private static boolean transformFluidRendererRanAlready = false;
+
 	/**
 	 * Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#preIteration} hook
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
 	 */
 	public static void transformChunkRenderer(ClassNode targetClass) {
+		if (transformChunkRendererRanAlready)
+			return;
+		transformChunkRendererRanAlready = true;
+
 		var methodNode = findMethodNode(
 			targetClass,
 			"m_234467_", // "compile"
@@ -115,6 +122,10 @@ public final class MixinAsm {
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
 	 */
 	public static void transformFluidRenderer(ClassNode targetClass) {
+		if (transformFluidRendererRanAlready)
+			return;
+		transformFluidRendererRanAlready = true;
+
 		var methodNode = findMethodNode(
 			targetClass,
 			"m_234369_", // tesselate
