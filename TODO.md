@@ -18,6 +18,7 @@ Pressing issues that need to be fixed soon (usually because they affect performa
 Less pressing issues (usually large work that's important but should be sidelined for bug fixes)
 1. Investigate connected textures not working on 1.12.2 and backport new features
 1. Make collisions generate for an entire area, not single blocks (large task)
+   - Start off by keeping the exiting per-block gen code, replace it with the indev new code and then see wtf is going wrong with the indev stuff
    - Big performance gain
    - Needs to also fix mobs not spawning
    - Needs to also fix mobs not pathfinding
