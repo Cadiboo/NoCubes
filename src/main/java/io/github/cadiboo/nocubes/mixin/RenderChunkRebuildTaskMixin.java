@@ -23,7 +23,7 @@ public class RenderChunkRebuildTaskMixin {
 		)
 	)
 	public RenderShape nocubes_getRenderShape(BlockState state) {
-		// Invisible blocks are not rendered by vanilla
-		return Hooks.allowVanillaRenderingFor(state) ? state.getRenderShape() : RenderShape.INVISIBLE;
+		return Hooks.getRenderShape(state);
 	}
+
 }

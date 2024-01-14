@@ -22,7 +22,10 @@
 		"LiquidBlockRendererMixin",
 		"RenderChunkRebuildTaskMixin",
 		"RenderChunkRegionMixin",
-		"ScreenEffectRendererMixin"
+		"ScreenEffectRendererMixin",
+		"SodiumChunkBuilderMeshingTaskMixin",
+		"SodiumWorldRendererMixin",
+		"SodiumLevelRendererMixin"
 	],
 	"server": [
 	]

@@ -13,12 +13,14 @@ import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
+import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.BooleanOp;
@@ -69,6 +71,33 @@ public final class Hooks {
 			chunkPos, world, matrix,
 			usedLayers, random, dispatcher
 		);
+	}
+
+	/**
+	 * Same as {@link Hooks#preIteration} but for Sodium.
+	 */
+	@OnlyIn(Dist.CLIENT)
+	public static void preIterationSodium(
+		// Params
+		/*ChunkBuildContext*/ Object buildContext, /*CancellationToken*/ Object cancellationToken,
+		// Local variables
+		/*BuiltSectionInfo.Builder*/ Object renderData,
+		VisGraph occluder,
+		/*ChunkBuildBuffers*/ Object buffers,
+		/*BlockRenderCache*/ Object cache,
+		/*WorldSlice*/ Object slice,
+		int minX, int minY, int minZ,
+		int maxX, int maxY, int maxZ,
+		BlockPos.MutableBlockPos blockPos,
+		BlockPos.MutableBlockPos modelOffset,
+		/*BlockRenderContext*/ Object context
+	) {
+		SelfCheck.preIterationSodium = true;
+//		RendererDispatcher.renderChunk(
+//			rebuildTask, chunkRender, buffers,
+//			chunkPos, world, matrix,
+//			usedLayers, random, dispatcher
+//		);
 	}
 
 	/**
@@ -171,4 +200,23 @@ public final class Hooks {
 			BooleanOp.AND
 		);
 	}
+
+	/**
+	 * Helper function for use by other hooks/mixins.
+	 * @see io.github.cadiboo.nocubes.mixin.RenderChunkRebuildTaskMixin#nocubes_getRenderShape
+	 */
+	public static RenderShape getRenderShape(BlockState state) {
+		// Invisible blocks are not rendered by vanilla
+		return Hooks.allowVanillaRenderingFor(state) ? state.getRenderShape() : RenderShape.INVISIBLE;
+	}
+
+	/**
+	 * When a block is updated and marked for re-render, the renderer is told to rebuild everything inside a 'dirty' area.
+	 * Extending the size of the area that gets updated fixes seams that appear when meshes along chunk borders change.
+	 */
+	public static int expandDirtyRenderAreaExtension(int originalDirtyAreaExtension) {
+		// Math.max so if someone else also modifies the value (e.g. to 3) we don't overwrite their extension
+		return NoCubesConfig.Client.render ? Math.max(2, originalDirtyAreaExtension) : originalDirtyAreaExtension;
+	}
+
 }

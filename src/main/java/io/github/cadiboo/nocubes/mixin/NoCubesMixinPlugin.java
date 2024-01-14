@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.hooks.MixinAsm;
+import net.minecraftforge.fml.loading.LoadingModList;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -15,17 +16,39 @@ import java.util.Set;
  */
 public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 
+	// region Conditional mixins
+
+	private static boolean shouldApplyMixin(String mixinClassName) {
+		return switch (mixinClassName) {
+			case "io.github.cadiboo.nocubes.mixin.LevelRendererMixin" -> !isSodiumLoaded();
+			// Not implemented yet, see comments in MixinAsm#transformSodiumWorldRenderer
+//			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> isSodiumLoaded();
+//			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> isSodiumLoaded();
+			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> isSodiumLoaded();
+			default -> true;
+		};
+	}
+
+	private static boolean isSodiumLoaded() {
+		return LoadingModList.get().getModFileById("rubidium") != null;
+	}
+
+	// endregion
+
 	private static void transformClass(String mixinClassName, ClassNode classNode) {
 		switch (mixinClassName) {
 			case "io.github.cadiboo.nocubes.mixin.RenderChunkRebuildTaskMixin" -> MixinAsm.transformChunkRenderer(classNode);
 			case "io.github.cadiboo.nocubes.mixin.LiquidBlockRendererMixin" -> MixinAsm.transformFluidRenderer(classNode);
+			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> MixinAsm.transformSodiumChunkRenderer(classNode);
+			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> MixinAsm.transformSodiumWorldRenderer(classNode);
+			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> MixinAsm.transformSodiumLevelRenderer(classNode);
 		}
 	}
 
 	// region IMixinConfigPlugin boilerplate
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		return true;
+		return shouldApplyMixin(mixinClassName);
 	}
 
 	@Override

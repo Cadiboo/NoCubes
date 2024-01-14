@@ -15,11 +15,21 @@ import java.util.Objects;
  * We use Mixins to do most of our ASM (runtime class modification).
  * However, Mixins can't do everything, this class contains the modifications we can't do with Mixins.
  * Used by {@link io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin}.
+ * <p>
+ * About empty Mixins:
+ * Because this is invoked by {@link io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin#transformClass}, there
+ * needs to be a mixin that exists for any classes this class wants to transform.
+ * This means we NEED (often empty) Mixin classes for every target this class wants to transform
  */
 public final class MixinAsm {
 
 	private static boolean transformChunkRendererRanAlready = false;
 	private static boolean transformFluidRendererRanAlready = false;
+	private static boolean transformSodiumChunkRendererRanAlready = false;
+	private static boolean transformSodiumWorldRendererRanAlready = false;
+	private static boolean transformSodiumLevelRendererRanAlready = false;
+
+	// region Vanilla/OptiFine chunk rendering
 
 	/**
 	 * Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
@@ -117,6 +127,10 @@ public final class MixinAsm {
 		return false;
 	}
 
+	// endregion
+
+	// region Fluid rendering
+
 	/**
 	 * Changes fluid rendering to support extended fluid rendering
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
@@ -171,6 +185,110 @@ public final class MixinAsm {
 			// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
 		}
 	}
+
+	// endregion
+
+	// region Sodium compatibility
+
+	/**
+	 * Same as {@link MixinAsm#transformChunkRenderer} but for Sodium.
+	 */
+	public static void transformSodiumChunkRenderer(ClassNode targetClass) {
+		if (transformSodiumChunkRendererRanAlready)
+			return;
+		transformSodiumChunkRendererRanAlready = true;
+
+		var methodNode = findMethodNode(
+			targetClass,
+			"execute",
+			"(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;"
+		);
+		var instructions = methodNode.instructions;
+
+		var renderContextConstructor = findFirstMethodCall(
+			methodNode,
+			ASMAPI.MethodType.SPECIAL,
+			"me/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext",
+			"<init>",
+			"(Lme/jellysquid/mods/sodium/client/world/WorldSlice;)V",
+			0 // startIndex
+		);
+
+		var storeRenderContext = renderContextConstructor.getNext();
+		assertInstructionFound(storeRenderContext, "ASTORE blockRenderContext", instructions);
+
+		instructions.insert(storeRenderContext, ASMAPI.listOf(
+			// Fields
+			new VarInsnNode(Opcodes.ALOAD, 0), // this
+			// Params
+			new VarInsnNode(Opcodes.ALOAD, 1), // buildContext
+			new VarInsnNode(Opcodes.ALOAD, 2), // cancellationToken
+			// Local variables
+			new VarInsnNode(Opcodes.ALOAD, 3), // renderData
+			new VarInsnNode(Opcodes.ALOAD, 4), // occluder
+			new VarInsnNode(Opcodes.ALOAD, 5), // buffers
+			new VarInsnNode(Opcodes.ALOAD, 6), // cache
+			new VarInsnNode(Opcodes.ALOAD, 7), // slice
+			new VarInsnNode(Opcodes.ILOAD, 8), // minX
+			new VarInsnNode(Opcodes.ILOAD, 9), // minY
+			new VarInsnNode(Opcodes.ILOAD, 10), // minZ
+			new VarInsnNode(Opcodes.ILOAD, 11), // maxX
+			new VarInsnNode(Opcodes.ILOAD, 12), // maxY
+			new VarInsnNode(Opcodes.ILOAD, 13), // maxZ
+			new VarInsnNode(Opcodes.ALOAD, 14), // blockPos
+			new VarInsnNode(Opcodes.ALOAD, 15), // modelOffset
+			new VarInsnNode(Opcodes.ALOAD, 16), // context
+			callNoCubesHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
+		));
+	}
+
+	/**
+	 * Same as {@link io.github.cadiboo.nocubes.mixin.LevelRendererMixin#nocubes_setBlocksDirty} but for Sodium.
+	 */
+	public static void transformSodiumWorldRenderer(ClassNode classNode) {
+		if (transformSodiumWorldRendererRanAlready)
+			return;
+		transformSodiumWorldRendererRanAlready = true;
+
+		// This is low priority and tricky, I'm going to deal with it later
+		// When implementing, set up a test world
+		// - Need an empty Mixin to inject ASM into the vanilla LevelRenderer (overwritten by Sodium)
+		// - Need an empty Mixin to inject ASM into the Sodium WorldRenderer
+		// It seems as though, once overwritten by Sodium, LevelRenderer is no-longer extending the dirty block area
+		// Should NoCubes make it be extended again?
+
+//		var methodNode = findMethodNode(
+//			classNode,
+//			"scheduleRebuildForBlockArea",
+//			"(IIIIIIZ)V"
+//		);
+//		var instructions = methodNode.instructions;
+//
+//		LabelNode firstLabel = null;
+//		for (var instruction : instructions) {
+//			if (instruction instanceof LabelNode labelNode) {
+//				firstLabel = labelNode;
+//				break;
+//			}
+//		}
+//		assertInstructionFound(firstLabel, "firstLabel", instructions);
+//
+//		var instructionsToInsert = new InsnList();
+//
+	}
+
+	/**
+	 * Same as {@link io.github.cadiboo.nocubes.mixin.LevelRendererMixin#nocubes_setBlocksDirty} but for Sodium.
+	 */
+	public static void transformSodiumLevelRenderer(ClassNode classNode) {
+		if (transformSodiumLevelRendererRanAlready)
+			return;
+		transformSodiumLevelRendererRanAlready = true;
+
+		// Not implemented yet - see comments in transformSodiumWorldRenderer
+	}
+
+	// endregion
 
 	// region Utility functions
 
