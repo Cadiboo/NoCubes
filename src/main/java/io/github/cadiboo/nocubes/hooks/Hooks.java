@@ -10,6 +10,7 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.core.BlockPos;
@@ -71,7 +72,7 @@ public final class Hooks {
 	}
 
 	/**
-	 * Called from: {@link RebuildTask#compile} instead of {@link BlockState#getFluidState()}
+	 * Called from: {@link RebuildTask#compile} and {@link LiquidBlockRenderer#tesselate} instead of {@link BlockState#getFluidState()}
 	 * <p>
 	 * Hooking this makes extended fluids render properly
 	 */

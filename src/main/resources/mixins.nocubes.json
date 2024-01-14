@@ -3,6 +3,7 @@
 	"package": "io.github.cadiboo.nocubes.mixin",
 	"refmap": "mixins.nocubes.refmap.json",
 	"required": true,
+	"plugin": "io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin",
 	"injectors": {
 		"defaultRequire": 1
 	},
@@ -18,6 +19,7 @@
 		"BlockRenderDispatcherMixin",
 		"ChunkCacheOFMixin",
 		"LevelRendererMixin",
+		"LiquidBlockRendererMixin",
 		"RenderChunkRebuildTaskMixin",
 		"RenderChunkRegionMixin",
 		"ScreenEffectRendererMixin"
