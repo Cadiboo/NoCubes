@@ -8,13 +8,6 @@ import io.github.cadiboo.nocubes.client.render.SodiumRenderer;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
-import me.jellysquid.mods.sodium.client.render.chunk.data.BuiltSectionInfo;
-import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
-import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -103,18 +96,18 @@ public final class Hooks {
 		SelfCheck.preIterationSodium = true;
 		SodiumRenderer.renderChunk(
 			// Params
-			(ChunkBuildContext) buildContext, (CancellationToken) cancellationToken,
+			buildContext, cancellationToken,
 			// Local variables
-			(BuiltSectionInfo.Builder) renderData,
+			renderData,
 			occluder,
-			(ChunkBuildBuffers) buffers,
-			(BlockRenderCache) cache,
-			(WorldSlice) slice,
+			buffers,
+			cache,
+			slice,
 			minX, minY, minZ,
 			maxX, maxY, maxZ,
 			blockPos,
 			modelOffset,
-			(BlockRenderContext) context
+			context
 		);
 	}
 

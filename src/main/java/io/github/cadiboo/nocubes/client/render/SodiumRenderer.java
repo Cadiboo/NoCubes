@@ -285,18 +285,18 @@ public final class SodiumRenderer {
 
 	public static void renderChunk(
 		// Params
-		ChunkBuildContext buildContext, CancellationToken cancellationToken,
+		/*ChunkBuildContext*/ Object buildContext, /*CancellationToken*/ Object cancellationToken,
 		// Local variables
-		BuiltSectionInfo.Builder renderData,
+		/*BuiltSectionInfo.Builder*/ Object renderData,
 		VisGraph occluder,
-		ChunkBuildBuffers buffers,
-		BlockRenderCache cache,
-		WorldSlice slice,
+		/*ChunkBuildBuffers*/ Object buffers,
+		/*BlockRenderCache*/ Object cache,
+		/*WorldSlice*/ Object slice,
 		int minX, int minY, int minZ,
 		int maxX, int maxY, int maxZ,
 		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		BlockRenderContext context
+		/*BlockRenderContext*/ Object context
 	) {
 		if (NoCubesConfig.Client.debugSkipNoCubesRendering)
 			return;
@@ -311,18 +311,18 @@ public final class SodiumRenderer {
 				renderChunkMesh(
 
 					// Params
-					buildContext, cancellationToken,
+					(ChunkBuildContext) buildContext, (CancellationToken) cancellationToken,
 					// Local variables
-					renderData,
+					(BuiltSectionInfo.Builder) renderData,
 					occluder,
-					buffers,
-					cache,
-					slice,
+					(ChunkBuildBuffers) buffers,
+					(BlockRenderCache) cache,
+					(WorldSlice) slice,
 					minX, minY, minZ,
 					maxX, maxY, maxZ,
 					blockPos,
 					modelOffset,
-					context
+					(BlockRenderContext) context
 
 					, light, isSmoothable
 			);
