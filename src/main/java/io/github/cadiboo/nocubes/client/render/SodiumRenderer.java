@@ -10,7 +10,7 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.*;
-import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
+import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
@@ -618,12 +618,15 @@ public final class SodiumRenderer {
 			state, worldPos, faceInfo.approximateDirection,
 			(colorState, colorWorldPos, quad) -> ChunkRenderInfo.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
 			(layer, material, buffer, quad, color, emissive) -> {
-
 				var sprite = quad.getSprite();
 				if (sprite != null) {
 					buffer.addSprite(sprite);
 				}
-				var vertexBuffer = buffer.getVertexBuffer(((BakedQuadView)quad).getNormalFace());
+
+				var normal = faceInfo.normal;
+				var isApproximatelyFlat = Math.abs(normal.x) >= 0.9 || Math.abs(normal.y) >= 0.9 || Math.abs(normal.z) >= 0.9;
+
+				var vertexBuffer = buffer.getVertexBuffer(isApproximatelyFlat ? ModelQuadFacing.fromDirection(faceInfo.approximateDirection) : ModelQuadFacing.UNASSIGNED);
 
 				var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
 				renderQuad(vertexBuffer, material, vertices, context, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
