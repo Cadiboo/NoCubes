@@ -4,9 +4,17 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
+import io.github.cadiboo.nocubes.client.render.SodiumRenderer;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
+import me.jellysquid.mods.sodium.client.render.chunk.data.BuiltSectionInfo;
+import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
+import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
@@ -93,11 +101,21 @@ public final class Hooks {
 		/*BlockRenderContext*/ Object context
 	) {
 		SelfCheck.preIterationSodium = true;
-//		RendererDispatcher.renderChunk(
-//			rebuildTask, chunkRender, buffers,
-//			chunkPos, world, matrix,
-//			usedLayers, random, dispatcher
-//		);
+		SodiumRenderer.renderChunk(
+			// Params
+			(ChunkBuildContext) buildContext, (CancellationToken) cancellationToken,
+			// Local variables
+			(BuiltSectionInfo.Builder) renderData,
+			occluder,
+			(ChunkBuildBuffers) buffers,
+			(BlockRenderCache) cache,
+			(WorldSlice) slice,
+			minX, minY, minZ,
+			maxX, maxY, maxZ,
+			blockPos,
+			modelOffset,
+			(BlockRenderContext) context
+		);
 	}
 
 	/**
@@ -203,6 +221,7 @@ public final class Hooks {
 
 	/**
 	 * Helper function for use by other hooks/mixins.
+	 *
 	 * @see io.github.cadiboo.nocubes.mixin.RenderChunkRebuildTaskMixin#nocubes_getRenderShape
 	 */
 	public static RenderShape getRenderShape(BlockState state) {

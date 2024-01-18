@@ -311,7 +311,7 @@ public final class MeshRenderer {
 
 	}
 
-	private static boolean isSnow(BlockState state) {
+	public static boolean isSnow(BlockState state) {
 		var block = state.getBlock();
 		return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
 	}
