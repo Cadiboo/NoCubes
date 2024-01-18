@@ -260,7 +260,7 @@ public final class MeshRenderer {
 			new BlockPos(-1, -1, -1),
 		};
 
-		private final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		BlockState state;
 
 		public BlockPos relativePos() {
@@ -311,7 +311,7 @@ public final class MeshRenderer {
 
 	}
 
-	public static boolean isSnow(BlockState state) {
+	static boolean isSnow(BlockState state) {
 		var block = state.getBlock();
 		return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
 	}
