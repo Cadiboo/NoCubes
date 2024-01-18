@@ -153,28 +153,28 @@ public final class RendererDispatcher {
 		}
 
 		public void forEachQuad(BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action) {
-			var rand = optiFine.getSeed(stateIn.getSeed(worldPosIn));
+			var seed = optiFine.getSeed(stateIn.getSeed(worldPosIn));
 			renderInBlockLayers(
 				stateIn, worldPosIn,
 				(state, worldPos, modelData, layer, buffer, renderEnv) -> {
 					var model = getModel(state, renderEnv);
 
-					var nullQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, null);
+					var nullQuads = getQuadsAndStoreOverlays(state, worldPos, seed, modelData, layer, renderEnv, model, null);
 					var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
 
 					List<BakedQuad> dirQuads;
 					if (!state.hasProperty(SNOWY))
-						dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, direction);
+						dirQuads = getQuadsAndStoreOverlays(state, worldPos, seed, modelData, layer, renderEnv, model, direction);
 					else {
 						// Make grass/snow/mycilium side faces be rendered with their top texture
 						// Equivalent to OptiFine's Better Grass feature
 						if (!state.getValue(SNOWY))
-							dirQuads = getQuadsAndStoreOverlays(state, worldPos, rand, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
+							dirQuads = getQuadsAndStoreOverlays(state, worldPos, seed, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
 							BlockState snow = Blocks.SNOW.defaultBlockState();
 							BakedModel snowModel = getModel(snow, renderEnv);
-							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, rand, modelData, layer, renderEnv, snowModel, null);
+							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, seed, modelData, layer, renderEnv, snowModel, null);
 						}
 					}
 					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, buffer, renderEnv, action);
@@ -194,10 +194,10 @@ public final class RendererDispatcher {
 			return model;
 		}
 
-		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long rand, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
-			random.setSeed(rand);
+		private List<BakedQuad> getQuadsAndStoreOverlays(BlockState state, BlockPos worldPos, long seed, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
+			random.setSeed(seed);
 			var quads = model.getQuads(state, direction, random, modelData, layer);
-			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, rand, renderEnv);
+			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, seed, renderEnv);
 			return quads;
 		}
 
