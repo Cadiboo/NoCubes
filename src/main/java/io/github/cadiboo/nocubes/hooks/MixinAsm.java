@@ -88,27 +88,11 @@ public final class MixinAsm {
 			print("Done injecting the preIteration hook");
 		}
 
-		// Redirects 'state.getFluidState()' to our own code so we can have extended fluids render properly
-		{
-			var getFluidStateCall = findFirstMethodCall(
-				methodNode,
-				ASMAPI.MethodType.VIRTUAL,
-				"net/minecraft/world/level/block/state/BlockState",
-				ASMAPI.mapMethod("m_60819_"), // getFluidState
-				"()Lnet/minecraft/world/level/material/FluidState;",
-				0 // startIndex
-			);
-			var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
-			removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
-			instructions.insert(previousLabel, ASMAPI.listOf(
-				new VarInsnNode(Opcodes.ALOAD, isOptiFinePresent ? (ofg8 ? 19 : 17) : 16), // pos
-				new VarInsnNode(Opcodes.ALOAD, isOptiFinePresent ? (ofg8 ? 20 : 18) : 18), // state
-				callNoCubesHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;")
-			));
-			// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
-			print("Done injecting the fluid state getter redirect");
-		}
-
+		redirectBlockStateGetFluidStateSoExtendedFluidsWork(
+			methodNode,
+			// blockPos local variable index
+			isOptiFinePresent ? (ofg8 ? 19 : 17) : 16
+		);
 	}
 
 	static boolean detectOptiFine(InsnList instructions) {
@@ -125,6 +109,39 @@ public final class MixinAsm {
 		}
 		print("Did not detect OptiFine");
 		return false;
+	}
+
+	/**
+	 * Redirects 'state.getFluidState()' to our own code, so we can have extended fluids render properly
+	 * Specifically: changes 'state.getFluidState()' to 'Hooks.getRenderFluidState(pos, state)'
+	 */
+	static void redirectBlockStateGetFluidStateSoExtendedFluidsWork(MethodNode methodNode, int blockPosLocalVarIndex) {
+		var getFluidStateCall = findFirstMethodCall(
+			methodNode,
+			ASMAPI.MethodType.VIRTUAL,
+			"net/minecraft/world/level/block/state/BlockState",
+			ASMAPI.mapMethod("m_60819_"), // getFluidState
+			"()Lnet/minecraft/world/level/material/FluidState;",
+			0 // startIndex
+		);
+
+		var instructions = methodNode.instructions;
+		var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
+
+		// Change
+		// LABEL
+		//    <Somehow put BlockState onto the stack>
+		//    INVOKE BlockState.getFluidState
+		// to
+		// LABEL
+		//    LOAD blockPos
+		//    <Somehow put BlockState onto the stack>
+		//    INVOKE Hooks.getFluidState
+		instructions.insert(previousLabel, new VarInsnNode(Opcodes.ALOAD, blockPosLocalVarIndex));
+		instructions.insert(getFluidStateCall, callNoCubesHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;"));
+		instructions.remove(getFluidStateCall);
+
+		print("Done injecting the fluid state getter redirect");
 	}
 
 	// endregion
@@ -217,6 +234,7 @@ public final class MixinAsm {
 		var storeRenderContext = renderContextConstructor.getNext();
 		assertInstructionFound(storeRenderContext, "ASTORE blockRenderContext", instructions);
 
+		var blockPosLocalVarIndex = 14;
 		instructions.insert(storeRenderContext, ASMAPI.listOf(
 			// Fields
 			new VarInsnNode(Opcodes.ALOAD, 0), // this
@@ -235,11 +253,13 @@ public final class MixinAsm {
 			new VarInsnNode(Opcodes.ILOAD, 11), // maxX
 			new VarInsnNode(Opcodes.ILOAD, 12), // maxY
 			new VarInsnNode(Opcodes.ILOAD, 13), // maxZ
-			new VarInsnNode(Opcodes.ALOAD, 14), // blockPos
+			new VarInsnNode(Opcodes.ALOAD, blockPosLocalVarIndex), // blockPos
 			new VarInsnNode(Opcodes.ALOAD, 15), // modelOffset
 			new VarInsnNode(Opcodes.ALOAD, 16), // context
 			callNoCubesHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
 		));
+
+		redirectBlockStateGetFluidStateSoExtendedFluidsWork(methodNode, blockPosLocalVarIndex);
 	}
 
 	/**

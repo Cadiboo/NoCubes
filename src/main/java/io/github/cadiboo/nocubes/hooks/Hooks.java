@@ -54,6 +54,7 @@ public final class Hooks {
 	/**
 	 * Called from: {@link RebuildTask#compile} right before the BlockPos.getAllInBoxMutable iteration
 	 * Calls: {@link RendererDispatcher#renderChunk} to render our fluids and smooth terrain
+	 * Call injected by {@link MixinAsm#transformChunkRenderer}
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void preIteration(
@@ -76,6 +77,7 @@ public final class Hooks {
 
 	/**
 	 * Same as {@link Hooks#preIteration} but for Sodium.
+	 * Call injected by {@link MixinAsm#transformSodiumChunkRenderer}
 	 */
 	@OnlyIn(Dist.CLIENT)
 	public static void preIterationSodium(
@@ -113,6 +115,7 @@ public final class Hooks {
 
 	/**
 	 * Called from: {@link RebuildTask#compile} and {@link LiquidBlockRenderer#tesselate} instead of {@link BlockState#getFluidState()}
+	 * Call injected by {@link MixinAsm#transformChunkRenderer} or {@link MixinAsm#transformSodiumChunkRenderer}
 	 * <p>
 	 * Hooking this makes extended fluids render properly
 	 */
