@@ -109,20 +109,23 @@ public class ModUtil {
 		var chunkZ = z >> 4;
 		var chunk = world.getChunk(chunkX, chunkZ);
 
-		var fluid = chunk.getFluidState(x, y, z);
-		if (!fluid.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(chunk.getBlockState(pos)))
-			return fluid;
+		var blockState = chunk.getBlockState(pos);
+		var fluidState = blockState.getFluidState();
+		// If the fluid is non-empty we don't have to look for a fluid
+		// If the state isn't smoothable we don't want to extend fluid into it
+		if (!fluidState.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(blockState))
+			return fluidState;
 
 		// Check up
-		fluid = chunk.getFluidState(x, y + 1, z);
-		if (fluid.isSource())
-			return fluid;
+		fluidState = chunk.getFluidState(x, y + 1, z);
+		if (fluidState.isSource())
+			return fluidState;
 
 		// Check around
 		for (var extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
 			for (var extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
 				if (extendZ == z && extendX == x)
-					continue; // We already checked ourself above
+					continue; // We already checked ourselves above
 
 				if (chunkX != extendZ >> 4 || chunkZ != extendX >> 4) {
 					chunkZ = extendZ >> 4;
@@ -130,9 +133,9 @@ public class ModUtil {
 					chunk = world.getChunk(chunkX, chunkZ);
 				}
 
-				fluid = chunk.getFluidState(extendX, y, extendZ);
-				if (fluid.isSource())
-					return fluid;
+				fluidState = chunk.getFluidState(extendX, y, extendZ);
+				if (fluidState.isSource())
+					return fluidState;
 			}
 		}
 		return Fluids.EMPTY.defaultFluidState();
