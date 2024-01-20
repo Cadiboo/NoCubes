@@ -92,8 +92,6 @@ public class ModUtil {
 		return (xSize * ySize * z) + (xSize * y) + x;
 	}
 
-	private static final ThreadLocal<BlockPos.MutableBlockPos> EXTENDED_FLUIDS_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
-
 	/**
 	 * Searches neighbouring positions around a smooth block for a source fluid state.
 	 * Makes the smooth block have the fluid "extended" into it.
@@ -117,28 +115,6 @@ public class ModUtil {
 		// If the state isn't smoothable we don't want to extend fluid into it
 		if (!fluidState.isEmpty() || !NoCubes.smoothableHandler.isSmoothable(blockState))
 			return fluidState;
-
-		// Ensure there is no air horizontally
-		var chunkX2 = x >> 4;
-		var chunkZ2 = z >> 4;
-		var chunk2 = world.getChunk(chunkX2, chunkZ2);
-		var mutablePos = EXTENDED_FLUIDS_POS.get();
-		for (var extendZ = z - extendRange; extendZ <= z + extendRange; ++extendZ) {
-			for (var extendX = x - extendRange; extendX <= x + extendRange; ++extendX) {
-				if (extendZ == z && extendX == x)
-					continue; // We already checked ourselves above
-
-				if (chunkX2 != extendZ >> 4 || chunkZ2 != extendX >> 4) {
-					chunkZ2 = extendZ >> 4;
-					chunkX2 = extendX >> 4;
-					chunk2 = world.getChunk(chunkX2, chunkZ2);
-				}
-
-				var neighbourBlockState = chunk2.getBlockState(mutablePos.set(extendX, y, extendZ));
-				if (neighbourBlockState.isAir())
-					return Fluids.EMPTY.defaultFluidState();
-			}
-		}
 
 		// Check up
 		fluidState = chunk.getFluidState(x, y + 1, z);
