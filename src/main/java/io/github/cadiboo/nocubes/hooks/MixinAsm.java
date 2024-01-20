@@ -36,13 +36,13 @@ public final class MixinAsm {
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#preIteration} hook
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
 	 */
-	public static void transformChunkRenderer(ClassNode targetClass) {
+	public static void transformChunkRenderer(ClassNode classNode) {
 		if (transformChunkRendererRanAlready)
 			return;
 		transformChunkRendererRanAlready = true;
 
 		var methodNode = findMethodNode(
-			targetClass,
+			classNode,
 			"m_234467_", // "compile"
 			"(FFFLnet/minecraft/client/renderer/ChunkBufferBuilderPack;)Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask$CompileResults;"
 		);
@@ -152,13 +152,13 @@ public final class MixinAsm {
 	 * Changes fluid rendering to support extended fluid rendering
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
 	 */
-	public static void transformFluidRenderer(ClassNode targetClass) {
+	public static void transformFluidRenderer(ClassNode classNode) {
 		if (transformFluidRendererRanAlready)
 			return;
 		transformFluidRendererRanAlready = true;
 
 		var methodNode = findMethodNode(
-			targetClass,
+			classNode,
 			"m_234369_", // tesselate
 			"(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)V"
 		);
@@ -210,13 +210,13 @@ public final class MixinAsm {
 	/**
 	 * Same as {@link MixinAsm#transformChunkRenderer} but for Sodium.
 	 */
-	public static void transformSodiumChunkRenderer(ClassNode targetClass) {
+	public static void transformSodiumChunkRenderer(ClassNode classNode) {
 		if (transformSodiumChunkRendererRanAlready)
 			return;
 		transformSodiumChunkRendererRanAlready = true;
 
 		var methodNode = findMethodNode(
-			targetClass,
+			classNode,
 			"execute",
 			"(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;"
 		);
