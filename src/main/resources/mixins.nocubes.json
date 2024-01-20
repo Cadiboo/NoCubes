@@ -24,6 +24,7 @@
 		"RenderChunkRegionMixin",
 		"ScreenEffectRendererMixin",
 		"SodiumChunkBuilderMeshingTaskMixin",
+		"SodiumFluidRendererMixin",
 		"SodiumWorldRendererMixin",
 		"SodiumLevelRendererMixin"
 	],

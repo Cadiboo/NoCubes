@@ -26,6 +26,7 @@ public final class MixinAsm {
 	private static boolean transformChunkRendererRanAlready = false;
 	private static boolean transformFluidRendererRanAlready = false;
 	private static boolean transformSodiumChunkRendererRanAlready = false;
+	private static boolean transformSodiumFluidRendererRanAlready = false;
 	private static boolean transformSodiumWorldRendererRanAlready = false;
 	private static boolean transformSodiumLevelRendererRanAlready = false;
 
@@ -260,6 +261,29 @@ public final class MixinAsm {
 		));
 
 		redirectBlockStateGetFluidStateSoExtendedFluidsWork(methodNode, blockPosLocalVarIndex);
+	}
+
+	/**
+	 * Same as {@link MixinAsm#transformFluidRenderer} but for Sodium.
+	 */
+	public static void transformSodiumFluidRenderer(ClassNode classNode) {
+		if (transformSodiumFluidRendererRanAlready)
+			return;
+		transformSodiumFluidRendererRanAlready = true;
+
+		var methodNode = findMethodNode(
+			classNode,
+			"fluidHeight",
+			"(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/material/Fluid;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)F"
+		);
+
+		redirectBlockStateGetFluidStateSoExtendedFluidsWork(
+			methodNode,
+			// blockPosLocalVarIndex
+			3
+		);
+
+		// Not implemented yet - see comments in transformSodiumWorldRenderer
 	}
 
 	/**

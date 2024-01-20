@@ -44,6 +44,7 @@ public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 			case "io.github.cadiboo.nocubes.mixin.RenderChunkRebuildTaskMixin" -> MixinAsm.transformChunkRenderer(classNode);
 			case "io.github.cadiboo.nocubes.mixin.LiquidBlockRendererMixin" -> MixinAsm.transformFluidRenderer(classNode);
 			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> MixinAsm.transformSodiumChunkRenderer(classNode);
+			case "io.github.cadiboo.nocubes.mixin.SodiumFluidRendererMixin" -> MixinAsm.transformSodiumFluidRenderer(classNode);
 			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> MixinAsm.transformSodiumWorldRenderer(classNode);
 			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> MixinAsm.transformSodiumLevelRenderer(classNode);
 		}
