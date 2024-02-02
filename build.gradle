@@ -176,6 +176,9 @@ jar {
 			'Main-Class'            : 'io.github.cadiboo.nocubes.DoNotRunThisFromTheConsoleDialog'
 		])
 	}
+	from('LICENSE') {
+		rename { "${it}_${project.base.archivesName.get()}"}
+	}
 }
 shadowJar {
 	archiveClassifier.set('')
