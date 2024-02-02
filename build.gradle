@@ -35,6 +35,7 @@ if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || Sys
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
+// Forge
 minecraft {
 	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/master/mdk/build.gradle#L28-L40"
 	mappings channel: 'official', version: modMinecraftVersion
@@ -111,9 +112,6 @@ dependencies {
 	// OptiFine is the first dependency because so that we can compile against its version of vanilla's classes, not Forge's
 	testCompileOnly fileTree(include: ['OptiFine_*_MOD-deobf.jar'], dir: 'libs')
 
-	// Specify the version of Minecraft to use
-	// If this is any group other than 'net.minecraft' it is assumed that the dep is a ForgeGradle 'patcher' dependency and its patches will be applied
-	// The userdev artifact is a special name and will get all sorts of transformations applied to it
 	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
 
 	// Apply Mixin AP
@@ -146,6 +144,7 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+// Write our mod version into our mod info file(s)
 processResources {
 	// Ensures this task is redone when the version changes
 	inputs.property 'version', project.version
