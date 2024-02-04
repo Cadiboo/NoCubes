@@ -1,4 +1,5 @@
 {
+	"minVersion": "0.8",
 	"compatibilityLevel": "JAVA_17",
 	"package": "io.github.cadiboo.nocubes.mixin",
 	"refmap": "mixins.nocubes.refmap.json",
