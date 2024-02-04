@@ -18,7 +18,10 @@ public class EntityMixin {
 	 * This makes collisions work properly even when {@link io.github.cadiboo.nocubes.config.NoCubesConfig.Server#tempMobCollisionsDisabled} is false.
 	 */
 	@Redirect(
-		method = "lambda$isInWall$8",
+		method = {
+			"lambda$isInWall$8",  // Forge < 47.2
+			"lambda$isInWall$11", // Forge > 47.2
+		},
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;"
