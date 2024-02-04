@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.hooks;
 
+import io.github.cadiboo.nocubes.mixin.client.LevelRendererMixin;
 import net.minecraftforge.coremod.api.ASMAPI;
 import org.apache.logging.log4j.LogManager;
 import org.objectweb.asm.Opcodes;
@@ -17,31 +18,19 @@ import java.util.Objects;
  * Used by {@link io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin}.
  * <p>
  * About empty Mixins:
- * Because this is invoked by {@link io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin#transformClass}, there
+ * Because this is invoked by {@link io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin#preApply}, there
  * needs to be a mixin that exists for any classes this class wants to transform.
  * This means we NEED (often empty) Mixin classes for every target this class wants to transform
  */
 public final class MixinAsm {
 
-	private static boolean transformChunkRendererRanAlready = false;
-	private static boolean transformFluidRendererRanAlready = false;
-	private static boolean transformSodiumChunkRendererRanAlready = false;
-	private static boolean transformSodiumFluidRendererRanAlready = false;
-	private static boolean transformSodiumWorldRendererRanAlready = false;
-	private static boolean transformSodiumLevelRendererRanAlready = false;
-
 	// region Vanilla/OptiFine chunk rendering
-
 	/**
 	 * Hooks multiple parts of the chunk rendering method to allow us to do our own custom rendering
-	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#preIteration} hook
-	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
+	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.ClientHooks#preIteration} hook
+	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.ClientHooks#getRenderFluidState} hook
 	 */
 	public static void transformChunkRenderer(ClassNode classNode) {
-		if (transformChunkRendererRanAlready)
-			return;
-		transformChunkRendererRanAlready = true;
-
 		var methodNode = findMethodNode(
 			classNode,
 			"m_234467_", // "compile"
@@ -83,7 +72,7 @@ public final class MixinAsm {
 				new VarInsnNode(Opcodes.ALOAD, isOptiFinePresent ? 15 : 12), // usedLayers
 				new VarInsnNode(Opcodes.ALOAD, isOptiFinePresent ? (ofg8 ? 16 : 14) : 13), // random
 				new VarInsnNode(Opcodes.ALOAD, isOptiFinePresent ? (ofg8 ? 17 : 15) : 14), // dispatcher
-				callNoCubesHook("preIteration", "(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk$RebuildTask;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V"),
+				callNoCubesClientHook("preIteration", "(Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;Lnet/minecraft/client/renderer/ChunkBufferBuilderPack;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/Set;Lnet/minecraft/util/RandomSource;Lnet/minecraft/client/renderer/block/BlockRenderDispatcher;)V"),
 				new LabelNode() // Label for original instructions
 			));
 			print("Done injecting the preIteration hook");
@@ -139,25 +128,19 @@ public final class MixinAsm {
 		//    <Somehow put BlockState onto the stack>
 		//    INVOKE Hooks.getFluidState
 		instructions.insert(previousLabel, new VarInsnNode(Opcodes.ALOAD, blockPosLocalVarIndex));
-		instructions.insert(getFluidStateCall, callNoCubesHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;"));
+		instructions.insert(getFluidStateCall, callNoCubesClientHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;"));
 		instructions.remove(getFluidStateCall);
 
 		print("Done injecting the fluid state getter redirect");
 	}
-
 	// endregion
 
 	// region Fluid rendering
-
 	/**
 	 * Changes fluid rendering to support extended fluid rendering
-	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.Hooks#getRenderFluidState} hook
+	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.ClientHooks#getRenderFluidState} hook
 	 */
 	public static void transformFluidRenderer(ClassNode classNode) {
-		if (transformFluidRendererRanAlready)
-			return;
-		transformFluidRendererRanAlready = true;
-
 		var methodNode = findMethodNode(
 			classNode,
 			"m_234369_", // tesselate
@@ -199,23 +182,17 @@ public final class MixinAsm {
 			);
 			var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
 			removeBetweenIndicesInclusive(instructions, instructions.indexOf(previousLabel) + 1, instructions.indexOf(getFluidStateCall));
-			instructions.insert(previousLabel, callNoCubesHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;"));
+			instructions.insert(previousLabel, callNoCubesClientHook("getRenderFluidState", "(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/material/FluidState;"));
 			// We didn't remove the ASTORE instruction with our 'removeBetweenIndicesInclusive' so the result of our hook call automatically gets stored
 		}
 	}
-
 	// endregion
 
 	// region Sodium compatibility
-
 	/**
 	 * Same as {@link MixinAsm#transformChunkRenderer} but for Sodium.
 	 */
 	public static void transformSodiumChunkRenderer(ClassNode classNode) {
-		if (transformSodiumChunkRendererRanAlready)
-			return;
-		transformSodiumChunkRendererRanAlready = true;
-
 		var methodNode = findMethodNode(
 			classNode,
 			"execute",
@@ -257,7 +234,7 @@ public final class MixinAsm {
 			new VarInsnNode(Opcodes.ALOAD, blockPosLocalVarIndex), // blockPos
 			new VarInsnNode(Opcodes.ALOAD, 15), // modelOffset
 			new VarInsnNode(Opcodes.ALOAD, 16), // context
-			callNoCubesHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
+			callNoCubesClientHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
 		));
 
 		redirectBlockStateGetFluidStateSoExtendedFluidsWork(methodNode, blockPosLocalVarIndex);
@@ -267,10 +244,6 @@ public final class MixinAsm {
 	 * Same as {@link MixinAsm#transformFluidRenderer} but for Sodium.
 	 */
 	public static void transformSodiumFluidRenderer(ClassNode classNode) {
-		if (transformSodiumFluidRendererRanAlready)
-			return;
-		transformSodiumFluidRendererRanAlready = true;
-
 		var methodNode = findMethodNode(
 			classNode,
 			"fluidHeight",
@@ -287,13 +260,9 @@ public final class MixinAsm {
 	}
 
 	/**
-	 * Same as {@link io.github.cadiboo.nocubes.mixin.LevelRendererMixin#nocubes_setBlocksDirty} but for Sodium.
+	 * Same as {@link LevelRendererMixin#noCubes$setBlocksDirty} but for Sodium.
 	 */
 	public static void transformSodiumWorldRenderer(ClassNode classNode) {
-		if (transformSodiumWorldRendererRanAlready)
-			return;
-		transformSodiumWorldRendererRanAlready = true;
-
 		// This is low priority and tricky, I'm going to deal with it later
 		// When implementing, set up a test world
 		// - Need an empty Mixin to inject ASM into the vanilla LevelRenderer (overwritten by Sodium)
@@ -322,20 +291,14 @@ public final class MixinAsm {
 	}
 
 	/**
-	 * Same as {@link io.github.cadiboo.nocubes.mixin.LevelRendererMixin#nocubes_setBlocksDirty} but for Sodium.
+	 * Same as {@link LevelRendererMixin#noCubes$setBlocksDirty} but for Sodium.
 	 */
 	public static void transformSodiumLevelRenderer(ClassNode classNode) {
-		if (transformSodiumLevelRendererRanAlready)
-			return;
-		transformSodiumLevelRendererRanAlready = true;
-
 		// Not implemented yet - see comments in transformSodiumWorldRenderer
 	}
-
 	// endregion
 
 	// region Utility functions
-
 	static void print(String msg) {
 		LogManager.getLogger("NoCubes ASM").info(msg);
 	}
@@ -389,18 +352,18 @@ public final class MixinAsm {
 	}
 
 	/**
-	 * Utility function to create an INVOKESTATIC call to one of our hooks
+	 * Utility function to create an INVOKESTATIC call to one of our client hooks.
 	 *
-	 * @param {string} name The name of the hook method
-	 * @param {string} desc The hook method's method descriptor
-	 * @return {object} The transformersObj with all transformers wrapped
+	 * @param name The name of the hook method
+	 * @param desc The hook method's method descriptor
+	 * @return The transformersObj with all transformers wrapped
 	 */
-	static MethodInsnNode callNoCubesHook(String name, String desc) {
+	static MethodInsnNode callNoCubesClientHook(String name, String desc) {
 		return new MethodInsnNode(
 			//int opcode
 			Opcodes.INVOKESTATIC,
 			//String owner
-			"io/github/cadiboo/nocubes/hooks/Hooks",
+			"io/github/cadiboo/nocubes/hooks/ClientHooks",
 			//String name
 			name,
 			//String descriptor
@@ -432,7 +395,6 @@ public final class MixinAsm {
 		printer.print(new PrintWriter(writer));
 		return writer.toString();
 	}
-
 	// endregion
 
 }

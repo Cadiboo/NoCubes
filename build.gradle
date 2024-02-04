@@ -41,9 +41,6 @@ minecraft {
 	mappings channel: 'official', version: modMinecraftVersion
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
-	// We have an access transformer because we reach into some of Minecraft's private/protected rendering internals
-	accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg') // Must be this exact path
-
 	runs {
 		client {
 			workingDirectory project.file('run')

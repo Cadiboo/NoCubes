@@ -24,7 +24,7 @@ public class PlayerMixin {
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isSuffocating(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
 		)
 	)
-	private boolean nocubes_freeAt_isSuffocating(BlockState state, BlockGetter level, BlockPos pos) {
+	private boolean noCubes$freeAt$isSuffocating(BlockState state, BlockGetter level, BlockPos pos) {
 		if (!Hooks.collisionsEnabledFor(state))
 			return state.isSuffocating(level, pos); // Original behaviour
 		return !state.isSuffocating(level, pos) || !Hooks.collisionShapeOfSmoothBlockIntersectsEntityAABB((Entity) (Object) this, state, level, pos);

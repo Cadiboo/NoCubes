@@ -2,7 +2,9 @@ package io.github.cadiboo.nocubes.collision;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesBlockType;
 import io.github.cadiboo.nocubes.mesh.Mesher;
+import io.github.cadiboo.nocubes.mixin.client.ScreenEffectRendererMixin;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -29,14 +31,14 @@ import java.util.function.Predicate;
 
 /**
  * Collisions sanity check:
- * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_getCollisionShape})
- * - Player should be able to walk into and out of single block holes ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
- * - Player should be able to walk up slopes made out of normally solid blocks like stone/dirt/grass/sand ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_hasLargeCollisionShape})
- * - Player should be able to swim through smooth blocks underwater without suffocating (e.g. near the shore) ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#nocubes_isSuffocating})
+ * - Entities shouldn't fall through the floor ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#noCubes$getCollisionShape})
+ * - Player should be able to walk into and out of single block holes ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#noCubes$hasLargeCollisionShape})
+ * - Player should be able to walk up slopes made out of normally solid blocks like stone/dirt/grass/sand ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#noCubes$hasLargeCollisionShape})
+ * - Player should be able to swim through smooth blocks underwater without suffocating (e.g. near the shore) ({@link io.github.cadiboo.nocubes.mixin.BlockCollisionsMixin#noCubes$isSuffocating})
  * - Player should not suffocate when inside the voxel of a smooth block but not inside its new shape (same as above)
  * - Player should suffocate when inside the voxel of a smooth block and inside its new shape (same as above)
- * - Suffocation overlay should only show when inside the voxel and new shape of a smooth block ({@link io.github.cadiboo.nocubes.mixin.ScreenEffectRendererMixin#nocubes_isViewBlocking})
- * - 3rd person camera should not be super zoomed-in when only partially inside a smooth voxel ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#nocubes_getVisualShape})
+ * - Suffocation overlay should only show when inside the voxel and new shape of a smooth block ({@link ScreenEffectRendererMixin#noCubes$isViewBlocking})
+ * - 3rd person camera should not be super zoomed-in when only partially inside a smooth voxel ({@link io.github.cadiboo.nocubes.mixin.BlockStateBaseMixin#noCubes$getVisualShape})
  * - Dirt path/Farmland turning to dirt should not crash the game
  * - Falling blocks (sand/gravel) should not break when they fall
  * - Player should be able to place redstone on slopes of smooth blocks
@@ -47,7 +49,7 @@ import java.util.function.Predicate;
 public final class CollisionHandler {
 
 	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
-		boolean canCollide = state.getBlock().hasCollision;
+		var canCollide = ((INoCubesBlockType) state.getBlock()).noCubes$hasCollision();
 		try {
 			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, (EntityCollisionContext) context);
 		} catch (Throwable t) {

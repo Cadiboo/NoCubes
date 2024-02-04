@@ -30,7 +30,7 @@ public class BlockCollisionsMixin {
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isSuffocating(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
 		)
 	)
-	public boolean nocubes_isSuffocating(BlockState state, BlockGetter blockGetter, BlockPos blockPos) {
+	public boolean noCubes$isSuffocating(BlockState state, BlockGetter blockGetter, BlockPos blockPos) {
 		if (Hooks.collisionsEnabledFor(state))
 			return false;
 		return state.isSuffocating(blockGetter, blockPos);

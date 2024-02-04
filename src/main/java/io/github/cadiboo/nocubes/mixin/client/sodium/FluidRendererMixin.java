@@ -1,10 +1,9 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client.sodium;
 
-import io.github.cadiboo.nocubes.hooks.Hooks;
+import io.github.cadiboo.nocubes.hooks.ClientHooks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.fluids.FluidStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Pseudo // Sodium may not be installed
 @Mixin(targets = "me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.FluidRenderer")
-public class SodiumFluidRendererMixin {
+public class FluidRendererMixin {
 
 	@Redirect(
 		method = "isFluidOccluded",
@@ -26,8 +25,8 @@ public class SodiumFluidRendererMixin {
 		),
 		require = 2 // Redirect both calls to the function
 	)
-	private FluidState nocubes_getFluidState(BlockAndTintGetter world, BlockPos adjPos) {
-		return Hooks.getRenderFluidState(adjPos, world.getBlockState(adjPos));
+	private FluidState noCubes$getFluidState(BlockAndTintGetter world, BlockPos adjPos) {
+		return ClientHooks.getRenderFluidState(adjPos, world.getBlockState(adjPos));
 	}
 
 }

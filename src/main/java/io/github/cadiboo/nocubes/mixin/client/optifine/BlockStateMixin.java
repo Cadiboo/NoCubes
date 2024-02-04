@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client.optifine;
 
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,10 +21,9 @@ public abstract class BlockStateMixin {
 		method = "isCacheOpaqueCube()Z",
 		at = @At("HEAD"),
 		cancellable = true,
-		require = 0, // Don't fail if OptiFine isn't installed
 		remap = false // OptiFine added method
 	)
-	public void nocubes_isCacheOpaqueCube(CallbackInfoReturnable<Boolean> ci) {
+	public void noCubes$isCacheOpaqueCube(CallbackInfoReturnable<Boolean> ci) {
 		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
 			ci.setReturnValue(false);
 	}

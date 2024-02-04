@@ -24,7 +24,7 @@ public abstract class LevelMixin {
 		),
 		cancellable = true
 	)
-	public void nocubes_getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
+	public void noCubes$getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			ci.setReturnValue(ModUtil.getExtendedFluidState((Level) (Object) this, pos));
 	}

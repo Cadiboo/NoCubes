@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.smoothable;
 
-import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesBlockState;
 import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -31,9 +31,9 @@ public class SmoothableHandlerTests {
 		var mock = (INoCubesBlockState) mockedState;
 
 		// This code would have been added into the BlockState via ASM
-		Mockito.when(mock.isSmoothable()).thenAnswer(invocation -> smoothableRef[0]);
-		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setSmoothable(true);
-		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).setSmoothable(false);
+		Mockito.when(mock.noCubes$isSmoothable()).thenAnswer(invocation -> smoothableRef[0]);
+		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).noCubes$setSmoothable(true);
+		Mockito.doAnswer(invocation -> setStubbedStateSmoothable(invocation, smoothableRef)).when(mock).noCubes$setSmoothable(false);
 
 		return mockedState;
 	}

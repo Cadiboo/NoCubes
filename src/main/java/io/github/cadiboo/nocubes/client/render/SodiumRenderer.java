@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.client.render;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
@@ -9,7 +8,10 @@ import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
-import io.github.cadiboo.nocubes.util.*;
+import io.github.cadiboo.nocubes.util.Area;
+import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
+import io.github.cadiboo.nocubes.util.Vec;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
@@ -25,13 +27,10 @@ import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
 import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
@@ -47,7 +46,6 @@ import net.minecraftforge.client.model.data.ModelData;
 import org.joml.Vector3f;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -66,40 +64,6 @@ public final class SodiumRenderer {
 	 * Stops every method having lots of parameters.
 	 */
 	public static class ChunkRenderInfo {
-		public final ChunkRenderDispatcher.RenderChunk.RebuildTask rebuildTask;
-		public final ChunkRenderDispatcher.RenderChunk chunkRender;
-		public final ChunkBufferBuilderPack buffers;
-		public final BlockPos chunkPos;
-		public final BlockAndTintGetter world;
-		public final FluentMatrixStack matrix;
-		public final Set<RenderType> usedLayers;
-		public final RandomSource random;
-		public final BlockRenderDispatcher dispatcher;
-		public final LightCache light;
-//		public final OptiFineProxy optiFine;
-		public final BlockColors blockColors;
-
-		public ChunkRenderInfo(
-			ChunkRenderDispatcher.RenderChunk.RebuildTask rebuildTask, ChunkRenderDispatcher.RenderChunk chunkRender,
-			ChunkBufferBuilderPack buffers, BlockPos chunkPos,
-			BlockAndTintGetter world, FluentMatrixStack matrix,
-			Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
-			LightCache light//, OptiFineProxy optiFine
-		) {
-			this.rebuildTask = rebuildTask;
-			this.chunkRender = chunkRender;
-			this.buffers = buffers;
-			this.chunkPos = chunkPos;
-			this.world = world;
-			this.matrix = matrix;
-			this.usedLayers = usedLayers;
-			this.random = random;
-			this.dispatcher = dispatcher;
-			this.light = light;
-//			this.optiFine = optiFine;
-			this.blockColors = Minecraft.getInstance().getBlockColors();
-		}
-
 		interface RenderInLayer {
 			void render(BlockState state, BlockPos worldPos, ModelData modelData, RenderType layer, Material material, ChunkModelBuilder buffer, Object renderEnv);
 		}
@@ -369,13 +333,6 @@ public final class SodiumRenderer {
 			);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
-	}
-
-	public static BufferBuilder getAndStartBuffer(ChunkRenderDispatcher.RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
-		var buffer = buffers.builder(layer);
-		if (usedLayers.add(layer))
-			chunkRender.beginLayer(buffer);
-		return buffer;
 	}
 
 	static void quad(

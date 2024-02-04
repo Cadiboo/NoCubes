@@ -1,14 +1,14 @@
 package io.github.cadiboo.nocubes.client.optifine;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
 import net.minecraft.core.BlockPos;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 
-import static io.github.cadiboo.nocubes.client.optifine.HD_U_G7.Reflect.*;
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.BufferBuilder_setMidBlock;
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G8.Reflect.Shaders_useMidBlockAttrib;
 import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetField;
@@ -33,13 +33,14 @@ class HD_U_G8 extends HD_U_G7 {
 	}
 
 	@Override
-	protected void prePushShaderEntity(RenderChunk chunkRender, BufferBuilder buffer, BlockPos pos) {
+	protected void prePushShaderEntity(INoCubesChunkSectionRender chunkRender, BufferBuilder buffer, BlockPos pos) {
+		var chunkRenderOf = (INoCubesChunkSectionRenderOptiFine) chunkRender;
 		if (Shaders_useMidBlockAttrib())
 			BufferBuilder_setMidBlock(
 				buffer,
-				0.5F + (float) ChunkRender_regionDX(chunkRender) + (float) (pos.getX() & 15),
-				0.5F + (float) ChunkRender_regionDY(chunkRender) + (float) (pos.getY() & 15),
-				0.5F + (float) ChunkRender_regionDZ(chunkRender) + (float) (pos.getZ() & 15)
+				0.5F + (float) chunkRenderOf.noCubes$regionDX() + (float) (pos.getX() & 15),
+				0.5F + (float) chunkRenderOf.noCubes$regionDY() + (float) (pos.getY() & 15),
+				0.5F + (float) chunkRenderOf.noCubes$regionDZ() + (float) (pos.getZ() & 15)
 			);
 	}
 

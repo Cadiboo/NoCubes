@@ -9,24 +9,28 @@
 	},
 	"mixins": [
 		"BlockCollisionsMixin",
+		"BlockMixin",
 		"BlockStateBaseMixin",
-		"BlockStateMixin",
 		"EntityMixin",
 		"LevelMixin",
-		"PlayerMixin"
+		"PlayerMixin",
+		"client.optifine.BlockStateMixin"
 	],
 	"client": [
-		"BlockRenderDispatcherMixin",
-		"ChunkCacheOFMixin",
-		"LevelRendererMixin",
-		"LiquidBlockRendererMixin",
-		"RenderChunkRebuildTaskMixin",
-		"RenderChunkRegionMixin",
-		"ScreenEffectRendererMixin",
-		"SodiumChunkBuilderMeshingTaskMixin",
-		"SodiumFluidRendererMixin",
-		"SodiumWorldRendererMixin",
-		"SodiumLevelRendererMixin"
+		"client.BlockRenderDispatcherMixin",
+		"client.LevelRendererMixin",
+		"client.LiquidBlockRendererMixin",
+		"client.RenderChunkCompileTaskMixin",
+		"client.RenderChunkMixin",
+		"client.RenderChunkRebuildTaskMixin",
+		"client.RenderChunkRegionMixin",
+		"client.ScreenEffectRendererMixin",
+		"client.optifine.ChunkCacheOFMixin",
+		"client.optifine.RenderChunkMixin",
+		"client.sodium.ChunkBuilderMeshingTaskMixin",
+		"client.sodium.FluidRendererMixin",
+		"client.sodium.LevelRendererMixin",
+		"client.sodium.WorldRendererMixin"
 	],
 	"server": [
 	]

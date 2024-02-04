@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.hooks.Hooks;
-import io.github.cadiboo.nocubes.hooks.INoCubesBlockState;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesBlockState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.BlockGetter;
@@ -28,16 +28,17 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Shadow
 	public abstract Block getBlock();
 
-	public boolean nocubes_isSmoothable;
+	@Unique
+	public boolean noCubes$isSmoothable;
 
 	@Override
-	public void setSmoothable(boolean value) {
-		nocubes_isSmoothable = value;
+	public void noCubes$setSmoothable(boolean value) {
+		noCubes$isSmoothable = value;
 	}
 
 	@Override
-	public boolean isSmoothable() {
-		return nocubes_isSmoothable;
+	public boolean noCubes$isSmoothable() {
+		return noCubes$isSmoothable;
 	}
 
 	/**
@@ -48,7 +49,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_canOcclude(CallbackInfoReturnable<Boolean> ci) {
+	public void noCubes$canOcclude(CallbackInfoReturnable<Boolean> ci) {
 		if (Hooks.shouldCancelOcclusion((BlockStateBase) (Object) this))
 			ci.setReturnValue(false);
 	}
@@ -61,7 +62,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+	public void noCubes$getVisualShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		var state = asState();
 		@SuppressWarnings("deprecation")
 		var visualShape = getBlock().getVisualShape(state, level, pos, context);
@@ -83,8 +84,8 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_getCollisionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
-		nocubes_collisionShapeHelper(asState(), level, pos, CollisionContext.empty(), cir);
+	public void noCubes$getCollisionShape(BlockGetter level, BlockPos pos, CallbackInfoReturnable<VoxelShape> cir) {
+		noCubes$collisionShapeHelper(asState(), level, pos, CollisionContext.empty(), cir);
 	}
 
 	/**
@@ -95,12 +96,12 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
-		nocubes_collisionShapeHelper(asState(), level, pos, context, cir);
+	public void noCubes$getCollisionShape(BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+		noCubes$collisionShapeHelper(asState(), level, pos, context, cir);
 	}
 
 	@Unique
-	private static void nocubes_collisionShapeHelper(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
+	private static void noCubes$collisionShapeHelper(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		if (Hooks.collisionsEnabledFor(state))
 			cir.setReturnValue(CollisionHandler.getCollisionShape(state, level, pos, context));
 	}
@@ -120,7 +121,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_hasLargeCollisionShape(CallbackInfoReturnable<Boolean> cir) {
+	public void noCubes$hasLargeCollisionShape(CallbackInfoReturnable<Boolean> cir) {
 		if (Hooks.collisionsEnabledFor(asState()))
 			cir.setReturnValue(true);
 	}

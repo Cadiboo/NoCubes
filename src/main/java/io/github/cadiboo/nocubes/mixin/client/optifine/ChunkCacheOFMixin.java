@@ -1,7 +1,8 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client.optifine;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.mixin.client.RenderChunkRegionMixin;
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.material.FluidState;
@@ -18,7 +19,7 @@ public abstract class ChunkCacheOFMixin {
 
 	/**
 	 * ChunkCacheOF is OptiFine's override of {@link RenderChunkRegion}
-	 * See the documentation on {@link RenderChunkRegionMixin#nocubes_getExtendedFluidState}
+	 * See the documentation on {@link RenderChunkRegionMixin#noCubes$getExtendedFluidState}
 	 */
 	@Dynamic("Added by OptiFine")
 	@Inject(
@@ -28,7 +29,7 @@ public abstract class ChunkCacheOFMixin {
 		require = 0, // Don't fail if OptiFine isn't present
 		remap = false // OptiFine added method
 	)
-	public void nocubes_getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
+	public void noCubes$getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			ci.setReturnValue(ClientUtil.getExtendedFluidState(pos));
 	}

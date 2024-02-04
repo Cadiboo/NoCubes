@@ -24,7 +24,7 @@ public class EntityMixin {
 			target = "Lnet/minecraft/world/level/block/state/BlockState;getCollisionShape(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/shapes/VoxelShape;"
 		)
 	)
-	private VoxelShape nocubes_isCollidingWithWall(BlockState state, BlockGetter world, BlockPos pos) {
+	private VoxelShape noCubes$isCollidingWithWall(BlockState state, BlockGetter world, BlockPos pos) {
 		if (!Hooks.collisionsEnabledFor(state))
 			return state.getCollisionShape(world, pos);
 		return Hooks.getSmoothCollisionShapeFor((Entity)(Object)this, state, world, pos);

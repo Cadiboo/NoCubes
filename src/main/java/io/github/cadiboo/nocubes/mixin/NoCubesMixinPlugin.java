@@ -2,58 +2,66 @@ package io.github.cadiboo.nocubes.mixin;
 
 import io.github.cadiboo.nocubes.hooks.MixinAsm;
 import net.minecraftforge.fml.loading.LoadingModList;
+import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.mixin.transformer.ClassInfo;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Allows NoCubes to
- * - conditionally enable/disable its Mixins, depending on what mods are installed
- * - transform classes in ways that Mixins can't
+ * - {@link #shouldApply} - conditionally enable/disable its Mixins, depending on what mods are installed
+ * - {@link #transformClass} - transform classes in ways that Mixins can't
  */
 public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 
-	// region Conditional mixins
+	private final boolean sodiumInstalled;
+	private final boolean optiFineInstalled;
+	private final HashSet<String> runTransformers = new HashSet<>();
 
-	private static boolean shouldApplyMixin(String mixinClassName) {
-		return switch (mixinClassName) {
-			case "io.github.cadiboo.nocubes.mixin.LevelRendererMixin" -> !isSodiumLoaded();
-			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> isSodiumLoaded();
-			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> isSodiumLoaded();
-			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> isSodiumLoaded();
-			default -> true;
-		};
+	public NoCubesMixinPlugin() {
+		var loadedModIds = LoadingModList.get().getMods().stream().map(ModInfo::getModId).collect(Collectors.toSet());
+		sodiumInstalled = loadedModIds.contains("sodium") || loadedModIds.contains("rubidium") || loadedModIds.contains("embeddium");
+		optiFineInstalled = ClassInfo.forName("net.optifine.Config") != null;
 	}
 
-	private static boolean isSodiumLoaded() {
-		var mods = LoadingModList.get();
-		if (mods.getModFileById("rubidium") != null)
-			return true;
-		if (mods.getModFileById("embeddium") != null)
-			return true;
-		return false;
+	boolean shouldApply(String mixinClassName) {
+		if (mixinClassName.equals("io.github.cadiboo.nocubes.mixin.client.LevelRendererMixin"))
+			return !sodiumInstalled;
+		if (mixinClassName.startsWith("io.github.cadiboo.nocubes.mixin.client.optifine"))
+			return optiFineInstalled;
+		if (mixinClassName.startsWith("io.github.cadiboo.nocubes.mixin.client.sodium"))
+			return sodiumInstalled;
+		return true;
 	}
 
-	// endregion
-
-	private static void transformClass(String mixinClassName, ClassNode classNode) {
+	void transformClass(String mixinClassName, ClassNode classNode) {
 		switch (mixinClassName) {
-			case "io.github.cadiboo.nocubes.mixin.RenderChunkRebuildTaskMixin" -> MixinAsm.transformChunkRenderer(classNode);
-			case "io.github.cadiboo.nocubes.mixin.LiquidBlockRendererMixin" -> MixinAsm.transformFluidRenderer(classNode);
-			case "io.github.cadiboo.nocubes.mixin.SodiumChunkBuilderMeshingTaskMixin" -> MixinAsm.transformSodiumChunkRenderer(classNode);
-			case "io.github.cadiboo.nocubes.mixin.SodiumFluidRendererMixin" -> MixinAsm.transformSodiumFluidRenderer(classNode);
-			case "io.github.cadiboo.nocubes.mixin.SodiumWorldRendererMixin" -> MixinAsm.transformSodiumWorldRenderer(classNode);
-			case "io.github.cadiboo.nocubes.mixin.SodiumLevelRendererMixin" -> MixinAsm.transformSodiumLevelRenderer(classNode);
+			case "io.github.cadiboo.nocubes.mixin.client.RenderChunkRebuildTaskMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformChunkRenderer);
+			case "io.github.cadiboo.nocubes.mixin.client.LiquidBlockRendererMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformFluidRenderer);
+			case "io.github.cadiboo.nocubes.mixin.client.sodium.ChunkBuilderMeshingTaskMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformSodiumChunkRenderer);
+			case "io.github.cadiboo.nocubes.mixin.client.sodium.FluidRendererMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformSodiumFluidRenderer);
+			case "io.github.cadiboo.nocubes.mixin.client.sodium.WorldRendererMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformSodiumWorldRenderer);
+			case "io.github.cadiboo.nocubes.mixin.client.sodium.LevelRendererMixin" -> transformOnce(mixinClassName, classNode, MixinAsm::transformSodiumLevelRenderer);
+		}
+	}
+
+	void transformOnce(String mixinClassName, ClassNode classNode, Consumer<ClassNode> transformer) {
+		if (runTransformers.add(mixinClassName)) {
+			transformer.accept(classNode);
 		}
 	}
 
 	// region IMixinConfigPlugin boilerplate
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		return shouldApplyMixin(mixinClassName);
+		return shouldApply(mixinClassName);
 	}
 
 	@Override

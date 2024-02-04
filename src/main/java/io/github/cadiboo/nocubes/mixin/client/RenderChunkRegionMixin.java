@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client;
 
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -23,7 +23,7 @@ public class RenderChunkRegionMixin {
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void nocubes_getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
+	public void noCubes$getExtendedFluidState(BlockPos pos, CallbackInfoReturnable<FluidState> ci) {
 		if (NoCubesConfig.Server.extendFluidsRange > 0)
 			ci.setReturnValue(ClientUtil.getExtendedFluidState(pos));
 	}

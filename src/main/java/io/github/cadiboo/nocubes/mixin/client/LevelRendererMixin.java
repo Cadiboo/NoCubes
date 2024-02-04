@@ -1,6 +1,6 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client;
 
-import io.github.cadiboo.nocubes.hooks.Hooks;
+import io.github.cadiboo.nocubes.hooks.ClientHooks;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public class LevelRendererMixin {
 
 	/**
-	 * @see Hooks#expandDirtyRenderAreaExtension
+	 * @see ClientHooks#expandDirtyRenderAreaExtension
 	 */
 	@ModifyConstant(
 		method = {
@@ -20,8 +20,8 @@ public class LevelRendererMixin {
 		constant = @Constant(intValue = 1),
 		require = 6 * 2 // 6 replacements for each method, targets 2 methods
 	)
-	public int nocubes_setBlocksDirty(int originalValue) {
-		return Hooks.expandDirtyRenderAreaExtension(originalValue);
+	public int noCubes$setBlocksDirty(int originalValue) {
+		return ClientHooks.expandDirtyRenderAreaExtension(originalValue);
 	}
 
 }

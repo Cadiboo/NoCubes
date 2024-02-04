@@ -11,6 +11,8 @@ import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -22,8 +24,6 @@ import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.RebuildTask;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -58,8 +58,8 @@ public final class RendererDispatcher {
 	 * Stops every method having lots of parameters.
 	 */
 	public static class ChunkRenderInfo {
-		public final RebuildTask rebuildTask;
-		public final RenderChunk chunkRender;
+		public final INoCubesChunkSectionRenderBuilder rebuildTask;
+		public final INoCubesChunkSectionRender chunkRender;
 		public final ChunkBufferBuilderPack buffers;
 		public final BlockPos chunkPos;
 		public final BlockAndTintGetter world;
@@ -72,7 +72,7 @@ public final class RendererDispatcher {
 		public final BlockColors blockColors;
 
 		public ChunkRenderInfo(
-			RebuildTask rebuildTask, RenderChunk chunkRender,
+			INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
 			ChunkBufferBuilderPack buffers, BlockPos chunkPos,
 			BlockAndTintGetter world, FluentMatrixStack matrix,
 			Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
@@ -92,12 +92,12 @@ public final class RendererDispatcher {
 			this.blockColors = Minecraft.getInstance().getBlockColors();
 		}
 
-		interface RenderInLayer {
+		public interface RenderInLayer {
 			void render(BlockState state, BlockPos worldPos, ModelData modelData, RenderType layer, BufferBuilder buffer, Object renderEnv);
 		}
 
 		public void renderInBlockLayers(BlockState state, BlockPos worldPos, RenderInLayer render) {
-			var modelData = rebuildTask.getModelData(worldPos);
+			var modelData = rebuildTask.noCubes$getModelData(worldPos);
 			var layers = ItemBlockRenderTypes.getRenderLayers(state);
 			for (var layer : layers) {
 				var buffer = getAndStartBuffer(layer);
@@ -223,8 +223,11 @@ public final class RendererDispatcher {
 		}
 	}
 
+	/**
+	 * Render our fluids and smooth terrain
+	 */
 	public static void renderChunk(
-		RebuildTask rebuildTask, RenderChunk chunkRender, ChunkBufferBuilderPack buffers,
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
@@ -283,10 +286,10 @@ public final class RendererDispatcher {
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
-	public static BufferBuilder getAndStartBuffer(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
+	public static BufferBuilder getAndStartBuffer(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {
 		var buffer = buffers.builder(layer);
 		if (usedLayers.add(layer))
-			chunkRender.beginLayer(buffer);
+			chunkRender.noCubes$beginLayer(buffer);
 		return buffer;
 	}
 

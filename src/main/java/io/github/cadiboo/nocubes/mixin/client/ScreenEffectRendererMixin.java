@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client;
 
 import io.github.cadiboo.nocubes.hooks.Hooks;
 import net.minecraft.client.Minecraft;
@@ -25,7 +25,7 @@ public class ScreenEffectRendererMixin {
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isViewBlocking(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"
 		)
 	)
-	private static boolean nocubes_isViewBlocking(BlockState state, BlockGetter level, BlockPos pos) {
+	private static boolean noCubes$isViewBlocking(BlockState state, BlockGetter level, BlockPos pos) {
 		var blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");

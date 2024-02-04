@@ -3,10 +3,10 @@ package io.github.cadiboo.nocubes.client.optifine;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,7 +26,7 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderChunk(RenderChunk chunkRender, BlockPos chunkPos, PoseStack matrix) {
+	public void preRenderChunk(INoCubesChunkSectionRender chunkRender, BlockPos chunkPos, PoseStack matrix) {
 	}
 
 	@Override
@@ -35,12 +35,12 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(RenderChunk chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
+	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		return null;
 	}
 
 	@Override
-	public Object preRenderFluid(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return null;
 	}
 
@@ -50,11 +50,11 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override

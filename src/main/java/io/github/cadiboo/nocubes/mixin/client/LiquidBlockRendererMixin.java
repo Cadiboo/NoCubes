@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client;
 
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import org.spongepowered.asm.mixin.Mixin;

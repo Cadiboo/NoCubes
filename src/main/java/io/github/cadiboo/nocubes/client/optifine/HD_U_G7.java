@@ -4,10 +4,11 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,12 +18,10 @@ import net.minecraft.world.level.material.FluidState;
 
 import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G7.Reflect.*;
-import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetField;
 import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetMethod;
 
 class HD_U_G7 implements OptiFineProxy {
@@ -45,12 +44,13 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public void preRenderChunk(RenderChunk chunkRender, BlockPos chunkPos, PoseStack matrix) {
+	public void preRenderChunk(INoCubesChunkSectionRender chunkRender, BlockPos chunkPos, PoseStack matrix) {
+		var chunkRenderOf = (INoCubesChunkSectionRenderOptiFine) chunkRender;
 		// Support Render Regions
 		matrix.translate(
-			ChunkRender_regionDX(chunkRender),
-			ChunkRender_regionDY(chunkRender),
-			ChunkRender_regionDZ(chunkRender)
+			chunkRenderOf.noCubes$regionDX(),
+			chunkRenderOf.noCubes$regionDY(),
+			chunkRenderOf.noCubes$regionDZ()
 		);
 	}
 
@@ -60,7 +60,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(RenderChunk chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
+	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		BufferBuilder_setBlockLayer(buffer, renderType);
 		Object renderEnv = BufferBuilder_getRenderEnv(buffer, state, pos);
 		RenderEnv_setRegionRenderCacheBuilder(renderEnv, builder);
@@ -73,11 +73,11 @@ class HD_U_G7 implements OptiFineProxy {
 		return renderEnv;
 	}
 
-	protected void prePushShaderEntity(RenderChunk chunkRender, BufferBuilder buffer, BlockPos pos) {
+	protected void prePushShaderEntity(INoCubesChunkSectionRender chunkRender, BufferBuilder buffer, BlockPos pos) {
 	}
 
 	@Override
-	public Object preRenderFluid(RenderChunk chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return this.preRenderBlock(chunkRender, buffers, chunkCache, layer, buffer, block, worldPos);
 	}
 
@@ -87,18 +87,19 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+		var chunkRenderOf = (INoCubesChunkSectionRenderOptiFine) chunkRender;
 		if (Config_isShaders())
 			SVertexBuilder_popEntity(buffer);
 
 		if (RenderEnv_isOverlaysRendered(renderEnv)) {
-			ChunkRender_postRenderOverlays(chunkRender, builder, usedLayers);
+			chunkRenderOf.noCubes$postRenderOverlays(builder, usedLayers);
 			RenderEnv_setOverlaysRendered(renderEnv, false);
 		}
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
 		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, usedLayers);
 	}
 
@@ -150,11 +151,6 @@ class HD_U_G7 implements OptiFineProxy {
 		MethodHandle pushEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "pushEntity", BlockState.class, VertexConsumer.class);
 		MethodHandle popEntity = tryGetMethod("net.optifine.shaders.SVertexBuilder", "popEntity", VertexConsumer.class);
 
-		MethodHandle postRenderOverlays = tryGetMethod(RenderChunk.class.getName(), "postRenderOverlays", ChunkBufferBuilderPack.class, Set.class);
-		Field regionDX = tryGetField(RenderChunk.class.getName(), "regionDX");
-		Field regionDY = tryGetField(RenderChunk.class.getName(), "regionDY");
-		Field regionDZ = tryGetField(RenderChunk.class.getName(), "regionDZ");
-
 		MethodHandle getQuadEmissive = tryGetMethod(BakedQuad.class.getName(), "getQuadEmissive");
 		MethodHandle setBlockLayer = tryGetMethod(BufferBuilder.class.getName(), "setBlockLayer", RenderType.class);
 		MethodHandle getRenderEnv = tryGetMethod(BufferBuilder.class.getName(), "getRenderEnv", BlockState.class, BlockPos.class);
@@ -186,30 +182,6 @@ class HD_U_G7 implements OptiFineProxy {
 		static boolean Config_isAlternateBlocks() {
 			try {
 				return (boolean) isAlternateBlocks.invokeExact();
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
-		}
-
-		static int ChunkRender_regionDX(RenderChunk chunkRender) {
-			try {
-				return regionDX.getInt(chunkRender);
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
-		}
-
-		static int ChunkRender_regionDY(RenderChunk chunkRender) {
-			try {
-				return regionDY.getInt(chunkRender);
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
-		}
-
-		static int ChunkRender_regionDZ(RenderChunk chunkRender) {
-			try {
-				return regionDZ.getInt(chunkRender);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}
@@ -306,15 +278,6 @@ class HD_U_G7 implements OptiFineProxy {
 //			return ((RenderEnv) renderEnv).isOverlaysRendered();
 			try {
 				return (boolean) isOverlaysRendered.invoke(renderEnv);
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
-		}
-
-		static void ChunkRender_postRenderOverlays(RenderChunk chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
-//			chunkRender.postRenderOverlays(builder, compiledChunk);
-			try {
-				postRenderOverlays.invokeExact(chunkRender, builder, usedLayers);
 			} catch (Throwable t) {
 				throw new RuntimeException(t);
 			}

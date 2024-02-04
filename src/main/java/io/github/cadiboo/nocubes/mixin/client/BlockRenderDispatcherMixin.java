@@ -1,4 +1,4 @@
-package io.github.cadiboo.nocubes.mixin;
+package io.github.cadiboo.nocubes.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -26,7 +26,7 @@ public class BlockRenderDispatcherMixin {
 		remap = false, // Forge-added method
 		cancellable = true
 	)
-	private void nocubes_renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData, CallbackInfo ci) {
+	private void noCubes$renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData, CallbackInfo ci) {
 		if (Hooks.renderingEnabledFor(state)) {
 			RendererDispatcher.renderBreakingTexture((BlockRenderDispatcher) (Object) this, state, pos, world, matrix, buffer, modelData);
 			ci.cancel();
