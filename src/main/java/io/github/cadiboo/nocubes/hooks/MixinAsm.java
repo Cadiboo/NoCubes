@@ -234,7 +234,7 @@ public final class MixinAsm {
 			new VarInsnNode(Opcodes.ALOAD, blockPosLocalVarIndex), // blockPos
 			new VarInsnNode(Opcodes.ALOAD, 15), // modelOffset
 			new VarInsnNode(Opcodes.ALOAD, 16), // context
-			callNoCubesClientHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
+			callNoCubesClientHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
 		));
 
 		redirectBlockStateGetFluidStateSoExtendedFluidsWork(methodNode, blockPosLocalVarIndex);

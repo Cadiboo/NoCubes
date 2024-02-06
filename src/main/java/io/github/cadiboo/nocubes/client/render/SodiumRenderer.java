@@ -6,6 +6,7 @@ import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilderSodium;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.Area;
@@ -14,24 +15,19 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import me.jellysquid.mods.sodium.client.model.quad.properties.ModelQuadFacing;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
-import me.jellysquid.mods.sodium.client.render.chunk.data.BuiltSectionInfo;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.DefaultMaterials;
 import me.jellysquid.mods.sodium.client.render.chunk.terrain.material.Material;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.builder.ChunkMeshBufferBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
-import me.jellysquid.mods.sodium.client.util.task.CancellationToken;
-import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import net.caffeinemc.mods.sodium.api.util.ColorABGR;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
@@ -59,44 +55,30 @@ public final class SodiumRenderer {
 	private static final RollingProfiler fluidsProfiler = new RollingProfiler(256);
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
 
-	/**
-	 * A big blob of objects related to vanilla chunk rendering.
-	 * Stops every method having lots of parameters.
-	 */
-	public static class ChunkRenderInfo {
-		interface RenderInLayer {
-			void render(BlockState state, BlockPos worldPos, ModelData modelData, RenderType layer, Material material, ChunkModelBuilder buffer, Object renderEnv);
+	public static class Helper {
+		public interface RenderInLayer {
+			void render(BlockState state, BlockPos worldPos, BakedModel model, long seed, ModelData modelData, RenderType layer, Material material, ChunkModelBuilder buffer, Object renderEnv);
 		}
 
 		public static void renderInBlockLayers(
-			// Params
-			ChunkBuildContext buildContext, CancellationToken cancellationToken,
-			// Local variables
-			BuiltSectionInfo.Builder renderData,
-			VisGraph occluder,
+			INoCubesChunkSectionRenderBuilderSodium task,
 			ChunkBuildBuffers buffers,
 			BlockRenderCache cache,
-			WorldSlice slice,
-			int minX, int minY, int minZ,
-			int maxX, int maxY, int maxZ,
-			BlockPos.MutableBlockPos blockPos,
 			BlockPos.MutableBlockPos modelOffset,
 			BlockRenderContext context,
-
-
-
 			BlockState state, BlockPos worldPos, RenderInLayer render
-
-
 		) {
-			var modelData = ModelData.EMPTY;//modelDataGetter.getModelData(worldPos);
+			var model = cache.getBlockModels().getBlockModel(state);
+			var seed = state.getSeed(worldPos);
+			var modelData = model.getModelData(context.localSlice(), worldPos, state, task.noCubes$getModelData(worldPos));
 			var layers = ItemBlockRenderTypes.getRenderLayers(state);
 			for (var layer : layers) {
+				context.update(worldPos, modelOffset, state, model, seed, modelData, layer);
 				var material = DefaultMaterials.forRenderLayer(layer);
 				var buffer = buffers.get(material);
 //				var buffer = getAndStartBuffer(layer);
-				var renderEnv = (Object)null;//optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
-				render.render(state, worldPos, modelData, layer, material, buffer, renderEnv);
+				var renderEnv = (Object) null;//optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
+				render.render(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv);
 
 //				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
 //				markLayerUsed(layer);
@@ -132,53 +114,21 @@ public final class SodiumRenderer {
 		}
 
 		public static void forEachQuad(
-
-
-			// Params
-			ChunkBuildContext buildContext, CancellationToken cancellationToken,
-			// Local variables
-			BuiltSectionInfo.Builder renderData,
-			VisGraph occluder,
+			INoCubesChunkSectionRenderBuilderSodium task,
 			ChunkBuildBuffers buffers,
 			BlockRenderCache cache,
-			WorldSlice slice,
-			int minX, int minY, int minZ,
-			int maxX, int maxY, int maxZ,
-			BlockPos.MutableBlockPos blockPos,
 			BlockPos.MutableBlockPos modelOffset,
-			BlockRenderContext context
-
-			, LightCache light,
+			BlockRenderContext context,
 			RandomSource random,
-
-
 			BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action
 		) {
-			var model = cache.getBlockModels().getBlockModel(stateIn);
-			var seed = stateIn.getSeed(worldPosIn);
 			renderInBlockLayers(
-
-				// Params
-				buildContext, cancellationToken,
-				// Local variables
-				renderData,
-				occluder,
-				buffers,
-				cache,
-				slice,
-				minX, minY, minZ,
-				maxX, maxY, maxZ,
-				blockPos,
-				modelOffset,
-				context,
-
+				task, buffers, cache, modelOffset, context,
 				stateIn, worldPosIn,
-				(state, worldPos, modelData, layer, material, buffer, renderEnv) -> {
+				(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
 					var nullQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, null);
 					var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, material, buffer, renderEnv, action);
 
-
-					context.update(worldPosIn, modelOffset, stateIn, model, seed, modelData, layer);
 					List<BakedQuad> dirQuads;
 					if (!state.hasProperty(SNOWY))
 						dirQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, direction);
@@ -189,8 +139,8 @@ public final class SodiumRenderer {
 							dirQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-							BlockState snow = Blocks.SNOW.defaultBlockState();
-							BakedModel snowModel = cache.getBlockModels().getBlockModel(snow);
+							var snow = Blocks.SNOW.defaultBlockState();
+							var snowModel = cache.getBlockModels().getBlockModel(snow);
 							dirQuads = getQuadsAndStoreOverlays(random, snow, worldPos, seed, modelData, layer, renderEnv, snowModel, null);
 						}
 					}
@@ -203,12 +153,6 @@ public final class SodiumRenderer {
 						forEachQuad(getMissingQuads(Minecraft.getInstance().getBlockRenderer(), random), state, worldPos, colorSupplier, layer, material, buffer, renderEnv, action);
 				}
 			);
-		}
-
-		private static BakedModel getModel(BlockRenderDispatcher dispatcher, BlockState state, Object renderEnv) {
-			var model = dispatcher.getBlockModel(state);
-//			model = optiFine.getModel(renderEnv, model, state);
-			return model;
 		}
 
 		private static List<BakedQuad> getQuadsAndStoreOverlays(RandomSource random, BlockState state, BlockPos worldPos, long seed, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
@@ -242,16 +186,9 @@ public final class SodiumRenderer {
 	}
 
 	public static void renderChunk(
-		// Params
-		/*ChunkBuildContext*/ Object buildContext, /*CancellationToken*/ Object cancellationToken,
-		// Local variables
-		/*BuiltSectionInfo.Builder*/ Object renderData,
-		VisGraph occluder,
+		INoCubesChunkSectionRenderBuilderSodium task,
 		/*ChunkBuildBuffers*/ Object buffers,
 		/*BlockRenderCache*/ Object cache,
-		/*WorldSlice*/ Object slice,
-		int minX, int minY, int minZ,
-		int maxX, int maxY, int maxZ,
 		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
 		/*BlockRenderContext*/ Object context
@@ -267,44 +204,26 @@ public final class SodiumRenderer {
 
 			if (NoCubesConfig.Client.render)
 				renderChunkMesh(
-
-					// Params
-					(ChunkBuildContext) buildContext, (CancellationToken) cancellationToken,
-					// Local variables
-					(BuiltSectionInfo.Builder) renderData,
-					occluder,
+					task,
 					(ChunkBuildBuffers) buffers,
 					(BlockRenderCache) cache,
-					(WorldSlice) slice,
-					minX, minY, minZ,
-					maxX, maxY, maxZ,
 					blockPos,
 					modelOffset,
-					(BlockRenderContext) context
-
-					, light, isSmoothable
-			);
+					(BlockRenderContext) context,
+					light, isSmoothable
+				);
 		}
 		totalProfiler.recordAndLogElapsedNanosChunk(start, "total");
 	}
 
 	private static void renderChunkMesh(
-
-		// Params
-		ChunkBuildContext buildContext, CancellationToken cancellationToken,
-		// Local variables
-		BuiltSectionInfo.Builder renderData,
-		VisGraph occluder,
+		INoCubesChunkSectionRenderBuilderSodium task,
 		ChunkBuildBuffers buffers,
 		BlockRenderCache cache,
-		WorldSlice slice,
-		int minX, int minY, int minZ,
-		int maxX, int maxY, int maxZ,
 		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		BlockRenderContext context
-
-		, LightCache light, Predicate<BlockState> isSmoothable
+		BlockRenderContext context,
+		LightCache light, Predicate<BlockState> isSmoothable
 	) {
 		var start = System.nanoTime();
 		var mesher = NoCubesConfig.Server.mesher;
@@ -312,24 +231,14 @@ public final class SodiumRenderer {
 			var area = new Area(Minecraft.getInstance().level, blockPos, ModUtil.CHUNK_SIZE, mesher);
 		) {
 			renderArea(
-				// Params
-				buildContext, cancellationToken,
-				// Local variables
-				renderData,
-				occluder,
+				task,
 				buffers,
 				cache,
-				slice,
-				minX, minY, minZ,
-				maxX, maxY, maxZ,
 				blockPos,
 				modelOffset,
-				context
-
-				, light,
-
-
-				 isSmoothable, mesher, area
+				context,
+				light,
+				isSmoothable, mesher, area
 			);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
@@ -438,24 +347,14 @@ public final class SodiumRenderer {
 	}
 
 	public static void renderArea(
-		// Params
-		ChunkBuildContext buildContext, CancellationToken cancellationToken,
-		// Local variables
-		BuiltSectionInfo.Builder renderData,
-		VisGraph occluder,
+		INoCubesChunkSectionRenderBuilderSodium task,
 		ChunkBuildBuffers buffers,
 		BlockRenderCache cache,
-		WorldSlice slice,
-		int minX, int minY, int minZ,
-		int maxX, int maxY, int maxZ,
 		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		BlockRenderContext context
-
-		, LightCache light,
-
+		BlockRenderContext context,
+		LightCache light,
 		Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area
-
 	) {
 		var faceInfo = FaceInfo.INSTANCE.get();
 		var objects = MutableObjects.INSTANCE.get();
@@ -487,46 +386,16 @@ public final class SodiumRenderer {
 				}
 
 				renderFaceWithConnectedTextures(
-
-					// Params
-					buildContext, cancellationToken,
-					// Local variables
-					renderData,
-					occluder,
-					buffers,
-					cache,
-					slice,
-					minX, minY, minZ,
-					maxX, maxY, maxZ,
-					blockPos,
-					modelOffset,
-					context
-
-					, light, random, vertices
-
-					, objects, area, faceInfo, renderState
+					task, buffers, cache, modelOffset, context,
+					light, random, vertices,
+					objects, area, faceInfo, renderState
 				);
 
 				// Draw grass tufts, plants etc.
 				renderExtras(
-
-					// Params
-					buildContext, cancellationToken,
-					// Local variables
-					renderData,
-					occluder,
-					buffers,
-					cache,
-					slice,
-					minX, minY, minZ,
-					maxX, maxY, maxZ,
-					blockPos,
-					modelOffset,
-					context
-
-					, light, random, vertices
-
-					, objects, area, foundState, renderState, faceInfo
+					task, buffers, cache, modelOffset, context,
+					light, random, vertices,
+					objects, area, foundState, renderState, faceInfo
 				);
 				return true;
 			});
@@ -534,59 +403,28 @@ public final class SodiumRenderer {
 	}
 
 	static void renderFaceWithConnectedTextures(
-
-		// Params
-		ChunkBuildContext buildContext, CancellationToken cancellationToken,
-		// Local variables
-		BuiltSectionInfo.Builder renderData,
-		VisGraph occluder,
+		INoCubesChunkSectionRenderBuilderSodium task,
 		ChunkBuildBuffers buffers,
 		BlockRenderCache cache,
-		WorldSlice slice,
-		int minX, int minY, int minZ,
-		int maxX, int maxY, int maxZ,
-		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		BlockRenderContext context
-
-		, LightCache lightCache,
-
-		RandomSource random, ChunkVertexEncoder.Vertex[] vertices
-
-
-		, MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState
+		BlockRenderContext context,
+		LightCache lightCache,
+		RandomSource random, ChunkVertexEncoder.Vertex[] vertices,
+		MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState
 	) {
 		var state = renderState.state;
 		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
 
 		var block = state.getBlock();
-		var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof  EndPortalBlock) && !(block instanceof SnowLayerBlock) && !MeshRenderer.isSolidRender(state);
+		var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof EndPortalBlock) && !(block instanceof SnowLayerBlock) && !MeshRenderer.isSolidRender(state);
 
 		var light = lightCache.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
-		var shade = ChunkRenderInfo.getShade(cache.getWorldSlice(), faceInfo.approximateDirection);
+		var shade = Helper.getShade(cache.getWorldSlice(), faceInfo.approximateDirection);
 
-		ChunkRenderInfo.forEachQuad(
-
-			// Params
-			buildContext, cancellationToken,
-			// Local variables
-			renderData,
-			occluder,
-			buffers,
-			cache,
-			slice,
-			minX, minY, minZ,
-			maxX, maxY, maxZ,
-			blockPos,
-			modelOffset,
-			context
-
-			, lightCache,
-			random,
-
-
+		Helper.forEachQuad(
+			task, buffers, cache, modelOffset, context, random,
 			state, worldPos, faceInfo.approximateDirection,
-			(colorState, colorWorldPos, quad) -> ChunkRenderInfo.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
+			(colorState, colorWorldPos, quad) -> Helper.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
 			(layer, material, buffer, quad, color, emissive) -> {
 				var sprite = quad.getSprite();
 				if (sprite != null) {
@@ -605,27 +443,17 @@ public final class SodiumRenderer {
 	}
 
 	static void renderExtras(
-
-		// Params
-		ChunkBuildContext buildContext, CancellationToken cancellationToken,
-		// Local variables
-		BuiltSectionInfo.Builder renderData,
-		VisGraph occluder,
+		INoCubesChunkSectionRenderBuilderSodium task,
 		ChunkBuildBuffers buffers,
 		BlockRenderCache cache,
-		WorldSlice slice,
-		int minX, int minY, int minZ,
-		int maxX, int maxY, int maxZ,
-		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		BlockRenderContext context
+		BlockRenderContext context,
 
-		, LightCache light,
+		LightCache light,
 
-		RandomSource random, ChunkVertexEncoder.Vertex[] vertices
+		RandomSource random, ChunkVertexEncoder.Vertex[] vertices,
 
-		, MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo
-
+		MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo
 	) {
 		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
 		var renderGrassTufts = NoCubesConfig.Client.grassTufts;
@@ -646,39 +474,20 @@ public final class SodiumRenderer {
 				var worldAbove = relativeAbove.move(area.start);
 				var center = faceInfo.centre;
 
-
-				var model = cache.getBlockModels().getBlockModel(stateAbove);
-				var seed = stateAbove.getSeed(worldAbove);
-				ChunkRenderInfo.renderInBlockLayers(
-
-					// Params
-					buildContext, cancellationToken,
-					// Local variables
-					renderData,
-					occluder,
-					buffers,
-					cache,
-					slice,
-					minX, minY, minZ,
-					maxX, maxY, maxZ,
-					blockPos,
-					modelOffset,
-					context,
-
+				Helper.renderInBlockLayers(
+					task, buffers, cache, modelOffset, context,
 					stateAbove, worldAbove,
-					(state, worldPos, modelData, layer, material, buffer, renderEnv) -> {
-						context.update(worldAbove, BlockPos.ZERO, stateAbove, model, seed, modelData, layer);
-						((Vector3f)context.origin()).set(
+					(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
+						((Vector3f) context.origin()).set(
 							oldX + center.x - 0.5F,
 							oldY + center.y,
 							oldZ + center.z - 0.5F
 						);
 						cache.getBlockRenderer().renderModel(context, buffers);
-//						return dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer);
 					}
 				);
 			}
-			((Vector3f)context.origin()).set(oldX, oldY, oldZ);
+			((Vector3f) context.origin()).set(oldX, oldY, oldZ);
 		}
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
@@ -697,35 +506,17 @@ public final class SodiumRenderer {
 			var grassTuft0 = objects.grassTuft0;
 			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
 			var light0 = light.get(area.start, grassTuft0, objects.grassTuft0Light);
-			var shade0 = ChunkRenderInfo.getShade(world, grassTuft0.approximateDirection);
+			var shade0 = Helper.getShade(world, grassTuft0.approximateDirection);
 
 			var grassTuft1 = objects.grassTuft1;
 			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
 			var light1 = light.get(area.start, grassTuft1, objects.grassTuft1Light);
-			var shade1 = ChunkRenderInfo.getShade(world, grassTuft1.approximateDirection);
+			var shade1 = Helper.getShade(world, grassTuft1.approximateDirection);
 
-//			var matrix = renderer.matrix.matrix();
-			ChunkRenderInfo.forEachQuad(
-
-				// Params
-				buildContext, cancellationToken,
-				// Local variables
-				renderData,
-				occluder,
-				buffers,
-				cache,
-				slice,
-				minX, minY, minZ,
-				maxX, maxY, maxZ,
-				blockPos,
-				modelOffset,
-				context,
-
-				light,
-				random,
-
+			Helper.forEachQuad(
+				task, buffers, cache, modelOffset, context, random,
 				grass, worldAbove, null,
-				(state, worldPos, quad) -> snowy ? Color.WHITE : ChunkRenderInfo.getColor(objects.color, quad, grass, world, worldAbove, 1F),
+				(state, worldPos, quad) -> snowy ? Color.WHITE : Helper.getColor(objects.color, quad, grass, world, worldAbove, 1F),
 				(layer, material, buffer, quad, color, emissive) -> {
 					var sprite = quad.getSprite();
 					if (sprite != null) {

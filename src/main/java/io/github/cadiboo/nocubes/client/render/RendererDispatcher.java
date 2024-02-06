@@ -172,8 +172,8 @@ public final class RendererDispatcher {
 							dirQuads = getQuadsAndStoreOverlays(state, worldPos, seed, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
 						else {
 							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-							BlockState snow = Blocks.SNOW.defaultBlockState();
-							BakedModel snowModel = getModel(snow, renderEnv);
+							var snow = Blocks.SNOW.defaultBlockState();
+							var snowModel = getModel(snow, renderEnv);
 							dirQuads = getQuadsAndStoreOverlays(snow, worldPos, seed, modelData, layer, renderEnv, snowModel, null);
 						}
 					}

@@ -8,6 +8,7 @@ import io.github.cadiboo.nocubes.client.render.SodiumRenderer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilderSodium;
 import io.github.cadiboo.nocubes.mixin.client.RenderChunkRebuildTaskMixin;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
@@ -60,6 +61,8 @@ public final class ClientHooks {
 	 * Call injected by {@link MixinAsm#transformSodiumChunkRenderer}
 	 */
 	public static void preIterationSodium(
+		// Fields
+		Object chunkBuilderMeshingTask,
 		// Params
 		/*ChunkBuildContext*/ Object buildContext, /*CancellationToken*/ Object cancellationToken,
 		// Local variables
@@ -76,16 +79,9 @@ public final class ClientHooks {
 	) {
 		SelfCheck.preIterationSodium = true;
 		SodiumRenderer.renderChunk(
-			// Params
-			buildContext, cancellationToken,
-			// Local variables
-			renderData,
-			occluder,
+			(INoCubesChunkSectionRenderBuilderSodium) chunkBuilderMeshingTask,
 			buffers,
 			cache,
-			slice,
-			minX, minY, minZ,
-			maxX, maxY, maxZ,
 			blockPos,
 			modelOffset,
 			context
