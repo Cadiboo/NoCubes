@@ -48,6 +48,12 @@ import java.util.function.Predicate;
  */
 public final class CollisionHandler {
 
+	static final int OLD_COLLISIONS_CORNERS = 1;
+	static final int OLD_COLLISIONS_EDGES = OLD_COLLISIONS_CORNERS + 1;
+	static final int OLD_COLLISIONS_CORNER_EDGES_INTERP = OLD_COLLISIONS_EDGES + 1;
+	static final int OLD_COLLISIONS_CENTER_CORNER_INTERP = OLD_COLLISIONS_CORNER_EDGES_INTERP + 1;
+	public static final int OLD_COLLISIONS_ENHANCEMENT_LEVEL_MAX = OLD_COLLISIONS_CENTER_CORNER_INTERP;
+
 	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
 		var canCollide = ((INoCubesBlockType) state.getBlock()).noCubes$hasCollision();
 		try {
@@ -194,16 +200,32 @@ public final class CollisionHandler {
 	}
 
 	public static boolean generateShapes(Vec centre, Vec faceNormal, ShapeConsumer consumer, Face face) {
-		generateShapesOld(consumer, face, centre, faceNormal, null, 0.125F);
-//		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v0))
-//			return false;
-//		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v1))
-//			return false;
-//		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v2))
-//			return false;
-//		if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v3))
-//			return false;
-		return true;
+		var mut = faceNormal;
+		var mutOldX = mut.x;
+		var mutOldY = mut.y;
+		var mutOldZ = mut.z;
+		try {
+			if (!generateShapesOld(consumer, face, centre, mut, Double.MAX_VALUE, 0.125F, NoCubesConfig.Server.oldStyleCollisionsEnhancementLevel))
+				return false;
+		} finally {
+			mut.set(
+				mutOldX,
+				mutOldY,
+				mutOldZ
+			);
+		}
+
+		if (!NoCubesConfig.Server.onlyOldStyleCollisions) {
+			if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v0))
+				return false;
+			if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v1))
+				return false;
+			if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v2))
+				return false;
+			if (!CollisionHandler.generateShape(centre, faceNormal, consumer, face.v3))
+				return false;
+		}
+			return true;
 	}
 
 	private static boolean generateShape(Vec centre, Vec faceNormal, ShapeConsumer consumer, Vec v) {
@@ -219,11 +241,7 @@ public final class CollisionHandler {
 		);
 	}
 
-	private static void generateShapesOld(ShapeConsumer consumer, Face face, Vec centre, Vec mut, VoxelShape originalBoxOffset, float boxRadius) {
-		var mutOldX = mut.x;
-		var mutOldY = mut.y;
-		var mutOldZ = mut.z;
-
+	private static boolean generateShapesOld(ShapeConsumer consumer, Face face, Vec centre, Vec mut, double maxY, float boxRadius, int level) {
 		var v0 = face.v0;
 		var v1 = face.v1;
 		var v2 = face.v2;
@@ -234,59 +252,63 @@ public final class CollisionHandler {
 		//__c__
 		//_____
 		//1___2
-		if (!acceptVoxelShapeForVertex(consumer, v0, boxRadius, originalBoxOffset) ||
-			!acceptVoxelShapeForVertex(consumer, v1, boxRadius, originalBoxOffset) ||
-			!acceptVoxelShapeForVertex(consumer, v2, boxRadius, originalBoxOffset) ||
-			!acceptVoxelShapeForVertex(consumer, v3, boxRadius, originalBoxOffset) ||
-			!acceptVoxelShapeForVertex(consumer, centre, boxRadius, originalBoxOffset)
+		if (level < OLD_COLLISIONS_CORNERS)
+			return true;
+		if (!acceptVoxelShapeForVertex(consumer, v0, boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, v1, boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, v2, boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, v3, boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, centre, boxRadius, maxY)
 		)
-			return;
+			return false;
 
-//		//0_*_3
-//		//_____
-//		//*_c_*
-//		//_____
-//		//1_*_2
-//		if (!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.5F, mut), boxRadius, originalBoxOffset)
-//		)
-//			return;
+		//0_*_3
+		//_____
+		//*_c_*
+		//_____
+		//1_*_2
+		if (level < OLD_COLLISIONS_EDGES)
+			return true;
+		if (!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.5F, mut), boxRadius, maxY)
+		)
+			return false;
 
-//		//0x*x3
-//		//x___x
-//		//*_c_*
-//		//x___x
-//		//1x*x2
-//		if (!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.25F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.75F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.25F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.75F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.25F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.75F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.25F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.75F, mut), boxRadius, originalBoxOffset)
-//		)
-//			return;
+		//0x*x3
+		//x___x
+		//*_c_*
+		//x___x
+		//1x*x2
+		if (level < OLD_COLLISIONS_CORNER_EDGES_INTERP)
+			return true;
+		if (!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.25F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v0, v1, 0.75F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.25F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v1, v2, 0.75F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.25F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v2, v3, 0.75F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.25F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v3, v0, 0.75F, mut), boxRadius, maxY)
+		)
+			return false;
 
-//		//0x*x3
-//		//x†_†x
-//		//*_c_*
-//		//x†_†x
-//		//1x*x2
-//		if (!acceptVoxelShapeForVertex(consumer, interp(v0, centre, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v1, centre, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v2, centre, 0.5F, mut), boxRadius, originalBoxOffset) ||
-//			!acceptVoxelShapeForVertex(consumer, interp(v3, centre, 0.5F, mut), boxRadius, originalBoxOffset)
-//		)
-//			return;
+		//0x*x3
+		//x†_†x
+		//*_c_*
+		//x†_†x
+		//1x*x2
+		if (level < OLD_COLLISIONS_CENTER_CORNER_INTERP)
+			return true;
+		if (!acceptVoxelShapeForVertex(consumer, interp(v0, centre, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v1, centre, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v2, centre, 0.5F, mut), boxRadius, maxY) ||
+			!acceptVoxelShapeForVertex(consumer, interp(v3, centre, 0.5F, mut), boxRadius, maxY)
+		)
+			return false;
 
-		mut.set(
-			mutOldX,
-			mutOldY,
-			mutOldZ
-		);
+		return true;
 	}
 
 	private static Vec interp(Vec v0, Vec v1, float t, Vec toUse) {
@@ -298,22 +320,20 @@ public final class CollisionHandler {
 
 	}
 
-	private static boolean acceptVoxelShapeForVertex(ShapeConsumer consumer, Vec v, float boxRadius, VoxelShape originalBox) {
-		final double vy = v.y;
-		final double vx = v.x;
-		final double vz = v.z;
-
-		final boolean originalBoxMaxYGreaterThanVertex = false;//originalBox != null && originalBox.getEnd(EnumFacing.Axis.Y) >= vy;
+	private static boolean acceptVoxelShapeForVertex(ShapeConsumer consumer, Vec v, float boxRadius, double maxY) {
+		final double topX = v.x + boxRadius;
+		final double topY = Math.min(v.y + boxRadius, maxY);
+		final double topZ = v.z + boxRadius;
 
 		return consumer.accept(
 			//min
-			vx - boxRadius,
-			originalBoxMaxYGreaterThanVertex ? vy - boxRadius - boxRadius : vy - boxRadius,
-			vz - boxRadius,
+			topX - boxRadius * 2,
+			topY - boxRadius * 2,
+			topZ - boxRadius * 2,
 			//max
-			vx + boxRadius,
-			originalBoxMaxYGreaterThanVertex ? vy : vy + boxRadius,
-			vz + boxRadius
+			topX,
+			topY,
+			topZ
 		);
 	}
 
