@@ -41,7 +41,7 @@ public final class ClientUtil {
 		if (NoCubesConfig.Client.infoMessage)
 			Minecraft.getInstance().player.sendSystemMessage(
 				Component.translatable(NoCubes.MOD_ID + ".notification.infoMessage",
-				KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE),
+				KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE_BLOCK_TYPE),
 				NoCubesConfig.Client.INFO_MESSAGE,
 				clientConfigComponent()
 			).withStyle(ChatFormatting.GREEN));

@@ -31,13 +31,21 @@ public final class KeyMappings {
 	private static final Logger LOG = LogManager.getLogger();
 
 	public static final String TOGGLE_VISUALS = "toggleVisuals";
-	public static final String TOGGLE_SMOOTHABLE = "toggleSmoothable";
+	/**
+	 * It is tedious to have to add/remove each block state for blocks that have many states with little to no visual difference.
+	 * Leaves are a primary example of this.
+	 * Therefore, the default add/remove keybind changes all block states for the targeted block.
+	 * We have {@link #TOGGLE_SMOOTHABLE_BLOCK_STATE a separate keybind} that only changes a single state to give players that want it more fine-grained control.
+	 */
+	public static final String TOGGLE_SMOOTHABLE_BLOCK_TYPE = "toggleSmoothable";
+	public static final String TOGGLE_SMOOTHABLE_BLOCK_STATE = "toggleSmoothableBlockState";
 
 	public static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
 			makeKeybinding(registerEvent, TOGGLE_VISUALS, InputConstants.UNKNOWN.getValue(), KeyMappings::toggleVisuals),
-			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE, GLFW.GLFW_KEY_N, KeyMappings::toggleLookedAtSmoothable)
+			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE_BLOCK_TYPE, GLFW.GLFW_KEY_N, () -> toggleLookedAtSmoothable(true)),
+			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE_BLOCK_STATE, InputConstants.UNKNOWN.getValue(), () -> toggleLookedAtSmoothable(false))
 		);
 		forgeBus.addListener((TickEvent.ClientTickEvent tickEvent) -> {
 			if (tickEvent.phase != TickEvent.Phase.END)
@@ -75,7 +83,7 @@ public final class KeyMappings {
 		reloadAllChunks("toggleVisuals was pressed");
 	}
 
-	private static void toggleLookedAtSmoothable() {
+	private static void toggleLookedAtSmoothable(boolean changeAllStatesOfBlock) {
 		var minecraft = Minecraft.getInstance();
 		var world = minecraft.level;
 		var player = minecraft.player;
@@ -88,10 +96,7 @@ public final class KeyMappings {
 		var targeted = ((BlockHitResult) lookingAt);
 		var targetedState = world.getBlockState(targeted.getBlockPos());
 		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
-		// Add all states if the player is not crouching (to make it easy to toggle on/off all leaves)
-		// If the player needs fine-grained control over which specific blockstates are smoothable they can crouch
-		// (Yes I know it says shift, it actually checks the crouch key)
-		var states = player.isShiftKeyDown() ? new BlockState[]{targetedState} : ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new);
+		var states = changeAllStatesOfBlock ? ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new) : new BlockState[] {targetedState};
 
 		LOG.debug("toggleLookedAtSmoothable currentServerHasNoCubes={}", NoCubesNetwork.currentServerHasNoCubes);
 		if (!NoCubesNetwork.currentServerHasNoCubes) {

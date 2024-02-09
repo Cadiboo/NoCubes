@@ -1,7 +1,8 @@
 {
 	"nocubes.keycategory": "NoCubes",
 	"nocubes.key.toggleVisuals": "Toggle rendering",
-	"nocubes.key.toggleSmoothable": "Toggle block smoothness",
+	"nocubes.key.toggleSmoothableBlockType": "Toggle block smoothness",
+	"nocubes.key.toggleSmoothableBlockState": "Toggle specific block state smoothness",
 
 	"nocubes.config.infoMessage": "NoCubes info message",
 	"nocubes.config.render": "NoCubes rendering",

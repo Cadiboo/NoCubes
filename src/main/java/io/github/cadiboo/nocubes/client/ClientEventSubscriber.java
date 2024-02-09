@@ -51,7 +51,7 @@ public final class ClientEventSubscriber {
 		if (!NoCubesNetwork.currentServerHasNoCubes) {
 			// This lets players not phase through the ground on servers that don't have NoCubes installed
 			NoCubesConfig.Server.collisionsEnabled = false;
-			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.notInstalledOnServer", KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE));
+			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.notInstalledOnServer", KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE_BLOCK_TYPE));
 		}
 	}
 
