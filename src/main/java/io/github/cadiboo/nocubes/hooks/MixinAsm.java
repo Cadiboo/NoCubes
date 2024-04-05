@@ -46,18 +46,18 @@ public final class MixinAsm {
 		// We inject right above where vanilla loops (iterates) through all the blocks
 		{
 			var positionsIteratorCall = findFirstMethodCall(
-				methodNode,
-				ASMAPI.MethodType.STATIC,
+				instructions,
+				Opcodes.INVOKESTATIC,
 				isOptiFinePresent ? "net/optifine/BlockPosM" : "net/minecraft/core/BlockPos",
-				isOptiFinePresent ? "getAllInBoxMutable" : ASMAPI.mapMethod("m_121940_"), // BlockPos#betweenClosed
+				isOptiFinePresent ? "getAllInBoxMutable" : mapMethod("m_121940_"), // BlockPos#betweenClosed
 				"(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;",
 				0 // startIndex
 			);
 			var firstLabelBeforePositionsIteratorCall = findFirstLabelBefore(instructions, positionsIteratorCall);
 
 			// I'm not sure if this is still necessary, but it works so I'm not touching it (I remember it was painful to get right)
-			var outerClassFieldName = isOptiFinePresent ? "this$1" : ASMAPI.mapField("f_112859_");
-			instructions.insert(firstLabelBeforePositionsIteratorCall, ASMAPI.listOf(
+			var outerClassFieldName = isOptiFinePresent ? "this$1" : mapField("f_112859_");
+			instructions.insert(firstLabelBeforePositionsIteratorCall, listOf(
 				// Fields
 				new VarInsnNode(Opcodes.ALOAD, 0), // this
 				new VarInsnNode(Opcodes.ALOAD, 0), // ChunkRender.this
@@ -79,7 +79,7 @@ public final class MixinAsm {
 		}
 
 		redirectBlockStateGetFluidStateSoExtendedFluidsWork(
-			methodNode,
+			instructions,
 			// blockPos local variable index
 			isOptiFinePresent ? (ofg8 ? 19 : 17) : 16
 		);
@@ -105,17 +105,16 @@ public final class MixinAsm {
 	 * Redirects 'state.getFluidState()' to our own code, so we can have extended fluids render properly
 	 * Specifically: changes 'state.getFluidState()' to 'Hooks.getRenderFluidState(pos, state)'
 	 */
-	static void redirectBlockStateGetFluidStateSoExtendedFluidsWork(MethodNode methodNode, int blockPosLocalVarIndex) {
+	static void redirectBlockStateGetFluidStateSoExtendedFluidsWork(InsnList instructions, int blockPosLocalVarIndex) {
 		var getFluidStateCall = findFirstMethodCall(
-			methodNode,
-			ASMAPI.MethodType.VIRTUAL,
+			instructions,
+			Opcodes.INVOKEVIRTUAL,
 			"net/minecraft/world/level/block/state/BlockState",
-			ASMAPI.mapMethod("m_60819_"), // getFluidState
+			mapMethod("m_60819_"), // getFluidState
 			"()Lnet/minecraft/world/level/material/FluidState;",
 			0 // startIndex
 		);
 
-		var instructions = methodNode.instructions;
 		var previousLabel = findFirstLabelBefore(instructions, getFluidStateCall);
 
 		// Change
@@ -141,12 +140,11 @@ public final class MixinAsm {
 	 * - Injects our {@link io.github.cadiboo.nocubes.hooks.ClientHooks#getRenderFluidState} hook
 	 */
 	public static void transformFluidRenderer(ClassNode classNode) {
-		var methodNode = findMethodNode(
+		var instructions = findMethodNode(
 			classNode,
 			"m_234369_", // tesselate
 			"(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/material/FluidState;)V"
-		);
-		var instructions = methodNode.instructions;
+		).instructions;
 		// Redirect every 'blockState.getFluidState()' call preceded by a 'world.getBlockState(pos)' to our 'getRenderFluidState' hook
 		// This could be converted to a Mixin but
 		// - Each offset block pos would need to be recreated (currently using DUP_X1 to avoid this) making it less efficient that this ASM
@@ -160,10 +158,10 @@ public final class MixinAsm {
 		var lastIndex = 0;
 		for (var direction = 0; direction < 6; ++direction) {
 			var getBlockStateCall = findFirstMethodCall(
-				methodNode,
-				ASMAPI.MethodType.INTERFACE,
+				instructions,
+				Opcodes.INVOKEINTERFACE,
 				"net/minecraft/world/level/BlockAndTintGetter",
-				ASMAPI.mapMethod("m_8055_"), // getBlockState
+				mapMethod("m_8055_"), // getBlockState
 				"(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;",
 				lastIndex + 1
 			);
@@ -173,10 +171,10 @@ public final class MixinAsm {
 			instructions.insert(getBlockStateCall, new InsnNode(Opcodes.DUP));
 			lastIndex = instructions.indexOf(getBlockStateCall);
 			var getFluidStateCall = findFirstMethodCall(
-				methodNode,
-				ASMAPI.MethodType.VIRTUAL,
+				instructions,
+				Opcodes.INVOKEVIRTUAL,
 				"net/minecraft/world/level/block/state/BlockState",
-				ASMAPI.mapMethod("m_60819_"), // getFluidState
+				mapMethod("m_60819_"), // getFluidState
 				"()Lnet/minecraft/world/level/material/FluidState;",
 				lastIndex + 1
 			);
@@ -193,16 +191,15 @@ public final class MixinAsm {
 	 * Same as {@link MixinAsm#transformChunkRenderer} but for Sodium.
 	 */
 	public static void transformSodiumChunkRenderer(ClassNode classNode) {
-		var methodNode = findMethodNode(
+		var instructions = findMethodNode(
 			classNode,
 			"execute",
 			"(Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildContext;Lme/jellysquid/mods/sodium/client/util/task/CancellationToken;)Lme/jellysquid/mods/sodium/client/render/chunk/compile/ChunkBuildOutput;"
-		);
-		var instructions = methodNode.instructions;
+		).instructions;
 
 		var renderContextConstructor = findFirstMethodCall(
-			methodNode,
-			ASMAPI.MethodType.SPECIAL,
+			instructions,
+			Opcodes.INVOKESPECIAL,
 			"me/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext",
 			"<init>",
 			"(Lme/jellysquid/mods/sodium/client/world/WorldSlice;)V",
@@ -213,7 +210,7 @@ public final class MixinAsm {
 		assertInstructionFound(storeRenderContext, "ASTORE blockRenderContext", instructions);
 
 		var blockPosLocalVarIndex = 14;
-		instructions.insert(storeRenderContext, ASMAPI.listOf(
+		instructions.insert(storeRenderContext, listOf(
 			// Fields
 			new VarInsnNode(Opcodes.ALOAD, 0), // this
 			// Params
@@ -237,21 +234,21 @@ public final class MixinAsm {
 			callNoCubesClientHook("preIterationSodium", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Lnet/minecraft/client/renderer/chunk/VisGraph;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;IIIIIILnet/minecraft/core/BlockPos$MutableBlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;Ljava/lang/Object;)V")
 		));
 
-		redirectBlockStateGetFluidStateSoExtendedFluidsWork(methodNode, blockPosLocalVarIndex);
+		redirectBlockStateGetFluidStateSoExtendedFluidsWork(instructions, blockPosLocalVarIndex);
 	}
 
 	/**
 	 * Same as {@link MixinAsm#transformFluidRenderer} but for Sodium.
 	 */
 	public static void transformSodiumFluidRenderer(ClassNode classNode) {
-		var methodNode = findMethodNode(
+		var instructions = findMethodNode(
 			classNode,
 			"fluidHeight",
 			"(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/material/Fluid;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)F"
-		);
+		).instructions;
 
 		redirectBlockStateGetFluidStateSoExtendedFluidsWork(
-			methodNode,
+			instructions,
 			// blockPosLocalVarIndex
 			3
 		);
@@ -303,8 +300,23 @@ public final class MixinAsm {
 		LogManager.getLogger("NoCubes ASM").info(msg);
 	}
 
-	static MethodNode findMethodNode(ClassNode classNode, String obfuscatedName, String desc) {
-		var name = ASMAPI.mapMethod(obfuscatedName);
+	static InsnList listOf(AbstractInsnNode... nodes) {
+		var list = new InsnList();
+		for (var node : nodes)
+			list.add(node);
+		return list;
+	}
+
+	static String mapField(String intermediaryName) {
+		return ASMAPI.mapField(intermediaryName);
+	}
+
+	static String mapMethod(String intermediaryName) {
+		return ASMAPI.mapMethod(intermediaryName);
+	}
+
+	static MethodNode findMethodNode(ClassNode classNode, String intermediaryName, String desc) {
+		var name = mapMethod(intermediaryName);
 		for (MethodNode methodNode : classNode.methods) {
 			if (name.equals(methodNode.name) && desc.equals(methodNode.desc))
 				return methodNode;
@@ -345,10 +357,17 @@ public final class MixinAsm {
 		return null;
 	}
 
-	static MethodInsnNode findFirstMethodCall(MethodNode methodNode, ASMAPI.MethodType methodType, String owner, String name, String desc, int startIndex) {
-		var instruction = ASMAPI.findFirstMethodCallAfter(methodNode, methodType, owner, name, desc, startIndex);
-		assertInstructionFound(instruction, name + " call", methodNode.instructions);
-		return instruction;
+	static MethodInsnNode findFirstMethodCall(InsnList instructions, int opcode, String owner, String name, String desc, int startIndex) {
+		for (int i = Math.max(0, startIndex); i < instructions.size(); i++) {
+			if (!(instructions.get(i) instanceof MethodInsnNode node))
+				continue;
+			if (node.getOpcode() != opcode)
+				continue;
+			if (!node.owner.equals(owner) || !node.name.equals(name) || !node.desc.equals(desc))
+				continue;
+			return node;
+		}
+		throw new RuntimeException("Error: Couldn't find '" + name + "' call in instructions:\n" + stringifyInstructions(instructions));
 	}
 
 	/**
