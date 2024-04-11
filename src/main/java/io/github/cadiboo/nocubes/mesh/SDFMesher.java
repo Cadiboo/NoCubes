@@ -4,8 +4,8 @@ import io.github.cadiboo.nocubes.mesh.TestData.TestMesh;
 import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 /**

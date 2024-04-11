@@ -108,6 +108,9 @@ dependencies {
 	// Apply Mixin AP
 	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
+	// For @Nullable
+	compileOnly 'org.jetbrains:annotations:23.0.0'
+
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'
 

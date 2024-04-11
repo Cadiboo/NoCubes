@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
 import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
 

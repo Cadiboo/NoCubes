@@ -7,8 +7,8 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.PerformanceCriticalAllocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.function.Predicate;
 
 /**
