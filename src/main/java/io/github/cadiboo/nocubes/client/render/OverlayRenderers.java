@@ -18,19 +18,18 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -43,8 +42,7 @@ import static net.minecraft.core.BlockPos.MutableBlockPos;
  */
 public final class OverlayRenderers {
 
-	public static void register(IEventBus events) {
-		events.addListener(OverlayRenderers::renderBlockHighlight);
+	public static void register(Consumer<Consumer<PoseStack>> registerPerFrameHandler) {
 		var meshProfiler = new RollingProfiler(600);
 		var debugOverlays = Lists.<Pair<String, DebugOverlay>>newArrayList(
 			Pair.of("drawOutlineAroundNearbySmoothableBlocks", OverlayRenderers::drawOutlineAroundNearbySmoothableBlocks),
@@ -54,48 +52,35 @@ public final class OverlayRenderers {
 			Pair.of("drawNearbyCollisions", OverlayRenderers::drawNearbyCollisions),
 			Pair.of("drawNearbyDensities", OverlayRenderers::drawNearbyDensities)
 		);
-		events.addListener((RenderLevelStageEvent event) -> renderDebugOverlays(event, debugOverlays));
+		registerPerFrameHandler.accept(matrix ->  renderDebugOverlays(matrix, debugOverlays));
 	}
 
-
-	public static void renderBlockHighlight(RenderHighlightEvent event) {
+	public static boolean renderNoCubesBlockHighlight(
+		PoseStack matrix, VertexConsumer buffer,
+		double cameraX, double cameraY, double cameraZ,
+		BlockGetter world, BlockPos lookingAtPos, BlockState state
+	) {
 		if (!NoCubesConfig.Client.render)
-			return;
+			return false;
 		if (!NoCubesConfig.Client.renderSelectionBox)
-			return;
-		var world = Minecraft.getInstance().level;
-		if (world == null)
-			return;
-		var targetHitResult = event.getTarget();
-		if (!(targetHitResult instanceof BlockHitResult target))
-			return;
-		var lookingAtPos = target.getBlockPos();
-		var state = world.getBlockState(lookingAtPos);
+			return false;
 		if (!NoCubes.smoothableHandler.isSmoothable(state))
-			return;
-
-		event.setCanceled(true);
-
-		var camera = event.getCamera().getPosition();
-		var matrix = event.getPoseStack();
-		var buffer = event.getMultiBufferSource().getBuffer(RenderType.lines());
+			return false;
 		var mesher = NoCubesConfig.Server.mesher;
 		var stateSolidity = MeshRenderer.isSolidRender(state);
 		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, mesher)) {
 			var color = NoCubesConfig.Client.selectionBoxColor;
 			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 			mesher.generateGeometry(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
-				drawFacePosColor(face, camera, area.start, color, buffer, matrix);
+				drawFacePosColor(face, cameraX, cameraY, cameraZ, area.start, color, buffer, matrix);
 				return true;
 			});
 		}
+		return true;
 	}
 
-	public static void renderDebugOverlays(RenderLevelStageEvent event, List<Pair<String, DebugOverlay>> overlays) {
+	static void renderDebugOverlays(PoseStack matrix, List<Pair<String, DebugOverlay>> overlays) {
 		if (!NoCubesConfig.Common.debugEnabled)
-			return;
-
-		if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_CUTOUT_BLOCKS)
 			return;
 
 		var minecraft = Minecraft.getInstance();
@@ -108,7 +93,7 @@ public final class OverlayRenderers {
 			var profiler = minecraft.getProfiler();
 			profiler.push(overlay.getLeft());
 			try {
-				overlay.getRight().render(camera, event.getPoseStack(), linesSupplier);
+				overlay.getRight().render(camera, matrix, linesSupplier);
 			} finally {
 				profiler.pop();
 			}

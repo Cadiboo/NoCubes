@@ -46,14 +46,29 @@ public class RenderHelper {
 		);
 	}
 
-	public static void drawFacePosColor(Face face, Vec3 camera, BlockPos pos, ColorParser.Color color, VertexConsumer buffer, PoseStack matrix) {
+	public static void drawFacePosColor(
+		Face face, Vec3 camera,
+		BlockPos pos, ColorParser.Color color,
+		VertexConsumer buffer, PoseStack matrix
+	) {
+		drawFacePosColor(
+			face, camera.x, camera.y, camera.z,
+			pos, color, buffer, matrix
+		);
+	}
+
+	public static void drawFacePosColor(
+		Face face, double cameraX, double cameraY, double cameraZ,
+		BlockPos pos, ColorParser.Color color,
+		VertexConsumer buffer, PoseStack matrix
+	) {
 		var v0 = face.v0;
 		var v1 = face.v1;
 		var v2 = face.v2;
 		var v3 = face.v3;
-		var x = pos.getX() - camera.x;
-		var y = pos.getY() - camera.y;
-		var z = pos.getZ() - camera.z;
+		var x = pos.getX() - cameraX;
+		var y = pos.getY() - cameraY;
+		var z = pos.getZ() - cameraZ;
 
 		var v0x = (float) (x + v0.x);
 		var v1x = (float) (x + v1.x);

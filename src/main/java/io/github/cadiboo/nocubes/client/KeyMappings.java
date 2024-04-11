@@ -13,13 +13,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.function.Consumer;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
@@ -40,16 +39,14 @@ public final class KeyMappings {
 	public static final String TOGGLE_SMOOTHABLE_BLOCK_TYPE = "toggleSmoothable";
 	public static final String TOGGLE_SMOOTHABLE_BLOCK_STATE = "toggleSmoothableBlockState";
 
-	public static void register(RegisterKeyMappingsEvent registerEvent, IEventBus forgeBus) {
+	public static void register(Consumer<KeyMapping> registerKey, Consumer<Runnable> registerClientTickHandler) {
 		LOG.debug("Registering keybindings");
 		var keybindings = Lists.newArrayList(
-			makeKeybinding(registerEvent, TOGGLE_VISUALS, InputConstants.UNKNOWN.getValue(), KeyMappings::toggleVisuals),
-			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE_BLOCK_TYPE, GLFW.GLFW_KEY_N, () -> toggleLookedAtSmoothable(true)),
-			makeKeybinding(registerEvent, TOGGLE_SMOOTHABLE_BLOCK_STATE, InputConstants.UNKNOWN.getValue(), () -> toggleLookedAtSmoothable(false))
+			makeKeybinding(registerKey, TOGGLE_VISUALS, InputConstants.UNKNOWN.getValue(), KeyMappings::toggleVisuals),
+			makeKeybinding(registerKey, TOGGLE_SMOOTHABLE_BLOCK_TYPE, GLFW.GLFW_KEY_N, () -> toggleLookedAtSmoothable(true)),
+			makeKeybinding(registerKey, TOGGLE_SMOOTHABLE_BLOCK_STATE, InputConstants.UNKNOWN.getValue(), () -> toggleLookedAtSmoothable(false))
 		);
-		forgeBus.addListener((TickEvent.ClientTickEvent tickEvent) -> {
-			if (tickEvent.phase != TickEvent.Phase.END)
-				return;
+		registerClientTickHandler.accept(() -> {
 			for (var keybinding : keybindings)
 				if (keybinding.getKey().consumeClick()) {
 					LOG.debug("Keybinding {} pressed", keybinding.getKey().getName());
@@ -58,10 +55,10 @@ public final class KeyMappings {
 		});
 	}
 
-	private static Pair<KeyMapping, Runnable> makeKeybinding(RegisterKeyMappingsEvent event, String name, int key, Runnable action) {
+	private static Pair<KeyMapping, Runnable> makeKeybinding(Consumer<KeyMapping> registerKey, String name, int key, Runnable action) {
 		LOG.debug("Registering keybinding {}", name);
 		var mapping = new KeyMapping(qualifyName(name), key, NoCubes.MOD_ID + ".keycategory");
-		event.register(mapping);
+		registerKey.accept(mapping);
 		return Pair.of(mapping, action);
 	}
 
