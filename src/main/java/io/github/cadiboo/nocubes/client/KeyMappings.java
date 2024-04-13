@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.network.C2SHandler;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -102,7 +103,7 @@ public final class KeyMappings {
 			reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
 		} else {
 			// We're on a server (possibly singleplayer) with NoCubes installed
-			if (C2SRequestUpdateSmoothable.checkPermissionAndNotifyIfUnauthorised(player, minecraft.getSingleplayerServer()))
+			if (C2SHandler.checkPermissionAndNotifyIfUnauthorised(player, minecraft.getSingleplayerServer()))
 				// Only send the packet if we have permission, don't send a packet that will be denied
 				NoCubesNetwork.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(newValue, states));
 		}
