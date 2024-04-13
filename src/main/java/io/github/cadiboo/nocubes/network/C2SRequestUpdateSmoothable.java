@@ -1,13 +1,22 @@
 package io.github.cadiboo.nocubes.network;
 
+import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Supplier;
+
+import static io.github.cadiboo.nocubes.network.NoCubesNetwork.REQUIRED_PERMISSION_LEVEL;
 
 /**
  * @author Cadiboo
@@ -31,21 +40,32 @@ public record C2SRequestUpdateSmoothable(
 
 	public static void handle(C2SRequestUpdateSmoothable msg, Supplier<NetworkEvent.Context> contextSupplier) {
 		var ctx = contextSupplier.get();
-		C2SHandler.onC2SRequestUpdateSmoothable(msg.newValue, msg.states, ctx.getSender(), new C2SHandler.C2SRequestUpdateSmoothableReplier() {
-			@Override
-			public void senderClientIsOutOfSyncNotifyThemOfNewValue(ServerPlayer sender, boolean newValue, BlockState[] states) {
-				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CUpdateSmoothable(newValue, states));
+		var sender = Objects.requireNonNull(ctx.getSender(), "Command sender was null");
+		if (checkPermissionAndNotifyIfUnauthorised(sender, sender.server)) {
+			var newValue = msg.newValue;
+			var statesToUpdate = Arrays.stream(msg.states)
+				.filter(s -> NoCubes.smoothableHandler.isSmoothable(s) != newValue)
+				.toArray(BlockState[]::new);
+			// Guards against useless config reload and/or someone spamming these packets to the server and the server spamming all clients
+			if (statesToUpdate.length == 0)
+				// Somehow the client is out of sync, just notify them
+				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CUpdateSmoothable(newValue, msg.states));
+			else {
+				ctx.enqueueWork(() -> NoCubesConfig.Server.updateSmoothable(newValue, statesToUpdate));
+				// Send back update to all clients
+				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(newValue, statesToUpdate));
 			}
-			@Override
-			public void updateAllClients(boolean newValue, BlockState[] states) {
-				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(newValue, states));
-			}
-			@Override
-			public void enqueueWork(Runnable work) {
-				ctx.enqueueWork(work);
-			}
-		});
+		}
 		ctx.setPacketHandled(true);
+	}
+
+	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player, @Nullable MinecraftServer connectedToServer) {
+		if (connectedToServer != null && connectedToServer.isSingleplayerOwner(player.getGameProfile()))
+			return true;
+		if (player.hasPermissions(REQUIRED_PERMISSION_LEVEL))
+			return true;
+		ModUtil.warnPlayer(player, NoCubes.MOD_ID + ".command.changeSmoothableNoPermission");
+		return false;
 	}
 
 }

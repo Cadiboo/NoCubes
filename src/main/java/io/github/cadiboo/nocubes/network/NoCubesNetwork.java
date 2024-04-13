@@ -24,6 +24,14 @@ public final class NoCubesNetwork {
 
 	private static final Logger LOG = LogManager.getLogger();
 
+	/**
+	 * From the minecraft wiki.
+	 * 1. Ops can bypass spawn protection.
+	 * 2. Ops can use /clear, /difficulty, /effect, /gamemode, /gamerule, /give, /summon, /setblock and /tp, and can edit command blocks.
+	 * 3. Ops can use /ban, /deop, /whitelist, /kick, and /op.
+	 * 4. Ops can use /stop.
+	 */
+	public static final int REQUIRED_PERMISSION_LEVEL = 2;
 
 	private static final String NETWORK_PROTOCOL_VERSION = "2";
 	/**
