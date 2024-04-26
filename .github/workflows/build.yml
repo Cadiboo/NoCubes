@@ -23,8 +23,6 @@ jobs:
           echo "signSHA1=${{ secrets.KEYSTORE_SIGN_SHA1 }}" >> gradle.properties
       - name: Build and check
         run: ./gradlew build --stacktrace
-      - name: Integration tests
-        run: ./gradlew runGameTestServer --stacktrace
       - name: Archive jars
         uses: actions/upload-artifact@v3
         with:
@@ -32,6 +30,8 @@ jobs:
           path: |
             ./build/libs/*.jar
           if-no-files-found: error
+      - name: Integration tests
+        run: ./gradlew runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
         if: "contains(github.event.head_commit.message, '[ci publish]')"
