@@ -24,33 +24,28 @@ String execCmd(List<String> params, String fallback) {
 }
 
 // We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
-version = "${modMinecraftVersion}-${modVersion}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
-group = modGroup
-archivesBaseName = modFileName
-
-if (System.getenv('BUILD_NUMBER') || System.getenv('TRAVIS_BUILD_NUMBER') || System.getenv('CIRCLE_BUILD_NUM'))
-	version += '.' + System.getenv('BUILD_NUMBER') ?: System.getenv('TRAVIS_BUILD_NUMBER') ?: System.getenv('CIRCLE_BUILD_NUM') ?: '0'
+version = "${minecraft_version}-${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
+group = mod_group
+base {
+	archivesName = mod_name
+}
 
 // Mojang ships Java 17 to end users in 1.18+, so mods should target this version
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 
 // Forge
 minecraft {
 	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/master/mdk/build.gradle#L28-L40"
-	mappings channel: 'official', version: modMinecraftVersion
+	mappings channel: 'official', version: minecraft_version
 	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
 	runs {
 		client {
-			workingDirectory project.file('run')
 		}
 		server {
-			workingDirectory project.file('run/server')
 		}
 		// Runs all integration tests then quits, for use in CI
 		gameTestServer {
-			workingDirectory project.file('run/server')
 		}
 		configureEach {
 			workingDirectory project.file('run/' + it.name) as File
@@ -59,11 +54,11 @@ minecraft {
 			property 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
 			property 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
 			property 'mixin.debug.export', "${dumpTransformedClasses}"
-			property 'forge.enabledGameTestNamespaces', project.modId // Run our integration tests
+			property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
 			jvmArg '-ea' // Enable assertions
 			// Use the 'test' module (and both source sets) because it contains our integration tests
 			ideaModule "${project.name}.test"
-			mods.register(modId as String) {
+			mods.register(mod_id as String) {
 				sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
 			}
 		}
@@ -71,8 +66,8 @@ minecraft {
 }
 
 mixin {
-	add sourceSets.main, "mixins.${modId}.refmap.json"
-	config "mixins.${modId}.json"
+	add sourceSets.main, "mixins.${mod_id}.refmap.json"
+	config "mixins.${mod_id}.json"
 
 	debug.verbose = true
 	debug.export = true
@@ -103,7 +98,7 @@ repositories {
 	}
 }
 dependencies {
-	minecraft "net.minecraftforge:forge:${modMinecraftVersion}-${modForgeVersion}"
+	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
 	// Apply Mixin AP
 	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
@@ -149,13 +144,13 @@ jar {
 		attributes([
 			// See https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
 			'Specification-Title'   : project.name,
-			'Specification-Version' : modVersion,
+			'Specification-Version' : mod_version,
 			'Specification-Vendor'  : project.group,
-			'Implementation-Title'  : modId,
+			'Implementation-Title'  : mod_id,
 			'Implementation-Version': project.version,
 			'Implementation-Vendor' : project.group,
 
-			'Built-For'             : "${modMinecraftVersion}-${modForgeVersion}",
+			'Built-For'             : "${minecraft_version}-${forge_version}",
 			'Built-At-UTC'          : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
 			'Built-On-JVM'          : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
 			'Signing-Fingerprint'   : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
