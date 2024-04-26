@@ -1,17 +1,10 @@
-buildscript {
-	dependencies {
-		// Can't use the newer 'plugins' block for Mixin, need to use the old 'apply plugin' method
-		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-	}
-}
 plugins {
 	id 'java'
 	// Shadow jar includes our libraries into our final jar
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
 	id 'maven-publish'
-	id 'net.minecraftforge.gradle' version '6.+'
+	id 'net.neoforged.gradle.userdev' version '7.0.97'
 }
-apply plugin: 'org.spongepowered.mixin'
 
 String execCmd(List<String> params, String fallback) {
 	def stdout = new ByteArrayOutputStream()
@@ -32,57 +25,6 @@ base {
 // Mojang ships Java 17 to end users in 1.18+, so mods should target this version
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-// Forge
-minecraft {
-	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/master/mdk/build.gradle#L28-L40"
-	mappings channel: 'official', version: minecraft_version
-	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-
-	runs {
-		client {
-		}
-		server {
-		}
-		// Runs all integration tests then quits, for use in CI
-		gameTestServer {
-		}
-		configureEach {
-			workingDirectory project.file('run/' + it.name) as File
-			def dumpTransformedClasses = false // Set to true to debug Mixin/Asm issues
-			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
-			property 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
-			property 'mixin.debug.export', "${dumpTransformedClasses}"
-			property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
-			jvmArg '-ea' // Enable assertions
-			// Use the 'test' module (and both source sets) because it contains our integration tests
-			ideaModule "${project.name}.test"
-			mods.register(mod_id as String) {
-				sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
-			}
-		}
-	}
-}
-
-mixin {
-	add sourceSets.main, "mixins.${mod_id}.refmap.json"
-	config "mixins.${mod_id}.json"
-
-	debug.verbose = true
-	debug.export = true
-}
-
-configurations {
-	library
-	implementation.extendsFrom library
-	shadow.extendsFrom library
-}
-minecraft.runs.all {
-	lazyToken('minecraft_classpath') {
-		configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-	}
-}
-
 repositories {
 	maven {
 		url "https://www.cursemaven.com"
@@ -96,11 +38,30 @@ repositories {
 		dir 'libs'
 	}
 }
-dependencies {
-	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-	// Apply Mixin AP
-	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+configurations {
+	library
+	implementation.extendsFrom library
+	shadow.extendsFrom library
+}
+runs.configureEach {
+	dependencies {
+		runtime project.configurations.library
+	}
+}
+
+// IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
+idea {
+	module {
+		downloadSources = true
+		downloadJavadoc = true
+	}
+}
+
+dependencies {
+	implementation "net.neoforged:neoforge:${neoforge_version}"
+//	implementation "net.minecraft:neoform_client:${neoforge_version}"
+//	implementation "net.minecraft:neoform_server:${neoforge_version}"
 
 	// For @Nullable
 	compileOnly 'org.jetbrains:annotations:23.0.0'
@@ -108,15 +69,42 @@ dependencies {
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'
 
-	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
-
-	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
-	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
-	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
+	implementation 'curse.maven:Embeddium-908741:5265345' // embeddium-0.3.14+mc1.20.4.jar
+//	implementation 'curse.maven:Oculus-581495:5108615' // oculus-mc1.20.1-1.6.15a.jar
+//	implementation 'curse.maven:DistantHorizons-508933:4924664' // DistantHorizons-2.0.1-a-1.20.1.jar
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'
 	testImplementation 'junit:junit:4.13.2'
+}
+
+runs {
+	client {
+	}
+	server {
+	}
+	// Runs all integration tests then quits, for use in CI
+	gameTestServer {
+	}
+	configureEach {
+		workingDirectory project.file('run/' + it.name) as File
+		def dumpTransformedClasses = false // Set to true to debug Mixin/Asm issues
+		// The markers can be added/removed as needed (separated by commas)
+		systemProperty 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
+		systemProperty 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
+		systemProperty 'mixin.debug.export', "${dumpTransformedClasses}"
+		systemProperty 'forge.enabledGameTestNamespaces', mod_id // Run our integration tests
+
+		modSource project.sourceSets.main
+		modSource project.sourceSets.test
+
+//		jvmArg '-ea' // Enable assertions
+//		// Use the 'test' module (and both source sets) because it contains our integration tests
+//		ideaModule "${project.name}.test"
+//		mods.register(modId as String) {
+//			sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
+//		}
+	}
 }
 
 // region build
@@ -124,15 +112,21 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
-// Write our mod version into our mod info file(s)
-processResources {
-	// Ensures this task is redone when the version changes
-	inputs.property 'version', project.version
-	// NB: We need to use 'file.jarVersion' in mods.toml because IntelliJ doesn't run this task when it runs our mod in dev
-	// This works because 'file.jarVersion' gets handled at runtime by Forge
-	// IntelliJ bug: "https://youtrack.jetbrains.com/issue/IDEA-173367/The-processResources-task-is-not-correctly-handled-by-IntelliJ"
-	filesMatching('**/META-INF/mods.toml') {
-		expand 'file': [jarVersion: project.version]
+tasks.withType(ProcessResources).configureEach {
+	var replaceProperties = [
+		mod_id                  : mod_id,
+		mod_name                : mod_name,
+		mod_version             : mod_version,
+		minecraft_version       : minecraft_version,
+		minecraft_version_range : minecraft_version_range,
+		fml_loader_version_range: fml_loader_version_range,
+		neoforge_version        : neoforge_version,
+		neoforge_version_range  : neoforge_version_range,
+	]
+	inputs.properties replaceProperties
+
+	filesMatching(['META-INF/mods.toml']) {
+		expand replaceProperties
 	}
 }
 
@@ -148,7 +142,7 @@ jar {
 			'Implementation-Version': project.version,
 			'Implementation-Vendor' : project.group,
 
-			'Built-For'             : "${minecraft_version}-${forge_version}",
+			'Built-For'             : "${minecraft_version}-${neoforge_version}",
 			'Built-At-UTC'          : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
 			'Built-On-JVM'          : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
 			'Signing-Fingerprint'   : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
@@ -176,11 +170,6 @@ shadowJar {
 		rename { "${it}_${project.base.archivesName.get()}" }
 	}
 }
-reobf {
-	// We want the output of the following tasks to be reobfuscated
-	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-	shadowJar {}
-}
 task sourcesJar(type: Jar, dependsOn: classes) {
 	archiveClassifier.set('sources')
 	from sourceSets.main.allSource
@@ -207,30 +196,30 @@ artifacts {
 // endregion
 
 // region publish
-// TODO: Move this to the publish step, not the build step
-// Sign all the jars
-import net.minecraftforge.gradle.common.tasks.SignJar
-
-[
-	jar,
-	shadowJar,
-	sourcesJar,
-	javadocJar,
-].each { jarTask ->
-	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: SignJar, dependsOn: jarTask) {
-		// Skips if the keyStore property is missing.
-		onlyIf {
-			project.hasProperty('keyStore')
-		}
-		// findProperty allows us to reference the property without it existing.
-		// Using project.propName would cause the script to fail validation if the property did not exist.
-		keyStore = project.findProperty('keyStore')
-		alias = project.findProperty('keyStoreAlias')
-		storePass = project.findProperty('keyStorePass')
-		keyPass = project.findProperty('keyStoreKeyPass')
-		inputFile = jarTask.archiveFile
-		outputFile = jarTask.archiveFile
-	}
-	jarTask.finalizedBy(signingTask)
-}
+//// TODO: Move this to the publish step, not the build step
+//// Sign all the jars
+//import net.neoforged.gradle.common.tasks.PotentiallySignJar
+////import net.minecraftforge.gradle.common.tasks.SignJar
+//
+//[
+//	jar,
+//	shadowJar,
+//	sourcesJar,
+//	javadocJar,
+//].each { jarTask ->
+//	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: PotentiallySignJar, dependsOn: jarTask) {
+//		// Skips if the keyStore property is missing.
+//		onlyIf {
+//			project.hasProperty('keyStore')
+//		}
+//		// findProperty allows us to reference the property without it existing.
+//		// Using project.propName would cause the script to fail validation if the property did not exist.
+//		keyStore = project.findProperty('keyStore')
+//		alias = project.findProperty('keyStoreAlias')
+//		storePass = project.findProperty('keyStorePass')
+//		keyPass = project.findProperty('keyStoreKeyPass')
+//		input = jarTask.archiveFile
+//	}
+//	jarTask.finalizedBy(signingTask)
+//}
 // endregion

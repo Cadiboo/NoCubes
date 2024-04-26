@@ -15,7 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -32,9 +32,9 @@ import java.util.Map;
 @Mixin(targets = "me.jellysquid.mods.sodium.client.render.chunk.compile.tasks.ChunkBuilderMeshingTask")
 public class ChunkBuilderMeshingTaskMixin implements INoCubesChunkSectionRenderBuilderSodium {
 
-	@Shadow
-	@Final
-	private Map<BlockPos, ModelData> modelDataMap;
+//	@Shadow
+//	@Final
+//	private Map<BlockPos, ModelData> modelDataMap;
 
 
 	@Shadow @Final private RandomSource random;
@@ -84,7 +84,8 @@ public class ChunkBuilderMeshingTaskMixin implements INoCubesChunkSectionRenderB
 
 	@Override
 	public ModelData noCubes$getModelData(BlockPos worldPos) {
-		return this.modelDataMap.getOrDefault(worldPos, ModelData.EMPTY);
+		return ModelData.EMPTY;
+//		return this.modelDataMap.getOrDefault(worldPos, ModelData.EMPTY);
 	}
 
 	/**

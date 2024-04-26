@@ -1,22 +1,26 @@
 package io.github.cadiboo.nocubes.network;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.network.handling.ConfigurationPayloadContext;
+import net.neoforged.neoforge.network.handling.PlayPayloadContext;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.function.Supplier;
 
 /**
  * @author Cadiboo
  */
 public record S2CUpdateServerConfig(
 	byte[] data
-) {
+) implements CustomPacketPayload {
+	public static ResourceLocation ID = new ResourceLocation(NoCubes.MOD_ID, S2CUpdateServerConfig.class.getSimpleName().toLowerCase());
 
 	public static S2CUpdateServerConfig create(ModConfig serverConfig) {
 		assert FMLEnvironment.dist.isDedicatedServer() : "This should not be called on clients because they don't need their logical server config synced (they just reference it directly)";
@@ -38,14 +42,21 @@ public record S2CUpdateServerConfig(
 		return new S2CUpdateServerConfig(data);
 	}
 
-	public static void handle(S2CUpdateServerConfig msg, Supplier<NetworkEvent.Context> contextSupplier) {
-		var ctx = contextSupplier.get();
-		NoCubesConfig.Hacks.receiveSyncedServerConfig(msg);
-		ctx.setPacketHandled(true);
+	public static void handle(S2CUpdateServerConfig msg, ConfigurationPayloadContext ctx) {
+		handle(msg);
 	}
 
-	public byte[] getBytes() {
-		return data;
+	private static void handle(S2CUpdateServerConfig msg) {
+		NoCubesConfig.Hacks.receiveSyncedServerConfig(msg.data);
 	}
 
+	@Override
+	public void write(FriendlyByteBuf buffer) {
+		encode(this, buffer);
+	}
+
+	@Override
+	public ResourceLocation id() {
+		return ID;
+	}
 }

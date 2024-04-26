@@ -1,15 +1,16 @@
 package io.github.cadiboo.nocubes.mixin.client.optifine;
 
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Set;
 
-@Mixin(net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.RenderChunk.class)
+@Mixin(SectionRenderDispatcher.RenderSection.class)
 public class RenderChunkMixin implements INoCubesChunkSectionRenderOptiFine {
 
 	@Dynamic("Added by OptiFine")
@@ -38,11 +39,11 @@ public class RenderChunkMixin implements INoCubesChunkSectionRenderOptiFine {
 
 	@Dynamic("Added by OptiFine")
 	@Shadow
-	private void shadow$postRenderOverlays(ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	private void shadow$postRenderOverlays(SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override
-	public void noCubes$postRenderOverlays(ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void noCubes$postRenderOverlays(SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 		shadow$postRenderOverlays(builder, usedLayers);
 	}
 }

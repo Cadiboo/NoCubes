@@ -1,11 +1,11 @@
 modLoader="javafml"
-loaderVersion="[40,)"
+loaderVersion="${fml_loader_version_range}"
 license="LGPLv3"
 issueTrackerURL="https://github.com/Cadiboo/NoCubes/issues"
 [[mods]]
-modId="nocubes"
-version="${file.jarVersion}"
-displayName="NoCubes"
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
 updateJSONURL="https://cadiboo.github.io/projects/nocubes/update.json"
 displayURL="https://cadiboo.github.io/projects/nocubes"
 logoFile="nocubes.png"
@@ -15,20 +15,20 @@ description='''
 NoCubes is a mod by Cadiboo for 1.12.2+ that creates smooth terrain in Minecraft.
 It is the spiritual successor of the NoCubes mod by Click_Me for 1.7.10.
 '''
-# Disable Sodium/Rubidium's chunk rendering optimisations because they break our chunk rendering
-[mods."sodium:options"]
-"features.chunk_rendering"=false
 
-[[dependencies.nocubes]]
-modId="forge"
-mandatory=true
-versionRange="[40,)"
+[[mixins]]
+config="mixins.${mod_id}.json"
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+type="required"
+versionRange="${neoforge_version_range}"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.nocubes]]
+[[dependencies.${mod_id}]]
 modId="minecraft"
-mandatory=true
-versionRange="[1.20,)"
+type="required"
+versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"

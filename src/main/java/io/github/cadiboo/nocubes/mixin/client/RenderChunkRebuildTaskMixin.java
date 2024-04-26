@@ -11,17 +11,18 @@ import io.github.cadiboo.nocubes.hooks.ClientHooks;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import io.github.cadiboo.nocubes.mixin.Constants;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelDataManager;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,7 +35,7 @@ import java.util.Set;
 /**
  * Changes chunk rendering to allow us to do our own custom rendering.
  */
-@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
+@Mixin(targets = "net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderSection$RebuildTask")
 public abstract class RenderChunkRebuildTaskMixin extends RenderChunkCompileTaskMixin implements INoCubesChunkSectionRenderBuilder {
 
 	@Shadow(aliases = {
@@ -44,11 +45,15 @@ public abstract class RenderChunkRebuildTaskMixin extends RenderChunkCompileTask
 		"field_20839", // Fabric
 	})
 	@Final
-	ChunkRenderDispatcher.RenderChunk parentClass;
+	SectionRenderDispatcher.RenderSection parentClass;
+
+	@Final
+	@Shadow
+	private ModelDataManager.Snapshot modelData;
 
 	@Override
 	public ModelData noCubes$getModelData(BlockPos worldPos) {
-		return shadow$getModelData(worldPos);
+		return modelData.getAtOrEmpty(worldPos);
 	}
 
 	@ModifyExpressionValue(
@@ -61,7 +66,7 @@ public abstract class RenderChunkRebuildTaskMixin extends RenderChunkCompileTask
 	public Iterator<BlockPos> noCubes$renderChunk(
 		Iterator<BlockPos> iterator,
 		float x, float y, float z,
-		ChunkBufferBuilderPack buffers,
+		SectionBufferBuilderPack buffers,
 		@Local(ordinal = 0) BlockPos chunkPos,
 		@Local(ordinal = 0) RenderChunkRegion region,
 		@Local(ordinal = 0) PoseStack matrix,

@@ -7,10 +7,10 @@ import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 import java.util.function.Predicate;
@@ -39,7 +39,7 @@ final class NoCubesTests {
 					NoCubes.smoothableHandler.setSmoothable(true, dirt);
 			}),
 			test("adding then removing lots of smoothables at once should work", () -> {
-				var states = ForgeRegistries.BLOCKS.getValues().stream()
+				var states = BuiltInRegistries.BLOCK.stream()
 					.skip(20) // Skip air, stone, dirt etc. which we test above
 					.limit(1000)
 					.map(Block::defaultBlockState)

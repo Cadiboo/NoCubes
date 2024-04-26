@@ -4,7 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.integrationtesting.GameTestsAdapter;
 import net.minecraft.gametest.framework.GameTestGenerator;
 import net.minecraft.gametest.framework.TestFunction;
-import net.minecraftforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.GameTestHolder;
 
 import java.util.Collection;
 

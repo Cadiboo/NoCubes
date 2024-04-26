@@ -12,25 +12,27 @@ import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.util.BlockStateConverter;
 import io.github.cadiboo.nocubes.util.ModUtil;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.*;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.config.ConfigFileTypeHandler;
-import net.minecraftforge.fml.config.ConfigTracker;
-import net.minecraftforge.fml.config.IConfigEvent;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.bus.EventBus;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.DistExecutor;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.config.ConfigFileTypeHandler;
+import net.neoforged.fml.config.ConfigTracker;
+import net.neoforged.fml.config.IConfigEvent;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec.*;
+import net.neoforged.neoforge.common.NeoForgeConfig;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +63,7 @@ public final class NoCubesConfig {
 	 * @param context The ModLoadingContext to register the configs to
 	 */
 	public static void register(ModLoadingContext context, IEventBus modBus) {
-		var specs = new HashMap<ForgeConfigSpec, Pair<ModConfig.Type, Consumer<ModConfig>>>();
+		var specs = new HashMap<ModConfigSpec, Pair<ModConfig.Type, Consumer<ModConfig>>>();
 		specs.put(Common.SPEC, Pair.of(ModConfig.Type.COMMON, Common::bake));
 		specs.put(Client.SPEC, Pair.of(ModConfig.Type.CLIENT, Client::bake));
 		specs.put(Server.SPEC, Pair.of(ModConfig.Type.SERVER, Server::bake));
@@ -81,7 +83,7 @@ public final class NoCubesConfig {
 	 * instead of looking up the values on the config (which is pretty slow) each time we need them.
 	 */
 	private static void bakeConfig(ModConfig config, Consumer<ModConfig> baker) {
-		if (!((ForgeConfigSpec)config.getSpec()).isLoaded()) {
+		if (!((ModConfigSpec) config.getSpec()).isLoaded()) {
 			LOG.debug("Not baking unloaded config {}", config.getFileName());
 			return;
 		}
@@ -95,12 +97,12 @@ public final class NoCubesConfig {
 	public static class Common {
 
 		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		public static final ModConfigSpec SPEC;
 
 		public static boolean debugEnabled;
 
 		static {
-			var specPair = new ForgeConfigSpec.Builder().configure(Common.Impl::new);
+			var specPair = new ModConfigSpec.Builder().configure(Common.Impl::new);
 			SPEC = specPair.getRight();
 			INSTANCE = specPair.getLeft();
 		}
@@ -119,7 +121,7 @@ public final class NoCubesConfig {
 
 			final BooleanValue debugEnabled;
 
-			private Impl(ForgeConfigSpec.Builder builder) {
+			private Impl(ModConfigSpec.Builder builder) {
 				debugEnabled = builder
 					.translation(NoCubes.MOD_ID + ".config.debugEnabled")
 					.comment("If debugging features should be enabled")
@@ -137,7 +139,7 @@ public final class NoCubesConfig {
 		public static String RENDER = "render";
 
 		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		public static final ModConfigSpec SPEC;
 		public static boolean infoMessage;
 		public static boolean render;
 		public static boolean renderSelectionBox;
@@ -156,7 +158,7 @@ public final class NoCubesConfig {
 		public static boolean debugSkipNoCubesRendering;
 
 		static {
-			var specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
+			var specPair = new ModConfigSpec.Builder().configure(Impl::new);
 			SPEC = specPair.getRight();
 			INSTANCE = specPair.getLeft();
 		}
@@ -227,7 +229,7 @@ public final class NoCubesConfig {
 			final BooleanValue debugOutlineNearbyMesh;
 			final BooleanValue debugSkipNoCubesRendering;
 
-			private Impl(ForgeConfigSpec.Builder builder) {
+			private Impl(ModConfigSpec.Builder builder) {
 				infoMessage = builder
 					.translation(NoCubes.MOD_ID + ".config.infoMessage")
 					.comment("If NoCubes should display a helpful message when you join a world")
@@ -315,7 +317,7 @@ public final class NoCubesConfig {
 	public static class Server {
 
 		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		public static final ModConfigSpec SPEC;
 		public static Mesher mesher;
 		public static boolean collisionsEnabled;
 		public static boolean tempMobCollisionsDisabled;
@@ -328,7 +330,7 @@ public final class NoCubesConfig {
 		public static float oldNoCubesRoughness;
 
 		static {
-			var specPair = new ForgeConfigSpec.Builder().configure(Impl::new);
+			var specPair = new ModConfigSpec.Builder().configure(Impl::new);
 			SPEC = specPair.getRight();
 			INSTANCE = specPair.getLeft();
 		}
@@ -354,10 +356,10 @@ public final class NoCubesConfig {
 			oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
 			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
-			if (Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
-				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
+			if (FMLEnvironment.dist == Dist.CLIENT && Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
+				reloadAllChunks("options affecting chunk rendering in the server config were changed");
 			if (FMLEnvironment.dist.isDedicatedServer() && ServerLifecycleHooks.getCurrentServer() != null)
-				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
+				PacketDistributor.ALL.noArg().send(S2CUpdateServerConfig.create(config));
 		}
 
 		private static <T extends Number & Comparable<T>> T validateRange(T min, T max, T value, String name) {
@@ -367,7 +369,7 @@ public final class NoCubesConfig {
 		}
 
 		private static int hashChunkRenderSettings() {
-			var smoothables = ForgeRegistries.BLOCKS.getValues().stream()
+			var smoothables = BuiltInRegistries.BLOCK.stream()
 				.flatMap(block -> ModUtil.getStates(block).stream())
 				.map(NoCubes.smoothableHandler::isSmoothable)
 				.toArray(Boolean[]::new);
@@ -426,7 +428,7 @@ public final class NoCubesConfig {
 			final BooleanValue oldNoCubesInFluids;
 			final DoubleValue oldNoCubesRoughness;
 
-			private Impl(ForgeConfigSpec.Builder builder) {
+			private Impl(ModConfigSpec.Builder builder) {
 				final var smoothableListCommentExtra = "Instead of manually editing this list, you can smoothen or un-smoothen blocks by looking at them in-game and pressing the 'N' key, or whatever it may have been rebound to.";
 				smoothableWhitelist = builder
 					.translation(NoCubes.MOD_ID + ".config.smoothableWhitelist")
@@ -535,8 +537,7 @@ public final class NoCubesConfig {
 		static void loadConfig(ModConfig modConfig) {
 			((CommentedFileConfig) modConfig.getConfigData()).load();
 			modConfig.getSpec().afterReload();
-//			modConfig.fireEvent(new IConfigEvent.reloading(modConfig));
-			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+			IConfigEvent.reloading(modConfig);
 		}
 
 		/**
@@ -550,8 +551,7 @@ public final class NoCubesConfig {
 				modConfig.getSpec().correct(config);
 //				modConfig.setConfigData(config);
 				ModConfig_setConfigData(modConfig, config);
-//				modConfig.fireEvent(IConfigEvent.loading(modConfig));
-				ModConfig_fireEvent(modConfig, IConfigEvent.loading(modConfig));
+				IConfigEvent.loading(modConfig);
 			});
 		}
 
@@ -575,19 +575,13 @@ public final class NoCubesConfig {
 			}
 		}
 
-		private static void ModConfig_fireEvent(ModConfig modConfig, IConfigEvent event) {
-			LOG.debug("Firing ModConfig event");
-//			modConfig.fireEvent(event);
-			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
-		}
-
-		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
+		public static void receiveSyncedServerConfig(byte[] configData) {
 			LOG.debug("Setting logical server config (on the client) from server sync packet");
 			assert FMLEnvironment.dist.isClient() : "This packet should have only be sent server->client";
 			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
 			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
-			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
-			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
+			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(configData)));
+			IConfigEvent.reloading(modConfig);
 		}
 	}
 
@@ -603,7 +597,7 @@ public final class NoCubesConfig {
 			// The minecraft wiki is a useful resource https://minecraft.fandom.com/wiki/Category:Natural_blocks
 			// TODO: This should include carpet-like blocks (moss, skulk, vine) once rendering issues have been fixed
 			// Add all possible BlockStates for these blocks
-			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[]{
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new Block[] {
 				STONE, GRANITE, DIORITE, ANDESITE,
 				GRASS_BLOCK, DIRT, COARSE_DIRT, PODZOL, MYCELIUM,
 				DEEPSLATE, ROOTED_DIRT, TUFF, CALCITE, SMOOTH_BASALT, AMETHYST_BLOCK, BUDDING_AMETHYST,
@@ -627,12 +621,12 @@ public final class NoCubesConfig {
 			}).flatMap(block -> ModUtil.getStates(block).stream()).collect(Collectors.toList()));
 
 			// Add each of these individual BlockStates
-			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new BlockState[]{
+			DEFAULT_SMOOTHABLES.addAll(Arrays.stream(new BlockState[] {
 			}).collect(Collectors.toList()));
 
 			// Add these modded BlockStates
 			//noinspection RedundantArrayCreation
-			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(new String[]{
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(Arrays.asList(new String[] {
 				"biomesoplenty:grass[snowy=false,variant=sandy]",
 				"biomesoplenty:dirt[coarse=false,variant=sandy]",
 				"biomesoplenty:white_sand",
@@ -677,7 +671,7 @@ public final class NoCubesConfig {
 			LOG.debug("Recomputing in-memory smoothable lookups from user-defined smoothable string lists");
 			var whitelisted = parseBlockStates(whitelist);
 			var blacklisted = parseBlockStates(blacklist);
-			ForgeRegistries.BLOCKS.getValues().parallelStream()
+			BuiltInRegistries.BLOCK.stream().parallel()
 				.flatMap(block -> ModUtil.getStates(block).parallelStream())
 				.forEach(state -> {
 					var smoothable = (whitelisted.contains(state) || (useDefaultSmoothables && Smoothables.DEFAULT_SMOOTHABLES.contains(state))) && !blacklisted.contains(state);

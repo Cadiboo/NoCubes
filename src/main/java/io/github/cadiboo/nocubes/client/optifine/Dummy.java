@@ -5,8 +5,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
@@ -38,12 +38,12 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
+	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		return null;
 	}
 
 	@Override
-	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return null;
 	}
 
@@ -53,11 +53,11 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 	}
 
 	@Override
@@ -77,7 +77,7 @@ class Dummy implements OptiFineProxy {
 	@Override
 	public int forEachOverlayQuad(
 		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
-		ChunkBufferBuilderPack buffers, BlockPos chunkPos,
+		SectionBufferBuilderPack buffers, BlockPos chunkPos,
 		BlockAndTintGetter world, PoseStack matrix,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
 		BlockState state, BlockPos worldPos,
