@@ -8,7 +8,6 @@ plugins {
 	id 'java'
 	// Shadow jar includes our libraries into our final jar
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'eclipse' // Is this needed?
 	id 'maven-publish'
 	id 'net.minecraftforge.gradle' version '6.+'
 }
@@ -156,7 +155,7 @@ jar {
 		])
 	}
 	from('LICENSE') {
-		rename { "${it}_${project.base.archivesName.get()}"}
+		rename { "${it}_${project.base.archivesName.get()}" }
 	}
 }
 shadowJar {
