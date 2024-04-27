@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.client.optifine;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
-import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo.ColorSupplier;
-import io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo.QuadConsumer;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo.ColorSupplier;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo.QuadConsumer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;

@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.client.optifine;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
@@ -17,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+
+import static io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo;
 
 class Dummy implements OptiFineProxy {
 
@@ -72,7 +73,7 @@ class Dummy implements OptiFineProxy {
 	}
 
 	@Override
-	public int forEachOverlayQuad(RendererDispatcher.ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, RendererDispatcher.ChunkRenderInfo.ColorSupplier colorSupplier, RendererDispatcher.ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
+	public int forEachOverlayQuad(ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, ChunkRenderInfo.ColorSupplier colorSupplier, ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
 		return 0;
 	}
 

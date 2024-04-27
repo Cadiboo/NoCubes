@@ -3,8 +3,8 @@ package io.github.cadiboo.nocubes.hooks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
-import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.client.render.SodiumRenderer;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
@@ -49,7 +49,7 @@ public final class ClientHooks {
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
 		SelfCheck.preIteration = true;
-		RendererDispatcher.renderChunk(
+		VanillaRenderer.renderChunk(
 			(INoCubesChunkSectionRenderBuilder) rebuildTask, (INoCubesChunkSectionRender) chunkRender, buffers,
 			chunkPos, world, matrix,
 			usedLayers, random, dispatcher

@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
@@ -13,7 +12,6 @@ import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
-import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -36,21 +34,12 @@ import net.minecraftforge.client.model.data.ModelData;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
-import static net.minecraft.core.BlockPos.MutableBlockPos;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
-/**
- * Calls the {@link MeshRenderer} or {@link FluidRenderer} and provides utility code for both.
- *
- * @author Cadiboo
- */
-public final class RendererDispatcher {
+public final class VanillaRenderer {
 
-	private static final RollingProfiler totalProfiler = new RollingProfiler(256);
-	private static final RollingProfiler fluidsProfiler = new RollingProfiler(256);
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
 
 	/**
@@ -125,7 +114,7 @@ public final class RendererDispatcher {
 			return color;
 		}
 
-		public void renderBlock(BlockState stateIn, MutableBlockPos worldPosIn) {
+		public void renderBlock(BlockState stateIn, BlockPos worldPosIn) {
 			renderInBlockLayers(
 				stateIn, worldPosIn,
 				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
@@ -137,7 +126,7 @@ public final class RendererDispatcher {
 		}
 
 		public BufferBuilder getAndStartBuffer(RenderType layer) {
-			return RendererDispatcher.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
+			return VanillaRenderer.getAndStartBuffer(chunkRender, buffers, usedLayers, layer);
 		}
 
 		public void markLayerUsed(RenderType layer) {
@@ -231,7 +220,7 @@ public final class RendererDispatcher {
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
 	) {
-		if (NoCubesConfig.Client.debugSkipNoCubesRendering)
+		if (NoCubesConfig.Client.debugSkipNoCubesRendering || !NoCubesConfig.Client.render)
 			return;
 
 		var start = System.nanoTime();
@@ -249,39 +238,34 @@ public final class RendererDispatcher {
 				usedLayers, random, dispatcher,
 				light, optiFine
 			);
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
-			renderChunkFluids(renderer);
+			var objects = MeshRenderer.MutableObjects.INSTANCE.get();
+			MeshRenderer.renderChunk(
+				renderer.world, renderer.chunkPos,
+				new MeshRenderer.INoCubesAreaRenderer() {
+					@Override
+					public void quad(BlockState state, BlockPos worldPos, MeshRenderer.FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
+						var light = renderer.light.get(renderer.chunkPos, faceInfo.face, faceInfo.normal, objects.light);
+						var shade = renderer.getShade(faceInfo.approximateDirection);
+						renderer.forEachQuad(
+							state, worldPos, faceInfo.approximateDirection,
+							(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
+							(layer, buffer, quad, color, emissive) -> {
+								var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+								renderQuad(buffer, renderer.matrix.matrix(), faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+							}
+						);
+					}
 
-			if (NoCubesConfig.Client.render)
-				renderChunkMesh(renderer, isSmoothable);
-		}
-		totalProfiler.recordAndLogElapsedNanosChunk(start, "total");
-	}
-
-	public static void renderBreakingTexture(BlockRenderDispatcher dispatcher, BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, ModelData modelData) {
-		var mesher = NoCubesConfig.Server.mesher;
-		try (var area = new Area(Minecraft.getInstance().level, pos, ModUtil.VEC_ONE, mesher)) {
-			MeshRenderer.renderBreakingTexture(state, pos, matrix, buffer, mesher, area);
-		}
-	}
-
-	private static void renderChunkFluids(ChunkRenderInfo renderer) {
-		var start = System.nanoTime();
-//		try (var area = new Area(Minecraft.getInstance().level, renderer.chunkPos.subtract(ModUtil.VEC_ONE), ModUtil.CHUNK_SIZE.offset(ModUtil.VEC_TWO))) {
-//			FluidRenderer.render(renderer, area);
-//		}
-		fluidsProfiler.recordAndLogElapsedNanosChunk(start, "fluids");
-	}
-
-	private static void renderChunkMesh(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothable) {
-		var start = System.nanoTime();
-		var mesher = NoCubesConfig.Server.mesher;
-		try (
-			var area = new Area(Minecraft.getInstance().level, renderer.chunkPos, ModUtil.CHUNK_SIZE, mesher);
-			var ignored = renderer.matrix.push()
-		) {
-			MeshRenderer.renderArea(renderer, isSmoothable, mesher, area);
+					@Override
+					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
+						try (var ignored = renderer.matrix.push()) {
+							renderer.matrix.matrix().translate(relativeX, relativeY, relativeZ);
+							renderer.renderBlock(state, worldPos);
+						}
+					}
+				}
+			);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
@@ -291,6 +275,17 @@ public final class RendererDispatcher {
 		if (usedLayers.add(layer))
 			chunkRender.noCubes$beginLayer(buffer);
 		return buffer;
+	}
+
+	public static void renderQuad(
+		VertexConsumer buffer, PoseStack matrix,
+		MeshRenderer.FaceInfo faceInfo,
+		Color color,
+		Texture uvs,
+		FaceLight light,
+		boolean renderBothSides
+	) {
+		quad(buffer, matrix, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
 	}
 
 	static void quad(

@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
-import io.github.cadiboo.nocubes.client.render.MeshRenderer.MutableObjects;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.ColorParser.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
@@ -14,7 +13,6 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -34,7 +32,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.*;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.*;
 import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
@@ -52,7 +50,7 @@ public final class OverlayRenderers {
 			Pair.of("drawNearbyCollisions", OverlayRenderers::drawNearbyCollisions),
 			Pair.of("drawNearbyDensities", OverlayRenderers::drawNearbyDensities)
 		);
-		registerPerFrameHandler.accept(matrix ->  renderDebugOverlays(matrix, debugOverlays));
+		registerPerFrameHandler.accept(matrix -> renderDebugOverlays(matrix, debugOverlays));
 	}
 
 	public static boolean renderNoCubesBlockHighlight(
@@ -60,23 +58,33 @@ public final class OverlayRenderers {
 		double cameraX, double cameraY, double cameraZ,
 		BlockGetter world, BlockPos lookingAtPos, BlockState state
 	) {
-		if (!NoCubesConfig.Client.render)
-			return false;
 		if (!NoCubesConfig.Client.renderSelectionBox)
 			return false;
-		if (!NoCubes.smoothableHandler.isSmoothable(state))
+		if (!NoCubesConfig.Client.render)
 			return false;
-		var mesher = NoCubesConfig.Server.mesher;
-		var stateSolidity = MeshRenderer.isSolidRender(state);
-		try (var area = new Area(world, lookingAtPos, ModUtil.VEC_ONE, mesher)) {
-			var color = NoCubesConfig.Client.selectionBoxColor;
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			mesher.generateGeometry(area, s -> isSmoothable.test(s) && MeshRenderer.isSolidRender(s) == stateSolidity, (pos, face) -> {
-				drawFacePosColor(face, cameraX, cameraY, cameraZ, area.start, color, buffer, matrix);
-				return true;
-			});
-		}
-		return true;
+		var color = NoCubesConfig.Client.selectionBoxColor;
+		return MeshRenderer.renderSingleBlock(world, lookingAtPos, state, new INoCubesAreaRenderer() {
+			@Override
+			public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride) {
+				drawFacePosColor(
+					faceInfo.face,
+					cameraX, cameraY, cameraZ,
+					lookingAtPos, color,
+					buffer, matrix
+				);
+			}
+
+			@Override
+			public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
+				drawShape(
+					matrix, buffer,
+					state.getShape(world, worldPos),
+					lookingAtPos, relativeX, relativeY, relativeZ,
+					cameraX, cameraY, cameraZ,
+					color
+				);
+			}
+		});
 	}
 
 	static void renderDebugOverlays(PoseStack matrix, List<Pair<String, DebugOverlay>> overlays) {
@@ -122,7 +130,7 @@ public final class OverlayRenderers {
 		var targetedPos = getTargetedPosForDebugRendering(viewer);
 		var start = targetedPos.offset(-2, -2, -2);
 		var end = targetedPos.offset(2, 2, 2);
-		var i = new int[]{0};
+		var i = new int[] {0};
 		BlockPos.betweenClosed(start, end)
 			.forEach(pos -> minecraft.levelRenderer.destroyBlockProgress(100 + i[0]++, pos, 9));
 	}
@@ -242,14 +250,15 @@ public final class OverlayRenderers {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, Vec3 camera, PoseStack matrix, VertexConsumer buffer) {
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 		var mesher = NoCubesConfig.Server.mesher;
 		var meshSize = new BlockPos(16, 16, 16);
 		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
+		matrix.pushPose();
+		var world = viewer.level();
 		try (
-			var area = new Area(viewer.level(), meshStart, meshSize, mesher);
-			var light = new LightCache((ClientLevel) viewer.level(), meshStart, meshSize)
+			var area = new Area(world, meshStart, meshSize, mesher);
 		) {
-			var faceInfo = new FaceInfo();
 			var objects = new MutableObjects();
 			var mutable = new Vec();
 
@@ -257,47 +266,66 @@ public final class OverlayRenderers {
 			var normalColor = new Color(0F, 0F, 1F, 0.2F);
 			var averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
 			var normalDirectionColor = new Color(0F, 1F, 0F, 1F);
+			var textureColor = new Color(1F, 1F, 1F, 1F);
 			var lightColor = new Color(1F, 1F, 0F, 1F);
 
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			mesher.generateGeometry(area, isSmoothable, (pos, face) -> {
-				if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
-					return true;
-				drawFacePosColor(face, camera, area.start, faceColor, buffer, matrix);
+			MeshRenderer.renderArea(
+				world, meshStart,
+				isSmoothable, mesher, area,
+				new INoCubesAreaRenderer() {
+					@Override
+					public void quad(BlockState state, BlockPos pos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride) {
+						if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
+							return;
+						var face = faceInfo.face;
+						drawFacePosColor(face, camera, meshStart, faceColor, buffer, matrix);
 
-				faceInfo.setup(face);
+						// Draw face normal vec + resulting direction
+						final float dirMul = 0.2F;
+						drawLinePosColorFromAdd(meshStart, faceInfo.centre, mutable.set(faceInfo.normal).multiply(dirMul), averageNormalColor, buffer, matrix, camera);
+						drawLinePosColorFromAdd(meshStart, faceInfo.centre, mutable.set(faceInfo.approximateDirection.getStepX(), faceInfo.approximateDirection.getStepY(), faceInfo.approximateDirection.getStepZ()).multiply(dirMul), normalDirectionColor, buffer, matrix, camera);
 
-				// Draw face normal vec + resulting direction
-				final float dirMul = 0.2F;
-				drawLinePosColorFromAdd(area.start, faceInfo.centre, mutable.set(faceInfo.normal).multiply(dirMul), averageNormalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, faceInfo.centre, mutable.set(faceInfo.approximateDirection.getStepX(), faceInfo.approximateDirection.getStepY(), faceInfo.approximateDirection.getStepZ()).multiply(dirMul), normalDirectionColor, buffer, matrix, camera);
+						// Draw each vertex normal
+						drawLinePosColorFromAdd(meshStart, face.v0, mutable.set(faceInfo.vertexNormals.v0).multiply(dirMul), normalColor, buffer, matrix, camera);
+						drawLinePosColorFromAdd(meshStart, face.v1, mutable.set(faceInfo.vertexNormals.v1).multiply(dirMul), normalColor, buffer, matrix, camera);
+						drawLinePosColorFromAdd(meshStart, face.v2, mutable.set(faceInfo.vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
+						drawLinePosColorFromAdd(meshStart, face.v3, mutable.set(faceInfo.vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
-				// Draw each vertex normal
-				drawLinePosColorFromAdd(area.start, face.v0, mutable.set(faceInfo.vertexNormals.v0).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v1, mutable.set(faceInfo.vertexNormals.v1).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v2, mutable.set(faceInfo.vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
-				drawLinePosColorFromAdd(area.start, face.v3, mutable.set(faceInfo.vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
+						// Draw texture pos
+						mutable.set(0.5F, 0.5F, 0.5F);
+						RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
+						drawLinePosColorFromTo(meshStart, faceInfo.centre, pos, mutable, textureColor, buffer, matrix, camera);
 
-				// Draw texture pos
-				mutable.set(0.5F, 0.5F, 0.5F);
-				MeshRenderer.RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
-				pos.move(area.start);
-				drawLinePosColorFromTo(area.start, faceInfo.centre, pos, mutable, lightColor, buffer, matrix, camera);
+		//				// Draw light pos
+		//				mutable.set(0, 0, 0);
+		//				var faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
+		//				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
+		//					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
+		//				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
+		//					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
+		//				if (light.get(faceRelativeToWorldPos, face.v2, faceNormal) == 0)
+		//					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
+		//				if (light.get(faceRelativeToWorldPos, face.v3, faceNormal) == 0)
+		//					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
 
-//				// Draw light pos
-//				mutable.set(0, 0, 0);
-//				var faceRelativeToWorldPos = faceInfo.faceRelativeToWorldPos;
-//				if (light.get(faceRelativeToWorldPos, face.v0, faceNormal) == 0)
-//					drawLinePosColorFromTo(area.start, face.v0, light.lightWorldPos(area.start, face.v0, faceNormal), mutable, lightColor, buffer, matrix, camera);
-//				if (light.get(faceRelativeToWorldPos, face.v1, faceNormal) == 0)
-//					drawLinePosColorFromTo(area.start, face.v1, light.lightWorldPos(area.start, face.v1, faceNormal), mutable, lightColor, buffer, matrix, camera);
-//				if (light.get(faceRelativeToWorldPos, face.v2, faceNormal) == 0)
-//					drawLinePosColorFromTo(area.start, face.v2, light.lightWorldPos(area.start, face.v2, faceNormal), mutable, lightColor, buffer, matrix, camera);
-//				if (light.get(faceRelativeToWorldPos, face.v3, faceNormal) == 0)
-//					drawLinePosColorFromTo(area.start, face.v3, light.lightWorldPos(area.start, face.v3, faceNormal), mutable, lightColor, buffer, matrix, camera);
+					}
 
-				return true;
-			});
+					@Override
+					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
+						if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
+							return;
+						drawShape(
+							matrix, buffer,
+							state.getShape(world, worldPos),
+							meshStart, relativeX, relativeY, relativeZ,
+							camera,
+							faceColor
+						);
+					}
+				}
+			);
+		} finally {
+			matrix.popPose();
 		}
 	}
 
