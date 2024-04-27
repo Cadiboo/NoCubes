@@ -22,8 +22,7 @@ public class FluidRendererMixin {
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/BlockAndTintGetter;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"
-		),
-		require = 2 // Redirect both calls to the function
+		)
 	)
 	private FluidState noCubes$getFluidState(BlockAndTintGetter world, BlockPos adjPos) {
 		return ClientHooks.getRenderFluidState(adjPos, world.getBlockState(adjPos));

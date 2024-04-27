@@ -109,12 +109,9 @@ dependencies {
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'
 
-//	implementation fg.deobf("curse.maven:KotlinForForge-351264:3331341")
-//	implementation fg.deobf("curse.maven:BetterFoliage-228529:3335091")
-
-//	implementation fg.deobf("curse.maven:Rubidium-574856:4952685")
-	implementation fg.deobf("curse.maven:Embeddium-908741:4984832")
-	implementation fg.deobf("curse.maven:Oculus-581495:4767500")
+	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
+	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
+	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'
