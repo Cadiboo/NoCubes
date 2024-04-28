@@ -172,6 +172,9 @@ shadowJar {
 	}
 	mergeServiceFiles() // Very important for MixinExtras to work
 	manifest.attributes(jar.manifest.getAttributes())
+	from('LICENSE') {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
 }
 reobf {
 	// We want the output of the following tasks to be reobfuscated
