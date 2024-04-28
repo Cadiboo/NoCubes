@@ -108,6 +108,8 @@ dependencies {
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'
 
+	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
+
 	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
 	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
 	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
@@ -162,7 +164,13 @@ shadowJar {
 	archiveClassifier.set('')
 
 	configurations = [project.configurations.shadow]
-	relocate('org.beryx', 'io.github.cadiboo.nocubes.repackage.org.beryx')
+	[
+		'org.beryx',
+		'com.llamalad7.mixinextras',
+	].each {
+		relocate(it, "${mod_group}.repackage.${it}")
+	}
+	mergeServiceFiles() // Very important for MixinExtras to work
 	manifest.attributes(jar.manifest.getAttributes())
 }
 reobf {
