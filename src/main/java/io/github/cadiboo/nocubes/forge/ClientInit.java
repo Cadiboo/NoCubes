@@ -5,8 +5,10 @@ import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.KeyMappings;
 import io.github.cadiboo.nocubes.client.render.OverlayRenderers;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.hooks.SelfCheck;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -57,6 +59,22 @@ public final class ClientInit {
 				))
 					event.setCanceled(true);
 			});
+		});
+		var selfCheckInfoPrintedAt = new long[] { Long.MIN_VALUE };
+		events.addListener((TickEvent.ClientTickEvent event) -> {
+			if (!NoCubesConfig.Common.debugEnabled || !Screen.hasAltDown())
+				return;
+
+			var world = Minecraft.getInstance().level;
+			if (world == null)
+				return;
+
+			long time = world.getGameTime();
+			if (time - 10 * 20 <= selfCheckInfoPrintedAt[0])
+				return; // Only print once every 10 seconds, don't spam the log
+
+			selfCheckInfoPrintedAt[0] = time;
+			LogManager.getLogger("NoCubes Hooks SelfCheck").info(String.join("\n", SelfCheck.info()));
 		});
 		events.addListener((ClientPlayerNetworkEvent.LoggingIn event) -> {
 			LOG.debug("Client joined server");
