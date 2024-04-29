@@ -1,5 +1,6 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -13,8 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
-
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
 
 /**
  * @author Cadiboo

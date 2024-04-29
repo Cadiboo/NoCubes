@@ -88,43 +88,10 @@ public class RenderHelper {
 		line(buffer, matrix, color, v3x, v3y, v3z, v0x, v0y, v0z);
 	}
 
-	public static void drawShape(
-		PoseStack stack, VertexConsumer buffer,
-		VoxelShape shape, BlockPos pos,
-		Vec3 camera, ColorParser.Color color
-	) {
-		drawShape(
-			stack, buffer, shape,
-			pos, 0, 0, 0,
-			camera, color
-		);
-	}
-
-	public static void drawShape(
-		PoseStack stack, VertexConsumer buffer,
-		VoxelShape shape, BlockPos pos,
-		float xOffset, float yOffset, float zOffset,
-		Vec3 camera, ColorParser.Color color
-	) {
-		drawShape(
-			stack, buffer, shape,
-			pos,
-			xOffset, yOffset, zOffset,
-			camera.x, camera.y, camera.z,
-			color
-		);
-	}
-
-	public static void drawShape(
-		PoseStack stack, VertexConsumer buffer,
-		VoxelShape shape, BlockPos pos,
-		float xOffset, float yOffset, float zOffset,
-		double cameraX, double cameraY, double cameraZ,
-		ColorParser.Color color
-	) {
-		var x = pos.getX() + xOffset - cameraX;
-		var y = pos.getY() + yOffset - cameraY;
-		var z = pos.getZ() + zOffset - cameraZ;
+	public static void drawShape(PoseStack stack, VertexConsumer buffer, VoxelShape shape, BlockPos pos, Vec3 camera, ColorParser.Color color) {
+		var x = pos.getX() - camera.x;
+		var y = pos.getY() - camera.y;
+		var z = pos.getZ() - camera.z;
 		shape.forAllEdges((x0, y0, z0, x1, y1, z1) -> line(
 			buffer, stack, color,
 			(float) (x + x0), (float) (y + y0), (float) (z + z0),

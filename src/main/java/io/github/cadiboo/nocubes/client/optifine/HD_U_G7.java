@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.optifine;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.cadiboo.nocubes.client.render.RendererDispatcher;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
@@ -22,7 +23,6 @@ import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G7.Reflect.*;
 import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetMethod;
-import static io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo;
 
 class HD_U_G7 implements OptiFineProxy {
 
@@ -119,7 +119,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public int forEachOverlayQuad(ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, ChunkRenderInfo.ColorSupplier colorSupplier, ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
+	public int forEachOverlayQuad(RendererDispatcher.ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, RendererDispatcher.ChunkRenderInfo.ColorSupplier colorSupplier, RendererDispatcher.ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
 		int totalSize = 0;
 		for (int i = 0; i < OVERLAY_LAYERS.length; i++) {
 			RenderType overlayLayer = OVERLAY_LAYERS[i];

@@ -1,11 +1,15 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilderSodium;
+import io.github.cadiboo.nocubes.mesh.Mesher;
+import io.github.cadiboo.nocubes.mesh.OldNoCubes;
+import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
@@ -30,19 +34,25 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraftforge.client.model.data.ModelData;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.*;
+import static io.github.cadiboo.nocubes.mesh.Mesher.getMeshOffset;
 import static net.minecraft.world.level.block.GrassBlock.SNOWY;
 
 public final class SodiumRenderer {
 
+	private static final RollingProfiler totalProfiler = new RollingProfiler(256);
+	private static final RollingProfiler fluidsProfiler = new RollingProfiler(256);
 	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
 
 	public static class Helper {
@@ -177,90 +187,61 @@ public final class SodiumRenderer {
 
 	public static void renderChunk(
 		INoCubesChunkSectionRenderBuilderSodium task,
-		/*ChunkBuildBuffers*/ Object buffersIn,
-		/*BlockRenderCache*/ Object cacheIn,
-		BlockPos.MutableBlockPos chunkPos,
+		/*ChunkBuildBuffers*/ Object buffers,
+		/*BlockRenderCache*/ Object cache,
+		BlockPos.MutableBlockPos blockPos,
 		BlockPos.MutableBlockPos modelOffset,
-		/*BlockRenderContext*/ Object contextIn
+		/*BlockRenderContext*/ Object context
 	) {
-		if (NoCubesConfig.Client.debugSkipNoCubesRendering || !NoCubesConfig.Client.render)
+		if (NoCubesConfig.Client.debugSkipNoCubesRendering)
 			return;
 
 		var start = System.nanoTime();
 		try (
-			var lightCache = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE);
+			var light = new LightCache(Minecraft.getInstance().level, blockPos, ModUtil.CHUNK_SIZE);
 		) {
-			var objects = MutableObjects.INSTANCE.get();
-			var random = new SingleThreadedRandomSource(42L);
-			var vertices = ChunkVertexEncoder.Vertex.uninitializedQuad();
-			var buffers = (ChunkBuildBuffers) buffersIn;
-			var cache = (BlockRenderCache) cacheIn;
-			var context = (BlockRenderContext) contextIn;
-			MeshRenderer.renderChunk(
-				cache.getWorldSlice(), chunkPos,
-				new INoCubesAreaRenderer() {
-					@Override
-					public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
-						var light = lightCache.get(chunkPos, faceInfo.face, faceInfo.normal, objects.light);
-						var shade = Helper.getShade(cache.getWorldSlice(), faceInfo.approximateDirection);
-						Helper.forEachQuad(
-							task, buffers, cache, modelOffset, context, random,
-							state, worldPos, faceInfo.approximateDirection,
-							(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : Helper.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
-							(layer, material, buffer, quad, color, emissive) -> {
-								var sprite = quad.getSprite();
-								if (sprite != null) {
-									buffer.addSprite(sprite);
-								}
+			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
 
-								var normal = faceInfo.normal;
-								var isApproximatelyFlat = Math.abs(normal.x) >= 0.9 || Math.abs(normal.y) >= 0.9 || Math.abs(normal.z) >= 0.9;
+			if (NoCubesConfig.Client.render)
+				renderChunkMesh(
+					task,
+					(ChunkBuildBuffers) buffers,
+					(BlockRenderCache) cache,
+					blockPos,
+					modelOffset,
+					(BlockRenderContext) context,
+					light, isSmoothable
+				);
+		}
+		totalProfiler.recordAndLogElapsedNanosChunk(start, "total");
+	}
 
-								var vertexBuffer = buffer.getVertexBuffer(isApproximatelyFlat ? ModelQuadFacing.fromDirection(faceInfo.approximateDirection) : ModelQuadFacing.UNASSIGNED);
-
-								var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
-								renderQuad(vertexBuffer, material, vertices, context, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
-							}
-						);
-					}
-
-					@Override
-					public void block(BlockState stateIn, BlockPos worldPosIn, float relativeX, float relativeY, float relativeZ) {
-						var oldX = context.origin().x();
-						var oldY = context.origin().y();
-						var oldZ = context.origin().z();
-						{
-							Helper.renderInBlockLayers(
-								task, buffers, cache, modelOffset, context,
-								stateIn, worldPosIn,
-								(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
-									((Vector3f) context.origin()).set(
-										oldX + relativeX,
-										oldY + relativeY,
-										oldZ + relativeZ
-									);
-									cache.getBlockRenderer().renderModel(context, buffers);
-								}
-							);
-						}
-						((Vector3f) context.origin()).set(oldX, oldY, oldZ);
-					}
-				}
+	private static void renderChunkMesh(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos blockPos,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+		LightCache light, Predicate<BlockState> isSmoothable
+	) {
+		var start = System.nanoTime();
+		var mesher = NoCubesConfig.Server.mesher;
+		try (
+			var area = new Area(Minecraft.getInstance().level, blockPos, ModUtil.CHUNK_SIZE, mesher);
+		) {
+			renderArea(
+				task,
+				buffers,
+				cache,
+				blockPos,
+				modelOffset,
+				context,
+				light,
+				isSmoothable, mesher, area
 			);
 		}
 		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
-	}
-
-	private static void renderQuad(
-		ChunkMeshBufferBuilder vertexBuffer, Material material,
-		ChunkVertexEncoder.Vertex[] vertices, BlockRenderContext context,
-		FaceInfo faceInfo,
-		Color color,
-		Texture uvs,
-		FaceLight light,
-		boolean renderBothSides
-	) {
-		quad(vertexBuffer, material, vertices, context, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
 	}
 
 	static void quad(
@@ -354,6 +335,233 @@ public final class SodiumRenderer {
 		vertex.v = v;
 		// Lightmap coordinates
 		vertex.light = light;
+	}
+
+	public static boolean isSolidRender(BlockState state) {
+		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof DirtPathBlock;
+	}
+
+	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
+		action.accept(state -> isSmoothable.test(state) && isSolidRender(state));
+		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
+	}
+
+	public static void renderArea(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos blockPos,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+		LightCache light,
+		Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area
+	) {
+		var faceInfo = FaceInfo.INSTANCE.get();
+		var objects = MutableObjects.INSTANCE.get();
+		var random = new SingleThreadedRandomSource(42L);
+		var vertices = ChunkVertexEncoder.Vertex.uninitializedQuad();
+
+//		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
+		modelOffset.set(
+			getMeshOffset(area.start.getX(), blockPos.getX()),
+			getMeshOffset(area.start.getY(), blockPos.getY()),
+			getMeshOffset(area.start.getZ(), blockPos.getZ())
+		);
+
+		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
+			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
+				faceInfo.setup(face);
+				RenderableState foundState;
+				if (mesher instanceof OldNoCubes) {
+					foundState = objects.foundState;
+					foundState.state = area.getBlockStateFaultTolerant(ignored);
+					foundState.pos.set(ignored);
+				} else
+					foundState = RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
+				var renderState = RenderableState.findRenderFor(objects, foundState, area, faceInfo.approximateDirection);
+
+				if (renderState.state.getRenderShape() == RenderShape.INVISIBLE) {
+//					renderState.state = Blocks.STONE.defaultBlockState();
+					return true; // How?
+				}
+
+				renderFaceWithConnectedTextures(
+					task, buffers, cache, modelOffset, context,
+					light, random, vertices,
+					objects, area, faceInfo, renderState
+				);
+
+				// Draw grass tufts, plants etc.
+				renderExtras(
+					task, buffers, cache, modelOffset, context,
+					light, random, vertices,
+					objects, area, foundState, renderState, faceInfo
+				);
+				return true;
+			});
+		});
+	}
+
+	static void renderFaceWithConnectedTextures(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+		LightCache lightCache,
+		RandomSource random, ChunkVertexEncoder.Vertex[] vertices,
+		MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState
+	) {
+		var state = renderState.state;
+		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
+
+		var block = state.getBlock();
+		var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof EndPortalBlock) && !(block instanceof SnowLayerBlock) && !MeshRenderer.isSolidRender(state);
+
+		var light = lightCache.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
+		var shade = Helper.getShade(cache.getWorldSlice(), faceInfo.approximateDirection);
+
+		Helper.forEachQuad(
+			task, buffers, cache, modelOffset, context, random,
+			state, worldPos, faceInfo.approximateDirection,
+			(colorState, colorWorldPos, quad) -> Helper.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
+			(layer, material, buffer, quad, color, emissive) -> {
+				var sprite = quad.getSprite();
+				if (sprite != null) {
+					buffer.addSprite(sprite);
+				}
+
+				var normal = faceInfo.normal;
+				var isApproximatelyFlat = Math.abs(normal.x) >= 0.9 || Math.abs(normal.y) >= 0.9 || Math.abs(normal.z) >= 0.9;
+
+				var vertexBuffer = buffer.getVertexBuffer(isApproximatelyFlat ? ModelQuadFacing.fromDirection(faceInfo.approximateDirection) : ModelQuadFacing.UNASSIGNED);
+
+				var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+				renderQuad(vertexBuffer, material, vertices, context, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+			}
+		);
+	}
+
+	static void renderExtras(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+
+		LightCache light,
+
+		RandomSource random, ChunkVertexEncoder.Vertex[] vertices,
+
+		MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo
+	) {
+		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
+		var renderGrassTufts = NoCubesConfig.Client.grassTufts;
+		if (!renderPlantsOffset && !renderGrassTufts)
+			return;
+
+		if (faceInfo.approximateDirection != Direction.UP)
+			return;
+
+		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
+		var stateAbove = area.getBlockStateFaultTolerant(relativeAbove);
+		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
+			var oldX = context.origin().x();
+			var oldY = context.origin().y();
+			var oldZ = context.origin().z();
+
+			{
+				var worldAbove = relativeAbove.move(area.start);
+				var center = faceInfo.centre;
+
+				Helper.renderInBlockLayers(
+					task, buffers, cache, modelOffset, context,
+					stateAbove, worldAbove,
+					(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
+						((Vector3f) context.origin()).set(
+							oldX + center.x - 0.5F,
+							oldY + center.y,
+							oldZ + center.z - 0.5F
+						);
+						cache.getBlockRenderer().renderModel(context, buffers);
+					}
+				);
+			}
+			((Vector3f) context.origin()).set(oldX, oldY, oldZ);
+		}
+
+		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
+			var grass = Blocks.GRASS.defaultBlockState();
+			var worldAbove = relativeAbove.move(area.start);
+			var renderBothSides = true;
+			var world = cache.getWorldSlice();
+
+			var offset = grass.getOffset(world, worldAbove);
+			var xOff = (float) offset.x;
+			var zOff = (float) offset.z;
+			var yExt = 0.4F;
+			var snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
+			var face = faceInfo.face;
+
+			var grassTuft0 = objects.grassTuft0;
+			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
+			var light0 = light.get(area.start, grassTuft0, objects.grassTuft0Light);
+			var shade0 = Helper.getShade(world, grassTuft0.approximateDirection);
+
+			var grassTuft1 = objects.grassTuft1;
+			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
+			var light1 = light.get(area.start, grassTuft1, objects.grassTuft1Light);
+			var shade1 = Helper.getShade(world, grassTuft1.approximateDirection);
+
+			Helper.forEachQuad(
+				task, buffers, cache, modelOffset, context, random,
+				grass, worldAbove, null,
+				(state, worldPos, quad) -> snowy ? Color.WHITE : Helper.getColor(objects.color, quad, grass, world, worldAbove, 1F),
+				(layer, material, buffer, quad, color, emissive) -> {
+					var sprite = quad.getSprite();
+					if (sprite != null) {
+						buffer.addSprite(sprite);
+					}
+
+					var normal = faceInfo.normal;
+					var isApproximatelyFlat = Math.abs(normal.x) >= 0.9 || Math.abs(normal.y) >= 0.9 || Math.abs(normal.z) >= 0.9;
+
+					var vertexBuffer = buffer.getVertexBuffer(isApproximatelyFlat ? ModelQuadFacing.fromDirection(faceInfo.approximateDirection) : ModelQuadFacing.UNASSIGNED);
+
+					// This is super ugly because Color is mutable. Will be fixed by Valhalla (color will be an inline type)
+					int argbTEMP = color.packToARGB();
+
+					color.multiplyUNSAFENEEDSVALHALLA(shade0);
+					renderQuad(vertexBuffer, material, vertices, context, grassTuft0, color, Texture.forQuadRearranged(objects.texture, quad, grassTuft0.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light0, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+					color.multiplyUNSAFENEEDSVALHALLA(shade1);
+					renderQuad(vertexBuffer, material, vertices, context, grassTuft1, color, Texture.forQuadRearranged(objects.texture, quad, grassTuft1.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light1, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+				}
+			);
+		}
+
+	}
+
+	private static void setupGrassTuft(Face face, Vec v0, Vec v1, float xOff, float yExt, float zOff) {
+		face.set(v0, v0, v1, v1);
+		face.v1.y += yExt;
+		face.v2.y += yExt;
+		face.add(xOff, 0, zOff);
+	}
+
+	private static void renderQuad(
+		ChunkMeshBufferBuilder vertexBuffer, Material material,
+		ChunkVertexEncoder.Vertex[] vertices, BlockRenderContext context,
+		FaceInfo faceInfo,
+		Color color,
+		Texture uvs,
+		FaceLight light,
+		boolean renderBothSides
+	) {
+		quad(vertexBuffer, material, vertices, context, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
 	}
 
 }

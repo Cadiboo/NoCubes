@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.client.render;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
@@ -8,11 +10,8 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -20,82 +19,25 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static io.github.cadiboo.nocubes.mesh.Mesher.getMeshOffset;
-import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
+import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.ChunkRenderInfo;
+import static io.github.cadiboo.nocubes.client.render.RendererDispatcher.quad;
+import static net.minecraft.world.level.block.GrassBlock.SNOWY;
 
-public class MeshRenderer {
-
-	public interface INoCubesAreaRenderer {
-		void quad(
-			BlockState state, BlockPos worldPos,
-			FaceInfo faceInfo, boolean renderBothSides,
-			Color colorOverride
-		);
-
-		void block(
-			BlockState state, BlockPos worldPos,
-			float relativeX, float relativeY, float relativeZ
-		);
-	}
+public final class MeshRenderer {
 
 	public static boolean isSolidRender(BlockState state) {
 		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof DirtPathBlock;
 	}
 
-	public static boolean renderSingleBlock(
-		BlockGetter world, BlockPos pos, BlockState state,
-		INoCubesAreaRenderer renderer
-	) {
-		var smoothable = NoCubes.smoothableHandler.isSmoothable(state);
-		var plant = NoCubesConfig.Client.fixPlantHeight && ModUtil.isShortPlant(state);
-		if (!smoothable && !plant)
-			return false;
-		var mesher = NoCubesConfig.Server.mesher;
-		var stateSolidity = MeshRenderer.isSolidRender(state);
-		try (var area = new Area(world, pos, ModUtil.VEC_ONE, mesher)) {
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			MeshRenderer.renderArea(
-				world, pos,
-				s -> isSmoothable.test(s) && (plant || MeshRenderer.isSolidRender(s) == stateSolidity), mesher, area,
-				new INoCubesAreaRenderer() {
-					@Override
-					public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
-						if (ModUtil.isShortPlant(state) != plant)
-							return;
-						renderer.quad(state, worldPos, faceInfo, renderBothSides, colorOverride);
-					}
-
-					@Override
-					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
-						if (ModUtil.isShortPlant(state) != plant)
-							return;
-						renderer.block(state, worldPos, relativeX, relativeY, relativeZ);
-					}
-				}
-			);
-		}
-		return true;
+	public static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
+		action.accept(state -> isSmoothable.test(state) && isSolidRender(state));
+		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
 	}
 
-	public static void renderChunk(
-		BlockAndTintGetter world, BlockPos chunkPos,
-		INoCubesAreaRenderer renderer
-	) {
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var mesher = NoCubesConfig.Server.mesher;
-		try (
-			var area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, mesher);
-		) {
-			renderArea(world, chunkPos, isSmoothable, mesher, area, renderer);
-		}
-	}
-	public static void renderArea(
-		BlockGetter world, BlockPos renderStartPos,
-		Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area,
-		INoCubesAreaRenderer renderer
-	) {
+	public static void renderArea(ChunkRenderInfo renderer, Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area) {
 		var faceInfo = FaceInfo.INSTANCE.get();
 		var objects = MutableObjects.INSTANCE.get();
+		Mesher.translateToMeshStart(renderer.matrix.matrix(), area.start, renderer.chunkPos);
 		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
 			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
@@ -113,38 +55,50 @@ public class MeshRenderer {
 					return true; // How?
 				}
 
-				var state = renderState.state;
-				var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
-
-				var block = state.getBlock();
-				var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof EndPortalBlock) && !(block instanceof SnowLayerBlock) && !isSolidRender(state);
-
-				faceInfo.reverseMeshOffset(renderStartPos, area.start);
-				renderer.quad(
-					state, worldPos,
-					faceInfo, renderBothSides,
-					null
-				);
+				renderFaceWithConnectedTextures(renderer, objects, area, faceInfo, renderState);
 
 				// Draw grass tufts, plants etc.
-				renderExtras(renderer, objects, world, area, foundState, renderState, faceInfo);
+				renderExtras(renderer, objects, area, foundState, renderState, faceInfo);
 				return true;
 			});
 		});
 	}
 
-	private static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
-		action.accept(state -> isSmoothable.test(state) && isSolidRender(state));
-		action.accept(state -> isSmoothable.test(state) && !isSolidRender(state));
+	static void renderBreakingTexture(BlockState state, BlockPos worldPos, PoseStack matrix, VertexConsumer buffer, Mesher mesher, Area area) {
+		Mesher.translateToMeshStart(matrix, area.start, worldPos);
+		var stateSolidity = isSolidRender(state);
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+		var faceInfo = FaceInfo.INSTANCE.get();
+		mesher.generateGeometry(area, s -> isSmoothable.test(s) && isSolidRender(s) == stateSolidity, (relativePos, face) -> {
+			faceInfo.setup(face);
+			var renderBothSides = false;
+			// Don't need textures or lighting because the crumbling texture overwrites them
+			renderQuad(buffer, matrix, faceInfo, Color.WHITE, Texture.EVERYTHING, FaceLight.MAX_BRIGHTNESS, renderBothSides);
+			return true;
+		});
 	}
 
-	private static void renderExtras(
-		INoCubesAreaRenderer renderer, MutableObjects objects,
-		BlockGetter world,
-		Area area, RenderableState foundState,
-		RenderableState renderState,
-		FaceInfo faceInfo
-	) {
+	static void renderFaceWithConnectedTextures(ChunkRenderInfo renderer, MutableObjects objects, Area area, FaceInfo faceInfo, RenderableState renderState) {
+		var state = renderState.state;
+		var worldPos = objects.pos.set(renderState.relativePos()).move(area.start);
+
+		var block = state.getBlock();
+		var renderBothSides = !(block instanceof BeaconBeamBlock) && !(block instanceof NetherPortalBlock || block instanceof  EndPortalBlock) && !(block instanceof SnowLayerBlock) && !MeshRenderer.isSolidRender(state);
+
+		var light = renderer.light.get(area.start, faceInfo.face, faceInfo.normal, objects.light);
+		var shade = renderer.getShade(faceInfo.approximateDirection);
+
+		renderer.forEachQuad(
+			state, worldPos, faceInfo.approximateDirection,
+			(colorState, colorWorldPos, quad) -> renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
+			(layer, buffer, quad, color, emissive) -> {
+				var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+				renderQuad(buffer, renderer.matrix.matrix(), faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+			}
+		);
+	}
+
+	static void renderExtras(ChunkRenderInfo renderer, MutableObjects objects, Area area, RenderableState foundState, RenderableState renderState, FaceInfo faceInfo) {
 		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
 		var renderGrassTufts = NoCubesConfig.Client.grassTufts;
 		if (!renderPlantsOffset && !renderGrassTufts)
@@ -156,12 +110,12 @@ public class MeshRenderer {
 		var relativeAbove = objects.pos.set(foundState.relativePos()).move(Direction.UP);
 		var stateAbove = area.getBlockStateFaultTolerant(relativeAbove);
 		if (renderPlantsOffset && ModUtil.isShortPlant(stateAbove)) {
-			var worldAbove = relativeAbove.move(area.start);
-			var center = faceInfo.centre;
-			renderer.block(
-				stateAbove, worldAbove,
-				center.x - 0.5F, center.y, center.z - 0.5F
-			);
+			try (var ignored = renderer.matrix.push()) {
+				var worldAbove = relativeAbove.move(area.start);
+				var center = faceInfo.centre;
+				renderer.matrix.matrix().translate(center.x - 0.5F, center.y, center.z - 0.5F);
+				renderer.renderBlock(stateAbove, worldAbove);
+			}
 		}
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
@@ -169,27 +123,40 @@ public class MeshRenderer {
 			var worldAbove = relativeAbove.move(area.start);
 			var renderBothSides = true;
 
-			var offset = grass.getOffset(world, worldAbove);
+			var offset = grass.getOffset(renderer.world, worldAbove);
 			var xOff = (float) offset.x;
 			var zOff = (float) offset.z;
 			var yExt = 0.4F;
 			var snowy = isSnow(renderState.state) || (renderState.state.hasProperty(SNOWY) && renderState.state.getValue(SNOWY));
-			var colorOverride = snowy ? Color.WHITE : null;
 			var face = faceInfo.face;
-			var grassTuft = objects.grassTuft;
 
-			setupGrassTuft(grassTuft.face, face.v2, face.v0, xOff, yExt, zOff);
-			renderer.quad(
-				grass, worldAbove,
-				grassTuft, renderBothSides,
-				colorOverride
-			);
+			var grassTuft0 = objects.grassTuft0;
+			setupGrassTuft(grassTuft0.face, face.v2, face.v0, xOff, yExt, zOff);
+			var light0 = renderer.light.get(area.start, grassTuft0, objects.grassTuft0Light);
+			var shade0 = renderer.getShade(grassTuft0.approximateDirection);
 
-			setupGrassTuft(grassTuft.face, face.v3, face.v1, xOff, yExt, zOff);
-			renderer.quad(
-				grass, worldAbove,
-				grassTuft, renderBothSides,
-				colorOverride
+			var grassTuft1 = objects.grassTuft1;
+			setupGrassTuft(grassTuft1.face, face.v3, face.v1, xOff, yExt, zOff);
+			var light1 = renderer.light.get(area.start, grassTuft1, objects.grassTuft1Light);
+			var shade1 = renderer.getShade(grassTuft1.approximateDirection);
+
+			var matrix = renderer.matrix.matrix();
+			renderer.forEachQuad(
+				grass, worldAbove, null,
+				(state, worldPos, quad) -> snowy ? Color.WHITE : renderer.getColor(objects.color, quad, grass, worldAbove, 1F),
+				(layer, buffer, quad, color, emissive) -> {
+					// This is super ugly because Color is mutable. Will be fixed by Valhalla (color will be an inline type)
+					int argbTEMP = color.packToARGB();
+
+					color.multiplyUNSAFENEEDSVALHALLA(shade0);
+					renderQuad(buffer, matrix, grassTuft0, color, Texture.forQuadRearranged(objects.texture, quad, grassTuft0.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light0, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+					color.multiplyUNSAFENEEDSVALHALLA(shade1);
+					renderQuad(buffer, matrix, grassTuft1, color, Texture.forQuadRearranged(objects.texture, quad, grassTuft1.approximateDirection), emissive ? FaceLight.MAX_BRIGHTNESS : light1, renderBothSides);
+
+					color.unpackFromARGB(argbTEMP);
+				}
 			);
 		}
 
@@ -202,6 +169,16 @@ public class MeshRenderer {
 		face.add(xOff, 0, zOff);
 	}
 
+	private static void renderQuad(
+		VertexConsumer buffer, PoseStack matrix,
+		FaceInfo faceInfo,
+		Color color,
+		Texture uvs,
+		FaceLight light,
+		boolean renderBothSides
+	) {
+		quad(buffer, matrix, faceInfo.face, faceInfo.normal, color, uvs, light, renderBothSides);
+	}
 
 	@PerformanceCriticalAllocation
 	public static final /* inline record */ class FaceInfo {
@@ -226,19 +203,6 @@ public class MeshRenderer {
 			faceInfo.setup(new Face());
 			return faceInfo;
 		}
-
-		public void reverseMeshOffset(BlockPos renderStartPos, BlockPos areaStart) {
-			face.add(
-				getMeshOffset(areaStart.getX(), renderStartPos.getX()),
-				getMeshOffset(areaStart.getY(), renderStartPos.getY()),
-				getMeshOffset(areaStart.getZ(), renderStartPos.getZ())
-			);
-			centre.add(
-				getMeshOffset(areaStart.getX(), renderStartPos.getX()),
-				getMeshOffset(areaStart.getY(), renderStartPos.getY()),
-				getMeshOffset(areaStart.getZ(), renderStartPos.getZ())
-			);
-		}
 	}
 
 	/**
@@ -251,7 +215,10 @@ public class MeshRenderer {
 		final RenderableState foundState = new RenderableState();
 		final RenderableState renderState = new RenderableState();
 		final Vec vec = new Vec();
-		final FaceInfo grassTuft = FaceInfo.withFace();
+		final FaceInfo grassTuft0 = FaceInfo.withFace();
+		final FaceLight grassTuft0Light = new FaceLight();
+		final FaceInfo grassTuft1 = FaceInfo.withFace();
+		final FaceLight grassTuft1Light = new FaceLight();
 		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		final Color color = new Color();
 		final Texture texture = new Texture();
@@ -348,4 +315,5 @@ public class MeshRenderer {
 		var block = state.getBlock();
 		return block == Blocks.SNOW || block == Blocks.SNOW_BLOCK;
 	}
+
 }
