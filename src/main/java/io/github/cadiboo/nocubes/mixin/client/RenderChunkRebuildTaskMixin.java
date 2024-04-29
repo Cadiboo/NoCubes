@@ -40,11 +40,9 @@ public abstract class RenderChunkRebuildTaskMixin extends RenderChunkCompileTask
 	@Shadow(aliases = {
 		"this$0",
 		"this$1",
-		"f_112859_", // Forge
-		"field_20839", // Fabric
 	})
 	@Final
-	ChunkRenderDispatcher.RenderChunk parentClass;
+	ChunkRenderDispatcher.RenderChunk field_20839;
 
 	@Override
 	public ModelData noCubes$getModelData(BlockPos worldPos) {
@@ -70,7 +68,7 @@ public abstract class RenderChunkRebuildTaskMixin extends RenderChunkCompileTask
 		@Local(ordinal = 0) BlockRenderDispatcher dispatcher
 	) {
 		VanillaRenderer.renderChunk(
-			this, (INoCubesChunkSectionRender) parentClass, buffers,
+			this, (INoCubesChunkSectionRender) this.field_20839, buffers,
 			chunkPos, region, matrix,
 			usedLayers, random, dispatcher
 		);
