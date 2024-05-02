@@ -9,9 +9,11 @@ public final class RollingProfiler {
 
 	private final AtomicInteger index = new AtomicInteger();
 	private final long[] records;
+	private final String name;
 
-	public RollingProfiler(int size) {
+	public RollingProfiler(int size, String name) {
 		this.records = new long[size];
+		this.name = name;
 	}
 
 	/**
@@ -42,8 +44,8 @@ public final class RollingProfiler {
 		return records.length;
 	}
 
-	public void recordAndLogElapsedNanosChunk(long start, String description) {
+	public void recordAndLogElapsedNanosChunk(long start) {
 		if (recordElapsedNanos(start))
-			LogManager.getLogger("Render chunk " + description).debug("Average {}ms over the past {} chunks", average() / 1000_000F, size());
+			LogManager.getLogger(name).debug("Average {}ms over the past {} calls", average() / 1000_000F, size());
 	}
 }

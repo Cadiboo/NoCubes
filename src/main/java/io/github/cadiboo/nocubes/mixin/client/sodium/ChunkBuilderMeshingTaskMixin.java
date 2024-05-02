@@ -11,6 +11,7 @@ import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderCache;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -36,6 +37,8 @@ public class ChunkBuilderMeshingTaskMixin implements INoCubesChunkSectionRenderB
 	private Map<BlockPos, ModelData> modelDataMap;
 
 
+	@Shadow @Final private RandomSource random;
+
 	/**
 	 * @see RenderChunkRebuildTaskMixin#noCubes$renderChunk
 	 */
@@ -55,6 +58,7 @@ public class ChunkBuilderMeshingTaskMixin implements INoCubesChunkSectionRenderB
 	) {
 		SodiumRenderer.renderChunk(
 			this,
+			this.random,
 			buffers,
 			cache,
 			blockPos,

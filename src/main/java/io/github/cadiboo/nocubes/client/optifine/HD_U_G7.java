@@ -120,18 +120,18 @@ class HD_U_G7 implements OptiFineProxy {
 
 	@Override
 	public int forEachOverlayQuad(ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, ChunkRenderInfo.ColorSupplier colorSupplier, ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
-		int totalSize = 0;
+		var totalSize = 0;
 		for (int i = 0; i < OVERLAY_LAYERS.length; i++) {
-			RenderType overlayLayer = OVERLAY_LAYERS[i];
-			Object overlay = RenderEnv_getListQuadsOverlay(renderEnv, overlayLayer);
-			int size = ListQuadsOverlay_size(overlay);
+			var overlayLayer = OVERLAY_LAYERS[i];
+			var overlay = RenderEnv_getListQuadsOverlay(renderEnv, overlayLayer);
+			var size = ListQuadsOverlay_size(overlay);
 			if (size <= 0)
 				continue;
 			totalSize += size;
-			BufferBuilder overlayBuffer = renderer.getAndStartBuffer(overlayLayer);
-			for (int j = 0; j < size; ++j) {
-				List<BakedQuad> quads = ListQuadsOverlay_getListQuadsSingle(overlay, ListQuadsOverlay_getQuad(overlay, j));
-				BlockState overlayState = ListQuadsOverlay_getBlockState(overlay, j);
+			var overlayBuffer = renderer.getAndStartBuffer(overlayLayer);
+			for (var j = 0; j < size; ++j) {
+				var quads = ListQuadsOverlay_getListQuadsSingle(overlay, ListQuadsOverlay_getQuad(overlay, j));
+				var overlayState = ListQuadsOverlay_getBlockState(overlay, j);
 				renderer.forEachQuad(quads, overlayState, worldPos, colorSupplier, overlayLayer, overlayBuffer, renderEnv, action);
 				RenderEnv_reset(renderEnv, overlayState, worldPos);
 			}

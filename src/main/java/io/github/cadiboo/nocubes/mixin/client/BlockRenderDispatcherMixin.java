@@ -2,6 +2,7 @@ package io.github.cadiboo.nocubes.mixin.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.cadiboo.nocubes.client.render.LightCache;
 import io.github.cadiboo.nocubes.client.render.MeshRenderer;
 import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
@@ -41,7 +42,7 @@ public class BlockRenderDispatcherMixin {
 		var dispatcher = ((BlockRenderDispatcher) (Object) this);
 		var cancel = MeshRenderer.renderSingleBlock(world, pos, state, new MeshRenderer.INoCubesAreaRenderer() {
 			@Override
-			public void quad(BlockState state, BlockPos worldPos, MeshRenderer.FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
+			public void quad(BlockState state, BlockPos worldPos, MeshRenderer.FaceInfo faceInfo, boolean renderBothSides, Color colorOverride, LightCache lightCache, float shade) {
 				VanillaRenderer.renderQuad(
 					buffer, matrix,
 					faceInfo,

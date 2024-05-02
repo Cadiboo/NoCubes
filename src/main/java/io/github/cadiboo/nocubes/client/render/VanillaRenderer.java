@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
@@ -13,7 +12,6 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import io.github.cadiboo.nocubes.util.Face;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
@@ -40,7 +38,59 @@ import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
 public final class VanillaRenderer {
 
-	private static final RollingProfiler meshProfiler = new RollingProfiler(256);
+	public static void renderChunk(
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
+		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
+	) {
+		if (MeshRenderer.shouldSkipChunkMeshRendering())
+			return;
+
+		matrix.pushPose();
+		try {
+			var optiFine = OptiFineCompatibility.proxy();
+			// Matrix stack is translated to the start of the chunk
+			optiFine.preRenderChunk(chunkRender, chunkPos, matrix);
+			var renderer = new ChunkRenderInfo(
+				rebuildTask, chunkRender, buffers,
+				chunkPos, world, matrix,
+				usedLayers, random, dispatcher,
+				optiFine
+			);
+
+			var objects = MeshRenderer.MutableObjects.INSTANCE.get();
+			MeshRenderer.renderChunk(
+				world, chunkPos,
+				new MeshRenderer.INoCubesAreaRenderer() {
+					@Override
+					public void quad(BlockState state, BlockPos worldPos, MeshRenderer.FaceInfo faceInfo, boolean renderBothSides, Color colorOverride, LightCache lightCache, float shade) {
+						var light = lightCache.get(chunkPos, faceInfo.face, faceInfo.normal, objects.light);
+						renderer.forEachQuad(
+							state, worldPos, faceInfo.approximateDirection,
+							(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
+							(layer, buffer, quad, color, emissive) -> {
+								var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
+								renderQuad(buffer, matrix, faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
+							}
+						);
+					}
+
+					@Override
+					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
+						matrix.pushPose();
+						try {
+							matrix.translate(relativeX, relativeY, relativeZ);
+							renderer.renderBlock(state, worldPos);
+						} finally {
+							matrix.popPose();
+						}
+					}
+				}
+			);
+		} finally {
+			matrix.popPose();
+		}
+	}
 
 	/**
 	 * A big blob of objects related to vanilla chunk rendering.
@@ -52,20 +102,19 @@ public final class VanillaRenderer {
 		public final ChunkBufferBuilderPack buffers;
 		public final BlockPos chunkPos;
 		public final BlockAndTintGetter world;
-		public final FluentMatrixStack matrix;
+		public final PoseStack matrix;
 		public final Set<RenderType> usedLayers;
 		public final RandomSource random;
 		public final BlockRenderDispatcher dispatcher;
-		public final LightCache light;
 		public final OptiFineProxy optiFine;
 		public final BlockColors blockColors;
 
 		public ChunkRenderInfo(
 			INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
 			ChunkBufferBuilderPack buffers, BlockPos chunkPos,
-			BlockAndTintGetter world, FluentMatrixStack matrix,
+			BlockAndTintGetter world, PoseStack matrix,
 			Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
-			LightCache light, OptiFineProxy optiFine
+			OptiFineProxy optiFine
 		) {
 			this.rebuildTask = rebuildTask;
 			this.chunkRender = chunkRender;
@@ -76,7 +125,6 @@ public final class VanillaRenderer {
 			this.usedLayers = usedLayers;
 			this.random = random;
 			this.dispatcher = dispatcher;
-			this.light = light;
 			this.optiFine = optiFine;
 			this.blockColors = Minecraft.getInstance().getBlockColors();
 		}
@@ -117,12 +165,8 @@ public final class VanillaRenderer {
 		public void renderBlock(BlockState stateIn, BlockPos worldPosIn) {
 			renderInBlockLayers(
 				stateIn, worldPosIn,
-				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix.matrix(), buffer, false, random, modelData, layer)
+				(state, worldPos, modelData, layer, buffer, renderEnv) -> dispatcher.renderBatched(state, worldPos, world, matrix, buffer, false, random, modelData, layer)
 			);
-		}
-
-		public float getShade(Direction direction) {
-			return world.getShade(direction, true);
 		}
 
 		public BufferBuilder getAndStartBuffer(RenderType layer) {
@@ -210,64 +254,6 @@ public final class VanillaRenderer {
 		private List<BakedQuad> getMissingQuads() {
 			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
 		}
-	}
-
-	/**
-	 * Render our fluids and smooth terrain
-	 */
-	public static void renderChunk(
-		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
-		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrixStack,
-		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
-	) {
-		if (NoCubesConfig.Client.debugSkipNoCubesRendering || !NoCubesConfig.Client.render)
-			return;
-
-		var start = System.nanoTime();
-		var matrix = new FluentMatrixStack(matrixStack);
-		try (
-			var light = new LightCache(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE);
-			var ignored = matrix.push()
-		) {
-			var optiFine = OptiFineCompatibility.proxy();
-			// Matrix stack is translated to the start of the chunk
-			optiFine.preRenderChunk(chunkRender, chunkPos, matrixStack);
-			var renderer = new ChunkRenderInfo(
-				rebuildTask, chunkRender, buffers,
-				chunkPos, world, matrix,
-				usedLayers, random, dispatcher,
-				light, optiFine
-			);
-
-			var objects = MeshRenderer.MutableObjects.INSTANCE.get();
-			MeshRenderer.renderChunk(
-				renderer.world, renderer.chunkPos,
-				new MeshRenderer.INoCubesAreaRenderer() {
-					@Override
-					public void quad(BlockState state, BlockPos worldPos, MeshRenderer.FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
-						var light = renderer.light.get(renderer.chunkPos, faceInfo.face, faceInfo.normal, objects.light);
-						var shade = renderer.getShade(faceInfo.approximateDirection);
-						renderer.forEachQuad(
-							state, worldPos, faceInfo.approximateDirection,
-							(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : renderer.getColor(objects.color, quad, colorState, colorWorldPos, shade),
-							(layer, buffer, quad, color, emissive) -> {
-								var texture = Texture.forQuadRearranged(objects.texture, quad, faceInfo.approximateDirection);
-								renderQuad(buffer, renderer.matrix.matrix(), faceInfo, color, texture, emissive ? FaceLight.MAX_BRIGHTNESS : light, renderBothSides);
-							}
-						);
-					}
-
-					@Override
-					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
-						try (var ignored = renderer.matrix.push()) {
-							renderer.matrix.matrix().translate(relativeX, relativeY, relativeZ);
-							renderer.renderBlock(state, worldPos);
-						}
-					}
-				}
-			);
-		}
-		meshProfiler.recordAndLogElapsedNanosChunk(start, "mesh");
 	}
 
 	public static BufferBuilder getAndStartBuffer(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, Set<RenderType> usedLayers, RenderType layer) {

@@ -16,7 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -32,7 +32,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.*;
-import static io.github.cadiboo.nocubes.client.render.MeshRenderer.*;
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.FaceInfo;
+import static io.github.cadiboo.nocubes.client.render.MeshRenderer.INoCubesAreaRenderer;
 import static net.minecraft.core.BlockPos.MutableBlockPos;
 
 /**
@@ -41,7 +42,7 @@ import static net.minecraft.core.BlockPos.MutableBlockPos;
 public final class OverlayRenderers {
 
 	public static void register(Consumer<Consumer<PoseStack>> registerPerFrameHandler) {
-		var meshProfiler = new RollingProfiler(600);
+		var meshProfiler = new RollingProfiler(600, "Render wireframe mesh");
 		var debugOverlays = Lists.<Pair<String, DebugOverlay>>newArrayList(
 			Pair.of("drawOutlineAroundNearbySmoothableBlocks", OverlayRenderers::drawOutlineAroundNearbySmoothableBlocks),
 			Pair.of("drawOutlineAroundNearbySmoothableBlocks", OverlayRenderers::drawOutlineAroundNearbySmoothableBlocks),
@@ -56,7 +57,7 @@ public final class OverlayRenderers {
 	public static boolean renderNoCubesBlockHighlight(
 		PoseStack matrix, VertexConsumer buffer,
 		double cameraX, double cameraY, double cameraZ,
-		BlockGetter world, BlockPos lookingAtPos, BlockState state
+		BlockAndTintGetter world, BlockPos lookingAtPos, BlockState state
 	) {
 		if (!NoCubesConfig.Client.renderSelectionBox)
 			return false;
@@ -65,7 +66,7 @@ public final class OverlayRenderers {
 		var color = NoCubesConfig.Client.selectionBoxColor;
 		return MeshRenderer.renderSingleBlock(world, lookingAtPos, state, new INoCubesAreaRenderer() {
 			@Override
-			public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride) {
+			public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride, LightCache lightCache, float shade) {
 				drawFacePosColor(
 					faceInfo.face,
 					cameraX, cameraY, cameraZ,
@@ -250,31 +251,26 @@ public final class OverlayRenderers {
 	}
 
 	private static void drawNearbyMesh(Entity viewer, Vec3 camera, PoseStack matrix, VertexConsumer buffer) {
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var mesher = NoCubesConfig.Server.mesher;
+		var faceColor = new Color(0F, 1F, 1F, 0.4F);
+		var normalColor = new Color(0F, 0F, 1F, 0.2F);
+		var averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
+		var normalDirectionColor = new Color(0F, 1F, 0F, 1F);
+		var textureColor = new Color(1F, 1F, 1F, 1F);
+		var lightColor = new Color(1F, 1F, 0F, 1F);
+
 		var meshSize = new BlockPos(16, 16, 16);
 		var meshStart = viewer.blockPosition().offset(-meshSize.getX() / 2, -meshSize.getY() / 2 + 2, -meshSize.getZ() / 2);
+
 		matrix.pushPose();
-		var world = viewer.level();
-		try (
-			var area = new Area(world, meshStart, meshSize, mesher);
-		) {
-			var objects = new MutableObjects();
+		try {
+			var world = viewer.level();
 			var mutable = new Vec();
-
-			var faceColor = new Color(0F, 1F, 1F, 0.4F);
-			var normalColor = new Color(0F, 0F, 1F, 0.2F);
-			var averageNormalColor = new Color(1F, 0F, 0F, 0.4F);
-			var normalDirectionColor = new Color(0F, 1F, 0F, 1F);
-			var textureColor = new Color(1F, 1F, 1F, 1F);
-			var lightColor = new Color(1F, 1F, 0F, 1F);
-
 			MeshRenderer.renderArea(
-				world, meshStart,
-				isSmoothable, mesher, area,
+				world, meshStart, meshSize,
+				NoCubes.smoothableHandler::isSmoothable,
 				new INoCubesAreaRenderer() {
 					@Override
-					public void quad(BlockState state, BlockPos pos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride) {
+					public void quad(BlockState state, BlockPos pos, FaceInfo faceInfo, boolean renderBothSides, io.github.cadiboo.nocubes.client.render.struct.Color colorOverride, LightCache lightCache, float shade) {
 						if (!NoCubesConfig.Client.debugOutlineNearbyMesh)
 							return;
 						var face = faceInfo.face;
@@ -291,9 +287,8 @@ public final class OverlayRenderers {
 						drawLinePosColorFromAdd(meshStart, face.v2, mutable.set(faceInfo.vertexNormals.v2).multiply(dirMul), normalColor, buffer, matrix, camera);
 						drawLinePosColorFromAdd(meshStart, face.v3, mutable.set(faceInfo.vertexNormals.v3).multiply(dirMul), normalColor, buffer, matrix, camera);
 
-						// Draw texture pos
+						// Draw texture pos (will have been set by caller)
 						mutable.set(0.5F, 0.5F, 0.5F);
-						RenderableState.findAt(objects, area, faceInfo.normal, faceInfo.centre, isSmoothable);
 						drawLinePosColorFromTo(meshStart, faceInfo.centre, pos, mutable, textureColor, buffer, matrix, camera);
 
 		//				// Draw light pos

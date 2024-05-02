@@ -1,18 +1,17 @@
 package io.github.cadiboo.nocubes.client.render;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.client.RollingProfiler;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.client.render.struct.FaceLight;
 import io.github.cadiboo.nocubes.client.render.struct.Texture;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.mesh.Mesher;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -25,11 +24,16 @@ import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
 
 public class MeshRenderer {
 
+	static boolean shouldSkipChunkMeshRendering() {
+		return NoCubesConfig.Client.debugSkipNoCubesRendering || !NoCubesConfig.Client.render;
+	}
+
 	public interface INoCubesAreaRenderer {
 		void quad(
 			BlockState state, BlockPos worldPos,
 			FaceInfo faceInfo, boolean renderBothSides,
-			Color colorOverride
+			Color colorOverride,
+			LightCache lightCache, float shade
 		);
 
 		void block(
@@ -42,38 +46,40 @@ public class MeshRenderer {
 		return state.isSolidRender(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) || state.getBlock() instanceof DirtPathBlock;
 	}
 
+	private static final RollingProfiler blockProfiler = new RollingProfiler(256, "Render single block mesh");
+	private static final RollingProfiler chunkProfiler = new RollingProfiler(256, "Render chunk mesh");
+
 	public static boolean renderSingleBlock(
-		BlockGetter world, BlockPos pos, BlockState state,
+		BlockAndTintGetter world, BlockPos pos, BlockState state,
 		INoCubesAreaRenderer renderer
 	) {
+		var start = System.nanoTime();
 		var smoothable = NoCubes.smoothableHandler.isSmoothable(state);
 		var plant = NoCubesConfig.Client.fixPlantHeight && ModUtil.isShortPlant(state);
 		if (!smoothable && !plant)
 			return false;
-		var mesher = NoCubesConfig.Server.mesher;
 		var stateSolidity = MeshRenderer.isSolidRender(state);
-		try (var area = new Area(world, pos, ModUtil.VEC_ONE, mesher)) {
-			Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-			MeshRenderer.renderArea(
-				world, pos,
-				s -> isSmoothable.test(s) && (plant || MeshRenderer.isSolidRender(s) == stateSolidity), mesher, area,
-				new INoCubesAreaRenderer() {
-					@Override
-					public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, Color colorOverride) {
-						if (ModUtil.isShortPlant(state) != plant)
-							return;
-						renderer.quad(state, worldPos, faceInfo, renderBothSides, colorOverride);
-					}
-
-					@Override
-					public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
-						if (ModUtil.isShortPlant(state) != plant)
-							return;
-						renderer.block(state, worldPos, relativeX, relativeY, relativeZ);
-					}
+		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
+		MeshRenderer.renderArea(
+			world, pos, ModUtil.VEC_ONE,
+			s -> isSmoothable.test(s) && (plant || MeshRenderer.isSolidRender(s) == stateSolidity),
+			new INoCubesAreaRenderer() {
+				@Override
+				public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, Color colorOverride, LightCache lightCache, float shade) {
+					if (ModUtil.isShortPlant(state) != plant)
+						return;
+					renderer.quad(state, worldPos, faceInfo, renderBothSides, colorOverride, lightCache, shade);
 				}
-			);
-		}
+
+				@Override
+				public void block(BlockState state, BlockPos worldPos, float relativeX, float relativeY, float relativeZ) {
+					if (ModUtil.isShortPlant(state) != plant)
+						return;
+					renderer.block(state, worldPos, relativeX, relativeY, relativeZ);
+				}
+			}
+		);
+		blockProfiler.recordAndLogElapsedNanosChunk(start);
 		return true;
 	}
 
@@ -81,23 +87,29 @@ public class MeshRenderer {
 		BlockAndTintGetter world, BlockPos chunkPos,
 		INoCubesAreaRenderer renderer
 	) {
-		Predicate<BlockState> isSmoothable = NoCubes.smoothableHandler::isSmoothable;
-		var mesher = NoCubesConfig.Server.mesher;
-		try (
-			var area = new Area(Minecraft.getInstance().level, chunkPos, ModUtil.CHUNK_SIZE, mesher);
-		) {
-			renderArea(world, chunkPos, isSmoothable, mesher, area, renderer);
-		}
+		var start = System.nanoTime();
+		renderArea(
+			world, chunkPos, ModUtil.CHUNK_SIZE,
+			NoCubes.smoothableHandler::isSmoothable,
+			renderer
+		);
+		chunkProfiler.recordAndLogElapsedNanosChunk(start);
 	}
+
 	public static void renderArea(
-		BlockGetter world, BlockPos renderStartPos,
-		Predicate<BlockState> isSmoothableIn, Mesher mesher, Area area,
+		BlockAndTintGetter world, BlockPos renderStartPos, BlockPos size,
+		Predicate<BlockState> isSmoothableIn,
 		INoCubesAreaRenderer renderer
 	) {
+		var mesher = NoCubesConfig.Server.mesher;
 		var faceInfo = FaceInfo.INSTANCE.get();
 		var objects = MutableObjects.INSTANCE.get();
-		runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> {
-			mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
+		var worldTemp = Minecraft.getInstance().level;
+		try (
+			var area = new Area(worldTemp, renderStartPos, size, mesher);
+			var lightCache = new LightCache(worldTemp, renderStartPos, size);
+		) {
+			runForSolidAndSeeThrough(isSmoothableIn, isSmoothable -> mesher.generateGeometry(area, isSmoothable, (ignored, face) -> {
 				faceInfo.setup(face);
 				RenderableState foundState;
 				if (mesher instanceof OldNoCubes) {
@@ -123,14 +135,24 @@ public class MeshRenderer {
 				renderer.quad(
 					state, worldPos,
 					faceInfo, renderBothSides,
-					null
+					null,
+					lightCache, getFaceShade(world, faceInfo)
 				);
 
 				// Draw grass tufts, plants etc.
-				renderExtras(renderer, objects, world, area, foundState, renderState, faceInfo);
+				renderExtras(
+					renderer, objects,
+					world, area, lightCache,
+					foundState, renderState,
+					faceInfo
+				);
 				return true;
-			});
-		});
+			}));
+		}
+	}
+
+	private static float getFaceShade(BlockAndTintGetter world, FaceInfo faceInfo) {
+		return world.getShade(faceInfo.approximateDirection, true);
 	}
 
 	private static void runForSolidAndSeeThrough(Predicate<BlockState> isSmoothable, Consumer<Predicate<BlockState>> action) {
@@ -140,9 +162,9 @@ public class MeshRenderer {
 
 	private static void renderExtras(
 		INoCubesAreaRenderer renderer, MutableObjects objects,
-		BlockGetter world,
-		Area area, RenderableState foundState,
-		RenderableState renderState,
+		BlockAndTintGetter world,
+		Area area, LightCache lightCache,
+		RenderableState foundState, RenderableState renderState,
 		FaceInfo faceInfo
 	) {
 		var renderPlantsOffset = NoCubesConfig.Client.fixPlantHeight;
@@ -178,28 +200,34 @@ public class MeshRenderer {
 			var face = faceInfo.face;
 			var grassTuft = objects.grassTuft;
 
-			setupGrassTuft(grassTuft.face, face.v2, face.v0, xOff, yExt, zOff);
+			setupGrassTuft(grassTuft, face.v2, face.v0, xOff, yExt, zOff);
 			renderer.quad(
 				grass, worldAbove,
 				grassTuft, renderBothSides,
-				colorOverride
+				colorOverride,
+				lightCache, getFaceShade(world, grassTuft)
 			);
 
-			setupGrassTuft(grassTuft.face, face.v3, face.v1, xOff, yExt, zOff);
+			setupGrassTuft(grassTuft, face.v3, face.v1, xOff, yExt, zOff);
 			renderer.quad(
 				grass, worldAbove,
 				grassTuft, renderBothSides,
-				colorOverride
+				colorOverride,
+				lightCache, getFaceShade(world, grassTuft)
 			);
 		}
 
 	}
 
-	private static void setupGrassTuft(Face face, Vec v0, Vec v1, float xOff, float yExt, float zOff) {
+	private static void setupGrassTuft(FaceInfo grassTuft, Vec v0, Vec v1, float xOff, float yExt, float zOff) {
+		var face = grassTuft.face;
 		face.set(v0, v0, v1, v1);
 		face.v1.y += yExt;
 		face.v2.y += yExt;
 		face.add(xOff, 0, zOff);
+		grassTuft.setup(face);
+		// Hack to make Texture.forQuadRearranged not apply any rearranging
+		grassTuft.approximateDirection = Direction.UP;
 	}
 
 
