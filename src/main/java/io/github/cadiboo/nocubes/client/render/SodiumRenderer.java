@@ -27,7 +27,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.ModelData;
@@ -58,16 +57,22 @@ public final class SodiumRenderer {
 		var context = (BlockRenderContext) contextIn;
 
 		var objects = MutableObjects.INSTANCE.get();
+		var world = cache.getWorldSlice();
+		var blockColors = Minecraft.getInstance().getBlockColors();
 		MeshRenderer.renderChunk(
-			cache.getWorldSlice(), chunkPos,
+			world, chunkPos,
 			new INoCubesAreaRenderer() {
 				@Override
 				public void quad(BlockState state, BlockPos worldPos, FaceInfo faceInfo, boolean renderBothSides, Color colorOverride, LightCache lightCache, float shade) {
 					var light = lightCache.get(chunkPos, faceInfo.face, faceInfo.normal, objects.light);
-					Helper.forEachQuad(
+					forEachQuadInEveryBlockLayer(
 						task, buffers, cache, modelOffset, context, random,
 						state, worldPos, faceInfo.approximateDirection,
-						(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : Helper.getColor(objects.color, quad, colorState, cache.getWorldSlice(), colorWorldPos, shade),
+						// TODO: Use Sodium's colorizer (ColorProvider) instead of vanilla's
+						(colorState, colorWorldPos, quad) -> colorOverride != null ? colorOverride : VanillaRenderer.applyColorTo(
+							world, blockColors,
+							objects.color, quad, colorState, colorWorldPos, shade
+						),
 						(layer, material, buffer, quad, color, emissive) -> {
 							var sprite = quad.getSprite();
 							if (sprite != null) {
@@ -84,17 +89,16 @@ public final class SodiumRenderer {
 						}
 					);
 				}
-
 				@Override
 				public void block(BlockState stateIn, BlockPos worldPosIn, float relativeX, float relativeY, float relativeZ) {
 					var oldX = context.origin().x();
 					var oldY = context.origin().y();
 					var oldZ = context.origin().z();
 					{
-						Helper.renderInBlockLayers(
+						renderInBlockLayers(
 							task, buffers, cache, modelOffset, context,
 							stateIn, worldPosIn,
-							(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
+							(state, worldPos, model, seed, modelData, layer, material, buffer) -> {
 								((Vector3f) context.origin()).set(
 									oldX + relativeX,
 									oldY + relativeY,
@@ -110,130 +114,113 @@ public final class SodiumRenderer {
 		);
 	}
 
-	public static class Helper {
-		public interface RenderInLayer {
-			void render(BlockState state, BlockPos worldPos, BakedModel model, long seed, ModelData modelData, RenderType layer, Material material, ChunkModelBuilder buffer, Object renderEnv);
+	interface RenderInLayer {
+		void render(BlockState state, BlockPos worldPos, BakedModel model, long seed, ModelData modelData, RenderType layer, Material material, ChunkModelBuilder buffer);
+	}
+
+	static void renderInBlockLayers(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+		BlockState state, BlockPos worldPos, RenderInLayer render
+	) {
+		var model = cache.getBlockModels().getBlockModel(state);
+		var seed = state.getSeed(worldPos);
+		var modelData = model.getModelData(context.localSlice(), worldPos, state, task.noCubes$getModelData(worldPos));
+		var layers = ItemBlockRenderTypes.getRenderLayers(state);
+		for (var layer : layers) {
+			context.update(worldPos, modelOffset, state, model, seed, modelData, layer);
+			var material = DefaultMaterials.forRenderLayer(layer);
+			var buffer = buffers.get(material);
+			render.render(state, worldPos, model, seed, modelData, layer, material, buffer);
 		}
+	}
 
-		public static void renderInBlockLayers(
-			INoCubesChunkSectionRenderBuilderSodium task,
-			ChunkBuildBuffers buffers,
-			BlockRenderCache cache,
-			BlockPos.MutableBlockPos modelOffset,
-			BlockRenderContext context,
-			BlockState state, BlockPos worldPos, RenderInLayer render
-		) {
-			var model = cache.getBlockModels().getBlockModel(state);
-			var seed = state.getSeed(worldPos);
-			var modelData = model.getModelData(context.localSlice(), worldPos, state, task.noCubes$getModelData(worldPos));
-			var layers = ItemBlockRenderTypes.getRenderLayers(state);
-			for (var layer : layers) {
-				context.update(worldPos, modelOffset, state, model, seed, modelData, layer);
-				var material = DefaultMaterials.forRenderLayer(layer);
-				var buffer = buffers.get(material);
-//				var buffer = getAndStartBuffer(layer);
-				var renderEnv = (Object) null;//optiFine.preRenderBlock(chunkRender, buffers, world, layer, buffer, state, worldPos);
-				render.render(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv);
+	interface QuadConsumer {
+		void accept(RenderType layer, Material material, ChunkModelBuilder buffer, BakedQuad quad, Color color, boolean emissive);
+	}
 
-//				optiFine.postRenderBlock(renderEnv, buffer, chunkRender, buffers, usedLayers);
-//				markLayerUsed(layer);
-			}
-		}
+	static void forEachQuadInEveryBlockLayer(
+		INoCubesChunkSectionRenderBuilderSodium task,
+		ChunkBuildBuffers buffers,
+		BlockRenderCache cache,
+		BlockPos.MutableBlockPos modelOffset,
+		BlockRenderContext context,
+		RandomSource random,
+		BlockState stateIn, BlockPos worldPosIn, Direction direction, VanillaRenderer.ColorSupplier colorSupplier, QuadConsumer action
+	) {
+		renderInBlockLayers(
+			task, buffers, cache, modelOffset, context,
+			stateIn, worldPosIn,
+			(state, worldPos, model, seed, modelData, layer, material, buffer) -> {
+				// TODO: Move logic to MeshRenderer and merge with SodiumRenderer
+				var nullQuads = getQuadsAndStoreOverlays(
+					random, state, seed, modelData,
+					layer, model, null
+				);
+				var anyQuadsFound = forEachQuad(
+					nullQuads, state, worldPos, colorSupplier,
+					layer, material, buffer, action
+				);
 
-		public static Color getColor(Color color, BakedQuad quad, BlockState state, BlockAndTintGetter world, BlockPos pos, float shade) {
-			if (!quad.isTinted()) {
-				color.red = shade;
-				color.green = shade;
-				color.blue = shade;
-//				color.alpha = 1.0F;
-				return color;
-			}
-			int packedColor = Minecraft.getInstance().getBlockColors().getColor(state, world, pos, quad.getTintIndex());
-			color.red = (float) (packedColor >> 16 & 255) / 255.0F * shade;
-			color.green = (float) (packedColor >> 8 & 255) / 255.0F * shade;
-			color.blue = (float) (packedColor & 255) / 255.0F * shade;
-//			color.alpha = 1.0F;
-			return color;
-		}
-
-		public interface ColorSupplier {
-			Color apply(BlockState state, BlockPos worldPos, BakedQuad quad);
-		}
-
-		public interface QuadConsumer {
-			void accept(RenderType layer, Material material, ChunkModelBuilder buffer, BakedQuad quad, Color color, boolean emissive);
-		}
-
-		public static void forEachQuad(
-			INoCubesChunkSectionRenderBuilderSodium task,
-			ChunkBuildBuffers buffers,
-			BlockRenderCache cache,
-			BlockPos.MutableBlockPos modelOffset,
-			BlockRenderContext context,
-			RandomSource random,
-			BlockState stateIn, BlockPos worldPosIn, Direction direction, ColorSupplier colorSupplier, QuadConsumer action
-		) {
-			renderInBlockLayers(
-				task, buffers, cache, modelOffset, context,
-				stateIn, worldPosIn,
-				(state, worldPos, model, seed, modelData, layer, material, buffer, renderEnv) -> {
-					var nullQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, null);
-					var anyQuadsFound = forEachQuad(nullQuads, state, worldPos, colorSupplier, layer, material, buffer, renderEnv, action);
-
-					List<BakedQuad> dirQuads;
-					if (!state.hasProperty(SNOWY))
-						dirQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, direction);
+				List<BakedQuad> dirQuads;
+				if (!state.hasProperty(SNOWY))
+					dirQuads = getQuadsAndStoreOverlays(
+						random, state, seed, modelData,
+						layer, model, direction
+					);
+				else {
+					// Make grass/snow/mycilium side faces be rendered with their top texture
+					// Equivalent to OptiFine's Better Grass feature
+					if (!state.getValue(SNOWY))
+						dirQuads = getQuadsAndStoreOverlays(
+							random, state, seed, modelData, layer,
+							model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction
+						);
 					else {
-						// Make grass/snow/mycilium side faces be rendered with their top texture
-						// Equivalent to OptiFine's Better Grass feature
-						if (!state.getValue(SNOWY))
-							dirQuads = getQuadsAndStoreOverlays(random, state, worldPos, seed, modelData, layer, renderEnv, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction);
-						else {
-							// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
-							var snow = Blocks.SNOW.defaultBlockState();
-							var snowModel = cache.getBlockModels().getBlockModel(snow);
-							dirQuads = getQuadsAndStoreOverlays(random, snow, worldPos, seed, modelData, layer, renderEnv, snowModel, null);
-						}
+						// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+						var snow = Blocks.SNOW.defaultBlockState();
+						var snowModel = cache.getBlockModels().getBlockModel(snow);
+						dirQuads = getQuadsAndStoreOverlays(
+							random, snow, seed, modelData,
+							layer, snowModel, null
+						);
 					}
-					anyQuadsFound |= forEachQuad(dirQuads, state, worldPos, colorSupplier, layer, material, buffer, renderEnv, action);
-
-//					int numOverlaysRendered = optiFine.forEachOverlayQuad(this, state, worldPos, colorSupplier, action, renderEnv);
-//					anyQuadsFound |= numOverlaysRendered > 0;
-
-					if (!anyQuadsFound)
-						forEachQuad(getMissingQuads(Minecraft.getInstance().getBlockRenderer(), random), state, worldPos, colorSupplier, layer, material, buffer, renderEnv, action);
 				}
-			);
-		}
+				anyQuadsFound |= forEachQuad(
+					dirQuads, state, worldPos, colorSupplier,
+					layer, material, buffer, action
+				);
 
-		private static List<BakedQuad> getQuadsAndStoreOverlays(RandomSource random, BlockState state, BlockPos worldPos, long seed, ModelData modelData, RenderType layer, Object renderEnv, BakedModel model, Direction direction) {
-			random.setSeed(seed);
-			var quads = model.getQuads(state, direction, random, modelData, layer);
-//			quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, seed, renderEnv);
-			return quads;
-		}
-
-		private static boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, RenderType layer, Material material, ChunkModelBuilder buffer, Object renderEnv, QuadConsumer action) {
-			int i = 0;
-			for (; i < quads.size(); i++) {
-				var quad = quads.get(i);
-				var color = colorSupplier.apply(state, worldPos, quad);
-//				var emissive = optiFine == null ? null : optiFine.getQuadEmissive(quad);
-//				if (emissive != null) {
-//					optiFine.preRenderQuad(renderEnv, emissive, state, worldPos);
-//					action.accept(layer, buffer, quad, color, true);
-//				}
-//				if (optiFine != null)
-//					optiFine.preRenderQuad(renderEnv, quad, state, worldPos);
-
-				action.accept(layer, material, buffer, quad, color, false);
+				if (!anyQuadsFound)
+					forEachQuad(
+						getMissingQuads(Minecraft.getInstance().getBlockRenderer(), random), state, worldPos, colorSupplier,
+						layer, material, buffer, action
+					);
 			}
-			return i > 0;
-		}
+		);
+	}
 
-		private static List<BakedQuad> getMissingQuads(BlockRenderDispatcher dispatcher, RandomSource random) {
-			return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
+	static List<BakedQuad> getQuadsAndStoreOverlays(RandomSource random, BlockState state, long seed, ModelData modelData, RenderType layer, BakedModel model, Direction direction) {
+		random.setSeed(seed);
+		return model.getQuads(state, direction, random, modelData, layer);
+	}
+
+	static boolean forEachQuad(List<BakedQuad> quads, BlockState state, BlockPos worldPos, VanillaRenderer.ColorSupplier colorSupplier, RenderType layer, Material material, ChunkModelBuilder buffer, QuadConsumer action) {
+		int i = 0;
+		for (; i < quads.size(); i++) {
+			var quad = quads.get(i);
+			var color = colorSupplier.apply(state, worldPos, quad);
+			// TODO: Emissive support
+			action.accept(layer, material, buffer, quad, color, false);
 		}
+		return i > 0;
+	}
+
+	static List<BakedQuad> getMissingQuads(BlockRenderDispatcher dispatcher, RandomSource random) {
+		return dispatcher.getBlockModelShaper().getModelManager().getMissingModel().getQuads(Blocks.AIR.defaultBlockState(), Direction.UP, random);
 	}
 
 	static void renderQuad(

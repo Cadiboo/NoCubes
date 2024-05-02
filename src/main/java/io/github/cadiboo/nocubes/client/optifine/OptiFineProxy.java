@@ -2,16 +2,17 @@ package io.github.cadiboo.nocubes.client.optifine;
 
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo;
-import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo.ColorSupplier;
-import io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo.QuadConsumer;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -49,5 +50,13 @@ public interface OptiFineProxy {
 
 	List<BakedQuad> getQuadsAndStoreOverlays(List<BakedQuad> quads, BlockAndTintGetter world, BlockState state, BlockPos worldPos, Direction direction, RenderType layer, long rand, Object renderEnv);
 
-	int forEachOverlayQuad(ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, ColorSupplier colorSupplier, QuadConsumer action, Object renderEnv);
+	int forEachOverlayQuad(
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
+		ChunkBufferBuilderPack buffers, BlockPos chunkPos,
+		BlockAndTintGetter world, PoseStack matrix,
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
+		BlockState state, BlockPos worldPos,
+		VanillaRenderer.ColorSupplier colorSupplier, VanillaRenderer.QuadConsumer action,
+		Object renderEnv
+	);
 }

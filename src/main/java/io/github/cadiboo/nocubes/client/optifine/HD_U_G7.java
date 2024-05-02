@@ -3,14 +3,18 @@ package io.github.cadiboo.nocubes.client.optifine;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
+import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -22,7 +26,6 @@ import java.util.Set;
 
 import static io.github.cadiboo.nocubes.client.optifine.HD_U_G7.Reflect.*;
 import static io.github.cadiboo.nocubes.client.optifine.Reflector.tryGetMethod;
-import static io.github.cadiboo.nocubes.client.render.VanillaRenderer.ChunkRenderInfo;
 
 class HD_U_G7 implements OptiFineProxy {
 
@@ -119,7 +122,15 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public int forEachOverlayQuad(ChunkRenderInfo renderer, BlockState state, BlockPos worldPos, ChunkRenderInfo.ColorSupplier colorSupplier, ChunkRenderInfo.QuadConsumer action, Object renderEnv) {
+	public int forEachOverlayQuad(
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
+		ChunkBufferBuilderPack buffers, BlockPos chunkPos,
+		BlockAndTintGetter world, PoseStack matrix,
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
+		BlockState state, BlockPos worldPos,
+		VanillaRenderer.ColorSupplier colorSupplier, VanillaRenderer.QuadConsumer action,
+		Object renderEnv
+	) {
 		var totalSize = 0;
 		for (int i = 0; i < OVERLAY_LAYERS.length; i++) {
 			var overlayLayer = OVERLAY_LAYERS[i];
@@ -128,15 +139,22 @@ class HD_U_G7 implements OptiFineProxy {
 			if (size <= 0)
 				continue;
 			totalSize += size;
-			var overlayBuffer = renderer.getAndStartBuffer(overlayLayer);
+			var overlayBuffer = VanillaRenderer.getAndStartBuffer(
+				chunkRender, buffers,
+				usedLayers, overlayLayer
+			);
 			for (var j = 0; j < size; ++j) {
 				var quads = ListQuadsOverlay_getListQuadsSingle(overlay, ListQuadsOverlay_getQuad(overlay, j));
 				var overlayState = ListQuadsOverlay_getBlockState(overlay, j);
-				renderer.forEachQuad(quads, overlayState, worldPos, colorSupplier, overlayLayer, overlayBuffer, renderEnv, action);
+				VanillaRenderer.forEachQuad(
+					overlayBuffer, quads, overlayState, worldPos,
+					colorSupplier, overlayLayer, this,
+					renderEnv, action
+				);
 				RenderEnv_reset(renderEnv, overlayState, worldPos);
 			}
 			ListQuadsOverlay_clear(overlay);
-			renderer.markLayerUsed(overlayLayer);
+			usedLayers.add(overlayLayer);
 		}
 		return totalSize;
 	}
