@@ -146,11 +146,13 @@ class HD_U_G7 implements OptiFineProxy {
 			for (var j = 0; j < size; ++j) {
 				var quads = ListQuadsOverlay_getListQuadsSingle(overlay, ListQuadsOverlay_getQuad(overlay, j));
 				var overlayState = ListQuadsOverlay_getBlockState(overlay, j);
-				VanillaRenderer.forEachQuad(
-					overlayBuffer, quads, overlayState, worldPos,
-					colorSupplier, overlayLayer, this,
-					renderEnv, action
-				);
+				for (int k = 0; k < quads.size(); k++) {
+					VanillaRenderer.applyActionToQuad(
+						overlayBuffer, quads.get(k), overlayState, worldPos,
+						colorSupplier, overlayLayer, this,
+						renderEnv, action
+					);
+				}
 				RenderEnv_reset(renderEnv, overlayState, worldPos);
 			}
 			ListQuadsOverlay_clear(overlay);

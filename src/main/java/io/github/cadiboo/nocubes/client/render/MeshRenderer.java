@@ -9,15 +9,20 @@ import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.mesh.OldNoCubes;
 import io.github.cadiboo.nocubes.util.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
+import org.apache.commons.lang3.function.TriFunction;
 
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.List;
+import java.util.function.*;
 
 import static io.github.cadiboo.nocubes.mesh.Mesher.getMeshOffset;
 import static net.minecraft.world.level.block.SnowyDirtBlock.SNOWY;
@@ -230,6 +235,46 @@ public class MeshRenderer {
 		grassTuft.approximateDirection = Direction.UP;
 	}
 
+	public static void forEveryQuadForState(
+		BlockState state, BakedModel model, Direction direction,
+		BlockModelShaper models, RandomSource random,
+		Function<BlockState, BakedModel> getModel,
+		TriFunction<BlockState, BakedModel, Direction, List<BakedQuad>> getQuads,
+		BiConsumer<BlockState, BakedQuad> renderQuad,
+		BiFunction<BlockState, BakedModel, Integer> renderOverlays
+	) {
+		var nQuads = forEachQuad(renderQuad, state, getQuads.apply(state, model, null));
+
+		if (!state.hasProperty(SNOWY)) {
+			nQuads += forEachQuad(renderQuad, state, getQuads.apply(state, model, direction));
+		} else {
+			// Make grass/snow/mycilium side faces be rendered with their top texture
+			// Equivalent to OptiFine's Better Grass feature
+			if (!state.getValue(SNOWY)) {
+				nQuads += forEachQuad(renderQuad, state, getQuads.apply(state, model, NoCubesConfig.Client.betterGrassSides ? Direction.UP : direction));
+			} else {
+				// The texture of grass underneath the snow (that normally never gets seen) is grey, we don't want that
+				state = Blocks.SNOW.defaultBlockState();
+				model = getModel.apply(state);
+				nQuads += forEachQuad(renderQuad, state, getQuads.apply(state, model, null));
+			}
+		}
+
+		nQuads += renderOverlays.apply(state, model);
+
+		if (nQuads == 0) {
+			var air = Blocks.AIR.defaultBlockState();
+			forEachQuad(renderQuad, air, models.getModelManager().getMissingModel().getQuads(air, Direction.UP, random));
+		}
+	}
+
+	static int forEachQuad(BiConsumer<BlockState, BakedQuad> action, BlockState state, List<BakedQuad> quads) {
+		var i = 0;
+		for (; i < quads.size(); i++) {
+			action.accept(state, quads.get(i));
+		}
+		return i;
+	}
 
 	@PerformanceCriticalAllocation
 	public static final /* inline record */ class FaceInfo {
