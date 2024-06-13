@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.platform;
 
-import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.util.IBlockStateSerializer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -38,8 +37,6 @@ public interface IPlatform {
 	default String getEnvironmentName() {
 		return isDevelopmentEnvironment() ? "development" : "production";
 	}
-
-	Color parseColor(String color);
 
 	IBlockStateSerializer blockStateSerializer();
 

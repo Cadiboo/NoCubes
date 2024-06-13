@@ -18,6 +18,12 @@ String execCmd(List<String> params, String fallback) {
 version = "${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
 group = mod_group
 
+ext {
+	// For the config color picker (we include it in our production jar with ShadowJar)
+	COLOR_FACTORY = 'org.beryx:awt-color-factory:1.0.2'
+	MIXIN_EXTRAS = 'io.github.llamalad7:mixinextras-common:0.3.5'
+}
+
 subprojects {
 	apply plugin: 'java'
 
@@ -27,6 +33,15 @@ subprojects {
 
 	version = rootProject.version
 	group = rootProject.group
+
+	dependencies {
+		// For @Nullable
+		compileOnly 'org.jetbrains:annotations:23.0.0'
+
+		// For unit tests
+		testImplementation 'org.mockito:mockito-core:4.5.1'
+		testImplementation 'junit:junit:4.13.2'
+	}
 
 	jar {
 		archiveClassifier.set('dev')

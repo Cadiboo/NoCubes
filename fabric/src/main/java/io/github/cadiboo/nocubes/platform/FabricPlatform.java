@@ -25,11 +25,6 @@ public class FabricPlatform implements IPlatform {
 	}
 
 	@Override
-	public Color parseColor(String color) {
-		return new Color(0, 0, 0, 0.6f);
-	}
-
-	@Override
 	public IBlockStateSerializer blockStateSerializer() {
 		return new IBlockStateSerializer() {
 			@Override

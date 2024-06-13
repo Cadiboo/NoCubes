@@ -6,7 +6,7 @@ import com.electronwill.nightconfig.core.io.ConfigParser;
 import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
-import io.github.cadiboo.nocubes.mesh.*;
+import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
 import io.github.cadiboo.nocubes.util.ModUtil;
@@ -146,9 +146,9 @@ public final class NoCubesConfigImpl {
 
 			NoCubesConfig.Client.infoMessage = INSTANCE.infoMessage.get();
 			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
-			NoCubesConfig.Client.render = Server.forceVisuals || INSTANCE.render.get();
+			NoCubesConfig.Client.render = NoCubesConfig.Server.forceVisuals || INSTANCE.render.get();
 			NoCubesConfig.Client.renderSelectionBox = INSTANCE.renderSelectionBox.get();
-			NoCubesConfig.Client.selectionBoxColor = NoCubes.platform.parseColor(INSTANCE.selectionBoxColor.get());
+			NoCubesConfig.Client.selectionBoxColor = ColorParser.parse(INSTANCE.selectionBoxColor.get()).toRenderableColor();
 			NoCubesConfig.Client.betterGrassSides = INSTANCE.betterGrassSides.get();
 			NoCubesConfig.Client.moreSnow = INSTANCE.moreSnow.get();
 			NoCubesConfig.Client.fixPlantHeight = INSTANCE.fixPlantHeight.get();
@@ -292,16 +292,6 @@ public final class NoCubesConfigImpl {
 
 		public static final Impl INSTANCE;
 		public static final ForgeConfigSpec SPEC;
-		public static Mesher mesher;
-		public static boolean collisionsEnabled;
-		public static boolean tempMobCollisionsDisabled;
-		public static int oldStyleCollisionsEnhancementLevel;
-		public static boolean onlyOldStyleCollisions;
-		public static boolean forceVisuals;
-		public static int extendFluidsRange;
-		public static boolean oldNoCubesSlopes;
-		public static boolean oldNoCubesInFluids;
-		public static float oldNoCubesRoughness;
 
 		static {
 			var specPair = new Builder().configure(Impl::new);
@@ -316,19 +306,19 @@ public final class NoCubesConfigImpl {
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
 			NoCubesConfig.Smoothables.recomputeInMemoryLookup(NoCubes.platform.blockStateSerializer(), ForgeRegistries.BLOCKS.getValues(), INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
-			mesher = INSTANCE.mesher.get().instance;
-			collisionsEnabled = INSTANCE.collisionsEnabled.get();
-			tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();
-			oldStyleCollisionsEnhancementLevel = INSTANCE.oldStyleCollisionsEnhancementLevel.get();
-			onlyOldStyleCollisions = INSTANCE.onlyOldStyleCollisions.get();
-			forceVisuals = INSTANCE.forceVisuals.get();
-			if (forceVisuals)
+			NoCubesConfig.Server.mesher = INSTANCE.mesher.get().instance;
+			NoCubesConfig.Server.collisionsEnabled = INSTANCE.collisionsEnabled.get();
+			NoCubesConfig.Server.tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();
+			NoCubesConfig.Server.oldStyleCollisionsEnhancementLevel = INSTANCE.oldStyleCollisionsEnhancementLevel.get();
+			NoCubesConfig.Server.onlyOldStyleCollisions = INSTANCE.onlyOldStyleCollisions.get();
+			NoCubesConfig.Server.forceVisuals = INSTANCE.forceVisuals.get();
+			if (NoCubesConfig.Server.forceVisuals)
 				// Directly setting the baked field - won't cause a NPE on the dedicated server
 				NoCubesConfig.Client.render = true;
-			extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
-			oldNoCubesSlopes = INSTANCE.oldNoCubesSlopes.get();
-			oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
-			oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
+			NoCubesConfig.Server.extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
+			NoCubesConfig.Server.oldNoCubesSlopes = INSTANCE.oldNoCubesSlopes.get();
+			NoCubesConfig.Server.oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
+			NoCubesConfig.Server.oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
 			if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
@@ -347,7 +337,7 @@ public final class NoCubesConfigImpl {
 				.flatMap(block -> ModUtil.getStates(block).stream())
 				.map(NoCubes.smoothableHandler::isSmoothable)
 				.toArray(Boolean[]::new);
-			return Objects.hash(mesher, forceVisuals, Arrays.hashCode(smoothables));
+			return Objects.hash(NoCubesConfig.Server.mesher, NoCubesConfig.Server.forceVisuals, Arrays.hashCode(smoothables));
 		}
 
 		public static void updateSmoothable(boolean newValue, BlockState... states) {
@@ -357,25 +347,6 @@ public final class NoCubesConfigImpl {
 
 		private static void saveAndLoad() {
 			Hacks.saveAndLoad(ModConfig.Type.SERVER);
-		}
-
-		public enum MesherType {
-			SurfaceNets(new SurfaceNets(false)),
-			OldNoCubes(new OldNoCubes()),
-			Debug_SurfaceNets2xSmoothness(new SurfaceNets(true)),
-			Debug_MarchingCubes(new MarchingCubes(false)),
-			Debug_MarchingCubes2xSmoothness(new MarchingCubes(true)),
-			Debug_CullingCubic(new CullingCubic()),
-			Debug_StupidCubic(new StupidCubic()),
-			Debug_CullingChamfer(new CullingChamfer()),
-			Debug_WulferisMesher(new WulferisMesher()),
-			;
-
-			public final Mesher instance;
-
-			MesherType(Mesher instance) {
-				this.instance = instance;
-			}
 		}
 
 		/**

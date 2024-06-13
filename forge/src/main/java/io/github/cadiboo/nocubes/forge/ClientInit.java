@@ -4,6 +4,7 @@ import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.KeyMappings;
 import io.github.cadiboo.nocubes.client.render.OverlayRenderers;
+import io.github.cadiboo.nocubes.config.NoCubesConfig;
 import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
 import net.minecraft.client.Minecraft;
@@ -65,7 +66,7 @@ public final class ClientInit {
 			ClientUtil.warnPlayerIfVisualsDisabled();
 			if (!NoCubesNetwork.currentServerHasNoCubes) {
 				// This lets players not phase through the ground on servers that don't have NoCubes installed
-				NoCubesConfigImpl.Server.collisionsEnabled = false;
+				NoCubesConfig.Server.collisionsEnabled = false;
 				ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.notInstalledOnServer", KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE_BLOCK_TYPE));
 			}
 		});

@@ -9,17 +9,13 @@ public final /* inline record */ class Color {
 	public /* final */ float red;
 	public /* final */ float green;
 	public /* final */ float blue;
-	public final float alpha = 1.0F;
-
-	public Color() {
-		this(0, 0, 0, 0);
-	}
+	public /* final */  float alpha;
 
 	public Color(float red, float green, float blue, float alpha) {
 		this.red = red;
 		this.green = green;
 		this.blue = blue;
-//		this.alpha = alpha;
+		this.alpha = alpha;
 	}
 
 	public Color multiplyUNSAFENEEDSVALHALLA(float shading) {

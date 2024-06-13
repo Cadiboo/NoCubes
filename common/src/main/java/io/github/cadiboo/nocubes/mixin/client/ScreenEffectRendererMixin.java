@@ -19,7 +19,10 @@ public class ScreenEffectRendererMixin {
 	 * Makes the suffocation overlay for smoothed blocks properly conform to their new shape.
 	 */
 	@Redirect(
-		method = "getViewBlockingState",
+		method = {
+			"getViewBlockingState", // Vanilla
+			"getOverlayBlock", // Forge (mappings conflict?)
+		},
 		at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/block/state/BlockState;isViewBlocking(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z"

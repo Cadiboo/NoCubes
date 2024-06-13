@@ -17,11 +17,11 @@ minecraft {
 dependencies {
 	compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
 	compileOnly group: 'org.ow2.asm', name: 'asm-tree', version: '9.7'
-	implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
 
 	annotationProcessor('org.spongepowered:mixin:0.8.5-SNAPSHOT:processor')
-	annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5')
-	compileOnly('io.github.llamalad7:mixinextras-common:0.3.5')
+
+	implementation("${rootProject.ext.COLOR_FACTORY}")
+	implementation(annotationProcessor("${rootProject.ext.MIXIN_EXTRAS}"))
 }
 
 publishing {

@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
-import io.github.cadiboo.nocubes.util.IBlockStateSerializer;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;

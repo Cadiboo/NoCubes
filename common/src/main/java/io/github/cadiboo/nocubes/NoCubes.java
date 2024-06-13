@@ -8,8 +8,6 @@ import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ServiceLoader;
-
 /**
  * @author Cadiboo
  */

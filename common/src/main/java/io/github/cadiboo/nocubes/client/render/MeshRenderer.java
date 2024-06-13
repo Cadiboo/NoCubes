@@ -326,7 +326,7 @@ public class MeshRenderer {
 		final Vec vec = new Vec();
 		final FaceInfo grassTuft = FaceInfo.withFace();
 		final BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-		final Color color = new Color();
+		final Color color = new Color(0, 0, 0, 1);
 		final Texture texture = new Texture();
 	}
 

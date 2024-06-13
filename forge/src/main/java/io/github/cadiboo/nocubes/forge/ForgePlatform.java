@@ -3,7 +3,6 @@ package io.github.cadiboo.nocubes.forge;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.github.cadiboo.nocubes.NoCubes;
-import io.github.cadiboo.nocubes.client.render.struct.Color;
 import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
 import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.network.NoCubesNetwork;
@@ -29,7 +28,6 @@ import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.beryx.awt.color.ColorFactory;
 
 import java.io.File;
 import java.util.stream.Collectors;
@@ -37,6 +35,7 @@ import java.util.stream.Collectors;
 public class ForgePlatform implements IPlatform {
 
 	private static final Logger LOG = LogManager.getLogger();
+	private static final BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.REGISTRY.allFlags()));
 
 	@Override
 	public String getPlatformName() {
@@ -54,19 +53,8 @@ public class ForgePlatform implements IPlatform {
 	}
 
 	@Override
-	public Color parseColor(String color) {
-		try {
-			final java.awt.Color parsed = ColorFactory.valueOf(color);
-			return new Color(parsed.getRed(), parsed.getGreen(), parsed.getBlue(), parsed.getAlpha());
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("Unable to parse color '" + color + "'", e);
-		}
-	}
-
-	@Override
 	public IBlockStateSerializer blockStateSerializer() {
-		var parser = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.REGISTRY.allFlags()));
-		;
+
 		return new IBlockStateSerializer() {
 			@Override
 			public BlockState fromId(int id) {
@@ -89,7 +77,7 @@ public class ForgePlatform implements IPlatform {
 			@Override
 			public BlockState fromStringOrNull(String string) {
 				try {
-					return parser.parse(new StringReader(string)).getState();
+					return PARSER.parse(new StringReader(string)).getState();
 				} catch (CommandSyntaxException e) {
 //					LOGGER.warn("Failed to parse blockstate \"{}\": {}", string, e.getMessage());
 					return null;
