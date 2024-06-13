@@ -1,86 +1,86 @@
 plugins {
-    id 'idea'
-    id 'maven-publish'
-    id 'net.minecraftforge.gradle'
-    id 'org.spongepowered.mixin'
-    // Shadow jar includes our libraries into our final jar
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+	id 'idea'
+	id 'maven-publish'
+	id 'net.minecraftforge.gradle'
+	id 'org.spongepowered.mixin'
+	// Shadow jar includes our libraries into our final jar
+	id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 base {
-    archivesName = "${mod_name}-forge-${minecraft_version}"
+	archivesName = "${mod_name}-forge-${minecraft_version}"
 }
 mixin {
-    add(sourceSets.main, "${mod_id}.refmap.json")
+	add(sourceSets.main, "${mod_id}.refmap.json")
 
-    config("${mod_id}.mixins.json")
-    config("${mod_id}.forge.mixins.json")
+	config("${mod_id}.mixins.json")
+	config("${mod_id}.forge.mixins.json")
 }
 
 minecraft {
-    mappings channel: 'official', version: minecraft_version
+	mappings channel: 'official', version: minecraft_version
 
-    copyIdeResources = true //Calls processResources when in dev
+	copyIdeResources = true //Calls processResources when in dev
 
-    // Automatically enable forge AccessTransformers if the file exists
-    // This location is hardcoded in Forge and can not be changed.
-    // https://github.com/MinecraftForge/MinecraftForge/blob/be1698bb1554f9c8fa2f58e32b9ab70bc4385e60/fmlloader/src/main/java/net/minecraftforge/fml/loading/moddiscovery/ModFile.java#L123
-    if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
-        accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-    }
+	// Automatically enable forge AccessTransformers if the file exists
+	// This location is hardcoded in Forge and can not be changed.
+	// https://github.com/MinecraftForge/MinecraftForge/blob/be1698bb1554f9c8fa2f58e32b9ab70bc4385e60/fmlloader/src/main/java/net/minecraftforge/fml/loading/moddiscovery/ModFile.java#L123
+	if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
+		accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+	}
 
-    runs {
-        client {
-        }
-        server {
-        }
-        // Runs all integration tests then quits, for use in CI
-        gameTestServer {
-        }
-        configureEach {
-            workingDirectory project.file('run/' + it.name) as File
-            // Use the 'test' module (and both source sets) because it contains our integration tests
-            ideaModule "${rootProject.name}.${project.name}.test"
+	runs {
+		client {
+		}
+		server {
+		}
+		// Runs all integration tests then quits, for use in CI
+		gameTestServer {
+		}
+		configureEach {
+			workingDirectory project.file('run/' + it.name) as File
+			// Use the 'test' module (and both source sets) because it contains our integration tests
+			ideaModule "${rootProject.name}.${project.name}.test"
 
-            // To debug Mixin/Asm issues
-            property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP'
-            property 'forge.logging.console.level', 'trace'
-            property 'mixin.debug.verbose', 'true'
-            property 'mixin.debug.export', 'true'
-            property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
-            jvmArg '-ea' // Enable assertions
+			// To debug Mixin/Asm issues
+			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP'
+			property 'forge.logging.console.level', 'trace'
+			property 'mixin.debug.verbose', 'true'
+			property 'mixin.debug.export', 'true'
+			property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
+			jvmArg '-ea' // Enable assertions
 
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            mods.register(mod_id as String) {
-                sources = [
-                    sourceSets.main as SourceSet, sourceSets.test as SourceSet,
-                    project(":common").sourceSets.main as SourceSet, project(":common").sourceSets.test as SourceSet,
-                ]
-            }
-        }
-    }
+			property 'mixin.env.remapRefMap', 'true'
+			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+			mods.register(mod_id as String) {
+				sources = [
+					sourceSets.main as SourceSet, sourceSets.test as SourceSet,
+					project(":common").sourceSets.main as SourceSet, project(":common").sourceSets.test as SourceSet,
+				]
+			}
+		}
+	}
 }
 
 configurations {
-    library
-    implementation.extendsFrom library
-    shadow.extendsFrom library
+	library
+	implementation.extendsFrom library
+	shadow.extendsFrom library
 }
 minecraft.runs.all {
-    lazyToken('minecraft_classpath') {
-        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-    }
+	lazyToken('minecraft_classpath') {
+		configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+	}
 }
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-    compileOnly project(":common")
-    annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+	compileOnly project(":common")
+	annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 
-    // For the config color picker (we include it in our production jar with ShadowJar)
-    library 'org.beryx:awt-color-factory:1.0.2'
+	// For the config color picker (we include it in our production jar with ShadowJar)
+	library 'org.beryx:awt-color-factory:1.0.2'
 
-    library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
+	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
 
 	// So we can compile our sodium compatibility code
 	// embeddium-0.3.14+mc1.20.1.jar
@@ -109,54 +109,54 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    source(project(":common").sourceSets.main.allSource)
+	source(project(":common").sourceSets.main.allSource)
 }
 tasks.withType(Javadoc).configureEach {
-    source(project(":common").sourceSets.main.allJava)
+	source(project(":common").sourceSets.main.allJava)
 }
 tasks.named("sourcesJar", Jar) {
-    from(project(":common").sourceSets.main.allSource)
+	from(project(":common").sourceSets.main.allSource)
 }
 
 processResources {
-    from project(":common").sourceSets.main.resources
+	from project(":common").sourceSets.main.resources
 }
 
 jar.finalizedBy('reobfJar')
 
 shadowJar {
-    archiveClassifier.set('')
+	archiveClassifier.set('')
 
-    configurations = [project.configurations.shadow]
-    [
-        'org.beryx',
-        'com.llamalad7.mixinextras',
-    ].each {
-        relocate(it, "${mod_group}.repackage.${it}")
-    }
-    mergeServiceFiles() // Very important for MixinExtras to work
-    manifest.attributes(jar.manifest.getAttributes())
-    from('LICENSE') {
-        rename { "${it}_${project.base.archivesName.get()}" }
-    }
+	configurations = [project.configurations.shadow]
+	[
+		'org.beryx',
+		'com.llamalad7.mixinextras',
+	].each {
+		relocate(it, "${mod_group}.repackage.${it}")
+	}
+	mergeServiceFiles() // Very important for MixinExtras to work
+	manifest.attributes(jar.manifest.getAttributes())
+	from('LICENSE') {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
 }
 reobf {
-    // We want the output of the following tasks to be reobfuscated
-    // More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-    shadowJar {}
+	// We want the output of the following tasks to be reobfuscated
+	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
+	shadowJar {}
 }
 
 publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifactId base.archivesName.get()
-            from components.java
-            fg.component(it)
-        }
-    }
-    repositories {
-        maven {
-            url "file://" + System.getenv("local_maven")
-        }
-    }
+	publications {
+		mavenJava(MavenPublication) {
+			artifactId base.archivesName.get()
+			from components.java
+			fg.component(it)
+		}
+	}
+	repositories {
+		maven {
+			url "file://" + System.getenv("local_maven")
+		}
+	}
 }
