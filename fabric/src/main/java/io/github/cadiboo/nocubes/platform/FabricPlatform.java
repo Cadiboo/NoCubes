@@ -1,6 +1,6 @@
-package com.example.examplemod.platform;
+package io.github.cadiboo.nocubes.platform;
 
-import com.example.examplemod.platform.services.IPlatform;
+import io.github.cadiboo.nocubes.platform.services.IPlatform;
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.awt.*;

@@ -1,4 +1,4 @@
-package com.example.examplemod.platform.services;
+package io.github.cadiboo.nocubes.platform.services;
 
 import java.awt.*;
 

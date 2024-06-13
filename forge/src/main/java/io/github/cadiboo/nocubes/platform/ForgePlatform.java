@@ -1,6 +1,6 @@
-package com.example.examplemod.platform;
+package io.github.cadiboo.nocubes.platform;
 
-import com.example.examplemod.platform.services.IPlatform;
+import io.github.cadiboo.nocubes.platform.services.IPlatform;
 import me.jellysquid.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;

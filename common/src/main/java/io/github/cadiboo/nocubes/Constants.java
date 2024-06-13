@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.github.cadiboo.nocubes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

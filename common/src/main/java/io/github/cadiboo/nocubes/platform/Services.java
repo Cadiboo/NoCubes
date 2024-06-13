@@ -1,7 +1,7 @@
-package com.example.examplemod.platform;
+package io.github.cadiboo.nocubes.platform;
 
-import com.example.examplemod.Constants;
-import com.example.examplemod.platform.services.IPlatform;
+import io.github.cadiboo.nocubes.Constants;
+import io.github.cadiboo.nocubes.platform.services.IPlatform;
 
 import java.util.ServiceLoader;
 

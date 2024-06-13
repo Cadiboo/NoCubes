@@ -1,6 +1,6 @@
-package com.example.examplemod;
+package io.github.cadiboo.nocubes;
 
-import com.example.examplemod.platform.Services;
+import io.github.cadiboo.nocubes.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Items;
 

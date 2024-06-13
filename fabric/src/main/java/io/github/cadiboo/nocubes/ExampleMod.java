@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package io.github.cadiboo.nocubes;
 
 import net.fabricmc.api.ModInitializer;
 

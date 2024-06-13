@@ -16,7 +16,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.examplemod.ExampleMod"
+			"io.github.cadiboo.nocubes.ExampleMod"
 		]
 	},
 	"mixins": [
