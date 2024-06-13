@@ -1,7 +1,27 @@
 pluginManagement {
-	repositories {
-		gradlePluginPortal()
-		maven { url = 'https://maven.minecraftforge.net/' }
-		maven { url = 'https://repo.spongepowered.org/maven' }
-	}
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'Sponge Snapshots'
+            url = 'https://repo.spongepowered.org/repository/maven-public/'
+        }
+    }
 }
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+
+// This should match the folder name of the project, or else IDEA may complain (see https://youtrack.jetbrains.com/issue/IDEA-317606)
+rootProject.name = 'MultiLoader-Template'
+include("common")
+include("fabric")
+include("forge")

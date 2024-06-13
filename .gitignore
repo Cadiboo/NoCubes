@@ -1,6 +1,5 @@
 # eclipse
 bin
-eclipse
 *.launch
 .settings
 .metadata
@@ -9,20 +8,16 @@ eclipse
 
 # idea
 out
-classes
 *.ipr
 *.iws
 *.iml
-.idea
+.idea/*
+!.idea/scopes
 
 # gradle
 build
 .gradle
 
 # other
-run/*
-!run/gameTestServer
-run/gameTestServer/*
-!run/gameTestServer/gameteststructures
-# Ignore mods being used for testing
-libs/*
+eclipse
+run
