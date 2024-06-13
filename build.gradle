@@ -19,11 +19,11 @@ subprojects {
 		manifest {
 			attributes([
 				'Specification-Title'     : mod_name,
-				'Specification-Vendor'    : mod_author,
+				'Specification-Vendor'    : mod_authors,
 				'Specification-Version'   : project.jar.archiveVersion,
 				'Implementation-Title'    : project.name,
 				'Implementation-Version'  : project.jar.archiveVersion,
-				'Implementation-Vendor'   : mod_author,
+				'Implementation-Vendor'   : mod_authors,
 				'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
 				'Timestamp'               : System.currentTimeMillis(),
 				'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
@@ -74,19 +74,23 @@ subprojects {
 	processResources {
 		def expandProps = [
 			"version"                   : version,
-			"group"                     : project.group, //Else we target the task's group.
+			"group"                     : project.group, // Else we target the task's group.
 			"minecraft_version"         : minecraft_version,
 			"forge_version"             : forge_version,
 			"forge_loader_version_range": forge_loader_version_range,
 			"forge_version_range"       : forge_version_range,
 			"minecraft_version_range"   : minecraft_version_range,
-//                "fabric_api_version": fabric_api_version,
+//			"fabric_api_version"        : fabric_api_version,
 			"fabric_loader_version"     : fabric_loader_version,
 			"mod_name"                  : mod_name,
-			"mod_author"                : mod_author,
+			"mod_authors"               : mod_authors,
 			"mod_id"                    : mod_id,
-			"license"                   : license,
-			"description"               : project.description
+			"mod_license"               : mod_license,
+			"mod_issue_tracker_url"     : mod_issue_tracker_url,
+			"mod_update_json_url"       : mod_update_json_url,
+			"mod_homepage_url"          : mod_homepage_url,
+			"mod_credits"               : mod_credits,
+			"mod_description"           : mod_description,
 		]
 
 		filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', '*.mixins.json']) {

@@ -7,7 +7,7 @@
 	"mixins": [
 	],
 	"client": [
-		"io.github.cadiboo.mixin.MixinTitleScreen"
+		"MixinTitleScreen"
 	],
 	"server": [
 	],

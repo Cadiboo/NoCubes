@@ -132,7 +132,7 @@ shadowJar {
 		'org.beryx',
 		'com.llamalad7.mixinextras',
 	].each {
-		relocate(it, "${mod_group}.repackage.${it}")
+		relocate(it, "${group}.repackage.${it}")
 	}
 	mergeServiceFiles() // Very important for MixinExtras to work
 	manifest.attributes(jar.manifest.getAttributes())

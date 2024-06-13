@@ -5,18 +5,18 @@
 	"name": "${mod_name}",
 	"description": "${description}",
 	"authors": [
-		"${mod_author}"
+		"${mod_authors}"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
-	"license": "${license}",
+	"license": "${mod_license}",
 	"icon": "assets/modid/${mod_id}.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"io.github.cadiboo.nocubes.ExampleMod"
+			"io.github.cadiboo.nocubes.init.FabricInit"
 		]
 	},
 	"mixins": [

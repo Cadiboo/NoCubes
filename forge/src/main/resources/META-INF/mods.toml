@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="${forge_loader_version_range}"
-license="${license}"
-issueTrackerURL="${issue_tracker_url}"
+license="${mod_license}"
+issueTrackerURL="${mod_issue_tracker_url}"
 [[mods]]
 modId="${mod_id}"
 version="${version}"
 displayName="${mod_name}"
-updateJSONURL="${update_json_url}"
-displayURL="${project_homepage_url}"
+updateJSONURL="${mod_update_json_url}"
+displayURL="${mod_homepage_url}"
 logoFile="${mod_id}.png"
 credits="${mod_credits}"
 authors="${mod_authors}"
@@ -16,16 +16,16 @@ description='''${mod_description}'''
 [mods."sodium:options"]
 "features.chunk_rendering"=false
 
-[[dependencies.${mod_id}]]
+[[dependencies.nocubes]]
 modId="forge"
 mandatory=true
-versionRange="${forge_version_range}"
+versionRange="[40,)"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.${mod_id}]]
+[[dependencies.nocubes]]
 modId="minecraft"
 mandatory=true
-versionRange="${minecraft_version_range}"
+versionRange="[1.20,)"
 ordering="NONE"
 side="BOTH"
