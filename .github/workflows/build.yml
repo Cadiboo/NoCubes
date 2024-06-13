@@ -22,28 +22,28 @@ jobs:
           echo "keyStoreKeyPass=${{ secrets.KEYSTORE_KEY_PASS }}" >> gradle.properties
           echo "signSHA1=${{ secrets.KEYSTORE_SIGN_SHA1 }}" >> gradle.properties
       - name: Build and check
-        run: ./gradlew build --stacktrace
-      - name: Archive development jars
+        run: ./gradlew forge:build --stacktrace
+      - name: Archive development jars (forge)
         uses: actions/upload-artifact@v4
         with:
-          name: Development jars inside
+          name: Development jars inside (forge)
           path: |
-            build/libs/*-dev.jar
-            build/libs/*-sources.jar
-            build/libs/*-javadoc.jar
+            forge/build/libs/*-dev.jar
+            forge/build/libs/*-sources.jar
+            forge/build/libs/*-javadoc.jar
           if-no-files-found: error
-      - name: Archive playable jar
+      - name: Archive playable jar (forge)
         uses: actions/upload-artifact@v4
         with:
-          name: Playable mod jar inside
+          name: Playable mod jar inside (forge)
           path: |
-            build/libs/*.jar
-            !build/libs/*-dev.jar
-            !build/libs/*-sources.jar
-            !build/libs/*-javadoc.jar
+            forge/build/libs/*.jar
+            !forge/build/libs/*-dev.jar
+            !forge/build/libs/*-sources.jar
+            !forge/build/libs/*-javadoc.jar
           if-no-files-found: error
-      - name: Integration tests
-        run: ./gradlew runGameTestServer --stacktrace
+      - name: Integration tests (forge)
+        run: ./gradlew forge:runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
         if: "contains(github.event.head_commit.message, '[ci publish]')"
