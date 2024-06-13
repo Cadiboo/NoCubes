@@ -1,0 +1,32 @@
+{
+	"nocubes.keycategory": "NoCubes",
+	"nocubes.key.toggleVisuals": "Toggle rendering",
+	"nocubes.key.toggleSmoothableBlockType": "Toggle block smoothness",
+	"nocubes.key.toggleSmoothableBlockState": "Toggle specific block state smoothness",
+
+	"nocubes.config.infoMessage": "NoCubes info message",
+	"nocubes.config.render": "NoCubes rendering",
+	"nocubes.config.selectionBoxColor": "Selection box color",
+	"nocubes.config.betterGrassSides": "Better grass sides",
+	"nocubes.config.moreSnow": "More snow",
+	"nocubes.config.fixPlantHeight": "Fix plant height",
+	"nocubes.config.grassTufts": "Grass tufts",
+	"nocubes.config.debugEnabled": "Debug mode",
+
+	"nocubes.config.smoothableWhitelist": "Whitelist of smoothable blocks",
+	"nocubes.config.smoothableBlacklist": "Blacklist of non-smoothable blocks",
+	"nocubes.config.meshGenerator": "Mesh generator",
+	"nocubes.config.collisionsEnabled": "Custom collisions",
+	"nocubes.config.forceVisuals": "Force custom rendering for players",
+	"nocubes.config.extendFluidsRange": "Extended fluids range",
+	"nocubes.config.oldNoCubesSlopes": "OldNoCubes slopes",
+	"nocubes.config.oldNoCubesInFluids": "OldNoCubes in fluids",
+	"nocubes.config.oldNoCubesRoughness": "OldNoCubes roughness",
+
+	"nocubes.command.changeSmoothableNoPermission": "Unable to change block smoothness; no permission",
+
+	"nocubes.notification.infoMessage": "NoCubes is installed, press %1$s while looking at a block to change if it is smooth\nYou can disable this message by changing '%2$s' to 'false' in your client config (%3$s)",
+	"nocubes.notification.notInstalledOnServer": "You have connected to a server that does not have NoCubes installed\nYou can still play but NoCubes' custom collisions cannot work properly and have been temporarily disabled\nAny changes to smooth blocks you make by pressing %1$s while looking at a block will not be saved",
+	"nocubes.notification.visualsForcedByServer": "This server forces NoCubes' visuals to be enabled at all times while playing to ensure a 'proper' player experience",
+	"nocubes.notification.visualsDisabled": "You have turned off NoCubes' visuals, press '%1$s' to turn them on again or set '%2$s' to 'true' in your client config (%3$s)"
+}
