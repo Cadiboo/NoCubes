@@ -27,6 +27,6 @@ public class PlayerMixin {
 	private boolean noCubes$freeAt$isSuffocating(BlockState state, BlockGetter level, BlockPos pos) {
 		if (!Hooks.collisionsEnabledFor(state))
 			return state.isSuffocating(level, pos); // Original behaviour
-		return !state.isSuffocating(level, pos) || !Hooks.collisionShapeOfSmoothBlockIntersectsEntityAABB((Entity) (Object) this, state, level, pos);
+		return !state.isSuffocating(level, pos) || !Hooks.shapeOfSmoothBlockIntersectsEntityAABB((Entity) (Object) this, state, level, pos);
 	}
 }

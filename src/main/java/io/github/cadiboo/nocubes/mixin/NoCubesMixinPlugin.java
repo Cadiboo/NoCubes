@@ -19,11 +19,13 @@ public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 
 	private final boolean sodiumInstalled;
 	private final boolean optiFineInstalled;
+	private final boolean apoliInstalled;
 
 	public NoCubesMixinPlugin() {
 		var loadedModIds = LoadingModList.get().getMods().stream().map(ModInfo::getModId).collect(Collectors.toSet());
 		sodiumInstalled = loadedModIds.contains("sodium") || loadedModIds.contains("rubidium") || loadedModIds.contains("embeddium");
 		optiFineInstalled = ClassInfo.forName("net.optifine.Config") != null;
+		apoliInstalled = loadedModIds.contains("apoli");
 	}
 
 	void onLoad() {
@@ -33,6 +35,8 @@ public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 	boolean shouldApply(String mixinClassName) {
 		if (mixinClassName.equals("io.github.cadiboo.nocubes.mixin.client.NonSodiumLevelRendererMixin"))
 			return !sodiumInstalled;
+		if (mixinClassName.equals("io.github.cadiboo.nocubes.mixin.EntityMixin"))
+			return !apoliInstalled;
 		if (mixinClassName.startsWith("io.github.cadiboo.nocubes.mixin.client.optifine"))
 			return optiFineInstalled;
 		if (mixinClassName.startsWith("io.github.cadiboo.nocubes.mixin.client.sodium"))

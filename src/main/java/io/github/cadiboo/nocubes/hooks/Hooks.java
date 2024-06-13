@@ -11,7 +11,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 import static net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 
@@ -41,18 +40,9 @@ public final class Hooks {
 	/**
 	 * Helper function for use by other hooks/mixins.
 	 */
-	public static VoxelShape getSmoothCollisionShapeFor(Entity entity, BlockState state, BlockGetter world, BlockPos pos) {
-		assert collisionsEnabledFor(state);
-		return CollisionHandler.getCollisionShape(state, world, pos, CollisionContext.of(entity));
-	}
-
-	/**
-	 * Helper function for use by other hooks/mixins.
-	 */
-	public static boolean collisionShapeOfSmoothBlockIntersectsEntityAABB(Entity entity, BlockState state, BlockGetter level, BlockPos pos) {
-		assert collisionsEnabledFor(state);
+	public static boolean shapeOfSmoothBlockIntersectsEntityAABB(Entity entity, BlockState state, BlockGetter level, BlockPos pos) {
 		return Shapes.joinIsNotEmpty(
-			getSmoothCollisionShapeFor(entity, state, level, pos).move(pos.getX(), pos.getY(), pos.getZ()),
+			CollisionHandler.getShapeOfSmoothBlock(state, level, pos, CollisionContext.of(entity)).move(pos.getX(), pos.getY(), pos.getZ()),
 			Shapes.create(entity.getBoundingBox()),
 			BooleanOp.AND
 		);

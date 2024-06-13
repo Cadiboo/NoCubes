@@ -29,7 +29,7 @@ public class ScreenEffectRendererMixin {
 		var blocking = state.isViewBlocking(level, pos);
 		if (blocking && Hooks.renderingEnabledFor(state)) {
 			var player = Objects.requireNonNull(Minecraft.getInstance().player, "Rendering overlay for a null player!?");
-			return Hooks.collisionShapeOfSmoothBlockIntersectsEntityAABB(player, state, level, pos);
+			return Hooks.shapeOfSmoothBlockIntersectsEntityAABB(player, state, level, pos);
 		}
 		return blocking;
 	}

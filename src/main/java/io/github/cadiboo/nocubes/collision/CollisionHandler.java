@@ -54,10 +54,10 @@ public final class CollisionHandler {
 	static final int OLD_COLLISIONS_CENTER_CORNER_INTERP = OLD_COLLISIONS_CORNER_EDGES_INTERP + 1;
 	public static final int OLD_COLLISIONS_ENHANCEMENT_LEVEL_MAX = OLD_COLLISIONS_CENTER_CORNER_INTERP;
 
-	public static VoxelShape getCollisionShape(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
+	public static VoxelShape getShapeOfSmoothBlock(BlockState state, BlockGetter reader, BlockPos blockPos, CollisionContext context) {
 		var canCollide = ((INoCubesBlockType) state.getBlock()).noCubes$hasCollision();
 		try {
-			return getCollisionShapeOrThrow(canCollide, state, reader, blockPos, (EntityCollisionContext) context);
+			return getShapeOfSmoothBlockOrThrow(canCollide, state, reader, blockPos, (EntityCollisionContext) context);
 		} catch (Throwable t) {
 			Util.pauseInIde(t);
 			throw t;
@@ -67,7 +67,7 @@ public final class CollisionHandler {
 	// TODO: Why is the 'cache' of every blockstate storing an empty VoxelShape... this is causing issues like
 	//  grass paths turning to dirt causing a crash because dirt's VoxelShape is empty
 	//  and not being able to place snow anywhere ('Block.doesSideFillSquare' is returning false for a flat area of stone)
-	public static VoxelShape getCollisionShapeOrThrow(boolean canCollide, BlockState state, BlockGetter reader, BlockPos blockPos, EntityCollisionContext context) {
+	public static VoxelShape getShapeOfSmoothBlockOrThrow(boolean canCollide, BlockState state, BlockGetter reader, BlockPos blockPos, EntityCollisionContext context) {
 		if (!canCollide)
 			return Shapes.empty();
 		// assert NoCubesConfig.Server.collisionsEnabled; // This is called from debug code & the ScreenEffectRenderer

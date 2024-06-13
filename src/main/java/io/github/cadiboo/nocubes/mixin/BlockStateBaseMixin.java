@@ -103,7 +103,7 @@ public abstract class BlockStateBaseMixin implements INoCubesBlockState {
 	@Unique
 	private static void noCubes$collisionShapeHelper(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context, CallbackInfoReturnable<VoxelShape> cir) {
 		if (Hooks.collisionsEnabledFor(state))
-			cir.setReturnValue(CollisionHandler.getCollisionShape(state, level, pos, context));
+			cir.setReturnValue(CollisionHandler.getShapeOfSmoothBlock(state, level, pos, context));
 	}
 
 	/**
