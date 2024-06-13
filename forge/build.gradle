@@ -11,7 +11,6 @@ base {
 }
 mixin {
 	add(sourceSets.main, "${mod_id}.refmap.json")
-
 	config("${mod_id}.mixins.json")
 	config("${mod_id}.forge.mixins.json")
 }
@@ -42,8 +41,6 @@ minecraft {
 			ideaModule "${rootProject.name}.${project.name}.test"
 
 			// To debug Mixin/Asm issues
-			property 'forge.logging.markers', 'XFORM,MODLAUNCHER,CLASSDUMP'
-			property 'forge.logging.console.level', 'trace'
 			property 'mixin.debug.verbose', 'true'
 			property 'mixin.debug.export', 'true'
 			property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
@@ -74,8 +71,11 @@ minecraft.runs.all {
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-	compileOnly project(":common")
-	annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
+	compileOnly project(':common')
+	annotationProcessor('org.spongepowered:mixin:0.8.5-SNAPSHOT:processor')
+
+	// For @Nullable
+	compileOnly 'org.jetbrains:annotations:23.0.0'
 
 	// For the config color picker (we include it in our production jar with ShadowJar)
 	library 'org.beryx:awt-color-factory:1.0.2'
@@ -132,12 +132,12 @@ shadowJar {
 		'org.beryx',
 		'com.llamalad7.mixinextras',
 	].each {
-		relocate(it, "${group}.repackage.${it}")
+		relocate(it, "${mod_group}.repackage.${it}")
 	}
 	mergeServiceFiles() // Very important for MixinExtras to work
 	manifest.attributes(jar.manifest.getAttributes())
-	from('LICENSE') {
-		rename { "${it}_${project.base.archivesName.get()}" }
+	from(rootProject.file('LICENSE')) {
+		rename { "${it}_${mod_name}" }
 	}
 }
 reobf {

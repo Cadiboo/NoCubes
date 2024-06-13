@@ -4,7 +4,7 @@ license="${mod_license}"
 issueTrackerURL="${mod_issue_tracker_url}"
 [[mods]]
 modId="${mod_id}"
-version="${version}"
+version="${mod_version}"
 displayName="${mod_name}"
 updateJSONURL="${mod_update_json_url}"
 displayURL="${mod_homepage_url}"

@@ -5,6 +5,19 @@ plugins {
 	id('org.spongepowered.mixin') version '0.7-SNAPSHOT' apply(false)
 }
 
+String execCmd(List<String> params, String fallback) {
+	def stdout = new ByteArrayOutputStream()
+	def result = exec {
+		commandLine params
+		standardOutput = stdout
+	}
+	return result.getExitValue() != 0 ? fallback : stdout.toString().trim()
+}
+
+// We use the version format MAJOR.MINOR.PATCH-COMMIT
+version = "${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
+group = mod_group
+
 subprojects {
 	apply plugin: 'java'
 
@@ -12,8 +25,12 @@ subprojects {
 	java.withSourcesJar()
 	java.withJavadocJar()
 
+	version = rootProject.version
+	group = rootProject.group
+
 	jar {
-		from(rootProject.file("LICENSE")) {
+		archiveClassifier.set('dev')
+		from(rootProject.file('LICENSE')) {
 			rename { "${it}_${mod_name}" }
 		}
 		manifest {
@@ -34,9 +51,14 @@ subprojects {
 	}
 
 	sourcesJar {
-		from(rootProject.file("LICENSE")) {
+		archiveClassifier.set('sources')
+		from(rootProject.file('LICENSE')) {
 			rename { "${it}_${mod_name}" }
 		}
+	}
+
+	javadocJar {
+		archiveClassifier.set('javadoc')
 	}
 
 	javadoc {
@@ -67,15 +89,12 @@ subprojects {
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-
 		it.options.encoding = 'UTF-8'
 		it.options.getRelease().set(17)
 	}
 
 	processResources {
 		def expandProps = [
-			"version"                   : version,
-			"group"                     : project.group, // Else we target the task's group.
 			"minecraft_version"         : minecraft_version,
 			"forge_version"             : forge_version,
 			"forge_loader_version_range": forge_loader_version_range,
@@ -84,8 +103,10 @@ subprojects {
 //			"fabric_api_version"        : fabric_api_version,
 			"fabric_loader_version"     : fabric_loader_version,
 			"mod_name"                  : mod_name,
-			"mod_authors"               : mod_authors,
 			"mod_id"                    : mod_id,
+			"mod_version"               : version,
+			"mod_group"                 : project.group, // Else we target the task's group.
+			"mod_authors"               : mod_authors,
 			"mod_license"               : mod_license,
 			"mod_issue_tracker_url"     : mod_issue_tracker_url,
 			"mod_update_json_url"       : mod_update_json_url,
