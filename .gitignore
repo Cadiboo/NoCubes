@@ -1,5 +1,6 @@
 # eclipse
 bin
+eclipse
 *.launch
 .settings
 .metadata
@@ -8,6 +9,7 @@ bin
 
 # idea
 out
+classes
 *.ipr
 *.iws
 *.iml
@@ -17,7 +19,3 @@ out
 # gradle
 build
 .gradle
-
-# other
-eclipse
-run
