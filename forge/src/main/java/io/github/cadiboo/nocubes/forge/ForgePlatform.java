@@ -21,10 +21,8 @@ import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.IPlantable;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,24 +31,8 @@ import java.io.File;
 import java.util.stream.Collectors;
 
 public class ForgePlatform implements IPlatform {
-
 	private static final Logger LOG = LogManager.getLogger();
 	private static final BlockStateArgument PARSER = new BlockStateArgument(CommandBuildContext.simple(VanillaRegistries.createLookup(), FeatureFlags.REGISTRY.allFlags()));
-
-	@Override
-	public String getPlatformName() {
-		return "Forge";
-	}
-
-	@Override
-	public boolean isModLoaded(String modId) {
-		return ModList.get().isLoaded(modId);
-	}
-
-	@Override
-	public boolean isDevelopmentEnvironment() {
-		return !FMLLoader.isProduction();
-	}
 
 	@Override
 	public IBlockStateSerializer blockStateSerializer() {
