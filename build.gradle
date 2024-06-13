@@ -115,7 +115,6 @@ subprojects {
 			"forge_loader_version_range": forge_loader_version_range,
 			"forge_version_range"       : forge_version_range,
 			"minecraft_version_range"   : minecraft_version_range,
-//			"fabric_api_version"        : fabric_api_version,
 			"fabric_loader_version"     : fabric_loader_version,
 			"mod_name"                  : mod_name,
 			"mod_id"                    : mod_id,
