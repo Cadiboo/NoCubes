@@ -161,7 +161,7 @@ public final class NoCubesConfig {
 			})));
 		}
 
-		static void updateUserDefinedSmoothableStringLists(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
+		public static void updateUserDefinedSmoothableStringLists(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
 			LOG.debug("Updating user-defined smoothable string lists");
 			var toAddTo = newValue ? whitelist : blacklist;
 			var toRemoveFrom = newValue ? blacklist : whitelist;

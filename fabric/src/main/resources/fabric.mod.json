@@ -20,6 +20,9 @@
 		],
 		"client": [
 			"io.github.cadiboo.nocubes.fabric.ClientInit"
+		],
+		"fabric-gametest": [
+			"io.github.cadiboo.nocubes.fabric.GameTests"
 		]
 	},
 	"mixins": [

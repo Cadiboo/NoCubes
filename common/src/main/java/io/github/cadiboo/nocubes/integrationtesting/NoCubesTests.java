@@ -2,18 +2,19 @@ package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
-import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
 import io.github.cadiboo.nocubes.util.Area;
 import io.github.cadiboo.nocubes.util.Face;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * Integration tests
@@ -24,7 +25,7 @@ final class NoCubesTests {
 
 	record Test(String name, Runnable action) {}
 
-	static Test[] createTests() {
+	static Test[] createTests(Supplier<Stream<Block>> getAllBlocks) {
 		return new Test[]{
 //			test("the version in mods.toml should have been replaced by gradle", () -> assertFalse(0 == ModList.get().getModFileById(NoCubes.MOD_ID).getMods().get(0).getVersion().getMajorVersion())),
 			test("stone should be smoothable", () -> assertTrue(NoCubes.smoothableHandler.isSmoothable(Blocks.STONE.defaultBlockState()))),
@@ -39,16 +40,16 @@ final class NoCubesTests {
 					NoCubes.smoothableHandler.setSmoothable(true, dirt);
 			}),
 			test("adding then removing lots of smoothables at once should work", () -> {
-				var states = ForgeRegistries.BLOCKS.getValues().stream()
+				var states = getAllBlocks.get()
 					.skip(20) // Skip air, stone, dirt etc. which we test above
 					.limit(1000)
 					.map(Block::defaultBlockState)
 					.toArray(BlockState[]::new);
 
-				NoCubesConfigImpl.Server.updateSmoothable(true, states);
+				ModUtil.platform.updateServerConfigSmoothable(true, states);
 				assertTrue(Arrays.stream(states).allMatch(NoCubes.smoothableHandler::isSmoothable));
 
-				NoCubesConfigImpl.Server.updateSmoothable(false, states);
+				ModUtil.platform.updateServerConfigSmoothable(false, states);
 				assertTrue(Arrays.stream(states).noneMatch(NoCubes.smoothableHandler::isSmoothable));
 			}),
 			test("area sanity check", NoCubesTests::areaSanityCheck),

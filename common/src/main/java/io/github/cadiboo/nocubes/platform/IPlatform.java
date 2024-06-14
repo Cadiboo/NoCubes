@@ -12,4 +12,5 @@ import net.minecraft.world.level.block.state.BlockState;
 public interface IPlatform {
 	ResourceLocation getRegistryName(Block block);
 	boolean isPlant(BlockState state);
+	void updateServerConfigSmoothable(boolean newValue, BlockState... states);
 }

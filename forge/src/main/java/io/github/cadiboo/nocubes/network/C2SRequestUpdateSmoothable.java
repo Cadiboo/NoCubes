@@ -51,7 +51,7 @@ public record C2SRequestUpdateSmoothable(
 				// Somehow the client is out of sync, just notify them
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.PLAYER.with(() -> sender), new S2CUpdateSmoothable(newValue, msg.states));
 			else {
-				ctx.enqueueWork(() -> NoCubesConfigImpl.Server.updateSmoothable(newValue, statesToUpdate));
+				ctx.enqueueWork(() -> ModUtil.platform.updateServerConfigSmoothable(newValue, statesToUpdate));
 				// Send back update to all clients
 				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), new S2CUpdateSmoothable(newValue, statesToUpdate));
 			}
