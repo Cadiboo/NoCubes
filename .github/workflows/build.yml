@@ -29,7 +29,7 @@ jobs:
           path: |
             fabric/build/libs/*.jar
           if-no-files-found: error
-      - name: Integration tests (forge)
+      - name: Integration tests (fabric)
         run: ./gradlew :fabric:runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
@@ -38,13 +38,10 @@ jobs:
           version-type: beta
           files: fabric/build/libs/*.jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-commitish: ${{ env.GITHUB_SHA }}
-          github-files-primary: fabric/build/libs/*.jar
-          github-files-secondary: fabric/build/devlibs/*.jar
-          curseforge-id: 309664
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          modrinth-id: w3bbwFYU
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+#          curseforge-id: 309664
+#          curseforge-token: "secrets.CURSEFORGE_TOKEN"
+#          modrinth-id: w3bbwFYU
+#          modrinth-token: "secrets.MODRINTH_TOKEN"
   build-forge:
     runs-on: ubuntu-latest
     steps:
@@ -85,12 +82,9 @@ jobs:
         if: "contains(github.event.head_commit.message, '[ci publish]')"
         with:
           version-type: beta
-          files: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
+          files: forge/build/libs/!(*-@(sources|dev|dev-shadow|javadoc).jar)
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-commitish: ${{ env.GITHUB_SHA }}
-          github-files-primary: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
-          github-files-secondary: forge/build/libs/*-@(dev|sources|javadoc).jar
-          curseforge-id: 309664
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          modrinth-id: w3bbwFYU
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+#          curseforge-id: 309664
+#          curseforge-token: "secrets.CURSEFORGE_TOKEN"
+#          modrinth-id: w3bbwFYU
+#          modrinth-token: "secrets.MODRINTH_TOKEN"
