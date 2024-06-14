@@ -58,6 +58,8 @@ minecraft {
 	}
 }
 
+// Required to make minecraft load 3rd party libraries (not mods)
+// See https://github.com/MinecraftForge/MinecraftForge/issues/8240#issuecomment-984621976
 configurations {
 	library
 	implementation.extendsFrom library
