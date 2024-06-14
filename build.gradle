@@ -110,17 +110,30 @@ dependencies {
 
 	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
 
-	// To compile our sodium compatibility
-	compileOnly fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
-	
-	// For debugging in dev mode
-//	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
-//	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
-//	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
+	// So we can compile our sodium compatibility code
+	// embeddium-0.3.14+mc1.20.1.jar
+	def embeddium = compileOnly(fg.deobf('curse.maven:Embeddium-908741:5265338'))
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'
 	testImplementation 'junit:junit:4.13.2'
+
+	// For debugging on my local machine
+	if (!System.getenv('CI')) {
+		[
+			embeddium,
+			// oculus-mc1.20.1-1.6.15a.jar
+			'curse.maven:Oculus-581495:5108615',
+			// DistantHorizons-2.0.1-a-1.20.1.jar
+			'curse.maven:DistantHorizons-508933:4924664',
+			// origins-forge-1.20.1-1.10.0.9-all.jar
+			'curse.maven:Origins-474438:5314209',
+			// caelus-forge-3.2.0+1.20.1.jar
+			'curse.maven:Caelus-308989:5281700',
+		].each {
+			implementation fg.deobf(it)
+		}
+	}
 }
 
 // region build
