@@ -16,10 +16,10 @@ minecraft {
 
 dependencies {
 	// Everything here should be compile only, since this common subproject is only ever compiled, never run
-	compileOnly group: 'org.spongepowered', name: 'mixin', version: '0.8.5'
-	compileOnly group: 'org.ow2.asm', name: 'asm-tree', version: '9.7'
-	compileOnly("${rootProject.ext.COLOR_FACTORY}")
-	compileOnly("${rootProject.ext.MIXIN_EXTRAS}")
+	compileOnly(group: 'org.spongepowered', name: 'mixin', version: '0.8.5')
+	compileOnly(group: 'org.ow2.asm', name: 'asm-tree', version: '9.7')
+	compileOnly(group: 'io.github.llamalad7', name: 'mixinextras-common', version: rootProject.ext.MIXIN_EXTRAS_VERSION)
+	compileOnly(group: 'org.beryx', name: 'awt-color-factory', version: rootProject.ext.COLOR_FACTORY_VERSION)
 	// Unit test dependencies are handled by the root project build.gradle
 }
 

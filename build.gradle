@@ -20,8 +20,8 @@ group = mod_group
 
 ext {
 	// For the config color picker (we include it in our production jar with ShadowJar)
-	COLOR_FACTORY = 'org.beryx:awt-color-factory:1.0.2'
-	MIXIN_EXTRAS = 'io.github.llamalad7:mixinextras-common:0.3.5'
+	COLOR_FACTORY_VERSION = '1.0.2'
+	MIXIN_EXTRAS_VERSION = '0.3.5'
 }
 
 subprojects {
@@ -41,7 +41,7 @@ subprojects {
 		// For unit tests
 		testImplementation 'org.mockito:mockito-core:4.5.1'
 		testImplementation 'junit:junit:4.13.2'
-		testImplementation("${rootProject.ext.COLOR_FACTORY}")
+		testImplementation group: 'org.beryx', name: 'awt-color-factory', version: rootProject.ext.COLOR_FACTORY_VERSION
 	}
 
 	jar {

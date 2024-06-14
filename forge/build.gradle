@@ -62,8 +62,6 @@ minecraft {
 // See https://github.com/MinecraftForge/MinecraftForge/issues/8240#issuecomment-984621976
 configurations {
 	library
-	implementation.extendsFrom library
-	shadow.extendsFrom library
 }
 minecraft.runs.all {
 	lazyToken('minecraft_classpath') {
@@ -76,13 +74,13 @@ dependencies {
 	testImplementation(compileOnly(project(':common')))
 	annotationProcessor('org.spongepowered:mixin:0.8.5-SNAPSHOT:processor')
 
-	library("${rootProject.ext.COLOR_FACTORY}")
-	library(annotationProcessor("${rootProject.ext.MIXIN_EXTRAS}"))
+	shadow(library(implementation(annotationProcessor(group: 'io.github.llamalad7', name: 'mixinextras-common', version: rootProject.ext.MIXIN_EXTRAS_VERSION))))
+	shadow(library(implementation(group: 'org.beryx', name: 'awt-color-factory', version: rootProject.ext.COLOR_FACTORY_VERSION)))
 
 	// embeddium-0.3.14+mc1.20.1.jar
 	def embeddium = 'curse.maven:Embeddium-908741:5265338'
 	// So we can compile our sodium compatibility code
-	compileOnly(fg.deobf('curse.maven:Embeddium-908741:5265338'))
+	compileOnly(fg.deobf(embeddium))
 
 	// For debugging on my local machine
 	if (!System.getenv('CI')) {

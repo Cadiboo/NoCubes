@@ -9,27 +9,19 @@ plugins {
 base {
 	archivesName = "${mod_name}-fabric-${minecraft_version}"
 }
-configurations {
-	library
-	implementation.extendsFrom library
-	shadow.extendsFrom library
-}
 dependencies {
 	minecraft "com.mojang:minecraft:${minecraft_version}"
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
 	testImplementation(compileOnly(project(':common')))
 
-	// For @Nullable
-	compileOnly 'org.jetbrains:annotations:23.0.0'
-
 //	// From https://github.com/MinecraftForge/MinecraftForge/blob/0579572148079a6bc483ff42404878962fc48702/build.gradle#L55
 //	def NIGHTCONFIG_VERSION = '3.6.0'
 //	// See https://github.com/MinecraftForge/MinecraftForge/blob/0579572148079a6bc483ff42404878962fc48702/build.gradle#L280-L281
-//	library "com.electronwill.night-config:core:${NIGHTCONFIG_VERSION}"
-//	library "com.electronwill.night-config:toml:${NIGHTCONFIG_VERSION}"
+//	shadow(implementation("com.electronwill.night-config:core:${NIGHTCONFIG_VERSION}"))
+//	shadow(implementation("com.electronwill.night-config:toml:${NIGHTCONFIG_VERSION}"))
 
-	library("${rootProject.ext.COLOR_FACTORY}")
+	shadow(implementation(group: 'org.beryx', name: 'awt-color-factory', version: rootProject.ext.COLOR_FACTORY_VERSION))
 
 	// CompileOnly so our Mixins can target Sodium's classes
 	def sodium = modCompileOnly 'maven.modrinth:sodium:mc1.20.1-0.5.7'
