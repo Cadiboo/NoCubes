@@ -110,9 +110,13 @@ dependencies {
 
 	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
 
-	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
-	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
-	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
+	// To compile our sodium compatibility
+	compileOnly fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
+	
+	// For debugging in dev mode
+//	implementation fg.deobf('curse.maven:Embeddium-908741:5265338') // embeddium-0.3.14+mc1.20.1.jar
+//	implementation fg.deobf('curse.maven:Oculus-581495:5108615') // oculus-mc1.20.1-1.6.15a.jar
+//	implementation fg.deobf('curse.maven:DistantHorizons-508933:4924664') // DistantHorizons-2.0.1-a-1.20.1.jar
 
 	// For unit tests
 	testImplementation 'org.mockito:mockito-core:4.5.1'
