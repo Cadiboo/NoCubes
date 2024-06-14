@@ -8,4 +8,5 @@ import java.util.Set;
  */
 public interface IMixinPlatform {
 	Set<String> getLoadedModIds();
+	void onLoad();
 }

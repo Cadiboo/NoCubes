@@ -1,15 +1,15 @@
 {
 	"schemaVersion": 1,
-	"id": "mod_id",
+	"id": "${mod_id}",
 	"version": "${mod_version}",
 	"name": "${mod_name}",
-	"description": "${description}",
+	"description": "${mod_description}",
 	"authors": [
 		"${mod_authors}"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "${mod_homepage_url}",
+		"issues": "${mod_issue_tracker_url}"
 	},
 	"license": "${mod_license}",
 	"icon": "${mod_id}.png",
@@ -17,6 +17,9 @@
 	"entrypoints": {
 		"main": [
 			"io.github.cadiboo.nocubes.fabric.Init"
+		],
+		"client": [
+			"io.github.cadiboo.nocubes.fabric.ClientInit"
 		]
 	},
 	"mixins": [
@@ -24,12 +27,7 @@
 		"${mod_id}.fabric.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.14",
-		"fabric": "*",
-		"minecraft": "${minecraft_version}",
-		"java": ">=17"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"fabricloader": ">=0.7.4",
+		"minecraft": "${minecraft_version}"
 	}
 }

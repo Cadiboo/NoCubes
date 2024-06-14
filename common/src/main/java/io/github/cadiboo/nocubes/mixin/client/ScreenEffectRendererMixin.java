@@ -20,7 +20,7 @@ public class ScreenEffectRendererMixin {
 	 */
 	@Redirect(
 		method = {
-			"getViewBlockingState", // Vanilla
+			"getViewBlockingState", // Vanilla/Fabric
 			"getOverlayBlock", // Forge (mappings conflict?)
 		},
 		at = @At(

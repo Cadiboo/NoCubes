@@ -1,6 +1,5 @@
 package io.github.cadiboo.nocubes.mixin;
 
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import io.github.cadiboo.nocubes.platform.IMixinPlatform;
 import io.github.cadiboo.nocubes.platform.PlatformLoader;
 import org.objectweb.asm.tree.ClassNode;
@@ -16,19 +15,21 @@ import java.util.Set;
  */
 public final class NoCubesMixinPlugin implements IMixinConfigPlugin {
 
+	private final IMixinPlatform platform;
 	private final boolean sodiumInstalled;
 	private final boolean optiFineInstalled;
 	private final boolean apoliInstalled;
 
 	public NoCubesMixinPlugin() {
-		var loadedModIds = PlatformLoader.load(IMixinPlatform.class).getLoadedModIds();
+		platform = PlatformLoader.load(IMixinPlatform.class);
+		var loadedModIds = platform.getLoadedModIds();
 		sodiumInstalled = loadedModIds.contains("sodium") || loadedModIds.contains("rubidium") || loadedModIds.contains("embeddium");
 		optiFineInstalled = ClassInfo.forName("net.optifine.Config") != null;
 		apoliInstalled = loadedModIds.contains("apoli");
 	}
 
 	void onLoad() {
-		MixinExtrasBootstrap.init();
+		platform.onLoad();
 	}
 
 	boolean shouldApply(String mixinClassName) {

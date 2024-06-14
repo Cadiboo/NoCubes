@@ -8,14 +8,11 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
 
 
 /**
  * Client-only version of {@link Hooks} that contains references to classes that only exist on the minecraft client.
  */
-@OnlyIn(Dist.CLIENT)
 @SuppressWarnings("unused") // Called via ASM
 public final class ClientHooks {
 

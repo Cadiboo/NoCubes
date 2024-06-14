@@ -3,6 +3,7 @@ package io.github.cadiboo.nocubes.client.render;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import io.github.cadiboo.nocubes.client.ClientUtil;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineCompatibility;
 import io.github.cadiboo.nocubes.client.optifine.OptiFineProxy;
 import io.github.cadiboo.nocubes.client.render.struct.Color;
@@ -15,7 +16,6 @@ import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.ChunkBufferBuilderPack;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -26,7 +26,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
 
 import java.util.List;
 import java.util.Set;
@@ -38,7 +37,8 @@ public final class VanillaRenderer {
 	public static void renderChunk(
 		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
-		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher
+		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
+		RenderInLayer renderBlock
 	) {
 		if (MeshRenderer.shouldSkipChunkMeshRendering())
 			return;
@@ -78,12 +78,11 @@ public final class VanillaRenderer {
 						matrix.pushPose();
 						try {
 							matrix.translate(relativeX, relativeY, relativeZ);
-							renderBlock(
+							renderInBlockLayers(
 								rebuildTask, chunkRender, buffers,
-								world, matrix,
-								usedLayers, random, dispatcher,
-								optiFine,
-								state, worldPos
+								world, usedLayers, optiFine,
+								state, worldPos,
+								renderBlock
 							);
 						} finally {
 							matrix.popPose();
@@ -97,7 +96,7 @@ public final class VanillaRenderer {
 	}
 
 	public interface RenderInLayer {
-		void render(BlockState state, BlockPos worldPos, ModelData modelData, RenderType layer, BufferBuilder buffer, Object optiFineRenderEnv);
+		void render(BlockState state, BlockPos worldPos, Object modelData, RenderType layer, BufferBuilder buffer, Object optiFineRenderEnv);
 	}
 
 	static void renderInBlockLayers(
@@ -106,8 +105,7 @@ public final class VanillaRenderer {
 		BlockState state, BlockPos worldPos, RenderInLayer render
 	) {
 		var modelData = rebuildTask.noCubes$getModelData(worldPos);
-		var layers = ItemBlockRenderTypes.getRenderLayers(state);
-		for (var layer : layers) {
+		ClientUtil.platform.forEachRenderLayer(state, layer -> {
 			var buffer = getAndStartBuffer(
 				chunkRender, buffers,
 				usedLayers, layer
@@ -117,7 +115,7 @@ public final class VanillaRenderer {
 
 			optiFine.postRenderBlock(optiFineRenderEnv, buffer, chunkRender, buffers, usedLayers);
 			usedLayers.add(layer);
-		}
+		});
 	}
 
 	static Color applyColorTo(
@@ -139,24 +137,6 @@ public final class VanillaRenderer {
 		color.blue = (float) (packedColor & 255) / 255.0F * shade;
 //		color.alpha = 1.0F;
 		return color;
-	}
-
-	static void renderBlock(
-		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
-		BlockAndTintGetter world, PoseStack matrix,
-		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
-		OptiFineProxy optiFine,
-		BlockState stateIn, BlockPos worldPosIn
-	) {
-		renderInBlockLayers(
-			rebuildTask, chunkRender, buffers,
-			world, usedLayers, optiFine,
-			stateIn, worldPosIn,
-			(state, worldPos, modelData, layer, buffer, optiFineRenderEnv) -> dispatcher.renderBatched(
-				state, worldPos, world, matrix, buffer,
-				false, random, modelData, layer
-			)
-		);
 	}
 
 	public interface ColorSupplier {
@@ -241,11 +221,11 @@ public final class VanillaRenderer {
 	static List<BakedQuad> getQuadsAndStoreOverlays(
 		BlockAndTintGetter world,
 		BlockPos worldPos, BlockState state, RenderType layer, long seed, RandomSource random,
-		BakedModel model, Direction direction, ModelData modelData, OptiFineProxy optiFine,
+		BakedModel model, Direction direction, Object modelData, OptiFineProxy optiFine,
 		Object optiFineRenderEnv
 	) {
 		random.setSeed(seed);
-		var quads = model.getQuads(state, direction, random, modelData, layer);
+		var quads = ClientUtil.platform.getQuads(model, state, direction, random, modelData, layer);
 		quads = optiFine.getQuadsAndStoreOverlays(quads, world, state, worldPos, direction, layer, seed, optiFineRenderEnv);
 		return quads;
 	}

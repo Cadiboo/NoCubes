@@ -3,37 +3,68 @@ plugins {
 	id 'idea'
 	id 'maven-publish'
 	id 'fabric-loom'
+	// Shadow jar includes our libraries into our final jar
+	id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 base {
 	archivesName = "${mod_name}-fabric-${minecraft_version}"
+}
+configurations {
+	library
+	implementation.extendsFrom library
+	shadow.extendsFrom library
 }
 dependencies {
 	minecraft "com.mojang:minecraft:${minecraft_version}"
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-	implementation group: 'com.google.code.findbugs', name: 'jsr305', version: '3.0.1'
-	compileOnly project(":common")
+	compileOnly project(':common')
+
+	// For @Nullable
+	compileOnly 'org.jetbrains:annotations:23.0.0'
+
+//	// From https://github.com/MinecraftForge/MinecraftForge/blob/0579572148079a6bc483ff42404878962fc48702/build.gradle#L55
+//	def NIGHTCONFIG_VERSION = '3.6.0'
+//	// See https://github.com/MinecraftForge/MinecraftForge/blob/0579572148079a6bc483ff42404878962fc48702/build.gradle#L280-L281
+//	library "com.electronwill.night-config:core:${NIGHTCONFIG_VERSION}"
+//	library "com.electronwill.night-config:toml:${NIGHTCONFIG_VERSION}"
+
+	library("${rootProject.ext.COLOR_FACTORY}")
+
+	// CompileOnly so our Mixins can target Sodium's classes
+	def sodium = modCompileOnly 'maven.modrinth:sodium:mc1.20.1-0.5.7'
+	modImplementation sodium
+	modImplementation 'maven.modrinth:iris:1.6.17+1.20.1'
+	// Fabric API appears to be required by Sodium
+	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.0+1.20.1'
 }
 
 loom {
-	if (project(":common").file("src/main/resources/${mod_id}.accesswidener").exists()) {
-		accessWidenerPath.set(project(":common").file("src/main/resources/${mod_id}.accesswidener"))
-	}
+//	splitEnvironmentSourceSets()
 	mixin {
 		defaultRefmapName.set("${mod_id}.refmap.json")
 	}
 	runs {
 		client {
 			client()
-			setConfigName("Fabric Client")
-			ideConfigGenerated(true)
-			runDir("run")
 		}
 		server {
 			server()
-			setConfigName("Fabric Server")
+		}
+		gameTestServer {
+			inherit server
+			vmArg "-Dfabric-api.gametest"
+			vmArg "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml"
+		}
+		configureEach {
+			// Use the 'test' source set because it contains our integration tests
+			source sourceSets.test
+			runDir = 'run/' + it.name
+			name 'Fabric ' + it.name
+			vmArg '-Dmixin.debug.export=true'
+			vmArg '-Dmixin.debug.verify=true'
+			vmArg '-Dmixin.dumpTargetOnFailure=true'
 			ideConfigGenerated(true)
-			runDir("run")
 		}
 	}
 }
@@ -44,9 +75,48 @@ tasks.withType(JavaCompile).configureEach {
 tasks.withType(Javadoc).configureEach {
 	source(project(":common").sourceSets.main.allJava)
 }
-tasks.named("sourcesJar", Jar) {
-	from(project(":common").sourceSets.main.allSource)
+javadocJar {
+	setArchiveClassifier("${getArchiveClassifier().get()}-deobf-unsigned")
+	destinationDirectory = file('build/devlibs')
 }
+tasks.named("sourcesJar", Jar) {
+	setArchiveClassifier("${getArchiveClassifier().get()}-deobf-unsigned")
+	from(project(":common").sourceSets.main.allSource)
+	destinationDirectory = file('build/devlibs')
+}
+remapSourcesJar {
+	destinationDirectory = file('build/devlibs')
+	dependsOn(sourcesJar)
+	mustRunAfter(sourcesJar)
+	inputFile = file(sourcesJar.archiveFile)
+}
+
+jar {
+	setArchiveClassifier('deobf-slim-unsigned')
+}
+// region Dependency bundling
+shadowJar {
+	setArchiveClassifier("${getArchiveClassifier().get()}-deobf-unsigned")
+	destinationDirectory = file('build/devlibs')
+
+	configurations = [project.configurations.shadow]
+	[
+		'org.beryx',
+	].each {
+		relocate(it, "${mod_group}.repackage.${it}")
+	}
+	manifest.attributes(jar.manifest.getAttributes())
+	from('LICENSE') {
+		rename { "${it}_${mod_group}" }
+	}
+}
+remapJar {
+	dependsOn(shadowJar)
+	mustRunAfter(shadowJar)
+	inputFile = file(shadowJar.archiveFile)
+}
+// endregion
+
 
 processResources {
 	from project(":common").sourceSets.main.resources

@@ -23,6 +23,7 @@ public class EntityMixin {
 		method = {
 			"lambda$isInWall$8",  // Forge < 47.2
 			"lambda$isInWall$11", // Forge > 47.2
+			"method_30022", // Fabric
 		},
 		at = @At(
 			value = "INVOKE",

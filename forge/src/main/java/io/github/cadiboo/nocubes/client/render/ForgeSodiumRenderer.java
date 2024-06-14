@@ -31,7 +31,7 @@ import org.joml.Vector3f;
 
 import static io.github.cadiboo.nocubes.client.render.MeshRenderer.*;
 
-public final class SodiumRenderer {
+public final class ForgeSodiumRenderer {
 
 	public static void renderChunk(
 		INoCubesChunkSectionRenderBuilderSodium task,
@@ -122,7 +122,7 @@ public final class SodiumRenderer {
 	) {
 		var model = cache.getBlockModels().getBlockModel(state);
 		var seed = state.getSeed(worldPos);
-		var modelData = model.getModelData(context.localSlice(), worldPos, state, task.noCubes$getModelData(worldPos));
+		var modelData = model.getModelData(context.localSlice(), worldPos, state, (ModelData) task.noCubes$getModelData(worldPos));
 		var layers = ItemBlockRenderTypes.getRenderLayers(state);
 		for (var layer : layers) {
 			context.update(worldPos, modelOffset, state, model, seed, modelData, layer);

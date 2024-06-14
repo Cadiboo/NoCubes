@@ -13,7 +13,7 @@
 	"client": [
 		"client.BlockRenderDispatcherMixin",
 		"client.RenderChunkCompileTaskMixin",
-		"client.RenderChunkRebuildTaskMixin",
+		"client.PlatformSpecificRenderChunkRebuildTaskMixin",
 		"client.sodium.ChunkBuilderMeshingTaskMixin"
 	],
 	"server": [

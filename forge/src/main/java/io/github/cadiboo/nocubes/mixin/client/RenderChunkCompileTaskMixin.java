@@ -1,5 +1,7 @@
 package io.github.cadiboo.nocubes.mixin.client;
 
+import net.minecraft.core.BlockPos;
+import net.minecraftforge.client.model.data.ModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -7,6 +9,6 @@ import org.spongepowered.asm.mixin.Shadow;
 public abstract class RenderChunkCompileTaskMixin {
 
 	@Shadow
-	public abstract net.minecraftforge.client.model.data.ModelData shadow$getModelData(net.minecraft.core.BlockPos pos);
+	public abstract ModelData shadow$getModelData(BlockPos pos);
 
 }

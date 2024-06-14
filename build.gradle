@@ -98,9 +98,12 @@ subprojects {
 				includeGroup "curse.maven"
 			}
 		}
-		// Mod jar dependencies in ./libs
-		flatDir {
-			dir 'libs'
+		maven {
+			name = 'Modrinth'
+			url = 'https://api.modrinth.com/maven'
+			content {
+				includeGroup 'maven.modrinth'
+			}
 		}
 	}
 

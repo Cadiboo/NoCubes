@@ -21,6 +21,7 @@
 		"client.LiquidBlockRendererMixin",
 		"client.NonSodiumLevelRendererMixin",
 		"client.RenderChunkMixin",
+		"client.RenderChunkRebuildTaskMixin",
 		"client.RenderChunkRegionMixin",
 		"client.ScreenEffectRendererMixin",
 		"client.optifine.BlockStateMixin",
