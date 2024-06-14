@@ -11,7 +11,7 @@ displayURL="${mod_homepage_url}"
 logoFile="${mod_id}.png"
 credits="${mod_credits}"
 authors="${mod_authors}"
-description='''${mod_description}'''
+description="${mod_description}"
 # Disable Sodium/Rubidium's chunk rendering optimisations because they break our chunk rendering
 [mods."sodium:options"]
 "features.chunk_rendering"=false
