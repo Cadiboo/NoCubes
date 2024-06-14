@@ -27,13 +27,13 @@ public record C2SRequestUpdateSmoothable(
 
 	public static void encode(C2SRequestUpdateSmoothable msg, FriendlyByteBuf buffer) {
 		buffer.writeBoolean(msg.newValue);
-		NoCubes.platform.blockStateSerializer().writeBlockStatesTo(buffer, msg.states);
+		ModUtil.platform.blockStateSerializer().writeBlockStatesTo(buffer, msg.states);
 	}
 
 	public static C2SRequestUpdateSmoothable decode(FriendlyByteBuf buffer) {
 		return new C2SRequestUpdateSmoothable(
 			buffer.readBoolean(),
-			NoCubes.platform.blockStateSerializer().readBlockStatesFrom(buffer)
+			ModUtil.platform.blockStateSerializer().readBlockStatesFrom(buffer)
 		);
 	}
 

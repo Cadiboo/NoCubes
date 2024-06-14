@@ -1,6 +1,7 @@
 package io.github.cadiboo.nocubes.network;
 
 import io.github.cadiboo.nocubes.NoCubes;
+import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
@@ -19,13 +20,13 @@ public record S2CUpdateSmoothable(
 
 	public static void encode(S2CUpdateSmoothable msg, FriendlyByteBuf buffer) {
 		buffer.writeBoolean(msg.newValue);
-		NoCubes.platform.blockStateSerializer().writeBlockStatesTo(buffer, msg.states);
+		ModUtil.platform.blockStateSerializer().writeBlockStatesTo(buffer, msg.states);
 	}
 
 	public static S2CUpdateSmoothable decode(FriendlyByteBuf buffer) {
 		return new S2CUpdateSmoothable(
 			buffer.readBoolean(),
-			NoCubes.platform.blockStateSerializer().readBlockStatesFrom(buffer)
+			ModUtil.platform.blockStateSerializer().readBlockStatesFrom(buffer)
 		);
 	}
 

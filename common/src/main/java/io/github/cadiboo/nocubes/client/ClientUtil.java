@@ -2,6 +2,8 @@ package io.github.cadiboo.nocubes.client;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.platform.IClientPlatform;
+import io.github.cadiboo.nocubes.platform.PlatformLoader;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -11,6 +13,8 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 
 public final class ClientUtil {
+
+	public static final IClientPlatform platform = PlatformLoader.load(IClientPlatform.class);
 
 	public static void warnPlayer(String translationKey, Object... formatArgs) {
 		ModUtil.warnPlayer(Minecraft.getInstance().player, translationKey, formatArgs);
@@ -27,17 +31,17 @@ public final class ClientUtil {
 				NoCubes.MOD_ID + ".notification.visualsDisabled",
 				KeyMappings.translate(KeyMappings.TOGGLE_VISUALS),
 				NoCubesConfig.Client.RENDER,
-				NoCubes.platform.clientConfigComponent()
+				platform.clientConfigComponent()
 			);
 	}
 
 	public static void sendPlayerInfoMessage() {
 		if (NoCubesConfig.Client.infoMessage)
-			Minecraft.getInstance().player.sendSystemMessage(
-				Component.translatable(NoCubes.MOD_ID + ".notification.infoMessage",
+			Minecraft.getInstance().player.sendSystemMessage(Component.translatable(
+				NoCubes.MOD_ID + ".notification.infoMessage",
 				KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE_BLOCK_TYPE),
 				NoCubesConfig.Client.INFO_MESSAGE,
-				NoCubes.platform.clientConfigComponent()
+				platform.clientConfigComponent()
 			).withStyle(ChatFormatting.GREEN));
 	}
 }

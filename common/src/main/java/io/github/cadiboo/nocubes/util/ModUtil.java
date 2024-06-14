@@ -3,6 +3,8 @@ package io.github.cadiboo.nocubes.util;
 import com.google.common.collect.ImmutableList;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.platform.IPlatform;
+import io.github.cadiboo.nocubes.platform.PlatformLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
@@ -20,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 /**
- * @author Cadiboo
+ * See also {@link io.github.cadiboo.nocubes.client.ClientUtil}
  */
 public class ModUtil {
 
@@ -32,6 +34,7 @@ public class ModUtil {
 	public static final Direction[] DIRECTIONS = Direction.values();
 	public static final float FULLY_SMOOTHABLE = 1;
 	public static final float NOT_SMOOTHABLE = -FULLY_SMOOTHABLE;
+	public static final IPlatform platform = PlatformLoader.load(IPlatform.class);
 
 	public static ImmutableList<BlockState> getStates(Block block) {
 		return block.getStateDefinition().getPossibleStates();
@@ -81,7 +84,7 @@ public class ModUtil {
 	}
 
 	public static boolean isPlant(BlockState state) {
-		return NoCubes.platform.isPlant(state);
+		return platform.isPlant(state);
 	}
 
 	/**

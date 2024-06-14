@@ -73,7 +73,7 @@ public final class KeyMappings {
 			ClientUtil.warnPlayer(NoCubes.MOD_ID + ".notification.visualsForcedByServer");
 			return;
 		}
-		NoCubes.platform.updateClientVisuals(!NoCubesConfig.Client.render);
+		ClientUtil.platform.updateClientVisuals(!NoCubesConfig.Client.render);
 		ClientUtil.warnPlayerIfVisualsDisabled();
 		reloadAllChunks("toggleVisuals was pressed");
 	}
@@ -93,7 +93,7 @@ public final class KeyMappings {
 		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
 		var states = changeAllStatesOfBlock ? ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new) : new BlockState[] {targetedState};
 
-		if (!NoCubes.platform.trySendC2SRequestUpdateSmoothable(player, newValue, states)) {
+		if (!ClientUtil.platform.trySendC2SRequestUpdateSmoothable(player, newValue, states)) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
 			NoCubes.smoothableHandler.setSmoothable(newValue, states);
 			reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");

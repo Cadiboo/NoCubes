@@ -305,7 +305,7 @@ public final class NoCubesConfigImpl {
 		public static void bake(ModConfig config) {
 			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
 
-			NoCubesConfig.Smoothables.recomputeInMemoryLookup(NoCubes.platform.blockStateSerializer(), ForgeRegistries.BLOCKS.getValues(), INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
+			NoCubesConfig.Smoothables.recomputeInMemoryLookup(ModUtil.platform.blockStateSerializer(), ForgeRegistries.BLOCKS.getValues(), INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
 			NoCubesConfig.Server.mesher = INSTANCE.mesher.get().instance;
 			NoCubesConfig.Server.collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			NoCubesConfig.Server.tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();

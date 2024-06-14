@@ -135,7 +135,7 @@ public final class NoCubesConfig {
 
 			// Add these modded BlockStates
 			//noinspection RedundantArrayCreation
-			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(NoCubes.platform.blockStateSerializer(), Arrays.asList(new String[]{
+			DEFAULT_SMOOTHABLES.addAll(parseBlockStates(ModUtil.platform.blockStateSerializer(), Arrays.asList(new String[]{
 				"biomesoplenty:grass[snowy=false,variant=sandy]",
 				"biomesoplenty:dirt[coarse=false,variant=sandy]",
 				"biomesoplenty:white_sand",
@@ -162,7 +162,7 @@ public final class NoCubesConfig {
 
 		static void updateUserDefinedSmoothableStringLists(boolean newValue, BlockState[] states, List<String> whitelist, List<String> blacklist) {
 			LOG.debug("Updating user-defined smoothable string lists");
-			var serializer = NoCubes.platform.blockStateSerializer();
+			var serializer = ModUtil.platform.blockStateSerializer();
 			var toAddTo = newValue ? whitelist : blacklist;
 			var toRemoveFrom = newValue ? blacklist : whitelist;
 			for (var state : states) {

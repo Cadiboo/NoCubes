@@ -1,11 +1,10 @@
-package io.github.cadiboo.nocubes.platform;
+package io.github.cadiboo.nocubes.fabric;
 
+import io.github.cadiboo.nocubes.platform.IPlatform;
 import io.github.cadiboo.nocubes.util.IBlockStateSerializer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class FabricPlatform implements IPlatform {
+public class Platform implements IPlatform {
 	@Override
 	public IBlockStateSerializer blockStateSerializer() {
 		return new IBlockStateSerializer() {
@@ -34,19 +33,5 @@ public class FabricPlatform implements IPlatform {
 	@Override
 	public boolean isPlant(BlockState state) {
 		return false;
-	}
-
-	@Override
-	public void updateClientVisuals(boolean render) {
-	}
-
-	@Override
-	public boolean trySendC2SRequestUpdateSmoothable(Player player, boolean newValue, BlockState[] states) {
-		return false;
-	}
-
-	@Override
-	public Component clientConfigComponent() {
-		return Component.literal("client config");
 	}
 }

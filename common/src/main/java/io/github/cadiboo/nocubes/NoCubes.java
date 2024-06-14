@@ -1,8 +1,6 @@
 package io.github.cadiboo.nocubes;
 
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
-import io.github.cadiboo.nocubes.platform.IPlatform;
-import io.github.cadiboo.nocubes.platform.PlatformLoader;
 import io.github.cadiboo.nocubes.smoothable.SmoothableHandler;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.Block;
@@ -15,7 +13,6 @@ public final class NoCubes {
 
 	public static final String MOD_ID = "nocubes";
 	public static final SmoothableHandler smoothableHandler = SmoothableHandler.create();
-	public static final IPlatform platform = PlatformLoader.load(IPlatform.class);
 
 	// region API
 	/**
