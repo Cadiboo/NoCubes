@@ -77,9 +77,10 @@ dependencies {
 	library("${rootProject.ext.COLOR_FACTORY}")
 	library(annotationProcessor("${rootProject.ext.MIXIN_EXTRAS}"))
 
-	// So we can compile our sodium compatibility code
 	// embeddium-0.3.14+mc1.20.1.jar
-	def embeddium = compileOnly(fg.deobf('curse.maven:Embeddium-908741:5265338'))
+	def embeddium = 'curse.maven:Embeddium-908741:5265338'
+	// So we can compile our sodium compatibility code
+	compileOnly(fg.deobf('curse.maven:Embeddium-908741:5265338'))
 
 	// For debugging on my local machine
 	if (!System.getenv('CI')) {
