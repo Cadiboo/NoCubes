@@ -1,17 +1,9 @@
-buildscript {
-	dependencies {
-		// Can't use the newer 'plugins' block for Mixin, need to use the old 'apply plugin' method
-		classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-	}
-}
 plugins {
-	id 'java'
-	// Shadow jar includes our libraries into our final jar
-	id 'com.github.johnrengelman.shadow' version '7.0.0'
-	id 'maven-publish'
-	id 'net.minecraftforge.gradle' version '6.+'
+	id 'fabric-loom' version '1.6-SNAPSHOT' apply(false)
+	id 'net.minecraftforge.gradle' version '[6.0,6.2)' apply(false)
+	id 'org.spongepowered.gradle.vanilla' version '0.2.1-SNAPSHOT' apply(false)
+	id('org.spongepowered.mixin') version '0.7-SNAPSHOT' apply(false)
 }
-apply plugin: 'org.spongepowered.mixin'
 
 String execCmd(List<String> params, String fallback) {
 	def stdout = new ByteArrayOutputStream()
@@ -22,232 +14,125 @@ String execCmd(List<String> params, String fallback) {
 	return result.getExitValue() != 0 ? fallback : stdout.toString().trim()
 }
 
-// We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
-version = "${minecraft_version}-${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
+// We use the version format MAJOR.MINOR.PATCH-COMMIT
+version = "${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
 group = mod_group
-base {
-	archivesName = mod_name
+
+ext {
+	// For the config color picker (we include it in our production jar with ShadowJar)
+	COLOR_FACTORY = 'org.beryx:awt-color-factory:1.0.2'
+	MIXIN_EXTRAS = 'io.github.llamalad7:mixinextras-common:0.3.5'
 }
 
-// Mojang ships Java 17 to end users in 1.18+, so mods should target this version
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+subprojects {
+	apply plugin: 'java'
 
-// Forge
-minecraft {
-	// See here for more info "https://github.com/MinecraftForge/MinecraftForge/blob/master/mdk/build.gradle#L28-L40"
-	mappings channel: 'official', version: minecraft_version
-	// makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
+	java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+	java.withSourcesJar()
+	java.withJavadocJar()
 
-	runs {
-		client {
+	version = rootProject.version
+	group = rootProject.group
+
+	dependencies {
+		// For @Nullable
+		compileOnly 'org.jetbrains:annotations:23.0.0'
+
+		// For unit tests
+		testImplementation 'org.mockito:mockito-core:4.5.1'
+		testImplementation 'junit:junit:4.13.2'
+		testImplementation("${rootProject.ext.COLOR_FACTORY}")
+	}
+
+	jar {
+		archiveClassifier.set('dev')
+		from(rootProject.file('LICENSE')) {
+			rename { "${it}_${mod_name}" }
 		}
-		server {
+		manifest {
+			attributes([
+				'Specification-Title'     : mod_name,
+				'Specification-Vendor'    : mod_authors,
+				'Specification-Version'   : project.jar.archiveVersion,
+				'Implementation-Title'    : project.name,
+				'Implementation-Version'  : project.jar.archiveVersion,
+				'Implementation-Vendor'   : mod_authors,
+				'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+				'Timestamp'               : System.currentTimeMillis(),
+				'Built-On-Java'           : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
+				'Built-On-Minecraft'      : minecraft_version,
+				'Main-Class'              : 'io.github.cadiboo.nocubes.DoNotRunThisFromTheConsoleDialog',
+			])
 		}
-		// Runs all integration tests then quits, for use in CI
-		gameTestServer {
+	}
+
+	sourcesJar {
+		archiveClassifier.set('sources')
+		from(rootProject.file('LICENSE')) {
+			rename { "${it}_${mod_name}" }
 		}
-		configureEach {
-			workingDirectory project.file('run/' + it.name) as File
-			def dumpTransformedClasses = false // Set to true to debug Mixin/Asm issues
-			// The markers can be added/removed as needed (separated by commas)
-			property 'forge.logging.markers', (!dumpTransformedClasses ? 'XFORM' : 'XFORM,MODLAUNCHER,CLASSDUMP')
-			property 'forge.logging.console.level', (!dumpTransformedClasses ? 'debug' : 'trace')
-			property 'mixin.debug.export', "${dumpTransformedClasses}"
-			property 'forge.enabledGameTestNamespaces', project.mod_id // Run our integration tests
-			jvmArg '-ea' // Enable assertions
-			// Use the 'test' module (and both source sets) because it contains our integration tests
-			ideaModule "${project.name}.test"
-			mods.register(mod_id as String) {
-				sources = [sourceSets.main as SourceSet, sourceSets.test as SourceSet]
+	}
+
+	javadocJar {
+		archiveClassifier.set('javadoc')
+	}
+
+	javadoc {
+		// Gradle doesn't support Java 8's new tags out of the box
+		options.tags = [
+			'apiNote:a:API Note:',
+			'implSpec:a:Implementation Requirements:',
+			'implNote:a:Implementation Note:',
+		]
+	}
+
+	repositories {
+		mavenCentral()
+		maven {
+			name = 'Sponge / Mixin'
+			url = 'https://repo.spongepowered.org/repository/maven-public/'
+		}
+		maven {
+			url "https://www.cursemaven.com"
+			content {
+				includeGroup "curse.maven"
 			}
 		}
-	}
-}
-
-mixin {
-	add sourceSets.main, "mixins.${mod_id}.refmap.json"
-	config "mixins.${mod_id}.json"
-
-	debug.verbose = true
-	debug.export = true
-}
-
-configurations {
-	library
-	implementation.extendsFrom library
-	shadow.extendsFrom library
-}
-minecraft.runs.all {
-	lazyToken('minecraft_classpath') {
-		configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
-	}
-}
-
-repositories {
-	maven {
-		url "https://www.cursemaven.com"
-		content {
-			includeGroup "curse.maven"
+		// Mod jar dependencies in ./libs
+		flatDir {
+			dir 'libs'
 		}
 	}
-	mavenCentral()
-	// Mod jar dependencies in ./libs
-	flatDir {
-		dir 'libs'
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.encoding = 'UTF-8'
+		it.options.getRelease().set(17)
 	}
-}
-dependencies {
-	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-	// Apply Mixin AP
-	annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+	processResources {
+		def expandProps = [
+			"minecraft_version"         : minecraft_version,
+			"forge_version"             : forge_version,
+			"forge_loader_version_range": forge_loader_version_range,
+			"forge_version_range"       : forge_version_range,
+			"minecraft_version_range"   : minecraft_version_range,
+			"fabric_loader_version"     : fabric_loader_version,
+			"mod_name"                  : mod_name,
+			"mod_id"                    : mod_id,
+			"mod_version"               : version,
+			"mod_group"                 : project.group, // Else we target the task's group.
+			"mod_authors"               : mod_authors,
+			"mod_license"               : mod_license,
+			"mod_issue_tracker_url"     : mod_issue_tracker_url,
+			"mod_update_json_url"       : mod_update_json_url,
+			"mod_homepage_url"          : mod_homepage_url,
+			"mod_credits"               : mod_credits,
+			"mod_description"           : mod_description,
+		]
 
-	// For @Nullable
-	compileOnly 'org.jetbrains:annotations:23.0.0'
-
-	// For the config color picker (we include it in our production jar with ShadowJar)
-	library 'org.beryx:awt-color-factory:1.0.2'
-
-	library(annotationProcessor('io.github.llamalad7:mixinextras-common:0.3.5'))
-
-	// So we can compile our sodium compatibility code
-	// embeddium-0.3.14+mc1.20.1.jar
-	def embeddium = compileOnly(fg.deobf('curse.maven:Embeddium-908741:5265338'))
-
-	// For unit tests
-	testImplementation 'org.mockito:mockito-core:4.5.1'
-	testImplementation 'junit:junit:4.13.2'
-
-	// For debugging on my local machine
-	if (!System.getenv('CI')) {
-		[
-			embeddium,
-			// oculus-mc1.20.1-1.6.15a.jar
-			'curse.maven:Oculus-581495:5108615',
-			// DistantHorizons-2.0.1-a-1.20.1.jar
-			'curse.maven:DistantHorizons-508933:4924664',
-			// origins-forge-1.20.1-1.10.0.9-all.jar
-			'curse.maven:Origins-474438:5314209',
-			// caelus-forge-3.2.0+1.20.1.jar
-			'curse.maven:Caelus-308989:5281700',
-		].each {
-			implementation fg.deobf(it)
+		filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', '*.mixins.json']) {
+			expand expandProps
 		}
+		inputs.properties(expandProps)
 	}
 }
-
-// region build
-tasks.withType(JavaCompile).configureEach {
-	options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
-}
-
-// Write our mod version into our mod info file(s)
-processResources {
-	// Ensures this task is redone when the version changes
-	inputs.property 'version', project.version
-	// NB: We need to use 'file.jarVersion' in mods.toml because IntelliJ doesn't run this task when it runs our mod in dev
-	// This works because 'file.jarVersion' gets handled at runtime by Forge
-	// IntelliJ bug: "https://youtrack.jetbrains.com/issue/IDEA-173367/The-processResources-task-is-not-correctly-handled-by-IntelliJ"
-	filesMatching('**/META-INF/mods.toml') {
-		expand 'file': [jarVersion: project.version]
-	}
-}
-
-jar {
-	archiveClassifier.set('dev')
-	manifest {
-		attributes([
-			// See https://docs.oracle.com/javase/8/docs/technotes/guides/versioning/spec/versioning2.html
-			'Specification-Title'   : project.name,
-			'Specification-Version' : mod_version,
-			'Specification-Vendor'  : project.group,
-			'Implementation-Title'  : mod_id,
-			'Implementation-Version': project.version,
-			'Implementation-Vendor' : project.group,
-
-			'Built-For'             : "${minecraft_version}-${forge_version}",
-			'Built-At-UTC'          : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-			'Built-On-JVM'          : "${System.getProperty('java.vm.version')} (${System.getProperty('java.vm.vendor')})",
-			'Signing-Fingerprint'   : project.hasProperty('signSHA1') ? project.findProperty('signSHA1') : 'unsigned',
-
-			'Main-Class'            : 'io.github.cadiboo.nocubes.DoNotRunThisFromTheConsoleDialog'
-		])
-	}
-	from('LICENSE') {
-		rename { "${it}_${project.base.archivesName.get()}" }
-	}
-}
-shadowJar {
-	archiveClassifier.set('')
-
-	configurations = [project.configurations.shadow]
-	[
-		'org.beryx',
-		'com.llamalad7.mixinextras',
-	].each {
-		relocate(it, "${mod_group}.repackage.${it}")
-	}
-	mergeServiceFiles() // Very important for MixinExtras to work
-	manifest.attributes(jar.manifest.getAttributes())
-	from('LICENSE') {
-		rename { "${it}_${project.base.archivesName.get()}" }
-	}
-}
-reobf {
-	// We want the output of the following tasks to be reobfuscated
-	// More info at "https://github.com/MinecraftForge/MinecraftForge/blob/b6ce4fb066eb886a305f0678649c33d6f8ba4f76/mdk/build.gradle#L157-L161"
-	shadowJar {}
-}
-task sourcesJar(type: Jar, dependsOn: classes) {
-	archiveClassifier.set('sources')
-	from sourceSets.main.allSource
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-	archiveClassifier.set('javadoc')
-	from javadoc.destinationDir
-}
-javadoc {
-	// Gradle doesn't support Java 8's new tags out of the box
-	options.tags = [
-		'apiNote:a:API Note:',
-		'implSpec:a:Implementation Requirements:',
-		'implNote:a:Implementation Note:',
-	]
-}
-
-artifacts {
-	archives jar
-	archives shadowJar
-	archives sourcesJar
-	archives javadocJar
-}
-// endregion
-
-// region publish
-// TODO: Move this to the publish step, not the build step
-// Sign all the jars
-import net.minecraftforge.gradle.common.tasks.SignJar
-
-[
-	jar,
-	shadowJar,
-	sourcesJar,
-	javadocJar,
-].each { jarTask ->
-	Task signingTask = tasks.create(name: "sign-${jarTask.name}", type: SignJar, dependsOn: jarTask) {
-		// Skips if the keyStore property is missing.
-		onlyIf {
-			project.hasProperty('keyStore')
-		}
-		// findProperty allows us to reference the property without it existing.
-		// Using project.propName would cause the script to fail validation if the property did not exist.
-		keyStore = project.findProperty('keyStore')
-		alias = project.findProperty('keyStoreAlias')
-		storePass = project.findProperty('keyStorePass')
-		keyPass = project.findProperty('keyStoreKeyPass')
-		inputFile = jarTask.archiveFile
-		outputFile = jarTask.archiveFile
-	}
-	jarTask.finalizedBy(signingTask)
-}
-// endregion

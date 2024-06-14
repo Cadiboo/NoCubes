@@ -18,11 +18,3 @@ classes
 # gradle
 build
 .gradle
-
-# other
-run/*
-!run/gameTestServer
-run/gameTestServer/*
-!run/gameTestServer/gameteststructures
-# Ignore mods being used for testing
-libs/*
