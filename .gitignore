@@ -13,8 +13,7 @@ classes
 *.ipr
 *.iws
 *.iml
-.idea/*
-!.idea/scopes
+.idea
 
 # gradle
 build
