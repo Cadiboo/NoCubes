@@ -2,7 +2,6 @@ package io.github.cadiboo.nocubes.integrationtesting;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import net.minecraft.gametest.framework.TestFunction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
 
