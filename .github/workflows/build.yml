@@ -13,23 +13,23 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Build and check (fabric)
+      - name: Build and check
         run: ./gradlew :fabric:build --stacktrace
-      - name: Archive development jars (fabric)
+      - name: Archive development jars
         uses: actions/upload-artifact@v4
         with:
           name: Development jars inside (fabric)
           path: |
             fabric/build/devlibs/*.jar
           if-no-files-found: error
-      - name: Archive playable jar (fabric)
+      - name: Archive playable jar
         uses: actions/upload-artifact@v4
         with:
           name: Playable mod jar inside (fabric)
           path: |
             fabric/build/libs/*.jar
           if-no-files-found: error
-      - name: Integration tests (forge)
+      - name: Integration tests
         run: ./gradlew :fabric:runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
@@ -37,14 +37,11 @@ jobs:
         with:
           version-type: beta
           files: fabric/build/libs/*.jar
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-commitish: ${{ env.GITHUB_SHA }}
-          github-files-primary: fabric/build/libs/*.jar
-          github-files-secondary: fabric/build/devlibs/*.jar
-          curseforge-id: 309664
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          modrinth-id: w3bbwFYU
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          github-token: ${{ secrets.RELEASES_GITHUB_TOKEN }}
+#          curseforge-id: 309664
+#          curseforge-token: "secrets.CURSEFORGE_TOKEN"
+#          modrinth-id: w3bbwFYU
+#          modrinth-token: "secrets.MODRINTH_TOKEN"
   build-forge:
     runs-on: ubuntu-latest
     steps:
@@ -57,9 +54,9 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Build and check (forge)
+      - name: Build and check
         run: ./gradlew :forge:build --stacktrace
-      - name: Archive development jars (forge)
+      - name: Archive development jars
         uses: actions/upload-artifact@v4
         with:
           name: Development jars inside (forge)
@@ -68,7 +65,7 @@ jobs:
             forge/build/libs/*-sources.jar
             forge/build/libs/*-javadoc.jar
           if-no-files-found: error
-      - name: Archive playable jar (forge)
+      - name: Archive playable jar
         uses: actions/upload-artifact@v4
         with:
           name: Playable mod jar inside (forge)
@@ -78,19 +75,16 @@ jobs:
             !forge/build/libs/*-sources.jar
             !forge/build/libs/*-javadoc.jar
           if-no-files-found: error
-      - name: Integration tests (forge)
+      - name: Integration tests
         run: ./gradlew :forge:runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
         if: "contains(github.event.head_commit.message, '[ci publish]')"
         with:
           version-type: beta
-          files: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          github-commitish: ${{ env.GITHUB_SHA }}
-          github-files-primary: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
-          github-files-secondary: forge/build/libs/*-@(dev|sources|javadoc).jar
-          curseforge-id: 309664
-          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          modrinth-id: w3bbwFYU
-          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          files: forge/build/libs/!(*-@(sources|dev|dev-shadow|javadoc).jar)
+          github-token: ${{ secrets.RELEASES_GITHUB_TOKEN }}
+#          curseforge-id: 309664
+#          curseforge-token: "secrets.CURSEFORGE_TOKEN"
+#          modrinth-id: w3bbwFYU
+#          modrinth-token: "secrets.MODRINTH_TOKEN"
