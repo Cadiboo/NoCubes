@@ -14,8 +14,8 @@ String execCmd(List<String> params, String fallback) {
 	return result.getExitValue() != 0 ? fallback : stdout.toString().trim()
 }
 
-// We use the version format MAJOR.MINOR.PATCH-COMMIT
-version = "${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
+// We use the version format MCVERSION-MAJOR.MINOR.PATCH-COMMIT
+version = "${minecraft_version}-${mod_version}-${execCmd(['git', 'rev-parse', '--short', 'HEAD'], 'nogit')}"
 group = mod_group
 
 ext {

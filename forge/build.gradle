@@ -7,7 +7,7 @@ plugins {
 	id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 base {
-	archivesName = "${mod_name}-forge-${minecraft_version}"
+	archivesName = "${mod_name}-forge"
 }
 mixin {
 	add(sourceSets.main, "${mod_id}.refmap.json")
