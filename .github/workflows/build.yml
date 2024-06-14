@@ -1,7 +1,7 @@
 name: Build
 on: [push, workflow_dispatch]
 jobs:
-  build:
+  build-fabric:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -13,49 +13,83 @@ jobs:
           java-version: 17
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-      - name: Setup Keystore
-        run: |
-          echo ${{ secrets.KEYSTORE_BASE64 }} | base64 -d > keystore.jks
-          echo "keyStore=keystore.jks" >> gradle.properties
-          echo "keyStoreAlias=${{ secrets.KEYSTORE_ALIAS }}" >> gradle.properties
-          echo "keyStorePass=${{ secrets.KEYSTORE_PASS }}" >> gradle.properties
-          echo "keyStoreKeyPass=${{ secrets.KEYSTORE_KEY_PASS }}" >> gradle.properties
-          echo "signSHA1=${{ secrets.KEYSTORE_SIGN_SHA1 }}" >> gradle.properties
-      - name: Build and check
-        run: ./gradlew :fabric:build :forge:build --stacktrace
-      - name: Archive development jars
+      - name: Build and check (fabric)
+        run: ./gradlew :fabric:build --stacktrace
+      - name: Archive development jars (fabric)
         uses: actions/upload-artifact@v4
         with:
-          name: Development jars inside
+          name: Development jars inside (fabric)
           path: |
             fabric/build/devlibs/*.jar
+          if-no-files-found: error
+      - name: Archive playable jar (fabric)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Playable mod jar inside (fabric)
+          path: |
+            fabric/build/libs/*.jar
+          if-no-files-found: error
+      - name: Integration tests (forge)
+        run: ./gradlew :fabric:runGameTestServer --stacktrace
+      - name: Publish
+        uses: Kir-Antipov/mc-publish@v3.3
+        if: "contains(github.event.head_commit.message, '[ci publish]')"
+        with:
+          version-type: beta
+          files: fabric/build/libs/*.jar
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-commitish: ${{ env.GITHUB_SHA }}
+          github-files-primary: fabric/build/libs/*.jar
+          github-files-secondary: fabric/build/devlibs/*.jar
+          curseforge-id: 309664
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          modrinth-id: w3bbwFYU
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+  build-forge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Build and check (forge)
+        run: ./gradlew :forge:build --stacktrace
+      - name: Archive development jars (forge)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Development jars inside (forge)
+          path: |
             forge/build/libs/*-dev.jar
             forge/build/libs/*-sources.jar
             forge/build/libs/*-javadoc.jar
           if-no-files-found: error
-      - name: Archive playable jar
+      - name: Archive playable jar (forge)
         uses: actions/upload-artifact@v4
         with:
-          name: Playable mod jar inside
+          name: Playable mod jar inside (forge)
           path: |
-            fabric/build/libs/*.jar
             forge/build/libs/*.jar
             !forge/build/libs/*-dev.jar
             !forge/build/libs/*-sources.jar
             !forge/build/libs/*-javadoc.jar
           if-no-files-found: error
       - name: Integration tests (forge)
-        run: ./gradlew :fabric:runGameTestServer :forge:runGameTestServer --stacktrace
+        run: ./gradlew :forge:runGameTestServer --stacktrace
       - name: Publish
         uses: Kir-Antipov/mc-publish@v3.3
         if: "contains(github.event.head_commit.message, '[ci publish]')"
         with:
           version-type: beta
-          files: build/libs/!(*-@(dev|sources|javadoc)).jar
+          files: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-commitish: ${{ env.GITHUB_SHA }}
-          github-files-primary: build/libs/!(*-@(dev|sources|javadoc)).jar
-          github-files-secondary: build/libs/*-@(dev|sources|javadoc).jar
+          github-files-primary: forge/build/libs/!(*-@(dev|sources|javadoc)).jar
+          github-files-secondary: forge/build/libs/*-@(dev|sources|javadoc).jar
           curseforge-id: 309664
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           modrinth-id: w3bbwFYU
