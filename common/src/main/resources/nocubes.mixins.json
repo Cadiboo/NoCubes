@@ -9,6 +9,12 @@
 		"defaultRequire": 1
 	},
 	"mixins": [
+		"BlockCollisionsMixin",
+		"BlockMixin",
+		"BlockStateBaseMixin",
+		"EntityMixin",
+		"LevelMixin",
+		"PlayerMixin"
 	],
 	"client": [
 		"client.LevelRendererMixin",

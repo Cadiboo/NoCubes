@@ -41,6 +41,7 @@ subprojects {
 		// For unit tests
 		testImplementation 'org.mockito:mockito-core:4.5.1'
 		testImplementation 'junit:junit:4.13.2'
+		testImplementation("${rootProject.ext.COLOR_FACTORY}")
 	}
 
 	jar {
