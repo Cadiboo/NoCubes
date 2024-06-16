@@ -1,9 +1,9 @@
 package io.github.cadiboo.nocubes.network;
 
 import com.electronwill.nightconfig.core.file.FileConfig;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLEnvironment;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +24,7 @@ public record S2CUpdateServerConfig(
 		}
 	}
 
-	public static void handle(S2CUpdateServerConfig msg, Supplier<NetworkEvent.Context> contextSupplier) {
+	public static void handle(S2CUpdateServerConfig msg, Supplier<CustomPayloadEvent.Context> contextSupplier) {
 		var ctx = contextSupplier.get();
 		NoCubesNetworkClient.handleS2CUpdateServerConfig(ctx::enqueueWork, msg.data());
 		ctx.setPacketHandled(true);

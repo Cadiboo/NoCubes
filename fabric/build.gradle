@@ -25,9 +25,9 @@ dependencies {
 	shadow(implementation(group: 'org.beryx', name: 'awt-color-factory', version: rootProject.ext.COLOR_FACTORY_VERSION))
 
 	// CompileOnly so our Mixins can target Sodium's classes
-	def sodium = modCompileOnly 'maven.modrinth:sodium:mc1.20.1-0.5.7'
+	def sodium = modCompileOnly 'maven.modrinth:sodium:mc1.20.4-0.5.8'
 	modImplementation sodium
-	modImplementation 'maven.modrinth:iris:1.6.17+1.20.1'
+	modImplementation 'maven.modrinth:iris:1.7.1+1.20.4'
 }
 
 loom {

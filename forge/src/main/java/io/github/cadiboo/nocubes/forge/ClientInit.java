@@ -13,7 +13,8 @@ import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.ConnectionType;
+import net.minecraftforge.network.NetworkContext;
 
 /**
  * @author Cadiboo
@@ -52,7 +53,7 @@ public final class ClientInit {
 		});
 		events.addListener((ClientPlayerNetworkEvent.LoggingIn event) -> {
 			// In this case Forge has already loaded the default server configs for us (see NetworkHooks#handleClientLoginSuccess(Connection))
-			var forgeAlreadyLoadedDefaultConfig = NetworkHooks.isVanillaConnection(event.getConnection());
+			var forgeAlreadyLoadedDefaultConfig = NetworkContext.get(event.getConnection()).getType() == ConnectionType.VANILLA;
 			NoCubesNetworkClient.onJoinedServer(forgeAlreadyLoadedDefaultConfig);
 		});
 	}

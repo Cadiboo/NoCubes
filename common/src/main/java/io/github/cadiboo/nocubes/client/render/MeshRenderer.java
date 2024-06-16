@@ -192,7 +192,7 @@ public class MeshRenderer {
 		}
 
 		if (renderGrassTufts && foundState.state.hasProperty(SNOWY) && !ModUtil.isPlant(stateAbove)) {
-			var grass = Blocks.GRASS.defaultBlockState();
+			var grass = Blocks.SHORT_GRASS.defaultBlockState();
 			var worldAbove = relativeAbove.move(area.start);
 			var renderBothSides = true;
 

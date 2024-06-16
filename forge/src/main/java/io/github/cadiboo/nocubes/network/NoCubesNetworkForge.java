@@ -2,9 +2,9 @@ package io.github.cadiboo.nocubes.network;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.minecraftforge.network.ChannelBuilder;
+import net.minecraftforge.network.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static io.github.cadiboo.nocubes.NoCubes.MOD_ID;
+import static net.minecraftforge.network.Channel.*;
 
 /**
  * Stores the mod's channel and registers the messages.
@@ -21,21 +22,21 @@ public final class NoCubesNetworkForge {
 
 	private static final Logger LOG = LogManager.getLogger();
 
-	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-		new ResourceLocation(MOD_ID, "main"),
-		() -> NoCubesNetwork.NETWORK_PROTOCOL_VERSION,
+	public static final SimpleChannel CHANNEL = ChannelBuilder
+		.named(new ResourceLocation(MOD_ID, "main"))
+		.networkProtocolVersion(NoCubesNetwork.NETWORK_PROTOCOL_VERSION)
 		// Clients can run on servers with the same NoCubes version and servers without NoCubes (including vanilla)
-		serverVersion -> {
-			if (NetworkRegistry.ABSENT.version().equals(serverVersion) || NetworkRegistry.ACCEPTVANILLA.equals(serverVersion)) {
+		.clientAcceptedVersions((serverVersionStatus, serverVersion) -> {
+			if (VersionTest.Status.MISSING.equals(serverVersionStatus) || VersionTest.Status.VANILLA.equals(serverVersionStatus)) {
 				NoCubesNetworkClient.currentServerHasNoCubes = false;
 				return true;
 			}
 			NoCubesNetworkClient.currentServerHasNoCubes = true;
-			return NoCubesNetwork.NETWORK_PROTOCOL_VERSION.equals(serverVersion);
-		},
+			return VersionTest.exact(NoCubesNetwork.NETWORK_PROTOCOL_VERSION).accepts(serverVersionStatus, serverVersion);
+		})
 		// Clients must have the same version as the server
-		NoCubesNetwork.NETWORK_PROTOCOL_VERSION::equals
-	);
+		.serverAcceptedVersions(VersionTest.exact(NoCubesNetwork.NETWORK_PROTOCOL_VERSION))
+		.simpleChannel();
 
 	/**
 	 * Called from inside the mod constructor.
@@ -68,23 +69,22 @@ public final class NoCubesNetworkForge {
 		);
 	}
 
-	static <MSG> void register(int index, Class<MSG> messageType, BiConsumer<MSG, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<NetworkEvent.Context>> handler) {
-		CHANNEL.registerMessage(
-			index,
-			messageType,
-			(msg, buffer) -> {
+	static <MSG> void register(int index, Class<MSG> messageType, BiConsumer<MSG, FriendlyByteBuf> encoder, Function<FriendlyByteBuf, MSG> decoder, BiConsumer<MSG, Supplier<CustomPayloadEvent.Context>> handler) {
+		CHANNEL
+			.messageBuilder(messageType, index)
+			.encoder((msg, buffer) -> {
 				LOG.debug("Encoding {}", messageType.getSimpleName());
 				encoder.accept(msg, buffer);
-			},
-			buffer -> {
+			})
+			.decoder(buffer -> {
 				LOG.debug("Decoding {}", messageType.getSimpleName());
 				return decoder.apply(buffer);
-			},
-			(msg, ctx) -> {
+			})
+			.consumerNetworkThread((msg, ctx) -> {
 				LOG.debug("Handling {}", messageType.getSimpleName());
-				handler.accept(msg, ctx);
-			}
-		);
+				handler.accept(msg, () -> ctx);
+			})
+			.add();
 	}
 
 }

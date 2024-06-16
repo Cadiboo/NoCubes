@@ -7,7 +7,7 @@ import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderOptiFine;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -62,7 +62,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
+	public Object preRenderBlock(INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, BlockAndTintGetter chunkCacheOF, RenderType renderType, BufferBuilder buffer, BlockState state, BlockPos pos) {
 		BufferBuilder_setBlockLayer(buffer, renderType);
 		Object renderEnv = BufferBuilder_getRenderEnv(buffer, state, pos);
 		RenderEnv_setRegionRenderCacheBuilder(renderEnv, builder);
@@ -79,7 +79,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
+	public Object preRenderFluid(INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack buffers, BlockAndTintGetter chunkCache, RenderType layer, BufferBuilder buffer, BlockState block, FluidState fluid, BlockPos worldPos) {
 		return this.preRenderBlock(chunkRender, buffers, chunkCache, layer, buffer, block, worldPos);
 	}
 
@@ -89,7 +89,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderBlock(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 		var chunkRenderOf = (INoCubesChunkSectionRenderOptiFine) chunkRender;
 		if (Config_isShaders())
 			SVertexBuilder_popEntity(buffer);
@@ -101,7 +101,7 @@ class HD_U_G7 implements OptiFineProxy {
 	}
 
 	@Override
-	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack builder, Set<RenderType> usedLayers) {
+	public void postRenderFluid(Object renderEnv, BufferBuilder buffer, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack builder, Set<RenderType> usedLayers) {
 		this.postRenderBlock(renderEnv, buffer, chunkRender, builder, usedLayers);
 	}
 
@@ -123,7 +123,7 @@ class HD_U_G7 implements OptiFineProxy {
 	@Override
 	public int forEachOverlayQuad(
 		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
-		ChunkBufferBuilderPack buffers, BlockPos chunkPos,
+		SectionBufferBuilderPack buffers, BlockPos chunkPos,
 		BlockAndTintGetter world, PoseStack matrix,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
 		BlockState state, BlockPos worldPos,
@@ -175,7 +175,7 @@ class HD_U_G7 implements OptiFineProxy {
 		MethodHandle getRenderEnv = Reflector.tryGetMethod(BufferBuilder.class.getName(), "getRenderEnv", BlockState.class, BlockPos.class);
 
 		MethodHandle reset = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "reset", BlockState.class, BlockPos.class);
-		MethodHandle setRegionRenderCacheBuilder = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "setRegionRenderCacheBuilder", ChunkBufferBuilderPack.class);
+		MethodHandle setRegionRenderCacheBuilder = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "setRegionRenderCacheBuilder", SectionBufferBuilderPack.class);
 		MethodHandle isOverlaysRendered = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "isOverlaysRendered");
 		MethodHandle setOverlaysRendered = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "setOverlaysRendered", boolean.class);
 		MethodHandle getListQuadsOverlay = Reflector.tryGetMethod("net.optifine.render.RenderEnv", "getListQuadsOverlay", RenderType.class);
@@ -266,7 +266,7 @@ class HD_U_G7 implements OptiFineProxy {
 			}
 		}
 
-		static void RenderEnv_setRegionRenderCacheBuilder(Object renderEnv, ChunkBufferBuilderPack builder) {
+		static void RenderEnv_setRegionRenderCacheBuilder(Object renderEnv, SectionBufferBuilderPack builder) {
 //			((RenderEnv) renderEnv).setRegionRenderCacheBuilder(builder);
 			try {
 				setRegionRenderCacheBuilder.invoke(renderEnv, builder);
