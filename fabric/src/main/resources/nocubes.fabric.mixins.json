@@ -7,12 +7,13 @@
 	"plugin": "io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin",
 	"mixins": [
 		"PlayerListMixin",
-		"client.sodium.ChunkBuilderMeshingTaskMixin"
 	],
 	"client": [
 		"client.BlockRenderDispatcherMixin",
 		"client.ClientHandshakePacketListenerImplMixin",
-		"client.PlatformSpecificRenderChunkRebuildTaskMixin"
+		"client.PlatformSpecificRenderChunkRebuildTaskMixin",
+		"client.sodium.ChunkBuilderMeshingTaskMixin",
+		"client.sodium.FluidRendererMixin"
 	],
 	"server": [
 	],
