@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.network.NoCubesNetworkClient;
 import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -20,9 +22,6 @@ import java.util.function.Consumer;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 
-/**
- * @author Cadiboo
- */
 public final class KeyMappings {
 
 	private static final Logger LOG = LogManager.getLogger();
@@ -93,10 +92,16 @@ public final class KeyMappings {
 		var newValue = !NoCubes.smoothableHandler.isSmoothable(targetedState);
 		var states = changeAllStatesOfBlock ? ModUtil.getStates(targetedState.getBlock()).toArray(BlockState[]::new) : new BlockState[] {targetedState};
 
-		if (!ClientUtil.platform.trySendC2SRequestUpdateSmoothable(player, newValue, states)) {
+		LOG.debug("toggleLookedAtSmoothable currentServerHasNoCubes={}", NoCubesNetworkClient.currentServerHasNoCubes);
+		if (!NoCubesNetworkClient.currentServerHasNoCubes) {
 			// The server doesn't have NoCubes, directly modify the smoothable state to hackily allow the player to have visuals
 			NoCubes.smoothableHandler.setSmoothable(newValue, states);
 			reloadAllChunks("toggleLookedAtSmoothable was pressed while connected to a server that doesn't have NoCubes installed");
+		} else {
+			// We're on a server (possibly singleplayer) with NoCubes installed
+			if (NoCubesNetwork.checkPermissionAndNotifyIfUnauthorised(player, Minecraft.getInstance().getSingleplayerServer()))
+				// Only send the packet if we have permission, don't send a packet that will be denied
+				ClientUtil.platform.sendC2SRequestUpdateSmoothable(newValue, states);
 		}
 	}
 

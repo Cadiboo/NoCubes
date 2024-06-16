@@ -58,6 +58,10 @@ public final class NoCubesConfig {
 		public static boolean debugRecordMeshPerformance;
 		public static boolean debugOutlineNearbyMesh;
 		public static boolean debugSkipNoCubesRendering;
+
+		public static int hashChunkRenderSettings() {
+			return Objects.hash(NoCubesConfig.Client.betterGrassSides, NoCubesConfig.Client.moreSnow, NoCubesConfig.Client.fixPlantHeight, NoCubesConfig.Client.grassTufts);
+		}
 	}
 
 	/**
@@ -93,6 +97,14 @@ public final class NoCubesConfig {
 			MesherType(Mesher instance) {
 				this.instance = instance;
 			}
+		}
+
+		public static int hashChunkRenderSettings(Stream<Block> blocks) {
+			var smoothables = blocks
+				.flatMap(block -> ModUtil.getStates(block).stream())
+				.map(NoCubes.smoothableHandler::isSmoothable)
+				.toArray(Boolean[]::new);
+			return Objects.hash(NoCubesConfig.Server.mesher, NoCubesConfig.Server.forceVisuals, Arrays.hashCode(smoothables));
 		}
 	}
 

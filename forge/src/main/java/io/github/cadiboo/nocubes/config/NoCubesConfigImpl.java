@@ -7,9 +7,8 @@ import com.google.common.collect.Lists;
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.collision.CollisionHandler;
 import io.github.cadiboo.nocubes.config.NoCubesConfig.Server.MesherType;
-import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.network.NoCubesNetworkForge;
 import io.github.cadiboo.nocubes.network.S2CUpdateServerConfig;
-import io.github.cadiboo.nocubes.util.ModUtil;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -34,7 +33,10 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
@@ -42,7 +44,6 @@ import static io.github.cadiboo.nocubes.client.RenderHelper.reloadAllChunks;
 /**
  * Handles registering and baking the configs.
  *
- * @author Cadiboo
  * @see NoCubesConfig
  */
 public final class NoCubesConfigImpl {
@@ -84,12 +85,11 @@ public final class NoCubesConfigImpl {
 	}
 
 	/**
-	 * Settings that effect the app state regardless of if it is a client or server.
+	 * Implementation of {@link NoCubesConfig.Common}
 	 */
 	public static class Common {
-
-		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		static final Impl INSTANCE;
+		static final ForgeConfigSpec SPEC;
 
 		static {
 			var specPair = new Builder().configure(Impl::new);
@@ -100,7 +100,7 @@ public final class NoCubesConfigImpl {
 		/**
 		 * See {@link NoCubesConfigImpl#bakeConfig}
 		 */
-		public static void bake(ModConfig config) {
+		static void bake(ModConfig config) {
 			NoCubesConfig.Common.debugEnabled = INSTANCE.debugEnabled.get();
 		}
 
@@ -121,15 +121,14 @@ public final class NoCubesConfigImpl {
 	}
 
 	/**
-	 * Settings that effect the client state i.e. rendering options.
+	 * Implementation of {@link NoCubesConfig.Client}
 	 */
 	public static class Client {
-
 		public static final String INFO_MESSAGE = "infoMessage";
 		public static String RENDER = "render";
 
-		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		static final Impl INSTANCE;
+		static final ForgeConfigSpec SPEC;
 
 		static {
 			var specPair = new Builder().configure(Impl::new);
@@ -140,9 +139,9 @@ public final class NoCubesConfigImpl {
 		/**
 		 * See {@link NoCubesConfigImpl#bakeConfig}
 		 */
-		public static void bake(ModConfig config) {
+		static void bake(ModConfig config) {
 			boolean oldRender = NoCubesConfig.Client.render;
-			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
+			int oldChunkRenderSettingsHash = NoCubesConfig.Client.hashChunkRenderSettings();
 
 			NoCubesConfig.Client.infoMessage = INSTANCE.infoMessage.get();
 			// Directly querying the baked 'forceVisuals' field - won't cause a NPE on the client when there is no server
@@ -156,7 +155,7 @@ public final class NoCubesConfigImpl {
 
 			if (oldRender != NoCubesConfig.Client.render)
 				reloadAllChunks("custom rendering was toggled to %b in the client config", NoCubesConfig.Client.render);
-			else if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
+			else if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != NoCubesConfig.Client.hashChunkRenderSettings())
 				reloadAllChunks("options affecting chunk rendering in the client config were changed");
 
 			NoCubesConfig.Client.debugOutlineSmoothables = INSTANCE.debugOutlineSmoothables.get();
@@ -168,16 +167,12 @@ public final class NoCubesConfigImpl {
 			NoCubesConfig.Client.debugSkipNoCubesRendering = INSTANCE.debugSkipNoCubesRendering.get();
 		}
 
-		private static int hashChunkRenderSettings() {
-			return Objects.hash(NoCubesConfig.Client.betterGrassSides, NoCubesConfig.Client.moreSnow, NoCubesConfig.Client.fixPlantHeight, NoCubesConfig.Client.grassTufts);
-		}
-
 		public static void updateRender(boolean newValue) {
 			Client.INSTANCE.render.set(newValue);
 			saveAndLoad();
 		}
 
-		private static void saveAndLoad() {
+		static void saveAndLoad() {
 			Hacks.saveAndLoad(ModConfig.Type.CLIENT);
 		}
 
@@ -286,12 +281,11 @@ public final class NoCubesConfigImpl {
 	}
 
 	/**
-	 * Settings that effect the server state i.e. gameplay options.
+	 * Implementation of {@link NoCubesConfig.Server}
 	 */
 	public static class Server {
-
-		public static final Impl INSTANCE;
-		public static final ForgeConfigSpec SPEC;
+		static final Impl INSTANCE;
+		static final ForgeConfigSpec SPEC;
 
 		static {
 			var specPair = new Builder().configure(Impl::new);
@@ -302,10 +296,11 @@ public final class NoCubesConfigImpl {
 		/**
 		 * See {@link NoCubesConfigImpl#bakeConfig}
 		 */
-		public static void bake(ModConfig config) {
-			int oldChunkRenderSettingsHash = hashChunkRenderSettings();
+		static void bake(ModConfig config) {
+			var blocks = ForgeRegistries.BLOCKS.getValues();
+			int oldChunkRenderSettingsHash = NoCubesConfig.Server.hashChunkRenderSettings(blocks.stream());
 
-			NoCubesConfig.Smoothables.recomputeInMemoryLookup(ForgeRegistries.BLOCKS.getValues().stream(), INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
+			NoCubesConfig.Smoothables.recomputeInMemoryLookup(blocks.stream(), INSTANCE.smoothableWhitelist.get(), INSTANCE.smoothableBlacklist.get(), INSTANCE.useDefaultSmoothableList.get());
 			NoCubesConfig.Server.mesher = INSTANCE.mesher.get().instance;
 			NoCubesConfig.Server.collisionsEnabled = INSTANCE.collisionsEnabled.get();
 			NoCubesConfig.Server.tempMobCollisionsDisabled = INSTANCE.tempMobCollisionsDisabled.get();
@@ -320,24 +315,16 @@ public final class NoCubesConfigImpl {
 			NoCubesConfig.Server.oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
 			NoCubesConfig.Server.oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
-			if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != hashChunkRenderSettings())
+			if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != NoCubesConfig.Server.hashChunkRenderSettings(blocks.stream()))
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
 			if (FMLEnvironment.dist.isDedicatedServer() && ServerLifecycleHooks.getCurrentServer() != null)
-				NoCubesNetwork.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
+				NoCubesNetworkForge.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
 		}
 
-		private static <T extends Number & Comparable<T>> T validateRange(T min, T max, T value, String name) {
+		static <T extends Number & Comparable<T>> T validateRange(T min, T max, T value, String name) {
 			if (value.compareTo(min) < 0 || value.compareTo(max) > 0)
 				throw new IllegalStateException("Config was not validated! '" + name + "' must be between " + min + " and " + max + " but was " + value);
 			return value;
-		}
-
-		private static int hashChunkRenderSettings() {
-			var smoothables = ForgeRegistries.BLOCKS.getValues().stream()
-				.flatMap(block -> ModUtil.getStates(block).stream())
-				.map(NoCubes.smoothableHandler::isSmoothable)
-				.toArray(Boolean[]::new);
-			return Objects.hash(NoCubesConfig.Server.mesher, NoCubesConfig.Server.forceVisuals, Arrays.hashCode(smoothables));
 		}
 
 		public static void updateSmoothable(boolean newValue, BlockState... states) {
@@ -345,7 +332,7 @@ public final class NoCubesConfigImpl {
 			saveAndLoad();
 		}
 
-		private static void saveAndLoad() {
+		static void saveAndLoad() {
 			Hacks.saveAndLoad(ModConfig.Type.SERVER);
 		}
 
@@ -528,12 +515,12 @@ public final class NoCubesConfigImpl {
 			ModList.get().getModContainerById(modConfig.getModId()).get().dispatchConfigEvent(event);
 		}
 
-		public static void receiveSyncedServerConfig(S2CUpdateServerConfig s2CConfigData) {
+		public static void receiveSyncedServerConfig(byte[] configData) {
 			LOG.debug("Setting logical server config (on the client) from server sync packet");
 			assert FMLEnvironment.dist.isClient() : "This packet should have only be sent server->client";
 			var modConfig = ConfigTracker_getConfig(ModConfig.Type.SERVER).get();
 			var parser = (ConfigParser<CommentedConfig>) modConfig.getConfigData().configFormat().createParser();
-			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(s2CConfigData.getBytes())));
+			ModConfig_setConfigData(modConfig, parser.parse(new ByteArrayInputStream(configData)));
 			ModConfig_fireEvent(modConfig, IConfigEvent.reloading(modConfig));
 		}
 	}

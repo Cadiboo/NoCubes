@@ -1,8 +1,11 @@
 package io.github.cadiboo.nocubes.fabric;
 
+import io.github.cadiboo.nocubes.client.ClientUtil;
+import io.github.cadiboo.nocubes.client.KeyMappings;
+import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
+import io.github.cadiboo.nocubes.network.C2SRequestUpdateSmoothable;
 import io.github.cadiboo.nocubes.platform.IClientPlatform;
-import io.github.cadiboo.nocubes.util.ModUtil;
-import net.minecraft.client.player.LocalPlayer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -19,17 +22,35 @@ public class ClientPlatform implements IClientPlatform {
 
 	@Override
 	public void updateClientVisuals(boolean render) {
+		warnClientPlayerThatConfigIsNotImplemented();
+		NoCubesConfigImpl.Client.updateRender(render);
 	}
 
 	@Override
-	public boolean trySendC2SRequestUpdateSmoothable(LocalPlayer player, boolean newValue, BlockState[] states) {
-		ModUtil.warnPlayer(player, "ERROR: FABRIC NETWORKING NOT IMPLEMENTED!");
-		return false;
+	public void sendC2SRequestUpdateSmoothable(boolean newValue, BlockState[] states) {
+		warnClientPlayerThatConfigIsNotImplemented();
+		ClientPlayNetworking.send(new C2SRequestUpdateSmoothable(newValue, states));
+	}
+
+	static void warnClientPlayerThatConfigIsNotImplemented() {
+		// Copied and tweaked from the bit of NoCubesNetworkClient.onJoinedServer that sends the notification.notInstalledOnServer message
+		var message = "!!! The Fabric version of NoCubes does not have a config system yet - any changes you make will not be saved";
+		ClientUtil.warnPlayer(message, KeyMappings.translate(KeyMappings.TOGGLE_SMOOTHABLE_BLOCK_TYPE));
+	}
+
+	@Override
+	public void loadDefaultServerConfig() {
+		NoCubesConfigImpl.loadDefaultServerConfig();
+	}
+
+	@Override
+	public void receiveSyncedServerConfig(byte[] configData) {
+		NoCubesConfigImpl.receiveSyncedServerConfig(configData);
 	}
 
 	@Override
 	public Component clientConfigComponent() {
-		return Component.literal("client config (not implemented yet on Fabric)");
+		return Component.literal("not implemented yet on Fabric");
 	}
 
 	@Override

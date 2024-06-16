@@ -6,11 +6,11 @@
 	"compatibilityLevel": "JAVA_17",
 	"plugin": "io.github.cadiboo.nocubes.mixin.NoCubesMixinPlugin",
 	"mixins": [
-		"PlayerListMixin",
 	],
 	"client": [
 		"client.BlockRenderDispatcherMixin",
 		"client.ClientHandshakePacketListenerImplMixin",
+		"client.ClientPacketListenerMixin",
 		"client.PlatformSpecificRenderChunkRebuildTaskMixin",
 		"client.sodium.ChunkBuilderMeshingTaskMixin",
 		"client.sodium.FluidRendererMixin"

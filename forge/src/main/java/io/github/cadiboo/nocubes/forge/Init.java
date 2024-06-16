@@ -2,7 +2,7 @@ package io.github.cadiboo.nocubes.forge;
 
 import io.github.cadiboo.nocubes.NoCubes;
 import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
-import io.github.cadiboo.nocubes.network.NoCubesNetwork;
+import io.github.cadiboo.nocubes.network.NoCubesNetworkForge;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -19,6 +19,6 @@ public class Init {
 		NoCubesConfigImpl.register(context, modBus);
 		if (FMLEnvironment.dist.isClient())
 			ClientInit.register(modBus, forgeBus);
-		NoCubesNetwork.register();
+		NoCubesNetworkForge.register();
 	}
 }

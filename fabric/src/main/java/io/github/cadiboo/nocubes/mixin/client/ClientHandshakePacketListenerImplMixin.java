@@ -1,6 +1,6 @@
 package io.github.cadiboo.nocubes.mixin.client;
 
-import io.github.cadiboo.nocubes.mixin.PlayerListMixin;
+import io.github.cadiboo.nocubes.network.NoCubesNetworkClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
@@ -16,7 +16,7 @@ import java.time.Duration;
 import java.util.function.Consumer;
 
 /**
- * See {@link PlayerListMixin} for documentation.
+ * See {@link io.github.cadiboo.nocubes.network.NoCubesNetworkFabric#handleS2CUpdateServerConfigDuringLogin} for documentation.
  */
 @Mixin(ClientHandshakePacketListenerImpl.class)
 public abstract class ClientHandshakePacketListenerImplMixin {
@@ -31,7 +31,7 @@ public abstract class ClientHandshakePacketListenerImplMixin {
 		boolean bl, Duration duration, Consumer<Component> consumer,
 		CallbackInfo ci
 	) {
-//		NoCubesNetwork.currentServerHasNoCubes = false;
+		NoCubesNetworkClient.currentServerHasNoCubes = false;
 	}
 
 }

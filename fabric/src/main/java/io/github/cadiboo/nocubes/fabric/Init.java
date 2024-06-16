@@ -1,25 +1,37 @@
 package io.github.cadiboo.nocubes.fabric;
 
-import io.github.cadiboo.nocubes.config.ColorParser;
-import io.github.cadiboo.nocubes.config.NoCubesConfig;
+import io.github.cadiboo.nocubes.config.NoCubesConfigImpl;
+import io.github.cadiboo.nocubes.network.*;
 import net.fabricmc.api.ModInitializer;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+
+import java.util.Collections;
 
 public class Init implements ModInitializer {
-
 	@Override
 	public void onInitialize() {
-		// TODO: REMOVE
-		{
-			NoCubesConfig.Common.debugEnabled = true;
-			NoCubesConfig.Client.render = true;
-			NoCubesConfig.Client.renderSelectionBox = true;
-			NoCubesConfig.Client.selectionBoxColor = new ColorParser.Color(0, 255, 255, 255).toRenderableColor();
-			NoCubesConfig.Server.mesher = NoCubesConfig.Server.MesherType.SurfaceNets.instance;
-			NoCubesConfig.Server.collisionsEnabled = true;
-			NoCubesConfig.Server.tempMobCollisionsDisabled = true;
-			NoCubesConfig.Server.extendFluidsRange = 3;
-			NoCubesConfig.Smoothables.recomputeInMemoryLookup(BuiltInRegistries.BLOCK.stream(), java.util.Collections.emptyList(), java.util.Collections.emptyList(), true);
-		}
+		ServerLifecycleEvents.SERVER_STARTED.register((event) -> {
+			NoCubesConfigImpl.loadServerConfig();
+		});
+		ServerLoginConnectionEvents.QUERY_START.register((handler, server, sender, synchronizer) -> {
+			synchronizer.waitFor(server.submit(() -> sender.sendPacket(NoCubesNetworkFabric.createS2CUpdateServerConfigDuringLogin(S2CUpdateServerConfig::new))));
+		});
+		ServerLoginNetworking.registerGlobalReceiver(S2CUpdateServerConfig.TYPE.getId(), (server, handler, understood, buf, synchronizer, responseSender) -> {
+		});
+		ServerPlayNetworking.registerGlobalReceiver(C2SRequestUpdateSmoothable.TYPE, (packet, player, responseSender) -> {
+			NoCubesNetwork.handleC2SRequestUpdateSmoothable(
+				player, packet.newValue(), packet.states(),
+				player.server::execute,
+				(playerIfNotNullElseEveryone, newValue, states) -> {
+					var players = playerIfNotNullElseEveryone != null
+						? Collections.singleton(playerIfNotNullElseEveryone)
+						: player.server.getPlayerList().getPlayers();
+					players.forEach(p -> ServerPlayNetworking.send(p, new S2CUpdateSmoothable(newValue, states)));
+				}
+			);
+		});
 	}
 }

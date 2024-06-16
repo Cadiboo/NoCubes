@@ -9,7 +9,6 @@ import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.registries.ForgeRegistries;
 
 public class Platform implements IPlatform {
-
 	@Override
 	public ResourceLocation getRegistryName(Block block) {
 		return ForgeRegistries.BLOCKS.getKey(block);
