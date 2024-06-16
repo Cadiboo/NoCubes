@@ -49,6 +49,7 @@ public class ModUtil {
 			player.sendSystemMessage(Component.translatable(translationKey, formatArgs).withStyle(ChatFormatting.RED));
 		else
 			LogManager.getLogger("NoCubes notification fallback").warn(I18n.get(translationKey, formatArgs));
+			// Language.getInstance().getOrDefault(translationKey).formatted
 	}
 
 	public static float getBlockDensity(Predicate<BlockState> isSmoothable, BlockState state) {
