@@ -14,7 +14,8 @@
 		"client.BlockRenderDispatcherMixin",
 		"client.PlatformSpecificRenderChunkRebuildTaskMixin",
 		"client.RenderChunkCompileTaskMixin",
-		"client.sodium.ChunkBuilderMeshingTaskMixin"
+		"client.sodium.ChunkBuilderMeshingTaskMixin",
+		"client.sodium.FluidRendererMixin"
 	],
 	"server": [
 	]
