@@ -30,7 +30,10 @@ public class FluidRendererMixin {
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/level/BlockAndTintGetter;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"
 		),
-		require = 2 // Redirect both calls to the function
+		// Embeddium >= 3.20 now only has a single call to getFluidState in isFluidOccluded
+		// See https://github.com/embeddedt/embeddium/commit/ece7936967834fc663b6e0dc14ea286ff23b1700?diff=split&w=0
+//		require = 2 // Redirect both calls to the function
+		require = 1
 	)
 	private FluidState noCubes$getFluidState(BlockAndTintGetter world, BlockPos adjPos) {
 		return ClientHooks.getRenderFluidState(adjPos, world.getBlockState(adjPos));
