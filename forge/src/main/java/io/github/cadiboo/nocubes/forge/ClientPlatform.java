@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.fml.config.ConfigTracker;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.io.File;
 import java.util.List;
@@ -31,7 +32,7 @@ public class ClientPlatform implements IClientPlatform {
 
 	@Override
 	public void sendC2SRequestUpdateSmoothable(boolean newValue, BlockState[] states) {
-		NoCubesNetworkForge.CHANNEL.sendToServer(new C2SRequestUpdateSmoothable(newValue, states));
+		NoCubesNetworkForge.CHANNEL.send(new C2SRequestUpdateSmoothable(newValue, states), PacketDistributor.SERVER.noArg());
 	}
 
 	@Override

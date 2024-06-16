@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 /**
  * Changes chunk rendering to allow us to do our own custom rendering.
  */
-@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
+@Mixin(targets = "net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderChunk$RebuildTask")
 public abstract class RenderChunkRebuildTaskMixin {
 
 	/**

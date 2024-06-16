@@ -15,7 +15,7 @@ import io.github.cadiboo.nocubes.util.Face;
 import io.github.cadiboo.nocubes.util.Vec;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColors;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -35,7 +35,7 @@ import static io.github.cadiboo.nocubes.client.RenderHelper.vertex;
 public final class VanillaRenderer {
 
 	public static void renderChunk(
-		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack buffers,
 		BlockPos chunkPos, BlockAndTintGetter world, PoseStack matrix,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
 		RenderInLayer renderBlock
@@ -100,7 +100,7 @@ public final class VanillaRenderer {
 	}
 
 	static void renderInBlockLayers(
-		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
+		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack buffers,
 		BlockAndTintGetter world, Set<RenderType> usedLayers, OptiFineProxy optiFine,
 		BlockState state, BlockPos worldPos, RenderInLayer render
 	) {
@@ -149,7 +149,7 @@ public final class VanillaRenderer {
 
 	static void forEachQuadInEveryBlockLayer(
 		INoCubesChunkSectionRenderBuilder rebuildTask, INoCubesChunkSectionRender chunkRender,
-		ChunkBufferBuilderPack buffers, BlockPos chunkPos,
+		SectionBufferBuilderPack buffers, BlockPos chunkPos,
 		BlockAndTintGetter world, PoseStack matrix,
 		Set<RenderType> usedLayers, RandomSource random, BlockRenderDispatcher dispatcher,
 		OptiFineProxy optiFine,
@@ -231,7 +231,7 @@ public final class VanillaRenderer {
 	}
 
 	public static BufferBuilder getAndStartBuffer(
-		INoCubesChunkSectionRender chunkRender, ChunkBufferBuilderPack buffers,
+		INoCubesChunkSectionRender chunkRender, SectionBufferBuilderPack buffers,
 		Set<RenderType> usedLayers, RenderType layer
 	) {
 		var buffer = buffers.builder(layer);

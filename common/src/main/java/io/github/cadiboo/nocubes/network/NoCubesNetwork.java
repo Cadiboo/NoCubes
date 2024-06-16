@@ -25,7 +25,7 @@ public class NoCubesNetwork {
 	 */
 	public static final int REQUIRED_PERMISSION_LEVEL = 2;
 
-	public static final String NETWORK_PROTOCOL_VERSION = "2";
+	public static final int NETWORK_PROTOCOL_VERSION = 2;
 
 	public static boolean checkPermissionAndNotifyIfUnauthorised(Player player, @Nullable MinecraftServer connectedToServer) {
 		if (connectedToServer != null && connectedToServer.isSingleplayerOwner(player.getGameProfile()))

@@ -313,12 +313,12 @@ public final class NoCubesConfigImpl {
 			NoCubesConfig.Server.extendFluidsRange = validateRange(0, 2, INSTANCE.extendFluidsRange.get(), "extendFluidsRange");
 			NoCubesConfig.Server.oldNoCubesSlopes = INSTANCE.oldNoCubesSlopes.get();
 			NoCubesConfig.Server.oldNoCubesInFluids = INSTANCE.oldNoCubesInFluids.get();
-			NoCubesConfig.Server.oldNoCubesRoughness = validateRange(0d, 1d, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
+			NoCubesConfig.Server.oldNoCubesRoughness = validateRange(0f, 1f, INSTANCE.oldNoCubesRoughness.get(), "oldNoCubesRoughness").floatValue();
 
 			if (NoCubesConfig.Client.render && oldChunkRenderSettingsHash != NoCubesConfig.Server.hashChunkRenderSettings(blocks.stream()))
 				DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> reloadAllChunks("options affecting chunk rendering in the server config were changed"));
 			if (FMLEnvironment.dist.isDedicatedServer() && ServerLifecycleHooks.getCurrentServer() != null)
-				NoCubesNetworkForge.CHANNEL.send(PacketDistributor.ALL.noArg(), S2CUpdateServerConfig.create(config));
+				NoCubesNetworkForge.CHANNEL.send(S2CUpdateServerConfig.create(config), PacketDistributor.ALL.noArg());
 		}
 
 		static <T extends Number & Comparable<T>> T validateRange(T min, T max, T value, String name) {
@@ -358,7 +358,7 @@ public final class NoCubesConfigImpl {
 			final IntValue extendFluidsRange;
 			final BooleanValue oldNoCubesSlopes;
 			final BooleanValue oldNoCubesInFluids;
-			final DoubleValue oldNoCubesRoughness;
+			final FloatValue oldNoCubesRoughness;
 
 			private Impl(Builder builder) {
 				final var smoothableListCommentExtra = "Instead of manually editing this list, you can smoothen or un-smoothen blocks by looking at them in-game and pressing the 'N' key, or whatever it may have been rebound to.";

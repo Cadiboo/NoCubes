@@ -6,10 +6,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.cadiboo.nocubes.client.render.VanillaRenderer;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRender;
 import io.github.cadiboo.nocubes.hooks.trait.INoCubesChunkSectionRenderBuilder;
-import net.minecraft.client.renderer.ChunkBufferBuilderPack;
+import net.minecraft.client.renderer.SectionBufferBuilderPack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import java.util.Iterator;
 import java.util.Set;
 
-@Mixin(targets = "net.minecraft.client.renderer.chunk.ChunkRenderDispatcher$RenderChunk$RebuildTask")
+@Mixin(targets = "net.minecraft.client.renderer.chunk.SectionRenderDispatcher$RenderChunk$RebuildTask")
 public abstract class PlatformSpecificRenderChunkRebuildTaskMixin implements INoCubesChunkSectionRenderBuilder {
 
 	@Shadow(aliases = {
@@ -31,7 +31,7 @@ public abstract class PlatformSpecificRenderChunkRebuildTaskMixin implements INo
 		"field_20839", // Fabric
 	})
 	@Final
-	ChunkRenderDispatcher.RenderChunk parentClass;
+	SectionRenderDispatcher.RenderSection parentClass;
 
 	@Override
 	public Object noCubes$getModelData(BlockPos worldPos) {
@@ -48,7 +48,7 @@ public abstract class PlatformSpecificRenderChunkRebuildTaskMixin implements INo
 	public Iterator<BlockPos> noCubes$renderChunk(
 		Iterator<BlockPos> iterator,
 		float x, float y, float z,
-		ChunkBufferBuilderPack buffers,
+		SectionBufferBuilderPack buffers,
 		@Local(ordinal = 0) BlockPos chunkPos,
 		@Local(ordinal = 0) RenderChunkRegion region,
 		@Local(ordinal = 0) PoseStack matrix,
