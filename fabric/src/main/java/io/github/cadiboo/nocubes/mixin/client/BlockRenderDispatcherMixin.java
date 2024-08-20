@@ -34,7 +34,6 @@ public class BlockRenderDispatcherMixin {
 	@Inject(
 		method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V",
 		at = @At("HEAD"),
-		remap = false, // Forge-added method
 		cancellable = true
 	)
 	private void noCubes$renderBreakingTexture(BlockState state, BlockPos pos, BlockAndTintGetter world, PoseStack matrix, VertexConsumer buffer, CallbackInfo ci) {
