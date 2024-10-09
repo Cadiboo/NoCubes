@@ -37,8 +37,6 @@ minecraft {
 		}
 		configureEach {
 			workingDirectory project.file('run/' + it.name) as File
-			// Use the 'test' module (and both source sets) because it contains our integration tests
-			ideaModule "${rootProject.name}.${project.name}.test"
 
 			// To debug Mixin/Asm issues
 			property 'mixin.debug.verbose', 'true'
@@ -50,8 +48,8 @@ minecraft {
 			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
 			mods.register(mod_id as String) {
 				sources = [
-					sourceSets.main as SourceSet, sourceSets.test as SourceSet,
-					project(":common").sourceSets.main as SourceSet, project(":common").sourceSets.test as SourceSet,
+					sourceSets.main as SourceSet,
+					project(":common").sourceSets.main as SourceSet,
 				]
 			}
 		}

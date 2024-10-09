@@ -48,8 +48,6 @@ loom {
 			vmArg "-Dfabric-api.gametest.report-file=${project.buildDir}/junit.xml"
 		}
 		configureEach {
-			// Use the 'test' source set because it contains our integration tests
-			source sourceSets.test
 			runDir = 'run/' + it.name
 			name 'Fabric ' + it.name
 			vmArg '-Dmixin.debug.export=true'

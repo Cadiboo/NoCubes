@@ -8,12 +8,8 @@ import net.minecraft.gametest.framework.TestFunction;
 import java.util.Collection;
 
 public class GameTests {
-
-	// Refers to './run/gameTestServer/gameteststructures/empty.snbt'
-	public static final String EMPTY_STRUCTURE = "empty";
-
 	@GameTestGenerator
 	public static Collection<TestFunction> createTests() {
-		return GameTestsAdapter.createTests(EMPTY_STRUCTURE, BuiltInRegistries.BLOCK::stream);
+		return GameTestsAdapter.createTests(BuiltInRegistries.BLOCK::stream);
 	}
 }
