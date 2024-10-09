@@ -46,12 +46,6 @@ minecraft {
 
 			property 'mixin.env.remapRefMap', 'true'
 			property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-			mods.register(mod_id as String) {
-				sources = [
-					sourceSets.main as SourceSet,
-					project(":common").sourceSets.main as SourceSet,
-				]
-			}
 		}
 	}
 }
